@@ -74,10 +74,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -96,12 +93,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected static final String NODE_NAME_ENV             = "ORIENTDB_NODE_NAME";
 
   protected OServer serverInstance;
-  protected boolean enabled = true;
-  protected String nodeUuid;
+  protected String  nodeUuid;
   protected String nodeName = null;
   protected int    nodeId   = -1;
   protected File defaultDatabaseConfigFile;
-  protected          ConcurrentHashMap<String, ODistributedStorage> storages = new ConcurrentHashMap<String, ODistributedStorage>();
+  protected final    ConcurrentHashMap<String, ODistributedStorage> storages = new ConcurrentHashMap<String, ODistributedStorage>();
   protected volatile NODE_STATUS                                    status   = NODE_STATUS.OFFLINE;
   protected long lastClusterChangeOn;
   protected       List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
@@ -114,13 +110,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
   protected OClusterOwnershipAssignmentStrategy clusterAssignmentStrategy = new ODefaultClusterOwnershipAssignmentStrategy(this);
 
-  protected static final int                  DEPLOY_DB_MAX_RETRIES  = 10;
-  protected              Map<String, Member>  activeNodes            = new ConcurrentHashMap<String, Member>();
-  protected              Map<String, String>  activeNodesNamesByUuid = new ConcurrentHashMap<String, String>();
-  protected              Map<String, String>  activeNodesUuidByName  = new ConcurrentHashMap<String, String>();
-  protected final        List<String>         registeredNodeById     = new ArrayList<String>();
-  protected final        Map<String, Integer> registeredNodeByName   = new HashMap<String, Integer>();
-  protected              Map<String, Long>    autoRemovalOfServers   = new ConcurrentHashMap<String, Long>();
+  protected static final int                               DEPLOY_DB_MAX_RETRIES  = 10;
+  protected              ConcurrentHashMap<String, Member> activeNodes            = new ConcurrentHashMap<String, Member>();
+  protected              Map<String, String>               activeNodesNamesByUuid = new ConcurrentHashMap<String, String>();
+  protected              Map<String, String>               activeNodesUuidByName  = new ConcurrentHashMap<String, String>();
+  protected final        List<String>                      registeredNodeById     = new CopyOnWriteArrayList<String>();
+  protected final        Map<String, Integer>              registeredNodeByName   = new ConcurrentHashMap<String, Integer>();
+  protected              Map<String, Long>                 autoRemovalOfServers   = new ConcurrentHashMap<String, Long>();
   protected volatile ODistributedMessageServiceImpl messageService;
   protected Date                 startedOn              = new Date();
   protected ORemoteTaskFactory   taskFactory            = new ODefaultRemoteTaskFactory();
@@ -130,7 +126,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected        CountDownLatch                      serverStarted           = new CountDownLatch(1);
   private          ODistributedConflictResolverFactory conflictResolverFactory = new ODistributedConflictResolverFactory();
   private final    ODistributedLockManagerRequester    lockManagerRequester    = new ODistributedLockManagerRequester(this);
-  private final    ODistributedLockManagerExecutor     lockManagerExecutor     = new ODistributedLockManagerExecutor(this);
+  private ODistributedLockManagerExecutor lockManagerExecutor;
 
   protected ODistributedAbstractPlugin() {
   }
@@ -170,6 +166,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         setDefaultDatabaseConfigFile(param.value);
       }
     }
+
+    lockManagerExecutor = new ODistributedLockManagerExecutor(this);
 
     if (serverInstance.getUser("replicator") == null)
       // DROP THE REPLICATOR USER. THIS USER WAS NEEDED BEFORE 2.2, BUT IT'S NOT REQUIRED ANYMORE
@@ -243,6 +241,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     activeNodesNamesByUuid.clear();
     activeNodesUuidByName.clear();
 
+    if (lockManagerExecutor != null)
+      lockManagerExecutor.shutdown();
+
+    if (lockManagerRequester != null)
+      lockManagerRequester.shutdown();
+
     setNodeStatus(NODE_STATUS.OFFLINE);
 
     Orient.instance().removeDbLifecycleListener(this);
@@ -290,6 +294,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       if (distribDatabase == null) {
         // CHECK TO PUBLISH IT TO THE CLUSTER
         distribDatabase = messageService.registerDatabase(dbName, cfg);
+        distribDatabase.checkNodeInConfiguration(cfg, getLocalNodeName());
         distribDatabase.resume();
         distribDatabase.setOnline();
       }
@@ -523,7 +528,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     status = iStatus;
 
-    ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Updated node status to '%s'", status);
+    ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Updated node status to '%s'", status);
   }
 
   public boolean checkNodeStatus(final NODE_STATUS iStatus2Check) {
@@ -534,7 +539,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   public ODistributedResponse sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
       final Collection<String> iTargetNodes, final ORemoteTask iTask, final long reqId,
       final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback) {
+      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
+      final OCallable<Void, ODistributedResponseManager> endCallback) {
 
     final ODistributedRequest req = new ODistributedRequest(taskFactory, nodeId, reqId, iDatabaseName, iTask);
 
@@ -560,7 +566,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     messageService.updateMessageStats(iTask.getName());
 
-    return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, iAfterSentCallback);
+    return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, iAfterSentCallback, endCallback);
   }
 
   /**
@@ -694,12 +700,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public int getNodeIdByName(final String name) {
-    synchronized (registeredNodeByName) {
-      final Integer val = registeredNodeByName.get(name);
-      if (val == null)
-        return -1;
-      return val.intValue();
-    }
+    final Integer val = registeredNodeByName.get(name);
+    if (val == null)
+      return -1;
+    return val.intValue();
   }
 
   @Override
@@ -722,7 +726,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // REASSIGN CLUSTERS WITHOUT AN OWNER, AVOIDING TO REBALANCE EXISTENT
     final ODatabaseDocumentTx database = serverInstance.openDatabase(databaseName, "internal", "internal", null, true);
     try {
-      executeInDistributedDatabaseLock(databaseName, 15000, cfg, new OCallable<Boolean, OModifiableDistributedConfiguration>() {
+      executeInDistributedDatabaseLock(databaseName, 20000, cfg, new OCallable<Boolean, OModifiableDistributedConfiguration>() {
         @Override
         public Boolean call(final OModifiableDistributedConfiguration cfg) {
           rebalanceClusterOwnership(iNode, database, cfg, canCreateNewClusters);
@@ -838,7 +842,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public synchronized boolean installDatabase(final boolean iStartup, final String databaseName, final boolean forceDeployment,
+  public boolean installDatabase(final boolean iStartup, final String databaseName, final boolean forceDeployment,
       final boolean tryWithDeltaFirst) {
     if (getDatabaseStatus(getLocalNodeName(), databaseName) == DB_STATUS.OFFLINE)
       // OFFLINE: AVOID TO INSTALL IT
@@ -850,65 +854,44 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName, null);
 
-    return executeInDistributedDatabaseLock(databaseName, 0, null, new OCallable<Boolean, OModifiableDistributedConfiguration>() {
-      @Override
-      public Boolean call(OModifiableDistributedConfiguration cfg) {
-        // GET ALL THE OTHER SERVERS
-        final Collection<String> nodes = cfg.getServers(null, nodeName);
-        getAvailableNodes(nodes, databaseName);
-        if (nodes.size() == 0) {
-          ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
-              "Cannot install database '%s' on local node, because no servers are available", databaseName);
-          return false;
-        }
+    return executeInDistributedDatabaseLock(databaseName, 20000, null,
+        new OCallable<Boolean, OModifiableDistributedConfiguration>() {
+          @Override
+          public Boolean call(OModifiableDistributedConfiguration cfg) {
+            distrDatabase.checkNodeInConfiguration(cfg, nodeName);
 
-        ODistributedServerLog
-            .info(this, nodeName, null, DIRECTION.NONE, "Current node is a %s for database '%s'", cfg.getServerRole(nodeName),
-                databaseName);
-
-        final Set<String> configuredDatabases = serverInstance.getAvailableStorageNames().keySet();
-        if (!iStartup && configuredDatabases.contains(databaseName))
-          return false;
-
-        // INIT STORAGE + UPDATE LOCAL FILE ONLY
-        final ODistributedStorage stg = getStorage(databaseName);
-        stg.setDistributedConfiguration(cfg);
-
-        // DISCARD MESSAGES DURING THE REQUEST OF DATABASE INSTALLATION
-        distrDatabase.suspend();
-
-        final Boolean deploy = forceDeployment ? Boolean.TRUE : (Boolean) cfg.getDocument().field("autoDeploy");
-
-        boolean databaseInstalled;
-
-        try {
-
-          // CREATE THE DISTRIBUTED QUEUE
-          if (!distrDatabase.exists() || distrDatabase.getSyncConfiguration().getMomentum().isEmpty()) {
-
-            if (deploy == null || !deploy) {
-              // NO AUTO DEPLOY
-              ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
-                  "Skipping download of database '%s' from the cluster because autoDeploy=false", databaseName);
-
-              setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
-              distrDatabase.resume();
+            // GET ALL THE OTHER SERVERS
+            final Collection<String> nodes = cfg.getServers(null, nodeName);
+            getAvailableNodes(nodes, databaseName);
+            if (nodes.size() == 0) {
+              ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
+                  "Cannot install database '%s' on local node, because no servers are available", databaseName);
               return false;
             }
 
-            // FIRST TIME, ASK FOR FULL REPLICA
-            databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+            ODistributedServerLog
+                .info(this, nodeName, null, DIRECTION.NONE, "Current node is a %s for database '%s'", cfg.getServerRole(nodeName),
+                    databaseName);
 
-          } else {
-            if (tryWithDeltaFirst) {
-              try {
+            final Set<String> configuredDatabases = serverInstance.getAvailableStorageNames().keySet();
+            if (!iStartup && configuredDatabases.contains(databaseName))
+              return false;
 
-                // TRY WITH DELTA SYNC
-                databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName, cfg);
+            // INIT STORAGE + UPDATE LOCAL FILE ONLY
+            final ODistributedStorage stg = getStorage(databaseName);
+            stg.setDistributedConfiguration(cfg);
 
-              } catch (ODistributedDatabaseDeltaSyncException e) {
-                // FALL BACK TO FULL BACKUP
-                removeStorage(databaseName);
+            // DISCARD MESSAGES DURING THE REQUEST OF DATABASE INSTALLATION
+            distrDatabase.suspend();
+
+            final Boolean deploy = forceDeployment ? Boolean.TRUE : (Boolean) cfg.isAutoDeploy();
+
+            boolean databaseInstalled;
+
+            try {
+
+              // CREATE THE DISTRIBUTED QUEUE
+              if (!distrDatabase.exists() || distrDatabase.getSyncConfiguration().getMomentum().isEmpty()) {
 
                 if (deploy == null || !deploy) {
                   // NO AUTO DEPLOY
@@ -920,51 +903,75 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                   return false;
                 }
 
+                // FIRST TIME, ASK FOR FULL REPLICA
                 databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
-              }
-            } else
-              // SKIP DELTA AND EXECUTE FULL BACKUP
-              databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
-          }
 
-          if (databaseInstalled) {
-            // OVERWRITE THE LSN
-            final ODatabaseDocumentTx db = distrDatabase.getDatabaseInstance();
-            try {
-              try {
-                distrDatabase.getSyncConfiguration()
-                    .setLastLSN(nodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), true);
-              } catch (IOException e) {
-                ODistributedServerLog
-                    .error(this, nodeName, null, DIRECTION.NONE, "Error on setting LSN after the installation of database '%s'",
-                        databaseName);
+              } else {
+                if (tryWithDeltaFirst) {
+                  try {
+
+                    // TRY WITH DELTA SYNC
+                    databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName, cfg);
+
+                  } catch (ODistributedDatabaseDeltaSyncException e) {
+                    // FALL BACK TO FULL BACKUP
+                    removeStorage(databaseName);
+
+                    if (deploy == null || !deploy) {
+                      // NO AUTO DEPLOY
+                      ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
+                          "Skipping download of database '%s' from the cluster because autoDeploy=false", databaseName);
+
+                      setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
+                      distrDatabase.resume();
+                      return false;
+                    }
+
+                    databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+                  }
+                } else
+                  // SKIP DELTA AND EXECUTE FULL BACKUP
+                  databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
               }
-            } finally {
-              db.close();
+
+              if (databaseInstalled) {
+                // OVERWRITE THE LSN
+                final ODatabaseDocumentTx db = distrDatabase.getDatabaseInstance();
+                try {
+                  try {
+                    distrDatabase.getSyncConfiguration()
+                        .setLastLSN(nodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), true);
+                  } catch (IOException e) {
+                    ODistributedServerLog
+                        .error(this, nodeName, null, DIRECTION.NONE, "Error on setting LSN after the installation of database '%s'",
+                            databaseName);
+                  }
+                } finally {
+                  db.close();
+                }
+              }
+
+            } catch (ODatabaseIsOldException e) {
+              // CURRENT DATABASE IS NEWER, SET ALL OTHER DATABASES AS NOT_AVAILABLE TO FORCE THEM TO ASK FOR THE CURRENT DATABASE
+              setDatabaseStatus(nodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+
+              final Set<String> otherServers = getAvailableNodeNames(databaseName);
+              otherServers.remove(nodeName);
+
+              ODistributedServerLog.info(this, nodeName, otherServers.toString(), DIRECTION.OUT,
+                  "Current copy of database '%s' is newer then the copy present in the cluster. Use the local copy and force other nodes to download this",
+                  databaseName);
+
+              for (String s : otherServers) {
+                setDatabaseStatus(s, databaseName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+              }
+              databaseInstalled = true;
+              distrDatabase.resume();
             }
+
+            return databaseInstalled;
           }
-
-        } catch (ODatabaseIsOldException e) {
-          // CURRENT DATABASE IS NEWER, SET ALL OTHER DATABASES AS NOT_AVAILABLE TO FORCE THEM TO ASK FOR THE CURRENT DATABASE
-          setDatabaseStatus(nodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
-
-          final Set<String> otherServers = getAvailableNodeNames(databaseName);
-          otherServers.remove(nodeName);
-
-          ODistributedServerLog.info(this, nodeName, otherServers.toString(), DIRECTION.OUT,
-              "Current copy of database '%s' is newer then the copy present in the cluster. Use the local copy and force other nodes to download this",
-              databaseName);
-
-          for (String s : otherServers) {
-            setDatabaseStatus(s, databaseName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-          }
-          databaseInstalled = true;
-          distrDatabase.resume();
-        }
-
-        return databaseInstalled;
-      }
-    });
+        });
   }
 
   protected boolean requestFullDatabase(final ODistributedDatabaseImpl distrDatabase, final String databaseName,
@@ -1026,7 +1033,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       try {
         final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
-            getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null).getPayload();
+            getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null).getPayload();
 
         ODistributedServerLog
             .debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Database delta sync returned: %s", results);
@@ -1151,7 +1158,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       selectedNodes.addAll(nodes);
 
     ODistributedServerLog
-        .warn(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Requesting deploy of database '%s' on local server...",
+        .info(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Requesting deploy of database '%s' on local server...",
             databaseName);
 
     final OLogSequenceNumber lastLSN = distrDatabase.getSyncConfiguration().getLastLSN(getLocalNodeName());
@@ -1160,7 +1167,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         distrDatabase.getSyncConfiguration().getLastOperationTimestamp());
 
     final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, selectedNodes, deployTask,
-        getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null).getPayload();
+        getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null).getPayload();
 
     ODistributedServerLog.debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Deploy returned: %s", results);
 
@@ -1369,7 +1376,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               for (int chunkNum = 2; !chunk.last; chunkNum++) {
                 final ODistributedResponse response = sendRequest(databaseName, null, OMultiValue.getSingletonList(iNode),
                     new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-                    getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+                    getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
                 final Object result = response.getPayload();
                 if (result instanceof Boolean)
@@ -1485,7 +1492,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   /**
    * Guarantees that each class has own master cluster.
    */
-  public synchronized boolean installClustersOfClass(final ODatabaseInternal iDatabase, final OClass iClass,
+  public boolean installClustersOfClass(final ODatabaseInternal iDatabase, final OClass iClass,
       OModifiableDistributedConfiguration cfg) {
 
     final String databaseName = iDatabase.getName();
@@ -1524,7 +1531,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (cluster2Create.isEmpty())
       return;
 
-    executeInDistributedDatabaseLock(iDatabase.getName(), 0, cfg, new OCallable<Object, OModifiableDistributedConfiguration>() {
+    executeInDistributedDatabaseLock(iDatabase.getName(), 20000, cfg, new OCallable<Object, OModifiableDistributedConfiguration>() {
       @Override
       public Object call(final OModifiableDistributedConfiguration cfg) {
 
@@ -1646,22 +1653,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       throw new RuntimeException(e);
 
     } finally {
-      for (int retry = 0; retry < 10; ++retry)
-        try {
-          lockManagerRequester.releaseExclusiveLock(databaseName, nodeName);
-          // RELEASED
-          break;
-        } catch (Throwable t) {
-          // ERROR: RETRY IN A BIT
-          ODistributedServerLog.error(this, nodeName, databaseName, DIRECTION.OUT,
-              "Cannot release distributed lock against database '%s' coordinator server '%s' (error: %s)", databaseName,
-              lockManagerRequester.getCoordinatorServer(), t);
-          try {
-            Thread.sleep(100);
-          } catch (InterruptedException e) {
-            break;
-          }
-        }
+      lockManagerRequester.releaseExclusiveLock(databaseName, nodeName);
     }
   }
 
@@ -1871,7 +1863,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       try {
         final ODistributedAbstractPlugin me = this;
-        executeInDistributedDatabaseLock(databaseName, 0, cfg, new OCallable<Void, OModifiableDistributedConfiguration>() {
+        executeInDistributedDatabaseLock(databaseName, 20000, cfg, new OCallable<Void, OModifiableDistributedConfiguration>() {
           @Override
           public Void call(final OModifiableDistributedConfiguration cfg) {
             try {
@@ -1971,8 +1963,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public long getNextMessageIdCounter() {
-    final long v = localMessageIdCounter.getAndIncrement();
-    return v;
+    return localMessageIdCounter.getAndIncrement();
   }
 
   public void closeRemoteServer(final String node) {
@@ -2011,8 +2002,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (!lastServerDump.equals(compactStatus)) {
       lastServerDump = compactStatus;
 
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status:\n%s",
-          ODistributedOutput.formatServerStatus(this, cfg));
+      ODistributedServerLog
+          .info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status (*=current @=coordinator[%s]):\n%s",
+              getCoordinatorServer(), ODistributedOutput.formatServerStatus(this, cfg));
     }
   }
 
@@ -2038,7 +2030,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public static String getListeningBinaryAddress(final ODocument cfg) {
-    if( cfg == null )
+    if (cfg == null)
       return null;
 
     String url = cfg.field("publicAddress");

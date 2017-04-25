@@ -22,7 +22,7 @@ import org.junit.Test;
  * Distributed TX test against "plocal" protocol + shutdown and restart of a node.
  */
 public class HATest extends AbstractHARemoveNode {
-  final static int SERVERS = 3;
+  private final static int SERVERS = 3;
 
   @Test
   public void test() throws Exception {
@@ -49,6 +49,8 @@ public class HATest extends AbstractHARemoveNode {
     serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
     if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
       serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
+
+    waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 10000);
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
 

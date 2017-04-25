@@ -1943,8 +1943,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     List<OIndexCursor> cursors = new ArrayList<OIndexCursor>();
 
     boolean indexIsUsedInOrderBy = false;
-    List<IndexUsageLog> indexUseAttempts = new ArrayList<IndexUsageLog>();
-    // try {
 
     OIndexSearchResult lastSearchResult = null;
     for (List<OIndexSearchResult> indexSearchResults : conditionHierarchy) {
@@ -2037,7 +2035,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           if (indexRebuildVersion == index.getRebuildVersion()) {
             cursors.add(OIndexChangesWrapper.wrap(index, cursor, indexRebuildVersion));
-            indexUseAttempts.add(new IndexUsageLog(index, keyParams, indexDefinition));
             indexUsed = true;
             break;
           }
@@ -2062,8 +2059,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     metricRecorder.recordOrderByOptimizationMetric(indexIsUsedInOrderBy, this.fullySortedByIndex);
-
-    indexUseAttempts.clear();
 
     return cursors;
   }

@@ -77,6 +77,7 @@ public class ServerRun {
   }
 
   public void deleteNode() {
+    System.out.println("Deleting directory " + getServerHome() + "...");
     OFileUtils.deleteRecursively(new File(getServerHome()));
   }
 

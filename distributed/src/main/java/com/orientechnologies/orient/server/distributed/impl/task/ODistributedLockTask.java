@@ -27,6 +27,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.DataInput;
@@ -45,11 +46,13 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   private String  resource;
   private long    timeout;
   private boolean acquire;
+  private String  coordinator;
 
   public ODistributedLockTask() {
   }
 
-  public ODistributedLockTask(final String resource, final long timeout, final boolean acquire) {
+  public ODistributedLockTask(final String coordinator, final String resource, final long timeout, final boolean acquire) {
+    this.coordinator = coordinator;
     this.resource = resource;
     this.timeout = timeout;
     this.acquire = acquire;
@@ -71,7 +74,7 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
     if (acquire)
       // RELEASE
-      return new ODistributedLockTask(resource, timeout, false);
+      return new ODistributedLockTask(coordinator, resource, timeout, false);
 
     return null;
   }
@@ -101,12 +104,14 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   public void toStream(final DataOutput out) throws IOException {
     out.writeUTF(resource);
     out.writeBoolean(acquire);
+    out.writeLong(timeout);
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     resource = in.readUTF();
     acquire = in.readBoolean();
+    timeout = in.readLong();
   }
 
   @Override
@@ -117,6 +122,13 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   @Override
   public boolean isIdempotent() {
     return false;
+  }
+
+  @Override
+  public void checkIsValid(final ODistributedServerManager dManager) {
+    // CHECKS THE COORDINATOR IS STILL AVAILABLE
+    if (!dManager.isNodeAvailable(dManager.getCoordinatorServer()))
+      throw new ODistributedOperationException("Coordinator server changed during lock " + (acquire ? "acquire" : "release"));
   }
 
   @Override

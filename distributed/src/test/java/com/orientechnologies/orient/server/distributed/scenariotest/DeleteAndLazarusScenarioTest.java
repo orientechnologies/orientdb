@@ -117,6 +117,9 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     simulateServerFault(serverInstance.get(2), "net-fault");
     assertFalse(serverInstance.get(2).isActive());
 
+    waitForDatabaseIsOffline(serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
+        getDatabaseName(), 10000);
+
     // updating r1 in r1* on server3
     banner("Updating r1* on server3 (isolated from the the cluster)");
     ODatabaseDocumentTx dbServer3 = null;
@@ -136,6 +139,9 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
     System.out.println("Server 3 restarted.");
     assertTrue(serverInstance.get(2).isActive());
+
+    waitForDatabaseIsOnline(2, serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
+        getDatabaseName(), 10000);
 
     // reading r1* on server3
     dbServer3 = poolFactory.get(getDatabaseURL(serverInstance.get(2)), "admin", "admin").acquire();
@@ -186,6 +192,9 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     serverInstance.get(0).startServer(getDistributedServerConfiguration(serverInstance.get(0)));
     System.out.println("Server 1 restarted.");
     assertTrue(serverInstance.get(0).isActive());
+
+    waitForDatabaseIsOnline(0, serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName(),
+        getDatabaseName(), 10000);
 
     // r1 is still present both on server1 and server2
     r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");

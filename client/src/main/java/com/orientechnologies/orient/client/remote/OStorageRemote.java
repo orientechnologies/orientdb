@@ -353,9 +353,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         parseOptions(iOptions);
 
-        int serverVersion = openRemoteDatabase();
+        openRemoteDatabase();
 
-        final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this, recordFormat, serverVersion);
+        final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this, recordFormat);
         storageConfiguration.load(iOptions);
 
         configuration = storageConfiguration;
@@ -1368,7 +1368,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     networkOperation(new OStorageRemoteOperation<Void>() {
       @Override
       public Void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        final List<ORecordOperation> committedEntries = new ArrayList<ORecordOperation>();
         try {
           session.commandExecuting = true;
 
@@ -1435,7 +1434,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             endResponse(network);
           }
 
-          committedEntries.clear();
           // SET ALL THE RECORDS AS UNDIRTY
           for (ORecordOperation txEntry : iTx.getAllRecordEntries())
             ORecordInternal.unsetDirty(txEntry.getRecord());
@@ -1855,9 +1853,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  protected synchronized int openRemoteDatabase() throws IOException {
+  protected synchronized void openRemoteDatabase() throws IOException {
     final String currentURL = getNextAvailableServerURL(true, getCurrentSession());
-    return openRemoteDatabase(currentURL);
+    openRemoteDatabase(currentURL);
   }
 
   public void openRemoteDatabase(OChannelBinaryAsynchClient network) throws IOException {
@@ -1912,7 +1910,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  protected int openRemoteDatabase(String currentURL) {
+  protected void openRemoteDatabase(String currentURL) {
     do {
       do {
         OChannelBinaryAsynchClient network = null;
@@ -1922,7 +1920,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final int serverVersion = network.getSrvProtocolVersion();
 
           connectionManager.release(network);
-          return serverVersion;
+          return;
         } catch (OIOException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY

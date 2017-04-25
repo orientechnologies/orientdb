@@ -108,7 +108,7 @@ public class OStreamableHelper {
         }
         ((OStreamable) object).fromStream(in);
       } catch (Exception e) {
-        OException.wrapException(new OSerializationException("Cannot unmarshall object from distributed request"), e);
+        throw OException.wrapException(new OSerializationException("Cannot unmarshall object from distributed request"), e);
       }
       break;
     case SERIALIZABLE:
@@ -130,7 +130,7 @@ public class OStreamableHelper {
         try {
           object = ois.readObject();
         } catch (ClassNotFoundException e) {
-          OException.wrapException(new OSerializationException("Cannot unmarshall object from distributed request"), e);
+          throw OException.wrapException(new OSerializationException("Cannot unmarshall object from distributed request"), e);
         }
       } finally {
         ois.close();

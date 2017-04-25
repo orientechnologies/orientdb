@@ -74,9 +74,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   final OSchemaShared owner;
   private final Map<String, OProperty> properties       = new HashMap<String, OProperty>();
   private       int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
-  private String name;
-  private String description;
-  private int[]  clusterIds;
+  private volatile String name;
+  private          String description;
+  private          int[]  clusterIds;
   private List<OClassImpl> superClasses = new ArrayList<OClassImpl>();
   private int[]        polymorphicClusterIds;
   private List<OClass> subclasses;
@@ -87,21 +87,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private          Map<String, String>       customFields;
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
   private volatile int                       hashCode;
-
-  private static Set<String> reserved = new HashSet<String>();
-
-  static {
-    // reserved.add("select");
-    reserved.add("traverse");
-    reserved.add("insert");
-    reserved.add("update");
-    reserved.add("delete");
-    reserved.add("from");
-    reserved.add("where");
-    reserved.add("skip");
-    reserved.add("limit");
-    reserved.add("timeout");
-  }
 
   /**
    * Constructor used in unmarshalling.
@@ -338,12 +323,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public String getName() {
-    acquireSchemaReadLock();
-    try {
-      return name;
-    } finally {
-      releaseSchemaReadLock();
-    }
+    return name;
   }
 
   @Override
@@ -1465,12 +1445,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   @Override
   public String toString() {
-    acquireSchemaReadLock();
-    try {
-      return name;
-    } finally {
-      releaseSchemaReadLock();
-    }
+    return name;
   }
 
   @Override

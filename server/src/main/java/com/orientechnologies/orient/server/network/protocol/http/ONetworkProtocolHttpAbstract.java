@@ -333,7 +333,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
         OLogManager.instance().error(this, "Internal server error:\n", e);
       } else {
         OLogManager.instance().debug(this, "Internal server error:\n", e);
-        OLogManager.instance().error(this, "Internal server error:\n%s", errorMessage);
       }
     }
 

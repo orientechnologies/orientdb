@@ -24,9 +24,8 @@ import com.orientechnologies.common.exception.OHighLevelException;
 
 /**
  * Exception thrown when a distributed operation doesn't reach the quorum.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class ODistributedOperationException extends ONeedRetryException implements OHighLevelException {
 
@@ -46,7 +45,7 @@ public class ODistributedOperationException extends ONeedRetryException implemen
       return false;
 
     final String message = ((ODistributedOperationException) obj).getMessage();
-    return (getMessage() == message) || (getMessage() != null && getMessage().equals(message));
+    return getMessage() != null && getMessage().equals(message);
   }
 
   @Override

@@ -30,7 +30,7 @@ import java.util.Set;
  * Start 3 servers with only "europe" as master and the others as REPLICA
  */
 public class ReplicaServerTest extends AbstractServerClusterTest {
-  final static int SERVERS = 3;
+  private final static int SERVERS = 3;
 
   public String getDatabaseName() {
     return "distributed-replicatest";

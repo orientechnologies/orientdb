@@ -27,15 +27,14 @@ import java.io.IOException;
 import java.util.Arrays;
 
 /**
- *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class ODistributedResponse {
-  private ODistributedRequestId requestId;
-  private String                executorNodeName;
-  private String                senderNodeName;
-  private Object                payload;
+  private ODistributedResponseManager distributedResponseManager;
+  private ODistributedRequestId       requestId;
+  private String                      executorNodeName;
+  private String                      senderNodeName;
+  private Object                      payload;
 
   /**
    * Constructor used by serializer.
@@ -43,8 +42,9 @@ public class ODistributedResponse {
   public ODistributedResponse() {
   }
 
-  public ODistributedResponse(final ODistributedRequestId iRequestId, final String executorNodeName, final String senderNodeName,
-      final Object payload) {
+  public ODistributedResponse(final ODistributedResponseManager msg, final ODistributedRequestId iRequestId,
+      final String executorNodeName, final String senderNodeName, final Object payload) {
+    this.distributedResponseManager = msg;
     this.requestId = iRequestId;
     this.executorNodeName = executorNodeName;
     this.senderNodeName = senderNodeName;
@@ -53,6 +53,14 @@ public class ODistributedResponse {
 
   public ODistributedRequestId getRequestId() {
     return requestId;
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    if (obj instanceof ODistributedResponse && ((ODistributedResponse) obj).payload != null)
+      return ((ODistributedResponse) obj).payload.equals(payload);
+
+    return false;
   }
 
   public String getExecutorNodeName() {
@@ -92,6 +100,10 @@ public class ODistributedResponse {
     payload = OStreamableHelper.fromStream(in);
   }
 
+  public ODistributedResponseManager getDistributedResponseManager() {
+    return distributedResponseManager;
+  }
+
   @Override
   public String toString() {
     if (payload == null)
@@ -101,5 +113,9 @@ public class ODistributedResponse {
       return Arrays.toString((Object[]) payload);
 
     return payload.toString();
+  }
+
+  public void setDistributedResponseManager(final ODistributedResponseManager distributedResponseManager) {
+    this.distributedResponseManager = distributedResponseManager;
   }
 }

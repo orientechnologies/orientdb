@@ -85,7 +85,7 @@ public class OMatchPathItemIterator implements Iterator<OIdentifiable> {
     final OWhereClause whileCondition = this.item.filter == null ? null : this.item.filter.getWhileCondition();
     final Integer maxDepth = maxDepth(this.item.filter);
     final OClass oClass =
-        this.item.filter == null ? null : item.getDatabase().getMetadata().getSchema().getClass(this.item.filter.getClassName(ctx));
+        this.item.filter == null ? null : SimpleNode.getDatabase().getMetadata().getSchema().getClass(this.item.filter.getClassName(ctx));
 
     boolean notDeep = this.item.filter == null || (whileCondition == null && this.item.filter.getMaxDepth() == null);
 

@@ -16,7 +16,7 @@ import java.util.*;
 public class OWhereClause extends SimpleNode {
   protected OBooleanExpression baseExpression;
 
-  protected List<OAndBlock>    flattened;
+  protected List<OAndBlock> flattened;
 
   public OWhereClause(int id) {
     super(id);
@@ -51,8 +51,9 @@ public class OWhereClause extends SimpleNode {
    * estimates how many items of this class will be returned applying this filter
    *
    * @param oClass
+   *
    * @return an estimation of the number of records of this class returned applying this filter, 0 if and only if sure that no
-   *         records are returned
+   * records are returned
    */
   public long estimate(OClass oClass, long threshold, OCommandContext ctx) {
     long count = oClass.count();
@@ -107,12 +108,17 @@ public class OWhereClause extends SimpleNode {
       key = new OCompositeKey();
       for (int i = 0; i < nMatchingKeys; i++) {
         Object keyValue = convert(conditions.get(definitionFields.get(i)), definition.getTypes()[i]);
-        ((OCompositeKey) key).addKey(conditions.get(definitionFields.get(i)));
+        ((OCompositeKey) key).addKey(keyValue);
       }
     }
     if (key != null) {
-      Object result = index.get(key);
-      if(result instanceof OIdentifiable){
+      Object result = null;
+      if (conditions.size() == definitionFields.size()) {
+        result = index.get(key);
+      } else if (index.supportsOrderedIterations()) {
+        result = index.iterateEntriesBetween(key, true, key, true, true);
+      }
+      if (result instanceof OIdentifiable) {
         return 1;
       }
       if (result instanceof Collection) {
@@ -120,6 +126,17 @@ public class OWhereClause extends SimpleNode {
       }
       if (result instanceof OSizeable) {
         return ((OSizeable) result).size();
+      }
+      if (result instanceof Iterable) {
+        result = ((Iterable) result).iterator();
+      }
+      if (result instanceof Iterator) {
+        int i = 0;
+        while (((Iterator) result).hasNext()) {
+          ((Iterator) result).next();
+          i++;
+        }
+        return i;
       }
     }
     return Long.MAX_VALUE;

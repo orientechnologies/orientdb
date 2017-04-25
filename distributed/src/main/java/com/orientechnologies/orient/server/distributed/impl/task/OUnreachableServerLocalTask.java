@@ -51,7 +51,7 @@ public class OUnreachableServerLocalTask extends OAbstractRemoteTask {
    */
   @Override
   public int[] getPartitionKey() {
-    return ALL;
+    return ANY;
   }
 
   @Override
@@ -85,11 +85,6 @@ public class OUnreachableServerLocalTask extends OAbstractRemoteTask {
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
     return OCommandDistributedReplicateRequest.QUORUM_TYPE.NONE;
-  }
-
-  @Override
-  public boolean isUsingDatabase() {
-    return false;
   }
 
   @Override

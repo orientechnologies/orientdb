@@ -27,10 +27,10 @@ import java.util.concurrent.Callable;
  * all the clients can auto-reconnect to the next available server.
  */
 public class HATxCrashTest extends AbstractHARemoveNode {
-  final static int SERVERS       = 3;
-  volatile boolean inserting     = true;
-  volatile int     serverStarted = 0;
-  volatile boolean lastServerOn  = false;
+  private final static int SERVERS       = 3;
+  private volatile boolean inserting     = true;
+  private volatile int     serverStarted = 0;
+  private volatile boolean lastServerOn  = false;
 
   @Test
   public void test() throws Exception {

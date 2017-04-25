@@ -41,23 +41,23 @@ public class OTableFormatter {
     LEFT, CENTER, RIGHT
   }
 
-  protected final static String                    MORE                 = "...";
-  protected final static SimpleDateFormat          DEF_DATEFORMAT       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+  protected final static String           MORE           = "...";
+  protected final static SimpleDateFormat DEF_DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-  protected OPair<String, Boolean>                 columnSorting        = null;
-  protected final Map<String, ALIGNMENT>           columnAlignment      = new HashMap<String, ALIGNMENT>();
-  protected final Map<String, Map<String, String>> columnMetadata       = new HashMap<String, Map<String, String>>();
-  protected final Set<String>                      columnHidden         = new HashSet<String>();
-  protected final Set<String>                      prefixedColumns      = new LinkedHashSet<String>(
+  protected       OPair<String, Boolean>           columnSorting   = null;
+  protected final Map<String, ALIGNMENT>           columnAlignment = new HashMap<String, ALIGNMENT>();
+  protected final Map<String, Map<String, String>> columnMetadata  = new HashMap<String, Map<String, String>>();
+  protected final Set<String>                      columnHidden    = new HashSet<String>();
+  protected final Set<String>                      prefixedColumns = new LinkedHashSet<String>(
       Arrays.asList(new String[] { "#", "@RID", "@CLASS" }));
-  protected final OTableOutput                     out;
-  protected int                                    maxMultiValueEntries = 10;
-  protected int                                    minColumnSize        = 4;
-  protected int                                    maxWidthSize         = 150;
-  protected String                                 nullValue            = "";
-  private boolean                                  leftBorder           = true;
-  private boolean                                  rightBorder          = true;
-  private ODocument                                footer;
+  protected final OTableOutput out;
+  protected int     maxMultiValueEntries = 10;
+  protected int     minColumnSize        = 4;
+  protected int     maxWidthSize         = 150;
+  protected String  nullValue            = "";
+  private   boolean leftBorder           = true;
+  private   boolean rightBorder          = true;
+  private ODocument footer;
 
   public interface OTableOutput {
     void onMessage(String text, Object... args);
@@ -341,11 +341,8 @@ public class OTableFormatter {
 
     // INIT METADATA
     final LinkedHashSet<String> allMetadataNames = new LinkedHashSet<String>();
-    final Set<String> metadataColumns = new HashSet<String>();
 
     for (Entry<String, Map<String, String>> entry : columnMetadata.entrySet()) {
-      metadataColumns.add(entry.getKey());
-
       for (Entry<String, String> entry2 : entry.getValue().entrySet()) {
         allMetadataNames.add(entry2.getKey());
 
@@ -456,6 +453,7 @@ public class OTableFormatter {
    *
    * @param resultSet
    * @param limit
+   *
    * @return
    */
   private Map<String, Integer> parseColumns(final Collection<? extends OIdentifiable> resultSet, final int limit) {
@@ -504,7 +502,7 @@ public class OTableFormatter {
     if (!hasClass)
       columns.remove("@CLASS");
 
-    if( footer!=null){
+    if (footer != null) {
       footer.setLazyLoad(false);
       // PARSE ALL THE DOCUMENT'S FIELDS
       for (String fieldName : footer.fieldNames()) {

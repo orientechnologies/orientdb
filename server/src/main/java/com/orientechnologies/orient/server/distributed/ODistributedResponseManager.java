@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -33,6 +34,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLo
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -41,6 +43,10 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Asynchronous response manager. All the public methods have to pay attention on synchronizing access by using
  * synchronousResponsesLock lock.
+ * <p>
+ * TODO:
+ * - remove synchronousResponsesLock & synchronousResponsesArrived in favour of the CountDownLatch
+ * - set flags during collecting of response for fast computation on checking for the status
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
@@ -54,21 +60,25 @@ public class ODistributedResponseManager {
   private final HashMap<String, Object> responses = new HashMap<String, Object>();
   private final boolean groupResponsesByResult;
   private final List<List<ODistributedResponse>> responseGroups = new ArrayList<List<ODistributedResponse>>();
-  private       int  totalExpectedResponses;
-  private final long synchTimeout;
-  private final long totalTimeout;
-  private final Lock      synchronousResponsesLock    = new ReentrantLock();
-  private final Condition synchronousResponsesArrived = synchronousResponsesLock.newCondition();
+  private final OCallable<Void, ODistributedResponseManager> endCallback;
+  private       int                                          totalExpectedResponses;
+  private final long                                         synchTimeout;
+  private final long                                         totalTimeout;
+  private final Lock           synchronousResponsesLock    = new ReentrantLock();
+  private final Condition      synchronousResponsesArrived = synchronousResponsesLock.newCondition();
+  private final CountDownLatch requestCompleted            = new CountDownLatch(1);
   private final int                  quorum;
   private final boolean              waitForLocalNode;
   private       ODistributedResponse localResponse;
   private volatile int receivedResponses = 0;
-  private volatile boolean receivedCurrentNode;
+  private volatile boolean              receivedCurrentNode;
+  private          ODistributedResponse quorumResponse;
+  private final Set<String> followupToNodes = new HashSet<String>();
 
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Collection<String> expectedResponses, final Set<String> iNodesConcurInQuorum, final int iTotalExpectedResponses,
       final int iQuorum, final boolean iWaitForLocalNode, final long iSynchTimeout, final long iTotalTimeout,
-      final boolean iGroupResponsesByResult) {
+      final boolean iGroupResponsesByResult, final OCallable<Void, ODistributedResponseManager> endCallback) {
     this.dManager = iManager;
     this.request = iRequest;
     this.sentOn = System.nanoTime();
@@ -79,6 +89,7 @@ public class ODistributedResponseManager {
     this.totalTimeout = iTotalTimeout;
     this.groupResponsesByResult = iGroupResponsesByResult;
     this.nodesConcurInQuorum = iNodesConcurInQuorum;
+    this.endCallback = endCallback;
 
     for (String node : expectedResponses)
       responses.put(node, NO_RESPONSE);
@@ -97,6 +108,7 @@ public class ODistributedResponseManager {
   public boolean collectResponse(final ODistributedResponse response) {
     final String executorNode = response.getExecutorNodeName();
     final String senderNode = response.getSenderNodeName();
+    response.setDistributedResponseManager(this);
 
     synchronousResponsesLock.lock();
     try {
@@ -171,12 +183,22 @@ public class ODistributedResponseManager {
         }
       }
 
-      boolean completed = getExpectedResponses() == receivedResponses;
+      // FOR EVERY RESPONSE COLLECTED, COMPUTE THE FINAL QUORUM RESPONSE IF POSSIBLE
+      computeQuorumResponse(false);
 
-      if (completed || isMinimumQuorumReached(false)) {
+      final boolean completed = getExpectedResponses() == receivedResponses;
+      if (completed || isMinimumQuorumReached(false))
         // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
         notifyWaiters();
+
+      if (completed) {
+        // FINALIZE THE REQUEST
+        end();
+
+        // NOTIFY WHO IS WAITING FOR REQUEST COMPLETION
+        requestCompleted.countDown();
       }
+
       return completed;
 
     } finally {
@@ -201,13 +223,13 @@ public class ODistributedResponseManager {
     return sentOn;
   }
 
-  public void setLocalResult(final String localNodeName, final Object localResult) {
+  public boolean setLocalResult(final String localNodeName, final Object localResult) {
     synchronousResponsesLock.lock();
     try {
 
-      localResponse = new ODistributedResponse(request.getId(), localNodeName, localNodeName, localResult);
+      localResponse = new ODistributedResponse(this, request.getId(), localNodeName, localNodeName, localResult);
       receivedCurrentNode = true;
-      collectResponse(localResponse);
+      return collectResponse(localResponse);
 
     } finally {
       synchronousResponsesLock.unlock();
@@ -315,6 +337,8 @@ public class ODistributedResponseManager {
           break;
         }
 
+        request.getTask().checkIsValid(dManager);
+
         if (missingActiveNodes == 0) {
           // NO MORE ACTIVE NODES TO WAIT
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
@@ -365,7 +389,7 @@ public class ODistributedResponseManager {
 
       final RuntimeException failure = manageConflicts();
       if (failure != null)
-        return new ODistributedResponse(request.getId(), dManager.getLocalNodeName(), dManager.getLocalNodeName(), failure);
+        return new ODistributedResponse(this, request.getId(), dManager.getLocalNodeName(), dManager.getLocalNodeName(), failure);
 
       if (receivedResponses == 0) {
         if (quorum > 0 && !request.getTask().isIdempotent())
@@ -379,10 +403,6 @@ public class ODistributedResponseManager {
 
       // MANAGE THE RESULT BASED ON RESULT STRATEGY
       switch (request.getTask().getResultStrategy()) {
-      case ANY:
-        // DEFAULT: RETURN BEST ANSWER
-        break;
-
       case UNION: {
         // COLLECT ALL THE RESPONSE IN A MAP OF <NODE, RESULT>
         final Map<String, Object> payloads = new HashMap<String, Object>();
@@ -393,16 +413,16 @@ public class ODistributedResponseManager {
         if (payloads.isEmpty())
           return null;
 
-        final ODistributedResponse response = (ODistributedResponse) getReceivedResponses().iterator().next();
+        final ODistributedResponse response = getReceivedResponses().iterator().next();
         response.setExecutorNodeName(responses.keySet().toString());
         response.setPayload(payloads);
         return response;
       }
-      }
 
-      final int bestResponsesGroupIndex = getBestResponsesGroup();
-      final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
-      return bestResponsesGroup.get(0);
+      default:
+        // DEFAULT: RETURN BEST ANSWER
+        return quorumResponse;
+      }
 
     } finally {
       synchronousResponsesLock.unlock();
@@ -417,10 +437,79 @@ public class ODistributedResponseManager {
     return synchTimeout;
   }
 
+  public void waitForCompletion() {
+    try {
+      final String expectedNodes = getExpectedNodes().toString();
+
+      if (ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog.debug(this, dManager.getLocalNodeName(), expectedNodes, ODistributedServerLog.DIRECTION.IN,
+            "Waiting for completion of distributed request (reqId=%s), missing %s...", request.getId(), getMissingNodes());
+
+      requestCompleted.await();
+
+      if (ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog.debug(this, dManager.getLocalNodeName(), expectedNodes, ODistributedServerLog.DIRECTION.IN,
+            "Distributed request completed (reqId=%s)...", request.getId());
+
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
   public void timeout() {
+    end();
+    requestCompleted.countDown();
+  }
+
+  public void end() {
     synchronousResponsesLock.lock();
     try {
-      manageConflicts();
+      if (endCallback != null)
+        // CUSTOM CALLBACK
+        endCallback.call(this);
+      else {
+        // DEFAULT CALLBACK
+        if (groupResponsesByResult) {
+          final String localNodeName = dManager.getLocalNodeName();
+
+          final Set<String> serversToFollowup = getServersWithoutFollowup();
+          serversToFollowup.remove(localNodeName);
+
+          if (!serversToFollowup.isEmpty()) {
+            ODistributedServerLog.debug(this, localNodeName, serversToFollowup.toString(), ODistributedServerLog.DIRECTION.OUT,
+                "Distributed transaction (reqId=%s quorum=%d result=%s), checking for any fix needed...", request.getId(), quorum,
+                quorumResponse);
+
+            for (String s : serversToFollowup) {
+              final Object response = responses.get(s);
+              if (quorumResponse != null && !quorumResponse.equals(response)) {
+                // SEND FIX
+
+                final Object payload = response instanceof ODistributedResponse ?
+                    ((ODistributedResponse) response).getPayload() :
+                    null;
+
+                final ORemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask())
+                    .getFixTask(request, request.getTask(), payload, quorumResponse.getPayload(), s, dManager);
+
+                if (fixTask == null) {
+                  // FIX NOT AVAILABLE: UNDO THE ENTIRE OPERATION
+                  ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+                      "No fix operation available: cannot fix the operation, undo the entire operation (reqId=%s)", request);
+                  continue;
+                }
+
+                ODistributedServerLog.debug(this, localNodeName, s, DIRECTION.OUT,
+                    "Sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, response, request,
+                    quorumResponse.getPayload());
+
+                dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(s), fixTask,
+                    dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null, null);
+              }
+            }
+          }
+        }
+      }
     } finally {
       synchronousResponsesLock.unlock();
     }
@@ -444,10 +533,67 @@ public class ODistributedResponseManager {
     }
   }
 
+  /**
+   * Returns all the servers in conflict.
+   */
+  public List<String> getConflictServers() {
+    synchronousResponsesLock.lock();
+    try {
+
+      final List<String> servers = new ArrayList<String>();
+      if (quorumResponse != null) {
+        for (Map.Entry<String, Object> entry : responses.entrySet()) {
+          if (!quorumResponse.equals(entry.getValue()))
+            servers.add(entry.getKey());
+        }
+      }
+      return servers;
+
+    } finally {
+      synchronousResponsesLock.unlock();
+    }
+  }
+
   public Set<String> getExpectedNodes() {
     synchronousResponsesLock.lock();
     try {
       return new HashSet<String>(responses.keySet());
+    } finally {
+      synchronousResponsesLock.unlock();
+    }
+  }
+
+  public boolean addFollowupToServer(final String server) {
+    synchronousResponsesLock.lock();
+    try {
+      return followupToNodes.add(server);
+    } finally {
+      synchronousResponsesLock.unlock();
+    }
+  }
+
+  public Set<String> getServersWithoutFollowup() {
+    if (!groupResponsesByResult)
+      return Collections.EMPTY_SET;
+
+    synchronousResponsesLock.lock();
+    try {
+      final HashSet<String> servers = new HashSet<String>(responses.keySet());
+      servers.removeAll(followupToNodes);
+      return servers;
+    } finally {
+      synchronousResponsesLock.unlock();
+    }
+  }
+
+  public ODistributedResponse getQuorumResponse() {
+    return quorumResponse;
+  }
+
+  public Object getResponseFromServer(final String s) {
+    synchronousResponsesLock.lock();
+    try {
+      return responses.get(s);
     } finally {
       synchronousResponsesLock.unlock();
     }
@@ -471,8 +617,6 @@ public class ODistributedResponseManager {
 
   /**
    * Returns all the responses in conflict.
-   *
-   * @return
    */
   protected List<ODistributedResponse> getConflictResponses() {
     final List<ODistributedResponse> servers = new ArrayList<ODistributedResponse>();
@@ -527,6 +671,17 @@ public class ODistributedResponseManager {
     if (quorum == 0)
       return true;
 
+    return computeQuorumResponse(reachedTimeout);
+  }
+
+  /**
+   * Computes the quorum response if possible by returning true and setting the field quorumResponse with the ODistributedResponse.
+   */
+  private boolean computeQuorumResponse(boolean reachedTimeout) {
+    if (quorumResponse != null)
+      // ALREADY COMPUTED
+      return true;
+
     if (groupResponsesByResult) {
       for (List<ODistributedResponse> group : responseGroups) {
         if (group.size() >= quorum) {
@@ -538,17 +693,17 @@ public class ODistributedResponseManager {
               if (payload instanceof Throwable) {
                 if (payload instanceof ODistributedRecordLockedException)
                   // JUST ONE ODistributedRecordLockedException IS ENOUGH TO FAIL THE OPERATION BECAUSE RESOURCES CANNOT BE LOCKED
-                  return false;
+                  break;
                 if (payload instanceof OConcurrentCreateException)
                   // JUST ONE OConcurrentCreateException IS ENOUGH TO FAIL THE OPERATION BECAUSE RID ARE DIFFERENT
-                  return false;
-              } else if (++responsesForQuorum >= quorum)
+                  break;
+              } else if (++responsesForQuorum >= quorum) {
                 // QUORUM REACHED
-                break;
+                setQuorumResponse(r);
+                return true;
+              }
             }
           }
-
-          return responsesForQuorum >= quorum;
         }
       }
 
@@ -557,7 +712,7 @@ public class ODistributedResponseManager {
         // CHECK FOR OFFLINE SERVERS
         final List<String> missingNodes = getMissingNodes();
 
-        // EXCLUDE THE SERVERS OFFLINE OR IN BACKUP
+        // EXCLUDE THE SERVERS OFFLINE OR NOT_AVAILABLE
         dManager.getNodesWithStatus(missingNodes, getDatabaseName(), ODistributedServerManager.DB_STATUS.OFFLINE,
             ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
@@ -565,6 +720,7 @@ public class ODistributedResponseManager {
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
               "%d server(s) (%s) became unreachable during the request, decreasing the quorum (%d) and accept the request: %s",
               missingNodes.size(), missingNodes, quorum, request);
+          setQuorumResponse(responseGroups.get(0).get(0));
           return true;
         }
       }
@@ -573,16 +729,14 @@ public class ODistributedResponseManager {
       if (receivedResponses >= quorum) {
         int responsesForQuorum = 0;
         for (Map.Entry<String, Object> response : responses.entrySet()) {
-          if (response.getValue() != NO_RESPONSE && nodesConcurInQuorum.contains(response.getKey()))
-            if (++responsesForQuorum >= quorum)
-              // QUORUM REACHED
-              break;
+          if (response.getValue() != NO_RESPONSE && nodesConcurInQuorum.contains(response.getKey())
+              && ++responsesForQuorum >= quorum) {
+            // QUORUM REACHED
+            setQuorumResponse((ODistributedResponse) response.getValue());
+            return true;
+          }
         }
-
-        return responsesForQuorum >= quorum;
       }
-
-      return receivedResponses >= quorum;
     }
 
     return false;
@@ -624,7 +778,7 @@ public class ODistributedResponseManager {
         // TODO: CALL THE RECORD CONFLICT PIPELINE
         return null;
 
-      if (fixNodesInConflict(bestResponsesGroup, conflicts))
+      if (fixNodesInConflict(bestResponsesGroup, conflicts, true))
         // FIX SUCCEED
         return null;
     }
@@ -647,7 +801,7 @@ public class ODistributedResponseManager {
     for (Object r : responses.values()) {
       if (r instanceof ODistributedRecordLockedException)
         throw (ODistributedRecordLockedException) r;
-      else if (r instanceof OConcurrentCreateException)
+      if (r instanceof OConcurrentCreateException)
         throw (OConcurrentCreateException) r;
     }
 
@@ -736,15 +890,15 @@ public class ODistributedResponseManager {
         final ORemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request.getId());
 
         if (undoTask != null) {
-          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
+          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
               "Sending undo message (%s) for request (%s) database '%s' to server %s", undoTask, request, request.getDatabaseName(),
               targetNode);
 
           final ODistributedResponse result = dManager
               .sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(targetNode), undoTask,
-                  dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+                  dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
-          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
+          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
               "Received response from undo message (%s) for request (%s) to server %s: %s", undoTask, request, targetNode, result);
         }
       }
@@ -752,7 +906,8 @@ public class ODistributedResponseManager {
     return true;
   }
 
-  protected boolean fixNodesInConflict(final List<ODistributedResponse> bestResponsesGroup, final int conflicts) {
+  protected boolean fixNodesInConflict(final List<ODistributedResponse> bestResponsesGroup, final int conflicts,
+      final boolean cannotFixRecordLockException) {
     // NO FIFTY/FIFTY CASE: FIX THE CONFLICTED NODES BY OVERWRITING THE RECORD WITH THE WINNER'S RESULT
     final ODistributedResponse goodResponse = bestResponsesGroup.get(0);
 
@@ -760,29 +915,37 @@ public class ODistributedResponseManager {
       return false;
 
     ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-        "Detected %d conflicts, but the quorum (%d) has been reached. Fixing remote records. Request (%s)", conflicts, quorum,
-        request);
+        "Detected %d conflicts, but the quorum (%d) has been reached. Checking responses and in case fixing remote records (reqId=%s)",
+        conflicts, quorum, request);
 
     for (List<ODistributedResponse> responseGroup : responseGroups) {
       if (responseGroup != bestResponsesGroup) {
         // CONFLICT GROUP: FIX THEM ONE BY ONE
         for (ODistributedResponse r : responseGroup) {
-          if (r.getPayload() instanceof ODistributedRecordLockedException)
+          if (cannotFixRecordLockException && r.getPayload() instanceof ODistributedRecordLockedException) {
             // NO FIX, THE RECORD WAS LOCKED
+            if (ODistributedServerLog.isDebugEnabled())
+              ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+                  "Node '%s' responded with a record lock exception: cannot fix the operation, undo the entire operation (reqId=%s)",
+                  r.getExecutorNodeName(), request);
             return false;
+          }
 
           final ORemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask())
               .getFixTask(request, request.getTask(), r.getPayload(), goodResponse.getPayload(), r.getExecutorNodeName(), dManager);
 
-          if (fixTask == null)
+          if (fixTask == null) {
             // FIX NOT AVAILABLE: UNDO THE ENTIRE OPERATION
+            ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+                "No fix operation available: cannot fix the operation, undo the entire operation (reqId=%s)", request);
             return false;
+          }
 
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), r.getExecutorNodeName(), DIRECTION.OUT,
               "Sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
           dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), fixTask,
-              dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
+              dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null, null);
         }
       }
     }
@@ -825,5 +988,12 @@ public class ODistributedResponseManager {
       }
     }
     return false;
+  }
+
+  private void setQuorumResponse(final ODistributedResponse quorumResponse) {
+    this.quorumResponse = quorumResponse;
+    ODistributedServerLog
+        .debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, "Reached the quorum (%d) for value '%s' (reqId=%s)", quorum,
+            quorumResponse, request);
   }
 }

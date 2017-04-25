@@ -29,8 +29,9 @@ import java.util.Map;
  * @author Luca Garulli
  */
 public abstract class OAbstractDistributedConflictResolver implements ODistributedConflictResolver {
+
   protected Object getBestResult(final Map<Object, List<String>> groupedResult, final List<Object> exclude) {
-    Object bestResult = null;
+    Object bestResult = NOT_FOUND;
     int max = -1;
     for (Map.Entry<Object, List<String>> entry : groupedResult.entrySet()) {
       boolean skip = false;

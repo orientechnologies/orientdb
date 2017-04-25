@@ -41,7 +41,7 @@ public interface ODistributedDatabase {
 
   ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, Collection<String> iNodes,
       ODistributedRequest.EXECUTION_MODE iExecutionMode, Object localResult,
-      OCallable<Void, ODistributedRequestId> iAfterSentCallback);
+      OCallable<Void, ODistributedRequestId> iAfterSentCallback, OCallable<Void, ODistributedResponseManager> endCallback);
 
   void setOnline();
 
@@ -105,6 +105,8 @@ public interface ODistributedDatabase {
   long getReceivedRequests();
 
   long getProcessedRequests();
+
+  void checkNodeInConfiguration(ODistributedConfiguration cfg, String serverName);
 
   void setLSN(String sourceNodeName, OLogSequenceNumber taskLastLSN, boolean writeLastOperation) throws IOException;
 

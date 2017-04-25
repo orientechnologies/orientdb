@@ -105,7 +105,7 @@ public class OCommandSQLParsingException extends OCoreException {
 
   @Override
   public boolean equals(final Object obj) {
-    if (obj == null)
+    if (obj == null || !(obj instanceof OCommandSQLParsingException))
       return false;
 
     return toString().equals(obj.toString());

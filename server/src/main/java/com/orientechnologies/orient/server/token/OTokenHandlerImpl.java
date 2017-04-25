@@ -1,13 +1,5 @@
 package com.orientechnologies.orient.server.token;
 
-import java.io.*;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Random;
-import java.util.UUID;
-
-import javax.crypto.Mac;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
@@ -30,6 +22,13 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+
+import javax.crypto.Mac;
+import java.io.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Random;
+import java.util.UUID;
 
 /**
  * Created by emrul on 27/10/2014.
@@ -71,7 +70,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
 
     algorithm = OGlobalConfiguration.NETWORK_TOKEN_ENCRYPTION_ALGORITHM.getValueAsString();
     if (algorithm != null)
-      this.algorithm = algorithm;
+      OTokenHandlerImpl.algorithm = algorithm;
 
     try {
       Mac.getInstance(algorithm);
@@ -80,7 +79,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     }
 
     this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keyProvider.getKeys(),
-        new String[] { this.algorithm }, new String[] { "OrientDB" });
+        new String[] { OTokenHandlerImpl.algorithm }, new String[] { "OrientDB" });
   }
 
   protected OTokenHandlerImpl() {

@@ -25,30 +25,30 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Test case to check the right management of distributed exception while a server is starting. Derived from the test provided by
  * Gino John for issue http://www.prjhub.com/#/issues/6449.
- *
+ * <p>
  * 3 nodes, the test is started after the 1st node is up & running. The test is composed by multiple (8) parallel threads that
  * update the same records 20,000 times.
- * 
+ *
  * @author Luca Garulli
  */
 public class HALocalGraphTest extends AbstractServerClusterTxTest {
 
-  protected final static int    SERVERS                 = 3;
-  protected static final int    CONCURRENCY_LEVEL       = 4;
-  protected static final int    TOTAL_CYCLES_PER_THREAD = 10000;
+  protected final static int SERVERS                 = 3;
+  protected static final int CONCURRENCY_LEVEL       = 4;
+  protected static final int TOTAL_CYCLES_PER_THREAD = 10000;
 
-  protected OrientGraphFactory  graphReadFactory;
-  protected ExecutorService     executorService;
-  protected int                 serverStarted           = 0;
-  protected AtomicLong          operations              = new AtomicLong();
+  protected OrientGraphFactory graphReadFactory;
+  protected ExecutorService    executorService;
+  protected int        serverStarted = 0;
+  protected AtomicLong operations    = new AtomicLong();
 
-  protected final AtomicBoolean serverDown              = new AtomicBoolean(false);
-  protected final AtomicBoolean serverRestarting        = new AtomicBoolean(false);
-  protected final AtomicBoolean serverRestarted         = new AtomicBoolean(false);
+  protected final AtomicBoolean serverDown       = new AtomicBoolean(false);
+  protected final AtomicBoolean serverRestarting = new AtomicBoolean(false);
+  protected final AtomicBoolean serverRestarted  = new AtomicBoolean(false);
 
-  List<Future<?>>               ths                     = new ArrayList<Future<?>>();
-  private TimerTask             task;
-  private volatile long         sleep                   = 0;
+  private List<Future<?>> ths = new ArrayList<Future<?>>();
+  private TimerTask task;
+  private volatile long sleep = 10;
 
   @Test
   public void test() throws Exception {
@@ -61,17 +61,21 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
   @Override
   protected void onServerStarted(ServerRun server) {
     if (serverStarted++ == 0) {
-      // START THE TEST DURING 2ND NODE STARTUP
       createSchemaAndFirstVertices();
       startTest();
 
+      // START THE TEST DURING 2ND NODE STARTUP
       task = new TimerTask() {
         @Override
         public void run() {
 
           final OServer server2 = serverInstance.get(SERVERS - 1).getServerInstance();
 
-          if (server2 != null)
+          banner("STATUS: serverDown=" + serverDown.get() + " serverRestarting=" + serverRestarting + " serverRestarted="
+              + serverRestarted + " server2.isActive()=" + (server2 != null ? server2.isActive() : false) + " operations="
+              + operations.get() + " total=" + (TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL));
+
+          if (server2 != null) {
             if (serverDown.get() && !serverRestarting.get() && !serverRestarted.get() && !server2.isActive()
                 && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 2 / 4) {
               serverRestarting.set(true);
@@ -104,9 +108,11 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
 
               serverDown.set(true);
             }
+          }
         }
       };
-      Orient.instance().scheduleTask(task, 2000, 100);
+
+      Orient.instance().scheduleTask(task, 1000, 1000);
     }
   }
 
@@ -123,8 +129,13 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
   public void executeTest() throws Exception {
     waitForEndOfTest();
 
-    if (task != null)
-      task.cancel();
+    waitFor(10000, new OCallable<Boolean, Void>() {
+      @Override
+      public Boolean call(Void iArgument) {
+        return serverDown.get();
+
+      }
+    }, "Server was never down");
 
     Assert.assertEquals(serverDown.get(), true);
 
@@ -138,6 +149,9 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
     }, "Server 2 is not active yet");
 
     Assert.assertEquals(serverRestarted.get(), true);
+
+    if (task != null)
+      task.cancel();
   }
 
   private void startTest() {
@@ -194,8 +208,8 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
               if (useSQL) {
                 boolean update = true;
                 boolean isException = false;
-                String sql = "Update Test set prop5='" + String.valueOf(System.currentTimeMillis()) + "', updateTime='"
-                    + new Date().toString() + "' where prop2='v2-1'";
+                String sql = "Update Test set prop5='" + String.valueOf(System.currentTimeMillis()) + "', updateTime='" + new Date()
+                    .toString() + "' where prop2='v2-1'";
                 for (int k = 0; k < 10 && update; k++) {
                   try {
                     graph.command(new OCommandSQL(sql)).execute();
@@ -205,19 +219,19 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
                     update = false;
                     break;
                   } catch (ONeedRetryException ex) {
-                    if (ex instanceof OConcurrentModificationException
-                        || ex.getCause() instanceof OConcurrentModificationException) {
+                    if (ex instanceof OConcurrentModificationException || ex
+                        .getCause() instanceof OConcurrentModificationException) {
                     } else {
                       isException = true;
-                      log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: ["
-                          + (ex.getCause() != null ? ex.getCause() : "--") + "] ");
+                      log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (
+                          ex.getCause() != null ? ex.getCause() : "--") + "] ");
                     }
                   } catch (ODistributedException ex) {
                     if (ex.getCause() instanceof OConcurrentModificationException) {
                     } else {
                       isException = true;
-                      log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: ["
-                          + (ex.getCause() != null ? ex.getCause() : "--") + "] ");
+                      log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (
+                          ex.getCause() != null ? ex.getCause() : "--") + "] ");
                     }
 
                   } catch (Exception ex) {
@@ -238,8 +252,9 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
 
                 for (Vertex vtx : vtxs) {
                   if (retry) {
-                    retry = true;
                     boolean isException = false;
+
+                    Exception lastException = null;
 
                     for (int k = 0; k < 100 && retry; k++) {
                       OrientVertex vtx1 = (OrientVertex) vtx;
@@ -256,8 +271,13 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
                         retry = false;
                         break;
                       } catch (OConcurrentModificationException ex) {
+                        lastException = ex;
+//                        final int currVersion = vtx1.getRecord().getVersion();
                         vtx1.reload();
+//                        log("********** [" + id + "] OConcurrentModificationException rid=" + ex.getRid() + " v" + currVersion
+//                            + ", reloaded as v" + vtx1.getRecord().getVersion() + " (" + ex.toString() + ")");
                       } catch (ONeedRetryException ex) {
+                        lastException = ex;
                         if (ex instanceof ODistributedRecordLockedException) {
                           if (k > 20)
                             log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] ODistributedRecordLockedException: [" + ex + "] Cause: ["
@@ -269,33 +289,36 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
                           if (ex.getCause() instanceof ConcurrentModificationException) {
                             ex.printStackTrace();
                           }
-                          log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: ["
-                              + (ex.getCause() != null ? ex.getCause() : "--") + "] for vertex " + vtx1);
+                          log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (
+                              ex.getCause() != null ? ex.getCause() : "--") + "] for vertex " + vtx1);
                         }
                         // log("*** [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (ex.getCause() != null ?
                         // ex.getCause() : "--") + "] for vertex " + vtx1);
 
                         isException = true;
                       } catch (ODistributedException ex) {
+                        lastException = ex;
                         if (ex.getCause() instanceof ONeedRetryException) {
                           vtx1.reload();
                         } else {
                           if (ex.getCause() instanceof ConcurrentModificationException) {
                             ex.printStackTrace();
                           }
-                          log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: ["
-                              + (ex.getCause() != null ? ex.getCause() : "--") + "] for vertex " + vtx1);
+                          log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (
+                              ex.getCause() != null ? ex.getCause() : "--") + "] for vertex " + vtx1);
                         }
                         // log("*** [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (ex.getCause() != null ?
                         // ex.getCause() : "--") + "] for vertex " + vtx1);
 
                         isException = true;
                       } catch (Exception ex) {
+                        lastException = ex;
                         log("[" + id + "][" + k + "] Exception " + ex + " for vertex " + vtx1);
                       }
                     }
                     if (retry) {
-                      log("********** [" + id + "] Failed to update after Exception for vertex " + vtx);
+                      log("********** [" + id + "] Failed to update after Exception (last was " + lastException + ") for vertex "
+                          + vtx);
                     }
                   }
                 }

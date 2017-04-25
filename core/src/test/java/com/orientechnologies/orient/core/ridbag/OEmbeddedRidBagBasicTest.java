@@ -38,7 +38,7 @@ public class OEmbeddedRidBagBasicTest {
 
   }
 
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expectedExceptions = IllegalArgumentException.class)
   public void testExceptionInCaseOfNull() {
     OEmbeddedRidBag bag = new OEmbeddedRidBag();
     bag.add(null);

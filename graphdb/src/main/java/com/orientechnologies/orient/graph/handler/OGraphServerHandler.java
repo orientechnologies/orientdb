@@ -38,7 +38,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import javax.script.Bindings;
 
 public class OGraphServerHandler extends OServerPluginAbstract implements OScriptInjection {
-  private boolean enabled      = true;
   private int     graphPoolMax = OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger();
   private OServer server;
 

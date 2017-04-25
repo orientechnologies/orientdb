@@ -58,7 +58,15 @@ public class ODistributedOutput {
 
         final String serverName = m.field("name");
 
-        serverRow.field("Name", serverName + (manager.getLocalNodeName().equals(serverName) ? "*" : ""));
+        String serverLabel = serverName;
+        if (manager.getLocalNodeName().equals(serverName))
+          serverLabel += "(*)";
+
+        final String coordinator = manager.getCoordinatorServer();
+        if (coordinator != null && coordinator.equals(serverName))
+          serverLabel += "(@)";
+
+        serverRow.field("Name", serverLabel);
         serverRow.field("Status", m.field("status"));
         serverRow.field("Databases", (String) null);
         serverRow.field("Conns", m.field("connections"));
@@ -293,9 +301,9 @@ public class ODistributedOutput {
       rowTotals.field("Servers", "TOTAL");
       for (String fromServer : orderedServers) {
         fromServer = formatServerName(manager, fromServer);
-        rowTotals.field(fromServer, String.format("%,d", rowTotals.field(fromServer)));
+        rowTotals.field(fromServer, String.format("%,d", (Number) rowTotals.field(fromServer)));
       }
-      rowTotals.field("TOTAL", String.format("%,d", rowTotals.field("TOTAL")));
+      rowTotals.field("TOTAL", String.format("%,d", (Number) rowTotals.field("TOTAL")));
 
       table.setColumnAlignment("TOTAL", OTableFormatter.ALIGNMENT.RIGHT);
     }
@@ -311,7 +319,7 @@ public class ODistributedOutput {
     final List<ODocument> members = distribCfg.field("members");
 
     final StringBuilder buffer = new StringBuilder();
-    buffer.append("\nREPLICATION MESSAGE COORDINATOR STATS");
+    buffer.append("\nREPLICATION MESSAGE CURRENT NODE STATS");
     final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
       @Override
       public void onMessage(final String text, final Object... args) {
@@ -393,9 +401,9 @@ public class ODistributedOutput {
 
       rowTotals.field("Servers", "TOTAL");
       for (String opName : operations) {
-        rowTotals.field(opName, String.format("%,d", rowTotals.field(opName)));
+        rowTotals.field(opName, String.format("%,d", (Number) rowTotals.field(opName)));
       }
-      rowTotals.field("TOTAL", String.format("%,d", rowTotals.field("TOTAL")));
+      rowTotals.field("TOTAL", String.format("%,d", (Number) rowTotals.field("TOTAL")));
     }
 
     table.setColumnAlignment("TOTAL", OTableFormatter.ALIGNMENT.RIGHT);
@@ -663,12 +671,12 @@ public class ODistributedOutput {
       SimpleDateFormat dateFormat = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
 
       for (ORID rid : orderedRIDs) {
-        final ODocument row = new ODocument();
-        rows.add(row);
-
         final ODistributedDatabaseImpl.ODistributedLock lock = lockManager.get(rid);
         if (lock == null)
           continue;
+
+        final ODocument row = new ODocument();
+        rows.add(row);
 
         row.field("rid", rid);
         row.field("server", manager.getNodeNameById(lock.reqId.getNodeId()));

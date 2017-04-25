@@ -25,7 +25,6 @@ import com.orientechnologies.common.exception.OSystemException;
  * Exception thrown during distributed operation between cluster nodes.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class ODistributedException extends OSystemException {
   private static final long serialVersionUID = 1L;
@@ -44,7 +43,7 @@ public class ODistributedException extends OSystemException {
       return false;
 
     final String message = ((ODistributedException) obj).getMessage();
-    return (getMessage() == message) || (getMessage() != null && getMessage().equals(message));
+    return getMessage() != null && getMessage().equals(message);
   }
 
   @Override

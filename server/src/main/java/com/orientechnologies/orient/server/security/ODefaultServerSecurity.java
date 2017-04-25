@@ -54,9 +54,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provides an implementation of OServerSecurity.
- * 
+ *
  * @author S. Colin Leister
- * 
+ *
  */
 public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycleListener, OServerSecurity {
   private boolean                             enabled                = false;                                    // Defaults to not
@@ -71,13 +71,13 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   // default authentication mode if external authentication fails.
   private boolean                             allowDefault           = true;
 
-  private Object                              passwordValidatorSynch = new Object();
+  private final Object                        passwordValidatorSynch = new Object();
   private OPasswordValidator                  passwordValidator;
 
-  private Object                              importLDAPSynch        = new Object();
+  private final Object                        importLDAPSynch        = new Object();
   private OSecurityComponent                  importLDAP;
 
-  private Object                              auditingSynch          = new Object();
+  private final Object                        auditingSynch          = new Object();
   private OAuditingService                    auditingService;
 
   private ODocument                           configDoc;                                                         // Holds the

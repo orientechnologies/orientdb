@@ -44,7 +44,9 @@ public class OrientJdbcResultSet implements ResultSet {
   private final List<String>                fieldNames;
   private List<ODocument> records = null;
   private OrientJdbcStatement statement;
-  private ODocument           document;
+
+
+  private ODocument document;
   private int cursor   = -1;
   private int rowCount = 0;
   private int type;
@@ -107,31 +109,36 @@ public class OrientJdbcResultSet implements ResultSet {
 
             if (!item.isAll()) {
 
+              if (!item.getExpression().isBaseIdentifier()) {
+                fields.clear();
+                break;
+              }
+
               if (item.getAlias() != null) {
 
                 String aliasValue = item.getAlias().getStringValue();
+
                 fields.add(aliasValue);
               } else {
 
                 OIdentifier alias = item.getDefaultAlias();
 
-                int underscore = alias.getValue().indexOf('_');
+                String aliasStringValue = alias.getStringValue();
+                int underscore = aliasStringValue.indexOf('_');
                 if (underscore > 0) {
-                  String maybeFunction = alias.getValue().substring(0, underscore);
+                  String maybeFunction = aliasStringValue.substring(0, underscore);
                   if (functionNames.contains(maybeFunction.toLowerCase())) {
                     fields.add(maybeFunction);
                   } else {
-                    fields.add(alias.getValue());
+                    fields.add(aliasStringValue);
                   }
                 } else {
-                  fields.add(alias.getValue());
+                  fields.add(aliasStringValue);
                 }
               }
-
             }
           }
           if (fields.size() == 1 && fields.contains("*")) {
-
             fields.clear();
           }
         }
@@ -144,6 +151,11 @@ public class OrientJdbcResultSet implements ResultSet {
       fields.addAll(Arrays.asList(document.fieldNames()));
     }
     return fields;
+  }
+
+
+  protected ODocument getDocument() {
+    return document;
   }
 
   private void activateDatabaseOnCurrentThread() {

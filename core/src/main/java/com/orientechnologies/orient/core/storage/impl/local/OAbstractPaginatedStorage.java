@@ -94,6 +94,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster.NO_POSITION;
+
 /**
  * @author Andrey Lomakin
  * @since 28.03.13
@@ -1337,9 +1339,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     databaseRecord.getMetadata().makeThreadLocalSchemaSnapshot();
 
     if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance()
-          .debug(this, "%d Committing transaction %d on database '%s' (items=%d)...", Thread.currentThread().getId(),
-              clientTx.getId(), databaseRecord.getName(), clientTx.getEntryCount());
+      OLogManager.instance().debug(this, "Committing transaction %d on database '%s' (items=%d thread=%d)...", clientTx.getId(),
+          databaseRecord.getName(), clientTx.getEntryCount(), Thread.currentThread().getId());
 
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
     final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<Integer, OCluster>();
@@ -1464,9 +1465,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance()
-          .debug(this, "%d Committed transaction %d on database '%s' (result=%s)", Thread.currentThread().getId(), clientTx.getId(),
-              databaseRecord.getName(), result);
+      OLogManager.instance().debug(this, "Committed transaction %d on database '%s' (result=%s thread=%d)", clientTx.getId(),
+          databaseRecord.getName(), result, Thread.currentThread().getId());
 
     return result;
   }
@@ -3059,8 +3059,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance()
-            .debug(this, "%d Created record %s v.%s size=%d bytes", Thread.currentThread().getId(), rid, recordVersion,
-                content.length);
+            .debug(this, "Created record %s v.%s size=%d bytes (thread=%d tx=%s)", rid, recordVersion, content.length,
+                Thread.currentThread().getId(), getStorageTransaction() != null);
 
       recordCreated.incrementAndGet();
 
@@ -3083,9 +3083,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int version, final byte recordType, final ORecordCallback<Integer> callback, final OCluster cluster) {
 
     try {
-
       final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
-      if (!checkForRecordValidity(ppos)) {
+
+      if (ppos != NO_POSITION && !checkForRecordValidity(ppos)) {
         final int recordVersion = -1;
         if (callback != null)
           callback.call(rid, recordVersion);
@@ -3096,7 +3096,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       boolean contentModified = false;
       if (updateContent) {
         final AtomicInteger recVersion = new AtomicInteger(version);
-        final int oldVersion = ppos.recordVersion;
         final AtomicInteger dbVersion = new AtomicInteger(ppos.recordVersion);
 
         final byte[] newContent = checkAndIncrementVersion(cluster, rid, recVersion, dbVersion, content, recordType);
@@ -3138,7 +3137,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         callback.call(rid, ppos.recordVersion);
 
       if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Updated record %s v.%s size=%d", rid, ppos.recordVersion, content.length);
+        OLogManager.instance()
+            .debug(this, "Updated record %s v.%s size=%d (thread=%d tx=%s)", rid, ppos.recordVersion, content.length,
+                Thread.currentThread().getId(), getStorageTransaction() != null);
 
       recordUpdated.incrementAndGet();
 
@@ -3190,7 +3191,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Recycled record %s v.%s size=%d", rid, version, content.length);
+        OLogManager.instance().debug(this, "Recycled record %s v.%s size=%d (thread=%d tx=%s)", rid, version, content.length,
+            Thread.currentThread().getId(), getStorageTransaction() != null);
 
       recordRecycled.incrementAndGet();
 
@@ -3238,7 +3240,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Deleted record %s v.%s", rid, version);
+        OLogManager.instance().debug(this, "Deleted record %s v.%s (thread=%d tx=%s)", rid, version, Thread.currentThread().getId(),
+            getStorageTransaction() != null);
 
       recordDeleted.incrementAndGet();
 
@@ -3267,6 +3270,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (context != null)
           context.executeOperations(this);
 
+        if (OLogManager.instance().isDebugEnabled())
+          OLogManager.instance().debug(this, "Hide record %s v.%s (thread=%d tx=%s)", rid, version, Thread.currentThread().getId(),
+              getStorageTransaction() != null);
+
         atomicOperationsManager.endAtomicOperation(false, null, (String) null);
       } catch (Exception e) {
         atomicOperationsManager.endAtomicOperation(true, e, (String) null);
@@ -3290,8 +3297,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final ORawBuffer buff = clusterSegment.readRecord(rid.getClusterPosition(), prefetchRecords);
 
       if (buff != null && OLogManager.instance().isDebugEnabled())
-        OLogManager.instance()
-            .debug(this, "Read record %s v.%s size=%d bytes", rid, buff.version, buff.buffer != null ? buff.buffer.length : 0);
+        OLogManager.instance().debug(this, "Read record %s v.%s size=%d bytes (thread=%d tx=%s)", rid, buff.version,
+            buff.buffer != null ? buff.buffer.length : 0, Thread.currentThread().getId(), getStorageTransaction() != null);
 
       recordRead.incrementAndGet();
 
@@ -3306,8 +3313,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       final ORawBuffer buff = cluster.readRecordIfVersionIsNotLatest(rid.getClusterPosition(), recordVersion);
       if (buff != null && OLogManager.instance().isDebugEnabled())
-        OLogManager.instance()
-            .debug(this, "Read record %s v.%s size=%d bytes", rid, buff.version, buff.buffer != null ? buff.buffer.length : 0);
+        OLogManager.instance().debug(this, "Read record %s v.%s size=%d bytes (thread=%d tx=%s)", rid, buff.version,
+            buff.buffer != null ? buff.buffer.length : 0, Thread.currentThread().getId(), getStorageTransaction() != null);
 
       recordRead.incrementAndGet();
 
@@ -3714,7 +3721,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     if (writeAheadLog.begin() == null) {
-      OLogManager.instance().error(this, "Restore is not possible because write ahead log is empty.");
+      OLogManager.instance().warn(this, "Restore is not possible because write ahead log is empty.");
       return null;
     }
 

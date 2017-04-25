@@ -41,6 +41,7 @@ public class ODistributedConfiguration {
   protected static final String CLUSTERS = "clusters";
   protected static final String VERSION  = "version";
 
+  protected static final String  AUTO_DEPLOY          = "autoDeploy";
   protected static final String  READ_QUORUM          = "readQuorum";
   protected static final String  WRITE_QUORUM         = "writeQuorum";
   public static final    String  QUORUM_MAJORITY      = "majority";
@@ -92,6 +93,10 @@ public class ODistributedConfiguration {
    */
   public boolean hasDataCenterConfiguration() {
     return configuration.field(DCS) != null;
+  }
+
+  public boolean isAutoDeploy() {
+    return configuration.field(AUTO_DEPLOY) != null ? (Boolean) configuration.field(AUTO_DEPLOY) : true;
   }
 
   /**

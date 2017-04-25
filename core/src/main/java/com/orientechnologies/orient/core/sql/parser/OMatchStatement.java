@@ -1008,9 +1008,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return true;
   }
 
-  private Iterator<OIdentifiable> query(String className, OWhereClause oWhereClause, ORID rid, OCommandContext ctx) {
+  private Iterator<OIdentifiable> query(final String className, final OWhereClause oWhereClause, final ORID rid,
+      final OCommandContext ctx) {
     final ODatabaseDocument database = getDatabase();
-    if(className!=null) {
+    if (className != null) {
       OClass schemaClass = database.getMetadata().getSchema().getClass(className);
       database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, schemaClass.getName().toLowerCase());
 //      Iterable<ORecord> baseIterable = fetchFromIndex(schemaClass, oWhereClause);

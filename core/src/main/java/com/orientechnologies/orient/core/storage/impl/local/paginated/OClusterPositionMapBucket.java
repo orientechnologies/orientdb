@@ -40,14 +40,14 @@ public class OClusterPositionMapBucket extends ODurablePage {
   private static final int POSITIONS_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   // NEVER USED ON DISK
-  public static final byte NOT_EXISTENT     = 0;
-  public static final byte REMOVED          = 1;
-  public static final byte FILLED           = 2;
-  public static final byte ALLOCATED        = 4;
+  public static final byte NOT_EXISTENT = 0;
+  public static final byte REMOVED      = 1;
+  public static final byte FILLED       = 2;
+  public static final byte ALLOCATED    = 4;
 
-  public static final int  ENTRY_SIZE       = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
+  public static final int ENTRY_SIZE = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
 
-  public static final int  MAX_ENTRIES      = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
+  public static final int MAX_ENTRIES = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
 
   public OClusterPositionMapBucket(OCacheEntry cacheEntry, OWALChanges changes) {
     super(cacheEntry, changes);
@@ -88,6 +88,10 @@ public class OClusterPositionMapBucket extends ODurablePage {
       return null;
 
     int position = entryPosition(index);
+
+    if (getByteValue(position) == ALLOCATED)
+      return new PositionEntry(-1, -1);
+
     if (getByteValue(position) != FILLED)
       return null;
 
@@ -146,7 +150,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
     int position = entryPosition(index);
 
-    if (getByteValue(position) != FILLED)
+    if (getByteValue(position) != FILLED && getByteValue(position) != ALLOCATED)
       return null;
 
     setByteValue(position, REMOVED);
@@ -196,7 +200,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
     private final long pageIndex;
     private final int  recordPosition;
 
-    public PositionEntry(final long pageIndex,final  int recordPosition) {
+    public PositionEntry(final long pageIndex, final int recordPosition) {
       this.pageIndex = pageIndex;
       this.recordPosition = recordPosition;
     }

@@ -31,7 +31,7 @@ import java.util.List;
  * Start 3 servers and wait for external commands.
  */
 public class ServerClusterRemoteDocumentTest extends AbstractServerClusterTest {
-  final static int SERVERS = 3;
+  private final static int SERVERS = 3;
 
   public String getDatabaseName() {
     return "distributed-remote-docs3";

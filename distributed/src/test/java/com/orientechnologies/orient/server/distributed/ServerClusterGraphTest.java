@@ -35,7 +35,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * Check vertex and edge creation are propagated across all the nodes.
  */
 public class ServerClusterGraphTest extends AbstractServerClusterTest {
-  final static int     SERVERS = 2;
+  private final static int     SERVERS = 2;
   private OrientVertex v1;
   private OrientVertex v2;
   private OrientVertex v3;

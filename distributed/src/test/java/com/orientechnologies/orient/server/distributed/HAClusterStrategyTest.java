@@ -24,7 +24,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 public class HAClusterStrategyTest extends AbstractHARemoveNode {
-  final static int SERVERS = 2;
+  private final static int SERVERS = 2;
 
   @Test
   public void test() throws Exception {

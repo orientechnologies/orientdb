@@ -40,7 +40,7 @@ public class OServerTest {
 
     conf.handlers = new ArrayList<OServerHandlerConfiguration>();
     OServerHandlerConfiguration handlerConfiguration = new OServerHandlerConfiguration();
-    handlerConfiguration.clazz = OServerFailingOnStarupPluginStub.class.getName();
+    handlerConfiguration.clazz = OServerFailingOnStartupPluginStub.class.getName();
     handlerConfiguration.parameters = new OServerParameterConfiguration[0];
 
     conf.handlers.add(0, handlerConfiguration);

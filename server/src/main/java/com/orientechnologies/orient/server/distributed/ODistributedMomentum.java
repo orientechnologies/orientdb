@@ -37,7 +37,7 @@ import java.util.List;
 public class ODistributedMomentum implements OStreamable {
   private static final String LAST_OPERATION_TIME_STAMP = "lastOperationTimeStamp";
   private static final String VERSION                   = "version";
-  private ODocument           configuration;
+  private final ODocument configuration;
 
   public ODistributedMomentum() {
     configuration = new ODocument();

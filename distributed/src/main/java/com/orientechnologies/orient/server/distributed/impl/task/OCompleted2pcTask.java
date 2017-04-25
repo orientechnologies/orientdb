@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedTxContextImpl;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
@@ -42,16 +43,15 @@ import java.util.List;
  * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class OCompleted2pcTask extends OAbstractReplicatedTask {
-  private static final long     serialVersionUID = 1L;
-  public static final int       FACTORYID        = 8;
+  private static final long serialVersionUID = 1L;
+  public static final  int  FACTORYID        = 8;
 
   private ODistributedRequestId requestId;
   private boolean               success;
-  private List<ORemoteTask>     fixTasks         = new ArrayList<ORemoteTask>();
-  private int[]                 partitionKey;
+  private List<ORemoteTask> fixTasks = new ArrayList<ORemoteTask>();
+  private int[] partitionKey;
 
   public OCompleted2pcTask() {
     partitionKey = ALL;
@@ -78,9 +78,9 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
   @Override
   public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "%s transaction db=%s originalReqId=%s...", (success ? "Committing" : fixTasks.isEmpty() ? "Rolling back" : "Fixing"),
-        database.getName(), requestId, requestId);
+    ODistributedServerLog
+        .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "%s transaction db=%s originalReqId=%s...",
+            (success ? "Committing" : fixTasks.isEmpty() ? "Rolling back" : "Fixing"), database.getName(), requestId, requestId);
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
 
@@ -90,45 +90,43 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
       throw new ODatabaseException(
           "Database '" + database.getName() + " is not available on server '" + iManager.getLocalNodeName() + "'");
 
-    final ODistributedTxContext pRequest = ddb.popTxContext(requestId);
+    final ODistributedTxContext ctx = ddb.popTxContext(requestId);
     try {
       if (success) {
         // COMMIT
-        if (pRequest != null)
-          pRequest.commit();
+        if (ctx != null)
+          ctx.commit();
         else {
           // UNABLE TO FIND TX CONTEXT
           ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "Error on committing distributed transaction %s db=%s", requestId, database.getName());
+              "Error on committing distributed transaction %s db=%s because the context was not found", requestId,
+              database.getName());
           return Boolean.FALSE;
         }
 
       } else if (fixTasks.isEmpty()) {
         // ROLLBACK
-        if (pRequest != null)
-          pRequest.rollback(database);
+        if (ctx != null)
+          ctx.rollback(database);
         else {
           // UNABLE TO FIND TX CONTEXT
           ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "Error on rolling back distributed transaction %s db=%s", requestId, database.getName());
+              "Error on rolling back distributed transaction %s db=%s because the context was not found", requestId,
+              database.getName());
           return Boolean.FALSE;
         }
       } else {
 
         // FIX TRANSACTION CONTENT
-        if (pRequest != null)
-          pRequest.fix(database, fixTasks);
-        else {
-          // UNABLE TO FIX TX CONTEXT
-          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "Error on fixing distributed transaction %s db=%s", requestId, database.getName());
-          return Boolean.FALSE;
-        }
-
+        if (ctx != null)
+          ctx.fix(database, fixTasks);
+        else
+          // DON'T NEED OF THE CONTEXT TO EXECUTE A FIX
+          ODistributedTxContextImpl.executeFix(this, database, fixTasks, requestId, ddb);
       }
     } finally {
-      if (pRequest != null)
-        pRequest.destroy();
+      if (ctx != null)
+        ctx.destroy();
     }
 
     return Boolean.TRUE;
@@ -192,8 +190,9 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
 
   @Override
   public String toString() {
-    return getName() + " origReqId: " + requestId + " type: "
-        + (success ? "commit" : (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) [" + fixTasks + "]"));
+    return getName() + " origReqId: " + requestId + " type: " + (success ?
+        "commit" :
+        (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) [" + fixTasks + "]"));
   }
 
   public List<ORemoteTask> getFixTasks() {

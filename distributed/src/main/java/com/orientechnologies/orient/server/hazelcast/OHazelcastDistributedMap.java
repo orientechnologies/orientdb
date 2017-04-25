@@ -135,7 +135,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
   public void entryAdded(final EntryEvent<String, Object> event) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map entry added key=" + event.getKey() + ": " + event.getValue());
+          "Map entry added " + event.getKey() + "=" + event.getValue() + " from server " + dManager.getNodeName(event.getMember()));
     super.put(event.getKey(), event.getValue());
   }
 
@@ -143,7 +143,8 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
   public void entryUpdated(final EntryEvent<String, Object> event) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map entry updated key=" + event.getKey() + ": " + event.getValue() + " from " + dManager.getNodeName(event.getMember()));
+          "Map entry updated " + event.getKey() + "=" + event.getValue() + " from server " + dManager
+              .getNodeName(event.getMember()));
 
     super.put(event.getKey(), event.getValue());
   }
@@ -152,7 +153,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
   public void entryRemoved(final EntryEvent<String, Object> event) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map entry removed key=" + event.getKey() + ": " + event.getValue() + " from " + dManager.getNodeName(event.getMember()));
+          "Map entry removed " + event.getKey() + "=" + event.getValue() + " from " + dManager.getNodeName(event.getMember()));
     super.remove(event.getKey());
   }
 
@@ -160,7 +161,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
   public void mapCleared(MapEvent event) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map cleared from " + dManager.getNodeName(event.getMember()));
+          "Map cleared from server " + dManager.getNodeName(event.getMember()));
     super.clear();
   }
 

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
@@ -23,9 +24,9 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -33,11 +34,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * automatic restart must be executed.
  */
 public class OneNodeBackupTest extends AbstractServerClusterTxTest {
-  final static int    SERVERS          = 3;
-  volatile boolean    inserting        = true;
-  volatile int        serverStarted    = 0;
-  volatile boolean    backupInProgress = false;
-  final AtomicInteger nodeLefts        = new AtomicInteger();
+  private final static int           SERVERS              = 3;
+  private volatile     boolean       inserting            = true;
+  private volatile     int           serverStarted        = 0;
+  private final        AtomicBoolean backupInProgress     = new AtomicBoolean(false);
+  private final        AtomicInteger nodeLefts            = new AtomicInteger();
+  private              long          verticesBeforeBackup = 0;
 
   @Test
   public void test() throws Exception {
@@ -89,61 +91,66 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
         @Override
         public void run() {
           try {
-            // CRASH LAST SERVER try {
             executeWhen(new Callable<Boolean>() {
-              // CONDITION
-              @Override
-              public Boolean call() throws Exception {
-                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
-                    .acquire();
-                try {
-                  return database.countClass("Person") > (count * SERVERS) * 1 / 3;
-                } finally {
-                  database.close();
-                }
-              }
-            }, // ACTION
+                          // CONDITION
+                          @Override
+                          public Boolean call() throws Exception {
+                            final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
+                                .acquire();
+                            try {
+                              return database.countClass("Person") > (count * SERVERS) * 1 / 3;
+                            } finally {
+                              database.close();
+                            }
+                          }
+                        }, // ACTION
                 new Callable() {
-              @Override
-              public Object call() throws Exception {
-                Assert.assertTrue("Insert was too fast", inserting);
+                  @Override
+                  public Object call() throws Exception {
+                    Assert.assertTrue("Insert was too fast", inserting);
 
-                banner("STARTING BACKUP SERVER " + (SERVERS - 1));
+                    banner("STARTING BACKUP SERVER " + (SERVERS - 1));
 
-                OrientGraphFactory factory = new OrientGraphFactory(
-                    "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName(), false);
-                OrientGraphNoTx g = factory.getNoTx();
+                    OrientGraphFactory factory = new OrientGraphFactory(
+                        "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName(), false);
+                    OrientGraphNoTx g = factory.getNoTx();
 
-                backupInProgress = true;
-                File file = null;
-                try {
-                  file = File.createTempFile("orientdb_test_backup", ".zip");
-                  if (file.exists())
-                    Assert.assertTrue(file.delete());
+                    backupInProgress.set(true);
+                    File file = null;
+                    try {
+                      file = File.createTempFile("orientdb_test_backup", ".zip");
+                      if (file.exists())
+                        Assert.assertTrue(file.delete());
 
-                  g.getRawGraph().backup(new FileOutputStream(file), null, new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
+                      verticesBeforeBackup = g.countVertices("Person");
 
-                      // SIMULATE LONG BACKUP
-                      Thread.sleep(10000);
+                      g.getRawGraph().backup(new FileOutputStream(file), null, new Callable<Object>() {
+                        @Override
+                        public Object call() throws Exception {
 
-                      return null;
+                          // SIMULATE LONG BACKUP
+                          for (int i = 0; i < 10; ++i) {
+                            banner("SIMULATING LONG BACKUP... ELAPSED SECOND " + i);
+                            Thread.sleep(1000);
+                          }
+
+                          return null;
+                        }
+                      }, null, 9, 1000000);
+
+                      final long verticesAfterBackup = g.countVertices("Person");
+                      Assert.assertTrue(verticesAfterBackup > verticesBeforeBackup);
+
+                    } finally {
+                      banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
+                      backupInProgress.set(false);
+
+                      if (file != null)
+                        file.delete();
                     }
-                  }, null, 9, 1000000);
-
-                } catch (IOException e) {
-                  e.printStackTrace();
-                } finally {
-                  banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
-                  backupInProgress = false;
-
-                  if (file != null)
-                    file.delete();
-                }
-                return null;
-              }
-            });
+                    return null;
+                  }
+                });
 
           } catch (Exception e) {
             e.printStackTrace();
@@ -157,7 +164,14 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
   @Override
   protected void onAfterExecution() throws Exception {
     inserting = false;
-    Assert.assertFalse(backupInProgress);
+    waitFor(10000, new OCallable<Boolean, Void>() {
+      @Override
+      public Boolean call(Void iArgument) {
+        return !backupInProgress.get();
+      }
+    }, "Backup could not finish on time");
+
+    Assert.assertFalse(backupInProgress.get());
     Assert.assertEquals("Found some nodes has been restarted", 0, nodeLefts.get());
   }
 
