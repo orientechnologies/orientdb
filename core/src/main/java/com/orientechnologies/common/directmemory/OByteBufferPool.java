@@ -43,6 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.LogManager;
 
@@ -121,6 +122,16 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
    * Tracks the status of the MBean registration.
    */
   private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
+
+  /**
+   * Size of page pool, we use separate counter because {@link ConcurrentLinkedQueue#size()} has linear complexity.
+   */
+  private final AtomicInteger poolSize = new AtomicInteger();
+
+  /**
+   * Amount of native memory in bytes consumed by current byte buffer pool
+   */
+  private final AtomicLong allocatedMemory = new AtomicLong();
 
   private final ReferenceQueue<ByteBuffer>                    trackedBuffersQueue;
   private final Set<TrackedBufferReference>                   trackedReferences;
@@ -225,6 +236,8 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
     final ByteBuffer buffer = pool.poll();
 
     if (buffer != null) {
+      poolSize.decrementAndGet();
+
       if (clear) {
         buffer.position(0);
         buffer.put(zeroPage.duplicate());
@@ -236,16 +249,24 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
     }
 
     if (maxPagesPerSingleArea > 1) {
-      final long currentAllocationPosition = nextAllocationPosition.getAndIncrement();
+      long currentAllocationPosition;
+
+      do {
+        currentAllocationPosition = nextAllocationPosition.get();
+
+        //if we hit the end of preallocation buffer we allocate by small chunks
+        if (currentAllocationPosition >= preAllocationLimit) {
+          overflowBufferCount.incrementAndGet();
+          allocatedMemory.getAndAdd(pageSize);
+
+          return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
+        }
+
+      } while (!nextAllocationPosition.compareAndSet(currentAllocationPosition, currentAllocationPosition + 1));
 
       //all chucks consumes maxPagesPerSingleArea space with exception of last one
-      final int position = (int) (currentAllocationPosition & (maxPagesPerSingleArea - 1));
-      final int bufferIndex = (int) (currentAllocationPosition / maxPagesPerSingleArea);
-
-      //if we hit the end of preallocation buffer we allocate by small chunks
-      if (currentAllocationPosition >= preAllocationLimit) {
-        return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
-      }
+      int position = (int) (currentAllocationPosition & (maxPagesPerSingleArea - 1));
+      int bufferIndex = (int) (currentAllocationPosition / maxPagesPerSingleArea);
 
       //allocation size should be the same for all buffers from chuck with the same index
       final int allocationSize = (int) Math
@@ -298,6 +319,8 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
 
     // this should not happen if amount of pages is needed for storage is calculated correctly
     overflowBufferCount.incrementAndGet();
+    allocatedMemory.getAndAdd(pageSize);
+
     return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
   }
 
@@ -309,6 +332,8 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
   private void allocateBuffer(BufferHolder bfh, int allocationSize) {
     try {
       bfh.buffer = ByteBuffer.allocateDirect(allocationSize).order(ByteOrder.nativeOrder());
+
+      allocatedMemory.getAndAdd(allocationSize);
     } finally {
       bfh.latch.countDown();
     }
@@ -321,6 +346,8 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
    */
   public void release(ByteBuffer buffer) {
     pool.offer(untrackBuffer(buffer));
+
+    poolSize.incrementAndGet();
   }
 
   @Override
@@ -329,7 +356,7 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
   }
 
   @Override
-  public long getAllocatedBufferCount() {
+  public long getPreAllocatedBufferCount() {
     return nextAllocationPosition.get();
   }
 
@@ -345,12 +372,7 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
 
   @Override
   public long getAllocatedMemory() {
-    long memory = getOverflowBufferCount();
-
-    final long allocatedAreas = (getAllocatedBufferCount() + maxPagesPerSingleArea - 1) / maxPagesPerSingleArea;
-    memory += allocatedAreas * maxPagesPerSingleArea;
-
-    return memory * pageSize;
+    return allocatedMemory.get();
   }
 
   @Override
@@ -361,6 +383,21 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
   @Override
   public double getAllocatedMemoryInGB() {
     return Math.ceil((getAllocatedMemory() * 100) / (1024.0 * 1024 * 1024)) / 100;
+  }
+
+  @Override
+  public long getPreAllocationLimit() {
+    return preAllocationLimit;
+  }
+
+  @Override
+  public int getMaxPagesPerSingleArea() {
+    return maxPagesPerSingleArea;
+  }
+
+  @Override
+  public int getPoolSize() {
+    return poolSize.get();
   }
 
   /**
@@ -506,6 +543,8 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
     nextAllocationPosition.set(0);
     pool.clear();
     overflowBufferCount.set(0);
+    poolSize.set(0);
+    allocatedMemory.set(0);
 
     if (TRACK) {
       for (TrackedBufferReference reference : trackedReferences)
