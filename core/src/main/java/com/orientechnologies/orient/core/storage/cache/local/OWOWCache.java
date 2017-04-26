@@ -1155,7 +1155,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
     }
 
-    if (localFileCounter > 0)
+    if (localFileCounter > 0 && fileCounter < localFileCounter)
       fileCounter = (int) localFileCounter;
 
     for (Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
