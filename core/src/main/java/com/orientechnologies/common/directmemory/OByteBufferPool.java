@@ -116,6 +116,16 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   private final AtomicLong overflowBufferCount = new AtomicLong();
 
   /**
+   * Size of page pool, we use separate counter because {@link ConcurrentLinkedQueue#size()} has linear complexity.
+   */
+  private final AtomicInteger poolSize = new AtomicInteger();
+
+  /**
+   * Amount of native memory in bytes consumed by current byte buffer pool
+   */
+  private final AtomicLong allocatedMemory = new AtomicLong();
+
+  /**
    * Tracks the status of the MBean registration.
    */
   private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
@@ -222,6 +232,8 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     final ByteBuffer buffer = pool.poll();
 
     if (buffer != null) {
+      poolSize.decrementAndGet();
+
       if (clear) {
         buffer.position(0);
         buffer.put(zeroPage.duplicate());
@@ -233,16 +245,24 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     }
 
     if (maxPagesPerSingleArea > 1) {
-      final long currentAllocationPosition = nextAllocationPosition.getAndIncrement();
+      long currentAllocationPosition;
+
+      do {
+        currentAllocationPosition = nextAllocationPosition.get();
+
+        //if we hit the end of preallocation buffer we allocate by small chunks
+        if (currentAllocationPosition >= preAllocationLimit) {
+          overflowBufferCount.incrementAndGet();
+          allocatedMemory.getAndAdd(pageSize);
+
+          return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
+        }
+
+      } while (!nextAllocationPosition.compareAndSet(currentAllocationPosition, currentAllocationPosition + 1));
 
       //all chucks consumes maxPagesPerSingleArea space with exception of last one
-      final int position = (int) (currentAllocationPosition & (maxPagesPerSingleArea - 1));
-      final int bufferIndex = (int) (currentAllocationPosition / maxPagesPerSingleArea);
-
-      //if we hit the end of preallocation buffer we allocate by small chunks
-      if (currentAllocationPosition >= preAllocationLimit) {
-        return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
-      }
+      int position = (int) (currentAllocationPosition & (maxPagesPerSingleArea - 1));
+      int bufferIndex = (int) (currentAllocationPosition / maxPagesPerSingleArea);
 
       //allocation size should be the same for all buffers from chuck with the same index
       final int allocationSize = (int) Math
@@ -330,6 +350,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
     // this should not happen if amount of pages is needed for storage is calculated correctly
     overflowBufferCount.incrementAndGet();
+    allocatedMemory.getAndAdd(pageSize);
     return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
   }
 
@@ -341,6 +362,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   private void allocateBuffer(BufferHolder bfh, int allocationSize) {
     try {
       bfh.buffer = ByteBuffer.allocateDirect(allocationSize).order(ByteOrder.nativeOrder());
+      allocatedMemory.getAndAdd(allocationSize);
     } finally {
       bfh.latch.countDown();
     }
@@ -353,6 +375,8 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    */
   public void release(ByteBuffer buffer) {
     pool.offer(untrackBuffer(buffer));
+
+    poolSize.incrementAndGet();
   }
 
   @Override
@@ -361,9 +385,10 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   }
 
   @Override
-  public long getAllocatedBufferCount() {
+  public long getPreAllocatedBufferCount() {
     return nextAllocationPosition.get();
   }
+
 
   @Override
   public long getOverflowBufferCount() {
@@ -375,14 +400,10 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     return getSize();
   }
 
+
   @Override
   public long getAllocatedMemory() {
-    long memory = getOverflowBufferCount();
-
-    final long allocatedAreas = (getAllocatedBufferCount() + maxPagesPerSingleArea - 1) / maxPagesPerSingleArea;
-    memory += allocatedAreas * maxPagesPerSingleArea;
-
-    return memory * pageSize;
+    return allocatedMemory.get();
   }
 
   @Override
@@ -394,6 +415,22 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   public double getAllocatedMemoryInGB() {
     return Math.ceil((getAllocatedMemory() * 100) / (1024.0 * 1024 * 1024)) / 100;
   }
+
+  @Override
+  public long getPreAllocationLimit() {
+    return preAllocationLimit;
+  }
+
+  @Override
+  public int getMaxPagesPerSingleArea() {
+    return maxPagesPerSingleArea;
+  }
+
+  @Override
+  public int getPoolSize() {
+    return poolSize.get();
+  }
+
 
   /**
    * Registers the MBean for this byte buffer pool.

@@ -39,7 +39,7 @@ public interface OByteBufferPoolMXBean {
    * @return the number of the allocated buffers of the associated {@link OByteBufferPool},
    * this does not include the overflow buffers.
    */
-  long getAllocatedBufferCount();
+  long getPreAllocatedBufferCount();
 
   /**
    * @return the number of the allocated overflow buffers of the associated {@link OByteBufferPool}.
@@ -64,4 +64,18 @@ public interface OByteBufferPoolMXBean {
    */
   double getAllocatedMemoryInGB();
 
+  /**
+   * @return Maximum amount of bytes which may be allocated using big chunks of memory
+   */
+  long getPreAllocationLimit();
+
+  /**
+   * @return Amount of pages which fit in single big chunk of memory preallocated during page allocation request.
+   */
+  int getMaxPagesPerSingleArea();
+
+  /**
+   * @return Size of the pool which contains records which were allocated but now were fried to the pool by database.
+   */
+  int getPoolSize();
 }
