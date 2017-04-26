@@ -98,7 +98,6 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       rightResult = ((Comparable<Object>) left).compareTo(right2c);
     }
 
-
     return (leftInclusive ? leftResult >= 0 : leftResult > 0) && (rightInclusive ? rightResult <= 0 : rightResult < 0);
   }
 
@@ -133,8 +132,16 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
     if (indexDefinition.getParamCount() == 1) {
       final Object[] betweenKeys = (Object[]) keyParams.get(0);
 
-      final Object keyOne = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[0])));
-      final Object keyTwo = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[2])));
+      final Object keyOne;
+      final Object keyTwo;
+
+      if (indexDefinition instanceof OIndexDefinitionMultiValue) {
+        keyOne = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(OSQLHelper.getValue(betweenKeys[0]));
+        keyTwo = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(OSQLHelper.getValue(betweenKeys[2]));
+      } else {
+        keyOne = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[0])));
+        keyTwo = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[2])));
+      }
 
       if (keyOne == null || keyTwo == null)
         return null;
