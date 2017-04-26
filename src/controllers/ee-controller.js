@@ -44,6 +44,7 @@ import '../views/server/stats/auditing/config.html';
 import '../views/server/stats/auditing/newClass.html';
 import '../views/database/auditing/newClass.html';
 import '../views/server/stats/importersManager.html';
+import '../views/server/stats/etl.html';
 import '../views/server/stats/events.html';
 import '../views/server/plugins/generic.html';
 import '../views/server/plugins/automaticBackup.html';
@@ -1230,7 +1231,7 @@ ee.controller('EEDashboardController', ["$scope", "$rootScope", "$routeParams", 
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
     {name: "alerts", title: "Alerts Management", template: 'events', icon: 'fa-bell'},
     {name: "importers", title: "Importer", template: 'importersManager', icon: 'fa-plug'},
-
+    {name: "etl", title: "Etl", template: 'etl', icon: 'fa-tasks'}
   ]
 
 

@@ -10,6 +10,7 @@ export const APP_DECLARATIONS = [
   GraphModelPanelComponent,
   DetailPanelComponent,
   Neo4jImporterComponent,
+  EtlComponent,
   SchedulerComponent,
   DualListComponent,
   GraphComponent,
