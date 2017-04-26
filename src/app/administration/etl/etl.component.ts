@@ -3,9 +3,10 @@ import {Component} from '@angular/core';
 
 import * as $ from "jquery"
 import {downgradeComponent} from '@angular/upgrade/static';
+import {EtlService} from '../../core/services';
 import {AgentService} from "../../core/services/agent.service";
 
-declare var angular:any
+declare var angular:any;
 
 @Component({
   selector: 'etl',
@@ -16,6 +17,7 @@ declare var angular:any
 class EtlComponent {
   private configParams;
   private jsonPrototypes;
+  private finalJson;
 
   private sourceJson;
 
@@ -29,7 +31,7 @@ class EtlComponent {
   private step;
   private hints;
 
-  constructor(private agentService: AgentService){
+  constructor(private agentService: AgentService, private etlService : EtlService){
 
     this.init();
 
@@ -131,8 +133,27 @@ class EtlComponent {
 
   }
 
-  prepareTransformerJson() {
+  // Core Functions
 
+  launch() {
+
+    this.etlService.launch(this.finalJson).then((data) => {
+      this.step = "3";
+      this.status();
+    }).catch(function (error) {
+      alert("Error during etl process!")
+    });
+  }
+
+  status() {
+
+  }
+
+  // Misc
+
+  scrollLogAreaDown() {
+    var logArea = $("#logArea");
+    logArea.scrollTop(9999999);
   }
 
   ngAfterViewChecked() {
