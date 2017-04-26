@@ -767,19 +767,39 @@ public class ODocumentHelper {
         return iCurrent.getIdentity().getClusterId();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_POS))
         return iCurrent.getIdentity().getClusterPosition();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
-        return iCurrent.getRecord().getVersion();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))
-        return ((ODocument) iCurrent.getRecord()).getClassName();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
-        return Orient.instance().getRecordFactoryManager().getRecordTypeName(ORecordInternal.getRecordType(iCurrent.getRecord()));
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
-        final byte[] stream = iCurrent.getRecord().toStream();
-        return stream != null ? stream.length : 0;
-      } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
-        return ((ODocument) iCurrent.getRecord()).fieldNames();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW))
-        return new String(iCurrent.getRecord().toStream());
+      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION)) {
+        final ORecord rec = iCurrent.getRecord();
+        if (rec != null)
+          return rec.getVersion();
+        return null;
+      } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS)) {
+        final ODocument rec = iCurrent.getRecord();
+        if (rec != null)
+          return rec.getClassName();
+        return null;
+      } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE)) {
+        final ORecord rec = iCurrent.getRecord();
+        if (rec != null)
+          return Orient.instance().getRecordFactoryManager().getRecordTypeName(ORecordInternal.getRecordType(rec));
+        return null;
+      } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
+        final ORecord rec = iCurrent.getRecord();
+        if (rec != null) {
+          final byte[] stream = rec.toStream();
+          return stream != null ? stream.length : 0;
+        }
+        return null;
+      } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS)) {
+        final ODocument rec = iCurrent.getRecord();
+        if (rec != null)
+          return rec.fieldNames();
+        return null;
+      } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW)) {
+        final ODocument rec = iCurrent.getRecord();
+        if (rec != null)
+          return new String(rec.toStream());
+        return null;
+      }
     }
 
     if (iCurrent == null)
