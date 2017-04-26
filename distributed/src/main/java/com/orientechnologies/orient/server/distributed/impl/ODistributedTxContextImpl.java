@@ -124,14 +124,14 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
    */
   @Override
   public synchronized void relock(final long waitTime) throws InterruptedException {
-    final List<ORID> locked = new ArrayList<ORID>(acquiredLocks);
+//    final List<ORID> locked = new ArrayList<ORID>(acquiredLocks);
 
-    unlock();
+//    unlock();
 
     Thread.sleep(waitTime);
 
-    for (ORID rid : locked)
-      lock(rid);
+//    for (ORID rid : locked)
+//      lock(rid);
   }
 
   @Override
