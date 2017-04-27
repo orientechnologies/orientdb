@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
@@ -65,7 +66,6 @@ public class OHttpGraphResponse extends OHttpResponse {
     try {
       // DIVIDE VERTICES FROM EDGES
       final Set<OVertex> vertices = new HashSet<>();
-      final Set<OEdge> edges = new HashSet<>();
 
       final Iterator<Object> iIterator = OMultiValue.getMultiValueIterator(iRecords);
       while (iIterator.hasNext()) {
@@ -88,7 +88,6 @@ public class OHttpGraphResponse extends OHttpResponse {
             OEdge edge = element.asEdge().get();
             vertices.add(edge.getTo());
             vertices.add(edge.getFrom());
-            edges.add(edge);
           } else
             // IGNORE IT
             continue;
@@ -108,10 +107,6 @@ public class OHttpGraphResponse extends OHttpResponse {
         json.writeAttribute("@rid", vertex.getIdentity());
         json.writeAttribute("@class", vertex.getSchemaType().get().getName());
 
-        // ADD ALL THE VERTEX'S EDGES
-        for (OEdge e : vertex.getEdges(ODirection.BOTH))
-          edges.add(e);
-
         // ADD ALL THE PROPERTIES
         for (String field : vertex.getPropertyNames()) {
           final Object v = vertex.getProperty(field);
@@ -124,26 +119,36 @@ public class OHttpGraphResponse extends OHttpResponse {
 
       // WRITE EDGES
       json.beginCollection("edges");
-      for (OEdge edge : edges) {
-        if (!vertices.contains(edge.getFrom()) || !vertices.contains(edge.getTo()))
-          // ONE OF THE 2 VERTICES ARE NOT PART OF THE RESULT SET: DISCARD IT
-          continue;
+      Set<ORID> edgeRids = new HashSet<ORID>();
+      for (OVertex vertex : vertices) {
+        for (OEdge e : vertex.getEdges(ODirection.BOTH)) {
+          OEdge edge = (OEdge) e;
+          if (edgeRids.contains(e.getIdentity())) {
+            continue;
+          }
+          if (!vertices.contains(edge.getVertex(ODirection.OUT)) || !vertices.contains(edge.getVertex(ODirection.IN)))
+            // ONE OF THE 2 VERTICES ARE NOT PART OF THE RESULT SET: DISCARD IT
+            continue;
 
-        json.beginObject();
-        json.writeAttribute("@rid", edge.getIdentity());
-        json.writeAttribute("@class", edge.getSchemaType().get().getName());
+          edgeRids.add(edge.getIdentity());
 
-        json.writeAttribute("out", edge.getFrom().getIdentity());
-        json.writeAttribute("in", edge.getTo().getIdentity());
+          json.beginObject();
+          json.writeAttribute("@rid", edge.getIdentity());
+          json.writeAttribute("@class", edge.getSchemaType().map(x -> x.getName()).orElse(null));
 
-        for (String field : edge.getPropertyNames()) {
-          final Object v = edge.getProperty(field);
-          if (v != null)
-            json.writeAttribute(field, v);
+          json.writeAttribute("out", edge.getVertex(ODirection.OUT).getIdentity());
+          json.writeAttribute("in", edge.getVertex(ODirection.IN).getIdentity());
+
+          for (String field : edge.getPropertyNames()) {
+            final Object v = edge.getProperty(field);
+            if (v != null)
+              json.writeAttribute(field, v);
+          }
+
+          json.endObject();
         }
-
-        json.endObject();
       }
+
       json.endCollection();
 
       if (iAdditionalProperties != null) {
