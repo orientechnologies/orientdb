@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -53,11 +54,10 @@ public class OHttpGraphResponse extends OHttpResponse {
 
   public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,
       final Map<String, Object> iAdditionalProperties, final String mode) throws IOException {
-    if (iRecords == null){
+    if (iRecords == null) {
       send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
       return;
     }
-
 
     if (!mode.equalsIgnoreCase("graph")) {
       super.writeRecords(iRecords, iFetchPlan, iFormat, accept, iAdditionalProperties, mode);
@@ -73,7 +73,6 @@ public class OHttpGraphResponse extends OHttpResponse {
     try {
       // DIVIDE VERTICES FROM EDGES
       final Set<OrientVertex> vertices = new HashSet<OrientVertex>();
-      final Set<OrientEdge> edges = new HashSet<OrientEdge>();
 
       final Iterator<Object> iIterator = OMultiValue.getMultiValueIterator(iRecords);
       while (iIterator.hasNext()) {
@@ -96,7 +95,6 @@ public class OHttpGraphResponse extends OHttpResponse {
             OrientEdge edge = graph.getEdge(entry);
             vertices.add(graph.getVertex(edge.getVertex(Direction.IN)));
             vertices.add(graph.getVertex(edge.getVertex(Direction.OUT)));
-            edges.add(edge);
           } else
             // IGNORE IT
             continue;
@@ -116,10 +114,6 @@ public class OHttpGraphResponse extends OHttpResponse {
         json.writeAttribute("@rid", vertex.getIdentity());
         json.writeAttribute("@class", vertex.getRecord().getClassName());
 
-        // ADD ALL THE VERTEX'S EDGES
-        for (Edge e : vertex.getEdges(Direction.BOTH))
-          edges.add((OrientEdge) e);
-
         // ADD ALL THE PROPERTIES
         for (String field : vertex.getPropertyKeys()) {
           final Object v = vertex.getProperty(field);
@@ -132,26 +126,36 @@ public class OHttpGraphResponse extends OHttpResponse {
 
       // WRITE EDGES
       json.beginCollection("edges");
-      for (OrientEdge edge : edges) {
-        if (!vertices.contains(edge.getVertex(Direction.OUT)) || !vertices.contains(edge.getVertex(Direction.IN)))
-          // ONE OF THE 2 VERTICES ARE NOT PART OF THE RESULT SET: DISCARD IT
-          continue;
+      Set<ORID> edgeRids = new HashSet<ORID>();
+      for (OrientVertex vertex : vertices) {
+        for (Edge e : vertex.getEdges(Direction.BOTH)) {
+          OrientEdge edge = (OrientEdge) e;
+          if (edgeRids.contains(((OrientEdge) e).getIdentity())) {
+            continue;
+          }
+          if (!vertices.contains(edge.getVertex(Direction.OUT)) || !vertices.contains(edge.getVertex(Direction.IN)))
+            // ONE OF THE 2 VERTICES ARE NOT PART OF THE RESULT SET: DISCARD IT
+            continue;
 
-        json.beginObject();
-        json.writeAttribute("@rid", edge.getIdentity());
-        json.writeAttribute("@class", edge.getRecord().getClassName());
+          edgeRids.add(edge.getIdentity());
 
-        json.writeAttribute("out", edge.getVertex(Direction.OUT).getId());
-        json.writeAttribute("in", edge.getVertex(Direction.IN).getId());
+          json.beginObject();
+          json.writeAttribute("@rid", edge.getIdentity());
+          json.writeAttribute("@class", edge.getRecord().getClassName());
 
-        for (String field : edge.getPropertyKeys()) {
-          final Object v = edge.getProperty(field);
-          if (v != null)
-            json.writeAttribute(field, v);
+          json.writeAttribute("out", edge.getVertex(Direction.OUT).getId());
+          json.writeAttribute("in", edge.getVertex(Direction.IN).getId());
+
+          for (String field : edge.getPropertyKeys()) {
+            final Object v = edge.getProperty(field);
+            if (v != null)
+              json.writeAttribute(field, v);
+          }
+
+          json.endObject();
         }
-
-        json.endObject();
       }
+
       json.endCollection();
 
       if (iAdditionalProperties != null) {
