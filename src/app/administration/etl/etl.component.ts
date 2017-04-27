@@ -2,6 +2,7 @@ import {Component} from '@angular/core';
 
 
 import * as $ from "jquery"
+
 import {downgradeComponent} from '@angular/upgrade/static';
 import {EtlService} from '../../core/services';
 import {AgentService} from "../../core/services/agent.service";
@@ -27,8 +28,6 @@ class EtlComponent {
 
   // Different types, used in the multiple choice dialogs
   private sourceTypes;
-  private extractorTypes;
-  private transformerTypes;
   private loaderTypes;
   private URLMethods;
   private predefinedFormats;
@@ -163,8 +162,7 @@ class EtlComponent {
 
     // Types for sources, extractors, transformers and loaders
     this.sourceTypes = ["jdbc", "local file", "url"];
-    this.extractorTypes = ["csv", "jdbc", "json", "row", "xml"];
-    this.transformerTypes = ["block", "code", "command", "csv", "edge", "flow", "field", "link", "log", "merge", "vertex"];
+
     this.loaderTypes = ["debug", "orientdb"];
 
     // Specific types
@@ -229,17 +227,39 @@ class EtlComponent {
 
   }
 
-  extractorInit() {
+  extractorInit(type) {
+    this.configParams.extractorType = type;
+    window.alert("It works! You selected " + this.configParams.extractorType);
+    $(document).ready(function() {
+      $("#addExtractor").click(function() {
+        var data = {
+          operators: {
+            operator: {
+              top: 20,
+              left: 20,
+              properties: {
+                title: 'Extractor',
+                outputs: {
+                  output_1: {
+                    label: 'Output 1',
+                  },
+                }
+              }
+            }
+          }
+        };
+      });
+    });
+  }
+
+  transformerInit(type) {
 
   }
 
-  transformerInit() {
+  loaderInit(type) {
 
   }
 
-  loaderInit() {
-
-  }
 
   // Core Functions
 
@@ -270,7 +290,7 @@ class EtlComponent {
 
   enablePopovers() {
     (<any>$('[data-toggle="popover"]')).popover({
-      title: 'About this parameter',
+      // title: 'About this parameter',
       placement: 'right',
       trigger: 'hover'
     });

@@ -88,7 +88,8 @@
         </div>
 
         <div class="stepTwo" *ngSwitchCase="'2'">
-          <h3 align="center">Step 2 - Configure the ETL Parameters</h3><br/>
+          <h3 align="center">Step 2 - Configure the ETL Parameters</h3>
+          <h4 align="center">Chosen source: {{configParams.source}}</h4><br>
           <div class="row">
             <div class="col-sm-3">
               <h3 align="center">Extractor
@@ -96,190 +97,86 @@
                         [attr.data-content]="hints.extractorHint" data-animation="am-fade-and-scale"><b>?</b></button>
               </h3>
               <div id="addExtractor" class="row" style="text-align: center;">
-                <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#addExtractorModal"><b>+</b></button>
-              </div>
+                <div class="btn-group">
 
+                  <button class="btn btn-primary btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <b>+</b>
+                  </button>
+                  <!-- dropdown menu. jdbc is shown only if selected as source -->
+                  <div class="dropdown-menu">
+                    <li class="list-group-item list-group-item-info">Extractor Type</li>
 
-              <!-- Modal for Extractor -->
-              <div id="addExtractorModal" class="modal fade" role="dialog">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <button type="button" class="close" data-dismiss="modal">&times;</button>
-                      <h4 class="modal-title"><b>Add the Extractor</b></h4>
-                    </div>
-                    <div class="modal-body">
-                      <form class="form-horizontal" id="etlExtractorForm" name="etlExtractorForm" #extractorForm="ngForm">
-                        <!-- normal setup for non jdbc sources -->
-                        <div class="form-group" *ngIf="configParams.source != 'jdbc'">
-                          <label class="col-sm-2 control-label">Extractor Type</label>
-                          <div class="col-md-5">
-                            <select class="form-control" name="extractorType" [(ngModel)]="configParams.extractorType" required>
-                              <option *ngFor="let extractorType of extractorTypes" [value]="extractorType"> {{extractorType}} </option>
-                            </select>
-                          </div>
-                          <div class="col-md-5">
-                            <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                                    [attr.data-content]="hints.extractorHint" data-animation="am-fade-and-scale"><b>?</b></button>
-                          </div>
-                          <br><br><br><br>
-                          <pre align="center">
-Here you can create your extractor module.
-Please notice that further configuration
-can be done using the side panel.
-                          </pre>
-                        </div>
-                        <!-- if jdbc is selected, restrict the choice -->
-                        <div class="form-group" *ngIf="configParams.source == 'jdbc'">
-                          <label class="col-sm-2 control-label">Extractor Type</label>
-                          <div class="col-md-5">
-                            <select class="form-control" name="extractorType" [(ngModel)]="configParams.extractorType" required>
-                              <option value="jdbc">jdbc</option>
-                            </select>
-                          </div>
-                          <div class="col-md-5">
-                            <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                                    [attr.data-content]="hints.extractorHint" data-animation="am-fade-and-scale"><b>?</b></button>
-                          </div>
-                          <br><br><br><br>
-                          <pre align="center" style="color: red">
-You previously selected jdbc as source. The
-extractor type must be jdbc. Please make sure
-that your jdbc driver is in classpath or in
-
-                          </pre>
-                          <pre align="center">
-Here you can create your extractor module.
-Please notice that further configuration
-can be done using the side panel.
-                        </pre>
-                        </div>
-                      </form>
-                    </div>
-                    <div class="modal-footer">
-                      <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-primary" (click)="extractorInit()" data-dismiss="modal" [disabled]="!extractorForm.valid">Create Extractor</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('jdbc')" *ngIf="configParams.source == 'jdbc'">jdbc</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('csv')" *ngIf="configParams.source != 'jdbc'">csv</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('json')" *ngIf="configParams.source != 'jdbc'">json</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('row')" *ngIf="configParams.source != 'jdbc'">row</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('xml')" *ngIf="configParams.source != 'jdbc'">xml</button>
+                    <a class="list-group-item list-group-item-action flex-column align-items-start active" *ngIf="configParams.source == 'jdbc'">
+                      <div class="d-flex w-100 justify-content-between">
+                        <small>Hint:</small>
                       </div>
-                    </div>
+                      <p class="mb-1">You selected jdbc previously. You have to use a jdbc extractor.</p>
+                      <small>Please make sure that your jdbc driver is in classpath or in lib folder.</small>
+                    </a>
                   </div>
-
-
                 </div>
               </div>
             </div>
+
+
             <div class="col-sm-6">
               <h3 align="center">Transformers
                 <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
                         [attr.data-content]="hints.transformerHint" data-animation="am-fade-and-scale"><b>?</b></button>
               </h3>
               <div id="addTransformer" class="row" style="text-align: center;">
-                <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#addTransformerModal"><b>+</b></button>
-              </div>
+                <div class="btn-group">
 
+                  <button class="btn btn-primary btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <b>+</b>
+                  </button>
+                  <!-- dropdown menu. -->
+                  <div class="dropdown-menu">
+                    <li class="list-group-item list-group-item-info">Transformer Type</li>
 
-              <!-- Modal for Transformer -->
-              <div id="addTransformerModal" class="modal fade" role="dialog">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <button type="button" class="close" data-dismiss="modal">&times;</button>
-                      <h4 class="modal-title"><b>Add a Transformer</b></h4>
-                    </div>
-                    <div class="modal-body">
-                      <form class="form-horizontal" id="etlTransformerForm" name="etlTransformerForm" #transformerForm="ngForm">
-                      <div class="form-group">
-                        <label class="col-sm-2 control-label">Transformer Type</label>
-                        <div class="col-md-5">
-                          <select class="form-control" name="transformerType" [(ngModel)]="configParams.transformerType" required>
-                            <option *ngFor="let transformerType of transformerTypes" [value]="transformerType"> {{transformerType}} </option>
-                          </select>
-                        </div>
-                        <div class="col-md-5">
-                          <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                                  [attr.data-content]="hints.transformerHint" data-animation="am-fade-and-scale"><b>?</b></button>
-                        </div>
-                        <br><br><br>
-                        <label class="col-sm-2 control-label">Custom Label</label>
-                        <div class="col-md-5">
-                          <input type="text" id="customLabel" class="form-control" name="customLabel" [(ngModel)]="configParams.customLabel"
-                                 placeholder="Custom label"/>
-                        </div>
-                        <div class="col-md-5">
-                          <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                                  [attr.data-content]="hints.customLabelHint" data-animation="am-fade-and-scale"><b>?</b></button>
-                        </div>
-                        <br><br><br><br>
-                        <pre align="center">
-Here you can create your transformer and
-assign a custom label. Please notice that
-further configuration can be done using
-the side panel.
-                        </pre>
-                      </div>
-                      </form>
-                    </div>
-                    <div class="modal-footer">
-                      <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-primary" (click)="transformerInit()" data-dismiss="modal" [disabled]="!transformerForm.valid">Create Transformer</button>
-                      </div>
-                    </div>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('block')">block</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('code')">code</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('command')">command</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('csv')">csv</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('edge')">edge</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('flow')">flow</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('field')">field</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('link')">link</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('log')">log</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('merge')">merge</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('vertex')">vertex</button>
                   </div>
-
-
                 </div>
               </div>
             </div>
+
             <div class="col-sm-3">
               <h3 align="center">Loader
                 <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
                         [attr.data-content]="hints.loaderHint" data-animation="am-fade-and-scale"><b>?</b></button>
               </h3>
               <div id="addLoader" class="row" style="text-align: center;">
-                <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#addLoaderModal"><b>+</b></button>
-              </div>
+                <div class="btn-group">
 
+                  <button class="btn btn-primary btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <b>+</b>
+                  </button>
+                  <!-- dropdown menu. -->
+                  <div class="dropdown-menu">
+                    <li class="list-group-item list-group-item-info">Loader Type</li>
 
-              <!-- Modal for Loader -->
-              <div id="addLoaderModal" class="modal fade" role="dialog">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <button type="button" class="close" data-dismiss="modal">&times;</button>
-                      <h4 class="modal-title"><b>Add the Loader</b></h4>
-                    </div>
-                    <div class="modal-body">
-                      <form class="form-horizontal" id="etlLoaderForm" name="etlLoaderForm" #loaderForm="ngForm">
-                        <div class="form-group">
-                          <label class="col-sm-2 control-label">Loader Type</label>
-                          <div class="col-md-5">
-                            <select class="form-control" name="loaderType" [(ngModel)]="configParams.loaderType" required>
-                              <option *ngFor="let loaderType of loaderTypes" [value]="loaderType"> {{loaderType}} </option>
-                            </select>
-                          </div>
-                          <div class="col-md-5">
-                            <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                                    [attr.data-content]="hints.loaderHint" data-animation="am-fade-and-scale"><b>?</b></button>
-                          </div>
-                          <br><br><br><br>
-                          <pre align="center">
-Here you can create your loader module.
-Please notice that further configuration
-can be done using the side panel.
-                          </pre>
-                        </div>
-                      </form>
-                    </div>
-                    <div class="modal-footer">
-                      <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-primary" (click)="loaderInit()" data-dismiss="modal" [disabled]="!loaderForm.valid">Create Loader</button>
-                      </div>
-                    </div>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('log')">log</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('OrientDB')">OrientDB</button>
                   </div>
                 </div>
               </div>
-
-              </div>
             </div>
+          </div>
 
           <br><br><br><br>
           <div class="form-group">
