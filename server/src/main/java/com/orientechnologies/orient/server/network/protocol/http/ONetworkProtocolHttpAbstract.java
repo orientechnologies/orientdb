@@ -171,7 +171,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             }
 
         } catch (Exception e) {
-          handleError(e);
+          handleError(e,request);
         }
       else {
         try {
@@ -257,7 +257,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     return cmdManager;
   }
 
-  protected void handleError(Throwable e) {
+  protected void handleError(Throwable e, OHttpRequest iRequest) {
     if (OLogManager.instance().isDebugEnabled())
       OLogManager.instance().debug(this, "Caught exception", e);
 
@@ -295,7 +295,12 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             // UNAUTHORIZED
             errorCode = OHttpUtils.STATUS_AUTH_CODE;
             errorReason = OHttpUtils.STATUS_AUTH_DESCRIPTION;
-            responseHeaders = server.getSecurity().getAuthenticationHeader(((OSecurityAccessException) cause).getDatabaseName());
+
+            String xRequestedWithHeader = iRequest.getHeader("X-Requested-With");
+            if (xRequestedWithHeader == null || !xRequestedWithHeader.equals("XMLHttpRequest")) {
+              // Defaults to "WWW-Authenticate: Basic" if not an AJAX Request.
+              responseHeaders = server.getSecurity().getAuthenticationHeader(((OSecurityAccessException) cause).getDatabaseName());
+            }
             errorMessage = null;
           } else {
             // USER ACCESS DENIED
@@ -338,7 +343,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     }
 
     try {
-      sendError(errorCode, errorReason, responseHeaders, OHttpUtils.CONTENT_TEXT_PLAIN, errorMessage, request.keepAlive);
+      sendError(errorCode, errorReason, responseHeaders, OHttpUtils.CONTENT_TEXT_PLAIN, errorMessage, this.request.keepAlive);
     } catch (IOException e1) {
       sendShutdown();
     }

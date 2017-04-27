@@ -2,6 +2,7 @@ package com.orientechnologies.orient.test.server.network.http;
 
 import com.orientechnologies.orient.server.OServer;
 import org.apache.http.Consts;
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -23,7 +24,7 @@ import java.io.IOException;
 
 /**
  * Base test class for HTTP protocol.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public abstract class BaseHttpTest {
@@ -108,6 +109,14 @@ public abstract class BaseHttpTest {
     return this;
   }
 
+  protected BaseHttpTest get(final String url, Header[] headers) throws IOException {
+    request = new HttpGet(getBaseURL() + "/" + url);
+    request.setHeaders(headers);
+
+    response = null;
+    return this;
+  }
+
   protected BaseHttpTest get(final String url) throws IOException {
     request = new HttpGet(getBaseURL() + "/" + url);
     response = null;
@@ -132,13 +141,11 @@ public abstract class BaseHttpTest {
     return this;
   }
 
-
   protected BaseHttpTest patch(final String url) throws IOException {
     request = new HttpPatch(getBaseURL() + "/" + url);
     response = null;
     return this;
   }
-
 
   protected HttpResponse getResponse() throws IOException {
     if (response == null)

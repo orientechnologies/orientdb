@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.io.IOException;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -16,6 +13,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * Created by emrul on 14/09/14.
@@ -139,8 +139,12 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
   protected void sendAuthorizationRequest(final OHttpRequest iRequest, final OHttpResponse iResponse, final String iDatabaseName)
       throws IOException {
 
-    // Defaults to "WWW-Authenticate: Basic".
-    String header = server.getSecurity().getAuthenticationHeader(iDatabaseName);
+    String header = null;
+    String xRequestedWithHeader = iRequest.getHeader("X-Requested-With");
+    if (xRequestedWithHeader == null || !xRequestedWithHeader.equals("XMLHttpRequest")) {
+      // Defaults to "WWW-Authenticate: Basic" if not an AJAX Request.
+      header = server.getSecurity().getAuthenticationHeader(iDatabaseName);
+    }
 
     if (isJsonResponse(iResponse)) {
       sendJsonError(iResponse, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
