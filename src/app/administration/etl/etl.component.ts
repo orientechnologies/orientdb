@@ -15,21 +15,29 @@ declare var angular:any;
 })
 
 class EtlComponent {
-  private configParams;
-  private jsonPrototypes;
-  private finalJson;
+  private configParams; // Parameters stored during the configuration
+  private jsonPrototypes; // Ready to use prototypes to build the partial json
 
-  private sourceJson;
+  private finalJson; // The final json, it will be passed to the launch function
 
+  private sourceJson; // The source json
+  private extractorJson; // The extractor json
+  private transformerJson; // An array containing all transformers json
+  private loaderJson; // The loader json
+
+  // Different types, used in the multiple choice dialogs
   private sourceTypes;
   private extractorTypes;
   private transformerTypes;
   private loaderTypes;
-
   private URLMethods;
+  private predefinedFormats;
+  private unresolvedLinkActions;
+  private linkFieldTypes;
 
   private step;
   private hints;
+
 
   constructor(private agentService: AgentService, private etlService : EtlService){
 
@@ -37,22 +45,119 @@ class EtlComponent {
 
     /*this.agentService.isActive().then(() => {
       this.init();
-    }); controls if enterprise*/
+    }); */ // TODO activate enterprise control
   }
 
   init() {
 
-    // Params to build the partial jsons
+    // Params to build the partial json.
     this.configParams = {
+
+      // Source
       source: "",
       fileURL: "",
       URLMethod: "GET",
       filePath: "",
       fileLock: false,
+
+      // Extractor
       extractorType: "",
+      // Row
+      multiline: true,
+      linefeed: "\r\n",
+      // Csv
+      separator: ",",
+      columnsOnFirstLine: true,
+      columns: [],
+      nullValue: "NULL",
+      dateFormat: "yyyy-MM-dd",
+      dateTimeFormat: "yyyy-MM-dd HH:mm",
+      quote: "\"",
+      skipFrom: "",
+      skipTo: "",
+      ignoreEmptyLines: false,
+      ignoreMissingColumns: false,
+      predefinedFormat: "",
+      // JDBC
+      driver: "", // mandatory
+      url: "", // mandatory
+      userName: "", // mandatory
+      userPassword: "", // mandatory
+      query: "", // mandatory
+      queryCount: "",
+      // Json has no parameters
+      // XML
+      rootNode: "",
+      tagsAsAttribute: [],
+
+      // Transformer
       transformerType: "",
       customLabel: "",
-      loaderType: ""
+      // Field
+      fieldName: "",
+      expression: "", // mandatory
+      value: "",
+      operation: "set",
+      save: false,
+      // Merge
+      joinFieldName: "", // mandatory
+      lookup: "", // mandatory
+      unresolvedLinkAction: "NOTHING",
+      // Vertex
+      class: "V",
+      skipDuplicates: false,
+      // Edge
+      // joinFieldName: "", TODO rename duplicates
+      direction: "out",
+      // class: "E", TODO rename duplicates
+      // lookup: "" TODO rename duplicates
+      targetVertexFields: {},
+      edgeFields: {},
+      // skipDuplicates: false, TODO rename duplicates
+      // unresolvedLinkAction: "NOTHING", TODO rename duplicates
+      // Flow
+      if: "", // mandatory
+      // operation: "", // mandatory TODO rename and decide if adopt this transformer
+      // Code
+      language: "javascript",
+      code: "", // Mandatory
+      // Link
+      // joinFieldName: "", TODO rename duplicates
+      // joinValue: "", TODO rename duplicates
+      linkFieldName: "", // mandatory
+      linkFieldType: "", // mandatory
+      // lookup: "", TODO rename duplicates
+      // unresolvedLinkAction: "NOTHING", TODO rename duplicates
+      // Log
+      prefix: "",
+      postfix: "",
+      // Block
+      // Command
+      // language: "sql", TODO rename duplicates
+      command: "", // mandatory
+
+      // Loader
+      loaderType: "",
+      // OrientDB
+      dbURL: "", // mandatory
+      dbUser: "admin",
+      dbPassword: "admin",
+      serverUser: "root",
+      serverPassword: "",
+      dbAutoCreate: true,
+      dbAutoCreateProperties: false,
+      dbAutoDropIfExists: false,
+      tx: false,
+      txUseLog: false,
+      wal: true,
+      batchCommit: 0,
+      dbType: "document", // or graph
+      // class: "", TODO rename duplicates
+      cluster: "",
+      // classes: TODO ???
+      // indexes: TODO ???
+      useLightweightEdges: false,
+      standardElementConstraints: true
 
     }
 
@@ -64,6 +169,9 @@ class EtlComponent {
 
     // Specific types
     this.URLMethods = ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE"];
+    this.predefinedFormats = ["Default", "Excel", "MySQL", "RCF4180", "TDF"];
+    this.unresolvedLinkActions = ["NOTHING", "WARNING", "ERROR", "HALT", "SKIP"];
+    this.linkFieldTypes = ["LINK", "LINKSET", "LINKLIST"];
 
     // User support
     this.step = 1;
@@ -83,7 +191,7 @@ class EtlComponent {
 
     }
 
-    // Json prototypes, contains partial jsons
+    // Json prototypes, contains partial json
     this.jsonPrototypes = new Map();
 
     // Source
