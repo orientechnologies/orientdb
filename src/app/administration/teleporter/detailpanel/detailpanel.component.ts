@@ -10,26 +10,26 @@ import {AgentService} from "../../../core/services/agent.service";
 declare var angular:any
 
 @Component({
-  selector: 'er-model-panel',
-  templateUrl: "./ermodelpanel.component.html",
+  selector: 'detail-panel',
+  templateUrl: "detailpanel.component.html",
   styleUrls: []
 })
 
-class ERModelPanelComponent {
+class DetailPanelComponent {
 
   @Input() modellingConfig = this.modellingConfig !== 'undefined' ? this.modellingConfig : 'no config from parent.';
   @Output() modellingConfigChange = new EventEmitter();
 
   updateModellingConfig() {
-    this.modellingConfig.vertices[0].name = "ER Model"
+    this.modellingConfig.vertices[0].name = "Detail";
     this.modellingConfigChange.next(this.modellingConfig);
   }
 
 }
 
-angular.module('ermodelpanel.component', []).directive(
-  `er-model-panel`,
-  downgradeComponent({component: ERModelPanelComponent}));
+angular.module('detailpanel.component', []).directive(
+  `detail-panel`,
+  downgradeComponent({component: DetailPanelComponent}));
 
 
-export {ERModelPanelComponent};
+export {DetailPanelComponent};

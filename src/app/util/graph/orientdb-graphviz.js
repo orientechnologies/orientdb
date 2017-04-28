@@ -33,7 +33,7 @@ let OrientGraph = (function () {
 
 
     this.colors = createColors(this.metadata.classes);
-    // this.colors = d3.scale.category20();
+    // this.colors = d3-graph.scale.category20();
     var self = this;
     this.selected = null;
     this.dragNode = null;
@@ -295,7 +295,7 @@ let OrientGraph = (function () {
         var cls = d3.select(this).attr("class");
         return cls.indexOf("hide") != -1 ? "legend-container" : "legend-container hide";
       })
-      //var parent = d3.select(this.classesContainer.node().parentNode());
+      //var parent = d3-graph.select(this.classesContainer.node().parentNode());
       //
       //console.log(parent);
       //var cls = parent.attr("class");
@@ -802,7 +802,7 @@ let OrientGraph = (function () {
           d3.select(this).style("opacity", "0.3");
           //var eclass = d.edge ? "edge" : "edge lightweight"
           //eclass = eclass + " edge-hover edge-" + d.label.toLowerCase();
-          //d3.select(this).attr("class", eclass)
+          //d3-graph.select(this).attr("class", eclass)
           //  .style('marker-start', function (d) {
           //    return d.left ? 'url(#start-arrow-hover)' : '';
           //  }).style('marker-end', function (d) {
@@ -816,7 +816,7 @@ let OrientGraph = (function () {
           d3.select(this).style("opacity", "0");
           //var eclass = d.edge ? "edge" : "edge lightweight"
           //eclass += " edge-" + d.label.toLowerCase();
-          //d3.select(this).attr("class", eclass)
+          //d3-graph.select(this).attr("class", eclass)
           //  .style('marker-start', function (d) {
           //    return d.left ? 'url(#start-arrow)' : '';
           //  }).style('marker-end', function (d) {
@@ -923,7 +923,7 @@ let OrientGraph = (function () {
       drag.on("dragend", function (v) {
         d3.event.sourceEvent.stopPropagation();
         d3.select(this).classed("dragging", false);
-        //d3.select(this).classed("fixed", v.fixed = false);
+        //d3-graph.select(this).classed("fixed", v.fixed = false);
       })
       g.call(drag);
       var cc = clickcancel();
@@ -1396,7 +1396,7 @@ let OrientGraph = (function () {
       self.links.splice(idx, 1);
       this.clearSelection();
 
-      //d3.select(e.elem).remove();
+      //d3-graph.select(e.elem).remove();
     }
     this.zoom = function () {
 
@@ -2043,7 +2043,7 @@ let OrientGraph = (function () {
 
   graph.create = function (element, config, metadata, vertexActions, edgeActions) {
     alert("Dajeeee!");
-    // return new OGraph(element, config, metadata, vertexActions, edgeActions);
+    // return new OGraph(elementId, config, metadata, vertexActions, edgeActions);
   }
 
 

@@ -6,7 +6,7 @@
         <div class="input-group">
           <span class="input-group-addon">Search</span>
           <input type="text" id="modelClass" name="modelClass" class="form-control"
-                 placeholder="Class name"/>
+                 placeholder="Class or Table name"/>
           <div class="input-group-btn">
             <button class="btn btn-default" type="submit" style="width: 34px; height: 34px;"><i class="fa fa-search"></i></button>
           </div>
@@ -31,11 +31,14 @@
     </div>
   </div>
 
-  <div #canvas id="canvas" class="panel-body svg-content-responsive" style="height: 450px">
+  <div id="canvas" class="panel-body svg-content-responsive" style="height: 485px;">
+
+    <!--
     {{modellingConfig.vertices[0].name}}
     <button class="btn-primary" (click)="updateModellingConfig()">Change value</button>
+    -->
 
-    <graph [modellingConfig]="modellingConfig" [element]="canvas"></graph>
+    <graph id="graph" [modellingConfig]="modellingConfig" style="height: 100%; width: 100%;"></graph>
 
   </div>
 

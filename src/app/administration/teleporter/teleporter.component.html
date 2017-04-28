@@ -13,7 +13,25 @@
       <div id="stepSwitch" [ngSwitch]="getStep()">
 
         <div class="stepOne" *ngSwitchCase="'1'">
-          <h3>Step 1: Source Database connection</h3><br/>
+
+          <h4>
+            <div class="row">
+              <div class="col-md-6">
+                <span>&nbsp;&nbsp;&nbsp;Step 1: Source Database connection</span>
+              </div>
+              <div class="col-md-6">
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary disabled">Prev</button>
+                </div>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('2')" [disabled]="!form.valid">Next</button>
+                </div>
+                <div class="btn-group pull-right">
+                  <button type="button" class="btn btn-sm btn-primary" (click)="testConnection()">Test connection</button>
+                </div>
+              </div>
+            </div>
+          </h4><br/><br/>
 
           <div class="form-group">
             <label class="col-sm-2 control-label">Database Driver</label>
@@ -83,23 +101,6 @@
           </div>
 
           <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <div class="btn-toolbar">
-                <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary disabled">Prev</button>
-                </div>
-                <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('2')" [disabled]="!form.valid">Next</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <div class="stepTwo" *ngSwitchCase="'2'">
-          <h3>Step 2: Source Database Credentials</h3><br/>
-          <div class="form-group">
             <label class="col-sm-2 control-label">User Name</label>
             <div class="col-md-5">
               <input type="text" id="username" class="form-control" [(ngModel)]="config.username" name="username"
@@ -122,33 +123,27 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <div class="btn-toolbar">
-                <div class="btn-group pull-right">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="testConnection()">Test connection</button>
-                </div>
-              </div>
-            </div>
-          </div>
+        </div>
 
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <div class="btn-toolbar">
+        <div class="stepTwo" *ngSwitchCase="'2'">
+          <h4>
+            <div class="row">
+              <div class="col-md-6">
+                <span>&nbsp;&nbsp;&nbsp;Step 2: Target OrientDB Database</span>
+              </div>
+              <div class="col-md-6">
                 <div class="btn-group">
                   <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('1')">Prev</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('3')" [disabled]="!form.valid">Next</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('3')" [disabled]="!form.valid">Next (Advanced)</button>
+                </div>
+                <div class="btn-group pull-right">
+                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()" [disabled]="!form.valid">Start migration</button>
                 </div>
               </div>
             </div>
-          </div>
-
-        </div>
-
-        <div class="stepThree" *ngSwitchCase="'3'">
-          <h3>Step 3: Target OrientDB Database</h3><br/>
+          </h4><br/><br/>
 
           <div class="form-group">
             <label class="col-sm-2 control-label">Connection Protocol</label>
@@ -175,27 +170,6 @@
                       [attr.data-content]="hints.outDBName" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
-
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <div class="btn-toolbar">
-                <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('2')">Prev</button>
-                </div>
-                <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('4')" [disabled]="!form.valid">Next (Advanced)</button>
-                </div>
-                <div class="btn-group pull-right">
-                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()" [disabled]="!form.valid">Start migration</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <div class="stepAdvanced" *ngSwitchCase="'4'">
-          <h3>Step 4: Strategies (Advanced)</h3><br/>
 
           <div class="form-group">
             <label class="col-sm-2 control-label">Strategy</label>
@@ -225,102 +199,17 @@
           </div>
 
           <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <div class="btn-toolbar">
-                <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('3')">Prev</button>
-                </div>
-                <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('5')">Next</button>
-                </div>
-                <div class="btn-group pull-right">
-                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()">Start migration</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <div class="stepAdvanced" *ngSwitchCase="'5'">
-          <h3>Step 5: Filters (Advanced)</h3><br/>
-
-          <div class="form-group">
-            <div class="col-md-offset-1 col-md-10">
-              <dual-list [sort]="keepSorted" [source]="sourceDBTables" [key]="key" [display]="fieldToDisplay" [(destination)]="includedTables"
-                         headerLeft="Source DB Tables" headerRight="Included Tables"
-                         addBtn="Include" removeBtn="Exclude"
-                         height="265px"></dual-list>
-            </div>
-          </div>
-
-          <br><br><br>
-
-          <div class="form-group">
-            <div class="col-sm-offset-9 col-sm-3">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-placement="top" data-html="true"
-                      [attr.data-content]="hints.tableList" data-animation="am-fade-and-scale"><b>?</b></button>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <div class="col-sm-offset-9 col-sm-3">
-              <button type="button" class="btn btn-sm btn-primary" (click)="testConnection()">Test connection</button>
-            </div>
-          </div>
-
-          <br><br><br><br>
-
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <div class="btn-toolbar">
-                <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('4')">Prev</button>
-                </div>
-                <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('6')">Next</button>
-                </div>
-                <div class="btn-group pull-right">
-                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()">Start migration</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="stepAdvanced" *ngSwitchCase="'6'">
-          <h3>Step 6: Inheritance (Advanced)</h3><br/>
-          <div class="form-group">
             <label class="col-sm-2 control-label">XML Path</label>
-            <div class="col-sm-7">
+            <div class="col-sm-5">
               <input type="text" class="form-control" [(ngModel)]="config.xmlPath" name="xmlPath"
                      placeholder="XML Path" required>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-5">
               <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
                       [attr.data-content]="hints.XMLPath" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <div class="btn-toolbar">
-                <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('5')">Prev</button>
-                </div>
-                <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('7')">Next</button>
-                </div>
-                <div class="btn-group pull-right">
-                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()">Start migration</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="stepAdvanced" *ngSwitchCase="'7'">
-          <h3>Step 7: Log Level (Advanced)</h3><br/>
           <div class="form-group">
             <label class="col-sm-2 control-label">Log Level</label>
             <div class="col-sm-5">
@@ -335,40 +224,50 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <div class="btn-toolbar">
+        </div>
+
+        <div class="stepThree" *ngSwitchCase="'3'">
+          <h4>
+            <div class="row">
+              <div class="col-md-6">
+                <span>&nbsp;&nbsp;&nbsp;Step 3: Filters (Advanced)</span>&nbsp;
+                <button type="button" class="btn btn-xs btn-primary" data-toggle="popover" data-placement="top" data-html="true"
+                        [attr.data-content]="hints.tableList" data-animation="am-fade-and-scale"><b>?</b></button>
+              </div>
+              <div class="col-md-6">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('6')">Prev</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('2')">Prev</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('8')">Next</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('4')" [disabled]="!form.valid">Next (Advanced)</button>
                 </div>
                 <div class="btn-group pull-right">
-                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()">Start migration</button>
+                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()" [disabled]="!form.valid">Start migration</button>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div class="stepAdvanced" *ngSwitchCase="'8'">
-          <h3>Step 8: Model Mapping (Advanced)</h3><br/> {{modellingConfig.vertices[0].name}}  <button class="btn-primary" (click)="updateModellingConfig()">Change value</button>
-
-          <div class="border">
-            <div class="col-sm-8">
-              <graph-model-panel [(modellingConfig)]="modellingConfig"></graph-model-panel>
-            </div>
-            <div class="col-md-4">
-              <er-model-panel [(modellingConfig)]="modellingConfig"></er-model-panel>
-            </div>
-          </div>
+          </h4><br/><br/>
 
           <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <div class="btn-toolbar">
+            <div class="col-md-offset-1 col-md-10">
+              <dual-list [sort]="keepSorted" [source]="sourceDBTables" [key]="key" [display]="fieldToDisplay" [(destination)]="includedTables"
+                         headerLeft="Source DB Tables" headerRight="Included Tables"
+                         addBtn="Include" removeBtn="Exclude"
+                         height="265px"></dual-list>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="stepAdvanced" *ngSwitchCase="'4'">
+          <h4>
+            <div class="row">
+              <div class="col-md-6">
+                <span>&nbsp;&nbsp;&nbsp;Step 4: Model Mapping (Advanced)</span>
+              </div>
+              <div class="col-md-6">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('7')">Prev</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('3')">Prev</button>
                 </div>
                 <div class="btn-group">
                   <button type="button" class="btn btn-sm btn-primary disabled">Next</button>
@@ -378,8 +277,19 @@
                 </div>
               </div>
             </div>
+          </h4><br/><br/>
+
+          <div class="border">
+            <div class="col-sm-7">
+              <graph-model-panel [(modellingConfig)]="modellingConfig"></graph-model-panel>
+            </div>
+            <div class="col-md-5">
+              <detail-panel [(modellingConfig)]="modellingConfig"></detail-panel>
+            </div>
           </div>
+
         </div>
+
 
         <div class="running" *ngSwitchCase="'running'">
           <h3>Migration to OrientDB</h3><br/>

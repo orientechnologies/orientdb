@@ -1,4 +1,5 @@
-import {Component, Input, ElementRef} from '@angular/core';
+import {Component, Input, ElementRef, AfterViewInit} from '@angular/core';
+import {OGraph} from './d3-graph/OGraph';
 
 import * as $ from "jquery"
 import './orientdb-graphviz'
@@ -7,7 +8,7 @@ import {downgradeComponent} from '@angular/upgrade/static';
 import {NotificationService} from "../../core/services/notification.service";
 
 declare var angular:any;
-declare var OrientGraph:any;
+// declare var OrientGraph:any;
 
 @Component({
   selector: 'graph',
@@ -15,12 +16,12 @@ declare var OrientGraph:any;
   styleUrls: []
 })
 
-class GraphComponent {
+class GraphComponent implements AfterViewInit {
 
-  private orientGraph;
+  private orientGraph:OGraph;
 
   @Input() modellingConfig;
-  @Input() element: ElementRef;
+  private elementId = '#graph';
   private opts;
 
   constructor() {
@@ -32,12 +33,16 @@ class GraphComponent {
     this.opts = {
       metadata: "no metadata",
       config: {
-        height: 500,
-        width: 1200,
+        height:460,
+        width: 700,
         classes: {},
         node: {
-          r: 30
-        }
+          r: 15
+        },
+        linkDistance: 200,
+        charge: -1000,
+        friction: 0.9,
+        gravity: 0.1
       },
       edgeMenu: [
         {
@@ -327,18 +332,16 @@ class GraphComponent {
         }
       ]
     }
-
-    this.callGraph();
   }
 
-  callGraph() {
-    OrientGraph.create(this.element, this.opts.config, this.opts.metadata, this.opts.menu, this.opts.edgeMenu);
+  ngAfterViewInit() {
+    this.loadGraph();
   }
+
 
   loadGraph() {
-
     if(this.opts.config) {
-      this.orientGraph = OrientGraph.create(this.element, this.opts.config, this.opts.metadata, this.opts.menu, this.opts.edgeMenu);
+      this.orientGraph = new OGraph(this.elementId, this.opts.config);
       this.orientGraph.data(this.modellingConfig).draw();
     }
   }

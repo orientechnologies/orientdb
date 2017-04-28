@@ -1,5 +1,5 @@
 import {ImportExportComponent} from './dbconfiguration';
-import {TeleporterComponent, GraphModelPanelComponent, ERModelPanelComponent, SchedulerComponent} from './administration'
+import {TeleporterComponent, GraphModelPanelComponent, DetailPanelComponent, SchedulerComponent} from './administration'
 import {DualListComponent, GraphComponent} from './util'
 
 
@@ -7,7 +7,7 @@ export const APP_DECLARATIONS = [
   ImportExportComponent,
   TeleporterComponent,
   GraphModelPanelComponent,
-  ERModelPanelComponent,
+  DetailPanelComponent,
   SchedulerComponent,
   DualListComponent,
   GraphComponent
