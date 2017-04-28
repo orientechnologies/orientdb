@@ -33,13 +33,19 @@ let InstantDatabaseResolve = {
 
 
 let AgentResolve = {
-  current: function (AgentService, $q) {
+  current: function (AgentService, $q, ServerApi, $location) {
     var deferred = $q.defer();
 
+    ServerApi.getServerInfo().then((data) => {
+      AgentService.isActive().then(function () {
+        deferred.resolve();
+      })
+    }).catch((err) => {
+      if (err.status === 401) {
+        $location.path("/");
+      }
+    });
 
-    AgentService.isActive().then(function () {
-      deferred.resolve();
-    })
     return deferred.promise;
   },
   delay: function ($q, $timeout) {

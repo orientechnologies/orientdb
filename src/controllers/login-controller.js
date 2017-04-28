@@ -54,8 +54,8 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
         callback();
       }
     }, function () {
-      var noti = "Invalid username or password";
-      Notification.push({content: noti, error: true});
+      // var noti = "Invalid username or password";
+      // Notification.push({content: noti, error: true});
       $scope.errorMsg = "Invalid username or password";
       Spinner.stopSpinner();
     });
@@ -98,7 +98,7 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
         Notification.push({content: noti});
       }, function (data) {
         modalScope.creating = false;
-        modalScope.error = data;
+        modalScope.errorMsg = data;
       });
     }
 

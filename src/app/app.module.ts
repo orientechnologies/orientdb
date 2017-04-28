@@ -11,6 +11,7 @@ import {APP_DECLARATIONS} from './app.declarations';
 import {APP_IMPORTS} from './app.imports';
 import {platformBrowserDynamic} from "@angular/platform-browser-dynamic";
 import {UpgradeModule} from "@angular/upgrade/src/aot/upgrade_module";
+import {BaseRequestOptions, RequestOptions} from "@angular/http";
 
 
 declare var angular: angular.IAngularStatic;
@@ -19,6 +20,17 @@ declare var angular: angular.IAngularStatic;
 const APP_PROVIDERS = [
   ...APP_RESOLVER_PROVIDERS,
 ];
+
+
+class CustomRequestOptions extends BaseRequestOptions {
+  constructor() {
+    super();
+
+
+    this.headers.append('X-Requested-With', 'XMLHttpRequest');
+
+  }
+}
 
 /**
  * `AppModule` is the main entry point into Angular2's bootstraping process
@@ -33,7 +45,8 @@ const APP_PROVIDERS = [
   ],
   providers: [ // expose our Services and Providers into Angular's dependency injection
     ENV_PROVIDERS,
-    APP_PROVIDERS
+    APP_PROVIDERS,
+    {provide: RequestOptions, useClass: CustomRequestOptions}
   ],
   entryComponents: [...APP_DECLARATIONS]
 })

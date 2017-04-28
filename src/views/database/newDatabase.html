@@ -81,9 +81,9 @@
             <span class="progress-value">Creating database {{ name }}</span>
           </div>
         </div>
-        <div class="alert alert-error" ng-show="error">
-          <button type="button" class="close" ng-click="error = null">×</button>
-          {{error}}
+        <div class="alert alert-danger" ng-show="errorMsg">
+          <button type="button" class="close" ng-click="errorMsg = null">×</button>
+          {{errorMsg}}
         </div>
       </div>
       <div class="modal-footer">

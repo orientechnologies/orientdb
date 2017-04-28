@@ -1,3 +1,5 @@
+<div ng-show="disabled" class="disable-view">
+</div>
 <div class="row">
   <div class="col-md-12">
     <div class="admin-header">
@@ -93,7 +95,7 @@
                     <div class="input-group">
                       <input type="text" class="form-control"
                              ng-model="functionToExecute['parameters'][$index]">
-                                            <span class="input-group-btn">
+                      <span class="input-group-btn">
                                             <button href="javascript:void(0)" class="btn"
                                                     ng-click="removeParam($index)"><i
                                               class="fa fa-trash-o"></i></button>

@@ -159,7 +159,7 @@ var App = angular.module('OrientDBStudioApp', deps);
 
 App.config(routing);
 
-App.run(["$rootScope", "$interval", "DatabaseApi", "Notification", "Spinner", "$templateCache", "Aside", function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $templateCache, Aside) {
+App.run(["$rootScope", "$interval", "DatabaseApi", "Notification", "Spinner", "$templateCache", "Aside","$http", function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $templateCache, Aside,$http) {
   $rootScope.$on('$routeChangeSuccess', function (event, currentRoute, oldRoute) {
 
 
@@ -227,6 +227,9 @@ App.run(["$rootScope", "$interval", "DatabaseApi", "Notification", "Spinner", "$
   }, 1000);
 
   $templateCache.put('popover/popover.tpl.html', '<div class="popover"><div class="arrow"></div><h3 class="popover-title" ng-bind="title" ng-show="title"></h3><div class="popover-content" ng-bind-html="content"></div></div>');
+
+  $http.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
 }])
 
 $('body').on('keyup', function (e) {

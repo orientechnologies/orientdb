@@ -13,6 +13,7 @@ functionModule.controller("FunctionController", ['$scope', '$routeParams', '$loc
   $scope.isCode = true;
   $scope.isDirty = false;
   $scope.listClasses = $scope.database.listClasses();
+  $scope.disabled = false;
   $scope.editorOptions = {
     lineWrapping: true,
     lineNumbers: true,
@@ -94,6 +95,10 @@ functionModule.controller("FunctionController", ['$scope', '$routeParams', '$loc
         deferred.resolve();
       }
 
+    },function(error){
+      Notification.push({content: error, error: true});
+      $scope.disabled = true;
+      deferred.reject(error);
     });
     return deferred.promise;
 

@@ -1,6 +1,7 @@
 import databaseServices from '../services/database-services';
 import {STUDIO_VERSION} from '../constants';
 import '../views/server/about.html';
+import '../views/database/loginServer.html';
 import angular from 'angular';
 
 let HeaderController = angular.module('header.controller', [databaseServices]).controller("HeaderController", ['$scope', '$rootScope', '$routeParams', '$http', '$location', '$modal', '$q', 'Database', 'Aside', 'DatabaseApi', function ($scope, $rootScope, $routeParams, $http, $location, $modal, $q, Database, Aside, DatabaseApi) {
@@ -90,7 +91,20 @@ let HeaderController = angular.module('header.controller', [databaseServices]).c
 
   }
   $scope.manageServer = function () {
-    $location.path("/dashboard");
+    //
+    var modalScope = $scope.$new(true);
+
+
+    var modalPromise = $modal({templateUrl: 'views/database/loginServer.html', show: false, scope: modalScope});
+    modalScope.login = (user, password) => {
+      DatabaseApi.connectServer(user, password).then((data) => {
+        modalPromise.hide();
+        $location.path("/dashboard");
+      }).catch((err) => {
+        console.log(err);
+      })
+    }
+    modalPromise.$promise.then(modalPromise.show);
   }
   $rootScope.$on('request:logout', function () {
     $scope.logout()

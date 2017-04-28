@@ -153,7 +153,7 @@ function routing($routeProvider, $httpProvider, $translateProvider) {
           $rootScope.$broadcast("server:down");
 
         } else if (rejection.status == 401 && checkError401(rejection.data)) {
-          Notification.push({content: rejection.data, error: true, autoHide: false});
+          // Notification.push({content: rejection.data, error: true, autoHide: false});
         }
         return $q.reject(rejection);
       }

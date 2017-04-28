@@ -8,7 +8,7 @@ import Utilities from '../util/library';
 import angular from 'angular';
 
 let UserModule = angular.module('users.controller', ['database.services']);
-UserModule.controller("SecurityController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route) {
+UserModule.controller("SecurityController", ['$scope', '$rootScope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', function ($scope, $rootScope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route) {
 
   $scope.database = Database;
   $scope.db = $routeParams.database;
@@ -18,12 +18,14 @@ UserModule.controller("SecurityController", ['$scope', '$routeParams', '$locatio
   $scope.tabsI18n['users'] = 'Users';
   $scope.tabsI18n['roles'] = 'Roles';
 
+  $scope.disabled = false;
+
   Database.setWiki("Security.html");
   $scope.getTemplate = function (tab) {
     return 'views/database/security/' + tab + '.html';
   }
 }]);
-UserModule.controller("UsersController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$filter', 'NgTableParams', 'DocumentApi', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $filter, ngTableParams, DocumentApi, Notification) {
+UserModule.controller("UsersController", ['$scope', '$rootScope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$filter', 'NgTableParams', 'DocumentApi', 'Notification', function ($scope, $rootScope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $filter, ngTableParams, DocumentApi, Notification) {
 
   $scope.database = Database;
   $scope.usersResult = new Array;
@@ -71,6 +73,9 @@ UserModule.controller("UsersController", ['$scope', '$routeParams', '$location',
           return orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count());
         }
       });
+    }, function (error) {
+      Notification.push({content: error, error: true});
+      $scope.$parent.$parent.$parent.disabled = true
     });
   }
   $scope.loadRoles = function ($query) {

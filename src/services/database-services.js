@@ -7,7 +7,7 @@ import angular from 'angular';
 let database = angular.module('database.services', ['ngResource', SpinnerService]);
 
 
-database.factory('Database', ["DatabaseApi", "localStorageService", "SchemaService", function (DatabaseApi, localStorageService, SchemaService) {
+database.factory('Database', ["DatabaseApi", "localStorageService", "SchemaService", "$location", function (DatabaseApi, localStorageService, SchemaService, $location) {
 
 
   var version = STUDIO_VERSION.indexOf("SNAPSHOT") == -1 ? STUDIO_VERSION : "last";
@@ -104,6 +104,11 @@ database.factory('Database', ["DatabaseApi", "localStorageService", "SchemaServi
         localStorageService.add("CurrentDB", current);
         if (callback)
           callback();
+      }, function (err) {
+
+        if (err.status === 401) {
+          $location.path("/");
+        }
       });
     },
     isConnected: function () {
@@ -530,11 +535,12 @@ database.factory('DatabaseApi', ["$http", "$resource", "$q", function ($http, $r
 
   resource.install = function (db, username, password) {
     var deferred = $q.defer();
+    let headers = {};
     if (!resource.sso) {
       delete $http.defaults.headers.common['Authorization'];
-      $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.Base64.encode(username + ':' + password);
+      headers['Authorization'] = 'Basic ' + Base64.Base64.encode(username + ':' + password);
     }
-    $http.post(API + 'installDatabase', db.url).success(function (data) {
+    $http.post(API + 'installDatabase', db.url, {headers: headers}).success(function (data) {
       deferred.resolve(data);
     }).error(function (data) {
       deferred.reject(data);
@@ -549,17 +555,19 @@ database.factory('DatabaseApi', ["$http", "$resource", "$q", function ($http, $r
   }
 
   resource.connect = function (database, username, password, callback, error) {
+    let headers = {};
     if (!resource.sso) {
-      $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.Base64.encode(username + ':' + password);
+      headers['Authorization'] = 'Basic ' + Base64.Base64.encode(username + ':' + password);
     }
-    $http.get(API + 'connect/' + database).success(callback).error(error);
+    $http.get(API + 'connect/' + database, {headers: headers}).success(callback).error(error);
   }
   resource.createDatabase = function (name, type, stype, username, password, callback, error) {
     delete $http.defaults.headers.common['Authorization'];
+    let headers = {};
     if (!resource.sso) {
-      $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.Base64.encode(username + ':' + password);
+      headers['Authorization'] = 'Basic ' + Base64.Base64.encode(username + ':' + password);
     }
-    $http.post(API + 'database/' + name + "/" + stype + "/" + type).success(function (data) {
+    $http.post(API + 'database/' + name + "/" + stype + "/" + type, null, {headers: headers}).success(function (data) {
       delete $http.defaults.headers.common['Authorization'];
       callback(data);
     }).error(function (data) {
@@ -569,14 +577,29 @@ database.factory('DatabaseApi', ["$http", "$resource", "$q", function ($http, $r
   resource.deleteDatabase = function (name, username, password) {
     var deferred = $q.defer();
     delete $http.defaults.headers.common['Authorization'];
+    let headers = {};
     if (!resource.sso) {
-      $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.Base64.encode(username + ':' + password);
+      headers['Authorization'] = 'Basic ' + Base64.Base64.encode(username + ':' + password);
     }
-    $http.delete(API + 'database/' + name).success(function (data) {
+    $http.delete(API + 'database/' + name, {headers: headers}).success(function (data) {
       deferred.resolve(data);
     }).error(function (data) {
       deferred.reject(data);
     })
+    return deferred.promise;
+  }
+
+  resource.connectServer = function (username, password) {
+    let deferred = $q.defer();
+    if (!resource.sso) {
+      $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.Base64.encode(username + ':' + password);
+    }
+    $http.get(API + 'server').success(function (data) {
+      deferred.resolve(data);
+    }).error(function (data) {
+      deferred.reject(data);
+    });
+
     return deferred.promise;
   }
   resource.exportDatabase = function (database) {
@@ -861,11 +884,18 @@ database.factory('ServerApi', ["$http", "$resource", "$q", function ($http, $res
 
   var resource = $resource(API + 'server');
   resource.getServerInfo = function (callback) {
-
-    $http.get(API + 'server').success(function (data) {
-      callback(data);
+    var deferred = $q.defer();
+    $http.get(API + 'server').then(function (data) {
+      if (callback) {
+        callback(data.data);
+      }
+      deferred.resolve(data.data)
+    }).catch(function (data) {
+      deferred.reject(data);
     });
+    return deferred.promise;
   }
+
   resource.killConnection = function (n, callback) {
     $http.post(API + 'connection/kill/' + n).success(function () {
       callback();
