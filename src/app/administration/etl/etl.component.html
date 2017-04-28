@@ -96,13 +96,14 @@
                 <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
                         [attr.data-content]="hints.extractorHint" data-animation="am-fade-and-scale"><b>?</b></button>
               </h3>
-              <div id="addExtractor" class="row" style="text-align: center;">
+              <div class="row" style="text-align: center;">
                 <div class="btn-group">
 
-                  <button class="btn btn-primary btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <button class="btn btn-primary btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                          aria-expanded="false" id="createExtractor">
                     <b>+</b>
                   </button>
-                  <!-- dropdown menu. jdbc is shown only if selected as source -->
+                  <!-- Dropdown menu, jdbc is shown only if selected as source -->
                   <div class="dropdown-menu">
                     <li class="list-group-item list-group-item-info">Extractor Type</li>
 
@@ -120,6 +121,10 @@
                     </a>
                   </div>
                 </div>
+                <br><br><br>
+                <div id="extractorSpace" class="row">
+                  <h5 id="pleaseExtractor" align="center"><b>Please create an extractor</b></h5>
+                </div>
               </div>
             </div>
 
@@ -129,13 +134,13 @@
                 <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
                         [attr.data-content]="hints.transformerHint" data-animation="am-fade-and-scale"><b>?</b></button>
               </h3>
-              <div id="addTransformer" class="row" style="text-align: center;">
+              <div class="row" style="text-align: center;">
                 <div class="btn-group">
 
                   <button class="btn btn-primary btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <b>+</b>
                   </button>
-                  <!-- dropdown menu. -->
+                  <!-- Dropdown menu -->
                   <div class="dropdown-menu">
                     <li class="list-group-item list-group-item-info">Transformer Type</li>
 
@@ -152,6 +157,10 @@
                     <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('vertex')">vertex</button>
                   </div>
                 </div>
+                <br><br><br>
+                <div id="transformerSpace" class="row">
+                  <h5 id="pleaseTransformer" align="center"><b>Please create at least one transformer</b></h5>
+                </div>
               </div>
             </div>
 
@@ -160,13 +169,14 @@
                 <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
                         [attr.data-content]="hints.loaderHint" data-animation="am-fade-and-scale"><b>?</b></button>
               </h3>
-              <div id="addLoader" class="row" style="text-align: center;">
+              <div class="row" style="text-align: center;">
                 <div class="btn-group">
 
-                  <button class="btn btn-primary btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <button class="btn btn-primary btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                          aria-expanded="false" id="createLoader">
                     <b>+</b>
                   </button>
-                  <!-- dropdown menu. -->
+                  <!-- Dropdown menu -->
                   <div class="dropdown-menu">
                     <li class="list-group-item list-group-item-info">Loader Type</li>
 
@@ -174,6 +184,10 @@
                     <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('OrientDB')">OrientDB</button>
                   </div>
                 </div>
+              </div>
+              <br><br>
+              <div id="loaderSpace" class="row">
+                <h5 id="pleaseLoader" align="center"><b>Please create a loader</b></h5>
               </div>
             </div>
           </div>

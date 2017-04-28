@@ -1,6 +1,5 @@
 import {Component} from '@angular/core';
 
-
 import * as $ from "jquery"
 
 import {downgradeComponent} from '@angular/upgrade/static';
@@ -28,7 +27,6 @@ class EtlComponent {
 
   // Different types, used in the multiple choice dialogs
   private sourceTypes;
-  private loaderTypes;
   private URLMethods;
   private predefinedFormats;
   private unresolvedLinkActions;
@@ -160,12 +158,8 @@ class EtlComponent {
 
     }
 
-    // Types for sources, extractors, transformers and loaders
+    // Types
     this.sourceTypes = ["jdbc", "local file", "url"];
-
-    this.loaderTypes = ["debug", "orientdb"];
-
-    // Specific types
     this.URLMethods = ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE"];
     this.predefinedFormats = ["Default", "Excel", "MySQL", "RCF4180", "TDF"];
     this.unresolvedLinkActions = ["NOTHING", "WARNING", "ERROR", "HALT", "SKIP"];
@@ -222,6 +216,7 @@ class EtlComponent {
   readyForExecution() {
     return true;
   }
+
   sourceInit() {
     this.sourceJson = this.jsonPrototypes.get(this.configParams.source);
 
@@ -230,34 +225,56 @@ class EtlComponent {
   extractorInit(type) {
     this.configParams.extractorType = type;
     window.alert("It works! You selected " + this.configParams.extractorType);
+    $("#createExtractor").hide();
+    $("#pleaseExtractor").hide();
+
     $(document).ready(function() {
-      $("#addExtractor").click(function() {
-        var data = {
-          operators: {
-            operator: {
-              top: 20,
-              left: 20,
-              properties: {
-                title: 'Extractor',
-                outputs: {
-                  output_1: {
-                    label: 'Output 1',
-                  },
-                }
+      var data = {
+        operators: {
+          operator: {
+            top: 20,
+            left: 20,
+            properties: {
+              title: 'Extractor',
+              outputs: {
+                output_1: {
+                  label: 'Output 1',
+                },
               }
             }
           }
-        };
+        }
+      };
+        (<any>$('#extractorSpace')).flowchart({
+          data: data
+        });
       });
-    });
   }
 
   transformerInit(type) {
+    this.configParams.transformerType = type;
+    window.alert("It works! You selected " + this.configParams.transformerType);
+    $("#pleaseTransformer").hide();
 
   }
 
   loaderInit(type) {
+    this.configParams.loaderType = type;
+    window.alert("It works! You selected " + this.configParams.loaderType);
+    $("#pleaseLoader").hide();
+    $("#createLoader").hide();
+  }
 
+  deleteExtractor() {
+
+  }
+
+  deleteTransformer() {
+
+  }
+
+  deleteLoader() {
+    
   }
 
 
