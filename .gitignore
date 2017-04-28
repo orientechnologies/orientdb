@@ -27,3 +27,5 @@ tests/src/test/java/com/orientechnologies/orient/test/database/auto/_*.xml
 export/
 
 */.DS_Store
+
+distribution/.orientdb_history
