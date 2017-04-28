@@ -722,6 +722,10 @@ public class OSelectStatementTest {
     checkWrongSyntax("Select from foo LOCK Foo");
   }
 
+  public void testFromAsInputParam() {
+    checkRightSyntax("Select from foo where foo = :from");
+  }
+
 
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());

@@ -1937,6 +1937,8 @@ Token token;
 	    	token = <SKIP2> {jjtThis.paramName = token.image;}
 	    	|
             token = <LIMIT> {jjtThis.paramName = token.image;}
+            |
+            token = <FROM> {jjtThis.paramName = token.image;}
 	    )
 	)
 	{
