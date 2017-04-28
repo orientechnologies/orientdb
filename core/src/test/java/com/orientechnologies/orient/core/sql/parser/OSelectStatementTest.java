@@ -740,6 +740,12 @@ public class OSelectStatementTest {
     Assert.assertFalse(stm.whereClause.toString().contains("LUCENE"));
   }
 
+  @Test
+  public void testFromAsNamedParam() {
+    checkRightSyntax("select from V where fromDate = :from");
+
+  }
+
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());
     OrientSql osql = new OrientSql(is);
