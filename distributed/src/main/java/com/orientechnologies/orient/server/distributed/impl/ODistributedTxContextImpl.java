@@ -116,22 +116,12 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   @Override
   public synchronized void destroy() {
     unlock();
-    undoTasks.clear();
+    clearUndo();
   }
 
-  /**
-   * Releases and re-acquires locks after a while.
-   */
   @Override
-  public synchronized void relock(final long waitTime) throws InterruptedException {
-//    final List<ORID> locked = new ArrayList<ORID>(acquiredLocks);
-
-//    unlock();
-
-    Thread.sleep(waitTime);
-
-//    for (ORID rid : locked)
-//      lock(rid);
+  public synchronized void clearUndo() {
+    undoTasks.clear();
   }
 
   @Override
@@ -160,7 +150,7 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
         fixTask.execute(requestId, ddb.getManager().getServerInstance(), ddb.getManager(), database);
 
       } catch (Exception e) {
-        ODistributedServerLog.error(me, ddb.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+        ODistributedServerLog.debug(me, ddb.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
             "Error on fixing transaction %s db=%s task=%s", e, requestId, ddb.getDatabaseName(), fixTask);
       }
     }

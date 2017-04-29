@@ -35,7 +35,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.DataInput;
@@ -144,7 +143,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     }
 
     if (record == null)
-      throw new ODistributedOperationException("Cannot update record " + rid);
+      throw new ODistributedException("Cannot update record " + rid);
 
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog

@@ -110,13 +110,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
   protected OClusterOwnershipAssignmentStrategy clusterAssignmentStrategy = new ODefaultClusterOwnershipAssignmentStrategy(this);
 
-  protected static final int                               DEPLOY_DB_MAX_RETRIES  = 10;
-  protected              ConcurrentHashMap<String, Member> activeNodes            = new ConcurrentHashMap<String, Member>();
-  protected              Map<String, String>               activeNodesNamesByUuid = new ConcurrentHashMap<String, String>();
-  protected              Map<String, String>               activeNodesUuidByName  = new ConcurrentHashMap<String, String>();
-  protected final        List<String>                      registeredNodeById     = new CopyOnWriteArrayList<String>();
-  protected final        Map<String, Integer>              registeredNodeByName   = new ConcurrentHashMap<String, Integer>();
-  protected              Map<String, Long>                 autoRemovalOfServers   = new ConcurrentHashMap<String, Long>();
+  protected static final int                  DEPLOY_DB_MAX_RETRIES  = 10;
+  protected              Map<String, Member>  activeNodes            = new ConcurrentHashMap<String, Member>();
+  protected              Map<String, String>  activeNodesNamesByUuid = new ConcurrentHashMap<String, String>();
+  protected              Map<String, String>  activeNodesUuidByName  = new ConcurrentHashMap<String, String>();
+  protected final        List<String>         registeredNodeById     = new CopyOnWriteArrayList<String>();
+  protected final        Map<String, Integer> registeredNodeByName   = new ConcurrentHashMap<String, Integer>();
+  protected              Map<String, Long>    autoRemovalOfServers   = new ConcurrentHashMap<String, Long>();
   protected volatile ODistributedMessageServiceImpl messageService;
   protected Date                 startedOn              = new Date();
   protected ORemoteTaskFactory   taskFactory            = new ODefaultRemoteTaskFactory();

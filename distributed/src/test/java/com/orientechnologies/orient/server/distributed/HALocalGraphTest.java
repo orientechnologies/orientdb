@@ -35,7 +35,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
 
   protected final static int SERVERS                 = 3;
   protected static final int CONCURRENCY_LEVEL       = 4;
-  protected static final int TOTAL_CYCLES_PER_THREAD = 10000;
+  protected static final int TOTAL_CYCLES_PER_THREAD = 5000;
 
   protected OrientGraphFactory graphReadFactory;
   protected ExecutorService    executorService;
@@ -48,7 +48,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
 
   private List<Future<?>> ths = new ArrayList<Future<?>>();
   private TimerTask task;
-  private volatile long sleep = 10;
+  private volatile long sleep = 0;
 
   @Test
   public void test() throws Exception {
@@ -100,7 +100,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
                 && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 1 / 4) {
 
               // SLOW DOWN A LITTLE BIT
-              sleep = 30;
+              sleep = 10;
 
               // SHUTDOWN LASt SERVER AT 1/3 OF PROGRESS
               banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));

@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
@@ -71,9 +70,9 @@ public class ODistributedResponseManager {
   private final boolean              waitForLocalNode;
   private       ODistributedResponse localResponse;
   private volatile int receivedResponses = 0;
-  private volatile boolean              receivedCurrentNode;
-  private          ODistributedResponse quorumResponse;
-  private final Set<String> followupToNodes = new HashSet<String>();
+  private volatile boolean receivedCurrentNode;
+  private       ODistributedResponse quorumResponse  = null;
+  private final Set<String>          followupToNodes = new HashSet<String>();
 
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Collection<String> expectedResponses, final Set<String> iNodesConcurInQuorum, final int iTotalExpectedResponses,
@@ -393,7 +392,7 @@ public class ODistributedResponseManager {
 
       if (receivedResponses == 0) {
         if (quorum > 0 && !request.getTask().isIdempotent())
-          throw new ODistributedOperationException(
+          throw new ODistributedException(
               "No response received from any of nodes " + getExpectedNodes() + " for request " + request + " after " + (
                   (System.nanoTime() - sentOn) / 1000000) + "ms");
 
@@ -615,6 +614,10 @@ public class ODistributedResponseManager {
     return respondedNodes;
   }
 
+  public ODistributedRequest getRequest() {
+    return request;
+  }
+
   /**
    * Returns all the responses in conflict.
    */
@@ -717,11 +720,20 @@ public class ODistributedResponseManager {
             ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
         if (responseGroups.get(0).size() + missingNodes.size() >= quorum) {
-          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "%d server(s) (%s) became unreachable during the request, decreasing the quorum (%d) and accept the request: %s",
-              missingNodes.size(), missingNodes, quorum, request);
-          setQuorumResponse(responseGroups.get(0).get(0));
-          return true;
+          final ODistributedResponse response = responseGroups.get(0).get(0);
+          if (response != null) {
+            if (response.getPayload() instanceof Throwable) {
+              ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+                  "%d server(s) (%s) became unreachable during the request, even decreasing the quorum (%d) the response cannot be accepted because is an error: %s",
+                  missingNodes.size(), missingNodes, quorum, request);
+            } else {
+              ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+                  "%d server(s) (%s) became unreachable during the request, decreasing the quorum (%d) and accept the request: %s",
+                  missingNodes.size(), missingNodes, quorum, request);
+              setQuorumResponse(responseGroups.get(0).get(0));
+              return true;
+            }
+          }
         }
       }
 
@@ -732,7 +744,9 @@ public class ODistributedResponseManager {
           if (response.getValue() != NO_RESPONSE && nodesConcurInQuorum.contains(response.getKey())
               && ++responsesForQuorum >= quorum) {
             // QUORUM REACHED
-            setQuorumResponse((ODistributedResponse) response.getValue());
+            ODistributedResponse resp = (ODistributedResponse) response.getValue();
+            if (resp != null && !(resp.getPayload() instanceof Throwable))
+              setQuorumResponse(resp);
             return true;
           }
         }
@@ -823,7 +837,7 @@ public class ODistributedResponseManager {
         }
       }
 
-      return new ODistributedOperationException(composeConflictMessage());
+      return new ODistributedException(composeConflictMessage());
     }
   }
 

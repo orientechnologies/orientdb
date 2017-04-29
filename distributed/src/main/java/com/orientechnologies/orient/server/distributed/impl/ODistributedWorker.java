@@ -79,14 +79,9 @@ public class ODistributedWorker extends Thread {
   }
 
   public void processRequest(final ODistributedRequest request) {
-    try {
-      localQueue.put(request);
-    } catch (InterruptedException e) {
-      ODistributedServerLog.warn(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-          "Received interruption signal, closing distributed worker thread (worker=%d)", id);
-
-      shutdown();
-    }
+    if (!localQueue.offer(request))
+      throw new ODistributedException(
+          "Local queue for database '" + this.databaseName + "' is full, cannot elaborate more requests");
   }
 
   @Override
@@ -232,7 +227,7 @@ public class ODistributedWorker extends Thread {
   protected ODistributedRequest readRequest() throws InterruptedException {
     // GET FROM DISTRIBUTED QUEUE. IF EMPTY WAIT FOR A MESSAGE
     ODistributedRequest req = nextMessage();
-    if( req == null )
+    if (req == null)
       return null;
 
     if (manager.isOffline())

@@ -28,6 +28,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -264,7 +265,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
         if (resultMgmt == OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT.MERGE) {
           if (!exec.isIdempotent() && dbCfg.isSharded())
-            throw new ODistributedOperationException("Cannot distribute the command '" + iCommand.getText()
+            throw new ODistributedException("Cannot distribute the command '" + iCommand.getText()
                 + "' because it is not idempotent and a map-reduce has been requested");
 
           final Map<String, Collection<String>> nodeClusterMap = dbCfg
@@ -1400,9 +1401,58 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             return wrapped.commit(iTx, callback);
           }
         });
-      } else
+      } else {
         // EXECUTE DISTRIBUTED TX
-        return txManager.commit((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get(), iTx, callback, eventListener);
+        int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
+        if (maxAutoRetry <= 0)
+          maxAutoRetry = 1;
+
+        int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
+        if (autoRetryDelay <= 0)
+          autoRetryDelay = 1;
+
+        Throwable lastException = null;
+        for (int retry = 1; retry <= maxAutoRetry; ++retry) {
+
+          try {
+
+            return txManager.commit((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get(), iTx, callback, eventListener);
+
+          } catch (Throwable e) {
+            lastException = e;
+
+            if (retry >= maxAutoRetry) {
+              // REACHED MAX RETRIES
+              ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                  "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
+              break;
+            }
+
+            // SKIP RETRY IN CASE OF OConcurrentModificationException BECAUSE IT NEEDS A RETRY AT APPLICATION LEVEL
+            if (!(e instanceof OConcurrentModificationException) && (e instanceof ONeedRetryException
+                || e instanceof ORecordNotFoundException)) {
+              // RETRY
+              final long wait = autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay);
+
+              ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                  "Distributed transaction cannot be completed, wait %dms and retry again (%d/%d)", wait, retry, maxAutoRetry);
+
+              Thread.sleep(wait);
+
+              Orient.instance().getProfiler().updateCounter("db." + getName() + ".distributedTxRetries",
+                  "Number of retries executed in distributed transaction", +1, "db.*.distributedTxRetries");
+
+            } else
+              // SKIP RETRY LOOP
+              break;
+          }
+        }
+
+        if (lastException instanceof RuntimeException)
+          throw (RuntimeException) lastException;
+        else
+          throw OException.wrapException(new ODistributedException("Error on executing distributed transaction"), lastException);
+      }
 
     } catch (OValidationException e) {
       throw e;

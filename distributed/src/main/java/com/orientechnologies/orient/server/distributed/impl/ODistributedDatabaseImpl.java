@@ -451,8 +451,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       // CREATE THE RESPONSE MANAGER
       final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, iNodes,
           nodesConcurToTheQuorum, expectedResponses, quorum, waitLocalNode,
-          adjustTimeoutWithLatency(iNodes, task.getSynchronousTimeout(expectedResponses)),
-          adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes)), groupByResponse, endCallback);
+          adjustTimeoutWithLatency(iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
+          adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()), groupByResponse, endCallback);
 
       if (localResult != null && currentResponseMgr.setLocalResult(localNodeName, localResult)) {
         // COLLECT LOCAL RESULT
@@ -539,7 +539,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  private long adjustTimeoutWithLatency(final Collection<String> iNodes, final long timeout) {
+  private long adjustTimeoutWithLatency(final Collection<String> iNodes, final long timeout,
+      final ODistributedRequestId requestId) {
     int delta = 0;
     if (iNodes != null)
       for (String n : iNodes)
@@ -548,7 +549,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     if (delta > 1000)
       ODistributedServerLog.debug(this, localNodeName, iNodes.toString(), DIRECTION.OUT,
-          "Adjusted timeouts by adding +%dms because the average latency recorded against servers %s", delta, iNodes);
+          "Adjusted timeouts by adding +%dms because the average latency recorded against servers %s (reqId=%s)", delta, iNodes,
+          requestId);
 
     return timeout + delta;
   }

@@ -102,8 +102,10 @@ public abstract class OAbstract2pcTask extends OAbstractReplicatedTask {
       final Object goodResult = ((OTxTaskResult) iGoodResponse).results.get(i);
 
       final ORemoteTask undoTask = t.getFixTask(iRequest, t, badResult, goodResult, executorNodeName, dManager);
-      if (undoTask != null)
-        fixTask.addFixTask(undoTask);
+      if (undoTask == null)
+        return null;
+
+      fixTask.addFixTask(undoTask);
     }
 
     return fixTask;

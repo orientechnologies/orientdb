@@ -52,7 +52,7 @@ import static org.junit.Assert.*;
  * - check consistency
  *
  * @author Gabriele Ponzi
- * @email  <gabriele.ponzi--at--gmail.com>
+ * @email <gabriele.ponzi--at--gmail.com>
  */
 
 public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
@@ -67,7 +67,8 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
   @Override
   public void executeTest() throws Exception {
 
-    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(SERVERS-1))).open("admin", "admin");
+    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(SERVERS - 1)))
+        .open("admin", "admin");
 
     try {
 
@@ -108,11 +109,11 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
 
   }
 
-  private class TestQuorum2 implements Callable<Void>  {
+  private class TestQuorum2 implements Callable<Void> {
 
-    private final String    databaseUrlServer3;
-    private List<ServerRun> serverInstances;
-    private List<ServerRun> executeWritesOnServers;
+    private final String          databaseUrlServer3;
+    private       List<ServerRun> serverInstances;
+    private       List<ServerRun> executeWritesOnServers;
     private int initialCount = 0;
 
     public TestQuorum2(List<ServerRun> serverInstances) {
@@ -139,7 +140,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
 
         // network fault on server3
         System.out.println("Network fault on server3.\n");
-        simulateServerFault(this.serverInstances.get(SERVERS - 1),"net-fault");
+        simulateServerFault(this.serverInstances.get(SERVERS - 1), "net-fault");
         assertFalse(serverInstance.get(2).isActive());
 
         // trying write on server3, writes must be served from the first available node
@@ -177,7 +178,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         e.printStackTrace();
         fail(e.getMessage());
       } finally {
-        if(dbServer3 != null) {
+        if (dbServer3 != null) {
           ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
           dbServer3.close();
           ODatabaseRecordThreadLocal.INSTANCE.set(null);
@@ -188,12 +189,12 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
     }
   }
 
-  private class TestQuorum3 implements Callable<Void>  {
+  private class TestQuorum3 implements Callable<Void> {
 
-    private final String databaseUrl1;
-    private final String databaseUrl2;
-    private List<ServerRun> serverInstances;
-    private List<ServerRun> executeWritesOnServers;
+    private final String          databaseUrl1;
+    private final String          databaseUrl2;
+    private       List<ServerRun> serverInstances;
+    private       List<ServerRun> executeWritesOnServers;
     private int initialCount = 0;
 
     public TestQuorum3(List<ServerRun> serverInstances) {
@@ -204,7 +205,6 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
       this.databaseUrl1 = getPlocalDatabaseURL(serverInstances.get(0));
       this.databaseUrl2 = getPlocalDatabaseURL(serverInstances.get(1));
     }
-
 
     @Override
     public Void call() throws Exception {
@@ -243,8 +243,11 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
 
         // network fault on server3
         System.out.println("Network fault on server3.\n");
-        simulateServerFault(this.serverInstances.get(SERVERS - 1),"net-fault");
+        simulateServerFault(this.serverInstances.get(SERVERS - 1), "net-fault");
         assertFalse(serverInstance.get(2).isActive());
+
+        waitForDatabaseIsOffline(serverInstances.get(SERVERS - 1).getServerInstance().getDistributedManager().getLocalNodeName(),
+            getDatabaseName(), 10000);
 
         // single write
         System.out.print("Insert operation in the database...");
@@ -275,6 +278,9 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         System.out.println("Server 3 restarted.");
         assertTrue(serverInstance.get(2).isActive());
 
+        waitForDatabaseIsOnline(0, serverInstances.get(SERVERS - 1).getServerInstance().getDistributedManager().getLocalNodeName(),
+            getDatabaseName(), 10000);
+
         // writes on server1, server2 and server3
         executeMultipleWrites(this.executeWritesOnServers, "plocal");
 
@@ -290,7 +296,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         e.printStackTrace();
         fail(e.getMessage());
       } finally {
-        if(dbServer1 != null) {
+        if (dbServer1 != null) {
           ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
           dbServer1.close();
           ODatabaseRecordThreadLocal.INSTANCE.set(null);

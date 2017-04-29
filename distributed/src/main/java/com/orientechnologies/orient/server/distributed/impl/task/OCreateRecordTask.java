@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -28,6 +29,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
@@ -190,13 +192,18 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ORemoteTask getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse,
       final Object iGoodResponse, final String executorNode, final ODistributedServerManager dManager) {
-    if (iBadResponse == null || iBadResponse instanceof Throwable)
+    if (iBadResponse == null || (iBadResponse instanceof Throwable && !(iBadResponse instanceof ONeedRetryException)))
       return null;
 
-    final OPlaceholder badResult = (OPlaceholder) iBadResponse;
+    ORemoteTask result = null;
+
     final OPlaceholder goodResult = (OPlaceholder) iGoodResponse;
 
-    ORemoteTask result = null;
+    if (iBadResponse instanceof ONeedRetryException)
+      return new OCreateRecordTask((ORecordId) goodResult.getIdentity(), content, ORecordVersionHelper.setRollbackMode(version),
+          recordType);
+
+    final OPlaceholder badResult = (OPlaceholder) iBadResponse;
 
     if (!badResult.equals(goodResult)) {
       // CREATE RECORD FAILED TO HAVE THE SAME RIDS. FORCE REALIGNING OF DATA CLUSTERS

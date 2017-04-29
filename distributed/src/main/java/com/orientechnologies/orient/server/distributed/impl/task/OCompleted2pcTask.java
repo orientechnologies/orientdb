@@ -198,4 +198,12 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
   public List<ORemoteTask> getFixTasks() {
     return fixTasks;
   }
+
+  public boolean getSuccess() {
+    return success;
+  }
+
+  public ODistributedRequestId getRequestId() {
+    return requestId;
+  }
 }

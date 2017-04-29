@@ -138,8 +138,14 @@ public class OTxTask extends OAbstract2pcTask {
 
       database.rollback();
 
-      // AVOID TO UNLOCK AND WAIT FOR THE COORDINATOR TO DO THAT
-      reqContext.unlock();
+      // KEEP THE LOCKS WAITING FOR THE FINAL MSG FROM THE COORDINATOR
+
+//      // REMOVE THE CONTEXT
+//      ddb.popTxContext(requestId);
+//      reqContext.destroy();
+
+      // ALREADY ROLLED BACK (ON STORAGE), REMOVE UNDO TASKS
+      reqContext.clearUndo();
 
       if (!(e instanceof ONeedRetryException || e instanceof OTransactionException || e instanceof ORecordDuplicatedException
           || e instanceof ORecordNotFoundException))

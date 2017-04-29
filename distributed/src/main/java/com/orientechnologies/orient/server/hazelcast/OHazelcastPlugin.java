@@ -363,6 +363,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           repairActiveServers();
       }
 
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Registered local server with nodeId=%d", nodeId);
+
       registeredNodesFromCluster.field("ids", registeredNodeById, OType.EMBEDDEDLIST);
       registeredNodesFromCluster.field("names", registeredNodeByName, OType.EMBEDDEDMAP);
 
@@ -1354,7 +1356,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   public boolean removeNodeFromConfiguration(final String nodeLeftName, final String databaseName,
       final boolean removeOnlyDynamicServers, final boolean statusOffline) {
-    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+    ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
         "Removing server '%s' from database configuration '%s' (removeOnlyDynamicServers=%s)...", nodeLeftName, databaseName,
         removeOnlyDynamicServers);
 

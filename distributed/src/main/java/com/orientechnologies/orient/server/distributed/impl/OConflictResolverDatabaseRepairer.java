@@ -222,9 +222,6 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
     final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);
 
-    final int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
-    final int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
-
     final ODistributedRequestId requestId = new ODistributedRequestId(dManager.getLocalNodeId(),
         dManager.getNextMessageIdCounter());
 
@@ -252,9 +249,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
       rids.add(new ORecordId(clusterId, -1));
 
       // ACQUIRE LOCKS ON LOCAL SERVER FIRST
-      ODistributedTransactionManager
-          .acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, rids, maxAutoRetry, autoRetryDelay, null, ctx,
-              2000);
+      ODistributedTransactionManager.acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, rids, null, ctx, 2000);
 
       try {
 
@@ -401,9 +396,6 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
   private boolean repairRecords(final ODatabaseDocumentInternal db, final List<ORecordId> rids) {
     final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);
 
-    final int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
-    final int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
-
     final ODistributedRequestId requestId = new ODistributedRequestId(dManager.getLocalNodeId(),
         dManager.getNextMessageIdCounter());
 
@@ -413,9 +405,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
     try {
       // ACQUIRE LOCKS WITH A LARGER TIMEOUT
-      ODistributedTransactionManager
-          .acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, rids, maxAutoRetry, autoRetryDelay, null, ctx,
-              2000);
+      ODistributedTransactionManager.acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, rids, null, ctx, 2000);
       try {
 
         final Set<String> clusterNames = new HashSet();
@@ -533,7 +523,8 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
                 if (winner == NOT_FOUND) {
                   // NO WINNER, SKIP IT
                   ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                      "Auto repair cannot find a winner for record %s and the following groups of contents: %s", rid, groupedResult);
+                      "Auto repair cannot find a winner for record %s and the following groups of contents: %s", rid,
+                      groupedResult);
                   continue;
                 }
 
