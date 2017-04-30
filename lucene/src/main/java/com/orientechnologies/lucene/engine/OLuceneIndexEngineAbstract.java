@@ -147,7 +147,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       @Override
       public void run() {
         if (!closed.get()) {
-          commit();
+          flush();
         }
       }
     };
@@ -173,9 +173,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     }
   }
 
-  protected void commit() {
-    flush();
-  }
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
 

@@ -23,15 +23,13 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -68,17 +66,12 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
     //Rome
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
-    doc.field("tags", new ArrayList<String>() {
-      {
-        add("Beautiful");
-        add("Touristic");
-        add("Sunny");
-      }
-    });
+    doc.field("tags", Arrays.asList("Beautiful", "Touristic", "Sunny"));
 
     db.save(doc);
 
-    OIndex tagsIndex = schema.getClass("City").getClassIndex("City.tags");
+    OIndex tagsIndex = schema.getClass("City")
+        .getClassIndex("City.tags");
     Collection<?> coll = (Collection<?>) tagsIndex.get("Sunny");
     assertThat(coll).hasSize(1);
 
@@ -89,13 +82,7 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
     //London
     doc = new ODocument("City");
     doc.field("name", "London");
-    doc.field("tags", new ArrayList<String>() {
-      {
-        add("Beautiful");
-        add("Touristic");
-        add("Sunny");
-      }
-    });
+    doc.field("tags", Arrays.asList("Beautiful", "Touristic", "Sunny"));
     db.save(doc);
 
     coll = (Collection<?>) tagsIndex.get("Sunny");
@@ -117,6 +104,10 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
     coll = (Collection<?>) tagsIndex.get("Sunny");
     assertThat(coll).hasSize(1);
 
+    OResultSet query = db.query("select from City where search_class('Beautiful') =true ");
+
+    assertThat(query).hasSize(2);
+
   }
 
   @Test
@@ -127,13 +118,7 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
 
     ODocument doc = new ODocument("Person");
     doc.field("name", "Enrico");
-    doc.field("tags", new ArrayList<String>() {
-      {
-        add("Funny");
-        add("Tall");
-        add("Geek");
-      }
-    });
+    doc.field("tags", Arrays.asList("Funny", "Tall", "Geek"));
 
     db.save(doc);
     OIndex idx = schema.getClass("Person").getClassIndex("Person.name_tags");
@@ -143,12 +128,8 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
 
     doc = new ODocument("Person");
     doc.field("name", "Jared");
-    doc.field("tags", new ArrayList<String>() {
-      {
-        add("Funny");
-        add("Tall");
-      }
-    });
+    doc.field("tags", Arrays.asList("Funny", "Tall"));
+
     db.save(doc);
 
     coll = (Collection<?>) idx.get("Jared");
@@ -172,26 +153,25 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
 
     assertThat(query).hasSize(1);
 
-    query = db.query(new OSQLSynchQuery<Object>("select from (select from Person search_class('name:Enrico')=true)"));
+    query = db.query("select from (select from Person search_class('name:Enrico')=true)");
 
     assertThat(query).hasSize(1);
 
-    query = db.query(new OSQLSynchQuery<Object>("select from Person where search_class('Jared')=true"));
+    query = db.query("select from Person where search_class('Jared')=true");
 
     assertThat(query).hasSize(1);
 
-    query = db.query(new OSQLSynchQuery<Object>("select from Person where search_class('Funny') =true"));
+    query = db.query("select from Person where search_class('Funny') =true");
 
     assertThat(query).hasSize(1);
 
-    query = db.query(new OSQLSynchQuery<Object>("select from Person where search_class('Geek')=true"));
+    query = db.query("select from Person where search_class('Geek')=true");
 
     assertThat(query).hasSize(2);
 
-    query = db.query(new OSQLSynchQuery<Object>("select from Person where search_class('(name:Enrico AND tags:Geek) ')=true"));
+    query = db.query("select from Person where search_class('(name:Enrico AND tags:Geek) ')=true");
 
     assertThat(query).hasSize(1);
   }
-
 
 }

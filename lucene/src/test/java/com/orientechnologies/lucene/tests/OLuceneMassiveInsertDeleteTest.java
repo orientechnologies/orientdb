@@ -22,45 +22,36 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
 
 /**
  * Created by enricorisa on 23/09/14.
  */
 public class OLuceneMassiveInsertDeleteTest extends OLuceneBaseTest {
 
-
   @Before
   public void init() {
     OSchema schema = db.getMetadata().getSchema();
-    OClass v = schema.getClass("V");
-    OClass song = schema.createClass("City");
-    song.setSuperClass(v);
+    OClass song = db.createVertexClass("City");
     song.createProperty("name", OType.STRING);
 
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE");
 
   }
 
   @Test
   public void loadCloseDelete() {
 
-    ODocument city = new ODocument("City");
     int size = 1000;
     for (int i = 0; i < size; i++) {
-      city.field("name", "Rome " + i);
+      OVertex city = db.newVertex("City");
+      city.setProperty("name", "Rome " + i);
       db.save(city);
-      city.reset();
-      city.setClassName("City");
     }
     String query = "select * from City where search_class('name:Rome')=true";
     OResultSet docs = db.query(query);

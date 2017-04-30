@@ -21,6 +21,8 @@ package com.orientechnologies.lucene.builder;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -37,7 +39,14 @@ import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID
  */
 public class OLuceneDocumentBuilder {
 
-  public Document newBuild(OIndexDefinition indexDefinition, OIdentifiable identifiable) {
+  public Document newBuild(OIndexDefinition indexDefinition, Object key, OIdentifiable oid) {
+
+    if (oid != null) {
+      ORecord record = oid.getRecord();
+
+      OElement element = record.load();
+
+    }
 
     return null;
   }
@@ -56,6 +65,7 @@ public class OLuceneDocumentBuilder {
       doc.add(createField("_CLASS", definition.getClassName(), Field.Store.YES));
 
     }
+
     List<Object> formattedKey = formatKeys(definition, key);
 
     int i = 0;

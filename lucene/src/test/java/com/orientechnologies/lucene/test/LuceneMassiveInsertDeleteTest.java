@@ -54,15 +54,13 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
   @Test
   public void loadCloseDelete() {
 
-    ODocument city = new ODocument("City");
     int size = 1000;
     for (int i = 0; i < size; i++) {
+      ODocument city = new ODocument("City");
       city.field("name", "Rome " + i);
       db.save(city);
-      city.reset();
-      city.setClassName("City");
     }
-    String query = "select * from City where [name] LUCENE \"(name:Rome)\"";
+    String query = "select * from City where name LUCENE 'name:Rome'";
     List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(docs.size(), size);
 

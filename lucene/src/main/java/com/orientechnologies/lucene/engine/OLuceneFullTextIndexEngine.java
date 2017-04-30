@@ -113,7 +113,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public boolean remove(Object key) {
 
-
     try {
       Query query = new QueryParser("", queryAnalyzer()).parse((String) key);
       deleteDocument(query);
@@ -132,16 +131,13 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public void put(Object key, Object value) {
+
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
+
 
     for (OIdentifiable oIdentifiable : container) {
 
-      Document doc;
-      if (index.isAutomatic()) {
-        doc = buildDocument(key, oIdentifiable);
-      } else {
-        doc = putInManualindex(key, oIdentifiable);
-      }
+      Document doc = buildDocument(key, oIdentifiable);
 
       if (facetManager.supportsFacets()) {
         try {
@@ -156,7 +152,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       }
 
       if (!index.isAutomatic()) {
-        commit();
+        flush();
       }
     }
   }
@@ -208,10 +204,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     return null;
   }
 
-
-
-
-
   @Override
   public boolean hasRangeQuerySupport() {
     return false;
@@ -220,7 +212,9 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public Document buildDocument(Object key, OIdentifiable value) {
     if (index.isAutomatic()) {
-    return builder.build(index, key, value, collectionFields, metadata);
+//      builder.newBuild(index, key, value);
+
+      return builder.build(index, key, value, collectionFields, metadata);
     } else {
       return putInManualindex(key, value);
     }
@@ -266,7 +260,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Object getInTx(Object key, OLuceneTxChanges changes) {
-
     try {
       Query q = queryBuilder.query(index, key, queryAnalyzer());
       OCommandContext context = null;

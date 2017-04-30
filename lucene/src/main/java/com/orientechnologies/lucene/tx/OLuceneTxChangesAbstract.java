@@ -62,13 +62,8 @@ public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
     try {
       IndexSearcher indexSearcher = new IndexSearcher(DirectoryReader.open(deletedIdx, true, true));
 
-      //      if (filter != null) {
-      //        TopDocs search = indexSearcher.search(query, filter, Integer.MAX_VALUE);
-      //        return search.totalHits;
-      //      } else {
       TopDocs search = indexSearcher.search(query, Integer.MAX_VALUE);
       return search.totalHits;
-      //      }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error during searcher instantiation", e);
     }

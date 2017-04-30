@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -84,28 +83,6 @@ public abstract class OLuceneBaseTest {
     pool.close();
     orient.drop(name.getMethodName());
     orient.close();
-  }
-
-  protected ODatabaseDocumentTx dropOrCreate(String url, boolean drop) {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    if (db.exists()) {
-      db.open("admin", "admin");
-      if (drop) {
-        // DROP AND RE-CREATE IT
-        db.drop();
-        db = new ODatabaseDocumentTx(url);
-        db.create();
-      }
-    } else {
-      // CREATE IT
-      db = new ODatabaseDocumentTx(url);
-      db.create();
-
-    }
-
-    db.activateOnCurrentThread();
-
-    return db;
   }
 
   protected String getScriptFromStream(InputStream in) {

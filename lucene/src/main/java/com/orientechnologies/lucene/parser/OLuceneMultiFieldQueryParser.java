@@ -1,8 +1,8 @@
 package com.orientechnologies.lucene.parser;
 
+import com.orientechnologies.lucene.builder.OLuceneDateTools;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.DoublePoint;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.LongPoint;
@@ -78,9 +78,10 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
       case DATE:
       case DATETIME:
         try {
-          return Optional.of(LongPoint
-              .newRangeQuery(field, Math.addExact(DateTools.stringToTime(part1), start),
-                  Math.addExact(DateTools.stringToTime(part2), end)));
+          return Optional.of(LongPoint.newRangeQuery(field,
+              Math.addExact(OLuceneDateTools.stringToTime(part1), start),
+              Math.addExact(OLuceneDateTools.stringToTime(part2), end)));
+
         } catch (java.text.ParseException e) {
           throw new ParseException(e.getMessage());
         }

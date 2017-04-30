@@ -20,6 +20,7 @@ import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.util.ODateHelper;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.Term;
@@ -51,7 +52,8 @@ public class OLuceneIndexType {
       return new IntPoint(fieldName, number.intValue());
 
     } else if (value instanceof Date) {
-      return new LongPoint(fieldName, ((Date) value).getTime());
+      Date date = (Date) value;
+      return new LongPoint(fieldName, date.getTime());
     }
 
     if (fieldName.equalsIgnoreCase(OLuceneIndexEngineAbstract.RID)) {

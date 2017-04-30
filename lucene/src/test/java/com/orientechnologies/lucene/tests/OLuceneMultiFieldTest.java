@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -34,7 +35,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Created by enricorisa on 19/09/14.
  */
 public class OLuceneMultiFieldTest extends OLuceneBaseTest {
-
 
   @Before
   public void init() {
@@ -99,6 +99,7 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
   }
 
   @Test
+  @Ignore
   public void testSelectOnIndexWithIgnoreNullValuesToFalse() {
     //#5579
     String script = "create class Item;\n"
@@ -106,6 +107,7 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
         + "create property Item.summary string;\n"
         + "create property Item.content string;\n"
         + "create index Item.fulltext on Item(title, summary, content) FULLTEXT ENGINE LUCENE METADATA {'ignoreNullValues':false};\n"
+        + "insert into Item set title = 'wrong', content = 'not me please';\n"
         + "insert into Item set title = 'test', content = 'this is a test';\n";
 
     db.execute("sql", script);
@@ -120,5 +122,17 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
 
     assertThat(docs).hasSize(1);
 
+    docs = db.query("select * from Item where search_class('title:test')=true");
+
+    assertThat(docs).hasSize(1);
+
+    //index
+    docs = db.query(
+        " SELECT expand(rid) FROM index:Item.fulltext where key = 'title:test'");
+
+    System.out.println(docs.getExecutionPlan().get().prettyPrint(1,1));
+    assertThat(docs).hasSize(1);
+
   }
+
 }
