@@ -20,11 +20,11 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.tinkerpop.blueprints.CloseableIterable;
-import com.tinkerpop.blueprints.Element;
-
 import java.util.Collections;
 import java.util.Iterator;
+
+import com.tinkerpop.blueprints.CloseableIterable;
+import com.tinkerpop.blueprints.Element;
 
 /**
  * @author Marko A. Rodriguez (http://markorodriguez.com)
@@ -50,5 +50,4 @@ public class OrientElementIterable<T extends Element> implements CloseableIterab
   public void close() {
 
   }
-
 }
