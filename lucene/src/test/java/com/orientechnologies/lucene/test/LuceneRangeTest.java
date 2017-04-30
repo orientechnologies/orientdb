@@ -97,12 +97,12 @@ public class LuceneRangeTest extends BaseLuceneTest {
     String today = DateTools.timeToString(System.currentTimeMillis(), DateTools.Resolution.MINUTE);
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
-    //anme and age range
-    Collection<ODocument> results = db.command(
-        new OCommandSQL("SELECT * FROM Person WHERE [name,surname,date,age] LUCENE 'name:luke  age:[5 TO 6]'"))
+    //name and age range
+    Collection<ODocument> results = db
+        .command(new OCommandSQL("SELECT * FROM Person WHERE [name,surname,date,age] LUCENE 'age:[5 TO 6] name:robert  '"))
         .execute();
 
-    assertThat(results).hasSize(2);
+    assertThat(results).hasSize(3);
 
     //date range
     results = db.command(

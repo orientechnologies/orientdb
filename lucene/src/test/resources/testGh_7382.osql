@@ -1,0 +1,29 @@
+ALTER DATABASE Timezone  'GMT';
+
+create class class_7382  IF NOT EXISTS;
+
+create property class_7382.server STRING;
+create property class_7382.date DATETIME;
+
+create index class_7382_multi on class_7382(server,date) FULLTEXT ENGINE LUCENE;
+
+insert into class_7382 content  {  "server": "206012221037803" ,  "date": "2017-03-12 00:00:00"};
+insert into class_7382 content  {  "server": "206011901913543" ,  "date": "2017-03-12 00:00:11"};
+insert into class_7382 content  {  "server": "206012223242132" ,  "date": "2017-03-12 00:00:33"};
+insert into class_7382 content  {  "server": "206012226886432" ,  "date": "2017-03-12 00:00:03"};
+insert into class_7382 content  {  "server": "206012221582810" ,  "date": "2017-03-12 00:00:09"};
+insert into class_7382 content  {  "server": "206012226875414" ,  "date": "2017-03-12 00:00:30"};
+insert into class_7382 content  {  "server": "206012228265114" ,  "date": "2017-03-12 00:00:02"};
+insert into class_7382 content  {  "server": "206012224194939" ,  "date": "2017-03-12 00:00:08"};
+insert into class_7382 content  {  "server": "206012223503344" ,  "date": "2017-03-12 00:00:28"};
+insert into class_7382 content  {  "server": "206012223214907" ,  "date": "2017-03-12 00:00:26"};
+insert into class_7382 content  {  "server": "206012225266182" ,  "date": "2017-03-12 00:00:47"};
+insert into class_7382 content  {  "server": "206012220197487" ,  "date": "2017-03-12 00:00:50"};
+insert into class_7382 content  {  "server": "206012225226237" ,  "date": "2017-03-12 00:00:24"};
+insert into class_7382 content  {  "server": "206012227484197" ,  "date": "2017-03-12 00:00:48"};
+insert into class_7382 content  {  "server": "206012223240955" ,  "date": "2017-03-12 00:00:17"};
+insert into class_7382 content  {  "server": "206012224786261" ,  "date": "2017-03-12 00:00:44"};
+insert into class_7382 content  {  "server": "206012223535134" ,  "date": "2017-03-12 00:00:20"};
+insert into class_7382 content  {  "server": "206012226314002" ,  "date": "2017-03-12 00:00:40"};
+insert into class_7382 content  {  "server": "206012216784882" ,  "date": "2017-03-12 00:00:14"};
+insert into class_7382 content  {  "server": "206012225213922" ,  "date": "2017-03-12 00:00:35"};

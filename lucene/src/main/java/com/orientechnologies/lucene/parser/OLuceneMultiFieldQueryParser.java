@@ -1,8 +1,8 @@
 package com.orientechnologies.lucene.parser;
 
+import com.orientechnologies.lucene.builder.OLuceneDateTools;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.DateTools;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.NumericRangeQuery;
@@ -64,18 +64,27 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
     if (types.containsKey(field)) {
       switch (types.get(field)) {
       case LONG:
-        return NumericRangeQuery.newLongRange(field, Long.parseLong(part1), Long.parseLong(part2),
+        return NumericRangeQuery.newLongRange(field,
+            Long.parseLong(part1),
+            Long.parseLong(part2),
             startInclusive, endInclusive);
       case INTEGER:
-        return NumericRangeQuery.newIntRange(field, Integer.parseInt(part1), Integer.parseInt(part2),
+        return NumericRangeQuery.newIntRange(field,
+            Integer.parseInt(part1),
+            Integer.parseInt(part2),
             startInclusive, endInclusive);
       case DOUBLE:
-        return NumericRangeQuery.newDoubleRange(field, Double.parseDouble(part1), Double.parseDouble(part2),
+        return NumericRangeQuery.newDoubleRange(field,
+            Double.parseDouble(part1),
+            Double.parseDouble(part2),
             startInclusive, endInclusive);
       case DATE:
       case DATETIME:
         try {
-          return NumericRangeQuery.newLongRange(field, DateTools.stringToTime(part1), DateTools.stringToTime(part2),
+
+          return NumericRangeQuery.newLongRange(field,
+              OLuceneDateTools.stringToTime(part1),
+              OLuceneDateTools.stringToTime(part2),
               startInclusive, endInclusive);
         } catch (java.text.ParseException e) {
           throw new ParseException(e.getMessage());
