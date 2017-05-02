@@ -42,9 +42,7 @@ import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import com.tinkerpop.blueprints.impls.orient.*;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -2203,6 +2201,26 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountHashNotUniqueTwoIndex");
     Assert.assertEquals(index.getKeySize(), 1);
     Assert.assertEquals(index.getSize(), 2);
+  }
+
+  @Test
+  public void testParamsOrder() {
+
+    OrientBaseGraph graph = new OrientGraphNoTx("memory:IndexTest_testParamsOrder", "admin", "admin");
+
+    graph.command(new OCommandSQL("CREATE CLASS Task extends V")).execute();
+    graph.command(new OCommandSQL("CREATE PROPERTY Task.projectId STRING (MANDATORY TRUE, NOTNULL, MAX 20)")).execute();
+    graph.command(new OCommandSQL("CREATE PROPERTY Task.seq SHORT ( MANDATORY TRUE, NOTNULL, MIN 0)")).execute();
+    graph.command(new OCommandSQL("CREATE INDEX TaskPK ON Task (projectId, seq) UNIQUE")).execute();
+
+    graph.command(new OCommandSQL("INSERT INTO Task (projectId, seq) values ( 'foo', 2)")).execute();
+    graph.command(new OCommandSQL("INSERT INTO Task (projectId, seq) values ( 'bar', 3)")).execute();
+    Iterable<Vertex> x = graph.getVertices("Task", new String[] { "seq", "projectId" }, new Object[] { (short) 2, "foo" });
+    Iterator<Vertex> iter = x.iterator();
+    Assert.assertTrue(iter.hasNext());
+    iter.next();
+    Assert.assertFalse(iter.hasNext());
+    graph.drop();
   }
 
   private static void checkIndexKeys(OrientGraph graph, String indexName) {
