@@ -4,8 +4,8 @@ node("master") {
     lock(resource: "${env.BRANCH_NAME}", inversePrecedence: true) {
         milestone()
         def mvnHome = tool 'mvn'
-        def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8"
-        def mvnJdk7Image = "orientdb/jenkins-slave-zulu-jdk-7"
+        def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-7"
+        def mvnJdk7Image = "orientdb/mvn-gradle-zulu-jdk-7"
 
         stage('Source checkout') {
 
@@ -67,15 +67,11 @@ node("master") {
             }
 
 
-            if (currentBuild.previousBuild == null || currentBuild.previousBuild.result != currentBuild.result) {
-                slackSend(color: '#00FF00', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-            }
+                slackSend( color: '#00FF00', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
 
         } catch (e) {
             currentBuild.result = 'FAILURE'
-            if (currentBuild.previousBuild == null || currentBuild.previousBuild.result != currentBuild.result) {
-                slackSend(color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-            }
+                slackSend(channel: '#jenkins-failures', color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
             throw e;
         }
     }
