@@ -235,6 +235,7 @@ class EtlComponent {
     $("#createExtractor").hide();
     $("#pleaseExtractor").hide();
 
+    // Object creation
     if(type == "row") {
       this.extractor = {
         row: {
@@ -291,11 +292,36 @@ class EtlComponent {
       }
     }
 
+    // Flowchart
+    $(document).ready(function() {
+      var dataExtractor = {
+        operators: {
+          operator: {
+            top: 20,
+            left: 100,
+            properties: {
+              title: type + ' extractor',
+              outputs: {
+                output_1: {
+                  label: 'click for further configuration'
+                }
+              }
+            }
+          }
+        }
+      };
+
+      (<any>$('#extractorSpace')).flowchart({
+        data: dataExtractor
+      });
+    });
+
   }
 
-  transformerInit(type) {
+  transformerInit(type) { // Block and Code aren't active atm
     $("#pleaseTransformer").hide();
 
+    // Object creation
     if(type == "field") {
       this.transformer = {
         field: {
@@ -382,13 +408,13 @@ class EtlComponent {
       }
     }
 
-    /*if(type == "block") {
+    if(type == "block") {
       this.transformer = {
         block: {
 
         }
       }
-    }*/
+    }
 
     if(type == "command") {
       this.transformer = {
@@ -400,12 +426,43 @@ class EtlComponent {
     }
 
     this.transformers.push(this.transformer);
+
+    // Flowchart
+    $(document).ready(function() {
+      var dataTransformer = {
+        operators: {
+          operator: {
+            top: 20,
+            left: 100,
+            properties: {
+              title: type + ' transformer',
+              inputs: {
+                input1: {
+                  label: ''
+                }
+              },
+              outputs: {
+                output_1: {
+                  label: 'click for further configuration'
+                }
+              }
+            }
+          }
+        }
+      };
+
+      (<any>$('#transformerSpace')).flowchart({
+        data: dataTransformer
+      });
+    });
+
   }
 
-  loaderInit(type) { // TODO a Flowchart node should be displayed, with the loader type. Same for other modules.
+  loaderInit(type) {
     $("#pleaseLoader").hide();
     $("#createLoader").hide();
 
+    // Object creation
     if(type == "log") {
       this.loader = {
         log: {}
@@ -437,6 +494,30 @@ class EtlComponent {
         }
       }
     }
+
+    // Flowchart
+    $(document).ready(function() {
+      var dataLoader = {
+        operators: {
+          operator: {
+            top: 20,
+            left: 100,
+            properties: {
+              title: type + ' loader',
+              inputs: {
+                input1: {
+                  label: 'click for further configuration'
+                }
+              }
+            }
+          }
+        }
+      };
+
+      (<any>$('#loaderSpace')).flowchart({
+        data: dataLoader
+      });
+    });
   }
 
   deleteExtractor() {
@@ -494,7 +575,7 @@ class EtlComponent {
 
   enablePopovers() {
     (<any>$('[data-toggle="popover"]')).popover({
-      // title: 'About this parameter',
+      title: 'About this parameter',
       placement: 'right',
       trigger: 'hover'
     });
