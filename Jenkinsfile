@@ -5,24 +5,23 @@ node("master") {
         ansiColor('xterm') {
             milestone()
             def mvnHome = tool 'mvn'
-            def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-7"
+            def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8"
             def mvnJdk7Image = "orientdb/mvn-gradle-zulu-jdk-7"
 
             stage('Source checkout') {
-
                 checkout scm
             }
 
             try {
-                stage('Compile on Java7') {
-                    docker.image("${mvnJdk7Image}")
-                            .inside("${env.VOLUMES}") {
-                        sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean compile -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
-                    }
-                }
+//                stage('Compile on Java7') {
+//                    docker.image("${mvnJdk7Image}")
+//                            .inside("${env.VOLUMES}") {
+//                        sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean compile -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
+//                    }
+//                }
 
-                stage('Run tests on Java8') {
-                    docker.image("${mvnJdk8Image}")
+                stage('Run tests on Java7') {
+                    docker.image("${mvnJdk7Image}")
                             .inside("${env.VOLUMES}") {
                         try {
                             //skip integration test for now
