@@ -30,11 +30,6 @@ class EtlComponent {
 
   private finalJson; // The final json, it will be passed to the launch function
 
-  private sourceJson; // The source json
-  private extractorJson; // The extractor json
-  private transformerJson // The transformer json
-  private loaderJson; // The loader json
-
   // Different types, used in the multiple choice dialogs
   private sourceTypes;
   private URLMethods;
@@ -112,33 +107,33 @@ class EtlComponent {
       class: "V",
       skipDuplicates: false,
       // Edge
-      // joinFieldName: "", TODO rename duplicates
+      joinFieldNameEdge: "",
       direction: "out",
-      // class: "E", TODO rename duplicates
-      // lookup: "" TODO rename duplicates
+      classEdge: "E",
+      lookupEdge: "",
       targetVertexFields: {},
       edgeFields: {},
-      // skipDuplicates: false, TODO rename duplicates
-      // unresolvedLinkAction: "NOTHING", TODO rename duplicates
+      skipDuplicatesEdge: false,
+      unresolvedLinkActionEdge: "NOTHING",
       // Flow
       if: "", // mandatory
-      // operation: "", // mandatory TODO rename and decide if adopt this transformer
-      // Code
+      operationFlow: "", // mandatory
+      // Code // TODO probably unadoptable
       language: "javascript",
       code: "", // Mandatory
       // Link
-      // joinFieldName: "", TODO rename duplicates
-      // joinValue: "", TODO rename duplicates
+      joinFieldNameLink: "",
+      joinValueLink: "",
       linkFieldName: "", // mandatory
       linkFieldType: "", // mandatory
-      // lookup: "", TODO rename duplicates
-      // unresolvedLinkAction: "NOTHING", TODO rename duplicates
+      lookupLink: "",
+      unresolvedLinkActionLink: "NOTHING",
       // Log
       prefix: "",
       postfix: "",
       // Block
       // Command
-      // language: "sql", TODO rename duplicates
+      languageCommand: "sql",
       command: "", // mandatory
 
       // Loader
@@ -156,7 +151,7 @@ class EtlComponent {
       wal: true,
       batchCommit: 0,
       dbType: "document", // or graph
-      // class: "", TODO rename duplicates
+      classOrient: "",
       cluster: "",
       // classes: TODO ???
       // indexes: TODO ???
@@ -344,12 +339,12 @@ class EtlComponent {
     if(type == "link") {
       this.transformer = {
         link: {
-          joinFieldName: this.configParams.joinFieldName,
-          joinValue: this.configParams.joinValue,
+          joinFieldName: this.configParams.joinFieldNameLink,
+          joinValue: this.configParams.joinValueLink,
           linkFieldName: this.configParams.linkFieldName,
           linkFieldType: this.configParams.linkFieldType,
-          lookup: this.configParams.lookup,
-          unresolvedLinkAction: this.configParams.unresolvedLinkAction
+          lookup: this.configParams.lookupLink,
+          unresolvedLinkAction: this.configParams.unresolvedLinkActionLink
         }
       }
     }
@@ -357,14 +352,14 @@ class EtlComponent {
     if(type == "edge") {
       this.transformer = {
         edge: {
-          joinFieldName: this.configParams.joinFieldName,
+          joinFieldName: this.configParams.joinFieldNameEdge,
           direction: this.configParams.direction,
-          class: this.configParams.class,
-          lookup: this.configParams.lookup,
+          class: this.configParams.classEdge,
+          lookup: this.configParams.lookupEdge,
           targetVertexFields: this.configParams.targetVertexFields,
           edgeFields: this.configParams.edgeFields,
-          skipDuplicates: this.configParams.skipDuplicates,
-          unresolvedLinkAction: this.configParams.unresolvedLinkAction
+          skipDuplicates: this.configParams.skipDuplicatesEdge,
+          unresolvedLinkAction: this.configParams.unresolvedLinkActionEdge
         }
       }
     }
@@ -373,7 +368,7 @@ class EtlComponent {
       this.transformer = {
         flow: {
           if: this.configParams.if,
-          operation: this.configParams.operation
+          operation: this.configParams.operationFlow
         }
       }
     }
@@ -398,7 +393,7 @@ class EtlComponent {
     if(type == "command") {
       this.transformer = {
         command: {
-          language: this.configParams.language,
+          language: this.configParams.languageCommand,
           command: this.configParams.command
         }
       }
@@ -433,10 +428,10 @@ class EtlComponent {
           wal: this.configParams.wal,
           batchCommit: this.configParams.batchCommit,
           dbType: this.configParams.dbType,
-          class: this.configParams.class,
+          class: this.configParams.classOrient,
           cluster: this.configParams.cluster,
-          classes: this.configParams.classes,
-          indexes: this.configParams.indexes,
+          // classes: this.configParams.classes,
+          // indexes: this.configParams.indexes,
           useLightweightEdges: this.configParams.useLightweightEdges,
           standardElementConstraints: this.configParams.standardElementConstraints
         }
