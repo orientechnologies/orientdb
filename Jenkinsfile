@@ -47,13 +47,13 @@ node("master") {
 //                }
 //            }
 
-                stage('Publish Javadoc') {
-                    docker.image("${mvnJdk8Image}")
-                            .inside("${env.VOLUMES}") {
-                        sh "${mvnHome}/bin/mvn  javadoc:aggregate"
-                        sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
-                    }
-                }
+//                stage('Publish Javadoc') {
+//                    docker.image("${mvnJdk8Image}")
+//                            .inside("${env.VOLUMES}") {
+//                        sh "${mvnHome}/bin/mvn  javadoc:aggregate"
+//                        sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
+//                    }
+//                }
 
                 stage("Downstream projects") {
 
