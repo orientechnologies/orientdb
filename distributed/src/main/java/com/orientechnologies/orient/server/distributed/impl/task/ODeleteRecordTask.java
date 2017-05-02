@@ -21,9 +21,11 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -32,6 +34,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
 /**
  * Distributed delete record task used for synchronization.
@@ -71,12 +75,34 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
       return true;
 
     final ORecord loadedRecord = previousRecord.copy();
-    if (loadedRecord != null) {
-      try {
-        loadedRecord.delete();
-      } catch (ORecordNotFoundException e) {
-        // NO ERROR, IT WAS ALREADY DELETED
+
+    try {
+      if (loadedRecord instanceof ODocument) {
+        if (((ODocument) loadedRecord).getSchemaClass().isEdgeType()) {
+          // DELETE EDGE
+          final OrientBaseGraph graph = OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentTx) database);
+          try {
+            graph.getEdge(loadedRecord).remove();
+          } finally {
+            graph.shutdown(false);
+          }
+          return true;
+        } else if (((ODocument) loadedRecord).getSchemaClass().isVertexType()) {
+          // DELETE VERTEX
+          final OrientBaseGraph graph = OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentTx) database);
+          try {
+            graph.getVertex(loadedRecord).remove();
+          } finally {
+            graph.shutdown(false);
+          }
+          return true;
+        }
       }
+
+      loadedRecord.delete();
+
+    } catch (ORecordNotFoundException e) {
+      // NO ERROR, IT WAS ALREADY DELETED
     }
 
     return true;
