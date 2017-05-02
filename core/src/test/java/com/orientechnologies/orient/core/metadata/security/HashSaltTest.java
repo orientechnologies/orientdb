@@ -9,7 +9,7 @@ import java.security.spec.InvalidKeySpecException;
 
 /**
  * Tests the salt + hash of passwords.
- * 
+ *
  * @author Luca Garulli
  */
 public class HashSaltTest {
@@ -18,9 +18,9 @@ public class HashSaltTest {
   public void testSalt() throws InvalidKeySpecException, NoSuchAlgorithmException {
     final String password = "OrientDBisCool";
     final OSecurityManager sm = new OSecurityManager();
-    final String hashed = sm.createHashWithSalt(password);
+    final String hashed = sm.createHashWithSalt(password, 500, OSecurityManager.PBKDF2_ALGORITHM);
 
-    Assert.assertTrue(sm.checkPasswordWithSalt(password, hashed));
+    Assert.assertTrue(sm.checkPasswordWithSalt(password, hashed, OSecurityManager.PBKDF2_ALGORITHM));
   }
 
 }

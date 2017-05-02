@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.security;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by frank on 19/11/2015.
@@ -41,9 +41,9 @@ public class OSecurityManagerTest {
 
     OSecurityManager securityManager = OSecurityManager.instance();
 
-    String hash = securityManager.createHashWithSalt("password");
+    String hash = securityManager.createHashWithSalt("password", 500, OSecurityManager.PBKDF2_ALGORITHM);
 
-    assertThat(securityManager.checkPasswordWithSalt("password", hash)).isTrue();
+    assertThat(securityManager.checkPasswordWithSalt("password", hash, OSecurityManager.PBKDF2_ALGORITHM)).isTrue();
   }
 
   @Test
