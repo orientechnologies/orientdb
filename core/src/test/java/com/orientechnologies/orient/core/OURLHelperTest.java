@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by tglman on 21/02/17.
  */
-public class TestOURLHelper {
+public class OURLHelperTest {
 
   @Test
   public void testSimpleUrl() {
@@ -31,6 +31,7 @@ public class TestOURLHelper {
     assertEquals(parsed.getType(), "remote");
     assertEquals(parsed.getPath(), "localhost");
     assertEquals(parsed.getDbName(), "to");
+
   }
 
   @Test
