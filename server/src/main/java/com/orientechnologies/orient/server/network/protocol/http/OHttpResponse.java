@@ -259,7 +259,7 @@ public class OHttpResponse {
     final Iterator<Object> it = OMultiValue.getMultiValueIterator(iRecords);
 
     if (accept != null && accept.contains("text/csv")) {
-      sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, "data.csv",
+      sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_CSV, "data.csv",
           new OCallable<Void, OChunkedResponse>() {
 
             @Override
