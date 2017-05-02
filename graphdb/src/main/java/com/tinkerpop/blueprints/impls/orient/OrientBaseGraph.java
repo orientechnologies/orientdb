@@ -900,6 +900,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @return Vertices as Iterable
    */
   public Iterable<Vertex> getVertices(final String label, final String[] iKey, Object[] iValue) {
+    if (iKey.length != iValue.length) {
+      throw new IllegalArgumentException("key names and values must be arrays of the same size");
+    }
     makeActive();
     final OClass clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(label);
     if (clazz != null) {
@@ -911,7 +914,12 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           if ("lucene".equalsIgnoreCase(idx.getAlgorithm())) {
             continue;
           }
-          List<Object> keys = Arrays.asList(convertKeys(idx, iValue));
+          Object[] sortedParams = new Object[iValue.length];
+          List<String> indexFields = idx.getDefinition().getFields();
+          for (int i = 0; i < iKey.length; i++) {
+            sortedParams[indexFields.indexOf(iKey[i])] = iValue[i];
+          }
+          List<Object> keys = Arrays.asList(convertKeys(idx, sortedParams));
           Object key;
           if (keys.size() == 1) {
             key = keys.get(0);
