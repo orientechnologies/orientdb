@@ -271,7 +271,6 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$route', '$l
 
 
     var handleResult = function (data) {
-
       if (data.result) {
 
         var warnings = data.warnings;

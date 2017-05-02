@@ -656,11 +656,14 @@ database.factory('CommandApi', ["$http", "$resource", "Notification", "Spinner",
     if (contentType == 'text/csv') {
       var query = params.text.trim();
       var config = {headers: {"accept": contentType}};
+
+
       $http.post(text, query, config).success(function (data) {
         var time = ((new Date().getTime() - startTime) / 1000);
         var records = data.result ? data.result.length : "";
-        var form = $('<a style="display: none;" type="hidden" id="linkdownload" href="data:application/octet-stream;charset=utf-8;base64,' + Base64.encode(data) + '">asdasdasasd</a>');
+        var form = $('<a style="display: none;" type="hidden" id="linkdownload" href="data:application/octet-stream;charset=utf-8;base64,' + Base64.Base64.encode(data) + '">asdasdasasd</a>');
         $('#download').append(form);
+
 
 
         query = query.replace(/ /gi, '');
@@ -681,8 +684,6 @@ database.factory('CommandApi', ["$http", "$resource", "Notification", "Spinner",
         Notification.push({content: data});
         if (error) error(data);
       });
-      ;
-
     }
 
     else {
