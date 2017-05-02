@@ -80,7 +80,7 @@ public class OLuceneIndexCrashRestoreIT {
         "-DORIENTDB_HOME=" + buildDirectory,
         RemoteDBRunner.class.getName());
 
-    processBuilder.inheritIO();
+//    processBuilder.inheritIO();
 
     serverProcess = processBuilder.start();
 
@@ -136,7 +136,8 @@ public class OLuceneIndexCrashRestoreIT {
 
     //crash the server
     // this works only on java8
-    serverProcess.destroyForcibly();
+//    serverProcess.destroyForcibly();
+    serverProcess.destroy();
 
     serverProcess.waitFor();
 
