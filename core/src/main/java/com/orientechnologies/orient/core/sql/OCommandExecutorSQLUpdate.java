@@ -669,7 +669,24 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
           coll = (Collection<Object>) fieldValue;
         else if (fieldValue instanceof ORidBag)
           bag = (ORidBag) fieldValue;
-        else
+        else if (fieldValue == null) {
+          OProperty prop = record.getSchemaClass().getProperty(entry.getKey());
+          if (prop == null) {
+            coll = new ArrayList<Object>();
+            record.field(entry.getKey(), coll);
+          } else if (prop.getType() == OType.EMBEDDEDSET || prop.getType() == OType.LINKSET) {
+            coll = new LinkedHashSet<Object>();
+            record.field(entry.getKey(), coll);
+          } else if (prop.getType() == OType.EMBEDDEDLIST || prop.getType() == OType.LINKLIST) {
+            coll = new ArrayList<Object>();
+            record.field(entry.getKey(), coll);
+          } else if (prop.getType() == OType.LINKBAG) {
+            bag = new ORidBag();
+            record.field(entry.getKey(), bag);
+          } else {
+            continue;
+          }
+        } else
           continue;
       }
 

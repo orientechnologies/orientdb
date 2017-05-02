@@ -32,7 +32,8 @@ import java.util.*;
 import static org.testng.Assert.*;
 
 public class OCommandExecutorSQLUpdateTest {
-  @Test public void testUpdateRemoveAll() throws Exception {
+  @Test
+  public void testUpdateRemoveAll() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTest");
     db.create();
 
@@ -66,7 +67,8 @@ public class OCommandExecutorSQLUpdateTest {
     db.close();
   }
 
-  @Test public void testUpdateContent() throws Exception {
+  @Test
+  public void testUpdateContent() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestContent");
     db.create();
     try {
@@ -80,7 +82,8 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
-  @Test public void testUpdateContentParse() throws Exception {
+  @Test
+  public void testUpdateContentParse() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestContentParse");
     db.create();
     try {
@@ -100,7 +103,8 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
-  @Test public void testUpdateMergeWithIndex() {
+  @Test
+  public void testUpdateMergeWithIndex() {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestMergeWithIndex");
     db.create();
     try {
@@ -131,7 +135,8 @@ public class OCommandExecutorSQLUpdateTest {
 
   }
 
-  @Test public void testNamedParamsSyntax() {
+  @Test
+  public void testNamedParamsSyntax() {
     // issue #4470
     String className = getClass().getSimpleName() + "_NamedParamsSyntax";
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + className);
@@ -166,7 +171,8 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
-  @Test public void testUpsertSetPut() throws Exception {
+  @Test
+  public void testUpsertSetPut() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateUpsertSetPut");
     db.create();
     try {
@@ -184,7 +190,8 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
-  @Test public void testUpdateParamDate() throws Exception {
+  @Test
+  public void testUpdateParamDate() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateParamDate");
     db.create();
     try {
@@ -206,7 +213,8 @@ public class OCommandExecutorSQLUpdateTest {
   }
 
   // issue #4776
-  @Test public void testBooleanListNamedParameter() {
+  @Test
+  public void testBooleanListNamedParameter() {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testBooleanListNamedParameter");
     try {
       ODatabaseRecordThreadLocal.INSTANCE.set(db);
@@ -253,7 +261,8 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
-  @Test public void testIncrementWithDotNotationField() throws Exception {
+  @Test
+  public void testIncrementWithDotNotationField() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestIncrementWithDotNotationField");
     db.create();
 
@@ -287,7 +296,8 @@ public class OCommandExecutorSQLUpdateTest {
     db.close();
   }
 
-  @Test public void testSingleQuoteInNamedParameter() throws Exception {
+  @Test
+  public void testSingleQuoteInNamedParameter() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestSingleQuoteInNamedParameter");
     db.create();
 
@@ -312,7 +322,8 @@ public class OCommandExecutorSQLUpdateTest {
     db.close();
   }
 
-  @Test public void testQuotedStringInNamedParameter() throws Exception {
+  @Test
+  public void testQuotedStringInNamedParameter() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestQuotedStringInNamedParameter");
     db.create();
 
@@ -337,7 +348,8 @@ public class OCommandExecutorSQLUpdateTest {
     db.close();
   }
 
-  @Test public void testQuotesInJson() throws Exception {
+  @Test
+  public void testQuotesInJson() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestQuotesInJson");
     db.create();
 
@@ -351,7 +363,8 @@ public class OCommandExecutorSQLUpdateTest {
     db.close();
   }
 
-  @Test public void testDottedTargetInScript() throws Exception {
+  @Test
+  public void testDottedTargetInScript() throws Exception {
     // #issue #5397
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestDottedTargetInScript");
     db.create();
@@ -373,7 +386,8 @@ public class OCommandExecutorSQLUpdateTest {
     db.close();
   }
 
-  @Test public void testBacktickClassName() throws Exception {
+  @Test
+  public void testBacktickClassName() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTest_testBacktickClassName");
     db.create();
     try {
@@ -388,7 +402,8 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
-  @Test public void testUpdateLockLimit() throws Exception {
+  @Test
+  public void testUpdateLockLimit() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTest_testUpdateLockLimit");
     db.create();
     try {
@@ -404,7 +419,8 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
-  @Test public void testUpdateContentOnClusterTarget() throws Exception {
+  @Test
+  public void testUpdateContentOnClusterTarget() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:UpdateContentOnClusterTarget");
     db.create();
     try {
@@ -423,7 +439,8 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
-  @Test public void testUpdateContentOnClusterTargetMultiple() throws Exception {
+  @Test
+  public void testUpdateContentOnClusterTargetMultiple() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:UpdateContentOnClusterTargetMultiple");
     db.create();
     try {
@@ -455,7 +472,8 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
-  @Test public void testUpdateContentOnClusterTargetMultipleSelection() throws Exception {
+  @Test
+  public void testUpdateContentOnClusterTargetMultipleSelection() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:UpdateContentOnClusterTargetMultipleSelection");
     db.create();
     try {
@@ -484,7 +502,8 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
-  @Test public void testUpdateContentNotORestricted() throws Exception {
+  @Test
+  public void testUpdateContentNotORestricted() throws Exception {
     //issue #5564
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:UpdateContentNotORestricted");
     db.create();
@@ -507,7 +526,8 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
-  @Test public void testUpdateReturnCount() throws Exception {
+  @Test
+  public void testUpdateReturnCount() throws Exception {
     //issue #5564
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testUpdateReturnCount");
     db.create();
@@ -529,7 +549,8 @@ public class OCommandExecutorSQLUpdateTest {
     }
   }
 
-  @Test public void testUpdateObjectInLinkedList() throws Exception {
+  @Test
+  public void testUpdateObjectInLinkedList() throws Exception {
     //issue #6729
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTest_testUpdateObjectInLinkedList");
     db.create();
@@ -550,12 +571,9 @@ public class OCommandExecutorSQLUpdateTest {
 
       db.getLocalCache().clear();
 
-      String update = "update testUpdateObjectInLinkedList set name = 'baz', Devices = [{'@type': 'd'," +
-          "'@rid': " + identity + "," +
-          "'@version':1," +
-          "'@class': 'testUpdateObjectInLinkedList_sub'," +
-          "'name': 'zzz'" +
-          "}] where name = 'foo'";
+      String update =
+          "update testUpdateObjectInLinkedList set name = 'baz', Devices = [{'@type': 'd'," + "'@rid': " + identity + ","
+              + "'@version':1," + "'@class': 'testUpdateObjectInLinkedList_sub'," + "'name': 'zzz'" + "}] where name = 'foo'";
 
       db.command(new OCommandSQL(update)).execute();
 
@@ -567,4 +585,79 @@ public class OCommandExecutorSQLUpdateTest {
       db.drop();
     }
   }
+
+  @Test
+  public void testUpdateAddOnNonExistingList1() throws Exception {
+    //issue #7194
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testUpdateAddOnNonExistingList1");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class Foo")).execute();
+      db.command(new OCommandSQL("insert into Foo set name = 'a'")).execute();
+
+      db.command(new OCommandSQL("update Foo add tags = 'foo'")).execute();
+      List<ODocument> result = db.query(new OSQLSynchQuery("SELECT FROM Foo"));
+
+      assertEquals(result.size(), 1);
+
+      ODocument doc = result.get(0);
+      List tags = doc.field("tags");
+      assertEquals(tags.size(), 1);
+      assertTrue(tags.contains("foo"));
+
+    } finally {
+      db.drop();
+    }
+  }
+
+  @Test
+  public void testUpdateAddOnNonExistingList2() throws Exception {
+    //issue #7194
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testUpdateAddOnNonExistingList2");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class Foo")).execute();
+      db.command(new OCommandSQL("CREATE property Foo.tags EMBEDDEDLIST")).execute();
+      db.command(new OCommandSQL("insert into Foo set name = 'a'")).execute();
+
+      db.command(new OCommandSQL("update Foo add tags = 'foo'")).execute();
+      List<ODocument> result = db.query(new OSQLSynchQuery("SELECT FROM Foo"));
+
+      assertEquals(result.size(), 1);
+
+      ODocument doc = result.get(0);
+      List tags = doc.field("tags");
+      assertEquals(tags.size(), 1);
+      assertTrue(tags.contains("foo"));
+
+    } finally {
+      db.drop();
+    }
+  }
+
+  @Test
+  public void testUpdateAddOnNonExistingSet() throws Exception {
+    //issue #7194
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testUpdateAddOnNonExistingSet");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class Foo")).execute();
+      db.command(new OCommandSQL("CREATE property Foo.tags EMBEDDEDSET")).execute();
+      db.command(new OCommandSQL("insert into Foo set name = 'a'")).execute();
+
+      db.command(new OCommandSQL("update Foo add tags = 'foo'")).execute();
+      List<ODocument> result = db.query(new OSQLSynchQuery("SELECT FROM Foo"));
+
+      assertEquals(result.size(), 1);
+
+      ODocument doc = result.get(0);
+      Set tags = doc.field("tags");
+      assertEquals(tags.size(), 1);
+      assertTrue(tags.contains("foo"));
+
+    } finally {
+      db.drop();
+    }
+  }
+
 }
