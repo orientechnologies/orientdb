@@ -124,7 +124,7 @@ public class OrientDataSource implements DataSource {
         .build();
 
     if (orientDB == null) {
-      orientDB = new OrientDB(connUrl.getType() + connUrl.getPath(), username, password, settings);
+      orientDB = new OrientDB(connUrl.getType() + ":" + connUrl.getPath(), username, password, settings);
       orientDB.createIfNotExists(connUrl.getDbName(), connUrl.getDbType().orElse(ODatabaseType.MEMORY));
 
     }
@@ -171,8 +171,7 @@ public class OrientDataSource implements DataSource {
     throw new SQLFeatureNotSupportedException();
   }
 
-
-  public void  close() {
+  public void close() {
     orientDB.close();
   }
 }

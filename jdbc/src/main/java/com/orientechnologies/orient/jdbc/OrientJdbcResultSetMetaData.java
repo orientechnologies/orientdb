@@ -125,6 +125,8 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     // results in a NullPointerException
     // OClass oclass = currentRecord.getSchemaClass();
 
+
+    currentRecord.getProperty(fieldName);
     OType otype = currentRecord.toElement().getSchemaType()
         .map(st -> st.getProperty(fieldName).getType())
         .orElse(null);

@@ -57,10 +57,13 @@ public class OrientJdbcConnection implements Connection {
     final String password = info.getProperty("password", "admin");
 
     OURLConnection connUrl = OURLHelper.parseNew(dbUrl);
-    orientDB = new OrientDB(connUrl.getType() + connUrl.getPath(), username, password, OrientDBConfig.defaultConfig());
+    orientDB = new OrientDB(connUrl.getType() + ":" + connUrl.getPath(), username, password, OrientDBConfig.defaultConfig());
     orientDB.createIfNotExists(connUrl.getDbName(), connUrl.getDbType().orElse(ODatabaseType.MEMORY));
 
+    System.out.println(Thread.currentThread().getName() + " opening:: " + connUrl  );
     database = orientDB.open(connUrl.getDbName(), username, password);
+
+
     status = ODatabase.STATUS.OPEN;
   }
 
