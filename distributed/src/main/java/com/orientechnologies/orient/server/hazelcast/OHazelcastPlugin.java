@@ -1581,6 +1581,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // NODE HAS NOT IS YET
       return;
 
+
     if (activeNodes.putIfAbsent(joinedNodeName, member) == null) {
       // NOTIFY NODE IS GOING TO BE ADDED. IS EVERYBODY OK?
       for (ODistributedLifecycleListener l : listeners) {
