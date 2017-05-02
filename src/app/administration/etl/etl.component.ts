@@ -1,6 +1,12 @@
 import {Component} from '@angular/core';
 
 import * as $ from "jquery"
+import * as jqueryUI from "jquery-ui";
+
+import "../../util/diagram-editor/jquery.flowchart.min.js";
+import "../../util/diagram-editor/jquery.flowchart.min.css";
+import "../../util/diagram-editor/flowchart.jquery.json";
+import "../../util/diagram-editor/package.json";
 
 import {downgradeComponent} from '@angular/upgrade/static';
 import {EtlService} from '../../core/services';
@@ -16,13 +22,17 @@ declare var angular:any;
 
 class EtlComponent {
   private configParams; // Parameters stored during the configuration
-  private jsonPrototypes; // Ready to use prototypes to build the partial json
+  private source;
+  private extractor;
+  private transformer; // Single transformer
+  private transformers; // Array containing every transformer
+  private loader;
 
   private finalJson; // The final json, it will be passed to the launch function
 
   private sourceJson; // The source json
   private extractorJson; // The extractor json
-  private transformerJson; // An array containing all transformers json
+  private transformerJson // The transformer json
   private loaderJson; // The loader json
 
   // Different types, used in the multiple choice dialogs
@@ -58,7 +68,6 @@ class EtlComponent {
       fileLock: false,
 
       // Extractor
-      extractorType: "",
       // Row
       multiline: true,
       linefeed: "\r\n",
@@ -88,7 +97,6 @@ class EtlComponent {
       tagsAsAttribute: [],
 
       // Transformer
-      transformerType: "",
       customLabel: "",
       // Field
       fieldName: "",
@@ -134,7 +142,6 @@ class EtlComponent {
       command: "", // mandatory
 
       // Loader
-      loaderType: "",
       // OrientDB
       dbURL: "", // mandatory
       dbUser: "admin",
@@ -183,22 +190,6 @@ class EtlComponent {
 
     }
 
-    // Json prototypes, contains partial json
-    this.jsonPrototypes = new Map();
-
-    // Source
-    this.jsonPrototypes.set("jdbc","{");
-    this.jsonPrototypes.set("url","{ source { url: this.configParams.fileURL, method: this.configParams.URLMethod }");
-    this.jsonPrototypes.set("file","{");
-
-    // Extractor
-    this.jsonPrototypes.set("csv","{");
-
-    // Transformer
-
-    // Loader
-
-
   }
 
   // Getters and setters
@@ -218,76 +209,277 @@ class EtlComponent {
   }
 
   sourceInit() {
-    this.sourceJson = this.jsonPrototypes.get(this.configParams.source);
+    this.step = 2;
+
+    if(this.configParams.source == "jdbc") this.source = null
+
+    if(this.configParams.source == "local file")
+      this.source = {
+        file: {
+          path: this.configParams.filePath,
+          lock: this.configParams.fileLock,
+          encoding: "UTF-8"
+        }
+    }
+
+    if(this.configParams.source == "url") {
+      this.source = {
+        http: {
+          url: this.configParams.fileURL,
+          method: this.configParams.URLMethod,
+          headers: {
+            "User-Agent": ""
+          }
+        }
+      }
+    }
 
   }
 
   extractorInit(type) {
-    this.configParams.extractorType = type;
-    window.alert("It works! You selected " + this.configParams.extractorType);
     $("#createExtractor").hide();
     $("#pleaseExtractor").hide();
 
-    $(document).ready(function() {
-      var data = {
-        operators: {
-          operator: {
-            top: 20,
-            left: 20,
-            properties: {
-              title: 'Extractor',
-              outputs: {
-                output_1: {
-                  label: 'Output 1',
-                },
-              }
-            }
-          }
+    if(type == "row") {
+      this.extractor = {
+        row: {
+          multiline: this.configParams.multiline,
+          linefeed: this.configParams.linefeed
         }
-      };
-        (<any>$('#extractorSpace')).flowchart({
-          data: data
-        });
-      });
+      }
+    }
+
+    if(type == "csv") {
+      this.extractor = {
+        csv: {
+          separator: this.configParams.separator,
+          columnsOnFirstLine: this.configParams.columnsOnFirstLine,
+          columns: this.configParams.columns,
+          nullValue: this.configParams.nullValue,
+          dateFormat: this.configParams.dateFormat,
+          dateTimeFormat: this.configParams.dateTimeFormat,
+          quote: this.configParams.quote,
+          skipFrom: this.configParams.skipFrom,
+          skipTo: this.configParams.skipTo,
+          ignoreEmptyLines: this.configParams.ignoreEmptyLines,
+          ignoreMissingColumns: this.configParams.ignoreMissingColumns,
+          predefinedFormat: this.configParams.predefinedFormat
+        }
+      }
+    }
+
+    if(type == "jdbc") {
+      this.extractor = {
+        jdbc: {
+          driver: this.configParams.driver,
+          url: this.configParams.url,
+          userName: this.configParams.userName,
+          userPassword: this.configParams.userPassword,
+          query: this.configParams.query,
+          queryCount: this.configParams.queryCount
+        }
+      }
+    }
+
+    if(type == "json") {
+      this.extractor = {
+        json: {}
+      }
+    }
+
+    if(type == "xml") {
+      this.extractor = {
+        xml: {
+          rootNode: this.configParams.rootNode,
+          tagsAsAttribute: this.configParams.tagsAsAttribute
+        }
+      }
+    }
+
   }
 
   transformerInit(type) {
-    this.configParams.transformerType = type;
-    window.alert("It works! You selected " + this.configParams.transformerType);
     $("#pleaseTransformer").hide();
 
+    if(type == "field") {
+      this.transformer = {
+        field: {
+          fieldName: this.configParams.fieldName,
+          expression: this.configParams.expression,
+          value: this.configParams.value,
+          operation: this.configParams.operation,
+          save: this.configParams.save
+        }
+      }
+    }
+
+    if(type == "merge") {
+      this.transformer = {
+        merge: {
+          joinFieldName: this.configParams.joinFieldName,
+          lookup: this.configParams.lookup,
+          unresolvedLinkAction: this.configParams.unresolvedLinkAction
+        }
+      }
+    }
+
+    if(type == "vertex") {
+      this.transformer = {
+        vertex: {
+          class: this.configParams.class,
+          skipDuplicates: this.configParams.skipDuplicates
+        }
+      }
+    }
+
+    if(type == "code") {
+      this.transformer = {
+        code: {
+          language: this.configParams.language,
+          code: this.configParams.code,
+        }
+      }
+    }
+
+    if(type == "link") {
+      this.transformer = {
+        link: {
+          joinFieldName: this.configParams.joinFieldName,
+          joinValue: this.configParams.joinValue,
+          linkFieldName: this.configParams.linkFieldName,
+          linkFieldType: this.configParams.linkFieldType,
+          lookup: this.configParams.lookup,
+          unresolvedLinkAction: this.configParams.unresolvedLinkAction
+        }
+      }
+    }
+
+    if(type == "edge") {
+      this.transformer = {
+        edge: {
+          joinFieldName: this.configParams.joinFieldName,
+          direction: this.configParams.direction,
+          class: this.configParams.class,
+          lookup: this.configParams.lookup,
+          targetVertexFields: this.configParams.targetVertexFields,
+          edgeFields: this.configParams.edgeFields,
+          skipDuplicates: this.configParams.skipDuplicates,
+          unresolvedLinkAction: this.configParams.unresolvedLinkAction
+        }
+      }
+    }
+
+    if(type == "flow") {
+      this.transformer = {
+        flow: {
+          if: this.configParams.if,
+          operation: this.configParams.operation
+        }
+      }
+    }
+
+    if(type == "log") {
+      this.transformer = {
+        log: {
+          prefix: this.configParams.prefix,
+          postfix: this.configParams.postfix
+        }
+      }
+    }
+
+    /*if(type == "block") {
+      this.transformer = {
+        block: {
+
+        }
+      }
+    }*/
+
+    if(type == "command") {
+      this.transformer = {
+        command: {
+          language: this.configParams.language,
+          command: this.configParams.command
+        }
+      }
+    }
+
+    this.transformers.push(this.transformer);
   }
 
-  loaderInit(type) {
-    this.configParams.loaderType = type;
-    window.alert("It works! You selected " + this.configParams.loaderType);
+  loaderInit(type) { // TODO a Flowchart node should be displayed, with the loader type. Same for other modules.
     $("#pleaseLoader").hide();
     $("#createLoader").hide();
+
+    if(type == "log") {
+      this.loader = {
+        log: {}
+      }
+    }
+
+    if(type == "OrientDB") {
+      this.loader = {
+        OrientDB: {
+          dbURL: this.configParams.dbURL,
+          dbUser: this.configParams.dbUser,
+          dbPassword: this.configParams.dbPassword,
+          serverUser: this.configParams.serverUser,
+          serverPassword: this.configParams.serverPassword,
+          dbAutoCreate: this.configParams.dbAutoCreate,
+          dbAutoCreateProperties: this.configParams.dbAutoCreateProperties,
+          dbAutoDropIfExists: this.configParams.dbAutoDropIfExists,
+          tx: this.configParams.tx,
+          txUseLog: this.configParams.txUseLog,
+          wal: this.configParams.wal,
+          batchCommit: this.configParams.batchCommit,
+          dbType: this.configParams.dbType,
+          class: this.configParams.class,
+          cluster: this.configParams.cluster,
+          classes: this.configParams.classes,
+          indexes: this.configParams.indexes,
+          useLightweightEdges: this.configParams.useLightweightEdges,
+          standardElementConstraints: this.configParams.standardElementConstraints
+        }
+      }
+    }
   }
 
   deleteExtractor() {
-
+    this.extractor = null;
   }
 
-  deleteTransformer() {
+  deleteTransformer(name) {
 
   }
 
   deleteLoader() {
-    
+    this.loader = null;
   }
 
 
   // Core Functions
 
-  launch() {
+  generateTransformersList(transformers) {
+    var transformersList = {
+      placeholder: "test"
+    };
 
-    this.etlService.launch(this.finalJson).then((data) => {
-      this.step = "3";
-      this.status();
-    }).catch(function (error) {
-      alert("Error during etl process!")
-    });
+    return transformers;
+  }
+
+  launch() {
+    var final = {};
+    $.extend(final, this.source, this.extractor, this.generateTransformersList(this.transformers), this.loader);
+    this.finalJson = JSON.stringify(final);
+
+    this.step = "3";
+
+   // this.etlService.launch(this.finalJson).then((data) => {
+   //   this.step = "3";
+   //   this.status();
+   // }).catch(function (error) {
+   //   alert("Error during etl process!")
+   // });
   }
 
   status() {
@@ -312,7 +504,6 @@ class EtlComponent {
       trigger: 'hover'
     });
   }
-
 }
 
 angular.module('etl.component', []).directive(

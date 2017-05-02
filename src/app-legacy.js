@@ -1,6 +1,6 @@
 import 'jquery';
 import 'select2'
-
+import 'jquery-ui';
 import angular from 'angular';
 
 import 'core-js';

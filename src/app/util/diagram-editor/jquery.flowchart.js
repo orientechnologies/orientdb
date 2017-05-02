@@ -4,8 +4,8 @@ $(function () {
     $.widget("flowchart.flowchart", {
         // default options
         options: {
-            canUserEditLinks: true,
-            canUserMoveOperators: true,
+            canUserEditLinks: false,
+            canUserMoveOperators: false,
             data: {},
             distanceFromArrow: 3,
             defaultOperatorClass: 'flowchart-default-operator',

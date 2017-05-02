@@ -80,7 +80,7 @@
             <div class="col-sm-offset-2 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="setStep('2'); sourceInit()" [disabled]="!form.valid">Start Configuration</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="sourceInit()" [disabled]="!form.valid">Start Configuration</button>
                 </div>
               </div>
             </div>
@@ -209,14 +209,25 @@
 
         <div class="stepThree" *ngSwitchCase="'3'">
           <h3 align="center">Step 3 - Monitor the Execution</h3>
-          <h3 align="center">Console Log
+          <h4 align="center">Console Log
             <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
                     [attr.data-content]="hints.executionHint" data-animation="am-fade-and-scale"><b>?</b></button>
-          </h3>
+          </h4>
           <div class="row row-space-2x">
             <div class="col-md-12">
-              <textarea  #logArea class="form-control" id="logArea" name="logArea" [(ngModel)]="configParams.source"
-                         rows="15" readonly></textarea> <!-- TODO object containing the log, source is just a placeholder -->
+              <h4 align="center"><b>The final json is temporarily displayed below</b></h4>
+              <textarea  #logArea class="form-control" id="logArea" name="logArea" [(ngModel)]="finalJson"
+                         rows="15" readonly></textarea> <!-- TODO object containing the log, finalJson is just a placeholder -->
+            </div>
+          </div>
+          <br><br>
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <div class="btn-toolbar">
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary" (click)="setStep(1)">Restart</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
