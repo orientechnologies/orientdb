@@ -204,7 +204,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
   public byte[] serializeValue(Object value, OType type) {
     BytesContainer bytes = new BytesContainer();
-    serializeValue(bytes,value,type,null);
+    serializeValue(bytes, value, type, null);
     return bytes.fitBytes();
   }
 
@@ -379,20 +379,16 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   private Collection<?> readEmbeddedCollection(final BytesContainer bytes, final Collection<Object> found,
       final ODocument document) {
     final int items = OVarIntSerializer.readAsInteger(bytes);
-    OType type = readOType(bytes);
 
-    if (type == OType.ANY) {
-      for (int i = 0; i < items; i++) {
-        OType itemType = readOType(bytes);
-        if (itemType == OType.ANY)
-          found.add(null);
-        else
-          found.add(deserializeValue(bytes, itemType, document));
-      }
-      return found;
+    for (int i = 0; i < items; i++) {
+      OType itemType = readOType(bytes);
+      if (itemType == OType.ANY)
+        found.add(null);
+      else
+        found.add(deserializeValue(bytes, itemType, document));
     }
-    // TODO: manage case where type is known
-    return null;
+    return found;
+
   }
 
   private OType getLinkedType(ODocument document, OType type, String key) {
@@ -617,7 +613,6 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   private int writeEmbeddedCollection(final BytesContainer bytes, final Collection<?> value, final OType linkedType) {
     final int pos = OVarIntSerializer.write(bytes, value.size());
     // TODO manage embedded type from schema and auto-determined.
-    writeOType(bytes, bytes.alloc(1), OType.ANY);
     for (Object itemValue : value) {
       // TODO:manage in a better way null entry
       if (itemValue == null) {
