@@ -16,8 +16,8 @@
           <div class="form-group">
             <label class="col-sm-2 control-label">Source Type</label>
             <div class="col-md-5">
-              <select class="form-control" name="source" [(ngModel)]="configParams.source" required>
-                <option *ngFor="let sourceType of sourceTypes" [value]="sourceType"> {{sourceType}} </option>
+              <select class="form-control" name="source" [(ngModel)]="sourcePrototype.source.value" required>
+                <option *ngFor="let sourceType of sourcePrototype.source.types" [value]="sourceType"> {{sourceType}} </option>
               </select>
             </div>
             <div class="col-md-5">
@@ -28,10 +28,10 @@
           <br><br><br>
 
           <!-- URL configuration -->
-          <div class="form-group" *ngIf="configParams.source == 'url'">
+          <div class="form-group" *ngIf="sourcePrototype.source.value == 'url'">
             <label class="col-sm-2 control-label">File URL</label>
             <div class="col-md-5">
-              <input type="url" id="fileURL" class="form-control" name="fileURL" [(ngModel)]="configParams.fileURL"
+              <input type="url" id="fileURL" class="form-control" name="fileURL" [(ngModel)]="sourcePrototype.fileURL"
                      placeholder="URL of your file" pattern="https?://.+" required/>
 
             </div>
@@ -42,8 +42,8 @@
             <br><br>
             <label class="col-sm-2 control-label">HTTP Method</label>
             <div class="col-md-5">
-              <select class="form-control" name="URLMethod" [(ngModel)]="configParams.URLMethod" required>
-                <option *ngFor="let URLMethod of URLMethods" [selected]="URLMethod == 'GET'" [value]="URLMethod"> {{URLMethod}} </option>
+              <select class="form-control" name="URLMethod" [(ngModel)]="sourcePrototype.URLMethod.value" required>
+                <option *ngFor="let URLMethod of sourcePrototype.URLMethod.types" [selected]="URLMethod == 'GET'" [value]="URLMethod"> {{URLMethod}} </option>
               </select>
             </div>
             <div class="col-md-5">
@@ -53,10 +53,10 @@
           </div>
 
           <!-- Local File configuration -->
-          <div class="form-group" *ngIf="configParams.source == 'local file'">
+          <div class="form-group" *ngIf="sourcePrototype.source.value == 'local file'">
             <label class="col-sm-2 control-label">File Path</label>
             <div class="col-md-5">
-              <input type="text" id="filePath" class="form-control" name="filePath" [(ngModel)]="configParams.filePath"
+              <input type="text" id="filePath" class="form-control" name="filePath" [(ngModel)]="sourcePrototype.filePath"
                      placeholder="Local path of your file" pattern="^(?:[\w]\:|\\)(\\[a-z_\-\s0-9\.]+)+\.?" required/>
             </div>
             <div class="col-md-5">
@@ -67,7 +67,7 @@
             <label class="col-sm-2 control-label">File Locking</label>
             <div class="col-md-5">
               <label>
-                <input type="checkbox" name="fileLock" id="fileLock" class="checkbox" [(ngModel)]="configParams.fileLock">
+                <input type="checkbox" name="fileLock" id="fileLock" class="checkbox" [(ngModel)]="sourcePrototype.fileLock">
               </label>
             </div>
             <div class="col-md-5">
@@ -89,9 +89,9 @@
 
         <div class="stepTwo" *ngSwitchCase="'2'">
           <h3 align="center">Step 2 - Configure the ETL Parameters</h3>
-          <h4 align="center">Chosen source: {{configParams.source}}</h4><br>
+          <h4 align="center">Chosen source: {{sourcePrototype.source.value}}</h4><br>
           <div class="row">
-            <div class="col-sm-3">
+            <div class="col-sm-2">
               <h3 align="center">Extractor
                 <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
                         [attr.data-content]="hints.extractorHint" data-animation="am-fade-and-scale"><b>?</b></button>
@@ -107,12 +107,12 @@
                   <div class="dropdown-menu">
                     <li class="list-group-item list-group-item-info">Extractor Type</li>
 
-                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('jdbc')" *ngIf="configParams.source == 'jdbc'">jdbc</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('csv')" *ngIf="configParams.source != 'jdbc'">csv</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('json')" *ngIf="configParams.source != 'jdbc'">json</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('row')" *ngIf="configParams.source != 'jdbc'">row</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('xml')" *ngIf="configParams.source != 'jdbc'">xml</button>
-                    <a class="list-group-item list-group-item-action flex-column align-items-start active" *ngIf="configParams.source == 'jdbc'">
+                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('jdbc')" *ngIf="sourcePrototype.source.value == 'jdbc'">jdbc</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('csv')" *ngIf="sourcePrototype.source.value != 'jdbc'">csv</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('json')" *ngIf="sourcePrototype.source.value != 'jdbc'">json</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('row')" *ngIf="sourcePrototype.source.value != 'jdbc'">row</button>
+                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('xml')" *ngIf="sourcePrototype.source.value != 'jdbc'">xml</button>
+                    <a class="list-group-item list-group-item-action flex-column align-items-start active" *ngIf="sourcePrototype.source.value == 'jdbc'">
                       <div class="d-flex w-100 justify-content-between">
                         <small>Hint:</small>
                       </div>
@@ -125,14 +125,14 @@
                 <div class="row">
                   <h5 id="pleaseExtractor" align="center"><b>Please create an extractor</b></h5>
                   <div id="extractorSpace" class="row">
-                    <br><br><br><br><br><br><br>
+                    <br><br><br><br><br><br><br> <br><br>
                   </div>
                 </div>
               </div>
             </div>
 
 
-            <div class="col-sm-6">
+            <div class="col-sm-4">
               <h3 align="center">Transformers
                 <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
                         [attr.data-content]="hints.transformerHint" data-animation="am-fade-and-scale"><b>?</b></button>
@@ -165,13 +165,13 @@
                 <div class="row">
                   <h5 id="pleaseTransformer" align="center"><b>Please create at least one transformer</b></h5>
                   <div id="transformerSpace" class="row">
-                    <br><br><br><br><br><br><br>
+                    <br><br><br><br><br><br><br> <br><br>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="col-sm-3">
+            <div class="col-sm-2">
               <h3 align="center">Loader
                 <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
                         [attr.data-content]="hints.loaderHint" data-animation="am-fade-and-scale"><b>?</b></button>
@@ -196,8 +196,14 @@
               <div class="row">
                 <h5 id="pleaseLoader" align="center"><b>Please create a loader</b></h5>
                 <div id="loaderSpace" class="row">
-                  <br><br><br><br><br><br><br>
+                  <br><br><br><br><br><br><br> <br><br>
                 </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="panel panel-default">
+                <div class="panel-body">Panel Content</div>
+                <div class="panel-footer">Panel Footer</div>
               </div>
             </div>
           </div>
@@ -235,7 +241,7 @@
             <div class="col-sm-offset-2 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="setStep(1)">Restart</button>
+                  <!--<button type="button" class="btn btn-sm btn-primary" (click)="setStep(1)">Restart</button>-->
                 </div>
               </div>
             </div>

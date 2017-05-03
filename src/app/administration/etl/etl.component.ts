@@ -21,21 +21,16 @@ declare var angular:any;
 })
 
 class EtlComponent {
-  private configParams; // Parameters stored during the configuration
-  private source;
-  private extractor;
-  private transformer; // Single transformer
-  private transformers; // Array containing every transformer
-  private loader;
+  private sourcePrototype;
+  private extractorPrototype;
+  private transformerPrototype;
+  private loaderPrototype;
+  private source; // Source variable
+  private extractor; // Extractor variable
+  private transformers = []; // Array containing every transformer
+  private loader; // Loader variable
 
   private finalJson; // The final json, it will be passed to the launch function
-
-  // Different types, used in the multiple choice dialogs
-  private sourceTypes;
-  private URLMethods;
-  private predefinedFormats;
-  private unresolvedLinkActions;
-  private linkFieldTypes;
 
   private step;
   private hints;
@@ -52,120 +47,231 @@ class EtlComponent {
 
   init() {
 
-    // Params to build the partial json.
-    this.configParams = {
+    this.sourcePrototype = {
+      source: {
+        value: undefined,
+        types: ["jdbc", "local file", "url"]
+      },
+      fileURL: undefined,
+      URLMethod: {
+        value: undefined,
+        types: ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE"]
+      },
+      filePath: undefined,
+      fileLock: false
+    }
 
-      // Source
-      source: "",
-      fileURL: "",
-      URLMethod: "GET",
-      filePath: "",
-      fileLock: false,
+    this.extractorPrototype = {
+      row: {
+        multiline: true,
+        linefeed: "\r\n",
+      },
 
-      // Extractor
-      // Row
-      multiline: true,
-      linefeed: "\r\n",
-      // Csv
-      separator: ",",
-      columnsOnFirstLine: true,
-      columns: [],
-      nullValue: "NULL",
-      dateFormat: "yyyy-MM-dd",
-      dateTimeFormat: "yyyy-MM-dd HH:mm",
-      quote: "\"",
-      skipFrom: "",
-      skipTo: "",
-      ignoreEmptyLines: false,
-      ignoreMissingColumns: false,
-      predefinedFormat: "",
-      // JDBC
-      driver: "", // mandatory
-      url: "", // mandatory
-      userName: "", // mandatory
-      userPassword: "", // mandatory
-      query: "", // mandatory
-      queryCount: "",
+      csv: {
+        separator: ",",
+        columnsOnFirstLine: true,
+        columns: undefined,
+        nullValue: "NULL",
+        dateFormat: "yyyy-MM-dd",
+        dateTimeFormat: "yyyy-MM-dd HH:mm",
+        quote: "\"",
+        skipFrom: undefined,
+        skipTo: undefined,
+        ignoreEmptyLines: false,
+        ignoreMissingColumns: false,
+        predefinedFormat: {
+          value: "Default",
+          types: ["Default", "Excel", "MySQL", "RCF4180", "TDF"]
+        }
+      },
+
+      jdbc: {
+        driver: {
+          mandatory: true,
+          value: undefined
+        },
+        url: {
+          mandatory: true,
+          value: undefined
+        },
+        userName: {
+          mandatory:true,
+          value: "admin"
+        },
+        userPassword: {
+          mandatory: true,
+          value: undefined
+        },
+        query: {
+          mandatory: true,
+          value: undefined
+        },
+        queryCount: undefined
+      },
+
       // Json has no parameters
-      // XML
-      rootNode: "",
-      tagsAsAttribute: [],
 
-      // Transformer
-      customLabel: "",
-      // Field
-      fieldName: "",
-      expression: "", // mandatory
-      value: "",
-      operation: "set",
-      save: false,
-      // Merge
-      joinFieldName: "", // mandatory
-      lookup: "", // mandatory
-      unresolvedLinkAction: "NOTHING",
-      // Vertex
-      class: "V",
-      skipDuplicates: false,
-      // Edge
-      joinFieldNameEdge: "",
-      direction: "out",
-      classEdge: "E",
-      lookupEdge: "",
-      targetVertexFields: {},
-      edgeFields: {},
-      skipDuplicatesEdge: false,
-      unresolvedLinkActionEdge: "NOTHING",
-      // Flow
-      if: "", // mandatory
-      operationFlow: "", // mandatory
-      // Code // TODO probably unadoptable
-      language: "javascript",
-      code: "", // Mandatory
-      // Link
-      joinFieldNameLink: "",
-      joinValueLink: "",
-      linkFieldName: "", // mandatory
-      linkFieldType: "", // mandatory
-      lookupLink: "",
-      unresolvedLinkActionLink: "NOTHING",
-      // Log
-      prefix: "",
-      postfix: "",
-      // Block
-      // Command
-      languageCommand: "sql",
-      command: "", // mandatory
-
-      // Loader
-      // OrientDB
-      dbURL: "", // mandatory
-      dbUser: "admin",
-      dbPassword: "admin",
-      serverUser: "root",
-      serverPassword: "",
-      dbAutoCreate: true,
-      dbAutoCreateProperties: false,
-      dbAutoDropIfExists: false,
-      tx: false,
-      txUseLog: false,
-      wal: true,
-      batchCommit: 0,
-      dbType: "document", // or graph
-      classOrient: "",
-      cluster: "",
-      // classes: TODO ???
-      // indexes: TODO ???
-      useLightweightEdges: false,
-      standardElementConstraints: true
+      xml: {
+        rootNode: undefined,
+        tagsAsAttribute: []
+      }
 
     }
 
-    // Types
-    this.sourceTypes = ["jdbc", "local file", "url"];
-    this.URLMethods = ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE"];
-    this.predefinedFormats = ["Default", "Excel", "MySQL", "RCF4180", "TDF"];
-    this.unresolvedLinkActions = ["NOTHING", "WARNING", "ERROR", "HALT", "SKIP"];
-    this.linkFieldTypes = ["LINK", "LINKSET", "LINKLIST"];
+    this.transformerPrototype = {
+      customLabel: undefined,
+
+      field: {
+        fieldName: undefined,
+        expression: {
+          mandatory: true,
+          value: undefined
+        },
+        value: undefined,
+        operation: {
+          value: "SET",
+          types: ["SET", "REMOVE"]
+        },
+        save: false
+      },
+
+      merge: {
+        joinFieldName: {
+          mandatory: true,
+          value: undefined
+        },
+        lookup: {
+          mandatory: true,
+          value: undefined
+        },
+        unresolvedLinkAction: {
+          value: "NOTHING",
+          types: ["NOTHING", "WARNING", "ERROR", "HALT", "SKIP"]
+        }
+      },
+
+      vertex: {
+        class: "V",
+        skipDuplicates: false
+      },
+
+      edge: {
+        joinFieldName: {
+          mandatory: true,
+          value: undefined
+        },
+        direction: {
+          value: "out",
+          types: ["in", "out"]
+        },
+        class: "E",
+        lookup: {
+          mandatory: true,
+          value: undefined
+        },
+        targetVertexFields: undefined,
+        edgeFields: undefined,
+        skipDuplicates: false,
+        unresolvedLinkAction: {
+          value: "NOTHING",
+          types: ["NOTHING", "WARNING", "ERROR", "HALT", "SKIP"]
+        },
+      },
+
+      flow: {
+        if: {
+          mandatory: true,
+          value: undefined
+        },
+        operation: {
+          mandatory: true,
+          value: undefined,
+          types: ["skip", "halt"]
+        },
+      },
+
+      code: {// TODO probably unadoptable
+        language: "JavaScript",
+        code: {
+          mandatory: true,
+          value: undefined
+        },
+      },
+
+      link: {
+        joinFieldName: undefined,
+        joinValue: undefined,
+        linkFieldName: {
+          mandatory: true,
+          value: undefined
+        },
+        linkFieldType: {
+          mandatory: true,
+          value: undefined,
+          types: ["LINK", "LINKSET", "LINKLIST"]
+        },
+        lookup: {
+          mandatory: true,
+          value: undefined
+        },
+        unresolvedLinkAction: {
+          value: "NOTHING",
+          types: ["NOTHING", "WARNING", "ERROR", "HALT", "SKIP"]
+        },
+      },
+
+      log: {
+        prefix: undefined,
+        postfix: undefined
+      },
+
+      // Block has no parameters
+
+      command: {
+        language: {
+          value: "sql",
+          types: ["sql","gremlin"]
+        },
+        command: {
+          mandatory: true,
+          value: undefined
+        },
+      }
+
+    }
+
+    this.loaderPrototype = {
+      // Log has no parameters
+
+      orientDb: {
+        dbURL: {
+          mandatory: true,
+          value: undefined
+        },
+        dbUser: "admin",
+        dbPassword: "admin",
+        serverUser: "root",
+        serverPassword: "",
+        dbAutoCreate: true,
+        dbAutoCreateProperties: false,
+        dbAutoDropIfExists: false,
+        tx: false,
+        txUseLog: false,
+        wal: true,
+        batchCommit: 0,
+        dbType: {
+          value: "document",
+          types: ["document", "graph"]
+        },
+        class: undefined,
+        cluster: undefined,
+        classes: undefined,
+        indexes: undefined,
+        useLightweightEdges: false,
+        standardElementConstraints: true
+      }
+
+    }
 
     // User support
     this.step = 1;
@@ -197,31 +303,27 @@ class EtlComponent {
       this.step = step;
   }
 
-  // Checks and Dinamic creations
-
-  readyForExecution() {
-    return true;
-  }
+  // Dynamic creations
 
   sourceInit() {
     this.step = 2;
 
-    if(this.configParams.source == "jdbc") this.source = null
+    if(this.sourcePrototype.source.value == "jdbc") this.source = null
 
-    if(this.configParams.source == "local file")
+    if(this.sourcePrototype.source.value == "local file")
       this.source = {
         file: {
-          path: this.configParams.filePath,
-          lock: this.configParams.fileLock,
+          path: this.sourcePrototype.filePath,
+          lock: this.sourcePrototype.fileLock,
           encoding: "UTF-8"
         }
     }
 
-    if(this.configParams.source == "url") {
+    if(this.sourcePrototype.source.value == "url") {
       this.source = {
         http: {
-          url: this.configParams.fileURL,
-          method: this.configParams.URLMethod,
+          url: this.sourcePrototype.fileURL,
+          method: this.sourcePrototype.URLMethod.value,
           headers: {
             "User-Agent": ""
           }
@@ -239,8 +341,8 @@ class EtlComponent {
     if(type == "row") {
       this.extractor = {
         row: {
-          multiline: this.configParams.multiline,
-          linefeed: this.configParams.linefeed
+          multiline: this.extractorPrototype.row.multiline,
+          linefeed: this.extractorPrototype.row.linefeed
         }
       }
     }
@@ -248,18 +350,18 @@ class EtlComponent {
     if(type == "csv") {
       this.extractor = {
         csv: {
-          separator: this.configParams.separator,
-          columnsOnFirstLine: this.configParams.columnsOnFirstLine,
-          columns: this.configParams.columns,
-          nullValue: this.configParams.nullValue,
-          dateFormat: this.configParams.dateFormat,
-          dateTimeFormat: this.configParams.dateTimeFormat,
-          quote: this.configParams.quote,
-          skipFrom: this.configParams.skipFrom,
-          skipTo: this.configParams.skipTo,
-          ignoreEmptyLines: this.configParams.ignoreEmptyLines,
-          ignoreMissingColumns: this.configParams.ignoreMissingColumns,
-          predefinedFormat: this.configParams.predefinedFormat
+          separator: this.extractorPrototype.csv.separator,
+          columnsOnFirstLine: this.extractorPrototype.csv.columnsOnFirstLine,
+          columns: this.extractorPrototype.csv.columns,
+          nullValue: this.extractorPrototype.csv.nullValue,
+          dateFormat: this.extractorPrototype.csv.dateFormat,
+          dateTimeFormat: this.extractorPrototype.csv.dateTimeFormat,
+          quote: this.extractorPrototype.csv.quote,
+          skipFrom: this.extractorPrototype.csv.skipFrom,
+          skipTo: this.extractorPrototype.csv.skipTo,
+          ignoreEmptyLines: this.extractorPrototype.csv.ignoreEmptyLines,
+          ignoreMissingColumns: this.extractorPrototype.csv.ignoreMissingColumns,
+          predefinedFormat: this.extractorPrototype.csv.predefinedFormat.value
         }
       }
     }
@@ -267,12 +369,12 @@ class EtlComponent {
     if(type == "jdbc") {
       this.extractor = {
         jdbc: {
-          driver: this.configParams.driver,
-          url: this.configParams.url,
-          userName: this.configParams.userName,
-          userPassword: this.configParams.userPassword,
-          query: this.configParams.query,
-          queryCount: this.configParams.queryCount
+          driver: this.extractorPrototype.jdbc.driver.value,
+          url: this.extractorPrototype.jdbc.url.value,
+          userName: this.extractorPrototype.jdbc.userName.value,
+          userPassword: this.extractorPrototype.jdbc.userPassword.value,
+          query: this.extractorPrototype.jdbc.query.value,
+          queryCount: this.extractorPrototype.jdbc.queryCount
         }
       }
     }
@@ -286,8 +388,8 @@ class EtlComponent {
     if(type == "xml") {
       this.extractor = {
         xml: {
-          rootNode: this.configParams.rootNode,
-          tagsAsAttribute: this.configParams.tagsAsAttribute
+          rootNode: this.extractorPrototype.xml.rootNode,
+          tagsAsAttribute: this.extractorPrototype.xml.tagsAsAttribute
         }
       }
     }
@@ -297,8 +399,8 @@ class EtlComponent {
       var dataExtractor = {
         operators: {
           operator: {
-            top: 20,
-            left: 100,
+            top: 30,
+            left: 70,
             properties: {
               title: type + ' extractor',
               outputs: {
@@ -320,96 +422,97 @@ class EtlComponent {
 
   transformerInit(type) { // Block and Code aren't active atm
     $("#pleaseTransformer").hide();
+    var transformer;
 
     // Object creation
     if(type == "field") {
-      this.transformer = {
+      transformer = {
         field: {
-          fieldName: this.configParams.fieldName,
-          expression: this.configParams.expression,
-          value: this.configParams.value,
-          operation: this.configParams.operation,
-          save: this.configParams.save
+          fieldName: this.transformerPrototype.field.fieldName,
+          expression: this.transformerPrototype.field.expression.value,
+          value: this.transformerPrototype.field.value,
+          operation: this.transformerPrototype.field.operation.value,
+          save: this.transformerPrototype.field.save
         }
       }
     }
 
     if(type == "merge") {
-      this.transformer = {
+      transformer = {
         merge: {
-          joinFieldName: this.configParams.joinFieldName,
-          lookup: this.configParams.lookup,
-          unresolvedLinkAction: this.configParams.unresolvedLinkAction
+          joinFieldName: this.transformerPrototype.merge.joinFieldName.value,
+          lookup: this.transformerPrototype.merge.lookup.value,
+          unresolvedLinkAction: this.transformerPrototype.merge.unresolvedLinkAction.value
         }
       }
     }
 
     if(type == "vertex") {
-      this.transformer = {
+      transformer = {
         vertex: {
-          class: this.configParams.class,
-          skipDuplicates: this.configParams.skipDuplicates
+          class: this.transformerPrototype.vertex.class,
+          skipDuplicates: this.transformerPrototype.vertex.skipDuplicates
         }
       }
     }
 
     if(type == "code") {
-      this.transformer = {
+      transformer = {
         code: {
-          language: this.configParams.language,
-          code: this.configParams.code,
+          language: this.transformerPrototype.code.language,
+          code: this.transformerPrototype.code.code,
         }
       }
     }
 
     if(type == "link") {
-      this.transformer = {
+      transformer = {
         link: {
-          joinFieldName: this.configParams.joinFieldNameLink,
-          joinValue: this.configParams.joinValueLink,
-          linkFieldName: this.configParams.linkFieldName,
-          linkFieldType: this.configParams.linkFieldType,
-          lookup: this.configParams.lookupLink,
-          unresolvedLinkAction: this.configParams.unresolvedLinkActionLink
+          joinFieldName: this.transformerPrototype.link.joinFieldName,
+          joinValue: this.transformerPrototype.link.joinValue,
+          linkFieldName: this.transformerPrototype.link.linkFieldName.value,
+          linkFieldType: this.transformerPrototype.link.linkFieldType.value,
+          lookup: this.transformerPrototype.link.lookup.value,
+          unresolvedLinkAction: this.transformerPrototype.link.unresolvedLinkAction.value
         }
       }
     }
 
     if(type == "edge") {
-      this.transformer = {
+      transformer = {
         edge: {
-          joinFieldName: this.configParams.joinFieldNameEdge,
-          direction: this.configParams.direction,
-          class: this.configParams.classEdge,
-          lookup: this.configParams.lookupEdge,
-          targetVertexFields: this.configParams.targetVertexFields,
-          edgeFields: this.configParams.edgeFields,
-          skipDuplicates: this.configParams.skipDuplicatesEdge,
-          unresolvedLinkAction: this.configParams.unresolvedLinkActionEdge
+          joinFieldName: this.transformerPrototype.edge.joinFieldName.value,
+          direction: this.transformerPrototype.edge.direction.value,
+          class: this.transformerPrototype.edge.class,
+          lookup: this.transformerPrototype.edge.lookup.value,
+          targetVertexFields: this.transformerPrototype.edge.targetVertexFields,
+          edgeFields: this.transformerPrototype.edge.edgeFields,
+          skipDuplicates: this.transformerPrototype.edge.skipDuplicates,
+          unresolvedLinkAction: this.transformerPrototype.edge.unresolvedLinkAction.value
         }
       }
     }
 
     if(type == "flow") {
-      this.transformer = {
+      transformer = {
         flow: {
-          if: this.configParams.if,
-          operation: this.configParams.operationFlow
+          if: this.transformerPrototype.flow.if.value,
+          operation: this.transformerPrototype.flow.operation.value
         }
       }
     }
 
     if(type == "log") {
-      this.transformer = {
+      transformer = {
         log: {
-          prefix: this.configParams.prefix,
-          postfix: this.configParams.postfix
+          prefix: this.transformerPrototype.log.prefix,
+          postfix: this.transformerPrototype.log.postfix
         }
       }
     }
 
     if(type == "block") {
-      this.transformer = {
+      transformer = {
         block: {
 
         }
@@ -417,15 +520,13 @@ class EtlComponent {
     }
 
     if(type == "command") {
-      this.transformer = {
+      transformer = {
         command: {
-          language: this.configParams.languageCommand,
-          command: this.configParams.command
+          language: this.transformerPrototype.command.language.value,
+          command: this.transformerPrototype.command.command.value
         }
       }
     }
-
-    this.transformers.push(this.transformer);
 
     // Flowchart
     $(document).ready(function() {
@@ -433,7 +534,7 @@ class EtlComponent {
         operators: {
           operator: {
             top: 20,
-            left: 100,
+            left: 160,
             properties: {
               title: type + ' transformer',
               inputs: {
@@ -456,6 +557,10 @@ class EtlComponent {
       });
     });
 
+    // Push into the array, return the new transformer
+    this.transformers.push(transformer);
+    return transformer; // TODO maybe useless?
+
   }
 
   loaderInit(type) {
@@ -472,25 +577,25 @@ class EtlComponent {
     if(type == "OrientDB") {
       this.loader = {
         OrientDB: {
-          dbURL: this.configParams.dbURL,
-          dbUser: this.configParams.dbUser,
-          dbPassword: this.configParams.dbPassword,
-          serverUser: this.configParams.serverUser,
-          serverPassword: this.configParams.serverPassword,
-          dbAutoCreate: this.configParams.dbAutoCreate,
-          dbAutoCreateProperties: this.configParams.dbAutoCreateProperties,
-          dbAutoDropIfExists: this.configParams.dbAutoDropIfExists,
-          tx: this.configParams.tx,
-          txUseLog: this.configParams.txUseLog,
-          wal: this.configParams.wal,
-          batchCommit: this.configParams.batchCommit,
-          dbType: this.configParams.dbType,
-          class: this.configParams.classOrient,
-          cluster: this.configParams.cluster,
-          // classes: this.configParams.classes,
-          // indexes: this.configParams.indexes,
-          useLightweightEdges: this.configParams.useLightweightEdges,
-          standardElementConstraints: this.configParams.standardElementConstraints
+          dbURL: this.loaderPrototype.orientDb.dbURL.value,
+          dbUser: this.loaderPrototype.orientDb.dbUser,
+          dbPassword: this.loaderPrototype.orientDb.dbPassword,
+          serverUser: this.loaderPrototype.orientDb.serverUser,
+          serverPassword: this.loaderPrototype.orientDb.serverPassword,
+          dbAutoCreate: this.loaderPrototype.orientDb.dbAutoCreate,
+          dbAutoCreateProperties: this.loaderPrototype.orientDb.dbAutoCreateProperties,
+          dbAutoDropIfExists: this.loaderPrototype.orientDb.dbAutoDropIfExists,
+          tx: this.loaderPrototype.orientDb.tx,
+          txUseLog: this.loaderPrototype.orientDb.txUseLog,
+          wal: this.loaderPrototype.orientDb.wal,
+          batchCommit: this.loaderPrototype.orientDb.batchCommit,
+          dbType: this.loaderPrototype.orientDb.dbType.value,
+          class: this.loaderPrototype.orientDb.class,
+          cluster: this.loaderPrototype.orientDb.cluster,
+          classes: this.loaderPrototype.orientDb.classes,
+          indexes: this.loaderPrototype.orientDb.indexes,
+          useLightweightEdges: this.loaderPrototype.orientDb.useLightweightEdges,
+          standardElementConstraints: this.loaderPrototype.orientDb.standardElementConstraints
         }
       }
     }
@@ -500,8 +605,8 @@ class EtlComponent {
       var dataLoader = {
         operators: {
           operator: {
-            top: 20,
-            left: 100,
+            top: 30,
+            left: 40,
             properties: {
               title: type + ' loader',
               inputs: {
@@ -535,17 +640,20 @@ class EtlComponent {
 
   // Core Functions
 
-  generateTransformersList(transformers) {
-    var transformersList = {
-      placeholder: "test"
-    };
+  readyForExecution() {
+    if(this.extractor)
+      return true;
+    else
+      return false;
+  }
 
+  generateTransformersList(transformers) {
     return transformers;
   }
 
   launch() {
     var final = {};
-    $.extend(final, this.source, this.extractor, this.generateTransformersList(this.transformers), this.loader);
+    $.extend(final, this.source, this.extractor, this.transformers, this.loader);
     this.finalJson = JSON.stringify(final);
 
     this.step = "3";
