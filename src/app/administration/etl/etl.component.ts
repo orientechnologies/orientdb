@@ -1,7 +1,7 @@
-import {Component} from '@angular/core';
-
 import * as $ from "jquery"
 import * as jqueryUI from "jquery-ui";
+
+import {Component} from '@angular/core';
 
 import "../../util/diagram-editor/jquery.flowchart.min.js";
 import "../../util/diagram-editor/jquery.flowchart.min.css";
@@ -34,6 +34,7 @@ class EtlComponent {
 
   private step;
   private hints;
+  private ready = false;
 
 
   constructor(private agentService: AgentService, private etlService : EtlService){
@@ -337,7 +338,7 @@ class EtlComponent {
     $("#createExtractor").hide();
     $("#pleaseExtractor").hide();
 
-    // Object creation
+    // Variable creation
     if(type == "row") {
       this.extractor = {
         row: {
@@ -366,7 +367,7 @@ class EtlComponent {
       }
     }
 
-    if(type == "jdbc") {
+    if(type == "jdbc") { // TODO: write === instead of ==
       this.extractor = {
         jdbc: {
           driver: this.extractorPrototype.jdbc.driver.value,
@@ -405,7 +406,7 @@ class EtlComponent {
               title: type + ' extractor',
               outputs: {
                 output_1: {
-                  label: 'click for further configuration'
+                  label: 'click to configure'
                 }
               }
             }
@@ -418,13 +419,15 @@ class EtlComponent {
       });
     });
 
+    this.readyForExecution();
   }
 
-  transformerInit(type) { // Block and Code aren't active atm
+  transformerInit(type) { // Block and Code aren't active atm. Csv is deprecated.
     $("#pleaseTransformer").hide();
     var transformer;
+    // TODO: use the custom label in the flowchart
 
-    // Object creation
+    // Variable creation
     if(type == "field") {
       transformer = {
         field: {
@@ -539,12 +542,12 @@ class EtlComponent {
               title: type + ' transformer',
               inputs: {
                 input1: {
-                  label: ''
+                  label: ""
                 }
               },
               outputs: {
                 output_1: {
-                  label: 'click for further configuration'
+                  label: 'click to configure'
                 }
               }
             }
@@ -559,6 +562,7 @@ class EtlComponent {
 
     // Push into the array, return the new transformer
     this.transformers.push(transformer);
+    this.readyForExecution();
     return transformer; // TODO maybe useless?
 
   }
@@ -567,16 +571,16 @@ class EtlComponent {
     $("#pleaseLoader").hide();
     $("#createLoader").hide();
 
-    // Object creation
-    if(type == "log") {
+    // Variable creation
+    if(type == "log")
       this.loader = {
         log: {}
       }
-    }
 
-    if(type == "OrientDB") {
+
+    if(type == "OrientDB")
       this.loader = {
-        OrientDB: {
+        orientdb: {
           dbURL: this.loaderPrototype.orientDb.dbURL.value,
           dbUser: this.loaderPrototype.orientDb.dbUser,
           dbPassword: this.loaderPrototype.orientDb.dbPassword,
@@ -596,9 +600,10 @@ class EtlComponent {
           indexes: this.loaderPrototype.orientDb.indexes,
           useLightweightEdges: this.loaderPrototype.orientDb.useLightweightEdges,
           standardElementConstraints: this.loaderPrototype.orientDb.standardElementConstraints
+
         }
       }
-    }
+
 
     // Flowchart
     $(document).ready(function() {
@@ -611,7 +616,7 @@ class EtlComponent {
               title: type + ' loader',
               inputs: {
                 input1: {
-                  label: 'click for further configuration'
+                  label: 'click to configure'
                 }
               }
             }
@@ -623,6 +628,8 @@ class EtlComponent {
         data: dataLoader
       });
     });
+
+    this.readyForExecution();
   }
 
   deleteExtractor() {
@@ -630,7 +637,7 @@ class EtlComponent {
   }
 
   deleteTransformer(name) {
-
+    this.transformers.indexOf(name);
   }
 
   deleteLoader() {
@@ -642,28 +649,28 @@ class EtlComponent {
 
   readyForExecution() {
     if(this.extractor)
-      return true;
+      this.ready = true;
     else
-      return false;
-  }
-
-  generateTransformersList(transformers) {
-    return transformers;
+      this.ready = false;
   }
 
   launch() {
-    var final = {};
-    $.extend(final, this.source, this.extractor, this.transformers, this.loader);
-    this.finalJson = JSON.stringify(final);
+    if(this.source)
+      this.finalJson = '{"source":' + JSON.stringify(this.source) + ',"transformers":' + JSON.stringify(this.transformers) +
+                       ',"loader":' + JSON.stringify(this.loader) + "}";
+    else
+      this.finalJson = '{"transformers":' + JSON.stringify(this.transformers) + ',"loader":' + JSON.stringify(this.loader) + "}";
 
     this.step = "3";
 
-   // this.etlService.launch(this.finalJson).then((data) => {
-   //   this.step = "3";
-   //   this.status();
-   // }).catch(function (error) {
-   //   alert("Error during etl process!")
-   // });
+    /*
+    this.etlService.launch(this.finalJson).then((data) => {
+      this.step = "3";
+      this.status();
+    }).catch(function (error) {
+      alert("Error during etl process!")
+    });
+    */
   }
 
   status() {

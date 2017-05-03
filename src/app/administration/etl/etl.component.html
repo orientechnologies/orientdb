@@ -148,10 +148,10 @@
                   <div class="dropdown-menu">
                     <li class="list-group-item list-group-item-info">Transformer Type</li>
 
+                    <!-- csv transformer is deprecated -->
                     <!--<button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('block')">block</button>-->
                     <!-- <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('code')">code</button> -->
                     <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('command')">command</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('csv')">csv</button>
                     <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('edge')">edge</button>
                     <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('flow')">flow</button>
                     <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('field')">field</button>
@@ -202,8 +202,10 @@
             </div>
             <div class="col-md-4">
               <div class="panel panel-default">
-                <div class="panel-body">Panel Content</div>
-                <div class="panel-footer">Panel Footer</div>
+                <div class="panel-body">
+                  <br><br><br><br><br><br><br><h4 align="center"><b>PARAMETERS SHOULD BE <br>DISPLAYED HERE</b></h4> <br><br><br><br><br><br><br><br>
+                </div>
+                <div class="panel-footer">Etl Advanced Configuration</div>
               </div>
             </div>
           </div>
@@ -216,7 +218,7 @@
                   <button type="button" class="btn btn-sm btn-primary" (click)="setStep('1')">Back</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="launch()" [disabled]="!readyForExecution()">Run Etl</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="launch()" [disabled]="!ready">Run Etl</button>
                 </div>
               </div>
             </div>
