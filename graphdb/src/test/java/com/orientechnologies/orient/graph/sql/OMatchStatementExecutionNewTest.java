@@ -84,7 +84,6 @@ public class OMatchStatementExecutionNewTest {
       String cmd =
           "CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid = 0) TO (SELECT FROM IndexedVertex WHERE uid > " + (
               i * nodes / 100) + " and uid <" + ((i + 1) * nodes / 100) + ")";
-      System.out.println(cmd);
       db.command(new OCommandSQL(cmd)).execute();
 //      break;
     }
@@ -306,7 +305,6 @@ public class OMatchStatementExecutionNewTest {
       OResult item = qResult.next();
       Assert.assertTrue(item.getPropertyNames().size() == 1);
       OElement person = item.getProperty("person");
-
 
       String name = person.getProperty("name");
       Assert.assertTrue(name.equals("n1") || name.equals("n2"));
@@ -1493,8 +1491,6 @@ public class OMatchStatementExecutionNewTest {
     query.append("{class:DiamondV, as: one, where: (uid = 0)}.out('DiamondE').out('DiamondE'){as: two} ");
     query.append("return one.uid, two.uid");
 
-
-
     result = db.query(query.toString());
     Assert.assertTrue(result.hasNext());
     doc = result.next();
@@ -1615,6 +1611,52 @@ public class OMatchStatementExecutionNewTest {
     Assert.assertEquals("n2", doc.getProperty("name"));
     Assert.assertNull(doc.getProperty("b"));
     Assert.assertFalse(qResult.hasNext());
+  }
+
+  @Test
+  public void testOrderByAsc() {
+    db.command(new OCommandSQL("CREATE CLASS testOrderByAsc EXTENDS V")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testOrderByAsc SET name = 'bbb'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testOrderByAsc SET name = 'zzz'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testOrderByAsc SET name = 'aaa'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testOrderByAsc SET name = 'ccc'")).execute();
+
+    String query = "MATCH { class: testOrderByAsc, as:a} RETURN a.name as name order by name asc";
+
+    OResultSet result = db.query(query);
+    Assert.assertTrue(result.hasNext());
+    Assert.assertEquals("aaa", result.next().getProperty("name"));
+    Assert.assertTrue(result.hasNext());
+    Assert.assertEquals("bbb", result.next().getProperty("name"));
+    Assert.assertTrue(result.hasNext());
+    Assert.assertEquals("ccc", result.next().getProperty("name"));
+    Assert.assertTrue(result.hasNext());
+    Assert.assertEquals("zzz", result.next().getProperty("name"));
+    Assert.assertFalse(result.hasNext());
+  }
+
+  @Test
+  public void testOrderByDesc() {
+    db.command(new OCommandSQL("CREATE CLASS testOrderByDesc EXTENDS V")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testOrderByDesc SET name = 'bbb'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testOrderByDesc SET name = 'zzz'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testOrderByDesc SET name = 'aaa'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testOrderByDesc SET name = 'ccc'")).execute();
+
+    String query = "MATCH { class: testOrderByDesc, as:a} RETURN a.name as name order by name desc";
+
+    OResultSet result = db.query(query);
+    Assert.assertTrue(result.hasNext());
+    Assert.assertEquals("zzz", result.next().getProperty("name"));
+    Assert.assertTrue(result.hasNext());
+    Assert.assertEquals("ccc", result.next().getProperty("name"));
+    Assert.assertTrue(result.hasNext());
+    Assert.assertEquals("bbb", result.next().getProperty("name"));
+    Assert.assertTrue(result.hasNext());
+    Assert.assertEquals("aaa", result.next().getProperty("name"));
+    Assert.assertFalse(result.hasNext());
   }
 
   private OResultSet getManagedPathElements(String managerName) {

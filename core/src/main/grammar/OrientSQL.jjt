@@ -1269,6 +1269,7 @@ OMatchStatement MatchStatement():
                 jjtThis.returnItems.add(lastReturn);
             }
         )*
+        [ jjtThis.orderBy = OrderBy() ]
         [ jjtThis.limit = Limit() ]
     ){ return jjtThis; }
 }
