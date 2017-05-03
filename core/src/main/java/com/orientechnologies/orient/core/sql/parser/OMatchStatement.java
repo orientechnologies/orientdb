@@ -17,6 +17,8 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLResultsetDelegate;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OIterableRecordSource;
 import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
@@ -1039,10 +1041,18 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
     OSQLTarget target = new OSQLTarget(text, ctx);
-
     Iterable targetResult = (Iterable) target.getTargetRecords();
     if (targetResult == null) {
       return null;
+    }
+
+    if(targetResult instanceof OCommandExecutorSQLSelect){
+      ((OCommandExecutorSQLSelect) targetResult).getContext().setRecordingMetrics(ctx.isRecordingMetrics());
+    }else if(targetResult instanceof OCommandExecutorSQLResultsetDelegate){
+      OCommandExecutor delegate = ((OCommandExecutorSQLResultsetDelegate) targetResult).getDelegate();
+      if(delegate instanceof OCommandExecutorSQLSelect){
+        delegate.getContext().setRecordingMetrics(ctx.isRecordingMetrics());
+      }
     }
     return targetResult.iterator();
   }
