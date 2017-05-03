@@ -710,4 +710,5 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   public boolean getSupportBinaryEvaluate() {
     return false;
   }
+
 }

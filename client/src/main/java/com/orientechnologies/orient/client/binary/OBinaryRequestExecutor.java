@@ -87,7 +87,11 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeConnect(OConnectRequest request);
 
+  OBinaryResponse executeConnect37(OConnect37Request request);
+
   OBinaryResponse executeDatabaseOpen(OOpenRequest request);
+
+  OBinaryResponse executeDatabaseOpen37(OOpenRequest37 request);
 
   OBinaryResponse executeShutdown(OShutdownRequest request);
 

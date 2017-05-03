@@ -1,14 +1,15 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-import java.util.Map;
-
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+
+import java.io.IOException;
+import java.util.Map;
 
 public class OListDatabasesResponse implements OBinaryResponse{
   private Map<String, String> databases;
@@ -30,8 +31,9 @@ public class OListDatabasesResponse implements OBinaryResponse{
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
+    ORecordSerializer serializer = ORecordSerializerNetworkFactory.INSTANCE.current();
     final ODocument result = new ODocument();
-    result.fromStream(network.readBytes());
+    serializer.fromStream(network.readBytes(),result,null);
     databases = result.field("databases");
   }
 

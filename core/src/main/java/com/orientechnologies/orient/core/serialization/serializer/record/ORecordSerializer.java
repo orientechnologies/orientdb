@@ -37,4 +37,6 @@ public interface ORecordSerializer {
   String[] getFieldNames(ODocument reference, byte[] iSource);
 
   boolean getSupportBinaryEvaluate();
+
+  String getName();
 }

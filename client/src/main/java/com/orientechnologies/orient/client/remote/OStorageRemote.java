@@ -1260,7 +1260,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     try {
       OStorageRemoteSession session = getCurrentSession();
       OStorageRemoteNodeSession nodeSession = session.getOrCreateServerSession(network.getServerURL());
-      OOpenRequest request = new OOpenRequest(name, session.connectionUserName, session.connectionUserPassword);
+      OOpenRequest37 request = new OOpenRequest37(name, session.connectionUserName, session.connectionUserPassword);
       try {
         network.writeByte(request.getCommand());
         network.writeInt(nodeSession.getSessionId());

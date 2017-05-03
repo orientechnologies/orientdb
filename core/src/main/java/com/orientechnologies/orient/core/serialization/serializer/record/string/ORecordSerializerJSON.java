@@ -764,4 +764,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     }
     return null;
   }
+
+  @Override
+  public String getName() {
+    return NAME;
+  }
 }

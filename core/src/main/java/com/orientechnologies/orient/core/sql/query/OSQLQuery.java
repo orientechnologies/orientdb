@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 
 import java.util.ArrayList;
@@ -109,7 +108,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
   public OCommandRequestText fromStream(final byte[] iStream, ORecordSerializer serializer) throws OSerializationException {
     final OMemoryStream buffer = new OMemoryStream(iStream);
 
-    queryFromStream(buffer);
+    queryFromStream(buffer,serializer);
 
     return this;
   }
@@ -130,22 +129,23 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
     return buffer;
   }
 
-  protected void queryFromStream(final OMemoryStream buffer) {
+  protected void queryFromStream(final OMemoryStream buffer, ORecordSerializer serializer) {
     text = buffer.getAsString();
     limit = buffer.getAsInteger();
 
     setFetchPlan(buffer.getAsString());
 
     final byte[] paramBuffer = buffer.getAsByteArray();
-    parameters = deserializeQueryParameters(paramBuffer);
+    parameters = deserializeQueryParameters(paramBuffer,serializer);
   }
 
-  protected Map<Object, Object> deserializeQueryParameters(final byte[] paramBuffer) {
+  protected Map<Object, Object> deserializeQueryParameters(final byte[] paramBuffer, ORecordSerializer serializer) {
     if (paramBuffer == null || paramBuffer.length == 0)
       return Collections.emptyMap();
 
     final ODocument param = new ODocument();
-    param.fromStream(paramBuffer);
+
+    serializer.fromStream(paramBuffer,param,null);
     param.setFieldType("params", OType.EMBEDDEDMAP);
     final Map<String, Object> params = param.rawField("params");
 

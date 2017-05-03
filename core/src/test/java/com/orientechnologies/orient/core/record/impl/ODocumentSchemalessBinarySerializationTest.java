@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -847,6 +848,50 @@ public class ODocumentSchemalessBinarySerializationTest {
 
   }
 
+  @Test
+  public void testWithRemove() {
+    ODocument document = new ODocument();
+    document.field("name", "name");
+    document.field("age", 20);
+    document.field("youngAge", (short) 20);
+    document.field("oldAge", (long) 20);
+    document.removeField("oldAge");
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] { });
+
+    assertEquals(document.field("name"), extr.<Object>field("name"));
+    assertEquals(document.<Object>field("age"), extr.field("age"));
+    assertEquals(document.<Object>field("youngAge"), extr.field("youngAge"));
+    assertNull(extr.field("oldAge"));
+
+  }
+
+  @Test
+  public void testPartialCustom() {
+    ODocument document = new ODocument();
+    document.field("name", "name");
+    document.field("age", 20);
+    document.field("youngAge", (short) 20);
+    document.field("oldAge", (long) 20);
+
+    byte[] res = serializer.toStream(document, false);
+
+
+    ODocument extr = new ODocument(res);
+
+    ORecordInternal.setRecordSerializer(extr,serializer);
+
+    assertEquals(document.field("name"), extr.<Object>field("name"));
+    assertEquals(document.<Object>field("age"), extr.field("age"));
+    assertEquals(document.<Object>field("youngAge"), extr.field("youngAge"));
+    assertEquals(document.<Object>field("oldAge"), extr.field("oldAge"));
+
+
+    assertEquals(document.fieldNames().length,extr.fieldNames().length);
+
+
+  }
 
 
   public static class Custom implements OSerializableStream {

@@ -80,4 +80,9 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   public boolean getSupportBinaryEvaluate() {
     return false;
   }
+
+  @Override
+  public String getName() {
+    return NAME;
+  }
 }

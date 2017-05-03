@@ -942,6 +942,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
     changes.putAll(ChangeSerializationHelper.INSTANCE.deserializeChanges(stream, offset));
 
+    offset += OIntegerSerializer.INT_SIZE + (OLinkSerializer.RID_SIZE + Change.SIZE) * changes.size();
+
     return offset;
   }
 

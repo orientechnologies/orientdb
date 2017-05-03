@@ -7,14 +7,13 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -72,12 +71,12 @@ public class OFetchTransactionResponse implements OBinaryResponse {
     channel.writeByte((byte) 0);
 
     // SEND MANUAL INDEX CHANGES
-    OMessageHelper.writeTransactionIndexChanges(channel, (ORecordSerializerNetwork) serializer, indexChanges);
+    OMessageHelper.writeTransactionIndexChanges(channel, (ORecordSerializerNetworkV37) serializer, indexChanges);
   }
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    ORecordSerializerNetwork serializer = ORecordSerializerNetwork.INSTANCE;
+    ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
     txId = network.readInt();
     operations = new ArrayList<>();
     byte hasEntry;
@@ -90,7 +89,7 @@ public class OFetchTransactionResponse implements OBinaryResponse {
     } while (hasEntry == 1);
 
     // RECEIVE MANUAL INDEX CHANGES
-    this.indexChanges = OMessageHelper.readTransactionIndexChanges(network, (ORecordSerializerNetwork) serializer);
+    this.indexChanges = OMessageHelper.readTransactionIndexChanges(network, serializer);
   }
 
   public int getTxId() {

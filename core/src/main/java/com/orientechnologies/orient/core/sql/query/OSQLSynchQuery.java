@@ -19,16 +19,17 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL synchronous query. When executed the caller wait for the result.
@@ -146,8 +147,8 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
   }
 
   @Override
-  protected void queryFromStream(final OMemoryStream buffer) {
-    super.queryFromStream(buffer);
+  protected void queryFromStream(final OMemoryStream buffer, ORecordSerializer serializer) {
+    super.queryFromStream(buffer, serializer);
 
     final String rid = buffer.getAsString();
     if ("".equals(rid))
@@ -156,7 +157,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
       nextPageRID = new ORecordId(rid);
 
     final byte[] serializedPrevParams = buffer.getAsByteArray();
-    previousQueryParams = deserializeQueryParameters(serializedPrevParams);
+    previousQueryParams = deserializeQueryParameters(serializedPrevParams, serializer);
 
   }
 

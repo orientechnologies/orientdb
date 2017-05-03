@@ -147,4 +147,9 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   public boolean getSupportBinaryEvaluate() {
     return true;
   }
+
+  @Override
+  public String getName() {
+    return NAME;
+  }
 }

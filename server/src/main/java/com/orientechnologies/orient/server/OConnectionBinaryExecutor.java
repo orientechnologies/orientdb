@@ -69,14 +69,20 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
-final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
+public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   private final OClientConnection connection;
   private final OServer           server;
+  private final HandshakeInfo     handshakeInfo;
 
   public OConnectionBinaryExecutor(OClientConnection connection, OServer server) {
+    this(connection, server, null);
+  }
+
+  public OConnectionBinaryExecutor(OClientConnection connection, OServer server, HandshakeInfo handshakeInfo) {
     this.connection = connection;
     this.server = server;
+    this.handshakeInfo = handshakeInfo;
   }
 
   @Override
@@ -843,6 +849,37 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   @Override
+  public OBinaryResponse executeConnect37(OConnect37Request request) {
+    connection.getData().driverName = handshakeInfo.getDriverName();
+    connection.getData().driverVersion = handshakeInfo.getDriverVersion();
+    connection.getData().protocolVersion = handshakeInfo.getProtocolVersion();
+    connection.getData().clientId = request.getClientId();
+    connection.getData().setSerializer(handshakeInfo.getSerializer());
+
+    connection.setTokenBased(request.isTokenBased());
+    connection.getData().supportsPushMessages = request.isSupportPush();
+    connection.getData().collectStats = request.isCollectStats();
+
+    connection.setServerUser(server.serverLogin(request.getUsername(), request.getPassword(), "server.connect"));
+
+    if (connection.getServerUser() == null)
+      throw new OSecurityAccessException("Wrong user/password to [connect] to the remote OrientDB Server instance");
+
+    byte[] token = null;
+    if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+      connection.getData().serverUsername = connection.getServerUser().name;
+      connection.getData().serverUser = true;
+
+      if (Boolean.TRUE.equals(connection.getTokenBased())) {
+        token = server.getTokenHandler().getSignedBinaryToken(null, null, connection.getData());
+      } else
+        token = OCommonConst.EMPTY_BYTE_ARRAY;
+    }
+
+    return new OConnectResponse(connection.getId(), token);
+  }
+
+  @Override
   public OBinaryResponse executeDatabaseOpen(OOpenRequest request) {
     connection.getData().driverName = request.getDriverName();
     connection.getData().driverVersion = request.getDriverVersion();
@@ -898,6 +935,62 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     return new OOpenResponse(connection.getId(), tokenToSend, clusters, distriConf, OConstants.getVersion());
 
+  }
+
+  @Override
+  public OBinaryResponse executeDatabaseOpen37(OOpenRequest37 request) {
+    connection.getData().clientId = request.getClientId();
+    connection.setTokenBased(request.isUseToken());
+    connection.getData().supportsPushMessages = request.isSupportsPush();
+    connection.getData().collectStats = request.isCollectStats();
+    connection.getData().driverName = handshakeInfo.getDriverName();
+    connection.getData().driverVersion = handshakeInfo.getDriverVersion();
+    connection.getData().protocolVersion = handshakeInfo.getProtocolVersion();
+    connection.getData().setSerializer(handshakeInfo.getSerializer());
+    try {
+      connection.setDatabase(
+          server.openDatabase(request.getDatabaseName(), request.getUserName(), request.getUserPassword(), connection.getData()));
+    } catch (OException e) {
+      server.getClientConnectionManager().disconnect(connection);
+      throw e;
+    }
+
+    byte[] token = null;
+
+    if (Boolean.TRUE.equals(connection.getTokenBased())) {
+      token = server.getTokenHandler()
+          .getSignedBinaryToken(connection.getDatabase(), connection.getDatabase().getUser(), connection.getData());
+      // TODO: do not use the parse split getSignedBinaryToken in two methods.
+      server.getClientConnectionManager().connect(connection.getProtocol(), connection, token, server.getTokenHandler());
+    }
+
+    if (connection.getDatabase().getStorage() instanceof OStorageProxy) {
+      connection.getDatabase().getMetadata().getSecurity().authenticate(request.getUserName(), request.getUserPassword());
+    }
+
+    final Collection<? extends OCluster> clusters = connection.getDatabase().getStorage().getClusterInstances();
+    final byte[] tokenToSend;
+    if (Boolean.TRUE.equals(connection.getTokenBased())) {
+      tokenToSend = token;
+    } else
+      tokenToSend = OCommonConst.EMPTY_BYTE_ARRAY;
+
+    final OServerPlugin plugin = server.getPlugin("cluster");
+    byte[] distriConf = null;
+    ODocument distributedCfg = null;
+    if (plugin != null && plugin instanceof ODistributedServerManager) {
+      distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
+
+      final ODistributedConfiguration dbCfg = ((ODistributedServerManager) plugin)
+          .getDatabaseConfiguration(connection.getDatabase().getName());
+      if (dbCfg != null) {
+        // ENHANCE SERVER CFG WITH DATABASE CFG
+        distributedCfg.field("database", dbCfg.getDocument(), OType.EMBEDDED);
+      }
+      distriConf = getRecordBytes(connection, distributedCfg);
+    }
+
+    return new OOpenResponse(connection.getId(), tokenToSend, clusters, distriConf, OConstants.getVersion());
   }
 
   @Override
