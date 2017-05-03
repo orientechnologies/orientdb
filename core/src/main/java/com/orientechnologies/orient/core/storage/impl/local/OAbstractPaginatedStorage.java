@@ -24,7 +24,7 @@ import com.orientechnologies.common.concur.lock.*;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OAbstractProfiler;
+import com.orientechnologies.common.profiler.AtomicLongOProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
@@ -165,6 +165,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     this.id = id;
     lockManager = new ORIDOLockManager(OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
     recordVersionManager = new OPartitionedLockManager<ORID>();
+
+    registerProfilerHooks();
     sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
   }
 
@@ -4141,93 +4143,43 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private void registerProfilerHooks() {
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".createRecord", "Number of created records", OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return recordCreated.get();
-              }
-            }, "db.*.createRecord");
+            new AtomicLongOProfilerHookValue(recordCreated), "db.*.createRecord");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".readRecord", "Number of read records", OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return recordRead.get();
-              }
-            }, "db.*.readRecord");
+            new AtomicLongOProfilerHookValue(recordRead), "db.*.readRecord");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".updateRecord", "Number of updated records", OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return recordUpdated.get();
-              }
-            }, "db.*.updateRecord");
+            new AtomicLongOProfilerHookValue(recordUpdated), "db.*.updateRecord");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".deleteRecord", "Number of deleted records", OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return recordDeleted.get();
-              }
-            }, "db.*.deleteRecord");
+            new AtomicLongOProfilerHookValue(recordDeleted), "db.*.deleteRecord");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".scanRecord", "Number of read scanned", OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return recordScanned.get();
-              }
-            }, "db.*.scanRecord");
+            new AtomicLongOProfilerHookValue(recordScanned), "db.*.scanRecord");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".recyclePosition", "Number of recycled records", OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return recordRecycled.get();
-              }
-            }, "db.*.recyclePosition");
+            new AtomicLongOProfilerHookValue(recordRecycled), "db.*.recyclePosition");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".conflictRecord", "Number of conflicts during updating and deleting records",
-            OProfiler.METRIC_TYPE.COUNTER, new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return recordConflict.get();
-              }
-            }, "db.*.conflictRecord");
+            OProfiler.METRIC_TYPE.COUNTER, new AtomicLongOProfilerHookValue(recordConflict), "db.*.conflictRecord");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".txBegun", "Number of transactions begun", OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return txBegun.get();
-              }
-            }, "db.*.txBegun");
+            new AtomicLongOProfilerHookValue(txBegun), "db.*.txBegun");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".txCommit", "Number of committed transactions", OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return txCommit.get();
-              }
-            }, "db.*.txCommit");
+            new AtomicLongOProfilerHookValue(txCommit), "db.*.txCommit");
 
     Orient.instance().getProfiler()
         .registerHookValue("db." + this.name + ".txRollback", "Number of rolled back transactions", OProfiler.METRIC_TYPE.COUNTER,
-            new OAbstractProfiler.OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                return txRollback.get();
-              }
-            }, "db.*.txRollback");
+            new AtomicLongOProfilerHookValue(txRollback), "db.*.txRollback");
   }
 
   private static class FuzzyCheckpointThreadFactory implements ThreadFactory {
