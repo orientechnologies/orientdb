@@ -117,13 +117,6 @@ final class OLogSegment implements Comparable<OLogSegment> {
       null);
 
   private final class FlushTask implements Runnable {
-    private ThreadLocal<ByteBuffer> pageBuffer = new ThreadLocal<ByteBuffer>() {
-      @Override
-      protected ByteBuffer initialValue() {
-        return ByteBuffer.allocateDirect(OWALPage.PAGE_SIZE).order(ByteOrder.nativeOrder());
-      }
-    };
-
     private FlushTask() {
     }
 
@@ -163,7 +156,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
         if (toFlush.isEmpty())
           return;
 
-        ByteBuffer pageContent = pageBuffer.get();
+        final ByteBuffer pageContent = ByteBuffer.allocate(OWALPage.PAGE_SIZE).order(ByteOrder.nativeOrder());
         pageContent.position(0);
 
         OLogRecord first = toFlush.get(0);
