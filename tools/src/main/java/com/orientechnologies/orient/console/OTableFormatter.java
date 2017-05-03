@@ -252,13 +252,13 @@ public class OTableFormatter {
       // RID
       value = iRecord.getIdentity().toString();
     else if (iRecord instanceof ODocument)
-      value = ((ODocument) iRecord).field(iColumnName);
+      value = ((ODocument) iRecord).getProperty(iColumnName);
     else if (iRecord instanceof OBlob)
       value = "<binary> (size=" + ((OBlob) iRecord).toStream().length + " bytes)";
     else if (iRecord instanceof OIdentifiable) {
       final ORecord rec = iRecord.getRecord();
       if (rec instanceof ODocument)
-        value = ((ODocument) rec).field(iColumnName);
+        value = ((ODocument) rec).getProperty(iColumnName);
       else if (rec instanceof OBlob)
         value = "<binary> (size=" + ((OBlob) rec).toStream().length + " bytes)";
     }

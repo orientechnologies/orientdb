@@ -200,7 +200,7 @@ public class OMatchExecutionPlanner {
         if (visitedNodes.contains(currentNode)) {
           // If a previous traversal already visited this alias, remove it from further consideration.
           startsToRemove.add(currentAlias);
-        } else if (remainingDependencies.get(currentAlias).isEmpty()) {
+        } else if (remainingDependencies.get(currentAlias)==null || remainingDependencies.get(currentAlias).isEmpty()) {
           // If it hasn't been visited, and has all dependencies satisfied, visit it.
           startsToRemove.add(currentAlias);
           startingNode = currentNode;

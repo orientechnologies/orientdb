@@ -20,10 +20,12 @@ public class OSQLFunctionSequence extends OSQLFunctionConfigurableAbstract {
     super(NAME, 1, 1);
   }
 
-  @Override public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
     final String seqName;
-    if (configuredParameters[0] instanceof OSQLFilterItem)//old stuff
+    if (configuredParameters != null && configuredParameters.length > 0
+        && configuredParameters[0] instanceof OSQLFilterItem)//old stuff
       seqName = (String) ((OSQLFilterItem) configuredParameters[0]).getValue(iCurrentRecord, iCurrentResult, iContext);
     else
       seqName = "" + iParams[0];
@@ -35,15 +37,18 @@ public class OSQLFunctionSequence extends OSQLFunctionConfigurableAbstract {
     return result;
   }
 
-  @Override public Object getResult() {
+  @Override
+  public Object getResult() {
     return null;
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "sequence(<name>)";
   }
 
-  @Override public boolean aggregateResults() {
+  @Override
+  public boolean aggregateResults() {
     return false;
   }
 

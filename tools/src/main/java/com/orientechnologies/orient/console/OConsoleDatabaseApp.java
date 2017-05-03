@@ -2939,8 +2939,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       final List<ODocument> resultSet = new ArrayList<ODocument>();
 
       Object value;
-      for (String fieldName : rec.fieldNames()) {
-        value = rec.field(fieldName);
+      for (String fieldName : rec.getPropertyNames()) {
+        value = rec.getProperty(fieldName);
         if (value instanceof byte[])
           value = "byte[" + ((byte[]) value).length + "]";
         else if (value instanceof Iterator<?>) {
