@@ -25,10 +25,14 @@ class EtlComponent {
   private extractorPrototype;
   private transformerPrototype;
   private loaderPrototype;
-  private source; // Source variable
-  private extractor; // Extractor variable
+  private source = undefined; // Source variable
+  private extractor = undefined; // Extractor variable
   private transformers = []; // Array containing every transformer
-  private loader; // Loader variable
+  private loader = undefined; // Loader variable
+
+  // Types needed for controls
+  private extractorType;
+  private loaderType;
 
   private finalJson; // The final json, it will be passed to the launch function
 
@@ -42,15 +46,15 @@ class EtlComponent {
     this.init();
 
     /*this.agentService.isActive().then(() => {
-      this.init();
-    }); */ // TODO activate enterprise control
+     this.init();
+     }); */ // TODO activate enterprise control
   }
 
   init() {
     this.sourcePrototype = {
       source: {
         value: undefined,
-        types: ["jdbc", "local file", "url"]
+        types: ["jdbc", "local file", "url","upload"] // TODO uploader library
       },
       fileURL: undefined,
       URLMethod: {
@@ -63,23 +67,63 @@ class EtlComponent {
 
     this.extractorPrototype = {
       row: {
-        multiline: true,
-        linefeed: "\r\n",
+        multiline: {
+          mandatory: false,
+          value:true
+        },
+        linefeed: {
+          mandatory: false,
+          value: "\r\n"
+        },
       },
 
       csv: {
-        separator: ",",
-        columnsOnFirstLine: true,
-        columns: undefined,
-        nullValue: "NULL",
-        dateFormat: "yyyy-MM-dd",
-        dateTimeFormat: "yyyy-MM-dd HH:mm",
-        quote: '"',
-        skipFrom: undefined,
-        skipTo: undefined,
-        ignoreEmptyLines: false,
-        ignoreMissingColumns: false,
+        separator: {
+          mandatory:false,
+          value: ","
+        },
+        columnsOnFirstLine: {
+          mandatory: false,
+          value:true
+        },
+        columns: {
+          mandatory: false,
+          value: undefined
+        },
+        nullValue: {
+          mandatory:false,
+          value: "NULL"
+        },
+        dateFormat: {
+          mandatory: false,
+          value: "yyyy-MM-dd"
+        },
+        dateTimeFormat: {
+          mandatory: false,
+          value: "yyyy-MM-dd HH:mm"
+        },
+        quote: {
+          mandatory: false,
+          value: '"'
+        },
+        skipFrom: {
+          mandatory: false,
+          value: undefined
+        },
+        skipTo: {
+          mandatory: false,
+          value: undefined
+        },
+        ignoreEmptyLines: {
+          mandatory: false,
+          value: false
+        },
+        ignoreMissingColumns: {
+          mandatory: false,
+          value: false
+        },
         predefinedFormat: {
+          mandatory: false,
           value: "Default",
           types: ["Default", "Excel", "MySQL", "RCF4180", "TDF"]
         }
@@ -106,14 +150,23 @@ class EtlComponent {
           mandatory: true,
           value: undefined
         },
-        queryCount: undefined
+        queryCount: {
+          mandatory: false,
+          value: undefined
+        }
       },
 
       // Json has no parameters
 
       xml: {
-        rootNode: undefined,
-        tagsAsAttribute: []
+        rootNode: {
+          mandatory: false,
+          value: undefined
+        },
+        tagsAsAttribute: {
+          mandatory: false,
+          value:[]
+        }
       }
 
     }
@@ -122,17 +175,27 @@ class EtlComponent {
       customLabel: undefined,
 
       field: {
-        fieldName: undefined,
+        fieldName: {
+          mandatory: false,
+          value: undefined
+        },
         expression: {
           mandatory: true,
           value: undefined
         },
-        value: undefined,
+        value: {
+          mandatory: false,
+          value: undefined
+        },
         operation: {
+          mandatory: false,
           value: "SET",
           types: ["SET", "REMOVE"]
         },
-        save: false
+        save: {
+          mandatory: false,
+          value: false
+        }
       },
 
       merge: {
@@ -145,14 +208,21 @@ class EtlComponent {
           value: undefined
         },
         unresolvedLinkAction: {
+          mandatory: false,
           value: "NOTHING",
           types: ["NOTHING", "WARNING", "ERROR", "HALT", "SKIP"]
         }
       },
 
       vertex: {
-        class: "V",
-        skipDuplicates: false
+        class: {
+          mandatory: false,
+          value: "V"
+        },
+        skipDuplicates: {
+          mandatory: false,
+          value: false
+        }
       },
 
       edge: {
@@ -161,18 +231,32 @@ class EtlComponent {
           value: undefined
         },
         direction: {
+          mandatory: false,
           value: "out",
           types: ["in", "out"]
         },
-        class: "E",
+        class: {
+          mandatory: false,
+          value: "E"
+        },
         lookup: {
           mandatory: true,
           value: undefined
         },
-        targetVertexFields: undefined,
-        edgeFields: undefined,
-        skipDuplicates: false,
+        targetVertexFields: {
+          mandatory: false,
+          value: undefined
+        },
+        edgeFields: {
+          mandatory: false,
+          value: undefined
+        },
+        skipDuplicates: {
+          mandatory: false,
+          value: false
+        },
         unresolvedLinkAction: {
+          mandatory: false,
           value: "NOTHING",
           types: ["NOTHING", "WARNING", "ERROR", "HALT", "SKIP"]
         },
@@ -191,7 +275,10 @@ class EtlComponent {
       },
 
       code: { // TODO probably unadoptable
-        language: "JavaScript",
+        language: {
+          mandatory: false,
+          value: "JavaScript"
+        },
         code: {
           mandatory: true,
           value: undefined
@@ -199,8 +286,14 @@ class EtlComponent {
       },
 
       link: {
-        joinFieldName: undefined,
-        joinValue: undefined,
+        joinFieldName: {
+          mandatory: false,
+          value: undefined
+        },
+        joinValue: {
+          mandatory: false,
+          value: undefined
+        },
         linkFieldName: {
           mandatory: true,
           value: undefined
@@ -215,20 +308,28 @@ class EtlComponent {
           value: undefined
         },
         unresolvedLinkAction: {
+          mandatory: false,
           value: "NOTHING",
           types: ["NOTHING", "WARNING", "ERROR", "HALT", "SKIP"]
         },
       },
 
       log: {
-        prefix: undefined,
-        postfix: undefined
+        prefix: {
+          mandatory: false,
+          value:undefined
+        },
+        postfix: {
+          mandatory: false,
+          value: undefined
+        }
       },
 
       // Block has no parameters
 
       command: {
         language: {
+          mandatory: false,
           value: "sql",
           types: ["sql","gremlin"]
         },
@@ -248,27 +349,79 @@ class EtlComponent {
           mandatory: true,
           value: undefined
         },
-        dbUser: "admin",
-        dbPassword: "admin",
-        serverUser: "root",
-        serverPassword: "",
-        dbAutoCreate: true,
-        dbAutoCreateProperties: false,
-        dbAutoDropIfExists: false,
-        tx: false,
-        txUseLog: false,
-        wal: true,
-        batchCommit: 0,
+        dbUser: {
+          mandatory: false,
+          value: "admin"
+        },
+        dbPassword: {
+          mandatory: false,
+          value: "admin"
+        },
+        serverUser: {
+          mandatory: false,
+          value: "root"
+        },
+        serverPassword: {
+          mandatory: false,
+          value: ""
+        },
+        dbAutoCreate: {
+          mandatory: false,
+          value: true
+        },
+        dbAutoCreateProperties: {
+          mandatory: false,
+          value: false
+        },
+        dbAutoDropIfExists: {
+          mandatory: false,
+          value: false
+        },
+        tx: {
+          mandatory: false,
+          value: false
+        },
+        txUseLog: {
+          mandatory: false,
+          value: false
+        },
+        wal: {
+          mandatory: false,
+          value: true
+        },
+        batchCommit: {
+          mandatory: false,
+          value: 0
+        },
         dbType: {
+          mandatory: false,
           value: "document",
           types: ["document", "graph"]
         },
-        class: undefined,
-        cluster: undefined,
-        classes: undefined,
-        indexes: undefined,
-        useLightweightEdges: false,
-        standardElementConstraints: true
+        class: {
+          mandatory: false,
+          value: undefined
+        },
+        cluster: {
+          mandatory: false,
+          value: undefined
+        },
+        classes: {
+          mandatory: false,
+          value:undefined
+        },
+        indexes: {
+          mandatory: false,
+          value: undefined
+        },
+        useLightweightEdges: {
+          mandatory: false,
+          value: false
+        },
+        standardElementConstraints: {
+          mandatory: false,
+          value: true
+        }
       }
 
     }
@@ -300,7 +453,7 @@ class EtlComponent {
   }
 
   setStep(step) {
-      this.step = step;
+    this.step = step;
   }
 
   // Dynamic creations
@@ -317,7 +470,7 @@ class EtlComponent {
           lock: this.sourcePrototype.fileLock,
           encoding: "UTF-8"
         }
-    }
+      }
 
     if(this.sourcePrototype.source.value === "url") {
       this.source = {
@@ -343,35 +496,33 @@ class EtlComponent {
     $("#extractorOptions").show();
 
     // Variable creation
-    if(type === "row") {
+    if(type === "row")
       this.extractor = {
         row: {
-          multiline: this.extractorPrototype.row.multiline,
-          linefeed: this.extractorPrototype.row.linefeed
+          multiline: this.extractorPrototype.row.multiline.value,
+          linefeed: this.extractorPrototype.row.linefeed.value
         }
       }
-    }
 
-    if(type === "csv") {
+    if(type === "csv")
       this.extractor = {
         csv: {
-          separator: this.extractorPrototype.csv.separator,
-          columnsOnFirstLine: this.extractorPrototype.csv.columnsOnFirstLine,
-          columns: this.extractorPrototype.csv.columns,
-          nullValue: this.extractorPrototype.csv.nullValue,
-          dateFormat: this.extractorPrototype.csv.dateFormat,
-          dateTimeFormat: this.extractorPrototype.csv.dateTimeFormat,
-          quote: this.extractorPrototype.csv.quote,
-          skipFrom: this.extractorPrototype.csv.skipFrom,
-          skipTo: this.extractorPrototype.csv.skipTo,
-          ignoreEmptyLines: this.extractorPrototype.csv.ignoreEmptyLines,
-          ignoreMissingColumns: this.extractorPrototype.csv.ignoreMissingColumns,
+          separator: this.extractorPrototype.csv.separator.value,
+          columnsOnFirstLine: this.extractorPrototype.csv.columnsOnFirstLine.value,
+          columns: this.extractorPrototype.csv.columns.value,
+          nullValue: this.extractorPrototype.csv.nullValue.value,
+          dateFormat: this.extractorPrototype.csv.dateFormat.value,
+          dateTimeFormat: this.extractorPrototype.csv.dateTimeFormat.value,
+          quote: this.extractorPrototype.csv.quote.value,
+          skipFrom: this.extractorPrototype.csv.skipFrom.value,
+          skipTo: this.extractorPrototype.csv.skipTo.value,
+          ignoreEmptyLines: this.extractorPrototype.csv.ignoreEmptyLines.value,
+          ignoreMissingColumns: this.extractorPrototype.csv.ignoreMissingColumns.value,
           predefinedFormat: this.extractorPrototype.csv.predefinedFormat.value
         }
       }
-    }
 
-    if(type === "jdbc") {
+    if(type === "jdbc")
       this.extractor = {
         jdbc: {
           driver: this.extractorPrototype.jdbc.driver.value,
@@ -379,25 +530,23 @@ class EtlComponent {
           userName: this.extractorPrototype.jdbc.userName.value,
           userPassword: this.extractorPrototype.jdbc.userPassword.value,
           query: this.extractorPrototype.jdbc.query.value,
-          queryCount: this.extractorPrototype.jdbc.queryCount
+          queryCount: this.extractorPrototype.jdbc.queryCount.value
         }
       }
-    }
 
-    if(type === "json") {
+    if(type === "json")
       this.extractor = {
         json: {}
       }
-    }
 
-    if(type === "xml") {
+    if(type === "xml")
       this.extractor = {
         xml: {
-          rootNode: this.extractorPrototype.xml.rootNode,
-          tagsAsAttribute: this.extractorPrototype.xml.tagsAsAttribute
+          rootNode: this.extractorPrototype.xml.rootNode.value,
+          tagsAsAttribute: this.extractorPrototype.xml.tagsAsAttribute.value
         }
       }
-    }
+
 
     // Flowchart
     $(document).ready(function() {
@@ -423,6 +572,7 @@ class EtlComponent {
       });
     });
 
+    this.extractorType = type;
     this.readyForExecution();
   }
 
@@ -438,19 +588,18 @@ class EtlComponent {
     // TODO: use the custom label in the flowchart, show the options for the created transformer
 
     // Variable creation
-    if(type === "field") {
+    if(type === "field")
       transformer = {
         field: {
-          fieldName: this.transformerPrototype.field.fieldName,
+          fieldName: this.transformerPrototype.field.fieldName.value,
           expression: this.transformerPrototype.field.expression.value,
           value: this.transformerPrototype.field.value,
           operation: this.transformerPrototype.field.operation.value,
-          save: this.transformerPrototype.field.save
+          save: this.transformerPrototype.field.save.value
         }
       }
-    }
 
-    if(type === "merge") {
+    if(type === "merge")
       transformer = {
         merge: {
           joinFieldName: this.transformerPrototype.merge.joinFieldName.value,
@@ -458,88 +607,80 @@ class EtlComponent {
           unresolvedLinkAction: this.transformerPrototype.merge.unresolvedLinkAction.value
         }
       }
-    }
 
-    if(type === "vertex") {
+    if(type === "vertex")
       transformer = {
         vertex: {
-          class: this.transformerPrototype.vertex.class,
-          skipDuplicates: this.transformerPrototype.vertex.skipDuplicates
+          class: this.transformerPrototype.vertex.class.value,
+          skipDuplicates: this.transformerPrototype.vertex.skipDuplicates.value
         }
       }
-    }
 
-    if(type === "code") {
+    if(type === "code")
       transformer = {
         code: {
-          language: this.transformerPrototype.code.language,
-          code: this.transformerPrototype.code.code,
+          language: this.transformerPrototype.code.language.value,
+          code: this.transformerPrototype.code.code.value,
         }
       }
-    }
 
-    if(type === "link") {
+    if(type === "link")
       transformer = {
         link: {
-          joinFieldName: this.transformerPrototype.link.joinFieldName,
-          joinValue: this.transformerPrototype.link.joinValue,
+          joinFieldName: this.transformerPrototype.link.joinFieldName.value,
+          joinValue: this.transformerPrototype.link.joinValue.value,
           linkFieldName: this.transformerPrototype.link.linkFieldName.value,
           linkFieldType: this.transformerPrototype.link.linkFieldType.value,
           lookup: this.transformerPrototype.link.lookup.value,
           unresolvedLinkAction: this.transformerPrototype.link.unresolvedLinkAction.value
         }
       }
-    }
 
-    if(type === "edge") {
+    if(type === "edge")
       transformer = {
         edge: {
           joinFieldName: this.transformerPrototype.edge.joinFieldName.value,
           direction: this.transformerPrototype.edge.direction.value,
-          class: this.transformerPrototype.edge.class,
+          class: this.transformerPrototype.edge.class.value,
           lookup: this.transformerPrototype.edge.lookup.value,
-          targetVertexFields: this.transformerPrototype.edge.targetVertexFields,
-          edgeFields: this.transformerPrototype.edge.edgeFields,
-          skipDuplicates: this.transformerPrototype.edge.skipDuplicates,
+          targetVertexFields: this.transformerPrototype.edge.targetVertexFields.value,
+          edgeFields: this.transformerPrototype.edge.edgeFields.value,
+          skipDuplicates: this.transformerPrototype.edge.skipDuplicates.value,
           unresolvedLinkAction: this.transformerPrototype.edge.unresolvedLinkAction.value
         }
       }
-    }
 
-    if(type === "flow") {
+    if(type === "flow")
       transformer = {
         flow: {
           if: this.transformerPrototype.flow.if.value,
           operation: this.transformerPrototype.flow.operation.value
         }
       }
-    }
 
-    if(type === "log") {
+    if(type === "log")
       transformer = {
         log: {
-          prefix: this.transformerPrototype.log.prefix,
-          postfix: this.transformerPrototype.log.postfix
+          prefix: this.transformerPrototype.log.prefix.value,
+          postfix: this.transformerPrototype.log.postfix.value
         }
       }
-    }
 
-    if(type === "block") {
+    if(type === "block")
       transformer = {
         block: {
 
         }
       }
-    }
 
-    if(type === "command") {
+    if(type === "command")
       transformer = {
         command: {
           language: this.transformerPrototype.command.language.value,
           command: this.transformerPrototype.command.command.value
         }
       }
-    }
+
 
     // Flowchart
     $(document).ready(function() {
@@ -570,10 +711,9 @@ class EtlComponent {
       });
     });
 
-    // Push into the array, return the new transformer
+    // Push into the array
     this.transformers.push(transformer);
     this.readyForExecution();
-    return transformer; // TODO maybe useless?
 
   }
 
@@ -592,30 +732,28 @@ class EtlComponent {
         log: {}
       }
 
-
     if(type === "OrientDB")
       this.loader = {
         orientdb: {
           dbURL: this.loaderPrototype.orientDb.dbURL.value,
-          dbUser: this.loaderPrototype.orientDb.dbUser,
-          dbPassword: this.loaderPrototype.orientDb.dbPassword,
-          serverUser: this.loaderPrototype.orientDb.serverUser,
-          serverPassword: this.loaderPrototype.orientDb.serverPassword,
-          dbAutoCreate: this.loaderPrototype.orientDb.dbAutoCreate,
-          dbAutoCreateProperties: this.loaderPrototype.orientDb.dbAutoCreateProperties,
-          dbAutoDropIfExists: this.loaderPrototype.orientDb.dbAutoDropIfExists,
-          tx: this.loaderPrototype.orientDb.tx,
-          txUseLog: this.loaderPrototype.orientDb.txUseLog,
-          wal: this.loaderPrototype.orientDb.wal,
-          batchCommit: this.loaderPrototype.orientDb.batchCommit,
+          dbUser: this.loaderPrototype.orientDb.dbUser.value,
+          dbPassword: this.loaderPrototype.orientDb.dbPassword.value,
+          serverUser: this.loaderPrototype.orientDb.serverUser.value,
+          serverPassword: this.loaderPrototype.orientDb.serverPassword.value,
+          dbAutoCreate: this.loaderPrototype.orientDb.dbAutoCreate.value,
+          dbAutoCreateProperties: this.loaderPrototype.orientDb.dbAutoCreateProperties.value,
+          dbAutoDropIfExists: this.loaderPrototype.orientDb.dbAutoDropIfExists.value,
+          tx: this.loaderPrototype.orientDb.tx.value,
+          txUseLog: this.loaderPrototype.orientDb.txUseLog.value,
+          wal: this.loaderPrototype.orientDb.wal.value,
+          batchCommit: this.loaderPrototype.orientDb.batchCommit.value,
           dbType: this.loaderPrototype.orientDb.dbType.value,
-          class: this.loaderPrototype.orientDb.class,
-          cluster: this.loaderPrototype.orientDb.cluster,
-          classes: this.loaderPrototype.orientDb.classes,
-          indexes: this.loaderPrototype.orientDb.indexes,
-          useLightweightEdges: this.loaderPrototype.orientDb.useLightweightEdges,
-          standardElementConstraints: this.loaderPrototype.orientDb.standardElementConstraints
-
+          class: this.loaderPrototype.orientDb.class.value,
+          cluster: this.loaderPrototype.orientDb.cluster.value,
+          classes: this.loaderPrototype.orientDb.classes.value,
+          indexes: this.loaderPrototype.orientDb.indexes.value,
+          useLightweightEdges: this.loaderPrototype.orientDb.useLightweightEdges.value,
+          standardElementConstraints: this.loaderPrototype.orientDb.standardElementConstraints.value
         }
       }
 
@@ -643,6 +781,7 @@ class EtlComponent {
       });
     });
 
+    this.loaderType = type;
     this.readyForExecution();
   }
 
@@ -655,7 +794,7 @@ class EtlComponent {
     $("#panelPlaceholder").show();
   }
 
-  deleteTransformer(name) { // TODO probably not working
+  deleteTransformer(name) { // TODO not working
     var v = this.transformers.indexOf(name);
     this.transformers[v] = undefined;
 
@@ -677,10 +816,32 @@ class EtlComponent {
   // Core Functions
 
   readyForExecution() {
-    if(this.extractor)
-      this.ready = true;
-    else
-      this.ready = false;
+
+    /*// If exists at least one module for every type (source excluded)
+     if(this.extractor && this.transformers && this.loader) {
+     // Controls, for every property of the extractor module, if it's mandatory and has a value
+     for(var property in this.extractorPrototype[this.extractorType]) {
+     if(this.extractorPrototype[this.extractorType].hasOwnProperty(property)) {
+     if(this.extractorPrototype[this.extractorType][property]["mandatory"] && !this.extractor[this.extractorType][property]) {
+     this.ready = false;
+     return;
+     }
+     else
+     this.ready = true;
+     }
+     }
+     for(var property in this.loaderPrototype[this.loaderType]) {
+     if(this.loaderPrototype[this.loaderType].hasOwnProperty(property)) {
+     if(this.loaderPrototype[this.loaderType][property]["mandatory"] && !this.loader[this.loaderType][property]) {
+     this.ready = false;
+     return;
+     }
+     else
+     this.ready = true;
+     }
+     }
+     }*/
+    this.ready = true; // TODO reactivate and finish the proper function
   }
 
   launch() {
@@ -694,13 +855,13 @@ class EtlComponent {
     this.step = "3";
 
     /*
-    this.etlService.launch(this.finalJson).then((data) => {
-      this.step = "3";
-      this.status();
-    }).catch(function (error) {
-      alert("Error during etl process!")
-    });
-    */
+     this.etlService.launch(this.finalJson).then((data) => {
+     this.step = "3";
+     this.status();
+     }).catch(function (error) {
+     alert("Error during etl process!")
+     });
+     */
   }
 
   status() {
