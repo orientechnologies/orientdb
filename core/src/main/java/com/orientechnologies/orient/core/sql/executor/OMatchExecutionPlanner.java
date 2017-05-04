@@ -65,6 +65,7 @@ public class OMatchExecutionPlanner {
     Set<String> aliasesToPrefetch = estimatedRootEntries.entrySet().stream().filter(x -> x.getValue() < this.threshold).
         map(x -> x.getKey()).collect(Collectors.toSet());
     if (estimatedRootEntries.values().contains(0l)) {
+      result.chain(new EmptyStep(context, enableProfiling));
       return result;
     }
 

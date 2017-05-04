@@ -14,7 +14,6 @@ public class EmptyStep extends AbstractExecutionStep {
   @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     OInternalResultSet result = new OInternalResultSet();
-    ctx.setVariable("$current", result);
     return result;
   }
 
