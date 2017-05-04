@@ -52,6 +52,8 @@ node("master") {
                     build job: "orientdb-spatial-multibranch/${env.BRANCH_NAME}", wait: false
                     //excluded: too long
                     //build job: "orientdb-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
+
+                    build job: "orientdb-develop-gremlin", wait: false
                     build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "orientdb-neo4j-importer-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "orientdb-teleporter-multibranch/${env.BRANCH_NAME}", wait: false
