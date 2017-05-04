@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.server.distributed.conflict;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +31,12 @@ import java.util.Map;
  * @author Luca Garulli
  */
 public abstract class OAbstractDistributedConflictResolver implements ODistributedConflictResolver {
+  protected ODocument configuration;
+
+  @Override
+  public void configure(final ODocument config) {
+    configuration = config;
+  }
 
   protected Object getBestResult(final Map<Object, List<String>> groupedResult, final List<Object> exclude) {
     Object bestResult = NOT_FOUND;

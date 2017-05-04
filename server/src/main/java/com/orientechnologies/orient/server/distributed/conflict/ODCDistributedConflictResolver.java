@@ -20,14 +20,14 @@
 
 package com.orientechnologies.orient.server.distributed.conflict;
 
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
  * Conflict resolver implementation where the majority is selected only in the specified data center. Use this if you have an
@@ -39,15 +39,18 @@ public class ODCDistributedConflictResolver extends OMajorityDistributedConflict
   public static final String NAME = "dc";
 
   public OConflictResult onConflict(final String databaseName, final String clusterName, final ORecordId rid,
-      final ODistributedServerManager dManager, final Map<Object, List<String>> candidates, final ODocument config) {
+      final ODistributedServerManager dManager, final Map<Object, List<String>> candidates) {
+
+    if (configuration == null)
+      throw new OConfigurationException("DC conflict resolver requires a configuration for the winner");
 
     final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);
-    final String winnerDC = config.field("winner");
+    final String winnerDC = configuration.field("winner");
 
     // FILTER THE RESULT BY REMOVING THE SERVER THAT ARE IN THE CONFIGURED DC
     for (Map.Entry<Object, List<String>> entry : candidates.entrySet()) {
       final List<String> servers = entry.getValue();
-      for (Iterator<String> it = servers.iterator(); it.hasNext();) {
+      for (Iterator<String> it = servers.iterator(); it.hasNext(); ) {
         final String server = it.next();
 
         if (!winnerDC.equals(dCfg.getDataCenterOfServer(server)))
@@ -56,7 +59,7 @@ public class ODCDistributedConflictResolver extends OMajorityDistributedConflict
       }
     }
 
-    return super.onConflict(databaseName, clusterName, rid, dManager, candidates, config);
+    return super.onConflict(databaseName, clusterName, rid, dManager, candidates);
   }
 
   public String getName() {

@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.distributed.conflict;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
@@ -39,7 +38,7 @@ public class OMajorityDistributedConflictResolver extends OAbstractDistributedCo
   public static final String NAME = "majority";
 
   public OConflictResult onConflict(final String databaseName, final String clusterName, final ORecordId rid,
-      final ODistributedServerManager dManager, final Map<Object, List<String>> candidates, final ODocument config) {
+      final ODistributedServerManager dManager, final Map<Object, List<String>> candidates) {
 
     final OConflictResult result = new OConflictResult();
 

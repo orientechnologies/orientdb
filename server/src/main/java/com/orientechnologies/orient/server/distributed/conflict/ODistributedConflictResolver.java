@@ -44,6 +44,8 @@ public interface ODistributedConflictResolver {
     public Map<Object, List<String>> candidates = new HashMap<Object, List<String>>();
   }
 
+  void configure(ODocument config);
+
   /**
    * Called on distributed conflict. It is responsible to resolve the conflicts by providing the winning result. If it's not able to
    * do that, NULL is returned.
@@ -54,13 +56,11 @@ public interface ODistributedConflictResolver {
    * @param dManager            Current distributed manager instance
    * @param groupedServerValues All the values from the servers grouped by value. The key could also be an exception in case the
    *                            record was not found. @return The winning object
-   * @param config              The ODocument representing the configuration of the conflict resolver. it's optional, null means no
-   *                            configuration
    *
    * @return The winning result object
    */
   OConflictResult onConflict(String databaseName, String clusterName, ORecordId rid, ODistributedServerManager dManager,
-      Map<Object, List<String>> groupedServerValues, ODocument config);
+      Map<Object, List<String>> groupedServerValues);
 
   /**
    * Name to register in the factory.
