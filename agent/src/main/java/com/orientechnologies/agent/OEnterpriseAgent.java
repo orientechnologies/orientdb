@@ -62,9 +62,9 @@ import java.util.UUID;
 public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener, OPluginLifecycleListener {
   public static final  String EE                         = "ee.";
   private static final String ORIENDB_ENTERPRISE_VERSION = "2.2"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
-  public  OServer server;
-  private String  license;
-  public static final String TOKEN;
+  public              OServer server;
+  private             String  license;
+  public static final String  TOKEN;
 
   static {
     String t = null;
@@ -275,7 +275,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   protected void installProfiler() {
     final OAbstractProfiler currentProfiler = (OAbstractProfiler) Orient.instance().getProfiler();
 
-    profiler = new OEnterpriseProfiler(60, 24, currentProfiler, server);
+    profiler = new OEnterpriseProfiler(60, currentProfiler, server);
 
     Orient.instance().setProfiler(profiler);
     Orient.instance().getProfiler().startup();

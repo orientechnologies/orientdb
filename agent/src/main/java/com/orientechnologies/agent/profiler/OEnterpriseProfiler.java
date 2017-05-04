@@ -45,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -56,16 +57,14 @@ import java.util.concurrent.atomic.AtomicLong;
  * @copyrights Orient Technologies.com
  */
 public class OEnterpriseProfiler extends OAbstractProfiler implements ODistributedLifecycleListener {
-  protected final static Timer               timer            = new Timer(true);
-  protected final static int                 BUFFER_SIZE      = 2048;
-  public static final    int                 KEEP_ALIVE       = 60 * 1000;
-  protected final        List<OProfilerData> snapshots        = new ArrayList<OProfilerData>();
-  protected final        int                 metricProcessors = Runtime.getRuntime().availableProcessors();
-  protected              Date                lastReset        = new Date();
-  protected              OProfilerData       realTime         = new OProfilerData();
-  protected OProfilerData lastSnapshot;
-  protected int elapsedToCreateSnapshot = 0;
-  protected int maxSnapshots            = 0;
+  protected final static Timer                          timer                   = new Timer(true);
+  protected final static int                            BUFFER_SIZE             = 2048;
+  public static final    int                            KEEP_ALIVE              = 60 * 1000;
+  protected final        int                            metricProcessors        = Runtime.getRuntime().availableProcessors();
+  protected              Date                           lastReset               = new Date();
+  protected              OProfilerData                  realTime                = new OProfilerData();
+  protected final        AtomicReference<OProfilerData> lastSnapshot            = new AtomicReference<OProfilerData>();
+  protected              int                            elapsedToCreateSnapshot = 0;
   protected TimerTask archiverTask;
   protected TimerTask autoPause;
   protected TimerTask autoPublish;
@@ -80,11 +79,9 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
     init();
   }
 
-  public OEnterpriseProfiler(final int iElapsedToCreateSnapshot, final int iMaxSnapshot, final OAbstractProfiler iParentProfiler,
-      OServer server) {
+  public OEnterpriseProfiler(final int iElapsedToCreateSnapshot, final OAbstractProfiler iParentProfiler, OServer server) {
     super(iParentProfiler);
     elapsedToCreateSnapshot = iElapsedToCreateSnapshot;
-    maxSnapshots = iMaxSnapshot;
     this.server = server;
     init();
   }
@@ -95,13 +92,11 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
     final String[] parts = iConfiguration.split(",");
     elapsedToCreateSnapshot = Integer.parseInt(parts[0].trim());
-    maxSnapshots = Integer.parseInt(parts[1].trim());
-
+    
     if (isRecording())
       stopRecording();
 
     startRecording();
-
   }
 
   public void shutdown() {
@@ -111,9 +106,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
     super.shutdown();
     hooks.clear();
 
-    synchronized (snapshots) {
-      snapshots.clear();
-    }
+    lastSnapshot.set(null);
   }
 
   @Override
@@ -135,29 +128,21 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
     if (!super.startRecording())
       return false;
 
-    acquireExclusiveLock();
-    try {
-      OLogManager.instance()
-          .info(this, "Profiler is recording metrics with configuration: %d,%d", elapsedToCreateSnapshot, maxSnapshots);
+    OLogManager.instance().info(this, "Profiler is recording metrics with configuration: %d", elapsedToCreateSnapshot);
 
-      if (elapsedToCreateSnapshot > 0) {
-        lastSnapshot = new OProfilerData();
+    if (elapsedToCreateSnapshot > 0) {
+      lastSnapshot.set(new OProfilerData());
 
-        if (archiverTask != null)
-          archiverTask.cancel();
+      if (archiverTask != null)
+        archiverTask.cancel();
 
-        archiverTask = new TimerTask() {
-          @Override
-          public void run() {
-            createSnapshot();
-          }
-        };
-        timer.schedule(archiverTask, elapsedToCreateSnapshot * 1000, elapsedToCreateSnapshot * 1000);
-
-      }
-
-    } finally {
-      releaseExclusiveLock();
+      archiverTask = new TimerTask() {
+        @Override
+        public void run() {
+          createSnapshot();
+        }
+      };
+      timer.schedule(archiverTask, elapsedToCreateSnapshot * 1000, elapsedToCreateSnapshot * 1000);
     }
 
     return true;
@@ -167,53 +152,16 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
     if (!super.stopRecording())
       return false;
 
-    acquireExclusiveLock();
-    try {
-      OLogManager.instance().config(this, "Profiler has stopped recording metrics");
+    OLogManager.instance().config(this, "Profiler has stopped recording metrics");
 
-      lastSnapshot = null;
-      realTime.clear();
-      dictionary.clear();
-      types.clear();
-      if (archiverTask != null)
-        archiverTask.cancel();
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    lastSnapshot.set(null);
+    realTime.clear();
+    dictionary.clear();
+    types.clear();
+    if (archiverTask != null)
+      archiverTask.cancel();
 
     return true;
-  }
-
-  public void createSnapshot() {
-    if (lastSnapshot == null)
-      return;
-
-    final Map<String, OProfilerHookStatic> hookValuesSnapshots = archiveHooks();
-
-    acquireExclusiveLock();
-    try {
-
-      synchronized (snapshots) {
-        // ARCHIVE IT
-        lastSnapshot.setHookValues(hookValuesSnapshots);
-        lastSnapshot.endRecording();
-        snapshots.add(lastSnapshot);
-
-        for (OProfilerListener listener : listeners) {
-          listener.onSnapshotCreated(lastSnapshot);
-        }
-        lastSnapshot = new OProfilerData();
-
-        while (snapshots.size() >= maxSnapshots && maxSnapshots > 0) {
-          // REMOVE THE OLDEST SNAPSHOT
-          snapshots.remove(0);
-        }
-      }
-
-    } finally {
-      releaseExclusiveLock();
-    }
   }
 
   public void updateCounter(final String iName, final String iDescription, final long iPlus) {
@@ -226,19 +174,15 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
     updateMetadata(iMetadata, iDescription, METRIC_TYPE.COUNTER);
 
-    acquireSharedLock();
-    try {
-      if (lastSnapshot != null)
-        lastSnapshot.updateCounter(iName, iPlus);
-      realTime.updateCounter(iName, iPlus);
+    final OProfilerData snapshot = lastSnapshot.get();
+    if (snapshot != null)
+      snapshot.updateCounter(iName, iPlus);
 
-      long counter = realTime.getCounter(iName);
-      for (OProfilerListener listener : listeners) {
-        listener.onUpdateCounter(iName, counter, realTime.getRecordingFrom(), System.currentTimeMillis());
-      }
+    realTime.updateCounter(iName, iPlus);
 
-    } finally {
-      releaseSharedLock();
+    long counter = realTime.getCounter(iName);
+    for (OProfilerListener listener : listeners) {
+      listener.onUpdateCounter(iName, counter, realTime.getRecordingFrom(), System.currentTimeMillis());
     }
   }
 
@@ -246,12 +190,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
     if (iStatName == null || recordingFrom < 0)
       return -1;
 
-    acquireSharedLock();
-    try {
-      return realTime.getCounter(iStatName);
-    } finally {
-      releaseSharedLock();
-    }
+    return realTime.getCounter(iStatName);
   }
 
   public void resetRealtime(final String iText) {
@@ -278,58 +217,40 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
     buffer.append("{ \"" + iQuery + "\":");
 
-    acquireSharedLock();
-    try {
-      if (iQuery.equals("realtime")) {
-        realTime.setHookValues(hookValuesSnapshots);
-        realTime.toJSON(buffer, iPar1);
+    if (iQuery.equals("realtime")) {
+      realTime.setHookValues(hookValuesSnapshots);
+      realTime.toJSON(buffer, iPar1);
 
-      } else if (iQuery.equals("last")) {
-        if (lastSnapshot != null) {
-          lastSnapshot.setHookValues(hookValuesSnapshots);
-          lastSnapshot.toJSON(buffer, iPar1);
-        }
+    } else if (iQuery.equals("last")) {
 
-      } else {
-        // GET THE RANGES
-        if (iPar1 == null)
-          throw new IllegalArgumentException("Invalid range format. Use: <from>, where * means any");
-
-        final long from = iPar1.equals("*") ? 0 : Long.parseLong(iPar1);
-
-        boolean firstItem = true;
-        buffer.append("[");
-        if (iQuery.equals("archive")) {
-          // ARCHIVE
-          for (int i = 0; i < snapshots.size(); ++i) {
-            final OProfilerData a = snapshots.get(i);
-
-            if (a.getRecordingFrom() < from) {
-              // ALREADY READ, REMOVE IT
-              snapshots.remove(i);
-              i--;
-              continue;
-            }
-
-            if (firstItem)
-              firstItem = false;
-            else
-              buffer.append(',');
-
-            a.toJSON(buffer, null);
-          }
-
-        } else
-          throw new IllegalArgumentException("Invalid archive query: use realtime|last|archive");
-
-        buffer.append("]");
+      final OProfilerData snapshot = lastSnapshot.get();
+      if (snapshot != null) {
+        snapshot.setHookValues(hookValuesSnapshots);
+        snapshot.toJSON(buffer, iPar1);
       }
 
-      buffer.append("}");
+    } else {
+      // GET THE RANGES
+      if (iPar1 == null)
+        throw new IllegalArgumentException("Invalid range format. Use: <from>, where * means any");
 
-    } finally {
-      releaseSharedLock();
+      final long from = iPar1.equals("*") ? 0 : Long.parseLong(iPar1);
+
+      buffer.append("[");
+      if (iQuery.equals("archive")) {
+        // ARCHIVE
+        final OProfilerData snapshot = lastSnapshot.get();
+
+        if (snapshot != null && snapshot.getRecordingFrom() >= from)
+          snapshot.toJSON(buffer, null);
+
+      } else
+        throw new IllegalArgumentException("Invalid archive query: use realtime|last|archive");
+
+      buffer.append("]");
     }
+
+    buffer.append("}");
 
     return buffer.toString();
   }
@@ -366,31 +287,24 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
     final long now = System.currentTimeMillis();
 
-    acquireSharedLock();
-    try {
-
-      final StringBuilder buffer = new StringBuilder(BUFFER_SIZE);
-      buffer.append("\nOrientDB profiler dump of ");
-      buffer.append(new Date(now));
-      buffer.append(" after ");
-      buffer.append((now - recordingFrom) / 1000);
-      buffer.append(" secs of profiling");
-      buffer.append(String
-          .format("\nFree memory: %2.2fMb (%2.2f%%) - Total memory: %2.2fMb - Max memory: %2.2fMb - CPUs: %d", freeMem,
-              (freeMem * 100 / (float) maxMem), totMem, maxMem, Runtime.getRuntime().availableProcessors()));
-      buffer.append("\n");
-      buffer.append(dumpHookValues());
-      buffer.append("\n");
-      buffer.append(dumpCounters());
-      buffer.append("\n\n");
-      buffer.append(dumpStats());
-      buffer.append("\n\n");
-      buffer.append(dumpChronos());
-      return buffer.toString();
-
-    } finally {
-      releaseSharedLock();
-    }
+    final StringBuilder buffer = new StringBuilder(BUFFER_SIZE);
+    buffer.append("\nOrientDB profiler dump of ");
+    buffer.append(new Date(now));
+    buffer.append(" after ");
+    buffer.append((now - recordingFrom) / 1000);
+    buffer.append(" secs of profiling");
+    buffer.append(String
+        .format("\nFree memory: %2.2fMb (%2.2f%%) - Total memory: %2.2fMb - Max memory: %2.2fMb - CPUs: %d", freeMem,
+            (freeMem * 100 / (float) maxMem), totMem, maxMem, Runtime.getRuntime().availableProcessors()));
+    buffer.append("\n");
+    buffer.append(dumpHookValues());
+    buffer.append("\n");
+    buffer.append(dumpCounters());
+    buffer.append("\n\n");
+    buffer.append(dumpStats());
+    buffer.append("\n\n");
+    buffer.append(dumpChronos());
+    return buffer.toString();
   }
 
   public long startChrono() {
@@ -430,22 +344,16 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
     updateMetadata(iDictionaryName, iDescription, METRIC_TYPE.CHRONO);
 
-    acquireSharedLock();
-    try {
+    final OProfilerData snapshot = lastSnapshot.get();
+    if (snapshot != null)
+      snapshot.stopChrono(iName, iStartTime, iPayload, user);
 
-      if (lastSnapshot != null)
-        lastSnapshot.stopChrono(iName, iStartTime, iPayload, user);
-
-      long stopChrono = realTime.stopChrono(iName, iStartTime, iPayload, user);
-      OProfilerEntry chrono = realTime.getChrono(iName);
-      for (OProfilerListener listener : listeners) {
-        listener.onUpdateChrono(chrono);
-      }
-      return stopChrono;
-
-    } finally {
-      releaseSharedLock();
+    final long stopChrono = realTime.stopChrono(iName, iStartTime, iPayload, user);
+    final OProfilerEntry chrono = realTime.getChrono(iName);
+    for (OProfilerListener listener : listeners) {
+      listener.onUpdateChrono(chrono);
     }
+    return stopChrono;
   }
 
   public long updateStat(final String iName, final String iDescription, final long iValue) {
@@ -455,16 +363,11 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
     updateMetadata(iName, iDescription, METRIC_TYPE.STAT);
 
-    acquireSharedLock();
-    try {
+    final OProfilerData snapshot = lastSnapshot.get();
+    if (snapshot != null)
+      snapshot.updateStat(iName, iValue);
 
-      if (lastSnapshot != null)
-        lastSnapshot.updateStat(iName, iValue);
-      return realTime.updateStat(iName, iValue);
-
-    } finally {
-      releaseSharedLock();
-    }
+    return realTime.updateStat(iName, iValue);
   }
 
   public String dumpCounters() {
@@ -472,30 +375,15 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
     if (recordingFrom < 0)
       return "Counters: <no recording>";
 
-    acquireSharedLock();
-    try {
-      return realTime.dumpCounters();
-    } finally {
-      releaseSharedLock();
-    }
+    return realTime.dumpCounters();
   }
 
   public String dumpChronos() {
-    acquireSharedLock();
-    try {
-      return realTime.dumpChronos();
-    } finally {
-      releaseSharedLock();
-    }
+    return realTime.dumpChronos();
   }
 
   public String dumpStats() {
-    acquireSharedLock();
-    try {
-      return realTime.dumpStats();
-    } finally {
-      releaseSharedLock();
-    }
+    return realTime.dumpStats();
   }
 
   public String dumpHookValues() {
@@ -504,31 +392,24 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
     final StringBuilder buffer = new StringBuilder(BUFFER_SIZE);
 
-    acquireSharedLock();
-    try {
+    if (hooks.size() == 0)
+      return "";
 
-      if (hooks.size() == 0)
-        return "";
+    buffer.append("HOOK VALUES:");
 
-      buffer.append("HOOK VALUES:");
+    buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
+    buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 
-      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-      buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
-      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    final List<String> names = new ArrayList<String>(hooks.keySet());
+    Collections.sort(names);
 
-      final List<String> names = new ArrayList<String>(hooks.keySet());
-      Collections.sort(names);
-
-      for (String k : names) {
-        final OProfilerHookRuntime v = hooks.get(k);
-        if (v != null) {
-          final Object hookValue = v.hook.getValue();
-          buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
-        }
+    for (String k : names) {
+      final OProfilerHookRuntime v = hooks.get(k);
+      if (v != null) {
+        final Object hookValue = v.hook.getValue();
+        buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
       }
-
-    } finally {
-      releaseSharedLock();
     }
 
     buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
@@ -541,30 +422,15 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
   }
 
   public String[] getCountersAsString() {
-    acquireSharedLock();
-    try {
-      return realTime.getCountersAsString();
-    } finally {
-      releaseSharedLock();
-    }
+    return realTime.getCountersAsString();
   }
 
   public String[] getChronosAsString() {
-    acquireSharedLock();
-    try {
-      return realTime.getChronosAsString();
-    } finally {
-      releaseSharedLock();
-    }
+    return realTime.getChronosAsString();
   }
 
   public String[] getStatsAsString() {
-    acquireSharedLock();
-    try {
-      return realTime.getStatsAsString();
-    } finally {
-      releaseSharedLock();
-    }
+    return realTime.getStatsAsString();
   }
 
   public Date getLastReset() {
@@ -572,30 +438,15 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
   }
 
   public List<String> getCounters() {
-    acquireSharedLock();
-    try {
-      return realTime.getCounters();
-    } finally {
-      releaseSharedLock();
-    }
+    return realTime.getCounters();
   }
 
   public OProfilerEntry getStat(final String iStatName) {
-    acquireSharedLock();
-    try {
-      return realTime.getStat(iStatName);
-    } finally {
-      releaseSharedLock();
-    }
+    return realTime.getStat(iStatName);
   }
 
   public OProfilerEntry getChrono(final String iChronoName) {
-    acquireSharedLock();
-    try {
-      return realTime.getChrono(iChronoName);
-    } finally {
-      releaseSharedLock();
-    }
+    return realTime.getChrono(iChronoName);
   }
 
   public void setAutoDump(final int iSeconds) {
@@ -619,7 +470,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
     if (!isRecording())
       return null;
 
-    final Map<String, OProfilerHookStatic> result = new HashMap<String, OProfilerHookStatic>();
+    final Map<String, OProfilerHookStatic> result = new HashMap<String, OProfilerHookStatic>(hooks.size());
 
     for (Entry<String, OProfilerHookRuntime> entry : hooks.entrySet())
       result.put(entry.getKey(), new OProfilerHookStatic(entry.getValue().hook.getValue(), entry.getValue().type));
@@ -665,35 +516,6 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
         return System.getProperty("java.version");
       }
     });
-    // registerHookValue(getProcessMetric("runtime.availableMemory"), "Available memory for the process", METRIC_TYPE.SIZE,
-    // new OProfilerHookValue() {
-    // @Override
-    // public Object getValue() {
-    // return Runtime.getRuntime().freeMemory();
-    // }
-    // });
-    // registerHookValue(getProcessMetric("runtime.maxMemory"), "Maximum memory usable for the process", METRIC_TYPE.SIZE,
-    // new OProfilerHookValue() {
-    // @Override
-    // public Object getValue() {
-    // return Runtime.getRuntime().maxMemory();
-    // }
-    // });
-    // registerHookValue(getProcessMetric("runtime.totalMemory"), "Total memory used by the process", METRIC_TYPE.SIZE,
-    // new OProfilerHookValue() {
-    // @Override
-    // public Object getValue() {
-    // return Runtime.getRuntime().totalMemory();
-    // }
-    // });
-    //
-    // registerHookValue(getProcessMetric("runtime.cpu"), "Total cpu used by the process", METRIC_TYPE.SIZE, new
-    // OProfilerHookValue() {
-    // @Override
-    // public Object getValue() {
-    // return "" + cpuUsage();
-    // }
-    // });
 
     final File[] roots = File.listRoots();
     for (final File root : roots) {
@@ -882,5 +704,21 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
   @Override
   public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
 
+  }
+
+  private void createSnapshot() {
+    final OProfilerData snapshot = lastSnapshot.getAndSet(new OProfilerData());
+    if (snapshot == null)
+      return;
+
+    final Map<String, OProfilerHookStatic> hookValuesSnapshots = archiveHooks();
+
+    // ARCHIVE IT
+    snapshot.setHookValues(hookValuesSnapshots);
+    snapshot.endRecording();
+
+    for (OProfilerListener listener : listeners) {
+      listener.onSnapshotCreated(snapshot);
+    }
   }
 }
