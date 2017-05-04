@@ -18,13 +18,9 @@
 
 package com.orientechnologies.lucene.tests;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -42,17 +38,14 @@ public class OLuceneContextTest extends OLuceneBaseTest {
   public void init() {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    db.execute("sql", getScriptFromStream(stream));
 
-    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-
-    db.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
+    db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE");
 
   }
 
   @Test
-  @Ignore
-  public void testContext() {
+  public void shouldReturnScore() {
 
     OResultSet docs = db
         .query("select *,$score from Song where search_index('Song.title', 'title:man')= true ");
@@ -61,24 +54,31 @@ public class OLuceneContextTest extends OLuceneBaseTest {
 
     assertThat(results).hasSize(14);
     Float latestScore = 100f;
+
+    //results are ordered by score desc
     for (OResult doc : results) {
       Float score = doc.getProperty("$score");
       assertThat(score)
           .isNotNull()
-          .isLessThan(latestScore);
+          .isLessThanOrEqualTo(latestScore);
       latestScore = score;
     }
 
-    docs = db.query(
-        "select *,$totalHits,$Song_title_totalHits search_index('Song.title', 'title:man')= true  limit 1");
+  }
 
-    results = docs.stream().collect(Collectors.toList());
+  @Test
+  public void shouldReturnToalHits() throws Exception {
+    OResultSet docs = db.query(
+        "select *,$totalHits,$Song_title_totalHits from Song where search_class('title:man')= true  limit 1");
+
+    List<OResult> results = docs.stream().collect(Collectors.toList());
     assertThat(results).hasSize(1);
 
     OResult doc = results.get(0);
-    Assert.assertEquals(doc.<Object>getProperty("$totalHits"), 14);
-    Assert.assertEquals(doc.<Object>getProperty("$Song_title_totalHits"), 14);
+    System.out.println("doc.toElement().toJSON() = " + doc.toElement().toJSON());
+
+    assertThat(doc.<Integer>getProperty("$totalHits")).isEqualTo(14);
+    assertThat(doc.<Integer>getProperty("$Song_title_totalHits")).isEqualTo(14);
 
   }
-
 }

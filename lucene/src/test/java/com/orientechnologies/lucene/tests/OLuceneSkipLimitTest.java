@@ -18,8 +18,6 @@
 
 package com.orientechnologies.lucene.tests;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
@@ -36,10 +34,10 @@ public class OLuceneSkipLimitTest extends OLuceneBaseTest {
   public void init() {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    db.execute("sql", getScriptFromStream(stream));
 
-    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-    db.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
+    db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE");
+    db.command("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE");
 
   }
 

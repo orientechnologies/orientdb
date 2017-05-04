@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.lucene.document.DateTools;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -114,9 +113,9 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
   }
 
   @Test
-  @Ignore
+//  @Ignore
   public void shouldUseRangeQueryMultipleFieldWithDirectIndexAccess() throws Exception {
-    db.command(new OCommandSQL("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE")).execute();
+    db.command("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE");
 
     assertThat(db.getMetadata().getIndexManager().getIndex("Person.composite").getSize()).isEqualTo(10);
 
@@ -125,10 +124,9 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     String today = DateTools.timeToString(System.currentTimeMillis(), DateTools.Resolution.MINUTE);
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
-    System.out.println("fiveDaysAgo = " + fiveDaysAgo);
     //anme and age range
-//    OResultSet results = db.query("SELECT * FROM index:Person.composite WHERE key ='name:luke  age:[5 TO 6]'");
-    OResultSet results = db.query("SELECT * FROM index:Person.composite WHERE key ='age:[5 TO 6]'");
+    OResultSet results = db.query("SELECT * FROM index:Person.composite WHERE key ='name:luke  age:[5 TO 6]'");
+//    OResultSet results = db.query("SELECT * FROM index:Person.composite WHERE key ='age:[5 TO 6]'");
 
     assertThat(results).hasSize(2);
 
@@ -142,6 +140,11 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
         .query("SELECT FROM index:Person.composite WHERE key = '+age:[4 TO 7]  +date:[" + fiveDaysAgo + " TO " + today + "]'");
 
     assertThat(results).hasSize(2);
+
+    results = db
+        .query("SELECT FROM index:Person.composite where key = '*:*'");
+
+    assertThat(results).hasSize(10);
 
   }
 

@@ -31,8 +31,11 @@ import java.util.List;
 
 public class OLuceneOperatorUtil {
 
-  public static OIndexSearchResult buildOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
-      List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
+  public static OIndexSearchResult buildOIndexSearchResult(OClass iSchemaClass,
+      OSQLFilterCondition iCondition,
+      List<OIndexSearchResult> iIndexSearchResults,
+      OCommandContext context) {
+
     if (iCondition.getLeft() instanceof Collection) {
       OIndexSearchResult lastResult = null;
 

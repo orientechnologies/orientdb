@@ -57,19 +57,6 @@ public class LuceneQeuryParserTest extends BaseLuceneTest {
     assertThat(docs).hasSize(0);
   }
 
-  @Test
-  public void shouldFailIfLeadinWild() {
-
-    //enabling leading wildcard
-    db.command(
-        new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {\"allowLeadingWildcard\": true}"))
-        .execute();
-
-    //querying with leading wildcard
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:*tain)\""));
-
-    assertThat(docs).hasSize(4);
-  }
 
 }
 

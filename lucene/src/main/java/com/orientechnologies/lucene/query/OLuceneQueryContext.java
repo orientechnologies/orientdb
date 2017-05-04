@@ -34,19 +34,18 @@ import java.io.IOException;
  */
 public class OLuceneQueryContext {
 
-  public final    OCommandContext context;
-  public final    Query           query;
-  //  public final    Query           filter;
-  public final    Sort            sort;
-  protected final IndexSearcher   searcher;
-  public          QueryContextCFG cfg;
-  public boolean facet     = false;
-  public boolean drillDown = false;
-  public    TaxonomyReader   reader;
-  protected OLuceneTxChanges changes;
-  private   FacetsConfig     facetConfig;
-  private   String           facetField;
-  private   String           drillDownQuery;
+  private final OCommandContext  context;
+  private final IndexSearcher    searcher;
+  private final Query            query;
+  private final Sort             sort;
+  private       OLuceneTxChanges changes;
+  private       QueryContextCFG  cfg;
+  private       TaxonomyReader   reader;
+  private       FacetsConfig     facetConfig;
+  private       String           facetField;
+  private       String           drillDownQuery;
+  private       boolean          facet;
+  private       boolean          drillDown;
 
   public OLuceneQueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
     this(context, searcher, query, null);
@@ -57,15 +56,13 @@ public class OLuceneQueryContext {
     this.searcher = searcher;
     this.query = query;
     this.sort = sort;
-    initCFG();
-
-  }
-
-  private void initCFG() {
     if (sort != null)
       cfg = QueryContextCFG.SORT;
     else
       cfg = QueryContextCFG.FILTER;
+
+    facet = false;
+    drillDown = false;
   }
 
   public OLuceneQueryContext setFacet(boolean facet) {
@@ -111,13 +108,25 @@ public class OLuceneQueryContext {
     return changes != null;
   }
 
-  public OLuceneQueryContext setChanges(OLuceneTxChanges changes) {
+  public OLuceneQueryContext withChanges(OLuceneTxChanges changes) {
     this.changes = changes;
     return this;
   }
 
   public OLuceneTxChanges changes() {
     return changes;
+  }
+
+  public OCommandContext getContext() {
+    return context;
+  }
+
+  public Query getQuery() {
+    return query;
+  }
+
+  public Sort getSort() {
+    return sort;
   }
 
   public IndexSearcher getSearcher() throws IOException {
@@ -127,8 +136,12 @@ public class OLuceneQueryContext {
         new IndexSearcher(new MultiReader(searcher.getIndexReader(), changes.searcher().getIndexReader()));
   }
 
+  public QueryContextCFG getCfg() {
+    return cfg;
+  }
+
   public enum QueryContextCFG {
-    NO_FILTER_NO_SORT, FILTER_SORT, FILTER, SORT
+    FILTER, SORT
   }
 
 }

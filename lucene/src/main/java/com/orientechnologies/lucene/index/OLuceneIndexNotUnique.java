@@ -22,6 +22,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneTxOperations;
+import com.orientechnologies.lucene.collections.OLuceneIndexCursor;
+import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -261,7 +263,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
         try {
           return storage.callIndexEngine(false, false, indexId, engine -> {
             OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-            return (Set<OIdentifiable>) indexEngine.getInTx(key, getTransactionChanges(transaction));
+            return indexEngine.getInTx(key, getTransactionChanges(transaction));
           });
         } catch (OInvalidIndexEngineIdException e) {
           doReloadIndexEngine();
@@ -349,7 +351,17 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
 
   @Override
   public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
-    return null;
+
+    String query = (String) keys.stream()
+        .findFirst()
+        .map(k -> (OCompositeKey) k)
+        .map(ck -> ck.getKeys())
+        .orElse(Arrays.asList("q=*:*"))
+        .get(0);
+
+    OLuceneResultSet identifiables = (OLuceneResultSet) get(query);
+
+    return new OLuceneIndexCursor(identifiables, query);
   }
 
   @Override
@@ -422,12 +434,12 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
         return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<IndexSearcher>() {
           @Override
           public IndexSearcher callEngine(OIndexEngine engine) {
-          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-          try {
-            return indexEngine.searcher();
-          } catch (IOException e) {
-            throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
-          }
+            OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+            try {
+              return indexEngine.searcher();
+            } catch (IOException e) {
+              throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
+            }
           }
         });
       } catch (OInvalidIndexEngineIdException e) {

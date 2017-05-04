@@ -23,6 +23,7 @@ import com.orientechnologies.lucene.builder.OLuceneDocumentBuilder;
 import com.orientechnologies.lucene.builder.OLuceneIndexType;
 import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
+import com.orientechnologies.lucene.collections.OLuceneIndexCursor;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.collections.OLuceneResultSetFactory;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
@@ -44,7 +45,10 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.Directory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
@@ -134,7 +138,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
 
-
     for (OIdentifiable oIdentifiable : container) {
 
       Document doc = buildDocument(key, oIdentifiable);
@@ -175,17 +178,18 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
-    return new LuceneIndexCursor((OLuceneResultSet) get(rangeFrom), rangeFrom);
+    return new OLuceneIndexCursor((OLuceneResultSet) get(rangeFrom), rangeFrom);
   }
 
   private Set<OIdentifiable> getResults(Query query, OCommandContext context, Object key, OLuceneTxChanges changes) {
 
     try {
       IndexSearcher searcher = searcher();
-      OLuceneQueryContext queryContext = new OLuceneQueryContext(context, searcher, query).setChanges(changes);
+      OLuceneQueryContext queryContext = new OLuceneQueryContext(context, searcher, query).withChanges(changes);
       if (facetManager.supportsFacets()) {
         facetManager.addFacetContext(queryContext, key);
       }
+
       return OLuceneResultSetFactory.INSTANCE.create(this, queryContext);
     } catch (IOException e) {
       throw OIOException.wrapException(new OIndexException("Error reading from Lucene index"), e);
@@ -259,7 +263,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public Object getInTx(Object key, OLuceneTxChanges changes) {
+  public Set<OIdentifiable> getInTx(Object key, OLuceneTxChanges changes) {
     try {
       Query q = queryBuilder.query(index, key, queryAnalyzer());
       OCommandContext context = null;
@@ -272,77 +276,4 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     }
   }
 
-  public class LuceneIndexCursor implements OIndexCursor {
-
-    private final Object           key;
-    private       OLuceneResultSet resultSet;
-
-    private Iterator<OIdentifiable> iterator;
-
-    public LuceneIndexCursor(OLuceneResultSet resultSet, Object key) {
-      this.resultSet = resultSet;
-      this.iterator = resultSet.iterator();
-      this.key = key;
-    }
-
-    @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
-
-      if (iterator.hasNext()) {
-        final OIdentifiable next = iterator.next();
-        return new Map.Entry<Object, OIdentifiable>() {
-          @Override
-          public Object getKey() {
-            return key;
-          }
-
-          @Override
-          public OIdentifiable getValue() {
-            return next;
-          }
-
-          @Override
-          public OIdentifiable setValue(OIdentifiable value) {
-            return null;
-          }
-        };
-      }
-      return null;
-    }
-
-    @Override
-    public Set<OIdentifiable> toValues() {
-      return null;
-    }
-
-    @Override
-    public Set<Map.Entry<Object, OIdentifiable>> toEntries() {
-      return null;
-    }
-
-    @Override
-    public Set<Object> toKeys() {
-      return null;
-    }
-
-    @Override
-    public void setPrefetchSize(int prefetchSize) {
-
-    }
-
-    @Override
-    public boolean hasNext() {
-      return false;
-    }
-
-    @Override
-    public OIdentifiable next() {
-      return null;
-    }
-
-    @Override
-    public void remove() {
-
-    }
-  }
 }

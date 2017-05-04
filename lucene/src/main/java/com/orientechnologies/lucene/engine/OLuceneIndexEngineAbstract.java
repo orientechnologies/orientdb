@@ -95,40 +95,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   }
 
-  // TODO: move to utility class
-  public static void sendTotalHits(String indexName, OCommandContext context, int totalHits) {
-    if (context != null) {
-
-      if (context.getVariable("totalHits") == null) {
-        context.setVariable("totalHits", totalHits);
-      } else {
-        context.setVariable("totalHits", null);
-      }
-      context.setVariable((indexName + ".totalHits").replace(".", "_"), totalHits);
-    }
-  }
-
-  // TODO: move to utility class
-  public static void sendLookupTime(String indexName, OCommandContext context, final TopDocs docs, final Integer limit,
-      long startFetching) {
-    if (context != null) {
-
-      final long finalTime = System.currentTimeMillis() - startFetching;
-      context.setVariable((indexName + ".lookupTime").replace(".", "_"), new HashMap<String, Object>() {
-        {
-          put("limit", limit);
-          put("totalTime", finalTime);
-          put("totalHits", docs.totalHits);
-          put("returnedHits", docs.scoreDocs.length);
-          if (!Float.isNaN(docs.getMaxScore())) {
-            put("maxScore", docs.getMaxScore());
-          }
-
-        }
-      });
-    }
-  }
-
   protected abstract IndexWriter openIndexWriter(Directory directory) throws IOException;
 
   protected void addDocument(Document doc) {
@@ -172,7 +138,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       OLogManager.instance().error(this, "Error on initializing Lucene index", e);
     }
   }
-
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
 
@@ -455,16 +420,17 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
+
   @Override
   public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
     throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
 
-
   @Override
   public OIndexKeyCursor keyCursor() {
     throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
+
   public long size(final ValuesTransformer transformer) {
     return sizeInTx(null);
   }

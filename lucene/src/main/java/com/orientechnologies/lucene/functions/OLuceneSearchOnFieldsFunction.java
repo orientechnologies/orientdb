@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -15,6 +16,7 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -112,7 +114,7 @@ public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implemen
         Set<OIdentifiable> luceneResultSet = index.get(query.toString());
       }
 
-      Set<OIdentifiable> luceneResultSet = index.get(query.toString());
+      Set<OIdentifiable> luceneResultSet = index.get(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx));
 
       return luceneResultSet;
     }

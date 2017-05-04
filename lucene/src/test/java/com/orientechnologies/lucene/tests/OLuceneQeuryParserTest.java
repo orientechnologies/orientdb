@@ -1,16 +1,11 @@
 package com.orientechnologies.lucene.tests;
 
-import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,8 +27,7 @@ public class OLuceneQeuryParserTest extends OLuceneBaseTest {
 
     //enabling leading wildcard
     db.command(
-        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {\"allowLeadingWildcard\": true}")
-        ;
+        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {\"allowLeadingWildcard\": true}");
 
     //querying with leading wildcard
     OResultSet docs = db.query("select * from Song where search_class(\"(title:*tain)\") = true");
@@ -62,9 +56,7 @@ public class OLuceneQeuryParserTest extends OLuceneBaseTest {
   public void shouldFailIfLeadinWild() {
 
     //enabling leading wildcard
-    db.command(
-        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {\"allowLeadingWildcard\": true}")
-        ;
+    db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {\"allowLeadingWildcard\": true}");
 
     //querying with leading wildcard
     OResultSet docs = db.query("select * from Song where search_class ('title:*tain')=true");

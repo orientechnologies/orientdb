@@ -23,7 +23,6 @@ import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -32,6 +31,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * Created by Enrico Risa on 04/09/15.
@@ -54,7 +54,7 @@ public interface OLuceneIndexEngine extends OIndexEngine, OFreezableStorageCompo
 
   IndexSearcher searcher() throws IOException;
 
-  Object getInTx(Object key, OLuceneTxChanges changes);
+  Set<OIdentifiable> getInTx(Object key, OLuceneTxChanges changes);
 
   long sizeInTx(OLuceneTxChanges changes);
 

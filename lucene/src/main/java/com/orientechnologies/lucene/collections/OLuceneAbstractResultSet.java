@@ -20,10 +20,11 @@ package com.orientechnologies.lucene.collections;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
-import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineUtils;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
 
@@ -46,7 +47,7 @@ public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
   public OLuceneAbstractResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext) {
     this.engine = engine;
     this.queryContext = queryContext;
-    this.query = enhanceQuery(queryContext.query);
+    this.query = enhanceQuery(queryContext.getQuery());
 
     indexName = engine.indexName();
     fetchFirstBatch();
@@ -59,19 +60,14 @@ public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
   protected void fetchFirstBatch() {
     try {
 
-      switch (queryContext.cfg) {
+      IndexSearcher searcher = queryContext.getSearcher();
+      switch (queryContext.getCfg()) {
 
-      case NO_FILTER_NO_SORT:
-        topDocs = queryContext.getSearcher().search(query, PAGE_SIZE);
-        break;
-      case FILTER_SORT:
-        topDocs = queryContext.getSearcher().search(query, PAGE_SIZE, queryContext.sort);
-        break;
       case FILTER:
-        topDocs = queryContext.getSearcher().search(query, PAGE_SIZE);
+        topDocs = searcher.search(query, PAGE_SIZE);
         break;
       case SORT:
-        topDocs = queryContext.getSearcher().search(query, PAGE_SIZE, queryContext.sort);
+        topDocs = searcher.search(query, PAGE_SIZE, queryContext.getSort());
         break;
       }
     } catch (IOException e) {
@@ -135,6 +131,6 @@ public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
   }
 
   public void sendLookupTime(OCommandContext commandContext, long start) {
-    OLuceneIndexEngineAbstract.sendLookupTime(indexName, commandContext, topDocs, -1, start);
+    OLuceneIndexEngineUtils.sendLookupTime(indexName, commandContext, topDocs, -1, start);
   }
 }

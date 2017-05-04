@@ -20,7 +20,7 @@ package com.orientechnologies.lucene.collections;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
-import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineUtils;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
@@ -31,6 +31,8 @@ import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
 import java.util.Iterator;
+
+import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
 
 /**
  * Created by Enrico Risa on 28/10/14.
@@ -53,7 +55,7 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
 
   private class OLuceneResultSetIterator implements Iterator<OIdentifiable> {
 
-    private ScoreDoc[] array;
+    private ScoreDoc[] scoreDocs;
     private int        index;
     private int        localIndex;
     private int        totalHits;
@@ -62,8 +64,8 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
       totalHits = topDocs.totalHits;
       index = 0;
       localIndex = 0;
-      array = topDocs.scoreDocs;
-      OLuceneIndexEngineAbstract.sendTotalHits(indexName, queryContext.context, topDocs.totalHits);
+      scoreDocs = topDocs.scoreDocs;
+      OLuceneIndexEngineUtils.sendTotalHits(indexName, queryContext.getContext(), topDocs.totalHits);
     }
 
     @Override
@@ -73,17 +75,15 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
 
     @Override
     public OIdentifiable next() {
-      if (localIndex == array.length) {
+      if (localIndex == scoreDocs.length) {
         localIndex = 0;
         fetchMoreResult();
       }
-      final ScoreDoc score = array[localIndex++];
-      Document ret = null;
+      final ScoreDoc score = topDocs.scoreDocs[localIndex++];
       OContextualRecordId res = null;
       try {
-        ret = queryContext.getSearcher().doc(score.doc);
-        String rId = ret.get(OLuceneIndexEngineAbstract.RID);
-        res = new OContextualRecordId(rId);
+        Document ret = queryContext.getSearcher().doc(score.doc);
+        res = new OContextualRecordId(ret.get(RID));
         engine.onRecordAddedToResultSet(queryContext, res, ret, score);
 
       } catch (IOException e) {
@@ -101,22 +101,16 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
       try {
 
         IndexSearcher searcher = queryContext.getSearcher();
-        switch (queryContext.cfg) {
+        switch (queryContext.getCfg()) {
 
-        case NO_FILTER_NO_SORT:
-          topDocs = searcher.searchAfter(array[array.length - 1], query, PAGE_SIZE);
-          break;
-        case FILTER_SORT:
-          topDocs = searcher.searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
-          break;
         case FILTER:
-          topDocs = searcher.searchAfter(array[array.length - 1], query, PAGE_SIZE);
+          topDocs = searcher.searchAfter(scoreDocs[scoreDocs.length - 1], query, PAGE_SIZE);
           break;
         case SORT:
-          topDocs = searcher.searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
+          topDocs = searcher.searchAfter(scoreDocs[scoreDocs.length - 1], query, PAGE_SIZE, queryContext.getSort());
           break;
         }
-        array = topDocs.scoreDocs;
+        scoreDocs = topDocs.scoreDocs;
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
       }

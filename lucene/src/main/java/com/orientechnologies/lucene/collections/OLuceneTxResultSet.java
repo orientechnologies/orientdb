@@ -21,11 +21,13 @@ package com.orientechnologies.lucene.collections;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineUtils;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 
@@ -63,7 +65,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
 
   private class OLuceneResultSetIteratorTx implements Iterator<OIdentifiable> {
 
-    private ScoreDoc[] array;
+    private ScoreDoc[] scoreDocs;
     private int        index;
     private int        localIndex;
     private int        totalHits;
@@ -72,8 +74,8 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
       totalHits = topDocs.totalHits;
       index = 0;
       localIndex = 0;
-      array = topDocs.scoreDocs;
-      OLuceneIndexEngineAbstract.sendTotalHits(indexName, queryContext.context, topDocs.totalHits - deletedMatchCount);
+      scoreDocs = topDocs.scoreDocs;
+      OLuceneIndexEngineUtils.sendTotalHits(indexName, queryContext.getContext(), topDocs.totalHits - deletedMatchCount);
     }
 
     @Override
@@ -96,11 +98,11 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
     }
 
     protected ScoreDoc fetchNext() {
-      if (localIndex == array.length) {
+      if (localIndex == scoreDocs.length) {
         localIndex = 0;
         fetchMoreResult();
       }
-      final ScoreDoc score = array[localIndex++];
+      final ScoreDoc score = scoreDocs[localIndex++];
       return score;
     }
 
@@ -132,22 +134,17 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
       TopDocs topDocs = null;
       try {
 
-        switch (queryContext.cfg) {
+        IndexSearcher searcher = queryContext.getSearcher();
+        switch (queryContext.getCfg()) {
 
-        case NO_FILTER_NO_SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
-          break;
-        case FILTER_SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
-          break;
         case FILTER:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
+          topDocs = searcher.searchAfter(scoreDocs[scoreDocs.length - 1], query, PAGE_SIZE);
           break;
         case SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
+          topDocs = searcher.searchAfter(scoreDocs[scoreDocs.length - 1], query, PAGE_SIZE, queryContext.getSort());
           break;
         }
-        array = topDocs.scoreDocs;
+        scoreDocs = topDocs.scoreDocs;
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
       }

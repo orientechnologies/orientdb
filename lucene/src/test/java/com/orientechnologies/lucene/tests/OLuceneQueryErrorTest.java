@@ -18,7 +18,6 @@
 
 package com.orientechnologies.lucene.tests;
 
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
@@ -38,7 +37,7 @@ public class OLuceneQueryErrorTest extends OLuceneBaseTest {
 
     db.execute("sql", getScriptFromStream(stream));
 
-    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
+    db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE");
 
   }
 

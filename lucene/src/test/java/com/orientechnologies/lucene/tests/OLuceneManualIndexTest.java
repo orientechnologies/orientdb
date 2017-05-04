@@ -25,15 +25,13 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by Enrico Risa on 09/07/15.
@@ -51,7 +49,6 @@ public class OLuceneManualIndexTest extends OLuceneBaseTest {
   }
 
   @Test
-  @Ignore
   public void shouldCreateManualIndexWithJavaApi() throws Exception {
 
     ODocument meta = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
@@ -66,51 +63,50 @@ public class OLuceneManualIndexTest extends OLuceneBaseTest {
     Assert.assertEquals(index.getSize(), 3);
 
     OResultSet docs = db.query("select from  index:apiManual  where  key = 'k0:Enrico'");
-    System.out.println(docs.getExecutionPlan().get().prettyPrint(10, 1));
-    Assertions.assertThat(docs).hasSize(1);
+    assertThat(docs).hasSize(1);
 
-    docs = db.command("select from index:apiManual where key LUCENE '(k0:Luca)'");
-    Assertions.assertThat(docs).hasSize(1);
+    docs = db.command("select from index:apiManual where key = '(k0:Luca)'");
+    assertThat(docs).hasSize(1);
 
-    docs = db.command("select from index:apiManual where key LUCENE '(k1:Rome)'");
-    Assertions.assertThat(docs).hasSize(2);
+    docs = db.command("select from index:apiManual where key ='(k1:Rome)'");
+    assertThat(docs).hasSize(2);
 
-    docs = db.command("select from index:apiManual where key LUCENE '(k1:London)'");
-    Assertions.assertThat(docs).hasSize(1);
+    docs = db.command("select from index:apiManual where key ='(k1:London)'");
+    assertThat(docs).hasSize(1);
 
   }
 
   @Test
-  @Ignore
   public void testManualIndex() {
 
     OIndex<?> manual = db.getMetadata().getIndexManager().getIndex("manual");
 
-    Assert.assertEquals(manual.getSize(), 3);
+    assertThat(manual.getSize()).isEqualTo(3);
 
-    List<ODocument> docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE 'Enrico'")).execute();
-    Assert.assertEquals(docs.size(), 1);
+    OResultSet docs = db.query("select from index:manual where key = 'Enrico'");
+
+    assertThat(docs).hasSize(1);
+
   }
 
   @Test
-  @Ignore
   public void testManualIndexWitKeys() {
 
     OIndex<?> manual = db.getMetadata().getIndexManager().getIndex("manual");
 
     Assert.assertEquals(manual.getSize(), 3);
 
-    List<ODocument> docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k0:Enrico)'")).execute();
-    Assert.assertEquals(docs.size(), 1);
+    OResultSet docs = db.query("select from index:manual where key = '(k0:Enrico)'");
+    assertThat(docs).hasSize(1);
 
-    docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k0:Luca)'")).execute();
-    Assert.assertEquals(docs.size(), 1);
+    docs = db.query("select from index:manual where key = '(k0:Luca)'");
+    assertThat(docs).hasSize(1);
 
-    docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k1:Rome)'")).execute();
-    Assert.assertEquals(docs.size(), 2);
+    docs = db.query("select from index:manual where key = '(k1:Rome)'");
+    assertThat(docs).hasSize(2);
 
-    docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k1:London)'")).execute();
-    Assert.assertEquals(docs.size(), 1);
+    docs = db.query("select from index:manual where key = '(k1:London)'");
+    assertThat(docs).hasSize(1);
 
   }
 
@@ -135,7 +131,7 @@ public class OLuceneManualIndexTest extends OLuceneBaseTest {
 
     OResultSet docs = db.query("select from index:manualInTransaction where key = 'k0:rob'");
 
-    Assertions.assertThat(docs).hasSize(1);
+    assertThat(docs).hasSize(1);
     db.commit();
   }
 

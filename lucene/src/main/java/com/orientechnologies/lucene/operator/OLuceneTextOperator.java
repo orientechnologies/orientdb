@@ -73,14 +73,15 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
-    OIndexCursor cursor;
-    Object indexResult = index.get(new OLuceneCompositeKey(keyParams).setContext(iContext));
-    if (indexResult == null || indexResult instanceof OIdentifiable)
-      cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OLuceneCompositeKey(keyParams));
-    else
-      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OLuceneCompositeKey(keyParams));
-    return cursor;
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      boolean ascSortOrder) {
+
+    Set<OIdentifiable> indexResult = (Set<OIdentifiable>) index.get(new OLuceneCompositeKey(keyParams).setContext(iContext));
+
+    if (indexResult == null)
+      return new OIndexCursorSingleValue((OIdentifiable) indexResult, new OLuceneCompositeKey(keyParams));
+
+    return new OIndexCursorCollectionValue(indexResult, new OLuceneCompositeKey(keyParams));
   }
 
   @Override
@@ -129,8 +130,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
 
         memoryIndex.addField(field, index.indexAnalyzer());
       }
-      boolean b = memoryIndex.search(index.buildQuery(iRight)) > 0.0f;
-      return b;
+      return memoryIndex.search(index.buildQuery(iRight)) > 0.0f;
     } catch (ParseException e) {
       OLogManager.instance().error(this, "error occurred while building query", e);
 

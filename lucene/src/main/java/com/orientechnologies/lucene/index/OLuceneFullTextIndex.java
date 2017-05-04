@@ -27,11 +27,15 @@ import org.apache.lucene.search.Query;
 
 public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
 
-  public OLuceneFullTextIndex(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata) {
+  public OLuceneFullTextIndex(String name,
+      String typeId,
+      String algorithm,
+      int version,
+      OAbstractPaginatedStorage storage,
+      String valueContainerAlgorithm,
+      ODocument metadata) {
     super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
   }
-
 
   public Document buildDocument(final Object key) {
 

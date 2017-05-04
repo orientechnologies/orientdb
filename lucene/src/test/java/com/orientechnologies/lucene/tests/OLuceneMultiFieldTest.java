@@ -99,7 +99,6 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
   }
 
   @Test
-  @Ignore
   public void testSelectOnIndexWithIgnoreNullValuesToFalse() {
     //#5579
     String script = "create class Item;\n"
@@ -130,7 +129,6 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
     docs = db.query(
         " SELECT expand(rid) FROM index:Item.fulltext where key = 'title:test'");
 
-    System.out.println(docs.getExecutionPlan().get().prettyPrint(1,1));
     assertThat(docs).hasSize(1);
 
   }

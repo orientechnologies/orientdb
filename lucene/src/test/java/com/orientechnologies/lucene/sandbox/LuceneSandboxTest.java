@@ -1,51 +1,49 @@
 package com.orientechnologies.lucene.sandbox;
 
-import com.orientechnologies.lucene.test.BaseLuceneTest;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.lucene.tests.OLuceneBaseTest;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.assertj.core.api.Assertions;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.StringReader;
-import java.util.List;
 
 /**
  * Created by frank on 02/01/2017.
  */
-public class LuceneSandboxTest extends BaseLuceneTest {
+public class LuceneSandboxTest extends OLuceneBaseTest {
+
+  @Before
+  public void setUp() throws Exception {
+
+    db.command("CREATE CLASS CDR");
+    db.command("CREATE PROPERTY  CDR.filename STRING");
+    db.command("INSERT into cdr(filename) values('MDCA10MCR201612291808.276388.eno.RRC.20161229183002.PROD_R4.eno.data') ");
+    db.command("INSERT into cdr(filename) values('MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data') ");
+
+  }
 
   @Test
   public void shouldFetchOneDocumentWithExactMatchOnLuceneIndexStandardAnalyzer() throws Exception {
 
-    db.command(new OCommandSQL("CREATE CLASS CDR")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY  CDR.filename STRING")).execute();
-    db.command(new OCommandSQL(
-        "CREATE INDEX cdr.filename ON cdr(filename) FULLTEXT ENGINE LUCENE ")).execute();
-    db.command(new OCommandSQL(
-        "INSERT into cdr(filename) values('MDCA10MCR201612291808.276388.eno.RRC.20161229183002.PROD_R4.eno.data') ")).execute();
-    db.command(new OCommandSQL(
-        "INSERT into cdr(filename) values('MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data') ")).execute();
-
+    db.command("CREATE INDEX cdr.filename ON cdr(filename) FULLTEXT ENGINE LUCENE ");
     //partial match
-    List<ODocument> res = db.query(new OSQLSynchQuery<ODocument>(
-        "select from cdr WHERE filename LUCENE ' RRC.20161229193002.PROD_R4.eno.data '"));
+    OResultSet res = db.query("select from cdr WHERE filename LUCENE ' RRC.20161229193002.PROD_R4.eno.data '");
 
     Assertions.assertThat(res).hasSize(2);
 
     //exact match
-    res = db.query(new OSQLSynchQuery<ODocument>(
-        "select from cdr WHERE filename LUCENE ' \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" '"));
+    res = db.query(
+        "select from cdr WHERE filename LUCENE ' \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" '");
 
     Assertions.assertThat(res).hasSize(1);
 
     //wildcard
-    res = db.query(new OSQLSynchQuery<ODocument>(
-        "select from cdr WHERE filename LUCENE ' MDCA* '"));
+    res = db.query("select from cdr WHERE filename LUCENE ' MDCA* '");
 
     Assertions.assertThat(res).hasSize(2);
   }
@@ -53,48 +51,31 @@ public class LuceneSandboxTest extends BaseLuceneTest {
   @Test
   public void shouldFetchOneDocumentWithExactMatchOnLuceneIndexKeyWordAnalyzer() throws Exception {
 
-    db.command(new OCommandSQL("CREATE CLASS CDR")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY CDR.filename STRING")).execute();
-    db.command(new OCommandSQL(
-        "CREATE INDEX cdr.filename ON cdr(filename) FULLTEXT ENGINE LUCENE metadata { 'allowLeadingWildcard': true}")).execute();
-    db.command(new OCommandSQL(
-        "INSERT into cdr(filename) values('MDCA10MCR201612291808.276388.eno.RRC.20161229183002.PROD_R4.eno.data') ")).execute();
-    db.command(new OCommandSQL(
-        "INSERT into cdr(filename) values('MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data') ")).execute();
+    db.command(
+        "CREATE INDEX cdr.filename ON cdr(filename) FULLTEXT ENGINE LUCENE metadata { 'allowLeadingWildcard': true}");
 
     //partial match
-    List<ODocument> res = db.query(new OSQLSynchQuery<ODocument>(
-        "select from cdr WHERE filename LUCENE ' RRC.20161229193002.PROD_R4.eno.data '"));
+    OResultSet res = db.query(
+        "select from cdr WHERE SEARCH_CLASS( ' RRC.20161229193002.PROD_R4.eno.data ') = true");
 
     Assertions.assertThat(res).hasSize(2);
 
     //exact match
-    res = db.query(new OSQLSynchQuery<ODocument>(
-        "select from cdr WHERE filename LUCENE ' \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" '"));
+    res = db.query(
+        "select from cdr WHERE SEARCH_CLASS( ' \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" ') = true");
 
     Assertions.assertThat(res).hasSize(1);
 
     //wildcard
-    res = db.query(new OSQLSynchQuery<ODocument>(
-        "select from cdr WHERE filename LUCENE ' MDCA* '"));
+    res = db.query(
+        "select from cdr WHERE SEARCH_CLASS(' MDCA* ')= true");
 
     //leadind wildcard
-    res = db.query(new OSQLSynchQuery<ODocument>(
-        "select from cdr WHERE filename LUCENE ' *20MCR2016122* '"));
+    res = db.query(
+        "select from cdr WHERE SEARCH_CLASS(' *20MCR2016122* ') =true");
 
     Assertions.assertThat(res).hasSize(1);
   }
 
-  @Test
-  public void testTokenStream() throws Exception {
 
-    String text = "MDMA10MCR201612291750.275868.eno.RRC.20161229180001.PROD_R4.eno.data";
-    Analyzer analyzer = new WhitespaceAnalyzer();
-
-    TokenStream stream = analyzer.tokenStream(null, new StringReader(text));
-    stream.reset();
-    while (stream.incrementToken()) {
-      System.out.println(stream.getAttribute(CharTermAttribute.class).toString());
-    }
-  }
 }
