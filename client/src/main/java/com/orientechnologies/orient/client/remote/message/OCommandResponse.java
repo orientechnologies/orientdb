@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.query.OBasicLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
@@ -211,7 +211,7 @@ public final class OCommandResponse implements OBinaryResponse {
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    ORecordSerializer serializer = ORecordSerializerNetwork.INSTANCE;
+    ORecordSerializer serializer = ORecordSerializerNetworkV37.INSTANCE;
     try {
       // Collection of prefetched temporary record (nested projection record), to refer for avoid garbage collection.
       List<ORecord> temporaryResults = new ArrayList<ORecord>();
@@ -298,7 +298,7 @@ public final class OCommandResponse implements OBinaryResponse {
 
   protected Object readSynchResult(final OChannelDataInput network, final ODatabaseDocument database,
       List<ORecord> temporaryResults) throws IOException {
-    ORecordSerializer serializer = ORecordSerializerNetwork.INSTANCE;
+    ORecordSerializer serializer = ORecordSerializerNetworkV37.INSTANCE;
     final Object result;
 
     final byte type = network.readByte();

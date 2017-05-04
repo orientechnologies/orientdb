@@ -82,7 +82,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       if (ODocumentInternal.rawContainsField(document, fieldName)) {
         continue;
       }
-      document.setProperty(fieldName, value);
+      ODocumentInternal.rawField(document,fieldName,value,type);
 
       for (String field : iFields) {
         if (field.equals(fieldName)) {
@@ -116,7 +116,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       if (ODocumentInternal.rawContainsField(document, fieldName)) {
         continue;
       }
-      document.setProperty(fieldName, value, type);
+      ODocumentInternal.rawField(document,fieldName,value,type);
     }
 
     ORecordInternal.clearSource(document);

@@ -10,6 +10,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -23,10 +24,10 @@ public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
   private boolean useToken        = true;
   private boolean supportsPush    = true;
   private boolean collectStats    = true;
-  private String  databaseName;
-  private String  userName;
-  private String  userPassword;
-  private String  dbType;
+  private String databaseName;
+  private String userName;
+  private String userPassword;
+  private String dbType;
 
   public OOpenRequest(String databaseName, String userName, String userPassword) {
     this.databaseName = databaseName;

@@ -110,4 +110,6 @@ public interface OBinaryRequestExecutor {
   OBinaryResponse executeFetchTransaction(OFetchTransactionRequest request);
 
   OBinaryResponse executeRollback(ORollbackTransactionRequest request);
+
+  OBinaryResponse executeSubscribePushRequest(OSubscribeDistributedConfigurationRequest request);
 }

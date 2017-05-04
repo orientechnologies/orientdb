@@ -27,7 +27,10 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
+import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
+import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
 import com.orientechnologies.orient.client.remote.message.OErrorResponse;
+import com.orientechnologies.orient.client.remote.message.OPushDistributedConfigurationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -66,6 +69,9 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.function.Function;
 import java.util.logging.Level;
 
@@ -78,7 +84,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected          boolean        okSent;
   private boolean tokenConnection = true;
   private long    requests        = 0;
-  private HandshakeInfo handshakeInfo;
+  private          HandshakeInfo                           handshakeInfo;
+  private volatile OBinaryPushRequest<OBinaryPushResponse> pushRequest;
+  private BlockingQueue<OBinaryPushResponse> pushResponse = new SynchronousQueue<OBinaryPushResponse>();
 
   private Function<Integer, OBinaryRequest<? extends OBinaryResponse>> factory = ONetworkBinaryProtocolFactory.defaultProtocol();
 
@@ -154,6 +162,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       requestType = channel.readByte();
       if (requestType == OChannelBinaryProtocol.REQUEST_HANDSHAKE) {
         handleHandshake();
+        return;
+      }
+      if (requestType == OChannelBinaryProtocol.REQUEST_PUSH_RESPONSE) {
+        handlePushResponse();
         return;
       }
 
@@ -643,6 +655,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
    * @param channel    TODO
    * @param connection
    * @param o
+   *
    * @throws IOException
    */
   public static void writeIdentifiable(OChannelBinary channel, OClientConnection connection, final OIdentifiable o)
@@ -742,6 +755,26 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   @Override
   public OBinaryRequestExecutor executor(OClientConnection connection) {
-    return new OConnectionBinaryExecutor(connection, server,handshakeInfo);
+    return new OConnectionBinaryExecutor(connection, server, handshakeInfo);
   }
+
+  public synchronized OBinaryPushResponse push(OBinaryPushRequest request) throws IOException {
+    this.pushRequest = request;
+    channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+    request.write(channel);
+    channel.flush();
+    try {
+      return pushResponse.take();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  private void handlePushResponse() throws IOException {
+    OBinaryPushResponse response = pushRequest.createResponse();
+    response.read(channel);
+    this.pushResponse.offer(response);
+  }
+
 }

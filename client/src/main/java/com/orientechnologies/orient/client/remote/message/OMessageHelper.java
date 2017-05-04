@@ -331,14 +331,16 @@ public class OMessageHelper {
   }
 
   static ORecord readRecordFromBytes(OChannelDataInput network, ORecordSerializer serializer) throws IOException {
+    byte rec = network.readByte();
     final ORecordId rid = network.readRID();
     final int version = network.readVersion();
     final byte[] content = network.readBytes();
 
-    final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
+    final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(rec);
     serializer.fromStream(content, record, null);
     ORecordInternal.setIdentity(record, rid);
     ORecordInternal.setVersion(record, version);
+    ORecordInternal.unsetDirty(record);
     return record;
   }
 }

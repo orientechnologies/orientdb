@@ -5,6 +5,7 @@ import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
@@ -26,7 +27,7 @@ public class OSubscribeDistributedConfigurationRequest implements OBinaryRequest
 
   @Override
   public byte getCommand() {
-    return 0;
+    return OChannelBinaryProtocol.SUBSCRIBE_PUSH_DISTRIB_CONFIG;
   }
 
   @Override
@@ -36,7 +37,7 @@ public class OSubscribeDistributedConfigurationRequest implements OBinaryRequest
 
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
-    return null;
+    return executor.executeSubscribePushRequest(this);
   }
 
   @Override

@@ -124,8 +124,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
                 + ". You could not use the full features of the newer version. Assure to have the same versions on both");
       }
 
-      if (asynchEventListener != null)
-        serviceThread = new OAsynchChannelServiceThread(asynchEventListener, this);
+//      if (asynchEventListener != null)
+//        serviceThread = new OAsynchChannelServiceThread(asynchEventListener, this);
     } catch (RuntimeException e) {
       if (socket.isConnected())
         socket.close();
@@ -385,7 +385,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     return serviceThread;
   }
 
-  protected int handleStatus(final byte iResult, final int iClientTxId) throws IOException {
+  public int handleStatus(final byte iResult, final int iClientTxId) throws IOException {
     if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_OK || iResult == OChannelBinaryProtocol.PUSH_DATA) {
       return iClientTxId;
     } else if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
@@ -419,7 +419,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       s.setSoTimeout(getSocketTimeout());
   }
 
-  private void setWaitResponseTimeout() throws SocketException {
+  public void setWaitResponseTimeout() throws SocketException {
     final Socket s = socket;
     if (s != null)
       s.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
@@ -472,7 +472,10 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public void beginRequest(final byte iCommand, final OStorageRemoteSession session) throws IOException {
     final OStorageRemoteNodeSession nodeSession = session.getServerSession(getServerURL());
+    beginRequest(iCommand, nodeSession);
+  }
 
+  public void beginRequest(byte iCommand, OStorageRemoteNodeSession nodeSession) throws IOException {
     if (nodeSession == null)
       throw new OIOException("Invalid session for URL '" + getServerURL() + "'");
 

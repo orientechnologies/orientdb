@@ -243,7 +243,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
         @Override
         public byte[] call() throws Exception {
-          return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
+          return connection.getDatabase().getStorage().getConfiguration()
+              .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
         }
       }, false);
 
@@ -303,7 +304,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
         @Override
         public byte[] call() throws Exception {
-          return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
+          return connection.getDatabase().getStorage().getConfiguration()
+              .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
         }
       }, false);
 
@@ -1215,5 +1217,13 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       throw new ODatabaseException("No Transaction Active");
     database.rollback(true);
     return new ORollbackTransactionResponse();
+  }
+
+  @Override
+  public OBinaryResponse executeSubscribePushRequest(OSubscribeDistributedConfigurationRequest request) {
+    OClientConnectionManager manager = server.getClientConnectionManager();
+
+    manager.subscribeDistributeConfig((ONetworkProtocolBinary) connection.getProtocol());
+    return new OSubscribeDistributedConfigurationResponse();
   }
 }
