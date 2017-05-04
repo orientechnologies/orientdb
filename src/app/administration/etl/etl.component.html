@@ -88,125 +88,166 @@
         </div>
 
         <div class="stepTwo" *ngSwitchCase="'2'">
-          <h3 align="center">Step 2 - Configure the ETL Parameters</h3>
-          <h4 align="center">Chosen source: {{sourcePrototype.source.value}}</h4><br>
-          <div class="row">
-            <div class="col-sm-2">
-              <h3 align="center">Extractor
-                <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                        [attr.data-content]="hints.extractorHint" data-animation="am-fade-and-scale"><b>?</b></button>
-              </h3>
-              <div class="row" style="text-align: center;">
-                <div class="btn-group">
+          <h3 align="center">Step 2 - Configure the ETL Parameters</h3><br>
+          <div class="col-md-9">
+            <div class="panel panel-default">
+              <div class="panel-heading" align="center"><b>CHOSEN SOURCE: {{sourcePrototype.source.value}}</b></div>
+              <div class="panel-body">
+                <div class="row">
 
-                  <button class="btn btn-primary btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
-                          aria-expanded="false" id="createExtractor">
-                    <b>+</b>
-                  </button>
-                  <!-- Dropdown menu, jdbc is shown only if selected as source -->
-                  <div class="dropdown-menu">
-                    <li class="list-group-item list-group-item-info">Extractor Type</li>
+                  <div class="col-sm-3">
+                    <h3 align="center">Extractor
+                      <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                              [attr.data-content]="hints.extractorHint" data-animation="am-fade-and-scale"><b>?</b></button>
+                    </h3>
+                    <div class="row" style="text-align: center;">
+                      <div class="btn-group">
 
-                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('jdbc')" *ngIf="sourcePrototype.source.value == 'jdbc'">jdbc</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('csv')" *ngIf="sourcePrototype.source.value != 'jdbc'">csv</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('json')" *ngIf="sourcePrototype.source.value != 'jdbc'">json</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('row')" *ngIf="sourcePrototype.source.value != 'jdbc'">row</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('xml')" *ngIf="sourcePrototype.source.value != 'jdbc'">xml</button>
-                    <a class="list-group-item list-group-item-action flex-column align-items-start active" *ngIf="sourcePrototype.source.value == 'jdbc'">
-                      <div class="d-flex w-100 justify-content-between">
-                        <small>Hint:</small>
+                        <button class="btn btn-primary btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                                aria-expanded="false" id="createExtractor">
+                          <b>+</b>
+                        </button>
+                        <!-- Dropdown menu, jdbc is shown only if selected as source -->
+                        <div class="dropdown-menu">
+                          <li class="list-group-item list-group-item-info">Extractor Type</li>
+
+                          <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('jdbc')" *ngIf="sourcePrototype.source.value == 'jdbc'">jdbc</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('csv')" *ngIf="sourcePrototype.source.value != 'jdbc'">csv</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('json')" *ngIf="sourcePrototype.source.value != 'jdbc'">json</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('row')" *ngIf="sourcePrototype.source.value != 'jdbc'">row</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('xml')" *ngIf="sourcePrototype.source.value != 'jdbc'">xml</button>
+                          <a class="list-group-item list-group-item-action flex-column align-items-start active" *ngIf="sourcePrototype.source.value == 'jdbc'">
+                            <div class="d-flex w-100 justify-content-between">
+                              <small>Hint:</small>
+                            </div>
+                            <p class="mb-1">You selected jdbc previously. You have to use a jdbc extractor.</p>
+                            <small>Please make sure that your jdbc driver is in classpath or in lib folder.</small>
+                          </a>
+                        </div>
                       </div>
-                      <p class="mb-1">You selected jdbc previously. You have to use a jdbc extractor.</p>
-                      <small>Please make sure that your jdbc driver is in classpath or in lib folder.</small>
-                    </a>
+                      <br><br><br>
+                      <div class="row">
+                        <h5 id="pleaseExtractor" align="center"><b>Please create an extractor</b></h5>
+                        <div id="extractorSpace" class="row">
+                          <br><br><br><br><br><br><br> <br><br>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <br><br><br>
-                <div class="row">
-                  <h5 id="pleaseExtractor" align="center"><b>Please create an extractor</b></h5>
-                  <div id="extractorSpace" class="row">
-                    <br><br><br><br><br><br><br> <br><br>
+
+                  <div class="col-sm-5">
+                    <h3 align="center">Transformers
+                      <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                              [attr.data-content]="hints.transformerHint" data-animation="am-fade-and-scale"><b>?</b></button>
+                    </h3>
+                    <div class="row" style="text-align: center;">
+                      <div class="btn-group">
+
+                        <button class="btn btn-primary btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                                aria-expanded="false" id="createTransformer">
+                          <b>+</b>
+                        </button>
+                        <!-- Dropdown menu -->
+                        <div class="dropdown-menu">
+                          <li class="list-group-item list-group-item-info">Transformer Type</li>
+
+                          <!-- csv transformer is deprecated -->
+                          <!--<button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('block')">block</button>-->
+                          <!-- <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('code')">code</button> -->
+                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('command')">command</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('edge')">edge</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('flow')">flow</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('field')">field</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('link')">link</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('log')">log</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('merge')">merge</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('vertex')">vertex</button>
+                        </div>
+                      </div>
+                      <br><br><br>
+                      <div class="row">
+                        <h5 id="pleaseTransformer" align="center"><b>Please create at least one transformer</b></h5>
+                        <div id="transformerSpace" class="row">
+                          <br><br><br><br><br><br><br> <br><br>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+
+                  <div class="col-sm-4">
+                    <h3 align="center">Loader
+                      <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                              [attr.data-content]="hints.loaderHint" data-animation="am-fade-and-scale"><b>?</b></button>
+                    </h3>
+                    <div class="row" style="text-align: center;">
+                      <div class="btn-group">
+
+                        <button class="btn btn-primary btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                                aria-expanded="false" id="createLoader">
+                          <b>+</b>
+                        </button>
+                        <!-- Dropdown menu -->
+                        <div class="dropdown-menu">
+                          <li class="list-group-item list-group-item-info">Loader Type</li>
+
+                          <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('log')">log</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('OrientDB')">OrientDB</button>
+                        </div>
+                      </div>
+                    </div>
+                    <br><br>
+                    <div class="row">
+                      <h5 id="pleaseLoader" align="center"><b>Please create a loader</b></h5>
+                      <div id="loaderSpace" class="row">
+                        <br><br><br><br><br><br><br> <br><br>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
+              <div class="panel-footer" align="center">Etl Overview</div>
             </div>
+          </div>
+          <div class="col-md-3">
+            <div class="panel panel-info">
+              <div class="panel-heading" align="center"><b>PARAMETER CONFIGURATION</b></div>
+              <div class="panel-body">
+                <div id="panelPlaceholder"><br><br><br><br><br><br><br><h4 align="center"><b>PARAMETERS SHOULD BE<br>
+                  DISPLAYED HERE</b></h4> <br><br><br><br><br><br><br><br> </div>
+                <!-- Extractor advanced configuration -->
+                <div id="extractorOptions" style="display:none">
+                  <h4 align="center"><b>Extractor options</b></h4>
 
-
-            <div class="col-sm-4">
-              <h3 align="center">Transformers
-                <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                        [attr.data-content]="hints.transformerHint" data-animation="am-fade-and-scale"><b>?</b></button>
-              </h3>
-              <div class="row" style="text-align: center;">
-                <div class="btn-group">
-
-                  <button class="btn btn-primary btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
-                          aria-expanded="false" id="createTransformer">
-                    <b>+</b>
-                  </button>
-                  <!-- Dropdown menu -->
-                  <div class="dropdown-menu">
-                    <li class="list-group-item list-group-item-info">Transformer Type</li>
-
-                    <!-- csv transformer is deprecated -->
-                    <!--<button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('block')">block</button>-->
-                    <!-- <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('code')">code</button> -->
-                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('command')">command</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('edge')">edge</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('flow')">flow</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('field')">field</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('link')">link</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('log')">log</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('merge')">merge</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('vertex')">vertex</button>
+                  <div class="col-md-12 text-center">
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-xs btn-danger" (click)="deleteExtractor()">Delete Extractor</button>
+                    </div>
                   </div>
                 </div>
-                <br><br><br>
-                <div class="row">
-                  <h5 id="pleaseTransformer" align="center"><b>Please create at least one transformer</b></h5>
-                  <div id="transformerSpace" class="row">
-                    <br><br><br><br><br><br><br> <br><br>
+                <!-- Transformer advanced configuration -->
+                <div id="transformerOptions" style="display:none">
+                  <h4 align="center"><b>Transformer options</b></h4>
+
+                  <div class="col-md-12 text-center">
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-xs btn-danger" (click)="deleteTransformer()">Delete Transformer</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
+                <!-- Loader advanced configuration -->
+                <div id="loaderOptions" style="display:none">
+                  <h4 align="center"><b>Loader options</b></h4>
 
-            <div class="col-sm-2">
-              <h3 align="center">Loader
-                <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                        [attr.data-content]="hints.loaderHint" data-animation="am-fade-and-scale"><b>?</b></button>
-              </h3>
-              <div class="row" style="text-align: center;">
-                <div class="btn-group">
-
-                  <button class="btn btn-primary btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
-                          aria-expanded="false" id="createLoader">
-                    <b>+</b>
-                  </button>
-                  <!-- Dropdown menu -->
-                  <div class="dropdown-menu">
-                    <li class="list-group-item list-group-item-info">Loader Type</li>
-
-                    <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('log')">log</button>
-                    <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('OrientDB')">OrientDB</button>
+                  <div class="col-md-12 text-center">
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-xs btn-danger" (click)="deleteLoader()">Delete Loader</button>
+                    </div>
                   </div>
                 </div>
+
               </div>
-              <br><br>
-              <div class="row">
-                <h5 id="pleaseLoader" align="center"><b>Please create a loader</b></h5>
-                <div id="loaderSpace" class="row">
-                  <br><br><br><br><br><br><br> <br><br>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="panel panel-default">
-                <div class="panel-body">
-                  <br><br><br><br><br><br><br><h4 align="center"><b>PARAMETERS SHOULD BE <br>DISPLAYED HERE</b></h4> <br><br><br><br><br><br><br><br>
-                </div>
-                <div class="panel-footer">Etl Advanced Configuration</div>
-              </div>
+              <div class="panel-footer" align="center">Etl Advanced Settings</div>
             </div>
           </div>
 

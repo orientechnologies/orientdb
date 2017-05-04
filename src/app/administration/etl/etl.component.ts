@@ -1,12 +1,12 @@
 import * as $ from "jquery"
 import * as jqueryUI from "jquery-ui";
 
-import {Component} from '@angular/core';
-
 import "../../util/diagram-editor/jquery.flowchart.min.js";
 import "../../util/diagram-editor/jquery.flowchart.min.css";
 import "../../util/diagram-editor/flowchart.jquery.json";
 import "../../util/diagram-editor/package.json";
+
+import {Component} from '@angular/core';
 
 import {downgradeComponent} from '@angular/upgrade/static';
 import {EtlService} from '../../core/services';
@@ -47,7 +47,6 @@ class EtlComponent {
   }
 
   init() {
-
     this.sourcePrototype = {
       source: {
         value: undefined,
@@ -75,7 +74,7 @@ class EtlComponent {
         nullValue: "NULL",
         dateFormat: "yyyy-MM-dd",
         dateTimeFormat: "yyyy-MM-dd HH:mm",
-        quote: "\"",
+        quote: '"',
         skipFrom: undefined,
         skipTo: undefined,
         ignoreEmptyLines: false,
@@ -191,7 +190,7 @@ class EtlComponent {
         },
       },
 
-      code: {// TODO probably unadoptable
+      code: { // TODO probably unadoptable
         language: "JavaScript",
         code: {
           mandatory: true,
@@ -309,9 +308,9 @@ class EtlComponent {
   sourceInit() {
     this.step = 2;
 
-    if(this.sourcePrototype.source.value == "jdbc") this.source = null
+    if(this.sourcePrototype.source.value === "jdbc") this.source = null
 
-    if(this.sourcePrototype.source.value == "local file")
+    if(this.sourcePrototype.source.value === "local file")
       this.source = {
         file: {
           path: this.sourcePrototype.filePath,
@@ -320,7 +319,7 @@ class EtlComponent {
         }
     }
 
-    if(this.sourcePrototype.source.value == "url") {
+    if(this.sourcePrototype.source.value === "url") {
       this.source = {
         http: {
           url: this.sourcePrototype.fileURL,
@@ -338,8 +337,13 @@ class EtlComponent {
     $("#createExtractor").hide();
     $("#pleaseExtractor").hide();
 
+    $("#panelPlaceholder").hide(); // Shows the options for the extractor, hides the placeholder
+    $("#loaderOptions").hide();
+    $("#transformerOptions").hide();
+    $("#extractorOptions").show();
+
     // Variable creation
-    if(type == "row") {
+    if(type === "row") {
       this.extractor = {
         row: {
           multiline: this.extractorPrototype.row.multiline,
@@ -348,7 +352,7 @@ class EtlComponent {
       }
     }
 
-    if(type == "csv") {
+    if(type === "csv") {
       this.extractor = {
         csv: {
           separator: this.extractorPrototype.csv.separator,
@@ -367,7 +371,7 @@ class EtlComponent {
       }
     }
 
-    if(type == "jdbc") { // TODO: write === instead of ==
+    if(type === "jdbc") {
       this.extractor = {
         jdbc: {
           driver: this.extractorPrototype.jdbc.driver.value,
@@ -380,13 +384,13 @@ class EtlComponent {
       }
     }
 
-    if(type == "json") {
+    if(type === "json") {
       this.extractor = {
         json: {}
       }
     }
 
-    if(type == "xml") {
+    if(type === "xml") {
       this.extractor = {
         xml: {
           rootNode: this.extractorPrototype.xml.rootNode,
@@ -424,11 +428,17 @@ class EtlComponent {
 
   transformerInit(type) { // Block and Code aren't active atm. Csv is deprecated.
     $("#pleaseTransformer").hide();
+
+    $("#panelPlaceholder").hide(); // Shows the options for the extractor, hides the placeholder
+    $("#loaderOptions").hide();
+    $("#extractorOptions").hide();
+    $("#transformerOptions").show();
+
     var transformer;
-    // TODO: use the custom label in the flowchart
+    // TODO: use the custom label in the flowchart, show the options for the created transformer
 
     // Variable creation
-    if(type == "field") {
+    if(type === "field") {
       transformer = {
         field: {
           fieldName: this.transformerPrototype.field.fieldName,
@@ -440,7 +450,7 @@ class EtlComponent {
       }
     }
 
-    if(type == "merge") {
+    if(type === "merge") {
       transformer = {
         merge: {
           joinFieldName: this.transformerPrototype.merge.joinFieldName.value,
@@ -450,7 +460,7 @@ class EtlComponent {
       }
     }
 
-    if(type == "vertex") {
+    if(type === "vertex") {
       transformer = {
         vertex: {
           class: this.transformerPrototype.vertex.class,
@@ -459,7 +469,7 @@ class EtlComponent {
       }
     }
 
-    if(type == "code") {
+    if(type === "code") {
       transformer = {
         code: {
           language: this.transformerPrototype.code.language,
@@ -468,7 +478,7 @@ class EtlComponent {
       }
     }
 
-    if(type == "link") {
+    if(type === "link") {
       transformer = {
         link: {
           joinFieldName: this.transformerPrototype.link.joinFieldName,
@@ -481,7 +491,7 @@ class EtlComponent {
       }
     }
 
-    if(type == "edge") {
+    if(type === "edge") {
       transformer = {
         edge: {
           joinFieldName: this.transformerPrototype.edge.joinFieldName.value,
@@ -496,7 +506,7 @@ class EtlComponent {
       }
     }
 
-    if(type == "flow") {
+    if(type === "flow") {
       transformer = {
         flow: {
           if: this.transformerPrototype.flow.if.value,
@@ -505,7 +515,7 @@ class EtlComponent {
       }
     }
 
-    if(type == "log") {
+    if(type === "log") {
       transformer = {
         log: {
           prefix: this.transformerPrototype.log.prefix,
@@ -514,7 +524,7 @@ class EtlComponent {
       }
     }
 
-    if(type == "block") {
+    if(type === "block") {
       transformer = {
         block: {
 
@@ -522,7 +532,7 @@ class EtlComponent {
       }
     }
 
-    if(type == "command") {
+    if(type === "command") {
       transformer = {
         command: {
           language: this.transformerPrototype.command.language.value,
@@ -571,14 +581,19 @@ class EtlComponent {
     $("#pleaseLoader").hide();
     $("#createLoader").hide();
 
+    $("#panelPlaceholder").hide(); // Shows the options for the extractor, hides the placeholder
+    $("#extractorOptions").hide();
+    $("#transformerOptions").hide();
+    $("#loaderOptions").show();
+
     // Variable creation
-    if(type == "log")
+    if(type === "log")
       this.loader = {
         log: {}
       }
 
 
-    if(type == "OrientDB")
+    if(type === "OrientDB")
       this.loader = {
         orientdb: {
           dbURL: this.loaderPrototype.orientDb.dbURL.value,
@@ -603,7 +618,6 @@ class EtlComponent {
 
         }
       }
-
 
     // Flowchart
     $(document).ready(function() {
@@ -633,15 +647,30 @@ class EtlComponent {
   }
 
   deleteExtractor() {
-    this.extractor = null;
+    this.extractor = undefined;
+
+    // Jquery hide/show
+    $("#createExtractor").show();
+    $("#extractorOptions").hide();
+    $("#panelPlaceholder").show();
   }
 
-  deleteTransformer(name) {
-    this.transformers.indexOf(name);
+  deleteTransformer(name) { // TODO probably not working
+    var v = this.transformers.indexOf(name);
+    this.transformers[v] = undefined;
+
+    // Jquery hide/show
+    $("#transformerOptions").hide();
+    $("#panelPlaceholder").show();
   }
 
   deleteLoader() {
-    this.loader = null;
+    this.loader = undefined;
+
+    // Jquery hide/show
+    $("#createLoader").show();
+    $("#loaderOptions").hide();
+    $("#panelPlaceholder").show();
   }
 
 
@@ -656,10 +685,11 @@ class EtlComponent {
 
   launch() {
     if(this.source)
-      this.finalJson = '{"source":' + JSON.stringify(this.source) + ',"transformers":' + JSON.stringify(this.transformers) +
-                       ',"loader":' + JSON.stringify(this.loader) + "}";
+      this.finalJson = '{"source":' + JSON.stringify(this.source) + ',"extractor":' + JSON.stringify(this.extractor) +
+        ',"transformers":' + JSON.stringify(this.transformers) + ',"loader":' + JSON.stringify(this.loader) + "}";
     else
-      this.finalJson = '{"transformers":' + JSON.stringify(this.transformers) + ',"loader":' + JSON.stringify(this.loader) + "}";
+      this.finalJson = '{"extractor":' + JSON.stringify(this.extractor) + ',"transformers":' + JSON.stringify(this.transformers) +
+        ',"loader":' + JSON.stringify(this.loader) + "}";
 
     this.step = "3";
 
