@@ -75,7 +75,7 @@ public class OCreateIndexStatement extends ODDLStatement {
             .createIndex(name.getValue(), type.getStringValue(), keyDef, null, null, metadataDoc, engine);
 
       } else {
-        throw new ODatabaseException("Impossible to create an index without specify the key type or the associated property");
+        throw new ODatabaseException("Impossible to create an index without specify the key type or the associated property: "+toString());
       }
     } else {
       String[] fields = calculateProperties(ctx);
