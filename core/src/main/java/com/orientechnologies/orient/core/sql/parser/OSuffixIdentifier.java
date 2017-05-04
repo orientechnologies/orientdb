@@ -2,10 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class OSuffixIdentifier extends SimpleNode {
@@ -75,6 +79,14 @@ public class OSuffixIdentifier extends SimpleNode {
       if (currentValue instanceof Map) {
         return ((Map) currentValue).get(varName);
       }
+      if(OMultiValue.isMultiValue(currentValue)){
+        Iterator<Object> iterator = OMultiValue.getMultiValueIterator(currentValue);
+        List<Object> result = new ArrayList<Object>();
+        while(iterator.hasNext()){
+          result.add(execute(iterator.next(), ctx));
+        }
+        return result;
+      }
       throw new UnsupportedOperationException("Implement SuffixIdentifier!");
       // TODO other cases?
     }
@@ -84,6 +96,14 @@ public class OSuffixIdentifier extends SimpleNode {
       }
       if (currentValue instanceof Map) {
         return ((Map) currentValue).get(recordAttribute.name);
+      }
+      if(OMultiValue.isMultiValue(currentValue)){
+        Iterator<Object> iterator = OMultiValue.getMultiValueIterator(currentValue);
+        List<Object> result = new ArrayList<Object>();
+        while(iterator.hasNext()){
+          result.add(execute(iterator.next(), ctx));
+        }
+        return result;
       }
       throw new UnsupportedOperationException("Implement SuffixIdentifier!");
       // TODO other cases?
