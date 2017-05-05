@@ -58,7 +58,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   /**
    * {@link OByteBufferPool}'s MBean name.
    */
-  public static final String MBEAN_NAME = "com.orientechnologies.common.directmemory:type=OByteBufferPoolMXBean";
+  private static final String MBEAN_NAME = "com.orientechnologies.common.directmemory:type=OByteBufferPoolMXBean";
 
   /**
    * Pool returned by this method is used in all components of storage. Memory used by this pool is preallocated by chunks with size
@@ -79,11 +79,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    * Size of single byte buffer instance in bytes.
    */
   private final int pageSize;
-
-  /**
-   * Page which is filled with zeros and used to speedup clear operation on page acquire operation {@link #acquireDirect(boolean)}.
-   */
-  private final ByteBuffer zeroPage;
 
   /**
    * Collections of chunks which are preallocated on demand when limit of currently allocated memory exceeds.
@@ -108,7 +103,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   /**
    * Pool of pages which are already allocated but not used any more.
    */
-  private final ConcurrentLinkedQueue<ByteBuffer> pool = new ConcurrentLinkedQueue<ByteBuffer>();
+  private final ConcurrentLinkedQueue<ByteBuffer> pool = new ConcurrentLinkedQueue<>();
 
   /**
    * Tracks the number of the overflow buffer allocations.
@@ -149,7 +144,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    */
   public OByteBufferPool(int pageSize, int maxChunkSize, long preAllocationLimit) {
     this.pageSize = pageSize;
-    this.zeroPage = ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder());
 
     this.preAllocationLimit = (preAllocationLimit / pageSize) * pageSize;
 
@@ -163,17 +157,17 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
       }
 
       maxPagesPerSingleArea = pagesPerArea;
-      lastPreallocatedArea = new AtomicReference<BufferHolder>();
+      lastPreallocatedArea = new AtomicReference<>();
     } else {
       maxPagesPerSingleArea = 1;
       lastPreallocatedArea = null;
     }
 
     if (TRACK) {
-      trackedBuffersQueue = new ReferenceQueue<ByteBuffer>();
-      trackedReferences = new HashSet<TrackedBufferReference>();
-      trackedBuffers = new HashMap<TrackedBufferKey, TrackedBufferReference>();
-      trackedReleases = new HashMap<TrackedBufferKey, Exception>();
+      trackedBuffersQueue = new ReferenceQueue<>();
+      trackedReferences = new HashSet<>();
+      trackedBuffers = new HashMap<>();
+      trackedReleases = new HashMap<>();
     } else {
       trackedBuffersQueue = null;
       trackedReferences = null;
@@ -192,7 +186,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   /**
    * @return Maximum amount of pages in single preallocate memory chunk.
    */
-  public int getMaxPagesPerChunk() {
+  int getMaxPagesPerChunk() {
     return maxPagesPerSingleArea;
   }
 
@@ -236,7 +230,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
       if (clear) {
         buffer.position(0);
-        buffer.put(zeroPage.duplicate());
+        buffer.put(new byte[pageSize]);
       }
 
       buffer.position(0);
@@ -331,7 +325,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
           if (clear) {
             slice.position(0);
-            slice.put(zeroPage.duplicate());
+            slice.put(new byte[pageSize]);
           }
 
           slice.position(0);
@@ -389,7 +383,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     return nextAllocationPosition.get();
   }
 
-
   @Override
   public long getOverflowBufferCount() {
     return overflowBufferCount.get();
@@ -399,7 +392,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   public int getBuffersInThePool() {
     return getSize();
   }
-
 
   @Override
   public long getAllocatedMemory() {
@@ -431,7 +423,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     return poolSize.get();
   }
 
-
   /**
    * Registers the MBean for this byte buffer pool.
    *
@@ -452,13 +443,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
                   + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
         }
 
-      } catch (MalformedObjectNameException e) {
-        throw OException.wrapException(new OSystemException("Error during registration of byte buffer pool MBean"), e);
-      } catch (InstanceAlreadyExistsException e) {
-        throw OException.wrapException(new OSystemException("Error during registration of byte buffer pool MBean"), e);
-      } catch (MBeanRegistrationException e) {
-        throw OException.wrapException(new OSystemException("Error during registration of byte buffer pool MBean"), e);
-      } catch (NotCompliantMBeanException e) {
+      } catch (MalformedObjectNameException | InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
         throw OException.wrapException(new OSystemException("Error during registration of byte buffer pool MBean"), e);
       }
     }
@@ -475,11 +460,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
         server.unregisterMBean(mbeanName);
-      } catch (MalformedObjectNameException e) {
-        throw OException.wrapException(new OSystemException("Error during unregistration of byte buffer pool MBean"), e);
-      } catch (InstanceNotFoundException e) {
-        throw OException.wrapException(new OSystemException("Error during unregistration of byte buffer pool MBean"), e);
-      } catch (MBeanRegistrationException e) {
+      } catch (MalformedObjectNameException | InstanceNotFoundException | MBeanRegistrationException e) {
         throw OException.wrapException(new OSystemException("Error during unregistration of byte buffer pool MBean"), e);
       }
     }
@@ -573,7 +554,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
     private final int index;
 
-    public BufferHolder(int index) {
+    BufferHolder(int index) {
       this.index = index;
     }
 
@@ -649,9 +630,9 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   private static class TrackedBufferReference extends WeakReference<ByteBuffer> {
 
     public final int       id;
-    public final Exception stackTrace;
+    final        Exception stackTrace;
 
-    public TrackedBufferReference(ByteBuffer referent, ReferenceQueue<? super ByteBuffer> q) {
+    TrackedBufferReference(ByteBuffer referent, ReferenceQueue<? super ByteBuffer> q) {
       super(referent, q);
 
       this.id = id(referent);
@@ -664,7 +645,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
     private final int hashCode;
 
-    public TrackedBufferKey(ByteBuffer referent) {
+    TrackedBufferKey(ByteBuffer referent) {
       super(referent);
       hashCode = System.identityHashCode(referent);
     }
