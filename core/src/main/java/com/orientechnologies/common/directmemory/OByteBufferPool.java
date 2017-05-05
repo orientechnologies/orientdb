@@ -84,11 +84,6 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
   private final int pageSize;
 
   /**
-   * Page which is filled with zeros and used to speedup clear operation on page acquire operation {@link #acquireDirect(boolean)}.
-   */
-  private ByteBuffer zeroPage = null;
-
-  /**
    * Map which contains collection of preallocated chunks and their indexes. Indexes are numbered in order of their allocation.
    */
   private final ConcurrentHashMap<Integer, BufferHolder> preallocatedAreas = new ConcurrentHashMap<Integer, BufferHolder>();
@@ -152,7 +147,6 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
    */
   public OByteBufferPool(int pageSize, int maxChunkSize, long preAllocationLimit) {
     this.pageSize = pageSize;
-    this.zeroPage = ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder());
 
     this.preAllocationLimit = (preAllocationLimit / pageSize) * pageSize;
 
@@ -240,7 +234,7 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
 
       if (clear) {
         buffer.position(0);
-        buffer.put(zeroPage.duplicate());
+        buffer.put(new byte[pageSize]);
       }
 
       buffer.position(0);
@@ -310,7 +304,7 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
 
       if (clear) {
         slice.position(0);
-        slice.put(zeroPage.duplicate());
+        slice.put(new byte[pageSize]);
       }
 
       slice.position(0);
@@ -511,27 +505,17 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
 
   @Override
   public void onStartup() {
-    if (this.zeroPage != null) // already/still started?
-      return;
-
-    this.zeroPage = ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder());
   }
 
   @Override
   public void onShutdown() {
-    if (zeroPage == null) // already/still shutdown?
-      return;
-
     final Set<ByteBuffer> cleaned = Collections.newSetFromMap(new IdentityHashMap<ByteBuffer, Boolean>());
     try {
-      clean(zeroPage, cleaned);
       for (ByteBuffer byteBuffer : pool)
         clean(byteBuffer, cleaned);
     } catch (Throwable t) {
       return;
     }
-
-    this.zeroPage = null;
 
     if (this.preallocatedAreas != null) {
       for (BufferHolder bufferHolder : preallocatedAreas.values()) {
