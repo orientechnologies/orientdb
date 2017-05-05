@@ -55,7 +55,9 @@ public class OrientDBRemote implements OrientDBInternal {
 
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
 
-    shutdownThread = new Thread(() -> OrientDBRemote.this.internalClose());
+    shutdownThread = new Thread(() -> {
+      OrientDBRemote.this.internalClose();
+    });
 
     Runtime.getRuntime().addShutdownHook(shutdownThread);
   }

@@ -821,7 +821,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
     clustersToClasses.clear();
     blobClusters.clear();
     properties.clear();
-    document.clear();
   }
 
   @Deprecated
