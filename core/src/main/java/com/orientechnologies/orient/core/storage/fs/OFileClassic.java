@@ -121,7 +121,7 @@ public class OFileClassic implements OFile, OClosableItem {
           offset = checkRegions(offset, iLength);
 
           final ByteBuffer buffer = ByteBuffer.wrap(iData, iArrayOffset, iLength);
-          readByteBuffer(buffer, channel, offset);
+          readByteBuffer(buffer, channel, offset, true);
           break;
 
         } finally {
@@ -136,7 +136,7 @@ public class OFileClassic implements OFile, OClosableItem {
   }
 
   @Override
-  public void read(long offset, ByteBuffer buffer) throws IOException {
+  public void read(long offset, ByteBuffer buffer, boolean throwOnEof) throws IOException {
     int attempts = 0;
 
     while (true) {
@@ -144,7 +144,7 @@ public class OFileClassic implements OFile, OClosableItem {
         acquireReadLock();
         try {
           offset = checkRegions(offset, buffer.limit());
-          readByteBuffer(buffer, channel, offset);
+          readByteBuffer(buffer, channel, offset, throwOnEof);
 
           break;
 
@@ -160,7 +160,7 @@ public class OFileClassic implements OFile, OClosableItem {
   }
 
   @Override
-  public void read(long offset, ByteBuffer[] buffers) throws IOException {
+  public void read(long offset, ByteBuffer[] buffers, boolean throwOnEof) throws IOException {
     int attempts = 0;
 
     while (true) {
@@ -170,7 +170,7 @@ public class OFileClassic implements OFile, OClosableItem {
           offset += HEADER_SIZE;
 
           channel.position(offset);
-          readByteBuffers(buffers, channel, buffers.length * buffers[0].limit());
+          readByteBuffers(buffers, channel, buffers.length * buffers[0].limit(), throwOnEof);
           break;
 
         } finally {
@@ -552,7 +552,7 @@ public class OFileClassic implements OFile, OClosableItem {
 
   private ByteBuffer readData(final long iOffset, final int iSize) throws IOException {
     ByteBuffer buffer = ByteBuffer.allocate(iSize);
-    readByteBuffer(buffer, channel, iOffset);
+    readByteBuffer(buffer, channel, iOffset, true);
     buffer.rewind();
     return buffer;
   }
@@ -587,7 +587,7 @@ public class OFileClassic implements OFile, OClosableItem {
 
     final ByteBuffer buffer = ByteBuffer.allocate(OLongSerializer.LONG_SIZE);
 
-    readByteBuffer(buffer, channel, SIZE_OFFSET);
+    readByteBuffer(buffer, channel, SIZE_OFFSET, true);
     return buffer.getLong(0);
   }
 

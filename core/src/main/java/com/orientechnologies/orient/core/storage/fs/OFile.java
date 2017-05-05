@@ -110,9 +110,9 @@ public interface OFile {
 
   void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException;
 
-  void read(long offset, ByteBuffer buffer) throws IOException;
+  void read(long offset, ByteBuffer buffer, boolean throwOnEof) throws IOException;
 
-  void read(long offset, ByteBuffer[] buffers) throws IOException;
+  void read(long offset, ByteBuffer[] buffers, boolean throwOnEof) throws IOException;
 
   void write(long offset, ByteBuffer buffer) throws IOException;
 

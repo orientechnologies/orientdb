@@ -987,7 +987,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     try {
       ByteBuffer buffer = ByteBuffer.allocate(MASTER_RECORD_SIZE);
 
-      OIOUtils.readByteBuffer(buffer, masterRecordLSNHolder, masterPosition);
+      OIOUtils.readByteBuffer(buffer, masterRecordLSNHolder, masterPosition, true);
       buffer.rewind();
 
       int firstCRC = buffer.getInt();

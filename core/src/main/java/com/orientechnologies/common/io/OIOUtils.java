@@ -348,7 +348,7 @@ public class OIOUtils {
     }
   }
 
-  public static void readByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
+  public static void readByteBuffer(ByteBuffer buffer, FileChannel channel, long position, boolean throwOnEof) throws IOException {
     int bytesToRead = buffer.limit();
 
     int read = 0;
@@ -357,7 +357,12 @@ public class OIOUtils {
 
       final int r = channel.read(buffer, position + read);
       if (r < 0)
-        throw new EOFException("End of file  is reached");
+        if (throwOnEof)
+          throw new EOFException("End of file is reached");
+        else {
+          buffer.put(new byte[buffer.remaining()]);
+          return;
+        }
 
       read += r;
     }
@@ -373,7 +378,7 @@ public class OIOUtils {
       final int r = channel.read(buffer);
 
       if (r < 0)
-        throw new EOFException("End of file  is reached");
+        throw new EOFException("End of file is reached");
 
       read += r;
     }
@@ -406,7 +411,8 @@ public class OIOUtils {
     }
   }
 
-  public static void readByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToRead) throws IOException {
+  public static void readByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToRead, boolean throwOnEof)
+      throws IOException {
     long read = 0;
 
     for (ByteBuffer buffer : buffers) {
@@ -421,7 +427,13 @@ public class OIOUtils {
       final long r = channel.read(buffers, bufferIndex, buffers.length - bufferIndex);
 
       if (r < 0)
-        throw new IllegalStateException("End of file is reached");
+        if (throwOnEof)
+          throw new EOFException("End of file is reached");
+        else {
+          for (int i = bufferIndex; i < buffers.length; ++i)
+            buffers[i].put(new byte[buffers[i].remaining()]);
+          return;
+        }
 
       read += r;
     }

@@ -115,7 +115,7 @@ public class OPaginatedStorageDirtyFlag {
       }
 
       ByteBuffer buffer = ByteBuffer.allocate(1);
-      OIOUtils.readByteBuffer(buffer, channel, 0);
+      OIOUtils.readByteBuffer(buffer, channel, 0, true);
 
       buffer.position(0);
       dirtyFlag = buffer.get() > 0;
