@@ -1001,7 +1001,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   }
 
-  protected void checkWriteQuorum(ODistributedConfiguration dbCfg, String clusterName, String localNodeName) {
+  protected void checkWriteQuorum(final ODistributedConfiguration dbCfg, final String clusterName, final String localNodeName) {
     final List<String> clusterServers = dbCfg.getServers(clusterName, null);
     final int writeQuorum = dbCfg.getWriteQuorum(clusterName, clusterServers.size(), localNodeName);
     final int availableNodes = dManager.getAvailableNodes(getName());
@@ -1772,7 +1772,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       // PRINT THE NEW CONFIGURATION
       final String cfgOutput = ODistributedOutput
-          .formatClusterTable(dManager, getName(), distributedConfiguration, dManager.getAvailableNodes(getName()));
+          .formatClusterTable(dManager, getName(), distributedConfiguration, dManager.getTotalNodes(getName()));
 
       ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Setting new distributed configuration for database: %s (version=%d)%s\n", getName(),

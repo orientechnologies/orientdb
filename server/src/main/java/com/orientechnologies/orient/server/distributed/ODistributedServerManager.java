@@ -190,6 +190,8 @@ public interface ODistributedServerManager {
    */
   boolean isNodeOnline(String iNodeName, String databaseName);
 
+  int getTotalNodes(String iDatabaseName);
+
   int getAvailableNodes(String iDatabaseName);
 
   int getAvailableNodes(Collection<String> iNodes, String databaseName);
@@ -227,8 +229,8 @@ public interface ODistributedServerManager {
    * @param iExecutionMode
    * @param localResult        It's the result of the request executed locally
    * @param iAfterSentCallback
-   *
    * @param endCallback
+   *
    * @return
    */
   ODistributedResponse sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
@@ -273,4 +275,12 @@ public interface ODistributedServerManager {
    */
   <T> T executeInDistributedDatabaseLock(String databaseName, long timeoutLocking, OModifiableDistributedConfiguration lastCfg,
       OCallable<T, OModifiableDistributedConfiguration> iCallback);
+
+  /**
+   * Returns true if the quorum is present in terms of number of available nodes for full replication only. With sharding, instead,
+   * the quorum may depend on the involved clusters.
+   *
+   * @return
+   */
+  boolean isWriteQuorumPresent(String databaseName);
 }

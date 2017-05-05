@@ -946,8 +946,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected int calculateQuorum(final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType, Collection<String> clusterNames,
-      final ODistributedConfiguration cfg, final int allAvailableNodes, final int masterAvailableNodes,
-      final boolean checkNodesAreOnline, final String localNodeName) {
+      final ODistributedConfiguration cfg, final int totalServers, final int totalMasterServers, final boolean checkNodesAreOnline,
+      final String localNodeName) {
 
     int quorum = 1;
 
@@ -956,6 +956,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       clusterNames.add(null);
     }
 
+    int totalServerInQuorum = totalServers;
     for (String cluster : clusterNames) {
       int clusterQuorum = 0;
       switch (quorumType) {
@@ -963,13 +964,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         // IGNORE IT
         break;
       case READ:
-        clusterQuorum = cfg.getReadQuorum(cluster, allAvailableNodes, localNodeName);
+        clusterQuorum = cfg.getReadQuorum(cluster, totalServers, localNodeName);
         break;
       case WRITE:
-        clusterQuorum = cfg.getWriteQuorum(cluster, masterAvailableNodes, localNodeName);
+        clusterQuorum = cfg.getWriteQuorum(cluster, totalMasterServers, localNodeName);
+        totalServerInQuorum = totalMasterServers;
         break;
       case ALL:
-        clusterQuorum = allAvailableNodes;
+        clusterQuorum = totalServers;
         break;
       }
 
@@ -979,10 +981,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (quorum < 0)
       quorum = 0;
 
-    if (checkNodesAreOnline && quorum > allAvailableNodes)
+    if (checkNodesAreOnline && quorum > totalServerInQuorum)
       throw new ODistributedException(
           "Quorum (" + quorum + ") cannot be reached on server '" + localNodeName + "' database '" + databaseName
-              + "' because it is major than available nodes (" + allAvailableNodes + ")");
+              + "' because it is major than available nodes (" + totalServerInQuorum + ")");
 
     return quorum;
   }

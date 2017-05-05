@@ -1356,34 +1356,33 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           for (ORecordOperation txEntry : newRecords) {
             ORecord rec = txEntry.getRecord();
 
-            if (rec.isDirty()) {
-              ORecordId rid = (ORecordId) rec.getIdentity().copy();
-              ORecordId oldRID = rid.copy();
+            ORecordId rid = (ORecordId) rec.getIdentity().copy();
+            ORecordId oldRID = rid.copy();
 
-              final Integer clusterOverride = clusterOverrides.get(txEntry);
-              final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
+            final Integer clusterOverride = clusterOverrides.get(txEntry);
+            final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
 
-              final OCluster cluster = getClusterById(clusterId);
-              OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
-              rid.setClusterId(cluster.getId());
+            final OCluster cluster = getClusterById(clusterId);
+            OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+            rid.setClusterId(cluster.getId());
 
-              if (rid.getClusterPosition() > -1) {
-                // CREATE EMPTY RECORDS UNTIL THE POSITION IS REACHED. THIS IS THE CASE WHEN A SERVER IS OUT OF SYNC
-                // BECAUSE A TRANSACTION HAS BEEN ROLLED BACK BEFORE TO SEND THE REMOTE CREATES. SO THE OWNER NODE DELETED
-                // RECORD HAVING A HIGHER CLUSTER POSITION
-                while (rid.getClusterPosition() > ppos.clusterPosition) {
-                  ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
-                }
-
-                if (rid.getClusterPosition() != ppos.clusterPosition)
-                  throw new OConcurrentCreateException(rid, new ORecordId(rid.getClusterId(), ppos.clusterPosition));
+            if (rid.getClusterPosition() > -1) {
+              // CREATE EMPTY RECORDS UNTIL THE POSITION IS REACHED. THIS IS THE CASE WHEN A SERVER IS OUT OF SYNC
+              // BECAUSE A TRANSACTION HAS BEEN ROLLED BACK BEFORE TO SEND THE REMOTE CREATES. SO THE OWNER NODE DELETED
+              // RECORD HAVING A HIGHER CLUSTER POSITION
+              while (rid.getClusterPosition() > ppos.clusterPosition) {
+                ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
               }
-              positions.put(txEntry, ppos);
 
-              rid.setClusterPosition(ppos.clusterPosition);
-
-              clientTx.updateIdentityAfterCommit(oldRID, rid);
+              if (rid.getClusterPosition() != ppos.clusterPosition)
+                throw new OConcurrentCreateException(rid, new ORecordId(rid.getClusterId(), ppos.clusterPosition));
             }
+            positions.put(txEntry, ppos);
+
+            rid.setClusterPosition(ppos.clusterPosition);
+
+            if (!oldRID.equals(rid))
+              clientTx.updateIdentityAfterCommit(oldRID, rid);
           }
 
           for (ORecordOperation txEntry : entries) {

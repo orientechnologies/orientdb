@@ -175,7 +175,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       }
 
       ODistributedServerLog
-          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d reqId=%s",
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigning new rid %s/%s v.%d reqId=%s",
               database.getName(), rid.toString(), record.getVersion(), requestId);
     }
     }
