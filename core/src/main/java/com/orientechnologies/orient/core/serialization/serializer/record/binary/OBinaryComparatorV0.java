@@ -601,6 +601,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
           final long clusterPos2 = OVarIntSerializer.readAsLong(fieldValue2);
           if (clusterPos1 == clusterPos2)
             return true;
+          break;
         }
         case STRING: {
           return ORecordSerializerBinaryV0.readOptimizedLink(fieldValue1).toString()
