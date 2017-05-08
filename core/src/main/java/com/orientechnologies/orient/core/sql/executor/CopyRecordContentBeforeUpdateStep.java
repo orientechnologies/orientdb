@@ -40,7 +40,7 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
             prevValue.setProperty("@rid", rec.getIdentity());
             prevValue.setProperty("@version", rec.getVersion());
             if (rec instanceof ODocument) {
-              prevValue.setProperty("@class", ((ODocument) rec).getClass().getName());
+              prevValue.setProperty("@class", ((ODocument) rec).getSchemaClass().getName());
             }
             for (String propName : result.getPropertyNames()) {
               prevValue.setProperty(propName, result.getProperty(propName));

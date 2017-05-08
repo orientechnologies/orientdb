@@ -13,50 +13,82 @@ import java.util.Optional;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class UnwrapPreviousValueStep extends AbstractExecutionStep {
+
+  private long cost = 0;
+
   public UnwrapPreviousValueStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = prev.get().syncPull(ctx, nRecords);
     return new OResultSet() {
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         return upstream.hasNext();
       }
 
-      @Override public OResult next() {
-        OResult prevResult = upstream.next();
-        if (prevResult instanceof OUpdatableResult) {
-          prevResult = ((OUpdatableResult) prevResult).previousValue;
-          if (prevResult == null) {
+      @Override
+      public OResult next() {
+        long begin = profilingEnabled ? System.nanoTime() : 0;
+        try {
+          OResult prevResult = upstream.next();
+          if (prevResult instanceof OUpdatableResult) {
+            prevResult = ((OUpdatableResult) prevResult).previousValue;
+            if (prevResult == null) {
+              throw new OCommandExecutionException("Invalid status of record: no previous value available");
+            }
+            return prevResult;
+          } else {
             throw new OCommandExecutionException("Invalid status of record: no previous value available");
           }
-          return prevResult;
-        } else {
-          throw new OCommandExecutionException("Invalid status of record: no previous value available");
+        } finally {
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
         upstream.close();
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
+  }
+
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ UNWRAP PREVIOUS VALUE";
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    return result;
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

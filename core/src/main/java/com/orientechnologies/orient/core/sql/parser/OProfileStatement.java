@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,6 +47,9 @@ public class OProfileStatement extends OStatement {
     ctx.setInputParameters(params);
 
     OExecutionPlan executionPlan = statement.createExecutionPlan(ctx, true);
+    if(executionPlan instanceof OUpdateExecutionPlan){
+      ((OUpdateExecutionPlan) executionPlan).executeInternal();
+    }
 
     OLocalResultSet rs = new OLocalResultSet((OInternalExecutionPlan) executionPlan);
 
