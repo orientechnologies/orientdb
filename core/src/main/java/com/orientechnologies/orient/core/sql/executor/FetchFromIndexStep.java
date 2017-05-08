@@ -425,16 +425,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return orderAsc;
   }
 
-  @Override
-  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override
-  public void sendResult(Object o, Status status) {
-
-  }
-
   private OCollection indexKeyFrom(OAndBlock keyCondition, OBinaryCondition additional) {
     OCollection result = new OCollection(-1);
     for (OBooleanExpression exp : keyCondition.getSubBlocks()) {

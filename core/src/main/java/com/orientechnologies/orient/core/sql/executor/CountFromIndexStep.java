@@ -26,11 +26,6 @@ public class CountFromIndexStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void sendResult(Object o, Status status) {
-
-  }
-
-  @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
 
@@ -78,11 +73,6 @@ public class CountFromIndexStep extends AbstractExecutionStep {
         CountFromIndexStep.this.reset();
       }
     };
-  }
-
-  @Override
-  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
   }
 
   @Override

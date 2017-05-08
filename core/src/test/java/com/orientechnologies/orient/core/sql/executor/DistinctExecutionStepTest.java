@@ -31,13 +31,6 @@ public class DistinctExecutionStepTest {
         return result;
       }
 
-      @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-      }
-
-      @Override public void sendResult(Object o, Status status) {
-
-      }
     };
 
     step.setPrevious(prev);

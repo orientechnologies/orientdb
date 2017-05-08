@@ -24,12 +24,14 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
     this.alias = alias;
   }
 
-  @Override public void reset() {
+  @Override
+  public void reset() {
     executed = false;
     prefetchExecutionPlan.reset(ctx);
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!executed) {
       getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
 
@@ -48,15 +50,8 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
     return new OInternalResultSet();
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-
-  }
-
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);

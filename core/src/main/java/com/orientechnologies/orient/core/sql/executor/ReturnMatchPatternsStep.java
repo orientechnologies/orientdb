@@ -15,26 +15,32 @@ public class ReturnMatchPatternsStep extends AbstractExecutionStep {
     super(context, profilingEnabled);
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
     return new OResultSet() {
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         return upstream.hasNext();
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         return filter(upstream.next());
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -46,16 +52,9 @@ public class ReturnMatchPatternsStep extends AbstractExecutionStep {
     return next;
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     return spaces + "+ RETURN $patterns";
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-
   }
 }

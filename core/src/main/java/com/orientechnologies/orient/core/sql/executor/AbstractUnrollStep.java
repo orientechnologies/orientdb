@@ -108,12 +108,4 @@ public abstract class AbstractUnrollStep extends AbstractExecutionStep {
 
   protected abstract Collection<OResult> unroll(final OResult doc, final OCommandContext iContext);
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-
-  }
-
 }

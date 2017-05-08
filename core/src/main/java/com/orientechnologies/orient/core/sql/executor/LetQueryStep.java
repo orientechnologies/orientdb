@@ -27,18 +27,21 @@ public class LetQueryStep extends AbstractExecutionStep {
     this.query = query;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!getPrev().isPresent()) {
       throw new OCommandExecutionException("Cannot execute a local LET on a query without a target");
     }
     return new OResultSet() {
       OResultSet source = getPrev().get().syncPull(ctx, nRecords);
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         return source.hasNext();
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         OResultInternal result = (OResultInternal) source.next();
         if (result != null) {
           calculate(result, ctx);
@@ -63,31 +66,26 @@ public class LetQueryStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
         source.close();
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-
-  }
-
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ LET (for each record)\n" +
-        spaces + "  " + varName + " = (" + query + ")";
+    return spaces + "+ LET (for each record)\n" + spaces + "  " + varName + " = (" + query + ")";
   }
 }

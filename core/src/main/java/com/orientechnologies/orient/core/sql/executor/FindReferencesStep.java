@@ -39,17 +39,20 @@ public class FindReferencesStep extends AbstractExecutionStep {
     this.clusters = clusters;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!inited) {
       init(ctx, nRecords);
     }
     return new OResultSet() {
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
 
         return nextResult != null;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (nextResult == null) {
           throw new IllegalStateException();
         }
@@ -58,15 +61,18 @@ public class FindReferencesStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -162,14 +168,6 @@ public class FindReferencesStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-
-  }
-
   private static List<String> checkObject(final Set<ORID> iSourceRIDs, final Object value, final ORecord iRootObject,
       String prefix) {
     if (value instanceof OResult) {
@@ -245,7 +243,8 @@ public class FindReferencesStep extends AbstractExecutionStep {
     return result;
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);

@@ -173,16 +173,6 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
     return false;
   }
 
-  @Override
-  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override
-  public void sendResult(Object o, Status status) {
-
-  }
-
   public void setOrder(Object order) {
     this.order = order;
   }

@@ -30,7 +30,8 @@ public class MatchFirstStep extends AbstractExecutionStep {
     this.executionPlan = subPlan;
   }
 
-  @Override public void reset() {
+  @Override
+  public void reset() {
     this.iterator = null;
     this.subResultSet = null;
     if (executionPlan != null) {
@@ -38,14 +39,17 @@ public class MatchFirstStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init(ctx);
     return new OResultSet() {
 
       int currentCount = 0;
-      @Override public boolean hasNext() {
-        if(currentCount>=nRecords){
+
+      @Override
+      public boolean hasNext() {
+        if (currentCount >= nRecords) {
           return false;
         }
         if (iterator != null) {
@@ -55,8 +59,9 @@ public class MatchFirstStep extends AbstractExecutionStep {
         }
       }
 
-      @Override public OResult next() {
-        if(currentCount>=nRecords){
+      @Override
+      public OResult next() {
+        if (currentCount >= nRecords) {
           throw new IllegalStateException();
         }
         OResultInternal result = new OResultInternal();
@@ -70,15 +75,18 @@ public class MatchFirstStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -88,10 +96,6 @@ public class MatchFirstStep extends AbstractExecutionStep {
     OResultInternal result = new OResultInternal();
     result.setElement(nextElement);
     return result;
-  }
-
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
   }
 
   private void init(OCommandContext ctx) {
@@ -120,7 +124,8 @@ public class MatchFirstStep extends AbstractExecutionStep {
     iterator = possibleResults.iterator();
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
@@ -142,7 +147,4 @@ public class MatchFirstStep extends AbstractExecutionStep {
     return this.node.alias;
   }
 
-  @Override public void sendResult(Object o, Status status) {
-
-  }
 }

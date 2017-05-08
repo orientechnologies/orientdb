@@ -119,11 +119,6 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override
   public void sendTimeout() {
     super.sendTimeout();
   }
@@ -131,11 +126,6 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   @Override
   public void close() {
     super.close();
-  }
-
-  @Override
-  public void sendResult(Object o, Status status) {
-
   }
 
   @Override

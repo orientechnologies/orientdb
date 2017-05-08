@@ -23,18 +23,21 @@ public class MatchStep extends AbstractExecutionStep {
     this.edge = edge;
   }
 
-  @Override public void reset() {
+  @Override
+  public void reset() {
     this.upstream = null;
     this.lastUpstreamRecord = null;
     this.traverser = null;
     this.nextResult = null;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     return new OResultSet() {
       int localCount = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (localCount >= nRecords) {
           return false;
         }
@@ -47,7 +50,8 @@ public class MatchStep extends AbstractExecutionStep {
         return true;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (localCount >= nRecords) {
           throw new IllegalStateException();
         }
@@ -64,15 +68,18 @@ public class MatchStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -121,15 +128,8 @@ public class MatchStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-
-  }
-
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);

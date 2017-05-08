@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
  */
 public class SubQueryStep extends AbstractExecutionStep {
   private final OInternalExecutionPlan subExecuitonPlan;
-  private final OCommandContext   childCtx;
+  private final OCommandContext        childCtx;
 
   /**
    * executes a sub-query
@@ -17,26 +17,21 @@ public class SubQueryStep extends AbstractExecutionStep {
    * @param ctx              the context of the current execution plan
    * @param subCtx           the context of the subquery execution plan
    */
-  public SubQueryStep(OInternalExecutionPlan subExecutionPlan, OCommandContext ctx, OCommandContext subCtx, boolean profilingEnabled) {
+  public SubQueryStep(OInternalExecutionPlan subExecutionPlan, OCommandContext ctx, OCommandContext subCtx,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.subExecuitonPlan = subExecutionPlan;
     this.childCtx = subCtx;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return subExecuitonPlan.fetchNext(nRecords);
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-    //TODO
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-    //TODO
-  }
-
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     StringBuilder builder = new StringBuilder();
     String ind = OExecutionStepInternal.getIndent(depth, indent);
     builder.append(ind);

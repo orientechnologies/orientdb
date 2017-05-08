@@ -166,16 +166,6 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override
-  public void sendResult(Object o, Status status) {
-
-  }
-
-  @Override
   public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     String result = spaces + "+ FOR EACH x in " + fromAlias + "\n";

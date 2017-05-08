@@ -159,11 +159,6 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override
   public void sendTimeout() {
     for (OExecutionStepInternal step : subSteps) {
       step.sendTimeout();
@@ -177,11 +172,6 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
       step.close();
     }
     prev.ifPresent(p -> p.close());
-  }
-
-  @Override
-  public void sendResult(Object o, Status status) {
-
   }
 
   @Override

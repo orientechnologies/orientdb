@@ -21,12 +21,14 @@ public class ParallelExecStep extends AbstractExecutionStep {
     this.subExecutionPlans = subExecuitonPlans;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
       int localCount = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (localCount >= nRecords) {
           return false;
         }
@@ -39,7 +41,8 @@ public class ParallelExecStep extends AbstractExecutionStep {
         return true;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (localCount >= nRecords) {
           throw new IllegalStateException();
         }
@@ -53,15 +56,18 @@ public class ParallelExecStep extends AbstractExecutionStep {
         return currentResultSet.next();
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -80,15 +86,8 @@ public class ParallelExecStep extends AbstractExecutionStep {
     } while (!currentResultSet.hasNext());
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-    //TODO
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-    //TODO
-  }
-
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String result = "";
     String ind = OExecutionStepInternal.getIndent(depth, indent);
 

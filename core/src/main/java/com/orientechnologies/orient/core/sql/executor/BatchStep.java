@@ -22,11 +22,6 @@ public class BatchStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void sendResult(Object o, Status status) {
-
-  }
-
-  @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet prevResult = getPrev().get().syncPull(ctx, nRecords);
     return new OResultSet() {
@@ -64,11 +59,6 @@ public class BatchStep extends AbstractExecutionStep {
         return null;
       }
     };
-  }
-
-  @Override
-  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
   }
 
   @Override

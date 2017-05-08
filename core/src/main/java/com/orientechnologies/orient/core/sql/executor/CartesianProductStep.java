@@ -158,16 +158,6 @@ public class CartesianProductStep extends AbstractExecutionStep {
     }
   }
 
-  @Override
-  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override
-  public void sendResult(Object o, Status status) {
-
-  }
-
   public void addSubPlan(OInternalExecutionPlan subPlan) {
     this.subPlans.add(subPlan);
   }

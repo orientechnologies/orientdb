@@ -107,14 +107,6 @@ public class FilterStep extends AbstractExecutionStep {
 
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-
-  }
-
   @Override public String prettyPrint(int depth, int indent) {
     return OExecutionStepInternal.getIndent(depth, indent) + "+ FILTER ITEMS WHERE \n" +OExecutionStepInternal.getIndent(depth, indent)+"  "+ whereClause.toString();
   }

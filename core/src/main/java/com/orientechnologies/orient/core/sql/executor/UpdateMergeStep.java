@@ -19,14 +19,17 @@ public class UpdateMergeStep extends AbstractExecutionStep {
     this.json = json;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
     return new OResultSet() {
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         return upstream.hasNext();
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         OResult result = upstream.next();
         if (result instanceof OResultInternal) {
           if (!(result.getElement().orElse(null) instanceof ODocument)) {
@@ -40,15 +43,18 @@ public class UpdateMergeStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
         upstream.close();
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -58,15 +64,8 @@ public class UpdateMergeStep extends AbstractExecutionStep {
     record.merge(json.toDocument(record, ctx), true, false);
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-
-  }
-
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);

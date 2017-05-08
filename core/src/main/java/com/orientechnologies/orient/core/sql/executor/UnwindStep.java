@@ -30,14 +30,16 @@ public class UnwindStep extends AbstractExecutionStep {
     unwindFields = unwind.getItems().stream().map(x -> x.getStringValue()).collect(Collectors.toList());
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
     return new OResultSet() {
       long localCount = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (localCount >= nRecords) {
           return false;
         }
@@ -50,7 +52,8 @@ public class UnwindStep extends AbstractExecutionStep {
         return true;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (localCount >= nRecords) {
           throw new IllegalStateException();
         }
@@ -68,15 +71,18 @@ public class UnwindStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -157,15 +163,8 @@ public class UnwindStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-
-  }
-
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     return spaces + "+ " + unwind;
   }

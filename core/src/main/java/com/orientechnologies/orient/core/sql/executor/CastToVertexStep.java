@@ -20,11 +20,6 @@ public class CastToVertexStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void sendResult(Object o, Status status) {
-
-  }
-
-  @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
     return new OResultSet() {
@@ -55,7 +50,9 @@ public class CastToVertexStep extends AbstractExecutionStep {
           }
           return result;
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -74,11 +71,6 @@ public class CastToVertexStep extends AbstractExecutionStep {
         return null;
       }
     };
-  }
-
-  @Override
-  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
   }
 
   @Override

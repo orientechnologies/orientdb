@@ -54,14 +54,6 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
     return result;
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-
-  }
-
   @Override public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     return spaces + "+ LET (once)\n" +

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 
 import java.text.DecimalFormat;
@@ -65,5 +66,15 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
 
   protected String getCostFormatted() {
     return new DecimalFormat().format(getCost() / 1000) + "μs";
+  }
+
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+
+  }
+
+  @Override
+  public void sendResult(Object o, Status status) {
+
   }
 }

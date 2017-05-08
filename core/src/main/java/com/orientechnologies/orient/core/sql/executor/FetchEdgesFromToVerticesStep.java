@@ -46,11 +46,6 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void sendResult(Object o, Status status) {
-
-  }
-
-  @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init();
@@ -91,11 +86,6 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
         return null;
       }
     };
-  }
-
-  @Override
-  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
   }
 
   private OVertex asVertex(Object currentFrom) {

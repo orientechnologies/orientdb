@@ -31,20 +31,12 @@ public class LimitExecutionStep extends AbstractExecutionStep {
     return result;
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-    //TODO
-  }
-
   @Override public void sendTimeout() {
 
   }
 
   @Override public void close() {
     prev.ifPresent(x -> x.close());
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-
   }
 
   @Override public String prettyPrint(int depth, int indent) {

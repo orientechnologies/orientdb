@@ -126,16 +126,6 @@ public class ConvertToResultInternalStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override
-  public void sendResult(Object o, Status status) {
-
-  }
-
-  @Override
   public String prettyPrint(int depth, int indent) {
     String result = OExecutionStepInternal.getIndent(depth, indent) + "+ CONVERT TO REGULAR RESULT ITEM";
     if (profilingEnabled) {

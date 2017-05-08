@@ -16,28 +16,21 @@ public class ScriptLineStep extends AbstractExecutionStep {
     this.plan = nextPlan;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     return plan.fetchNext(nRecords);
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override public void sendResult(Object o, Status status) {
-
-  }
-
   public boolean containsReturn() {
-    if(plan instanceof OScriptExecutionPlan){
-      return ((OScriptExecutionPlan)plan).containsReturn();
+    if (plan instanceof OScriptExecutionPlan) {
+      return ((OScriptExecutionPlan) plan).containsReturn();
     }
     return false;
   }
 
   public OExecutionStepInternal executeUntilReturn(OCommandContext ctx) {
-    if(plan instanceof OScriptExecutionPlan){
-      return ((OScriptExecutionPlan)plan).executeUntilReturn();
+    if (plan instanceof OScriptExecutionPlan) {
+      return ((OScriptExecutionPlan) plan).executeUntilReturn();
     }
     throw new IllegalStateException();
   }
