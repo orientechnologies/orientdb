@@ -1,4 +1,4 @@
-import {Component, Input, ElementRef, AfterViewInit} from '@angular/core';
+import {Component, Input, ElementRef, AfterViewInit, Output, EventEmitter} from '@angular/core';
 import {OGraph} from './d3-graph/OGraph';
 
 import * as $ from "jquery"
@@ -20,11 +20,16 @@ class GraphComponent implements AfterViewInit {
 
   private orientGraph:OGraph;
 
-  @Input() modellingConfig;
+  @Input() modellingConfig = this.modellingConfig !== 'undefined' ? this.modellingConfig : 'no config from parent.';
+  @Output() modellingConfigChange = new EventEmitter();
+
+  @Input() selectedElement;
+  @Output() onSelectedElement = new EventEmitter();
+
   private elementId = '#graph';
   private opts;
 
-  constructor() {
+  constructor(private notification: NotificationService) {
     this.init();
   }
 
@@ -39,7 +44,7 @@ class GraphComponent implements AfterViewInit {
         node: {
           r: 15
         },
-        linkDistance: 200,
+        linkDistance: 350,
         charge: -1000,
         friction: 0.9,
         gravity: 0.1
@@ -338,12 +343,23 @@ class GraphComponent implements AfterViewInit {
     this.loadGraph();
   }
 
-
   loadGraph() {
     if(this.opts.config) {
-      this.orientGraph = new OGraph(this.elementId, this.opts.config);
+      this.orientGraph = new OGraph(this.elementId, this.opts.config, this);
       this.orientGraph.data(this.modellingConfig).draw();
     }
+  }
+
+  searchNode(targetName) {
+    var matchingNode = this.orientGraph.searchNode(targetName);
+    if(!matchingNode) {
+      this.notification.push({content: "Node not found.", error: true, autoHide: true});
+    }
+  }
+
+  setSelectedElement(selectedElement) {
+    this.selectedElement = selectedElement;
+    this.onSelectedElement.emit(this.selectedElement);
   }
 
 }

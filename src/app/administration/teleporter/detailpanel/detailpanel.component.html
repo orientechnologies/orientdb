@@ -3,18 +3,21 @@
   <div class="panel-heading">
     <span class="h4 center">Details</span>
   </div>
-
   <div class="panel-body" style="height: 255px;">
 
-    <!--
-    {{modellingConfig.vertices[0].name}}
-    <button class="btn-primary" (click)="updateModellingConfig()">Change value</button>
-    -->
+    <div *ngIf="selectedElement">
+      <div *ngIf="selectedElement.name">Vertex Class: {{selectedElement.name}}</div>
+      <div *ngIf="!selectedElement.name">Edge Class: {{edgeName}}</div>
+    </div>
 
   </div>
 </div>
 <div class="panel panel-success">
   <div class="panel-body" style="height: 256px;">
-
+    <div *ngIf="selectedElement">
+      <div *ngIf="!edgeName">Table: {{selectedElement.mapping.sourceTables[0].tableName}}</div>
+      <div *ngIf="edgeName">Relationship: {{selectedElement[edgeName].mapping[0].fromTable}}  -->
+        {{selectedElement[edgeName].mapping[0].toTable}}</div>
+    </div>
   </div>
 </div>

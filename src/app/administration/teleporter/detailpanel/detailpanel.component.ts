@@ -1,11 +1,9 @@
-import {Component, Input, Output, NgZone, AfterViewChecked, EventEmitter} from '@angular/core';
+import {Component, Input, Output, EventEmitter, OnChanges} from '@angular/core';
 
 import * as $ from "jquery"
 
 import {downgradeComponent} from '@angular/upgrade/static';
-import {TeleporterService} from '../../../core/services';
 import {NotificationService} from "../../../core/services/notification.service";
-import {AgentService} from "../../../core/services/agent.service";
 
 declare var angular:any
 
@@ -15,14 +13,32 @@ declare var angular:any
   styleUrls: []
 })
 
-class DetailPanelComponent {
+class DetailPanelComponent implements OnChanges {
 
   @Input() modellingConfig = this.modellingConfig !== 'undefined' ? this.modellingConfig : 'no config from parent.';
   @Output() modellingConfigChange = new EventEmitter();
 
-  updateModellingConfig() {
-    this.modellingConfig.vertices[0].name = "Detail";
-    this.modellingConfigChange.next(this.modellingConfig);
+  @Input() selectedElement;
+
+  private edgeName;
+
+  constructor() {
+    this.edgeName = undefined;
+  }
+
+
+  ngOnChanges(changes) {
+
+    if(changes.selectedElement && this.selectedElement) {
+
+      // when and edge is selected we store the edge name
+      if(!this.selectedElement.name) {
+        this.edgeName = Object.keys(this.selectedElement)[0];
+      }
+      else {
+        this.edgeName = undefined;
+      }
+    }
   }
 
 }

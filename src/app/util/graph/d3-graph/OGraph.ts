@@ -1,14 +1,17 @@
 import '../../../../styles/orientdb-graphviz.css';
 
+
 import * as d3 from 'd3';
 
 export class OGraph {
 
+  private graphContainer;
+
   // DOM elements
   private config;
   private originElement;
-  private svgContainer;
   private svg;
+  private innerContainer;
   private gNodes;
   private gLinks;
 
@@ -23,12 +26,20 @@ export class OGraph {
   private nodeLabels;
   private linkLabels;
 
-  // zooom
+  // zoom
   private zoomComponent;
   private minZoom;
   private maxZoom;
 
-  constructor(elemId, config) {
+  // selection and highlighting
+  private highlightColor;
+  private highlightTrans;
+  private selectedElement;
+
+
+  constructor(elemId, config, container) {
+
+    this.graphContainer = container;
 
     this.config = config;
     this.originElement = d3.select(elemId);
@@ -38,6 +49,9 @@ export class OGraph {
 
     this.minZoom = 0.1;
     this.maxZoom = 10;
+
+    this.highlightColor = "blue";
+    this.highlightTrans = 0.1;
   }
 
   data(data) {
@@ -65,17 +79,14 @@ export class OGraph {
       edge.target = toVertexClass;
     }
 
-    for(var edge of this.edges) {
-      console.log("Edge: " + Object.keys(edge));
-      console.log("Edge source: "+ edge.source.name);
-      console.log("Edge target: "+ edge.target.name);
-      console.log("");
-    }
-
     return this;
   }
 
   initLayout() {
+
+    var self = this;
+
+    var margin = {top: -5, right: -5, bottom: -5, left: -5};
 
     this.force = d3.layout.force()
       .size([this.config.width, this.config.height])
@@ -86,30 +97,29 @@ export class OGraph {
       .on("tick", () => {this.tick()});
 
     var drag = this.force.drag()
-      .on("dragstart", dragstart);
+      .on("dragstart", dragstart)
+      // .on("drag", dragging)
+      .on("dragend", dragend);
 
     // preparing svg
-    this.svgContainer = this.originElement.append("svg")
+    this.svg = this.originElement.append("svg")
       .attr("width", this.config.width)
       .attr("height", this.config.height)
-      .attr("pointer-events", "all");
-    this.svg = this.svgContainer
+      .style("cursor", "move")
+      .on("click", () => {this.deselectLastElement()});
+    this.innerContainer = this.svg
       .append("g");
 
-    this.svg.append('svg:rect')
-      .attr('width', this.config.width)
-      .attr('height', this.config.height)
-      .attr('fill', 'white');
+    this.gNodes = this.innerContainer.append("g")
+      .attr("class", "g-nodes")
+      .style("cursor", "pointer");
 
-
-    this.gNodes = this.svg.append("g")
-      .attr("class","g-nodes");
-
-    this.gLinks = this.svg.append("g")
-      .attr("class","g-links");
+    this.gLinks = this.innerContainer.append("g")
+      .attr("class", "g-links")
+      .style("cursor", "pointer");
 
     // define arrow markers for graph links
-    this.svgContainer.append('svg:defs').append('svg:marker')
+    this.svg.append('svg:defs').append('svg:marker')
       .attr('id', 'end-arrow')
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', 6)
@@ -121,7 +131,7 @@ export class OGraph {
       .attr('fill', '#000')
       .attr('class', 'end-arrow');
 
-    this.svgContainer.append('svg:defs').append('svg:marker')
+    this.svg.append('svg:defs').append('svg:marker')
       .attr('id', 'start-arrow')
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', 4)
@@ -134,7 +144,7 @@ export class OGraph {
       .attr('class', 'end-arrow');
 
     // define arrow markers for graph links
-    this.svgContainer.append('svg:defs').append('svg:marker')
+    this.svg.append('svg:defs').append('svg:marker')
       .attr('id', 'end-arrow-hover')
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', 6)
@@ -145,7 +155,7 @@ export class OGraph {
       .attr('d', 'M0,-5L10,0L0,5')
       .attr('class', 'end-arrow-hover');
 
-    this.svgContainer.append('svg:defs').append('svg:marker')
+    this.svg.append('svg:defs').append('svg:marker')
       .attr('id', 'start-arrow-hover')
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', 4)
@@ -168,7 +178,10 @@ export class OGraph {
 
     this.nodes = this.nodes
       .data(this.vertices)
-      .enter().append("circle")
+      .enter().append("g")
+      .attr("class", "node-container")
+      .append("circle")
+      .attr("id", function(d) {return d.name})
       .attr("class", "node")
       .attr("r", this.config.node.r)
       .attr("stroke", "#0066cc")
@@ -180,7 +193,8 @@ export class OGraph {
     this.nodeLabels = this.gNodes.selectAll(".node-label")
       .data(this.vertices)
       .enter().append("svg:text")
-      .attr("class", "node-label")
+      .attr("id", function(d) {return "vlabel-" + d.name;})
+      .attr("class", "node")
       .attr("dx", -1.5 * this.config.node.r)
       .attr("dy", -1.5 * this.config.node.r)
       .text(function(d) { return d.name; });
@@ -199,9 +213,10 @@ export class OGraph {
       .enter().append('text')
       .style("text-anchor", "middle")
       .attr("dy", "-8")
-      .attr("class","link-label")
       .append("svg:textPath")
       .attr("startOffset", "50%")
+      .attr("id",function(d) {return "llabel-" + Object.keys(d)[0];})
+      .attr("class", "link")
       // .attr("text-anchor", "middle")
       .attr("xlink:href", function(d) { return "#" + Object.keys(d)[0]; })
       .attr("baselineShift", "super")
@@ -209,21 +224,91 @@ export class OGraph {
       // .style("font-family", "Arial")
       .text(function(d) { return Object.keys(d)[0]; });
 
+    // highlighting and selection
+    this.nodes.on("mouseover", highlightElement);
+    this.nodeLabels.on("mouseover", highlightElement);
+    this.links.on("mouseover", highlightElement);
+    this.linkLabels.on("mouseover", highlightElement);
+
+    this.nodes.on("mouseout", clearElementHighlight);
+    this.nodeLabels.on("mouseout", clearElementHighlight);
+    this.links.on("mouseout", clearElementHighlight);
+    this.linkLabels.on("mouseout", clearElementHighlight);
+
+    this.nodes.on("click", (d) => {
+      // stopping higher events
+      d3.event.stopPropagation();
+      this.selectNode(d)});
+    this.nodeLabels.on("click", (d) => {
+      // stopping higher events
+      d3.event.stopPropagation();
+      this.selectNode(d)});
+    this.links.on("click", (d) => {
+      // stopping higher events
+      d3.event.stopPropagation();
+      this.selectLink(d)});
+    this.linkLabels.on("click", (d) => {
+      // stopping higher events
+      d3.event.stopPropagation();
+      this.selectLink(d)});
+
     // zoom
     this.zoomComponent = d3.behavior.zoom()
       .scaleExtent([this.minZoom, this.maxZoom])
       .on("zoom", () => {this.zoom()});
-
-    this.svg.call(this.zoomComponent);
+    this.svg
+      .call(this.zoomComponent);
 
     function dblclick(d) {
       d3.select(this).classed("fixed", d.fixed = false);
     }
 
-    function dragstart(d) {
-      d3.select(this).classed("fixed", d.fixed = true);
+    function dragstart(v) {
+      d3.event.sourceEvent.stopPropagation();
+      d3.select(this).classed("dragging", true);
+      d3.select(this).classed("fixed", v.fixed = true);
     }
 
+    function dragging(d) {
+      d.style("cursor", "grabbing");
+      d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+    }
+
+    function dragend(v) {
+      d3.event.sourceEvent.stopPropagation();
+      d3.select(this).classed("dragging", false);
+    }
+
+    function highlightElement(d) {
+
+      self.nodes.style("opacity", 0.1);
+      self.links.style("opacity", 0.1);
+      self.nodeLabels.style("opacity", 0.1);
+      self.linkLabels.style("opacity", 0.1);
+
+      // highlighting elements
+      d3.select("#" + d.name).style("opacity", 1);
+      d3.select("#vlabel-" + d.name).style("opacity", 1);
+      d3.select("#" + Object.keys(d)[0]).style("opacity", 1);
+      d3.select("#llabel-" + Object.keys(d)[0]).style("opacity", 1);
+
+    }
+
+    function clearElementHighlight(d) {
+
+      self.nodes.style("opacity", 1);
+      self.links.style("opacity", 1);
+      self.nodeLabels.style("opacity", 1);
+      self.linkLabels.style("opacity", 1);
+    }
+  }
+
+  // zoom the 'g' inner container
+  zoom() {
+    var scale = d3.event.scale;
+    var translation = d3.event.translate;
+    this.innerContainer.attr("transform", "translate(" + translation + ")" +
+      " scale(" + scale + ")");
   }
 
   tick() {
@@ -261,17 +346,7 @@ export class OGraph {
     return "translate(" + d.x + "," + d.y + ")";
   }
 
-// zoom g
-  zoom() {
-    var scale = d3.event.scale;
-    var translation = d3.event.translate;
-    this.svg.attr("transform", "translate(" + translation + ")" +
-      " scale(" + scale + ")");
-  }
-
-
   draw() {
-    console.log('Drawing the graph.')
     this.initLayout();
     this.force.start();
   }
@@ -289,6 +364,145 @@ export class OGraph {
     return null;
   }
 
+  setSelectedElement(element) {
+    this.selectedElement = element;
+    this.graphContainer.setSelectedElement(element);
+  }
 
+  selectNode(node) {
+
+    // deselect previous selected element
+    this.deselectLastElement();
+
+    // selection
+    this.setSelectedElement(node);
+    // this.selectedElement = node;
+
+    d3.select("#" + node.name)
+      .attr("stroke", "#bfff00")
+      .attr("stroke-width", "5px");
+
+    // highlighting the label
+    d3.select("#vlabel-" + node.name).style("font-weight", "bold");
+
+  }
+
+  selectLink(link) {
+
+    // deselect previous selected element
+    this.deselectLastElement();
+
+    // selection
+    this.setSelectedElement(link);
+    // this.selectedElement = link;
+
+    d3.select("#" + Object.keys(link)[0])
+      .attr("stroke", "#bfff00")
+      .attr("stroke-width", "2px");
+
+    // highlighting the label
+    d3.select("#llabel-" + Object.keys(link)[0]).style("font-weight", "bold");
+
+  }
+
+  deselectLastElement() {
+
+    if(this.selectedElement) {
+      if(this.selectedElement.name) { // is a vertex
+        this.deselectNode(this.selectedElement);
+      }
+      else {
+        this.deselectLink(this.selectedElement)
+      }
+    }
+  }
+
+  deselectNode(node) {
+
+    this.setSelectedElement(undefined);
+    // this.selectedElement = undefined;
+
+    d3.select("#" + node.name)
+      .attr("stroke", "#0066cc")
+      .attr("stroke-width", "1px");
+
+    // highlighting the label
+    d3.select("#vlabel-" + node.name).style("font-weight", "normal");
+
+  }
+
+  deselectLink(link) {
+
+    this.setSelectedElement(undefined);
+    // this.selectedElement = undefined;
+
+    d3.select("#" + Object.keys(link)[0])
+      .attr("stroke", "#000")
+      .attr("stroke-width", "1px");
+
+    // highlighting the label
+    d3.select("#llabel-" + Object.keys(link)[0]).style("font-weight", "normal");
+
+  }
+
+  // it performs a search according to the value of the form looking for among the vertices and tables names.
+  searchNode(targetName) {
+
+    var matchingNode;
+
+    for(var i=0; i<this.vertices.length; i++) {
+
+      // checking the vertex class name
+      if(this.vertices[i].name === targetName) {
+        matchingNode = this.vertices[i];
+        break;
+      }
+
+      // check the correspondent source table name
+      else {
+
+        for(var j=0; j<this.vertices[i].mapping.sourceTables.length; j++) {
+          var tableName = this.vertices[i].mapping.sourceTables[j].tableName;
+          if(tableName === targetName) {
+            matchingNode = this.vertices[i];
+            break;
+          }
+        }
+      }
+    }
+
+    if(matchingNode) {
+      this.selectNode(matchingNode);
+
+      // enlarge node selection
+      d3.select("#" + matchingNode.name)
+        .attr("stroke", "#bfff00")
+        .attr("stroke-width", "50px");
+
+      // making selection small again
+      d3.select("#" + matchingNode.name).transition()
+        .duration(500)
+        .attr("stroke", "#bfff00")
+        .attr("stroke-width", "5px");
+    }
+
+    return matchingNode;
+  }
+
+  fadeOutInAllExceptNode(node) {
+
+    var link = this.svg.selectAll(".link")
+    link.style("opacity", "0");
+
+    var nodes = this.svg.selectAll(".node").filter(function(d) {
+      return d.name != node.name;
+    });
+    nodes.style("opacity", "0");
+
+    // fading out and fading in all other elements in a short transition
+    d3.selectAll(".node, .link").transition()
+      .duration(1000)
+      .style("opacity", 1);
+  }
 
 }

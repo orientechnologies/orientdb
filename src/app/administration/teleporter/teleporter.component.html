@@ -278,13 +278,13 @@
               </div>
             </div>
           </h4><br/><br/>
-
+          Selected element: {{selectedElement !== undefined ? selectedElement.name : selectedElement}}
           <div class="border">
             <div class="col-sm-7">
-              <graph-model-panel [(modellingConfig)]="modellingConfig"></graph-model-panel>
+              <graph-model-panel [(modellingConfig)]="modellingConfig" [(selectedElement)]="selectedElement" (onSelectedElement)="changeSelectedElement($event)"></graph-model-panel>
             </div>
             <div class="col-md-5">
-              <detail-panel [(modellingConfig)]="modellingConfig"></detail-panel>
+              <detail-panel [(modellingConfig)]="modellingConfig" [(selectedElement)]="selectedElement"></detail-panel>
             </div>
           </div>
 

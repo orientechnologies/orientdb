@@ -47,6 +47,7 @@ class TeleporterComponent implements AfterViewChecked {
 
   // JSON configuration for modelling
   private modellingConfig;
+  private selectedElement;
 
   constructor(private teleporterService: TeleporterService, private notification: NotificationService,
               private agentService: AgentService, private zone: NgZone) {
@@ -56,10 +57,6 @@ class TeleporterComponent implements AfterViewChecked {
       this.init();
     });
 
-  }
-
-  updateModellingConfig() {
-    this.modellingConfig.vertices[0].name = "Parent";
   }
 
   init() {
@@ -140,6 +137,8 @@ class TeleporterComponent implements AfterViewChecked {
     this.fieldToDisplay = "tableName";
 
     this.buildConfigJSON();
+
+    this.selectedElement = undefined;
   }
 
   ngAfterViewChecked() {
@@ -168,6 +167,10 @@ class TeleporterComponent implements AfterViewChecked {
       })
     }
     this.step = step;
+  }
+
+  changeSelectedElement(e) {
+    this.selectedElement = e;
   }
 
   drivers() {
