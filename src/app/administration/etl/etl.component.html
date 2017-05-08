@@ -91,7 +91,7 @@
           <h3 align="center">Step 2 - Configure the ETL Parameters</h3><br>
           <div class="col-md-9">
             <div class="panel panel-default">
-              <div class="panel-heading" align="center"><b>CHOSEN SOURCE: {{sourcePrototype.source.value}}</b></div>
+              <div class="panel-heading" align="center"><b>CHOSEN SOURCE: {{sourcePrototype.source.value.toUpperCase()}}</b></div>
               <div class="panel-body">
                 <div class="row">
 
@@ -110,7 +110,6 @@
                         <!-- Dropdown menu, jdbc is shown only if selected as source -->
                         <div class="dropdown-menu">
                           <li class="list-group-item list-group-item-info">Extractor Type</li>
-
                           <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('jdbc')" *ngIf="sourcePrototype.source.value == 'jdbc'">jdbc</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('csv')" *ngIf="sourcePrototype.source.value != 'jdbc'">csv</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('json')" *ngIf="sourcePrototype.source.value != 'jdbc'">json</button>
@@ -191,7 +190,7 @@
                           <li class="list-group-item list-group-item-info">Loader Type</li>
 
                           <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('log')">log</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('OrientDB')">OrientDB</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('orientDb')">OrientDB</button>
                         </div>
                       </div>
                     </div>
@@ -213,18 +212,39 @@
             <div class="panel panel-info">
               <div class="panel-heading" align="center"><b>PARAMETER CONFIGURATION</b></div>
               <div class="panel-body">
-                <div id="panelPlaceholder"><br><br><br><br><br><br><br><h4 align="center"><b>PARAMETERS SHOULD BE<br>
-                  DISPLAYED HERE</b></h4> <br><br><br><br><br><br><br><br> </div>
+                <div id="panelPlaceholder"><br><br><br><br><br><br><br><h4 align="center"><b>PARAMETERS CONFIGURATION PANEL<br>
+                  </b></h4> <br><br><br><br><br><br><br><br> </div>
+
                 <!-- Extractor advanced configuration -->
                 <div id="extractorOptions" style="display:none">
-                  <h4 align="center"><b>Extractor options</b></h4>
+                  <h4 align="center"><b>Extractor options</b></h4><br>
+                  <div *ngIf="extractorType && eKeys">
+                    <li *ngFor="let eParameter of eKeys">
+                      <label *ngIf="extractorPrototype[extractorType][eParameter]['mandatory'] == true">
+                        {{eParameter.toUpperCase()}} <b style="color:red;">*</b>
+                      </label>
+                      <label *ngIf="extractorPrototype[extractorType][eParameter]['mandatory'] == false">
+                        {{eParameter.toUpperCase()}}
+                      </label>
 
+                      <select *ngIf="extractorPrototype[extractorType][eParameter]['types']"
+                              class="form-control" name="eTypeConfig" [(ngModel)]="extractor[extractorType][eParameter]">
+                        <option *ngFor="let eType of extractorPrototype[extractorType][eParameter]['types']" [value]="eType" placeholder="default">
+                          {{eType}}
+                        </option>
+                      </select>
+                      <input type="text" class="form-control" name="eTextConfig" [(ngModel)]="extractor[extractorType][eParameter]"
+                             placeholder="enter your value" *ngIf="!extractorPrototype[extractorType][eParameter]['types']"/>
+
+                    </li>
+                  </div><br><br>
                   <div class="col-md-12 text-center">
                     <div class="btn-group">
                       <button type="button" class="btn btn-xs btn-danger" (click)="deleteExtractor()">Delete Extractor</button>
                     </div>
                   </div>
                 </div>
+
                 <!-- Transformer advanced configuration -->
                 <div id="transformerOptions" style="display:none">
                   <h4 align="center"><b>Transformer options</b></h4>
@@ -234,10 +254,31 @@
                     </div>
                   </div>
                 </div>
+
                 <!-- Loader advanced configuration -->
                 <div id="loaderOptions" style="display:none">
                   <h4 align="center"><b>Loader options</b></h4>
+                  <div *ngIf="loaderType && lKeys">
+                    <li *ngFor="let lParameter of lKeys">
+                      <label *ngIf="loaderPrototype[loaderType][lParameter]['mandatory'] == true">
+                        {{lParameter.toUpperCase()}} <b style="color:red;">*</b>
+                      </label>
+                      <label *ngIf="loaderPrototype[loaderType][lParameter]['mandatory'] == false">
+                        {{lParameter.toUpperCase()}}
+                      </label>
 
+                      <select *ngIf="loaderPrototype[loaderType][lParameter]['types']"
+                              class="form-control" name="lTypeConfig" [(ngModel)]="loader[loaderType][lParameter]">
+                        <option *ngFor="let lType of loaderPrototype[loaderType][lParameter]['types']" [value]="lType" placeholder="default">
+                          {{lType}}
+                        </option>
+                      </select>
+
+                      <input type="text" class="form-control" name="lTextConfig" [(ngModel)]="loader[loaderType][lParameter]"
+                             placeholder="enter your value" *ngIf="!loaderPrototype[loaderType][lParameter]['types']"/>
+
+                    </li>
+                  </div><br><br>
                   <div class="col-md-12 text-center">
                     <div class="btn-group">
                       <button type="button" class="btn btn-xs btn-danger" (click)="deleteLoader()">Delete Loader</button>
@@ -246,7 +287,7 @@
                 </div>
 
               </div>
-              <div class="panel-footer" align="center">Etl Advanced Settings</div>
+              <div class="panel-footer" align="center"><b style="color:red;">*</b> means that the parameter is mandatory for a correct configuration.</div>
             </div>
           </div>
 

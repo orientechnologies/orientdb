@@ -33,6 +33,6 @@
   "bugs": "https://github.com/sdrdis/jquery.flowchart/issues",
   "dependencies": {
     "jquery": ">=1.10",
-    "jquery-ui": ">=1.11"
+    "jquery-ui": "=1.12.1"
   }
 }

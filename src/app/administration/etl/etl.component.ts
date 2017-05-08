@@ -8,9 +8,10 @@ import "../../util/diagram-editor/package.json";
 
 import {Component} from '@angular/core';
 
-import {downgradeComponent} from '@angular/upgrade/static';
-import {EtlService} from '../../core/services';
+import {downgradeComponent} from "@angular/upgrade/static";
+import {EtlService} from "../../core/services";
 import {AgentService} from "../../core/services/agent.service";
+import {ObjectKeysPipe} from "../../core/pipes"
 
 declare var angular:any;
 
@@ -34,11 +35,14 @@ class EtlComponent {
   private extractorType;
   private loaderType;
 
+  private eKeys;
+  private lKeys;
+
   private finalJson; // The final json, it will be passed to the launch function
 
   private step;
   private hints;
-  private ready = false;
+  private ready;
 
 
   constructor(private agentService: AgentService, private etlService : EtlService){
@@ -54,7 +58,7 @@ class EtlComponent {
     this.sourcePrototype = {
       source: {
         value: undefined,
-        types: ["jdbc", "local file", "url","upload"] // TODO uploader library
+        types: ["jdbc", "local file", "url", "upload"] // TODO uploader library
       },
       fileURL: undefined,
       URLMethod: {
@@ -69,7 +73,8 @@ class EtlComponent {
       row: {
         multiline: {
           mandatory: false,
-          value:true
+          value:true,
+          types: [true, false]
         },
         linefeed: {
           mandatory: false,
@@ -84,7 +89,8 @@ class EtlComponent {
         },
         columnsOnFirstLine: {
           mandatory: false,
-          value:true
+          value:true,
+          types: [true, false]
         },
         columns: {
           mandatory: false,
@@ -116,11 +122,13 @@ class EtlComponent {
         },
         ignoreEmptyLines: {
           mandatory: false,
-          value: false
+          value: false,
+          types: [true, false]
         },
         ignoreMissingColumns: {
           mandatory: false,
-          value: false
+          value: false,
+          types: [true, false]
         },
         predefinedFormat: {
           mandatory: false,
@@ -152,7 +160,7 @@ class EtlComponent {
         },
         queryCount: {
           mandatory: false,
-          value: undefined
+          value: undefined,
         }
       },
 
@@ -194,7 +202,8 @@ class EtlComponent {
         },
         save: {
           mandatory: false,
-          value: false
+          value: false,
+          types: [true, false]
         }
       },
 
@@ -221,7 +230,8 @@ class EtlComponent {
         },
         skipDuplicates: {
           mandatory: false,
-          value: false
+          value: false,
+          types: [true, false]
         }
       },
 
@@ -253,7 +263,8 @@ class EtlComponent {
         },
         skipDuplicates: {
           mandatory: false,
-          value: false
+          value: false,
+          types: [true, false]
         },
         unresolvedLinkAction: {
           mandatory: false,
@@ -269,7 +280,7 @@ class EtlComponent {
         },
         operation: {
           mandatory: true,
-          value: undefined,
+          value: "skip",
           types: ["skip", "halt"]
         },
       },
@@ -367,27 +378,33 @@ class EtlComponent {
         },
         dbAutoCreate: {
           mandatory: false,
-          value: true
+          value: true,
+          types: [true, false]
         },
         dbAutoCreateProperties: {
           mandatory: false,
-          value: false
+          value: false,
+          types: [true, false]
         },
         dbAutoDropIfExists: {
           mandatory: false,
-          value: false
+          value: false,
+          types: [true, false]
         },
         tx: {
           mandatory: false,
-          value: false
+          value: false,
+          types: [true, false]
         },
         txUseLog: {
           mandatory: false,
-          value: false
+          value: false,
+          types: [true, false]
         },
         wal: {
           mandatory: false,
-          value: true
+          value: true,
+          types: [true, false]
         },
         batchCommit: {
           mandatory: false,
@@ -416,17 +433,20 @@ class EtlComponent {
         },
         useLightweightEdges: {
           mandatory: false,
-          value: false
+          value: false,
+          types: [true, false]
         },
         standardElementConstraints: {
           mandatory: false,
-          value: true
+          value: true,
+          types: [true, false]
         }
       }
 
     }
 
     // User support
+    this.ready = false;
     this.step = 1;
     this.hints = {
       // Main hints
@@ -487,14 +507,6 @@ class EtlComponent {
   }
 
   extractorInit(type) {
-    $("#createExtractor").hide();
-    $("#pleaseExtractor").hide();
-
-    $("#panelPlaceholder").hide(); // Shows the options for the extractor, hides the placeholder
-    $("#loaderOptions").hide();
-    $("#transformerOptions").hide();
-    $("#extractorOptions").show();
-
     // Variable creation
     if(type === "row")
       this.extractor = {
@@ -549,41 +561,43 @@ class EtlComponent {
 
 
     // Flowchart
-    $(document).ready(function() {
-      var dataExtractor = {
-        operators: {
-          operator: {
-            top: 30,
-            left: 70,
-            properties: {
-              title: type + ' extractor',
-              outputs: {
-                output_1: {
-                  label: 'click to configure'
-                }
-              }
-            }
-          }
-        }
-      };
+    /*    $(document).ready(function() { // TODO remove the comment. atm this blocks the instructions that follow.
+     var dataExtractor = {
+     operators: {
+     operator: {
+     top: 30,
+     left: 70,
+     properties: {
+     title: type + ' extractor',
+     outputs: {
+     output_1: {
+     label: 'click to configure'
+     }
+     }
+     }
+     }
+     }
+     };
 
-      (<any>$('#extractorSpace')).flowchart({
-        data: dataExtractor
-      });
-    });
+     (<any>$('#extractorSpace')).flowchart({
+     data: dataExtractor
+     });
+     }); */
 
+    this.eKeys = Object.keys(this.extractor[type]); // TODO try a pipe-style implementation
     this.extractorType = type;
     this.readyForExecution();
-  }
 
-  transformerInit(type) { // Block and Code aren't active atm. Csv is deprecated.
-    $("#pleaseTransformer").hide();
+    $("#createExtractor").hide();
+    $("#pleaseExtractor").hide();
 
     $("#panelPlaceholder").hide(); // Shows the options for the extractor, hides the placeholder
     $("#loaderOptions").hide();
-    $("#extractorOptions").hide();
-    $("#transformerOptions").show();
+    $("#transformerOptions").hide();
+    $("#extractorOptions").show();
+  }
 
+  transformerInit(type) { // Block and Code aren't active atm. Csv is deprecated.
     var transformer;
     // TODO: use the custom label in the flowchart, show the options for the created transformer
 
@@ -715,26 +729,25 @@ class EtlComponent {
     this.transformers.push(transformer);
     this.readyForExecution();
 
+    $("#pleaseTransformer").hide();
+
+    $("#panelPlaceholder").hide(); // Shows the options for the extractor, hides the placeholder
+    $("#loaderOptions").hide();
+    $("#extractorOptions").hide();
+    $("#transformerOptions").show();
+
   }
 
   loaderInit(type) {
-    $("#pleaseLoader").hide();
-    $("#createLoader").hide();
-
-    $("#panelPlaceholder").hide(); // Shows the options for the extractor, hides the placeholder
-    $("#extractorOptions").hide();
-    $("#transformerOptions").hide();
-    $("#loaderOptions").show();
-
     // Variable creation
     if(type === "log")
       this.loader = {
         log: {}
       }
 
-    if(type === "OrientDB")
+    if(type === "orientDb")
       this.loader = {
-        orientdb: {
+        orientDb: {
           dbURL: this.loaderPrototype.orientDb.dbURL.value,
           dbUser: this.loaderPrototype.orientDb.dbUser.value,
           dbPassword: this.loaderPrototype.orientDb.dbPassword.value,
@@ -758,38 +771,50 @@ class EtlComponent {
       }
 
     // Flowchart
-    $(document).ready(function() {
-      var dataLoader = {
-        operators: {
-          operator: {
-            top: 30,
-            left: 40,
-            properties: {
-              title: type + ' loader',
-              inputs: {
-                input1: {
-                  label: 'click to configure'
-                }
-              }
-            }
-          }
-        }
-      };
+    /*    $(document).ready(function() {
+     var dataLoader = {
+     operators: {
+     operator: {
+     top: 30,
+     left: 40,
+     properties: {
+     title: type + ' loader',
+     inputs: {
+     input1: {
+     label: 'click to configure'
+     }
+     }
+     }
+     }
+     }
+     };
 
-      (<any>$('#loaderSpace')).flowchart({
-        data: dataLoader
-      });
-    });
+     (<any>$('#loaderSpace')).flowchart({
+     data: dataLoader
+     });
+     }); */
 
+    this.lKeys = Object.keys(this.loader[type]);
     this.loaderType = type;
     this.readyForExecution();
+
+    $("#pleaseLoader").hide();
+    $("#createLoader").hide();
+
+    $("#panelPlaceholder").hide(); // Shows the options for the extractor, hides the placeholder
+    $("#extractorOptions").hide();
+    $("#transformerOptions").hide();
+    $("#loaderOptions").show();
+
   }
 
   deleteExtractor() {
     this.extractor = undefined;
+    this.extractorType = undefined;
 
     // Jquery hide/show
     $("#createExtractor").show();
+    $("#pleaseExtractor").show();
     $("#extractorOptions").hide();
     $("#panelPlaceholder").show();
   }
@@ -801,13 +826,16 @@ class EtlComponent {
     // Jquery hide/show
     $("#transformerOptions").hide();
     $("#panelPlaceholder").show();
+    if(this.transformers.length == 0) $("#pleaseTransformer").show();
   }
 
   deleteLoader() {
     this.loader = undefined;
+    this.loaderType = undefined;
 
     // Jquery hide/show
     $("#createLoader").show();
+    $("#pleaseLoader").show();
     $("#loaderOptions").hide();
     $("#panelPlaceholder").show();
   }
@@ -844,7 +872,7 @@ class EtlComponent {
     this.ready = true; // TODO reactivate and finish the proper function
   }
 
-  launch() {
+  launch() { // TODO maybe even a restart function is needed, to avoid weird behaviors
     if(this.source)
       this.finalJson = '{"source":' + JSON.stringify(this.source) + ',"extractor":' + JSON.stringify(this.extractor) +
         ',"transformers":' + JSON.stringify(this.transformers) + ',"loader":' + JSON.stringify(this.loader) + "}";
