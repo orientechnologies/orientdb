@@ -2849,7 +2849,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         for (Entry<Object, ORuntimeResult> g : groupedResult.entrySet()) {
           if (g.getKey() != null || (groupedResult.size() == 1 && groupByFields == null)) {
             final ODocument doc = g.getValue().getResult();
-            if (doc != null && !doc.isEmpty()) {
+            if (doc != null) {
               ((List<OIdentifiable>) tempResult).add(doc);
             }
           }
