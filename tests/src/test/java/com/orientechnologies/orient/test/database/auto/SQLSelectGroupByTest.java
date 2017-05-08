@@ -92,8 +92,11 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
     Assert.assertTrue(result.size() > 1);
     last = null;
     for (ODocument d : result) {
-      if (last != null)
-        Assert.assertTrue(last.compareTo((String) d.field("location")) > 0);
+      Object current = d.field("location");
+      if(current!=null) {
+        if (last != null)
+          Assert.assertTrue(last.compareTo((String) current) > 0);
+      }
       last = d.field("location");
     }
   }
