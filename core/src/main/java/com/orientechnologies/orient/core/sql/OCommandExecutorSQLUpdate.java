@@ -841,7 +841,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       parserRequiredKeyword("=");
       fieldValue = parserRequiredWord(false, "Value expected", " =><,\r\n");
 
-      final Object v = convertValue(clazz, fieldName, getFieldValueCountingParameters(fieldValue));
+      Object fVal = getFieldValueCountingParameters(fieldValue);
+      fVal = reattachInTx(fVal);
+      final Object v = convertValue(clazz, fieldName, fVal);
 
       // INSERT TRANSFORMED FIELD VALUE
       addEntries.add(new OPair<String, Object>(fieldName, v));
@@ -869,8 +871,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n"));
 
       // INSERT TRANSFORMED FIELD VALUE
+      Object val = getFieldValueCountingParameters(fieldValue);
+      val = reattachInTx(val);
       putEntries.add(
-          new OTriple(fieldName, (String) getFieldValueCountingParameters(fieldKey), getFieldValueCountingParameters(fieldValue)));
+          new OTriple(fieldName, (String) getFieldValueCountingParameters(fieldKey), val));
       parserSkipWhiteSpaces();
 
       firstLap = false;

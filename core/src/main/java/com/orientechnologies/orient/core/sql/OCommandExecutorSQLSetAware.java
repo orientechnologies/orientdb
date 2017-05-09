@@ -25,8 +25,10 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.tx.OTransaction;
 
 import java.util.*;
 
@@ -66,8 +68,8 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
       fieldValue = parserRequiredWord(false, "Value expected", " =><,\r\n", true);
 
       // INSERT TRANSFORMED FIELD VALUE
-      final Object v = convertValue(iClass, fieldName, getFieldValueCountingParameters(fieldValue));
-
+      Object v = convertValue(iClass, fieldName, getFieldValueCountingParameters(fieldValue));
+      v = reattachInTx(v);
       fields.add(new OPair(fieldName, v));
       parserSkipWhiteSpaces();
       firstLap = false;
@@ -76,6 +78,39 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
     if (fields.size() == 0)
       throwParsingException("Entries to set <field> = <value> are missed. Example: name = 'Bill', salary = 300.2");
   }
+
+  protected Object reattachInTx(Object fVal) {
+    if (fVal == null) {
+      return null;
+    }
+    OTransaction tx = getDatabase().getTransaction();
+    if (!tx.isActive()) {
+      return fVal;
+    }
+    if (fVal instanceof ORID && ((ORID) fVal).isTemporary()) {
+      ORecord txVal = tx.getRecord((ORID) fVal);
+      if (txVal != null) {
+        return txVal;
+      }
+    } else if (!(fVal instanceof OIdentifiable) && OMultiValue.isMultiValue(fVal)) {
+      Iterator<Object> iter = OMultiValue.getMultiValueIterator(fVal);
+      if (fVal instanceof List) {
+        List<Object> result = new ArrayList<Object>();
+        while (iter.hasNext()) {
+          result.add(reattachInTx(iter.next()));
+        }
+        return result;
+      } else if (fVal instanceof Set) {
+        Set<Object> result = new HashSet<Object>();
+        while (iter.hasNext()) {
+          result.add(reattachInTx(iter.next()));
+        }
+        return result;
+      }
+    }
+    return fVal;
+  }
+
 
   protected OClass extractClassFromTarget(String iTarget) {
     // CLASS
