@@ -22,7 +22,7 @@ import java.util.Map;
 
 public class OContextualRecordId extends ORecordId {
 
-  protected Map<String, Object> context;
+  private Map<String, Object> context;
 
   public OContextualRecordId(final String iRecordId) {
     super(iRecordId);
