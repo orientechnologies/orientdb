@@ -39,7 +39,7 @@ import java.util.TimeZone;
 
 /**
  * Implementation v0 of comparator based on protocol v0.
- * 
+ *
  * @author Luca Garulli
  */
 public class OBinaryComparatorV0 implements OBinaryComparator {
@@ -482,7 +482,9 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
                 : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
 
             final Date value2AsDate = dateFormat.parse(value2AsString);
-            final long value2 = value2AsDate.getTime();
+            long value2 = value2AsDate.getTime();
+            value2 = ORecordSerializerBinaryV0
+                .convertDayToTimezone(ODateHelper.getDatabaseTimeZone(), TimeZone.getTimeZone("GMT"), value2);
             return value1 == value2;
           } catch (ParseException e) {
             try {
