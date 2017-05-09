@@ -1807,6 +1807,29 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
+  public void recycle(final ORecord record) {
+    checkOpeness();
+    if (record == null)
+      throw new ODatabaseException("Cannot recycle null document");
+
+    // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
+    if (record instanceof ODocument && ((ODocument) record).getClassName() != null)
+      checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_CREATE, ((ODocument) record).getClassName());
+
+    try {
+      currentTx.recycleRecord(record);
+    } catch (OException e) {
+      throw e;
+    } catch (Exception e) {
+      if (record instanceof ODocument)
+        throw OException.wrapException(new ODatabaseException(
+            "Error on recycling record " + record.getIdentity() + " of class '" + ((ODocument) record).getClassName() + "'"), e);
+      else
+        throw OException.wrapException(new ODatabaseException("Error on recycling record " + record.getIdentity()), e);
+    }
+  }
+
+  @Override
   public boolean hide(ORID rid) {
     checkOpeness();
     checkIfActive();
@@ -2323,6 +2346,99 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       ORecordSerializationContext.pullContext();
       getMetadata().clearThreadLocalSchemaSnapshot();
     }
+  }
+
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   *
+   * @Internal
+   */
+  public <RET extends ORecord> RET executeRecycleRecord(final ORecord record) {
+    checkOpeness();
+    checkIfActive();
+
+    final ORecordId rid = (ORecordId) record.getIdentity();
+
+    if (rid == null)
+      throw new ODatabaseException(
+          "Cannot recycle record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
+
+    record.setInternalStatus(ORecordElement.STATUS.MARSHALLING);
+    try {
+
+      byte[] stream = null;
+      final OStorageOperationResult<Integer> operationResult;
+
+      getMetadata().makeThreadLocalSchemaSnapshot();
+      if (record instanceof ODocument)
+        ODocumentInternal.checkClass((ODocument) record, this);
+      ORecordSerializationContext.pushContext();
+
+      try {
+
+        final String clusterName = getClusterNameById(rid.getClusterId());
+        checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
+        stream = record.toStream();
+
+        final ORecordHook.RESULT hookResult = callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, record);
+
+        if (hookResult == ORecordHook.RESULT.RECORD_CHANGED) {
+          if (record instanceof ODocument)
+            ((ODocument) record).validate();
+          stream = updateStream(record);
+        } else if (hookResult == ORecordHook.RESULT.SKIP_IO)
+          return (RET) record;
+        else if (hookResult == ORecordHook.RESULT.RECORD_REPLACED)
+          // RETURNED THE REPLACED RECORD
+          return (RET) OHookReplacedRecordThreadLocal.INSTANCE.get();
+
+        ORecordSaveThreadLocal.setLast(record);
+        try {
+          boolean updateContent = ORecordInternal.isContentChanged(record);
+          byte[] content = (stream == null) ? OCommonConst.EMPTY_BYTE_ARRAY : stream;
+          byte recordType = ORecordInternal.getRecordType(record);
+
+          // CHECK IF RECORD TYPE IS SUPPORTED
+          Orient.instance().getRecordFactoryManager().getRecordTypeClass(recordType);
+
+          operationResult = storage.recyclePosition(rid, content, record.getVersion(), recordType);
+
+          final int version = operationResult.getResult();
+
+          if (operationResult.getModifiedRecordContent() != null)
+            stream = operationResult.getModifiedRecordContent();
+          else if (version > record.getVersion() + 1)
+            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+            record.unload();
+
+          ORecordInternal.fill(record, rid, version, stream, false);
+
+          callbackHooks(ORecordHook.TYPE.AFTER_CREATE, record);
+
+          callbackHookSuccess(record, true, stream, operationResult);
+        } catch (Exception t) {
+          callbackHookFailure(record, true, stream);
+          throw t;
+        }
+      } finally {
+        callbackHookFinalize(record, true, stream);
+        ORecordSerializationContext.pullContext();
+        getMetadata().clearThreadLocalSchemaSnapshot();
+        ORecordSaveThreadLocal.removeLast();
+      }
+
+      if (stream != null && stream.length > 0 && !operationResult.isMoved())
+        // ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
+        getLocalCache().updateRecord(record);
+
+    } catch (OException e) {
+      throw e;
+    } catch (Exception t) {
+      throw OException.wrapException(new ODatabaseException("Error on recycling record " + record.getIdentity()), t);
+    } finally {
+      record.setInternalStatus(ORecordElement.STATUS.LOADED);
+    }
+    return (RET) record;
   }
 
   /**

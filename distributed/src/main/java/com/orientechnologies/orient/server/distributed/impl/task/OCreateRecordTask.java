@@ -119,13 +119,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     switch (recordStatus) {
     case REMOVED: {
       // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
-      ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().recyclePosition(rid, new byte[] {}, version, recordType);
-
-      // CREATE A RECORD TO CALL ALL THE HOOKS (LIKE INDEXES FOR UNIQUE CONSTRAINTS)
-      final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-      ORecordInternal.fill(loadedRecordInstance, rid, version, content, true);
-      loadedRecordInstance.save();
-      return new OPlaceholder(rid, loadedRecordInstance.getVersion());
+      getRecord();
+      ODatabaseRecordThreadLocal.INSTANCE.get().recycle(record);
     }
 
     case ALLOCATED:

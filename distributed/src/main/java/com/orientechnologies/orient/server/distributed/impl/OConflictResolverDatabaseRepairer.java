@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -540,9 +541,39 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
                 if (winner == NOT_FOUND) {
                   // NO WINNER, SKIP IT
+
+                  final StringBuilder buffer = new StringBuilder();
+                  int resultIndex = 0;
+                  for (Map.Entry<Object, List<String>> entry : groupedResult.entrySet()) {
+                    buffer.append("\n- ");
+                    buffer.append(resultIndex++);
+                    buffer.append(": ");
+
+                    if (entry.getKey() instanceof ORawBuffer) {
+                      final ORawBuffer r = ((ORawBuffer) entry.getKey());
+                      if (r.buffer != null) {
+                        buffer.append("bytes=");
+                        buffer.append(Arrays.toString(r.buffer));
+
+                        final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(r.recordType);
+                        record.fromStream(r.buffer);
+                        buffer.append(record);
+                        buffer.append(" (size=");
+                        buffer.append(r.buffer.length);
+                        buffer.append(" v=");
+                        buffer.append(r.version);
+                        buffer.append(")");
+                      } else
+                        buffer.append("(empty)");
+                    } else
+                      buffer.append(entry.getKey());
+
+                    buffer.append(" in servers ");
+                    buffer.append(entry.getValue());
+                  }
+
                   ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                      "Auto repair cannot find a winner for record %s and the following groups of contents: %s", rid,
-                      groupedResult);
+                      "Auto repair cannot find a winner for record %s and the following groups of contents: %s", rid, buffer);
                   continue;
                 }
 

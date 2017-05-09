@@ -584,7 +584,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (rid.isPersistent()) {
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (db != null)
-        originalRecord = db.getStorage().getUnderlying().readRecord((ORecordId) rid, null, false, true, null).getResult();
+        originalRecord = db.getStorage().getUnderlying().readRecord((ORecordId) rid, null, false, false, null).getResult();
     }
 
     final ODistributedLock lock = new ODistributedLock(iRequestId, originalRecord);

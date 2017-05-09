@@ -94,20 +94,20 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         switch (recordStatus) {
         case ORecordOperation.CREATED:
+        case ORecordOperation.RECYCLED:
           byte[] content = channel.readBytes();
           ORecordInternal.fill(entry.getRecord(), rid, 0, null, true);
-          // oNetworkProtocolBinary.fillRecord(rid, content, 0, entry.getRecord(), database);
           lazyDeserialize.put(entry.getRecord(), content);
 
-          // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
-          createdRecords.put(rid.copy(), entry.getRecord());
+          if (recordStatus == ORecordOperation.CREATED)
+            // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
+            createdRecords.put(rid.copy(), entry.getRecord());
           break;
 
         case ORecordOperation.UPDATED:
           int version = channel.readVersion();
           byte[] bytes = channel.readBytes();
           ORecordInternal.fill(entry.getRecord(), rid, version, null, true);
-          // oNetworkProtocolBinary.fillRecord(rid, bytes, version, entry.getRecord(), database);
           lazyDeserialize.put(entry.getRecord(), bytes);
           if (protocolVersion >= 23)
             ORecordInternal.setContentChanged(entry.getRecord(), channel.readBoolean());

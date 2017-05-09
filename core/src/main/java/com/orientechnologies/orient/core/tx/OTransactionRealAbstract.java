@@ -89,7 +89,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   @Override
   public boolean hasRecordCreation() {
     for (ORecordOperation op : allEntries.values()) {
-      if (op.type == ORecordOperation.CREATED)
+      if (op.type == ORecordOperation.CREATED || op.type == ORecordOperation.RECYCLED)
         return true;
     }
     return false;
@@ -180,13 +180,13 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     if (iClass == null)
       // RETURN ALL THE RECORDS
       for (ORecordOperation entry : allEntries.values()) {
-        if (entry.type == ORecordOperation.CREATED)
+        if (entry.type == ORecordOperation.CREATED || entry.type == ORecordOperation.RECYCLED)
           result.add(entry);
       }
     else {
       // FILTER RECORDS BY CLASSNAME
       for (ORecordOperation entry : allEntries.values()) {
-        if (entry.type == ORecordOperation.CREATED)
+        if (entry.type == ORecordOperation.CREATED || entry.type == ORecordOperation.RECYCLED)
           if (entry.getRecord() != null && entry.getRecord() instanceof ODocument) {
             if (iPolymorphic) {
               if (iClass.isSuperClassOf(((ODocument) entry.getRecord()).getSchemaClass()))
@@ -209,15 +209,15 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     if (iIds == null)
       // RETURN ALL THE RECORDS
       for (ORecordOperation entry : allEntries.values()) {
-        if (entry.type == ORecordOperation.CREATED)
+        if (entry.type == ORecordOperation.CREATED || entry.type == ORecordOperation.RECYCLED)
           result.add(entry);
       }
     else
       // FILTER RECORDS BY ID
       for (ORecordOperation entry : allEntries.values()) {
         for (int id : iIds) {
-          if (entry.getRecord() != null && entry.getRecord().getIdentity().getClusterId() == id
-              && entry.type == ORecordOperation.CREATED) {
+          if (entry.getRecord() != null && entry.getRecord().getIdentity().getClusterId() == id && (
+              entry.type == ORecordOperation.CREATED || entry.type == ORecordOperation.RECYCLED)) {
             result.add(entry);
             break;
           }
@@ -243,7 +243,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   }
 
   public ODocument getIndexChanges() {
-
     final ODocument result = new ODocument().setAllowChainedAccess(false).setTrackingChanges(false);
 
     for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {

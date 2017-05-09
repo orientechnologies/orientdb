@@ -291,11 +291,20 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     return loadRecord(rid, record, fetchPlan, ignoreCache, false, OStorage.LOCKING_STRATEGY.NONE);
   }
 
+  @Override
   public void deleteRecord(final ORecord iRecord, final OPERATION_MODE iMode) {
     if (!iRecord.getIdentity().isValid())
       return;
 
     addRecord(iRecord, ORecordOperation.DELETED, null);
+  }
+
+  @Override
+  public void recycleRecord(final ORecord iRecord) {
+    if (!iRecord.getIdentity().isValid())
+      return;
+
+    addRecord(iRecord, ORecordOperation.RECYCLED, null);
   }
 
   public ORecord saveRecord(final ORecord iRecord, final String iClusterName, final OPERATION_MODE iMode,
@@ -376,7 +385,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     try {
       switch (iStatus) {
-      case ORecordOperation.CREATED: {
+      case ORecordOperation.CREATED:
+      case ORecordOperation.RECYCLED: {
         database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
         RESULT res = database.callbackHooks(TYPE.BEFORE_CREATE, iRecord);
         if (res == RESULT.RECORD_CHANGED && iRecord instanceof ODocument)
@@ -447,6 +457,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           case ORecordOperation.DELETED:
             break;
           case ORecordOperation.CREATED:
+          case ORecordOperation.RECYCLED:
             switch (iStatus) {
             case ORecordOperation.DELETED:
               allEntries.remove(rid);
@@ -459,6 +470,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
         switch (iStatus) {
         case ORecordOperation.CREATED:
+        case ORecordOperation.RECYCLED:
           database.callbackHooks(TYPE.AFTER_CREATE, iRecord);
           break;
         case ORecordOperation.LOADED:
@@ -483,6 +495,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       } catch (Exception e) {
         switch (iStatus) {
         case ORecordOperation.CREATED:
+        case ORecordOperation.RECYCLED:
           database.callbackHooks(TYPE.CREATE_FAILED, iRecord);
           break;
         case ORecordOperation.UPDATED:
@@ -498,6 +511,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     } finally {
       switch (iStatus) {
       case ORecordOperation.CREATED:
+      case ORecordOperation.RECYCLED:
         database.callbackHooks(TYPE.FINALIZE_CREATION, iRecord);
         break;
       case ORecordOperation.UPDATED:
@@ -540,7 +554,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         final ORecord record = operation.getRecord();
         final ORID identity = record.getIdentity();
 
-        if (operation.type == ORecordOperation.CREATED && recordCreatedCallback != null)
+        if ((operation.type == ORecordOperation.CREATED || operation.type == ORecordOperation.RECYCLED)
+            && recordCreatedCallback != null)
           recordCreatedCallback.call(new ORecordId(identity), identity.getClusterPosition());
         else if (operation.type == ORecordOperation.UPDATED && recordUpdatedCallback != null)
           recordUpdatedCallback.call(new ORecordId(identity), record.getVersion());

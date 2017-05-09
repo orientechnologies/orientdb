@@ -19,12 +19,10 @@
      */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.OServer;
@@ -61,12 +59,7 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
             database.getName(), rid.toString(), version, requestId);
 
     try {
-      database.getStorage().recyclePosition(rid, new byte[] {}, version, recordType);
-
-      // CREATE A RECORD TO CALL ALL THE HOOKS (LIKE INDEXES FOR UNIQUE CONSTRAINTS)
-      final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-      ORecordInternal.fill(loadedRecordInstance, rid, version, content, true);
-      loadedRecordInstance.save();
+      database.recycle(getRecord());
 
       ODistributedServerLog
           .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> resurrected deleted record");

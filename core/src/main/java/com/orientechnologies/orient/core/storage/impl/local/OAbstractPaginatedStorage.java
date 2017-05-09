@@ -1303,7 +1303,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     });
 
     for (ORecordOperation txEntry : entries) {
-      if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+      if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.RECYCLED
+          || txEntry.type == ORecordOperation.UPDATED) {
         final ORecord record = txEntry.getRecord();
         if (record instanceof ODocument)
           ((ODocument) record).validate();
@@ -1312,7 +1313,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.DELETED) {
         final int clusterId = txEntry.getRecord().getIdentity().getClusterId();
         clustersToLock.put(clusterId, getClusterById(clusterId));
-      } else if (txEntry.type == ORecordOperation.CREATED) {
+      } else if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.RECYCLED) {
         newRecords.add(txEntry);
 
         final ORecord record = txEntry.getRecord();
@@ -1363,22 +1364,35 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
 
             final OCluster cluster = getClusterById(clusterId);
-            OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
-            rid.setClusterId(cluster.getId());
 
-            if (rid.getClusterPosition() > -1) {
-              // CREATE EMPTY RECORDS UNTIL THE POSITION IS REACHED. THIS IS THE CASE WHEN A SERVER IS OUT OF SYNC
-              // BECAUSE A TRANSACTION HAS BEEN ROLLED BACK BEFORE TO SEND THE REMOTE CREATES. SO THE OWNER NODE DELETED
-              // RECORD HAVING A HIGHER CLUSTER POSITION
-              while (rid.getClusterPosition() > ppos.clusterPosition) {
-                ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+            final OPaginatedCluster.RECORD_STATUS recordStatus = rid.getClusterPosition() > -1 ?
+                ((OPaginatedCluster) cluster).getRecordStatus(rid.getClusterPosition()) :
+                OPaginatedCluster.RECORD_STATUS.NOT_EXISTENT;
+
+            OPhysicalPosition ppos = new OPhysicalPosition(rid.getClusterPosition());
+
+            if (recordStatus == OPaginatedCluster.RECORD_STATUS.NOT_EXISTENT) {
+              ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+
+              if (rid.getClusterPosition() > -1) {
+                // CREATE EMPTY RECORDS UNTIL THE POSITION IS REACHED. THIS IS THE CASE WHEN A SERVER IS OUT OF SYNC
+                // BECAUSE A TRANSACTION HAS BEEN ROLLED BACK BEFORE TO SEND THE REMOTE CREATES. SO THE OWNER NODE DELETED
+                // RECORD HAVING A HIGHER CLUSTER POSITION
+                while (rid.getClusterPosition() > ppos.clusterPosition) {
+                  ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+                }
+
+                if (rid.getClusterPosition() != ppos.clusterPosition)
+                  throw new OConcurrentCreateException(rid, new ORecordId(rid.getClusterId(), ppos.clusterPosition));
               }
-
-              if (rid.getClusterPosition() != ppos.clusterPosition)
-                throw new OConcurrentCreateException(rid, new ORecordId(rid.getClusterId(), ppos.clusterPosition));
+            } else if (recordStatus == OPaginatedCluster.RECORD_STATUS.REMOVED) {
+              // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
+              recyclePosition(rid, new byte[] {}, txEntry.getRecord().getVersion(),
+                  ORecordInternal.getRecordType(txEntry.getRecord()));
             }
-            positions.put(txEntry, ppos);
 
+            positions.put(txEntry, ppos);
+            rid.setClusterId(cluster.getId());
             rid.setClusterPosition(ppos.clusterPosition);
 
             if (!oldRID.equals(rid))
@@ -3610,9 +3624,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           ORecordInternal.setVersion(rec, ppos.recordVersion);
         } else {
-          // USE -2 AS VERSION TO AVOID INCREMENTING THE VERSION
-          final OStorageOperationResult<Integer> updateRes = updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, -2,
-              ORecordInternal.getRecordType(rec), -1, null);
+          final OStorageOperationResult<Integer> updateRes = updateRecord(rid, ORecordInternal.isContentChanged(rec), stream,
+              rec.getVersion(), ORecordInternal.getRecordType(rec), -1, null);
           ORecordInternal.setVersion(rec, updateRes.getResult());
           if (updateRes.getModifiedRecordContent() != null)
             ORecordInternal.fill(rec, rid, updateRes.getResult(), updateRes.getModifiedRecordContent(), false);
