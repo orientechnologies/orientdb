@@ -1,14 +1,15 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.assertj.core.api.Assertions;
+import org.junit.*;
+import org.junit.rules.TestName;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,44 +22,69 @@ import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintU
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OUpdateStatementExecutionTest {
-  static ODatabaseDocument db;
+  @Rule
+  public TestName name = new TestName();
 
-  @BeforeClass
-  public static void beforeClass() {
+  private ODatabaseDocument db;
 
-    db = new ODatabaseDocumentTx("memory:OUpdateStatementExecutionTest");
-    db.create();
+  private String className;
+
+  @Before
+  public void before() {
+
+    OrientDB orientDB = new OrientDB("embedded:./target/databases", OrientDBConfig.defaultConfig());
+
+    orientDB.create(name.getMethodName(), ODatabaseType.MEMORY);
+
+    db = orientDB.open(name.getMethodName(), "admin", "admin");
+
+    className = name.getMethodName();
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("number", 4L);
+
+      List<String> tagsList = new ArrayList<>();
+      tagsList.add("foo");
+      tagsList.add("bar");
+      tagsList.add("baz");
+      doc.setProperty("tagsList", tagsList);
+
+      Map<String, String> tagsMap = new HashMap<>();
+      tagsMap.put("foo", "foo");
+      tagsMap.put("bar", "bar");
+      tagsMap.put("baz", "baz");
+      doc.setProperty("tagsMap", tagsMap);
+
+      doc.save();
+    }
+
   }
 
-  @AfterClass
-  public static void afterClass() {
+  @After
+  public void after() {
     db.close();
   }
 
   @Test
   public void testSetString() {
-    String className = "testSetString";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
     OResultSet result = db.command("update " + className + " set surname = 'foo'");
     printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 10L, item.getProperty("count"));
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 10L, item.getProperty("count"));
+
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals("foo", item.getProperty("surname"));
     }
@@ -68,28 +94,19 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testCopyField() {
-    String className = "testCopyField";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
     OResultSet result = db.command("update " + className + " set surname = name");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 10L, item.getProperty("count"));
-    }
+
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 10L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals((Object) item.getProperty("name"), item.getProperty("surname"));
     }
@@ -99,28 +116,18 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testSetExpression() {
-    String className = "testSetExpression";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
     OResultSet result = db.command("update " + className + " set surname = 'foo'+name ");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 10L, item.getProperty("count"));
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 10L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals("foo" + item.getProperty("name"), item.getProperty("surname"));
     }
@@ -130,21 +137,11 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testConditionalSet() {
-    String className = "testConditionalSet";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
     OResultSet result = db.command("update " + className + " set surname = 'foo' where name = 'name3'");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 1L, item.getProperty("count"));
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 1L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
@@ -152,7 +149,7 @@ public class OUpdateStatementExecutionTest {
     boolean found = false;
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       if ("name3".equals(item.getProperty("name"))) {
         Assert.assertEquals("foo", item.getProperty("surname"));
@@ -166,26 +163,12 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testSetOnList() {
-    String className = "testSetOnList";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      List<String> tags = new ArrayList<>();
-      tags.add("foo");
-      tags.add("bar");
-      tags.add("baz");
-      doc.setProperty("tags", tags);
-      doc.save();
-    }
-    OResultSet result = db.command("update " + className + " set tags[0] = 'abc' where name = 'name3'");
+    OResultSet result = db.command("update " + className + " set tagsList[0] = 'abc' where name = 'name3'");
     printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 1L, item.getProperty("count"));
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 1L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
@@ -193,14 +176,14 @@ public class OUpdateStatementExecutionTest {
     boolean found = false;
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       if ("name3".equals(item.getProperty("name"))) {
         List<String> tags = new ArrayList<>();
         tags.add("abc");
         tags.add("bar");
         tags.add("baz");
-        Assert.assertEquals(tags, item.getProperty("tags"));
+        Assert.assertEquals(tags, item.getProperty("tagsList"));
         found = true;
       }
     }
@@ -211,26 +194,12 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testSetOnList2() {
-    String className = "testSetOnList2";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      List<String> tags = new ArrayList<>();
-      tags.add("foo");
-      tags.add("bar");
-      tags.add("baz");
-      doc.setProperty("tags", tags);
-      doc.save();
-    }
-    OResultSet result = db.command("update " + className + " set tags[6] = 'abc' where name = 'name3'");
+    OResultSet result = db.command("update " + className + " set tagsList[6] = 'abc' where name = 'name3'");
     printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 1L, item.getProperty("count"));
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 1L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
@@ -238,7 +207,7 @@ public class OUpdateStatementExecutionTest {
     boolean found = false;
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       if ("name3".equals(item.getProperty("name"))) {
         List<String> tags = new ArrayList<>();
@@ -249,7 +218,7 @@ public class OUpdateStatementExecutionTest {
         tags.add(null);
         tags.add(null);
         tags.add("abc");
-        Assert.assertEquals(tags, item.getProperty("tags"));
+        Assert.assertEquals(tags, item.getProperty("tagsList"));
         found = true;
       }
     }
@@ -260,26 +229,11 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testSetOnMap() {
-    String className = "testSetOnMap";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      Map<String, String> tags = new HashMap<>();
-      tags.put("foo", "foo");
-      tags.put("bar", "bar");
-      tags.put("baz", "baz");
-      doc.setProperty("tags", tags);
-      doc.save();
-    }
-    OResultSet result = db.command("update " + className + " set tags['foo'] = 'abc' where name = 'name3'");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 1L, item.getProperty("count"));
-    }
+    OResultSet result = db.command("update " + className + " set tagsMap['foo'] = 'abc' where name = 'name3'");
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 1L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
@@ -287,21 +241,21 @@ public class OUpdateStatementExecutionTest {
     boolean found = false;
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       if ("name3".equals(item.getProperty("name"))) {
         Map<String, String> tags = new HashMap<>();
         tags.put("foo", "abc");
         tags.put("bar", "bar");
         tags.put("baz", "baz");
-        Assert.assertEquals(tags, item.getProperty("tags"));
+        Assert.assertEquals(tags, item.getProperty("tagsMap"));
         found = true;
       } else {
         Map<String, String> tags = new HashMap<>();
         tags.put("foo", "foo");
         tags.put("bar", "bar");
         tags.put("baz", "baz");
-        Assert.assertEquals(tags, item.getProperty("tags"));
+        Assert.assertEquals(tags, item.getProperty("tagsMap"));
       }
     }
     Assert.assertTrue(found);
@@ -311,33 +265,22 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testPlusAssign() {
-    String className = "testPlusAssign";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.setProperty("number", 4L);
-      doc.save();
-    }
-    OResultSet result = db.command("update " + className + " set name += 'foo', surname += 'bar', number += 5");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 10L, item.getProperty("count"));
-    }
+    OResultSet result = db.command("update " + className + " set name += 'foo', newField += 'bar', number += 5");
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 10L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       Assert.assertTrue(item.getProperty("name").toString().endsWith("foo")); //test concatenate string to string
       Assert.assertEquals(8, item.getProperty("name").toString().length());
-      Assert.assertEquals("bar", item.getProperty("surname")); //test concatenate null to string
+      Assert.assertEquals("bar", item.getProperty("newField")); //test concatenate null to string
       Assert.assertEquals((Object) 9L, item.getProperty("number")); //test sum numbers
     }
     Assert.assertFalse(result.hasNext());
@@ -346,29 +289,19 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testMinusAssign() {
-    String className = "testMinusAssign";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.setProperty("number", 4L);
-      doc.save();
-    }
     OResultSet result = db.command("update " + className + " set number -= 5");
     printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 10L, item.getProperty("count"));
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 10L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals((Object) (-1L), item.getProperty("number"));
     }
@@ -378,29 +311,18 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testStarAssign() {
-    String className = "testStarAssign";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.setProperty("number", 4L);
-      doc.save();
-    }
     OResultSet result = db.command("update " + className + " set number *= 5");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 10L, item.getProperty("count"));
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 10L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals((Object) 20L, item.getProperty("number"));
     }
@@ -410,29 +332,18 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testSlashAssign() {
-    String className = "testSlashAssign";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.setProperty("number", 4L);
-      doc.save();
-    }
     OResultSet result = db.command("update " + className + " set number /= 2");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 10L, item.getProperty("count"));
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 10L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals((Object) 2L, item.getProperty("number"));
     }
@@ -442,15 +353,6 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testRemove() {
-    String className = "testRemove";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.setProperty("surname", "surname" + i);
-      doc.save();
-    }
-
     OResultSet result = db.query("select from " + className);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
@@ -460,7 +362,6 @@ public class OUpdateStatementExecutionTest {
     }
 
     result = db.command("update " + className + " remove surname");
-    printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
@@ -483,30 +384,19 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testContent() {
-    String className = "testContent";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.setProperty("surname", "surname" + i);
-      doc.save();
-    }
 
     OResultSet result = db.command("update " + className + " content {'name': 'foo', 'secondName': 'bar'}");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 10L, item.getProperty("count"));
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 10L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals("foo", item.getProperty("name"));
       Assert.assertEquals("bar", item.getProperty("secondName"));
@@ -518,30 +408,19 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testMerge() {
-    String className = "testMerge";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.setProperty("surname", "surname" + i);
-      doc.save();
-    }
 
     OResultSet result = db.command("update " + className + " merge {'name': 'foo', 'secondName': 'bar'}");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 10L, item.getProperty("count"));
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 10L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals("foo", item.getProperty("name"));
       Assert.assertEquals("bar", item.getProperty("secondName"));
@@ -553,30 +432,19 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testUpsert1() {
-    String className = "testUpsert1";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.setProperty("surname", "surname" + i);
-      doc.save();
-    }
 
     OResultSet result = db.command("update " + className + " set foo = 'bar' upsert where name = 'name1'");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 1L, item.getProperty("count"));
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 1L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       String name = item.getProperty("name");
       Assert.assertNotNull(name);
@@ -591,31 +459,34 @@ public class OUpdateStatementExecutionTest {
   }
 
   @Test
+  public void testUpsertAndReturn() {
+
+    OResultSet result = db.command("update " + className + " set foo = 'bar' upsert  return after  where name = 'name1' ");
+
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals("bar", item.getProperty("foo"));
+    Assert.assertFalse(result.hasNext());
+    result.close();
+
+  }
+
+  @Test
   public void testUpsert2() {
-    String className = "testUpsert2";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.setProperty("surname", "surname" + i);
-      doc.save();
-    }
 
     OResultSet result = db.command("update " + className + " set foo = 'bar' upsert where name = 'name11'");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 1L, item.getProperty("count"));
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals((Object) 1L, item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
     for (int i = 0; i < 11; i++) {
       Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
+      item = result.next();
       Assert.assertNotNull(item);
       String name = item.getProperty("name");
       Assert.assertNotNull(name);
@@ -631,7 +502,8 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testRemove1() {
-    String className = "testRemove1";
+    String className = "overridden" + this.className;
+
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("theProperty", OType.EMBEDDEDLIST);
 
@@ -646,31 +518,27 @@ public class OUpdateStatementExecutionTest {
 
     OResultSet result = db.command("update " + className + " remove theProperty[0]");
     printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      List ls = item.getProperty("theProperty");
-      Assert.assertNotNull(ls);
-      Assert.assertEquals(9, ls.size());
-      Assert.assertFalse(ls.contains("n0"));
-    }
+    Assert.assertTrue(result.hasNext());
+    item = result.next();
+    Assert.assertNotNull(item);
+    List ls = item.getProperty("theProperty");
+    Assert.assertNotNull(ls);
+    Assert.assertEquals(9, ls.size());
+    Assert.assertFalse(ls.contains("n0"));
     Assert.assertFalse(result.hasNext());
     result.close();
   }
 
   @Test
   public void testRemove2() {
-    String className = "testRemove2";
+    String className = "overridden" + this.className;
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("theProperty", OType.EMBEDDEDLIST);
 
@@ -685,35 +553,41 @@ public class OUpdateStatementExecutionTest {
 
     OResultSet result = db.command("update " + className + " remove theProperty[0, 1, 3]");
     printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      List ls = item.getProperty("theProperty");
-      Assert.assertNotNull(ls);
-      Assert.assertEquals(7, ls.size());
-      Assert.assertFalse(ls.contains("n0"));
-      Assert.assertFalse(ls.contains("n1"));
-      Assert.assertTrue(ls.contains("n2"));
-      Assert.assertFalse(ls.contains("n3"));
-      Assert.assertTrue(ls.contains("n4"));
-    }
+    Assert.assertTrue(result.hasNext());
+    item = result.next();
+    Assert.assertNotNull(item);
+    List ls = item.getProperty("theProperty");
+
+    Assertions.assertThat(ls).isNotNull()
+        .hasSize(7)
+        .doesNotContain("n0")
+        .doesNotContain("n1")
+        .contains("n2")
+        .doesNotContain("n3")
+        .contains("n4");
+
+//    Assert.assertNotNull(ls);
+//    Assert.assertEquals(7, ls.size());
+//    Assert.assertFalse(ls.contains("n0"));
+//    Assert.assertFalse(ls.contains("n1"));
+//    Assert.assertTrue(ls.contains("n2"));
+//    Assert.assertFalse(ls.contains("n3"));
+//    Assert.assertTrue(ls.contains("n4"));
+
     Assert.assertFalse(result.hasNext());
     result.close();
   }
 
   @Test
   public void testRemove3() {
-    String className = "testRemove3";
+    String className = "overriden" + this.className;
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("theProperty", OType.EMBEDDED);
 
@@ -727,24 +601,20 @@ public class OUpdateStatementExecutionTest {
 
     OResultSet result = db.command("update " + className + " remove theProperty.sub");
     printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-    }
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
     Assert.assertFalse(result.hasNext());
     result.close();
 
     result = db.query("select from " + className);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      ODocument ls = item.getProperty("theProperty");
-      Assert.assertNotNull(ls);
-      Assert.assertFalse(ls.getPropertyNames().contains("sub"));
-      Assert.assertEquals("bar", ls.getProperty("aaa"));
-    }
+    Assert.assertTrue(result.hasNext());
+    item = result.next();
+    Assert.assertNotNull(item);
+    ODocument ls = item.getProperty("theProperty");
+    Assert.assertNotNull(ls);
+    Assert.assertFalse(ls.getPropertyNames().contains("sub"));
+    Assert.assertEquals("bar", ls.getProperty("aaa"));
     Assert.assertFalse(result.hasNext());
     result.close();
   }
