@@ -122,7 +122,9 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
       } else {
         List<Method> methodsList = methodsMap.get(entry.getKey());
         Method[] methods = new Method[methodsList.size()];
-        int i = 0, minParams = 0, maxParams = 0;
+        int i = 0;
+        int minParams = 0;
+        int maxParams = 0;
         for (Method m : methodsList) {
           methods[i++] = m;
           minParams = minParams < m.getParameterTypes().length ? minParams : m.getParameterTypes().length;

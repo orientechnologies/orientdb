@@ -121,59 +121,50 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
     return method;
   }
 
-  private static boolean isAssignable(Class<?> cls, Class<?> toClass) {
+  private static boolean isAssignable(Class<?> fromClass, Class<?> toClass) {
     // handle autoboxing
-    if (cls.isPrimitive() && !toClass.isPrimitive()) {
-      cls = PRIMITIVE_TO_WRAPPER.get(cls);
-      if (cls == null) {
+    if (fromClass.isPrimitive() && !toClass.isPrimitive()) {
+      fromClass = PRIMITIVE_TO_WRAPPER.get(fromClass);
+      if (fromClass == null) {
         return false;
       }
-    }
-    if (toClass.isPrimitive() && !cls.isPrimitive()) {
-      cls = WRAPPER_TO_PRIMITIVE.get(cls);
-      if (cls == null) {
+    } else if (toClass.isPrimitive() && !fromClass.isPrimitive()) {
+      fromClass = WRAPPER_TO_PRIMITIVE.get(fromClass);
+      if (fromClass == null) {
         return false;
       }
     }
 
-    if (cls.equals(toClass)) {
+    if (fromClass.equals(toClass)) {
       return true;
     }
-    if (cls.isPrimitive()) {
+    if (fromClass.isPrimitive()) {
       if (!toClass.isPrimitive()) {
         return false;
-      }
-      if (Integer.TYPE.equals(cls)) {
+      } else if (Integer.TYPE.equals(fromClass)) {
         return Long.TYPE.equals(toClass) || Float.TYPE.equals(toClass) || Double.TYPE.equals(toClass);
-      }
-      if (Long.TYPE.equals(cls)) {
+      } else if (Long.TYPE.equals(fromClass)) {
         return Float.TYPE.equals(toClass) || Double.TYPE.equals(toClass);
-      }
-      if (Boolean.TYPE.equals(cls)) {
+      } else if (Boolean.TYPE.equals(fromClass)) {
         return false;
-      }
-      if (Double.TYPE.equals(cls)) {
+      } else if (Double.TYPE.equals(fromClass)) {
         return false;
-      }
-      if (Float.TYPE.equals(cls)) {
+      } else if (Float.TYPE.equals(fromClass)) {
         return Double.TYPE.equals(toClass);
-      }
-      if (Character.TYPE.equals(cls)) {
+      } else if (Character.TYPE.equals(fromClass)) {
         return Integer.TYPE.equals(toClass) || Long.TYPE.equals(toClass) || Float.TYPE.equals(toClass)
             || Double.TYPE.equals(toClass);
-      }
-      if (Short.TYPE.equals(cls)) {
+      } else if (Short.TYPE.equals(fromClass)) {
         return Integer.TYPE.equals(toClass) || Long.TYPE.equals(toClass) || Float.TYPE.equals(toClass)
             || Double.TYPE.equals(toClass);
-      }
-      if (Byte.TYPE.equals(cls)) {
+      } else if (Byte.TYPE.equals(fromClass)) {
         return Short.TYPE.equals(toClass) || Integer.TYPE.equals(toClass) || Long.TYPE.equals(toClass)
             || Float.TYPE.equals(toClass) || Double.TYPE.equals(toClass);
       }
       // this should never happen
       return false;
     }
-    return toClass.isAssignableFrom(cls);
+    return toClass.isAssignableFrom(fromClass);
   }
 
 }
