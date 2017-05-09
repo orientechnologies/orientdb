@@ -90,8 +90,8 @@
         <div class="stepTwo" *ngSwitchCase="'2'">
           <h3 align="center">Step 2 - Configure the ETL Parameters</h3><br>
           <div class="col-md-9">
-            <div class="panel panel-default">
-              <div class="panel-heading" align="center"><b>CHOSEN SOURCE: {{sourcePrototype.source.value.toUpperCase()}}</b></div>
+            <div class="panel panel-default" style="height:500px">
+              <div class="panel-heading" align="center"><b>ETL OVERVIEW - CHOSEN SOURCE: {{sourcePrototype.source.value.toUpperCase()}}</b></div>
               <div class="panel-body">
                 <div class="row">
 
@@ -202,24 +202,26 @@
                       </div>
                     </div>
                   </div>
-
                 </div>
               </div>
-              <div class="panel-footer" align="center">Etl Overview</div>
+              <!--<div class="panel-footer" align="center">Etl Overview</div>-->
             </div>
           </div>
           <div class="col-md-3">
-            <div class="panel panel-info">
+            <div class="panel panel-info" style="overflow:auto; height:500px">
               <div class="panel-heading" align="center"><b>PARAMETER CONFIGURATION</b></div>
               <div class="panel-body">
                 <div id="panelPlaceholder"><br><br><br><br><br><br><br><h4 align="center"><b>PARAMETERS CONFIGURATION PANEL<br>
-                  </b></h4> <br><br><br><br><br><br><br><br> </div>
+                </b></h4> <br><br><br><br><br><br><br><br> </div>
 
                 <!-- Extractor advanced configuration -->
                 <div id="extractorOptions" style="display:none">
-                  <h4 align="center"><b>Extractor options</b></h4><br>
+
                   <div *ngIf="extractorType && eKeys">
-                    <li *ngFor="let eParameter of eKeys">
+                    <h5 align="center"><b>{{extractorType.toUpperCase()}} EXTRACTOR OPTIONS</b></h5><br>
+                    <div *ngFor="let eParameter of eKeys">
+                      <button type="button" class="btn btn-xs btn-default" data-toggle="popover" data-html="true"
+                              [attr.data-content]="hints.extractor[eParameter]" data-animation="am-fade-and-scale"><b>?</b></button>
                       <label *ngIf="extractorPrototype[extractorType][eParameter]['mandatory'] == true">
                         {{eParameter.toUpperCase()}} <b style="color:red;">*</b>
                       </label>
@@ -233,10 +235,12 @@
                           {{eType}}
                         </option>
                       </select>
+
                       <input type="text" class="form-control" name="eTextConfig" [(ngModel)]="extractor[extractorType][eParameter]"
                              placeholder="enter your value" *ngIf="!extractorPrototype[extractorType][eParameter]['types']"/>
+                      <br>
 
-                    </li>
+                    </div>
                   </div><br><br>
                   <div class="col-md-12 text-center">
                     <div class="btn-group">
@@ -247,7 +251,32 @@
 
                 <!-- Transformer advanced configuration -->
                 <div id="transformerOptions" style="display:none">
-                  <h4 align="center"><b>Transformer options</b></h4>
+
+                  <div *ngIf="currentTransformerType && tKeys">
+                    <h5 align="center"><b>{{currentTransformerType.toUpperCase()}} TRANSFORMER OPTIONS</b></h5><br>
+                    <div *ngFor="let tParameter of tKeys">
+                      <button type="button" class="btn btn-xs btn-default" data-toggle="popover" data-html="true" style="border-radius: 40px;"
+                              [attr.data-content]="hints.transformer[tParameter]" data-animation="am-fade-and-scale"><b>?</b></button>
+                      <label *ngIf="transformerPrototype[currentTransformerType][tParameter]['mandatory'] == true">
+                        &emsp;{{tParameter.toUpperCase()}} <b style="color:red;">*</b>
+                      </label>
+                      <label *ngIf="transformerPrototype[currentTransformerType][tParameter]['mandatory'] == false">
+                        &emsp;{{tParameter.toUpperCase()}}
+                      </label>
+
+                      <select *ngIf="transformerPrototype[currentTransformerType][tParameter]['types']"
+                              class="form-control" name="tTypeConfig" [(ngModel)]="currentTransformer[currentTransformerType][tParameter]">
+                        <option *ngFor="let tType of transformerPrototype[currentTransformerType][tParameter]['types']" [value]="tType" placeholder="default">
+                          {{tType}}
+                        </option>
+                      </select>
+
+                      <input type="text" class="form-control" name="tTextConfig" [(ngModel)]="currentTransformer[currentTransformerType][tParameter]"
+                             placeholder="enter your value" *ngIf="!transformerPrototype[currentTransformerType][tParameter]['types']"/>
+                      <br>
+
+                    </div>
+                  </div><br><br>
                   <div class="col-md-12 text-center">
                     <div class="btn-group">
                       <button type="button" class="btn btn-xs btn-danger" (click)="deleteTransformer()">Delete Transformer</button>
@@ -257,9 +286,12 @@
 
                 <!-- Loader advanced configuration -->
                 <div id="loaderOptions" style="display:none">
-                  <h4 align="center"><b>Loader options</b></h4>
+
                   <div *ngIf="loaderType && lKeys">
-                    <li *ngFor="let lParameter of lKeys">
+                    <h5 align="center"><b>{{loaderType.toUpperCase()}} LOADER OPTIONS</b></h5><br>
+                    <div *ngFor="let lParameter of lKeys">
+                      <button type="button" class="btn btn-xs btn-default" data-toggle="popover" data-html="true"
+                              [attr.data-content]="hints.loader[lParameter]" data-animation="am-fade-and-scale"><b>?</b></button>
                       <label *ngIf="loaderPrototype[loaderType][lParameter]['mandatory'] == true">
                         {{lParameter.toUpperCase()}} <b style="color:red;">*</b>
                       </label>
@@ -276,8 +308,9 @@
 
                       <input type="text" class="form-control" name="lTextConfig" [(ngModel)]="loader[loaderType][lParameter]"
                              placeholder="enter your value" *ngIf="!loaderPrototype[loaderType][lParameter]['types']"/>
+                      <br>
 
-                    </li>
+                    </div>
                   </div><br><br>
                   <div class="col-md-12 text-center">
                     <div class="btn-group">
@@ -287,7 +320,6 @@
                 </div>
 
               </div>
-              <div class="panel-footer" align="center"><b style="color:red;">*</b> means that the parameter is mandatory for a correct configuration.</div>
             </div>
           </div>
 
@@ -301,6 +333,7 @@
                 <div class="btn-group">
                   <button type="button" class="btn btn-sm btn-primary" (click)="launch()" [disabled]="!ready">Run Etl</button>
                 </div>
+                <h5>&emsp;&emsp;&emsp;<b style="color:red;">*</b><b style="color:grey;"> means that the parameter is mandatory for a correct configuration.</b></h5>
               </div>
             </div>
           </div>

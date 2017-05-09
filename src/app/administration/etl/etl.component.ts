@@ -28,14 +28,18 @@ class EtlComponent {
   private loaderPrototype;
   private source = undefined; // Source variable
   private extractor = undefined; // Extractor variable
+  private currentTransformer = undefined; // Current transformer
   private transformers = []; // Array containing every transformer
   private loader = undefined; // Loader variable
 
   // Types needed for controls
   private extractorType;
+  private currentTransformerType;
   private loaderType;
 
+  // Keys to iterate TODO try a pipe-style implementation
   private eKeys;
+  private tKeys;
   private lKeys;
 
   private finalJson; // The final json, it will be passed to the launch function
@@ -460,10 +464,77 @@ class EtlComponent {
       URLMethodHint: "Defines the HTTP method to use in extracting data.",
       pathHint: "Defines the path to the local file.",
       lockHint: "Defines whether to lock the file during the extraction phase.",
-      customLabelHint: "Use a custom label if you want to use multiple transformers, to distinguish them clearly."
-
+      customLabelHint: "Use a custom label if you want to use multiple transformers, to distinguish them clearly.",
+      extractor: {
+        multiline: "Defines if multiline is supported",
+        linefeed: "Defines the linefeed to use in the event of multiline processing",
+        separator: "Defines the column separator",
+        columnsOnFirstLine: "Defines whether the first line contains column descriptors",
+        columns: "Defines an array for names and (optionally) types to write",
+        nullValue: "Defines the null value in the file",
+        dateFormat: "Defines the format to use in parsing dates from file",
+        dateTimeFormat: "Defines the format to use in parsing dates from file",
+        quote: "Defines string character delimiter",
+        skipFrom: "Defines the line number you want to skip from",
+        skipTo: "Defines the line number you want to skip to",
+        ignoreEmptyLines: "Defines whether it should ignore empty lines",
+        ignoreMissingColumns: "Defines whether it should ignore empty columns",
+        predefinedFormat: "Defines the csv format you want to use",
+        driver: "Defines the JDBC Driver class",
+        url: "Defines the JDBC URL to connect to",
+        userName: "Defines the username to use on the source database",
+        userPassword: "Defines the user password to use on the source database",
+        query: "Defines the query to extract the record you want to import",
+        queryCount: "Defines query that returns the count of the fetched record (used to provide a correct progress indication)",
+        rootNode: "Defines the root node to extract in the XML, By default, it builds from the root element in the file",
+        tagsAsAttribute: "Defines an array of elements, where child elements are considered as attributes of the document and the attribute values as the text within the element"
+      },
+      transformer: {
+        fieldName: "Defines the document field name to use",
+        expression: "Defines the expression you want to evaluate, using OrientDB SQL",
+        value: "Defines the value to set. If the value is taken or computed at run-time, use 'expression' instead",
+        if: "Condition for the operation to be executed",
+        operation: "Defines the operation to execute",
+        save: "Defines whether to save the vertex, edge or document right after setting the fields",
+        joinFieldName: "Defines the field containing the join value",
+        lookup: "Defines the index on which to execute the lookup, or a select query",
+        unresolvedLinkAction: "Defines the action to execute in the event that the join hasn't been resolved",
+        class: "Defines the class to use",
+        skipDuplicates: "Defines whether it skips duplicates",
+        direction: "Defines the edge direction",
+        targetVertexFields: "Defines the field on which to set the target vertex",
+        edgeFields: "Defines the fields to set in the edge",
+        language: "Defines the programming language to use",
+        code: "Defines the code to execute",
+        joinValue: "Defines the value to lookup",
+        linkFieldName: "Defines the field containing the link to set",
+        linkFieldType: "Defines the link type",
+        prefix: "Defines what it writes before the content",
+        postfix: "Defines what it writes after the content",
+        command: "Defines the command to execute"
+      },
+      loader: {
+        dbURL: "Defines the database URL",
+        dbUser: "Defines the user name",
+        dbPassword: "Defines the user password",
+        serverUser: "Defines the server administrator user name, usually root",
+        serverPassword: "Defines the server administrator user password that is provided at server startup",
+        dbAutoCreate: "Defines whether it automatically creates the database, in the event that it doesn't exist already",
+        dbAutoCreateProperties: "Defines whether it automatically creates properties in the schema",
+        dbAutoDropIfExists: "Defines whether it automatically drops the database if exists already",
+        tx: "Defines whether it uses transactions",
+        txUseLog: "Defines whether it uses log in transactions",
+        wal: "Defines whether it uses write ahead logging. disable to achieve better performance",
+        batchCommit: "When using tansactions, defines the batch of entries it commits. Helps avoid having one large transaction in memory",
+        dbType: "Defines the database type, graph or document",
+        class: "Defines the class to use in storing new record",
+        cluster: "Defines the cluster in which to store the new record",
+        classes: "Defines whether it creates classes, if not defined already in the database",
+        indexes: "Defines indexes to use on the ETL process. Before starting, it creates any declared indexes not present in the database. Indexes must have 'type', 'class' and 'fields'",
+        useLightweightEdges: "Defines whether it changes the default setting for Lightweight Edges",
+        standardElementConstraints: "Defines whether it changes the default setting for TinkerPop Blueprint constraints. Value cannot be null and you cannot use id as a property name"
+      }
     }
-
   }
 
   // Getters and setters
@@ -584,7 +655,7 @@ class EtlComponent {
      });
      }); */
 
-    this.eKeys = Object.keys(this.extractor[type]); // TODO try a pipe-style implementation
+    this.eKeys = Object.keys(this.extractor[type]);
     this.extractorType = type;
     this.readyForExecution();
 
@@ -697,36 +768,39 @@ class EtlComponent {
 
 
     // Flowchart
-    $(document).ready(function() {
-      var dataTransformer = {
-        operators: {
-          operator: {
-            top: 20,
-            left: 160,
-            properties: {
-              title: type + ' transformer',
-              inputs: {
-                input1: {
-                  label: ""
-                }
-              },
-              outputs: {
-                output_1: {
-                  label: 'click to configure'
-                }
-              }
-            }
-          }
-        }
-      };
+    /*  $(document).ready(function() {
+     var dataTransformer = {
+     operators: {
+     operator: {
+     top: 20,
+     left: 160,
+     properties: {
+     title: type + ' transformer',
+     inputs: {
+     input1: {
+     label: ""
+     }
+     },
+     outputs: {
+     output_1: {
+     label: 'click to configure'
+     }
+     }
+     }
+     }
+     }
+     };
 
-      (<any>$('#transformerSpace')).flowchart({
-        data: dataTransformer
-      });
-    });
+     (<any>$('#transformerSpace')).flowchart({
+     data: dataTransformer
+     });
+     }); */
 
     // Push into the array
     this.transformers.push(transformer);
+    this.currentTransformerType = type;
+    this.currentTransformer = transformer;
+    this.tKeys = Object.keys(this.currentTransformer[type]);
     this.readyForExecution();
 
     $("#pleaseTransformer").hide();
@@ -819,9 +893,13 @@ class EtlComponent {
     $("#panelPlaceholder").show();
   }
 
-  deleteTransformer(name) { // TODO not working
-    var v = this.transformers.indexOf(name);
-    this.transformers[v] = undefined;
+  deleteTransformer() {
+    var index = this.transformers.indexOf(this.currentTransformer);
+    if (index > -1) {
+      this.transformers.splice(index, 1);
+    }
+    this.currentTransformer = undefined;
+    this.currentTransformerType = undefined;
 
     // Jquery hide/show
     $("#transformerOptions").hide();
@@ -909,7 +987,7 @@ class EtlComponent {
 
   enablePopovers() {
     (<any>$('[data-toggle="popover"]')).popover({
-      title: 'About this parameter',
+      // title: 'About this parameter',
       placement: 'right',
       trigger: 'hover'
     });
