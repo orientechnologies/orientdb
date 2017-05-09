@@ -992,7 +992,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       distriConf = getRecordBytes(connection, distributedCfg);
     }
 
-    return new OOpenResponse(connection.getId(), tokenToSend, clusters, distriConf, OConstants.getVersion());
+    return new OOpenResponse37(connection.getId(), tokenToSend);
   }
 
   @Override

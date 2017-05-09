@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -397,7 +398,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString());
         storageConfiguration.load(conf);
 
-        configuration = storageConfiguration;
+        updateStorageConfiguration(storageConfiguration);
 
         componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
@@ -423,11 +424,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public void reload() {
+    final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this,
+        ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString());
+    storageConfiguration.load(clientConfiguration);
 
-    OReloadRequest request = new OReloadRequest();
-    OReloadResponse response = networkOperation(request, "Error on reloading database information");
-
-    updateStorageInformations(response.getClusters());
+    updateStorageConfiguration(storageConfiguration);
+//
+//    OReloadRequest request = new OReloadRequest();
+//    OReloadResponse response = networkOperation(request, "Error on reloading database information");
+//
+//    updateStorageInformations(response.getClusters());
   }
 
   public void create(OContextConfiguration contextConfiguration) {
@@ -1277,7 +1283,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       endRequest(network);
     }
     final int sessionId;
-    OOpenResponse response = request.createResponse();
+    OOpenResponse37 response = request.createResponse();
     try {
       network.beginResponse(nodeSession.getSessionId(), false);
       response.read(network, session);
@@ -1295,11 +1301,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
 
-    OCluster[] cl = response.getClusterIds();
-    updateStorageInformations(cl);
+//    OCluster[] cl = response.getClusterIds();
+//    updateStorageInformations(cl);
 
     // READ CLUSTER CONFIGURATION
-    updateClusterConfiguration(network.getServerURL(), response.getDistributedConfiguration());
+//    updateClusterConfiguration(network.getServerURL(), response.getDistributedConfiguration());
 
     // This need to be protected by a lock for now, let's see in future
     stateLock.acquireWriteLock();
@@ -1344,7 +1350,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         OChannelBinaryAsynchClient network = null;
         try {
           network = getNetwork(currentURL);
-          final int serverVersion = network.getSrvProtocolVersion();
           openRemoteDatabase(network);
           return;
         } catch (OIOException e) {
@@ -1652,8 +1657,24 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return retry;
   }
 
-  public void updateStorageInformations(OCluster[] clusters) {
+  public void updateStorageConfiguration(OStorageConfiguration storageConfiguration) {
     stateLock.acquireWriteLock();
+    this.configuration = storageConfiguration;
+    OCluster[] clusters = new OCluster[storageConfiguration.clusters.size()];
+    for (OStorageClusterConfiguration clusterConfig : storageConfiguration.clusters) {
+      if (clusterConfig != null) {
+        final OClusterRemote cluster = new OClusterRemote();
+        String clusterName = clusterConfig.getName();
+        final int clusterId = clusterConfig.getId();
+        if (clusterName != null) {
+          clusterName = clusterName.toLowerCase();
+          cluster.configure(null, clusterId, clusterName);
+          if (clusterId >= clusters.length)
+            clusters = Arrays.copyOf(clusters, clusterId + 1);
+          clusters[clusterId] = cluster;
+        }
+      }
+    }
     try {
       this.clusters = clusters;
       clusterMap.clear();
@@ -1667,6 +1688,23 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } finally {
       stateLock.releaseWriteLock();
     }
+  }
+
+  public void updateStorageInformations(OCluster[] clusters) {
+//    stateLock.acquireWriteLock();
+//    try {
+//      this.clusters = clusters;
+//      clusterMap.clear();
+//      for (int i = 0; i < clusters.length; ++i) {
+//        if (clusters[i] != null)
+//          clusterMap.put(clusters[i].getName(), clusters[i]);
+//      }
+//      final OCluster defaultCluster = clusterMap.get(CLUSTER_DEFAULT_NAME);
+//      if (defaultCluster != null)
+//        defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();
+//    } finally {
+//      stateLock.releaseWriteLock();
+//    }
   }
 
   protected OStorageRemoteSession getCurrentSession() {

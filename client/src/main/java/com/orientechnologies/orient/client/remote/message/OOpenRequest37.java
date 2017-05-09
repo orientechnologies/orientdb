@@ -11,7 +11,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput
 
 import java.io.IOException;
 
-public class OOpenRequest37 implements OBinaryRequest<OOpenResponse> {
+public class OOpenRequest37 implements OBinaryRequest<OOpenResponse37> {
 
   private String  clientId     = null;
   private boolean useToken     = true;
@@ -82,7 +82,6 @@ public class OOpenRequest37 implements OBinaryRequest<OOpenResponse> {
     return clientId;
   }
 
-
   public boolean isCollectStats() {
     return collectStats;
   }
@@ -101,8 +100,8 @@ public class OOpenRequest37 implements OBinaryRequest<OOpenResponse> {
   }
 
   @Override
-  public OOpenResponse createResponse() {
-    return new OOpenResponse();
+  public OOpenResponse37 createResponse() {
+    return new OOpenResponse37();
   }
 
   @Override
