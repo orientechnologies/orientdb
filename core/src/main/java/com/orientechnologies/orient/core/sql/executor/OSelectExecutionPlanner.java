@@ -155,7 +155,7 @@ public class OSelectExecutionPlanner {
       return result;
     }
 
-    handleGlobalLet(result, globalLetClause, ctx, enableProfiling);
+    boolean globalLets = handleGlobalLet(result, globalLetClause, ctx, enableProfiling);
     handleFetchFromTarger(result, ctx, enableProfiling);
     handleLet(result, perRecordLetClause, ctx, enableProfiling);
 
@@ -868,7 +868,9 @@ public class OSelectExecutionPlanner {
     }
   }
 
-  private void handleGlobalLet(OSelectExecutionPlan result, OLetClause letClause, OCommandContext ctx, boolean profilingEnabled) {
+  private boolean handleGlobalLet(OSelectExecutionPlan result, OLetClause letClause, OCommandContext ctx,
+      boolean profilingEnabled) {
+    boolean res = false;
     if (letClause != null) {
       List<OLetItem> items = letClause.getItems();
       for (OLetItem item : items) {
@@ -877,8 +879,10 @@ public class OSelectExecutionPlanner {
         } else {
           result.chain(new GlobalLetQueryStep(item.getVarName(), item.getQuery(), ctx, profilingEnabled));
         }
+        res = true;
       }
     }
+    return res;
   }
 
   private void handleLet(OSelectExecutionPlan result, OLetClause letClause, OCommandContext ctx, boolean profilingEnabled) {
