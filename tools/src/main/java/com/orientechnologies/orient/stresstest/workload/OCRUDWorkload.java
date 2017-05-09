@@ -24,7 +24,6 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.ODatabaseRepair;
@@ -116,54 +115,39 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
     // PREALLOCATE THE LIST TO AVOID CONCURRENCY ISSUES
     final ORID[] records = new ORID[createsResult.total];
 
-    executeOperation(databaseIdentifier, createsResult, settings, new OCallable<Void, OBaseWorkLoadContext>() {
-      @Override
-      public Void call(final OBaseWorkLoadContext context) {
-        final ODocument doc = createOperation(context.currentIdx);
-        records[context.currentIdx] = doc.getIdentity();
-        createsResult.current.incrementAndGet();
-        return null;
-      }
+    executeOperation(databaseIdentifier, createsResult, settings, context -> {
+      final ODocument doc = createOperation(context.currentIdx);
+      records[context.currentIdx] = doc.getIdentity();
+      createsResult.current.incrementAndGet();
+      return null;
     });
 
     if (records.length != createsResult.total)
       throw new RuntimeException("Error on creating records: found " + records.length + " but expected " + createsResult.total);
 
-    executeOperation(databaseIdentifier, scansResult, settings, new OCallable<Void, OBaseWorkLoadContext>() {
-      @Override
-      public Void call(final OBaseWorkLoadContext context) {
-        scanOperation(((OWorkLoadContext) context).getDb());
-        scansResult.current.incrementAndGet();
-        return null;
-      }
+    executeOperation(databaseIdentifier, scansResult, settings, context -> {
+      scanOperation(((OWorkLoadContext) context).getDb());
+      scansResult.current.incrementAndGet();
+      return null;
     });
 
-    executeOperation(databaseIdentifier, readsResult, settings, new OCallable<Void, OBaseWorkLoadContext>() {
-      @Override
-      public Void call(final OBaseWorkLoadContext context) {
-        readOperation(((OWorkLoadContext) context).getDb(), context.currentIdx);
-        readsResult.current.incrementAndGet();
-        return null;
-      }
+    executeOperation(databaseIdentifier, readsResult, settings, context -> {
+      readOperation(((OWorkLoadContext) context).getDb(), context.currentIdx);
+      readsResult.current.incrementAndGet();
+      return null;
     });
 
-    executeOperation(databaseIdentifier, updatesResult, settings, new OCallable<Void, OBaseWorkLoadContext>() {
-      @Override
-      public Void call(final OBaseWorkLoadContext context) {
-        updateOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
-        updatesResult.current.incrementAndGet();
-        return null;
-      }
+    executeOperation(databaseIdentifier, updatesResult, settings, context -> {
+      updateOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
+      updatesResult.current.incrementAndGet();
+      return null;
     });
 
-    executeOperation(databaseIdentifier, deletesResult, settings, new OCallable<Void, OBaseWorkLoadContext>() {
-      @Override
-      public Void call(final OBaseWorkLoadContext context) {
-        deleteOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
-        records[context.currentIdx] = null;
-        deletesResult.current.incrementAndGet();
-        return null;
-      }
+    executeOperation(databaseIdentifier, deletesResult, settings, context -> {
+      deleteOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
+      records[context.currentIdx] = null;
+      deletesResult.current.incrementAndGet();
+      return null;
     });
   }
 
