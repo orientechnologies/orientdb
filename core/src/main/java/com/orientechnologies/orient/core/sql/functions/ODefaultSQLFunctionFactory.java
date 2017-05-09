@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql.functions;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.*;
 import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
@@ -27,9 +28,9 @@ import com.orientechnologies.orient.core.sql.functions.stat.*;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionConcat;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.*;
 
 /**
  * Default set of SQL function.
@@ -38,7 +39,7 @@ import java.util.Set;
  */
 public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
 
-  private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
+  private static final Map<String, Object> FUNCTIONS = new HashMap<>();
   static {
     // MISC FUNCTIONS
     register(OSQLFunctionAverage.NAME, OSQLFunctionAverage.class);
@@ -94,11 +95,44 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionShortestPath.NAME, OSQLFunctionShortestPath.class);
     register(OSQLFunctionDijkstra.NAME, OSQLFunctionDijkstra.class);
     register(OSQLFunctionAstar.NAME, OSQLFunctionAstar.class);
-
+    // auto-register all Math.<method>() automatically with math_ prefix
+    registerStaticReflectiveFunctions("math_", Math.class);
   }
 
   public static void register(final String iName, final Object iImplementation) {
     FUNCTIONS.put(iName.toLowerCase(), iImplementation);
+  }
+
+  private static void registerStaticReflectiveFunctions(final String prefix, final Class<?> clazz) {
+    Map<String, List<Method>> methodsMap = new HashMap<>();
+
+    for (Method method : clazz.getMethods()) {
+      if (Modifier.isStatic(method.getModifiers())) {
+        if (!methodsMap.containsKey(method.getName())) {
+          methodsMap.put(method.getName(), new ArrayList<>());
+        }
+        methodsMap.get(method.getName()).add(method);
+      }
+    }
+
+    for (Map.Entry<String, List<Method>> entry : methodsMap.entrySet()) {
+      final String name = prefix + entry.getKey();
+      if (FUNCTIONS.containsKey(name)) {
+        OLogManager.instance().warn(null, "Unable to register reflective function with name " + entry.getKey());
+      } else {
+        List<Method> methodsList = methodsMap.get(entry.getKey());
+        Method[] methods = new Method[methodsList.size()];
+        int i = 0, minParams = 0, maxParams = 0;
+        for (Method m : methodsList) {
+          methods[i++] = m;
+          minParams = minParams < m.getParameterTypes().length ? minParams : m.getParameterTypes().length;
+          maxParams = maxParams > m.getParameterTypes().length ? maxParams : m.getParameterTypes().length;
+        }
+        OSQLStaticReflectiveFunction reflectiveFunction = new OSQLStaticReflectiveFunction(name, minParams, maxParams, methods);
+        register(name, reflectiveFunction);
+      }
+    }
+
   }
 
   @Override
