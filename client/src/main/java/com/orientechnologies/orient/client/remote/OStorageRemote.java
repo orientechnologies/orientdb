@@ -1114,6 +1114,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  public void updateDistributedNodes(List<String> hosts) {
+    // TEMPORARY FIX: DISTRIBUTED MODE DOESN'T SUPPORT TREE BONSAI, KEEP ALWAYS EMBEDDED RIDS
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
+    // UPDATE IT
+    synchronized (serverURLs) {
+      for (String host : hosts) {
+        addHost(host);
+      }
+    }
+  }
+
   public void removeSessions(final String url) {
     synchronized (serverURLs) {
       serverURLs.remove(url);

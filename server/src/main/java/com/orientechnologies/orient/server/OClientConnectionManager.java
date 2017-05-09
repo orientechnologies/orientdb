@@ -506,9 +506,10 @@ public class OClientConnectionManager {
     }
   }
 
-  public void pushDistributedConfig() {
+  public void pushDistributedConfig(String database, List<String> hosts) {
     for (ONetworkProtocolBinary protocolBinary : distributeConfigPush) {
-      OPushDistributedConfigurationRequest request = null;
+      //TODO Filter by database, push just list of active server for a specific database
+      OPushDistributedConfigurationRequest request = new OPushDistributedConfigurationRequest(hosts);
       try {
         OBinaryPushResponse response = protocolBinary.push(request);
       } catch (IOException e) {

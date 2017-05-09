@@ -766,14 +766,34 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       } else
         configurationMap.putInLocalCache(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, document);
-
       // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
+      notifyClients(databaseName);
       serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
 
       dumpServersStatus();
     }
 
     return updated;
+  }
+
+  private void notifyClients(String databaseName) {
+    List<String> hosts = new ArrayList<>();
+    for (Member member : activeNodes.values()) {
+      ODocument memberConfig = getNodeConfigurationByUuid(member.getUuid(), true);
+      final String nodeStatus = memberConfig.field("status");
+
+      if (memberConfig != null && !"OFFLINE".equals(nodeStatus)) {
+        final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) memberConfig.field("listeners"));
+        if (listeners != null)
+          for (Map<String, Object> listener : listeners) {
+            if (listener.get("protocol").equals("ONetworkProtocolBinary")) {
+              String url = (String) listener.get("listen");
+              hosts.add(url);
+            }
+          }
+      }
+    }
+    serverInstance.getClientConnectionManager().pushDistributedConfig(databaseName, hosts);
   }
 
   @Override

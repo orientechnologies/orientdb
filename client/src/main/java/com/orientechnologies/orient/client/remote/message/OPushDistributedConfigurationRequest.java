@@ -10,33 +10,52 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by tglman on 11/01/17.
  */
 public class OPushDistributedConfigurationRequest implements OBinaryPushRequest<OBinaryPushResponse> {
 
-  public ODocument configuration;
+  public  ODocument    configuration;
+  private List<String> hosts;
+
+  public OPushDistributedConfigurationRequest(List<String> hosts) {
+    this.hosts = hosts;
+  }
+
+  public OPushDistributedConfigurationRequest() {
+  }
 
   @Override
   public void write(OChannelDataOutput channel) throws IOException {
-    channel.writeBytes(OMessageHelper.getRecordBytes(configuration, ORecordSerializerNetworkV37.INSTANCE));
+    channel.writeInt(hosts.size());
+    for (String host : hosts) {
+      channel.writeString(host);
+    }
   }
 
   @Override
   public void read(OChannelDataInput network) throws IOException {
-    ORecordSerializer serializer = ORecordSerializerNetworkV37.INSTANCE;
-    final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
-    serializer.fromStream(network.readBytes(), record, null);
-    configuration = (ODocument) record;
+    int size = network.readInt();
+    hosts = new ArrayList<>(size);
+    while (size-- > 0) {
+      hosts.add(network.readString());
+    }
   }
 
   public OBinaryPushResponse execute(OStorageRemote remote) {
-    return null;
+    remote.updateDistributedNodes(this.hosts);
+    return new OPushDistributedConfigurationResponse();
   }
 
   @Override
   public OBinaryPushResponse createResponse() {
     return new OPushDistributedConfigurationResponse();
+  }
+
+  public List<String> getHosts() {
+    return hosts;
   }
 }
