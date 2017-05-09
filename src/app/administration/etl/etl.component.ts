@@ -26,15 +26,15 @@ class EtlComponent {
   private extractorPrototype;
   private transformerPrototype;
   private loaderPrototype;
-  private source = undefined; // Source variable
-  private extractor = undefined; // Extractor variable
-  private currentTransformer = undefined; // Current transformer
+  private source; // Source variable
+  private extractor; // Extractor variable
+  private currentTransformer; // Current transformer
   private transformers = []; // Array containing every transformer
-  private loader = undefined; // Loader variable
+  private loader; // Loader variable
 
   // Types needed for controls
   private extractorType;
-  private currentTransformerType;
+  private transformerTypes = [];
   private loaderType;
 
   // Keys to iterate TODO try a pipe-style implementation
@@ -537,16 +537,6 @@ class EtlComponent {
     }
   }
 
-  // Getters and setters
-
-  getStep() {
-    return this.step;
-  }
-
-  setStep(step) {
-    this.step = step;
-  }
-
   // Dynamic creations
 
   sourceInit() {
@@ -670,7 +660,7 @@ class EtlComponent {
 
   transformerInit(type) { // Block and Code aren't active atm. Csv is deprecated.
     var transformer;
-    // TODO: use the custom label in the flowchart, show the options for the created transformer
+    // TODO: custom labels. Probably another parallel array could be useful
 
     // Variable creation
     if(type === "field")
@@ -796,9 +786,9 @@ class EtlComponent {
      });
      }); */
 
-    // Push into the array
+    // Push into the arrays
     this.transformers.push(transformer);
-    this.currentTransformerType = type;
+    this.transformerTypes.push(type);
     this.currentTransformer = transformer;
     this.tKeys = Object.keys(this.currentTransformer[type]);
     this.readyForExecution();
@@ -897,9 +887,9 @@ class EtlComponent {
     var index = this.transformers.indexOf(this.currentTransformer);
     if (index > -1) {
       this.transformers.splice(index, 1);
+      this.transformerTypes.splice(index, 1);
     }
     this.currentTransformer = undefined;
-    this.currentTransformerType = undefined;
 
     // Jquery hide/show
     $("#transformerOptions").hide();
@@ -923,34 +913,44 @@ class EtlComponent {
 
   readyForExecution() {
 
-    /*// If exists at least one module for every type (source excluded)
-     if(this.extractor && this.transformers && this.loader) {
-     // Controls, for every property of the extractor module, if it's mandatory and has a value
-     for(var property in this.extractorPrototype[this.extractorType]) {
-     if(this.extractorPrototype[this.extractorType].hasOwnProperty(property)) {
-     if(this.extractorPrototype[this.extractorType][property]["mandatory"] && !this.extractor[this.extractorType][property]) {
-     this.ready = false;
-     return;
-     }
-     else
-     this.ready = true;
-     }
-     }
-     for(var property in this.loaderPrototype[this.loaderType]) {
-     if(this.loaderPrototype[this.loaderType].hasOwnProperty(property)) {
-     if(this.loaderPrototype[this.loaderType][property]["mandatory"] && !this.loader[this.loaderType][property]) {
-     this.ready = false;
-     return;
-     }
-     else
-     this.ready = true;
-     }
-     }
-     }*/
-    this.ready = true; // TODO reactivate and finish the proper function
+    // If at least one module for every type exists (source excluded)
+    if(this.extractor && this.transformers.length > 0 && this.loader) {
+      // Controls, for every property of every module, if it's mandatory and has a value
+      // Extractor control
+      for(var property in this.extractorPrototype[this.extractorType]) {
+        if(this.extractorPrototype[this.extractorType].hasOwnProperty(property)) {
+          if(this.extractorPrototype[this.extractorType][property]["mandatory"] && !this.extractor[this.extractorType][property]) {
+            this.ready = false;
+            return;
+          }
+        }
+      }
+      // Transformers control
+      for(var i = 0; i < this.transformers.length; i++) {
+        var type = this.getTransformerType(this.transformers[i]);
+        for(var property in this.transformerPrototype[type]) {
+          if (this.transformerPrototype[type].hasOwnProperty(property)) {
+            if (this.transformerPrototype[type][property]["mandatory"] && !this.transformers[i][type][property]) {
+              this.ready = false;
+              return;
+            }
+          }
+        }
+      }
+      // Loader control
+      for(var property in this.loaderPrototype[this.loaderType]) {
+        if(this.loaderPrototype[this.loaderType].hasOwnProperty(property)) {
+          if(this.loaderPrototype[this.loaderType][property]["mandatory"] && !this.loader[this.loaderType][property]) {
+            this.ready = false;
+            return;
+          }
+        }
+      }
+      this.ready = true;
+    }
   }
 
-  launch() { // TODO maybe even a restart function is needed, to avoid weird behaviors
+  launch() {
     if(this.source)
       this.finalJson = '{"source":' + JSON.stringify(this.source) + ',"extractor":' + JSON.stringify(this.extractor) +
         ',"transformers":' + JSON.stringify(this.transformers) + ',"loader":' + JSON.stringify(this.loader) + "}";
@@ -972,6 +972,44 @@ class EtlComponent {
 
   status() {
 
+  }
+
+  reset() {
+    // useful assignations to reset the configuration
+    this.transformers = [];
+    this.currentTransformer = undefined;
+    this.extractor = undefined;
+    this.loader = undefined;
+    this.source = undefined;
+    this.extractorType = undefined;
+    this.transformerTypes = [];
+    this.loaderType = undefined;
+    this.eKeys = undefined;
+    this.tKeys = undefined;
+    this.lKeys = undefined;
+  }
+
+  // Getters and setters
+
+  getStep() {
+    return this.step;
+  }
+
+  setStep(step) {
+    this.step = step;
+  }
+
+  getTransformerType(transformer) {
+    var index = -1;
+    for(var i = 0; i < this.transformers.length; i++) {
+      for(var property in this.transformers[i]) {
+        if (this.transformers[i][property] === transformer[property]) {
+          index = i;
+          break;
+        }
+      }
+    }
+    return this.transformerTypes[index];
   }
 
   // Misc

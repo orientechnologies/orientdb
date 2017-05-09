@@ -219,14 +219,14 @@
 
                   <div *ngIf="extractorType && eKeys">
                     <h5 align="center"><b>{{extractorType.toUpperCase()}} EXTRACTOR OPTIONS</b></h5><br>
-                    <div *ngFor="let eParameter of eKeys">
-                      <button type="button" class="btn btn-xs btn-default" data-toggle="popover" data-html="true"
+                    <div *ngFor="let eParameter of eKeys;">
+                      <button type="button" class="btn btn-xs btn-default" data-toggle="popover" data-html="true" style="border-radius: 40px;"
                               [attr.data-content]="hints.extractor[eParameter]" data-animation="am-fade-and-scale"><b>?</b></button>
                       <label *ngIf="extractorPrototype[extractorType][eParameter]['mandatory'] == true">
-                        {{eParameter.toUpperCase()}} <b style="color:red;">*</b>
+                        &emsp;{{eParameter.toUpperCase()}} <b style="color:red;">*</b>
                       </label>
                       <label *ngIf="extractorPrototype[extractorType][eParameter]['mandatory'] == false">
-                        {{eParameter.toUpperCase()}}
+                        &emsp;{{eParameter.toUpperCase()}}
                       </label>
 
                       <select *ngIf="extractorPrototype[extractorType][eParameter]['types']"
@@ -252,27 +252,27 @@
                 <!-- Transformer advanced configuration -->
                 <div id="transformerOptions" style="display:none">
 
-                  <div *ngIf="currentTransformerType && tKeys">
-                    <h5 align="center"><b>{{currentTransformerType.toUpperCase()}} TRANSFORMER OPTIONS</b></h5><br>
+                  <div *ngIf="getTransformerType(currentTransformer) && tKeys">
+                    <h5 align="center"><b>{{getTransformerType(currentTransformer).toUpperCase()}} TRANSFORMER OPTIONS</b></h5><br>
                     <div *ngFor="let tParameter of tKeys">
                       <button type="button" class="btn btn-xs btn-default" data-toggle="popover" data-html="true" style="border-radius: 40px;"
                               [attr.data-content]="hints.transformer[tParameter]" data-animation="am-fade-and-scale"><b>?</b></button>
-                      <label *ngIf="transformerPrototype[currentTransformerType][tParameter]['mandatory'] == true">
+                      <label *ngIf="transformerPrototype[getTransformerType(currentTransformer)][tParameter]['mandatory'] == true">
                         &emsp;{{tParameter.toUpperCase()}} <b style="color:red;">*</b>
                       </label>
-                      <label *ngIf="transformerPrototype[currentTransformerType][tParameter]['mandatory'] == false">
+                      <label *ngIf="transformerPrototype[getTransformerType(currentTransformer)][tParameter]['mandatory'] == false">
                         &emsp;{{tParameter.toUpperCase()}}
                       </label>
 
-                      <select *ngIf="transformerPrototype[currentTransformerType][tParameter]['types']"
-                              class="form-control" name="tTypeConfig" [(ngModel)]="currentTransformer[currentTransformerType][tParameter]">
-                        <option *ngFor="let tType of transformerPrototype[currentTransformerType][tParameter]['types']" [value]="tType" placeholder="default">
+                      <select *ngIf="transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']"
+                              class="form-control" name="tTypeConfig" [(ngModel)]="currentTransformer[getTransformerType(currentTransformer)][tParameter]">
+                        <option *ngFor="let tType of transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']" [value]="tType" placeholder="default">
                           {{tType}}
                         </option>
                       </select>
 
-                      <input type="text" class="form-control" name="tTextConfig" [(ngModel)]="currentTransformer[currentTransformerType][tParameter]"
-                             placeholder="enter your value" *ngIf="!transformerPrototype[currentTransformerType][tParameter]['types']"/>
+                      <input type="text" class="form-control" name="tTextConfig" [(ngModel)]="currentTransformer[getTransformerType(currentTransformer)][tParameter]"
+                             placeholder="enter your value" *ngIf="!transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']"/>
                       <br>
 
                     </div>
@@ -290,13 +290,13 @@
                   <div *ngIf="loaderType && lKeys">
                     <h5 align="center"><b>{{loaderType.toUpperCase()}} LOADER OPTIONS</b></h5><br>
                     <div *ngFor="let lParameter of lKeys">
-                      <button type="button" class="btn btn-xs btn-default" data-toggle="popover" data-html="true"
+                      <button type="button" class="btn btn-xs btn-default" data-toggle="popover" data-html="true" style="border-radius: 40px;"
                               [attr.data-content]="hints.loader[lParameter]" data-animation="am-fade-and-scale"><b>?</b></button>
                       <label *ngIf="loaderPrototype[loaderType][lParameter]['mandatory'] == true">
-                        {{lParameter.toUpperCase()}} <b style="color:red;">*</b>
+                        &emsp;{{lParameter.toUpperCase()}} <b style="color:red;">*</b>
                       </label>
                       <label *ngIf="loaderPrototype[loaderType][lParameter]['mandatory'] == false">
-                        {{lParameter.toUpperCase()}}
+                        &emsp;{{lParameter.toUpperCase()}}
                       </label>
 
                       <select *ngIf="loaderPrototype[loaderType][lParameter]['types']"
@@ -328,10 +328,13 @@
             <div class="col-sm-offset-2 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="setStep('1')">Back</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="setStep('1'); reset()">Back</button>
                 </div>
                 <div class="btn-group">
                   <button type="button" class="btn btn-sm btn-primary" (click)="launch()" [disabled]="!ready">Run Etl</button>
+                </div>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-warning" (click)="readyForExecution()">READY?</button> <!-- TODO find a smarter way to control if ready -->
                 </div>
                 <h5>&emsp;&emsp;&emsp;<b style="color:red;">*</b><b style="color:grey;"> means that the parameter is mandatory for a correct configuration.</b></h5>
               </div>
@@ -366,8 +369,4 @@
       </div>
     </form>
   </div>
-
-  <!-- TODO add the side panel with the configuration parameters -->
-
-
 </div>
