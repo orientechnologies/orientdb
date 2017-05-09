@@ -20,9 +20,13 @@
 
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Set;
 
 public class OStorageRemoteConfiguration extends OStorageConfiguration {
 
@@ -30,7 +34,7 @@ public class OStorageRemoteConfiguration extends OStorageConfiguration {
   private String networkRecordSerializer;
 
   public OStorageRemoteConfiguration(OStorageRemote oStorageRemote, String iRecordSerializer) {
-    super(oStorageRemote,  Charset.forName("UTF-8"));
+    super(oStorageRemote, Charset.forName("UTF-8"));
 
     networkRecordSerializer = iRecordSerializer;
   }
@@ -41,8 +45,54 @@ public class OStorageRemoteConfiguration extends OStorageConfiguration {
   }
 
   @Override
-  public int getRecordSerializerVersion() {
-    return super.getRecordSerializerVersion();
+  public void create() throws IOException {
+    throw new UnsupportedOperationException("create");
   }
+
+//  @Override
+//  public void update() throws OSerializationException {
+//    throw new UnsupportedOperationException("update");
+//  }
+
+  @Override
+  public void delete() throws IOException {
+    throw new UnsupportedOperationException( "delete");
+  }
+
+  @Override
+  public IndexEngineData getIndexEngine(String name) {
+    throw new UnsupportedOperationException("get index engine");
+  }
+
+  @Override
+  public void deleteIndexEngine(String name) {
+    throw new UnsupportedOperationException("delete index engine");
+  }
+
+  @Override
+  public Set<String> indexEngines() {
+    throw new UnsupportedOperationException("index engines");
+  }
+
+  @Override
+  public void addIndexEngine(String name, IndexEngineData engineData) {
+    throw new UnsupportedOperationException("add index engine");
+  }
+
+  @Override
+  public void dropCluster(int iClusterId) {
+    throw new UnsupportedOperationException("drop cluster");
+  }
+
+  @Override
+  public void setClusterStatus(int clusterId, OStorageClusterConfiguration.STATUS iStatus) {
+    throw new UnsupportedOperationException("cluster status");
+  }
+
+  @Override
+  public void removeProperty(String iName) {
+    throw new UnsupportedOperationException("remove property");
+  }
+
 
 }

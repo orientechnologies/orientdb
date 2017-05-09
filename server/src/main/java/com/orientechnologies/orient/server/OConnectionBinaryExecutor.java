@@ -940,7 +940,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   @Override
-  public OBinaryResponse executeDatabaseOpen37(OOpenRequest37 request) {
+  public OBinaryResponse executeDatabaseOpen37(OOpen37Request request) {
     connection.getData().clientId = request.getClientId();
     connection.setTokenBased(request.isUseToken());
     connection.getData().supportsPushMessages = request.isSupportsPush();
@@ -992,7 +992,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       distriConf = getRecordBytes(connection, distributedCfg);
     }
 
-    return new OOpenResponse37(connection.getId(), tokenToSend);
+    return new OOpen37Response(connection.getId(), tokenToSend);
   }
 
   @Override

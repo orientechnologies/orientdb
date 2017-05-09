@@ -231,7 +231,7 @@ public class ONetworkBinaryProtocolFactory {
       return new ORollbackTransactionRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_OPEN:
-      return new OOpenRequest37();
+      return new OOpen37Request();
 
     case OChannelBinaryProtocol.REQUEST_CONNECT:
       return new OConnect37Request();

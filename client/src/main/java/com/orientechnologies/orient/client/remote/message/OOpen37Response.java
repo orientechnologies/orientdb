@@ -14,14 +14,14 @@ import java.util.Collection;
 /**
  * Created by tglman on 09/05/17.
  */
-public class OOpenResponse37 implements OBinaryResponse {
+public class OOpen37Response implements OBinaryResponse {
   private int    sessionId;
   private byte[] sessionToken;
 
-  public OOpenResponse37() {
+  public OOpen37Response() {
   }
 
-  public OOpenResponse37(int sessionId, byte[] sessionToken) {
+  public OOpen37Response(int sessionId, byte[] sessionToken) {
     this.sessionId = sessionId;
     this.sessionToken = sessionToken;
   }

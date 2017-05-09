@@ -91,7 +91,7 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeDatabaseOpen(OOpenRequest request);
 
-  OBinaryResponse executeDatabaseOpen37(OOpenRequest37 request);
+  OBinaryResponse executeDatabaseOpen37(OOpen37Request request);
 
   OBinaryResponse executeShutdown(OShutdownRequest request);
 
