@@ -28,11 +28,12 @@ public class OUpdateStatementExecutionTest {
   private ODatabaseDocument db;
 
   private String className;
+  private OrientDB orientDB;
 
   @Before
   public void before() {
 
-    OrientDB orientDB = new OrientDB("embedded:./target/databases", OrientDBConfig.defaultConfig());
+    orientDB = new OrientDB("embedded:./target/databases", OrientDBConfig.defaultConfig());
 
     orientDB.create(name.getMethodName(), ODatabaseType.MEMORY);
 
@@ -67,6 +68,8 @@ public class OUpdateStatementExecutionTest {
   @After
   public void after() {
     db.close();
+
+    orientDB.close();
   }
 
   @Test
