@@ -511,8 +511,32 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
                   List<String> group = groupedResult.get(serverRecordContent);
                   if (group == null) {
-                    group = new ArrayList<String>();
-                    groupedResult.put(serverRecordContent, group);
+                    if (serverRecordContent instanceof ORawBuffer) {
+                      if (((ORawBuffer) serverRecordContent).recordType == ODocument.RECORD_TYPE) {
+                        // DOCUMENTS COULD BE THE SAME EVEN IF THE BINARY CONTENT IS NOT, COMPARING DOCUMENTS INSTEAD
+                        final ODocument currentDocument = new ODocument().fromStream(((ORawBuffer) serverRecordContent).buffer);
+
+                        for (Map.Entry<Object, List<String>> resultEntry : groupedResult.entrySet()) {
+                          if (resultEntry.getKey() instanceof ORawBuffer
+                              && ((ORawBuffer) resultEntry.getKey()).recordType == ODocument.RECORD_TYPE) {
+                            final ODocument otherDocument = new ODocument().fromStream(((ORawBuffer) resultEntry.getKey()).buffer);
+                            if (currentDocument.hasSameContentOf(otherDocument)) {
+                              // FOUND
+                              ODistributedServerLog.debug(this, dManager.getLocalNodeName(), serverName, ODistributedServerLog.DIRECTION.IN,
+                                  "Auto repairer: matched a document by its content (rid=%s)", rid);
+
+                              group = resultEntry.getValue();
+                              break;
+                            }
+                          }
+                        }
+                      }
+                    }
+
+                    if (group == null) {
+                      group = new ArrayList<String>();
+                      groupedResult.put(serverRecordContent, group);
+                    }
                   }
                   group.add(serverName);
                 }
