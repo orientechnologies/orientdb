@@ -419,12 +419,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       s.setSoTimeout(getSocketTimeout());
   }
 
-  public void setWaitResponseTimeout() throws SocketException {
-    final Socket s = socket;
-    if (s != null)
-      s.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
-  }
-
   private void throwSerializedException(final byte[] serializedException) throws IOException {
     final OMemoryInputStream inputStream = new OMemoryInputStream(serializedException);
     final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);

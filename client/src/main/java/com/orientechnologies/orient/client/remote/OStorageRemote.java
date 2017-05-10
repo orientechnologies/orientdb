@@ -87,7 +87,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * This object is bound to each remote ODatabase instances.
  */
-public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
+public class OStorageRemote extends OStorageAbstract implements OStorageProxy, ORemotePushHandler {
   @Deprecated
   public static final String PARAM_CONNECTION_STRATEGY = "connectionStrategy";
 
@@ -1335,7 +1335,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       stateLock.acquireWriteLock();
       try {
         if (pushThread == null) {
-          pushThread = new OStorageRemotePushThread(this);
+          pushThread = new OStorageRemotePushThread(this, getCurrentServerURL());
           pushThread.start();
           subscribeStorageConfiguration(nodeSession);
           subscribeDistributedConfiguration(nodeSession);
@@ -1820,4 +1820,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     transaction.replaceContent(respose.getOperations(), respose.getIndexChanges());
   }
 
+  public OBinaryPushRequest createPush(byte type) {
+    switch (type) {
+    case OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG:
+      return new OPushDistributedConfigurationRequest();
+//    case OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY:
+//    case OChannelBinaryProtocol.REQUEST_PUSH_STORAGE_CONFIG:
+//
+//      return  new
+    }
+    return null;
+  }
+
+  @Override
+  public OBinaryPushResponse executeUpdateDistributedConfig(OPushDistributedConfigurationRequest request) {
+    updateDistributedNodes(request.getHosts());
+    return new OPushDistributedConfigurationResponse();
+  }
 }

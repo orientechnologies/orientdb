@@ -108,7 +108,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
    * @param server
    * @param channel
    */
-  public void initVariables(final OServer server, OChannelBinaryServer channel) {
+  public void initVariables(final OServer server, OChannelBinary channel) {
     this.server = server;
     this.channel = channel;
   }
@@ -758,11 +758,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     return new OConnectionBinaryExecutor(connection, server, handshakeInfo);
   }
 
-  public synchronized OBinaryPushResponse push(OBinaryPushRequest request) throws IOException {
+  public OBinaryPushResponse push(OBinaryPushRequest request) throws IOException {
     this.pushRequest = request;
+    channel.acquireWriteLock();
     channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+    channel.writeByte(request.getPushCommand());
     request.write(channel);
     channel.flush();
+    channel.releaseWriteLock();
     try {
       return pushResponse.take();
     } catch (InterruptedException e) {

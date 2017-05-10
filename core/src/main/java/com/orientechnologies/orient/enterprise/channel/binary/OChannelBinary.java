@@ -31,6 +31,7 @@ import com.orientechnologies.orient.enterprise.channel.OChannel;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Arrays;
 
 /**
@@ -357,5 +358,11 @@ public abstract class OChannelBinary extends OChannel implements OChannelDataInp
 
   public DataInputStream getDataInput() {
     return in;
+  }
+
+  public void setWaitResponseTimeout() throws SocketException {
+    final Socket s = socket;
+    if (s != null)
+      s.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
   }
 }

@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.client.remote.ORemotePushHandler;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
@@ -14,8 +14,9 @@ public interface OBinaryPushRequest<T extends OBinaryPushResponse> {
 
   void read(final OChannelDataInput network) throws IOException;
 
-  T execute(OStorageRemote remote);
+  T execute(ORemotePushHandler remote);
 
   OBinaryPushResponse createResponse();
 
+  byte getPushCommand();
 }

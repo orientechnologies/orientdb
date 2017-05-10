@@ -10,25 +10,25 @@ import java.io.OutputStream;
  */
 public interface OChannelDataOutput {
 
-  public OChannelDataOutput writeByte(final byte iContent) throws IOException;
+  OChannelDataOutput writeByte(final byte iContent) throws IOException;
 
-  public OChannelDataOutput writeBoolean(final boolean iContent) throws IOException;
+  OChannelDataOutput writeBoolean(final boolean iContent) throws IOException;
 
-  public OChannelDataOutput writeInt(final int iContent) throws IOException ;
+  OChannelDataOutput writeInt(final int iContent) throws IOException ;
 
-  public OChannelDataOutput writeLong(final long iContent) throws IOException;
+  OChannelDataOutput writeLong(final long iContent) throws IOException;
 
-  public OChannelDataOutput writeShort(final short iContent) throws IOException;
+  OChannelDataOutput writeShort(final short iContent) throws IOException;
 
-  public OChannelDataOutput writeString(final String iContent) throws IOException;
+  OChannelDataOutput writeString(final String iContent) throws IOException;
 
-  public OChannelDataOutput writeBytes(final byte[] iContent) throws IOException;
+  OChannelDataOutput writeBytes(final byte[] iContent) throws IOException;
 
-  public OChannelDataOutput writeBytes(final byte[] iContent, final int iLength) throws IOException;
+  OChannelDataOutput writeBytes(final byte[] iContent, final int iLength) throws IOException;
 
-  public void writeRID(final ORID iRID) throws IOException;
+  void writeRID(final ORID iRID) throws IOException;
 
-  public void writeVersion(final int version) throws IOException;
+  void writeVersion(final int version) throws IOException;
 
   OutputStream getDataOutput();
 

@@ -230,12 +230,6 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
       s.setSoTimeout(socketTimeout);
   }
 
-  public void setWaitResponseTimeout() throws SocketException {
-    final Socket s = socket;
-    if (s != null)
-      s.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
-  }
-
   protected void throwSerializedException(final byte[] serializedException) throws IOException {
     final OMemoryInputStream inputStream = new OMemoryInputStream(serializedException);
     final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);

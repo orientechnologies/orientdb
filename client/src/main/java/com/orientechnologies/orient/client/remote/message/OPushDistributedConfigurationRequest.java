@@ -1,11 +1,8 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import com.orientechnologies.orient.client.remote.OStorageRemote;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.client.remote.ORemotePushHandler;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
@@ -29,6 +26,11 @@ public class OPushDistributedConfigurationRequest implements OBinaryPushRequest<
   }
 
   @Override
+  public byte getPushCommand() {
+    return OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG;
+  }
+
+  @Override
   public void write(OChannelDataOutput channel) throws IOException {
     channel.writeInt(hosts.size());
     for (String host : hosts) {
@@ -45,9 +47,8 @@ public class OPushDistributedConfigurationRequest implements OBinaryPushRequest<
     }
   }
 
-  public OBinaryPushResponse execute(OStorageRemote remote) {
-    remote.updateDistributedNodes(this.hosts);
-    return new OPushDistributedConfigurationResponse();
+  public OBinaryPushResponse execute(ORemotePushHandler remote) {
+    return remote.executeUpdateDistributedConfig(this);
   }
 
   @Override

@@ -9,7 +9,7 @@ import java.net.Socket;
 /**
  * Created by luigidellaquila on 14/12/16.
  */
-public class MockChannel extends OChannelBinary {
+public class  MockChannel extends OChannelBinary {
 
   private final ByteArrayOutputStream byteOut;
 
@@ -21,7 +21,8 @@ public class MockChannel extends OChannelBinary {
 
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
     this.in = new DataInputStream(new ByteArrayInputStream(byteOut.toByteArray()));
   }
 }
