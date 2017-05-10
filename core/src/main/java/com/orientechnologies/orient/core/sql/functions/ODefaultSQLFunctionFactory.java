@@ -112,7 +112,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     for (Map.Entry<String, List<Method>> entry : methodsMap.entrySet()) {
       final String name = prefix + entry.getKey();
       if (FUNCTIONS.containsKey(name)) {
-        OLogManager.instance().warn(null, "Unable to register reflective function with name " + entry.getKey());
+        OLogManager.instance().warn(null, "Unable to register reflective function with name " + name);
       } else {
         List<Method> methodsList = methodsMap.get(entry.getKey());
         Method[] methods = new Method[methodsList.size()];
