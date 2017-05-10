@@ -69,6 +69,7 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBinaryResponse>
     ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
 
     network.writeInt(txId);
+    network.writeBoolean(true);
     network.writeBoolean(usingLog);
 
     for (ORecordOperationRequest txEntry : operations) {
@@ -85,19 +86,22 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBinaryResponse>
   @Override
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     txId = channel.readInt();
+    boolean hasContent = channel.readBoolean();
     usingLog = channel.readBoolean();
-    operations = new ArrayList<>();
-    byte hasEntry;
-    do {
-      hasEntry = channel.readByte();
-      if (hasEntry == 1) {
-        ORecordOperationRequest entry = OMessageHelper.readTransactionEntry(channel, serializer);
-        operations.add(entry);
-      }
-    } while (hasEntry == 1);
+    if(hasContent) {
+      operations = new ArrayList<>();
+      byte hasEntry;
+      do {
+        hasEntry = channel.readByte();
+        if (hasEntry == 1) {
+          ORecordOperationRequest entry = OMessageHelper.readTransactionEntry(channel, serializer);
+          operations.add(entry);
+        }
+      } while (hasEntry == 1);
 
-    // RECEIVE MANUAL INDEX CHANGES
-    this.indexChanges = OMessageHelper.readTransactionIndexChanges(channel, (ORecordSerializerNetworkV37) serializer);
+      // RECEIVE MANUAL INDEX CHANGES
+      this.indexChanges = OMessageHelper.readTransactionIndexChanges(channel, (ORecordSerializerNetworkV37) serializer);
+    }
   }
 
   @Override
