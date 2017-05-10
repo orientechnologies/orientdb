@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.functions.sql;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.AfterClass;
@@ -54,5 +55,10 @@ public class OSQLMathFunctionsTest {
   public void testAbsFloat() {
     List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select math_abs(-5.0f) as abs"));
     assertTrue((Float)result.get(0).field("abs") == 5.0);
+  }
+
+  @Test(expected = OQueryParsingException.class)
+  public void testNonExistingFunction() {
+    db.query(new OSQLSynchQuery<ODocument>("select math_abs('boom') as boom"));
   }
 }

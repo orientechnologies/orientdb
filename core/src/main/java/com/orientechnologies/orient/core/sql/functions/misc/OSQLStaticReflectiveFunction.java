@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -83,12 +85,20 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
 
+    final Supplier<String> paramsPrettyPrint = () ->
+        Arrays.stream(iParams).map(p -> p + " [ " + p.getClass().getName() + " ]").collect(Collectors.joining());
+
     Method method = pickMethod(iParams);
+
+    if (method == null) {
+      throw new OQueryParsingException("Unable to find a function with name " + name + " and parameters " + paramsPrettyPrint.get());
+    }
 
     try {
       return method.invoke(null, iParams);
     } catch (ReflectiveOperationException e) {
-      throw new OQueryParsingException("Error on executing method " + method + " with parameters " + Arrays.toString(iParams));
+      e.printStackTrace();
+      throw new OQueryParsingException("Error executing function " + name + " with parameters " + paramsPrettyPrint.get());
     }
 
   }
