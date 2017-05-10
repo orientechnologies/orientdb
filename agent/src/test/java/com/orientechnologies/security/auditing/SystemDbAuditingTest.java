@@ -106,8 +106,12 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
 
     // Drop Class Test
     db.command(new OCommandSQL("drop class TestClass")).execute();
-
-
+    
+    try {
+      Thread.sleep(1000);//let auditing log happen (remove this and make auditing more reliable!!!)
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
     result = (List<ODocument>) server.getSystemDatabase().execute(null, query, TESTDB, "I dropped a class: TestClass");
 
     assertThat(result).isNotNull();
