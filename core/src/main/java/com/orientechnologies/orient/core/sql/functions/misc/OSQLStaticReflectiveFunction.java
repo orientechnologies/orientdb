@@ -86,19 +86,19 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
       OCommandContext iContext) {
 
     final Supplier<String> paramsPrettyPrint = () ->
-        Arrays.stream(iParams).map(p -> p + " [ " + p.getClass().getName() + " ]").collect(Collectors.joining());
+        Arrays.stream(iParams).map(p -> p + " [ " + p.getClass().getName() + " ]").collect(Collectors.joining(", ", "(", ")"));
 
     Method method = pickMethod(iParams);
 
     if (method == null) {
-      throw new OQueryParsingException("Unable to find a function with name " + name + " and parameters " + paramsPrettyPrint.get());
+      throw new OQueryParsingException("Unable to find a function for " + name + paramsPrettyPrint.get());
     }
 
     try {
       return method.invoke(null, iParams);
-    } catch (ReflectiveOperationException e) {
+    } catch (ReflectiveOperationException | IllegalArgumentException e) {
       e.printStackTrace();
-      throw new OQueryParsingException("Error executing function " + name + " with parameters " + paramsPrettyPrint.get());
+      throw new OQueryParsingException("Error executing function " + name + paramsPrettyPrint.get());
     }
 
   }

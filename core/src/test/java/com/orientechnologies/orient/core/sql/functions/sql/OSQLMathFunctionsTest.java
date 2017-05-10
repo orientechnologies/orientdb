@@ -59,6 +59,6 @@ public class OSQLMathFunctionsTest {
 
   @Test(expected = OQueryParsingException.class)
   public void testNonExistingFunction() {
-    db.query(new OSQLSynchQuery<ODocument>("select math_abs('boom') as boom"));
+    db.query(new OSQLSynchQuery<ODocument>("select math_min('boom', 'boom') as boom"));
   }
 }
