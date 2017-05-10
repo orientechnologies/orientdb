@@ -247,7 +247,7 @@ class EtlComponent {
         direction: {
           mandatory: false,
           value: "out",
-          types: ["in", "out"]
+          types: ["out", "in"]
         },
         class: {
           mandatory: false,
@@ -315,7 +315,7 @@ class EtlComponent {
         },
         linkFieldType: {
           mandatory: true,
-          value: undefined,
+          value: "LINK",
           types: ["LINK", "LINKSET", "LINKLIST"]
         },
         lookup: {
@@ -661,6 +661,7 @@ class EtlComponent {
   transformerInit(type) { // Block and Code aren't active atm. Csv is deprecated.
     var transformer;
     // TODO: custom labels. Probably another parallel array could be useful
+    // TODO: creating 2 transformers of the same type consecutively causes the 2nd transformer to be set with the first transformer parameters. Bug or feature?
 
     // Variable creation
     if(type === "field")
@@ -668,7 +669,7 @@ class EtlComponent {
         field: {
           fieldName: this.transformerPrototype.field.fieldName.value,
           expression: this.transformerPrototype.field.expression.value,
-          value: this.transformerPrototype.field.value,
+          value: this.transformerPrototype.field.value.value,
           operation: this.transformerPrototype.field.operation.value,
           save: this.transformerPrototype.field.save.value
         }
@@ -913,7 +914,7 @@ class EtlComponent {
 
   readyForExecution() {
 
-    // If at least one module for every type exists (source excluded)
+    // If one module for every type exists (source excluded)
     if(this.extractor && this.transformers.length > 0 && this.loader) {
       // Controls, for every property of every module, if it's mandatory and has a value
       // Extractor control

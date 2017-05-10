@@ -229,15 +229,15 @@
                         &emsp;{{eParameter.toUpperCase()}}
                       </label>
 
-                      <select *ngIf="extractorPrototype[extractorType][eParameter]['types']"
-                              class="form-control" name="eTypeConfig" [(ngModel)]="extractor[extractorType][eParameter]">
-                        <option *ngFor="let eType of extractorPrototype[extractorType][eParameter]['types']" [value]="eType" placeholder="default">
+                      <select *ngIf="extractorPrototype[extractorType][eParameter]['types']" class="form-control"
+                              name="eTypeConfig-{{eParameter}}" [(ngModel)]="extractor[extractorType][eParameter]" (ngModelChange)="readyForExecution()">
+                        <option *ngFor="let eType of extractorPrototype[extractorType][eParameter]['types']" [value]="eType">
                           {{eType}}
                         </option>
                       </select>
 
-                      <input type="text" class="form-control" name="eTextConfig" [(ngModel)]="extractor[extractorType][eParameter]"
-                             placeholder="enter your value" *ngIf="!extractorPrototype[extractorType][eParameter]['types']"/>
+                      <input *ngIf="!extractorPrototype[extractorType][eParameter]['types']" type="text" class="form-control" name="eTextConfig-{{eParameter}}"
+                             [(ngModel)]="extractor[extractorType][eParameter]" placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
                       <br>
 
                     </div>
@@ -264,15 +264,17 @@
                         &emsp;{{tParameter.toUpperCase()}}
                       </label>
 
-                      <select *ngIf="transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']"
-                              class="form-control" name="tTypeConfig" [(ngModel)]="currentTransformer[getTransformerType(currentTransformer)][tParameter]">
-                        <option *ngFor="let tType of transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']" [value]="tType" placeholder="default">
+                      <select *ngIf="transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']" class="form-control"
+                              name="tTypeConfig-{{tParameter}}" [(ngModel)]="currentTransformer[getTransformerType(currentTransformer)][tParameter]"
+                              (ngModelChange)="readyForExecution()">
+                        <option *ngFor="let tType of transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']" [value]="tType">
                           {{tType}}
                         </option>
                       </select>
 
-                      <input type="text" class="form-control" name="tTextConfig" [(ngModel)]="currentTransformer[getTransformerType(currentTransformer)][tParameter]"
-                             placeholder="enter your value" *ngIf="!transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']"/>
+                      <input *ngIf="!transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']" type="text" class="form-control"
+                             name="tTextConfig-{{tParameter}}" [(ngModel)]="currentTransformer[getTransformerType(currentTransformer)][tParameter]"
+                             placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
                       <br>
 
                     </div>
@@ -300,14 +302,14 @@
                       </label>
 
                       <select *ngIf="loaderPrototype[loaderType][lParameter]['types']"
-                              class="form-control" name="lTypeConfig" [(ngModel)]="loader[loaderType][lParameter]">
-                        <option *ngFor="let lType of loaderPrototype[loaderType][lParameter]['types']" [value]="lType" placeholder="default">
+                              class="form-control" name="lTypeConfig-{{lParameter}}" [(ngModel)]="loader[loaderType][lParameter]">
+                        <option *ngFor="let lType of loaderPrototype[loaderType][lParameter]['types']" [value]="lType" (ngModelChange)="readyForExecution()">
                           {{lType}}
                         </option>
                       </select>
 
-                      <input type="text" class="form-control" name="lTextConfig" [(ngModel)]="loader[loaderType][lParameter]"
-                             placeholder="enter your value" *ngIf="!loaderPrototype[loaderType][lParameter]['types']"/>
+                      <input *ngIf="!loaderPrototype[loaderType][lParameter]['types']" type="text" class="form-control" name="lTextConfig-{{lParameter}}"
+                             [(ngModel)]="loader[loaderType][lParameter]" placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
                       <br>
 
                     </div>
@@ -332,9 +334,6 @@
                 </div>
                 <div class="btn-group">
                   <button type="button" class="btn btn-sm btn-primary" (click)="launch()" [disabled]="!ready">Run Etl</button>
-                </div>
-                <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-warning" (click)="readyForExecution()">READY?</button> <!-- TODO find a smarter way to control if ready -->
                 </div>
                 <h5>&emsp;&emsp;&emsp;<b style="color:red;">*</b><b style="color:grey;"> means that the parameter is mandatory for a correct configuration.</b></h5>
               </div>
