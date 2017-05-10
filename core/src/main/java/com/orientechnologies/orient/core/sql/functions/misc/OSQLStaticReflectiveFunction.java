@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -121,50 +122,49 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
     return method;
   }
 
-  private static boolean isAssignable(Class<?> fromClass, Class<?> toClass) {
+  private static boolean isAssignable(final Class<?> iFromClass, final Class<?> iToClass) {
     // handle autoboxing
-    if (fromClass.isPrimitive() && !toClass.isPrimitive()) {
-      fromClass = PRIMITIVE_TO_WRAPPER.get(fromClass);
-      if (fromClass == null) {
-        return false;
-      }
-    } else if (toClass.isPrimitive() && !fromClass.isPrimitive()) {
-      fromClass = WRAPPER_TO_PRIMITIVE.get(fromClass);
-      if (fromClass == null) {
-        return false;
-      }
-    }
+    final BiFunction<Class<?>, Class<?>, Class<?>> autoboxer = (from, to) -> {
+      if (from.isPrimitive() && !to.isPrimitive()) {
+        return PRIMITIVE_TO_WRAPPER.get(from);
+      } else if (to.isPrimitive() && !from.isPrimitive()) {
+        return WRAPPER_TO_PRIMITIVE.get(from);
+      } else return from;
+    };
 
-    if (fromClass.equals(toClass)) {
+    final Class<?> fromClass = autoboxer.apply(iFromClass, iToClass);
+
+    if (fromClass == null) {
+      return false;
+    } else if (fromClass.equals(iToClass)) {
       return true;
-    }
-    if (fromClass.isPrimitive()) {
-      if (!toClass.isPrimitive()) {
+    } else if (fromClass.isPrimitive()) {
+      if (!iToClass.isPrimitive()) {
         return false;
       } else if (Integer.TYPE.equals(fromClass)) {
-        return Long.TYPE.equals(toClass) || Float.TYPE.equals(toClass) || Double.TYPE.equals(toClass);
+        return Long.TYPE.equals(iToClass) || Float.TYPE.equals(iToClass) || Double.TYPE.equals(iToClass);
       } else if (Long.TYPE.equals(fromClass)) {
-        return Float.TYPE.equals(toClass) || Double.TYPE.equals(toClass);
+        return Float.TYPE.equals(iToClass) || Double.TYPE.equals(iToClass);
       } else if (Boolean.TYPE.equals(fromClass)) {
         return false;
       } else if (Double.TYPE.equals(fromClass)) {
         return false;
       } else if (Float.TYPE.equals(fromClass)) {
-        return Double.TYPE.equals(toClass);
+        return Double.TYPE.equals(iToClass);
       } else if (Character.TYPE.equals(fromClass)) {
-        return Integer.TYPE.equals(toClass) || Long.TYPE.equals(toClass) || Float.TYPE.equals(toClass)
-            || Double.TYPE.equals(toClass);
+        return Integer.TYPE.equals(iToClass) || Long.TYPE.equals(iToClass) || Float.TYPE.equals(iToClass)
+            || Double.TYPE.equals(iToClass);
       } else if (Short.TYPE.equals(fromClass)) {
-        return Integer.TYPE.equals(toClass) || Long.TYPE.equals(toClass) || Float.TYPE.equals(toClass)
-            || Double.TYPE.equals(toClass);
+        return Integer.TYPE.equals(iToClass) || Long.TYPE.equals(iToClass) || Float.TYPE.equals(iToClass)
+            || Double.TYPE.equals(iToClass);
       } else if (Byte.TYPE.equals(fromClass)) {
-        return Short.TYPE.equals(toClass) || Integer.TYPE.equals(toClass) || Long.TYPE.equals(toClass)
-            || Float.TYPE.equals(toClass) || Double.TYPE.equals(toClass);
+        return Short.TYPE.equals(iToClass) || Integer.TYPE.equals(iToClass) || Long.TYPE.equals(iToClass)
+            || Float.TYPE.equals(iToClass) || Double.TYPE.equals(iToClass);
       }
       // this should never happen
       return false;
     }
-    return toClass.isAssignableFrom(fromClass);
+    return iToClass.isAssignableFrom(fromClass);
   }
 
 }
