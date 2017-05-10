@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Default set of SQL function.
@@ -104,16 +105,9 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
   }
 
   private static void registerStaticReflectiveFunctions(final String prefix, final Class<?> clazz) {
-    Map<String, List<Method>> methodsMap = new HashMap<>();
-
-    for (Method method : clazz.getMethods()) {
-      if (Modifier.isStatic(method.getModifiers())) {
-        if (!methodsMap.containsKey(method.getName())) {
-          methodsMap.put(method.getName(), new ArrayList<>());
-        }
-        methodsMap.get(method.getName()).add(method);
-      }
-    }
+    final Map<String, List<Method>> methodsMap = Arrays.stream(clazz.getMethods())
+        .filter(m -> Modifier.isStatic(m.getModifiers()))
+        .collect(Collectors.groupingBy(Method::getName));
 
     for (Map.Entry<String, List<Method>> entry : methodsMap.entrySet()) {
       final String name = prefix + entry.getKey();
@@ -130,8 +124,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
           minParams = minParams < m.getParameterTypes().length ? minParams : m.getParameterTypes().length;
           maxParams = maxParams > m.getParameterTypes().length ? maxParams : m.getParameterTypes().length;
         }
-        OSQLStaticReflectiveFunction reflectiveFunction = new OSQLStaticReflectiveFunction(name, minParams, maxParams, methods);
-        register(name, reflectiveFunction);
+        register(name, new OSQLStaticReflectiveFunction(name, minParams, maxParams, methods));
       }
     }
 
