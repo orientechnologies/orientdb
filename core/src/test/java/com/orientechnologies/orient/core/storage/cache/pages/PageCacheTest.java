@@ -469,7 +469,7 @@ public class PageCacheTest {
     }
 
     @Override
-    public void renameFile(long fileId, String oldFileName, String newFileName) throws IOException {
+    public void renameFile(long fileId, String newFileName) throws IOException {
 
     }
 

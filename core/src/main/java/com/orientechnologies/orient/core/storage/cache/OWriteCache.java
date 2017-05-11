@@ -94,7 +94,7 @@ public interface OWriteCache {
 
   void truncateFile(long fileId) throws IOException;
 
-  void renameFile(long fileId, String oldFileName, String newFileName) throws IOException;
+  void renameFile(long fileId, String newFileName) throws IOException;
 
   long[] close() throws IOException;
 

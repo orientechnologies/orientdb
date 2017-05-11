@@ -247,7 +247,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         readCache.deleteFile(fileId, writeCache);
         fileId = newFileId;
-        writeCache.renameFile(fileId, newFileName, getFullName());
+        writeCache.renameFile(fileId, getFullName());
       } finally {
         releaseExclusiveLock();
       }
@@ -1457,7 +1457,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         releaseExclusiveLock();
       }
 
-      writeCache.renameFile(newFileId, getName() + DEF_EXTENSION + "t", getName() + DEF_EXTENSION);
+      writeCache.renameFile(newFileId, getName() + DEF_EXTENSION);
 
       fileId = newFileId;
       pinnedStateEntryIndex = newStateIndex;
@@ -1904,7 +1904,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   private void setNameInternal(final String newName) throws IOException {
 
-    writeCache.renameFile(fileId, getFullName(), newName + getExtension());
+    writeCache.renameFile(fileId, newName + getExtension());
     clusterPositionMap.rename(newName);
 
     config.name = newName;
