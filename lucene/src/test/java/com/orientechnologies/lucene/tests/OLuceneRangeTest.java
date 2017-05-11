@@ -148,20 +148,5 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
 
   }
 
-  @Test
-  public void shouldFetchOnlyFromACluster() throws Exception {
-
-    db.command("create index Person.name on Person(name) FULLTEXT ENGINE LUCENE");
-
-    assertThat(db.getMetadata().getIndexManager().getIndex("Person.name").getSize()).isEqualTo(10);
-
-    int cluster = db.getMetadata().getSchema().getClass("Person").getClusterIds()[1];
-    db.commit();
-
-    OResultSet results = db.query("SELECT FROM Person WHERE name LUCENE '+_CLUSTER:" + cluster + "'");
-
-    assertThat(results).hasSize(2);
-
-  }
 
 }

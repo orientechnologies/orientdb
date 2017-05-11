@@ -42,4 +42,20 @@ public class OLuceneFunctionsUtils {
     return memoryIndex;
   }
 
+  public static String doubleEscape(String s) {
+    StringBuilder sb = new StringBuilder();
+
+    for(int i = 0; i < s.length(); ++i) {
+      char c = s.charAt(i);
+      if(c == 92 || c == 43 || c == 45 || c == 33 || c == 40 || c == 41 || c == 58 || c == 94 || c == 91 || c == 93 || c == 34 || c == 123 || c == 125 || c == 126 || c == 42 || c == 63 || c == 124 || c == 38 || c == 47) {
+        sb.append('\\');
+        sb.append('\\');
+      }
+
+      sb.append(c);
+    }
+
+    return sb.toString();
+  }
+
 }

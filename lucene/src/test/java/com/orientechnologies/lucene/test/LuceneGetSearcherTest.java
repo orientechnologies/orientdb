@@ -24,12 +24,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.assertj.core.api.Fail;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
 
 /**
  * Created by Enrico Risa on 29/04/15.
@@ -57,10 +54,7 @@ public class LuceneGetSearcherTest extends BaseLuceneTest {
 
     OLuceneIndexNotUnique idx = (OLuceneIndexNotUnique) index.getInternal();
 
-    try {
-      Assert.assertNotNull(idx.searcher());
-    } catch (IOException e) {
-      Fail.fail("fail", e);
-    }
+    Assert.assertNotNull(idx.searcher());
+
   }
 }

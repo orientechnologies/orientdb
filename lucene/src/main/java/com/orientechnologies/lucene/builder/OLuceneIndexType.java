@@ -67,7 +67,7 @@ public class OLuceneIndexType {
       return ridField;
     }
 
-    return new TextField(fieldName, value.toString(), store);
+    return new TextField(fieldName, value.toString(), Field.Store.YES);
 
   }
 

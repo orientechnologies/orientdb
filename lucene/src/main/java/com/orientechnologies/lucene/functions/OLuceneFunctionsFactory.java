@@ -32,6 +32,7 @@ public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
     register(OLuceneSearchOnIndexFunction.NAME, new OLuceneSearchOnIndexFunction());
     register(OLuceneSearchOnFieldsFunction.NAME, new OLuceneSearchOnFieldsFunction());
     register(OLuceneSearchOnClassFunction.NAME, new OLuceneSearchOnClassFunction());
+    register(OLuceneSearchMoreLikeThisFunction.NAME, new OLuceneSearchMoreLikeThisFunction());
   }
 
   public static void register(final String name, final Object function) {

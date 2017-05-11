@@ -5,6 +5,7 @@ import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -13,8 +14,14 @@ import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.index.memory.MemoryIndex;
+import org.apache.lucene.queries.mlt.MoreLikeThis;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.*;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -26,11 +33,11 @@ import static com.orientechnologies.lucene.functions.OLuceneFunctionsUtils.getOr
 /**
  * Created by frank on 15/01/2017.
  */
-public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
+public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
 
-  public static final String NAME = "search_class";
+  public static final String NAME = "search_more";
 
-  public OLuceneSearchOnClassFunction() {
+  public OLuceneSearchMoreLikeThisFunction() {
     super(NAME, 1, 2);
   }
 
@@ -82,7 +89,7 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
 
   @Override
   public String getSyntax() {
-    return "SEARCH_INDEX( indexName, [ metdatada {} ] )";
+    return "SEARCH_MORE( [rids], [ metdatada {} ] )";
   }
 
   @Override
@@ -99,8 +106,61 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
 
     OLuceneFullTextIndex index = searchForIndex(target, ctx);
 
+    IndexSearcher searcher = index.searcher();
+
     OExpression expression = args[0];
-    String query = (String) expression.execute((OIdentifiable) null, ctx);
+
+    List<ORID> rids = (List<ORID>) expression.execute((OIdentifiable) null, ctx);
+
+    List<String> ridsAsString = rids.stream()
+        .map(r -> r.toString())
+        .collect(Collectors.toList());
+
+    String queryOthers =
+        "RID:( " + QueryParser.escape(String.join(" ", ridsAsString)) + ")";
+
+    Set<OIdentifiable> oIdentifiables = index.get(queryOthers);
+
+    MoreLikeThis mlt = new MoreLikeThis(searcher.getIndexReader());
+
+    mlt.setAnalyzer(index.queryAnalyzer());
+    mlt.setFieldNames(index.getDefinition().getFields().toArray(new String[] {}));
+    mlt.setMinTermFreq(1);
+    mlt.setMinDocFreq(1);
+
+    BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+    oIdentifiables.stream()
+        .forEach(oi -> {
+
+              index.getDefinition().getFields()
+                  .stream().forEach(fieldName -> {
+                try {
+                  OElement element = oi.getRecord().load();
+                  String property = element.getProperty(fieldName);
+                  Query fieldQuery = mlt.like(fieldName, new StringReader(property));
+
+                  queryBuilder.add(fieldQuery, BooleanClause.Occur.SHOULD);
+                } catch (IOException e) {
+                  //Fixme: do something usefull
+                  e.printStackTrace();
+                }
+
+              });
+
+            }
+
+        );
+
+    ridsAsString.stream()
+        .forEach(rid ->
+            {
+              Term rid1 = new Term("RID", QueryParser.escape(rid));
+              queryBuilder.add(new TermQuery(rid1), BooleanClause.Occur.MUST_NOT);
+            }
+
+        );
+
+    Query mltQuery = queryBuilder.build();
 
     if (index != null) {
 
@@ -109,10 +169,10 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
 
         //TODO handle metadata
         System.out.println("metadata.toJSON() = " + metadata.toJSON());
-        Set<OIdentifiable> luceneResultSet = index.get(query.toString());
+        Set<OIdentifiable> luceneResultSet = index.get(mltQuery.toString());
       }
 
-      Set<OIdentifiable> luceneResultSet = index.get(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx));
+      Set<OIdentifiable> luceneResultSet = index.get(new OLuceneCompositeKey(Arrays.asList(mltQuery.toString())).setContext(ctx));
 
       return luceneResultSet;
     }

@@ -428,18 +428,15 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   }
 
   @Override
-  public IndexSearcher searcher() throws IOException {
+  public IndexSearcher searcher() {
     while (true) {
       try {
-        return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<IndexSearcher>() {
-          @Override
-          public IndexSearcher callEngine(OIndexEngine engine) {
-            OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-            try {
-              return indexEngine.searcher();
-            } catch (IOException e) {
-              throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
-            }
+        return storage.callIndexEngine(false, false, indexId, engine -> {
+          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+          try {
+            return indexEngine.searcher();
+          } catch (IOException e) {
+            throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
           }
         });
       } catch (OInvalidIndexEngineIdException e) {
