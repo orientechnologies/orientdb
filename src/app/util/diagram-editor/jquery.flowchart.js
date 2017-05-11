@@ -5,7 +5,7 @@ $(function () {
         // default options
         options: {
             canUserEditLinks: false,
-            canUserMoveOperators: false,
+            canUserMoveOperators: true,
             data: {},
             distanceFromArrow: 3,
             defaultOperatorClass: 'flowchart-default-operator',

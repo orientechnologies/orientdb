@@ -1,17 +1,15 @@
 import * as $ from "jquery"
-import * as jqueryUI from "jquery-ui";
 
 import "../../util/diagram-editor/jquery.flowchart.min.js";
 import "../../util/diagram-editor/jquery.flowchart.min.css";
 import "../../util/diagram-editor/flowchart.jquery.json";
 import "../../util/diagram-editor/package.json";
 
-import {Component} from '@angular/core';
+import {Component, NgZone} from '@angular/core';
 
 import {downgradeComponent} from "@angular/upgrade/static";
 import {EtlService} from "../../core/services";
 import {AgentService} from "../../core/services/agent.service";
-import {ObjectKeysPipe} from "../../core/pipes"
 
 declare var angular:any;
 
@@ -42,14 +40,15 @@ class EtlComponent {
   private tKeys;
   private lKeys;
 
-  private finalJson; // The final json, it will be passed to the launch function
-
   private step;
   private hints;
+
   private ready;
+  private finalJson; // The final json, it will be passed to the launch function
+  private job;
+  private jobRunning;
 
-
-  constructor(private agentService: AgentService, private etlService : EtlService){
+  constructor(private agentService: AgentService, private etlService : EtlService, private zone: NgZone){
 
     this.init();
 
@@ -451,6 +450,8 @@ class EtlComponent {
 
     // User support
     this.ready = false;
+    this.job = {};
+    this.jobRunning = false;
     this.step = 1;
     this.hints = {
       // Main hints
@@ -622,28 +623,44 @@ class EtlComponent {
 
 
     // Flowchart
-    /*    $(document).ready(function() { // TODO remove the comment. atm this blocks the instructions that follow.
-     var dataExtractor = {
-     operators: {
-     operator: {
-     top: 30,
-     left: 70,
-     properties: {
-     title: type + ' extractor',
-     outputs: {
-     output_1: {
-     label: 'click to configure'
-     }
-     }
-     }
-     }
-     }
-     };
+    $(document).ready(function() { // TODO atm this blocks the instructions that follow.
+      var dataExtractor = {
+        operators: {
+          operator: {
+            top: 30,
+            left: 70,
+            properties: {
+              title: type + ' extractor',
+              outputs: {
+                output_1: {
+                  label: 'click to configure'
+                }
+              }
+            }
+          }
+        }
+      };
 
-     (<any>$('#extractorSpace')).flowchart({
-     data: dataExtractor
-     });
-     }); */
+      (<any>$('#extractorSpace')).flowchart({
+        data: dataExtractor
+      });
+    });
+
+    console.log("Flowchart loaded.");
+
+    // Canvas
+    /* var canvas = <HTMLCanvasElement> document.getElementById("eCanvas");
+     var ctx = canvas.getContext("2d");
+     ctx.beginPath();
+     ctx.rect(0, 0, 120, 80);
+     ctx.fillStyle = "#ebebeb";
+     ctx.fill();
+     ctx.font = "bold 20px sans-serif";
+     ctx.fillStyle = "#ff9900"
+     ctx.fillText(type.toUpperCase(),20,30);
+     ctx.font = "bold 12px sans-serif";
+     ctx.fillStyle = "#ff4400"
+     ctx.fillText("click to configure",10,60); */
 
     this.eKeys = Object.keys(this.extractor[type]);
     this.extractorType = type;
@@ -656,6 +673,7 @@ class EtlComponent {
     $("#loaderOptions").hide();
     $("#transformerOptions").hide();
     $("#extractorOptions").show();
+    $("#eCanvas").slideDown(1000); // Canvas animation
   }
 
   transformerInit(type) { // Block and Code aren't active atm. Csv is deprecated.
@@ -787,6 +805,20 @@ class EtlComponent {
      });
      }); */
 
+    // Canvas
+    var canvas = <HTMLCanvasElement> document.getElementById("tCanvas");
+    var ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.rect(0, 0, 120, 80);
+    ctx.fillStyle = "#ebebeb";
+    ctx.fill();
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillStyle = "#ff9900"
+    ctx.fillText(type.toUpperCase(),20,30);
+    ctx.font = "bold 12px sans-serif";
+    ctx.fillStyle = "#ff4400"
+    ctx.fillText("click to configure",10,60);
+
     // Push into the arrays
     this.transformers.push(transformer);
     this.transformerTypes.push(type);
@@ -800,6 +832,7 @@ class EtlComponent {
     $("#loaderOptions").hide();
     $("#extractorOptions").hide();
     $("#transformerOptions").show();
+    $("#tCanvas").slideDown(1000); // Canvas animation
 
   }
 
@@ -859,6 +892,20 @@ class EtlComponent {
      });
      }); */
 
+    // Canvas
+    var canvas = <HTMLCanvasElement> document.getElementById("lCanvas");
+    var ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.rect(0, 0, 120, 80);
+    ctx.fillStyle = "#ebebeb";
+    ctx.fill();
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillStyle = "#ff9900"
+    ctx.fillText(type.toUpperCase(),20,30);
+    ctx.font = "bold 12px sans-serif";
+    ctx.fillStyle = "#ff4400"
+    ctx.fillText("click to configure",10,60);
+
     this.lKeys = Object.keys(this.loader[type]);
     this.loaderType = type;
     this.readyForExecution();
@@ -870,6 +917,7 @@ class EtlComponent {
     $("#extractorOptions").hide();
     $("#transformerOptions").hide();
     $("#loaderOptions").show();
+    $("#lCanvas").slideDown(1000); // Canvas animation
 
   }
 
@@ -882,6 +930,8 @@ class EtlComponent {
     $("#pleaseExtractor").show();
     $("#extractorOptions").hide();
     $("#panelPlaceholder").show();
+    $("#tCanvas").fadeOut(1000);
+
   }
 
   deleteTransformer() {
@@ -895,6 +945,8 @@ class EtlComponent {
     // Jquery hide/show
     $("#transformerOptions").hide();
     $("#panelPlaceholder").show();
+    $("#tCanvas").fadeOut(1000);
+
     if(this.transformers.length == 0) $("#pleaseTransformer").show();
   }
 
@@ -907,6 +959,7 @@ class EtlComponent {
     $("#pleaseLoader").show();
     $("#loaderOptions").hide();
     $("#panelPlaceholder").show();
+    $("#lCanvas").fadeOut(1000);
   }
 
 
@@ -961,18 +1014,40 @@ class EtlComponent {
 
     this.step = "3";
 
-    /*
-     this.etlService.launch(this.finalJson).then((data) => {
+    /*this.etlService.launch(this.finalJson).then((data) => {
      this.step = "3";
+     this.jobRunning = true;
      this.status();
      }).catch(function (error) {
      alert("Error during etl process!")
-     });
-     */
+     });*/
+
   }
 
   status() {
+    if(this.jobRunning) {
+      this.etlService.status().then((data) => {
+        if (data.jobs.length > 0) {
+          this.job = data.jobs[0];
+          this.scrollLogAreaDown();
+        }
+        else {
+          if (this.job) {
+            this.job.finished = true;
+            this.jobRunning = false;
+            this.scrollLogAreaDown();
+          }
+        }
 
+        // start status again after 3 secs
+        setTimeout(() => {
+          this.zone.run(() => {
+            this.status();
+          })
+        },3000);
+
+      });
+    }
   }
 
   reset() {
@@ -988,6 +1063,10 @@ class EtlComponent {
     this.eKeys = undefined;
     this.tKeys = undefined;
     this.lKeys = undefined;
+  }
+
+  arrangeTransformers() { // TODO thinking about the implementation for the transformers sort
+
   }
 
   // Getters and setters
@@ -1014,6 +1093,10 @@ class EtlComponent {
   }
 
   // Misc
+
+  showSource() {
+    $("#sourceArea").fadeIn(1000);
+  }
 
   scrollLogAreaDown() {
     var logArea = $("#logArea");
