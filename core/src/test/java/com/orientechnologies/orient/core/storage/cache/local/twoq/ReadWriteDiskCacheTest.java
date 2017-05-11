@@ -318,6 +318,95 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
+  public void testAddFourItemsInFourDifferentFilesCloseAndOpen() throws IOException {
+    List<Long> fileIds = new ArrayList<Long>();
+    List<String> nativeFileNames = new ArrayList<String>();
+    List<String> fileNames = new ArrayList<String>();
+
+    fileNames.add("readWriteDiskCacheTest.tst");
+    fileNames.add("readwRitedIskCacheTest.tst");
+    fileNames.add("ReadwRitedIskCacheTesT.tst");
+    fileNames.add("readwritediskcachetest.tst");
+
+    addFileName(fileNames.get(0), fileIds, nativeFileNames);
+    addFileName(fileNames.get(1), fileIds, nativeFileNames);
+    addFileName(fileNames.get(2), fileIds, nativeFileNames);
+    addFileName(fileNames.get(3), fileIds, nativeFileNames);
+
+    OCacheEntry[] entries = new OCacheEntry[4];
+
+    for (int i = 0; i < 4; i++) {
+      for (int n = 0; n < 4; n++) {
+        final long fileId = fileIds.get(n);
+
+        entries[i] = readBuffer.load(fileId, i, false, writeBuffer, 1);
+
+        if (entries[i] == null) {
+          entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer);
+        }
+
+        entries[i].getCachePointer().acquireExclusiveLock();
+
+        entries[i].markDirty();
+
+        final ByteBuffer buffer = entries[i].getCachePointer().getSharedBuffer();
+
+        buffer.position(systemOffset);
+        buffer.put(new byte[] { (byte) i, 1, 2, (byte) (seed + n), 4, 5, 6, (byte) (i + n) });
+
+        entries[i].getCachePointer().releaseExclusiveLock();
+
+        readBuffer.release(entries[i], writeBuffer);
+      }
+    }
+
+    readBuffer.closeStorage(writeBuffer);
+
+    initBuffer();
+
+    fileIds.clear();
+
+    for (int n = 0; n < 4; n++) {
+      fileIds.add(writeBuffer.loadFile(fileNames.get(n)));
+
+      final String nativeFileName = writeBuffer.nativeFileNameById(fileIds.get(n));
+      Assert.assertEquals(nativeFileName, nativeFileNames.get(n));
+    }
+
+    for (int n = 0; n < 4; n++) {
+      final long fileId = fileIds.get(n);
+      Assert.assertEquals(writeBuffer.getFilledUpTo(fileId), 4);
+    }
+
+    for (int n = 3; n >= 0; n--) {
+      for (int i = 3; i >= 0; i--) {
+        final String fileNativeName = nativeFileNames.get(i);
+
+        String path = storageLocal.getConfiguration().getDirectory() + "/" + fileNativeName;
+        final File file = new File(path);
+        if (i > n) {
+          Assert.assertFalse(file.exists());
+        } else {
+          Assert.assertTrue(file.exists());
+        }
+      }
+
+      writeBuffer.deleteFile(fileIds.get(n));
+
+      for (int i = 3; i >= 0; i--) {
+        final String fileNativeName = nativeFileNames.get(i);
+
+        String path = storageLocal.getConfiguration().getDirectory() + "/" + fileNativeName;
+        final File file = new File(path);
+        if (i >= n) {
+          Assert.assertFalse(file.exists());
+        } else {
+          Assert.assertTrue(file.exists());
+        }
+      }
+    }
+  }
+
   public void testFrequentlyReadItemsAreMovedInAm() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
