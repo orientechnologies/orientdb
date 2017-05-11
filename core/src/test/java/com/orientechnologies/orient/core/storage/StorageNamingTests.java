@@ -74,7 +74,7 @@ public class StorageNamingTests {
   private static class NamingTestStorage extends OStorageAbstract {
 
     public NamingTestStorage(String name) {
-      super(name, name, "rw", Integer.MAX_VALUE);
+      super(name, name, "rw");
     }
 
     @Override

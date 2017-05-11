@@ -21,10 +21,9 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClientSynch;
-import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.message.OShutdownRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -42,9 +41,9 @@ public class OServerShutdownMain {
   public int[]                      networkPort;
   public OChannelBinaryAsynchClient channel;
 
-  private OContextConfiguration     contextConfig;
-  private String                    rootUser;
-  private String                    rootPassword;
+  private OContextConfiguration contextConfig;
+  private String                rootUser;
+  private String                rootPassword;
 
   public OServerShutdownMain(final String iServerAddress, final String iServerPorts, final String iRootUser,
       final String iRootPassword) {
@@ -62,7 +61,8 @@ public class OServerShutdownMain {
     // TRY TO CONNECT TO THE RIGHT PORT
     for (int port : networkPort)
       try {
-        channel = new OChannelBinaryAsynchClientSynch(networkAddress, port, null, contextConfig);
+        channel = new OChannelBinaryAsynchClient(networkAddress, port, null, contextConfig,
+            OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
         break;
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error on connecting to %s:%d", e, networkAddress, port);

@@ -160,7 +160,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final AtomicLong txRollback     = new AtomicLong(0);
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode, int id) {
-    super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
+    super(name, filePath, mode);
 
     this.id = id;
     lockManager = new ORIDOLockManager(OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());

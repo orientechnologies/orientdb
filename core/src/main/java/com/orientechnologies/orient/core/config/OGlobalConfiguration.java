@@ -438,6 +438,7 @@ public enum OGlobalConfiguration {
   NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length (in KB) of BINARY requests",
       Integer.class, 16384, true),
 
+  @Deprecated
   NETWORK_BINARY_READ_RESPONSE_MAX_TIMES("network.binary.readResponse.maxTimes",
       "Maximum attempts, until a response can be read. Otherwise, the response will be dropped from the channel", Integer.class, 20,
       true),

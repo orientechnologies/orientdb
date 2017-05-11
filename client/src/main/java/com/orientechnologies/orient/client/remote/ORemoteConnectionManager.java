@@ -56,8 +56,7 @@ public class ORemoteConnectionManager {
     connections.clear();
   }
 
-  public OChannelBinaryAsynchClient acquire(String iServerURL, final OContextConfiguration clientConfiguration,
-      final OStorageRemoteAsynchEventListener iListener) {
+  public OChannelBinaryAsynchClient acquire(String iServerURL, final OContextConfiguration clientConfiguration) {
     if (iServerURL.startsWith(OEngineRemote.PREFIX))
       iServerURL = iServerURL.substring(OEngineRemote.PREFIX.length());
 
@@ -80,7 +79,7 @@ public class ORemoteConnectionManager {
           localTimeout = Integer.parseInt(netLockTimeout.toString());
       }
 
-      pool = new ORemoteConnectionPool(maxPool, iListener != null);
+      pool = new ORemoteConnectionPool(maxPool);
       final ORemoteConnectionPool prev = connections.putIfAbsent(iServerURL, pool);
       if (prev != null) {
         // ALREADY PRESENT, DESTROY IT AND GET THE ALREADY EXISTENT OBJ
@@ -91,7 +90,7 @@ public class ORemoteConnectionManager {
 
     try {
       // RETURN THE RESOURCE
-      OChannelBinaryAsynchClient ret = pool.acquire(iServerURL, localTimeout, clientConfiguration, iListener);
+      OChannelBinaryAsynchClient ret = pool.acquire(iServerURL, localTimeout, clientConfiguration);
       return ret;
 
     } catch (RuntimeException e) {

@@ -30,8 +30,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -43,7 +41,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.OStorageRemoteNodeSession;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.client.remote.message.OErrorResponse;
@@ -55,32 +52,20 @@ import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
-import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 public class OChannelBinaryAsynchClient extends OChannelBinary {
-  private         int   socketTimeout;                                               // IN MS
-  protected final short srvProtocolVersion;
-  private final Condition readCondition = getLockRead().getUnderlying().newCondition();
-  private final int    maxUnreadResponses;
-  private       String serverURL;
-  private volatile boolean channelRead = false;
-  private          byte                        currentStatus;
-  private          int                         currentSessionId;
-  private volatile OAsynchChannelServiceThread serviceThread;
+  private         int    socketTimeout;                                               // IN MS
+  protected final short  srvProtocolVersion;
+  private         String serverURL;
+  private         byte   currentStatus;
+  private         int    currentSessionId;
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int iProtocolVersion) throws IOException {
-    this(remoteHost, remotePort, iDatabaseName, iConfig, iProtocolVersion, null);
-  }
-
-  public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
-      final OContextConfiguration iConfig, final int protocolVersion, final ORemoteServerEventListener asynchEventListener)
-      throws IOException {
     super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
     try {
 
-      maxUnreadResponses = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIMES);
       serverURL = remoteHost + ":" + remotePort;
       if (iDatabaseName != null)
         serverURL += "/" + iDatabaseName;
@@ -108,7 +93,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         srvProtocolVersion = readShort();
 
         writeByte(OChannelBinaryProtocol.REQUEST_HANDSHAKE);
-        writeShort((short) protocolVersion);
+        writeShort((short) iProtocolVersion);
         writeString("Java Client");
         writeString(OConstants.getVersion());
         flush();
@@ -117,15 +102,13 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
             "Cannot read protocol version from remote server " + socket.getRemoteSocketAddress() + ": " + e);
       }
 
-      if (srvProtocolVersion != protocolVersion) {
+      if (srvProtocolVersion != iProtocolVersion) {
         OLogManager.instance().warn(this,
-            "The Client driver version is different than Server version: client=" + protocolVersion + ", server="
+            "The Client driver version is different than Server version: client=" + iProtocolVersion + ", server="
                 + srvProtocolVersion
                 + ". You could not use the full features of the newer version. Assure to have the same versions on both");
       }
 
-//      if (asynchEventListener != null)
-//        serviceThread = new OAsynchChannelServiceThread(asynchEventListener, this);
     } catch (RuntimeException e) {
       if (socket.isConnected())
         socket.close();
@@ -178,104 +161,31 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public byte[] beginResponse(final int iRequesterId, final long iTimeout, final boolean token) throws IOException {
     try {
-      int unreadResponse = 0;
-      final long startClock = iTimeout > 0 ? System.currentTimeMillis() : 0;
-
       // WAIT FOR THE RESPONSE
-      do {
-        if (iTimeout <= 0)
-          acquireReadLock();
-        else if (!getLockRead().tryAcquireLock(iTimeout, TimeUnit.MILLISECONDS))
-          throw new OTimeoutException("Cannot acquire read lock against channel: " + this);
+      if (iTimeout <= 0)
+        acquireReadLock();
 
-        boolean readLock = true;
+      if (!isConnected()) {
+        releaseReadLock();
+        throw new IOException("Channel is closed");
+      }
 
-        if (!isConnected()) {
-          releaseReadLock();
-          throw new IOException("Channel is closed");
-        }
+      try {
+        setWaitResponseTimeout();
+        currentStatus = readByte();
+        currentSessionId = readInt();
 
-        if (!channelRead) {
-          channelRead = true;
+        if (debug)
+          OLogManager.instance()
+              .debug(this, "%s - Read response: %d-%d", socket.getLocalAddress(), (int) currentStatus, currentSessionId);
 
-          try {
-            setWaitResponseTimeout();
-            currentStatus = readByte();
-            currentSessionId = readInt();
+      } catch (IOException e) {
+        throw e;
+      } finally {
+        setReadResponseTimeout();
+      }
 
-            if (debug)
-              OLogManager.instance()
-                  .debug(this, "%s - Read response: %d-%d", socket.getLocalAddress(), (int) currentStatus, currentSessionId);
-
-          } catch (IOException e) {
-            // UNLOCK THE RESOURCE AND PROPAGATES THE EXCEPTION
-            channelRead = false;
-            readCondition.signalAll();
-            releaseReadLock();
-            readLock = false;
-
-            throw e;
-          } finally {
-            setReadResponseTimeout();
-          }
-        }
-
-        if (currentSessionId == iRequesterId)
-          // IT'S FOR ME
-          break;
-
-        try {
-          if (debug)
-            OLogManager.instance()
-                .debug(this, "%s - Session %d skip response, it is for %d", socket.getLocalAddress(), iRequesterId,
-                    currentSessionId);
-
-          if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout) {
-            readLock = false;
-
-            throw new IOException(
-                "Timeout on reading response from the server " + (socket != null ? socket.getRemoteSocketAddress() : "")
-                    + " for the request " + iRequesterId);
-          }
-
-          // IN CASE OF TOO MUCH TIME FOR READ A MESSAGE, ASYNC THREAD SHOULD NOT BE INCLUDE IN THIS CHECK
-          if (unreadResponse > maxUnreadResponses && iRequesterId != Integer.MIN_VALUE) {
-            if (debug)
-              OLogManager.instance().info(this, "Unread responses %d > %d, consider the buffer as dirty: clean it", unreadResponse,
-                  maxUnreadResponses);
-
-            readLock = false;
-
-            throw new IOException("Timeout on reading response");
-          }
-
-          readCondition.signalAll();
-
-          if (debug)
-            OLogManager.instance().debug(this, "Session %d is going to sleep...", iRequesterId);
-
-          final long start = System.currentTimeMillis();
-
-          // WAIT MAX 30 SECOND AND RETRY, THIS IS UNBLOCKED BY ANOTHER THREAD IN CASE THE RESPONSE FOR THIS IS ARRIVED
-          readCondition.await(30, TimeUnit.SECONDS);
-
-          if (debug) {
-            final long now = System.currentTimeMillis();
-            OLogManager.instance()
-                .debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start), socket.getLocalAddress(),
-                    iRequesterId);
-          }
-
-          unreadResponse++;
-
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw OException.wrapException(new OInterruptedException("Thread interrupted while waiting for request"), e);
-        } finally {
-          if (readLock)
-            releaseReadLock();
-        }
-      } while (true);
+      assert (currentSessionId == iRequesterId);
 
       if (debug)
         OLogManager.instance().debug(this, "%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
@@ -295,15 +205,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   }
 
   public void endResponse() throws IOException {
-    channelRead = false;
-
     // WAKE UP ALL THE WAITING THREADS
-    try {
-      readCondition.signalAll();
-    } catch (IllegalMonitorStateException e) {
-      // IGNORE IT
-      OLogManager.instance().debug(this, "Error on signaling waiting clients after reading response");
-    }
     try {
       releaseReadLock();
     } catch (IllegalMonitorStateException e) {
@@ -320,25 +222,10 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   @Override
   public void close() {
-    if (getLockRead().tryAcquireLock())
-      try {
-        readCondition.signalAll();
-      } finally {
-        releaseReadLock();
-      }
-
     try {
       super.close();
     } catch (Exception e) {
       // IGNORE IT
-    }
-
-    if (serviceThread != null) {
-      final OAsynchChannelServiceThread s = serviceThread;
-      serviceThread = null;
-      if (s != null)
-        // CHECK S BECAUSE IT COULD BE CONCURRENTLY RESET
-        s.sendShutdown();
     }
   }
 
@@ -379,10 +266,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public void unlock() {
     getLockWrite().unlock();
-  }
-
-  public OAsynchChannelServiceThread getServiceThread() {
-    return serviceThread;
   }
 
   public int handleStatus(final byte iResult, final int iClientTxId) throws IOException {

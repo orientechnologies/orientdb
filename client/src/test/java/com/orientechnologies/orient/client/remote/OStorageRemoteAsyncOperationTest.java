@@ -27,17 +27,17 @@ import static org.junit.Assert.fail;
  */
 public class OStorageRemoteAsyncOperationTest {
 
-  private OStorageRemote             storage;
+  private OStorageRemote storage;
 
   @Mock
   private OChannelBinaryAsynchClient channel;
 
   @Mock
-  private ORemoteConnectionManager   connectionManager;
+  private ORemoteConnectionManager  connectionManager;
   @Mock
-  private OStorageRemoteSession      session;
+  private OStorageRemoteSession     session;
   @Mock
-  private OStorageRemoteNodeSession  nodeSession;
+  private OStorageRemoteNodeSession nodeSession;
 
   private class CallStatus {
     public String status;
@@ -47,7 +47,7 @@ public class OStorageRemoteAsyncOperationTest {
   public void before() throws IOException {
     MockitoAnnotations.initMocks(this);
     Mockito.when(session.getServerSession(Mockito.anyString())).thenReturn(nodeSession);
-    storage = new OStorageRemote("mock", "mock", "mock") {
+    storage = new OStorageRemote("mock", "mock", null) {
       @Override
       public <T> T baseNetworkOperation(OStorageRemoteOperation<T> operation, String errorMessage, int retry) {
         try {

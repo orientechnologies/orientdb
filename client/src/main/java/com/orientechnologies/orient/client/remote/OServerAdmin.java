@@ -41,7 +41,7 @@ import java.util.Set;
  * Remote administration class of OrientDB Server instances.
  */
 public class OServerAdmin {
-  protected OStorageRemote        storage;
+  protected OStorageRemote storage;
   protected OStorageRemoteSession session      = new OStorageRemoteSession(-1);
   protected String                clientType   = OStorageRemote.DRIVER_NAME;
   protected boolean               collectStats = true;
@@ -50,6 +50,7 @@ public class OServerAdmin {
    * Creates the object passing a remote URL to connect. sessionToken
    *
    * @param iURL URL to connect. It supports only the "remote" storage type.
+   *
    * @throws IOException
    */
   public OServerAdmin(String iURL) throws IOException {
@@ -59,7 +60,9 @@ public class OServerAdmin {
     if (!iURL.contains("/"))
       iURL += "/";
 
-    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN, true) {
+    ORemoteConnectionManager connectionManager = ((OEngineRemote) Orient.instance().getRunningEngine("remote")).getConnectionManager();
+
+    storage = new OStorageRemote(iURL, "", connectionManager, OStorage.STATUS.OPEN) {
       @Override
       protected OStorageRemoteSession getCurrentSession() {
         return session;
@@ -79,9 +82,11 @@ public class OServerAdmin {
   /**
    * Connects to a remote server.
    *
-   * @param iUserName Server's user name
+   * @param iUserName     Server's user name
    * @param iUserPassword Server's password for the user name used
+   *
    * @return The instance itself. Useful to execute method in chain
+   *
    * @throws IOException
    */
   public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
@@ -162,8 +167,10 @@ public class OServerAdmin {
    * Creates a database in a remote server.
    *
    * @param iDatabaseType 'document' or 'graph'
-   * @param iStorageMode local or memory
+   * @param iStorageMode  local or memory
+   *
    * @return The instance itself. Useful to execute method in chain
+   *
    * @throws IOException
    */
   public synchronized OServerAdmin createDatabase(final String iDatabaseType, String iStorageMode) throws IOException {
@@ -184,9 +191,11 @@ public class OServerAdmin {
    *
    * @param iDatabaseName The database name
    * @param iDatabaseType 'document' or 'graph'
-   * @param iStorageMode local or memory
-   * @param backupPath path to incremental backup which will be used to create database (optional)
+   * @param iStorageMode  local or memory
+   * @param backupPath    path to incremental backup which will be used to create database (optional)
+   *
    * @return The instance itself. Useful to execute method in chain
+   *
    * @throws IOException
    */
   public synchronized OServerAdmin createDatabase(final String iDatabaseName, final String iDatabaseType, final String iStorageMode,
@@ -224,8 +233,10 @@ public class OServerAdmin {
    * Checks if a database exists in the remote server.
    *
    * @param iDatabaseName The database name
-   * @param storageType Storage type between "plocal" or "memory".
+   * @param storageType   Storage type between "plocal" or "memory".
+   *
    * @return true if exists, otherwise false
+   *
    * @throws IOException
    */
   public synchronized boolean existsDatabase(final String iDatabaseName, final String storageType) throws IOException {
@@ -240,7 +251,9 @@ public class OServerAdmin {
    * Checks if a database exists in the remote server.
    *
    * @param storageType Storage type between "plocal" or "memory".
+   *
    * @return true if exists, otherwise false
+   *
    * @throws IOException
    */
   public synchronized boolean existsDatabase(final String storageType) throws IOException {
@@ -251,7 +264,9 @@ public class OServerAdmin {
    * Deprecated. Use dropDatabase() instead.
    *
    * @param storageType Storage type between "plocal" or "memory".
+   *
    * @return The instance itself. Useful to execute method in chain
+   *
    * @throws IOException
    * @see #dropDatabase(String)
    */
@@ -264,8 +279,10 @@ public class OServerAdmin {
    * Drops a database from a remote server instance.
    *
    * @param iDatabaseName The database name
-   * @param storageType Storage type between "plocal" or "memory".
+   * @param storageType   Storage type between "plocal" or "memory".
+   *
    * @return The instance itself. Useful to execute method in chain
+   *
    * @throws IOException
    */
   public synchronized OServerAdmin dropDatabase(final String iDatabaseName, final String storageType) throws IOException {
@@ -294,7 +311,9 @@ public class OServerAdmin {
    * Drops a database from a remote server instance.
    *
    * @param storageType Storage type between "plocal" or "memory".
+   *
    * @return The instance itself. Useful to execute method in chain
+   *
    * @throws IOException
    */
   public synchronized OServerAdmin dropDatabase(final String storageType) throws IOException {
@@ -305,7 +324,9 @@ public class OServerAdmin {
    * Freezes the database by locking it in exclusive mode.
    *
    * @param storageType Storage type between "plocal" or "memory".
+   *
    * @return
+   *
    * @throws IOException
    * @see #releaseDatabase(String)
    */
@@ -321,7 +342,9 @@ public class OServerAdmin {
    * Releases a frozen database.
    *
    * @param storageType Storage type between "plocal" or "memory".
+   *
    * @return
+   *
    * @throws IOException
    * @see #freezeDatabase(String)
    */
@@ -361,7 +384,8 @@ public class OServerAdmin {
 
     OGetGlobalConfigurationRequest request = new OGetGlobalConfigurationRequest(config.getKey());
 
-    OGetGlobalConfigurationResponse response = networkAdminOperation(request, "Cannot retrieve the configuration value: " + config.getKey());
+    OGetGlobalConfigurationResponse response = networkAdminOperation(request,
+        "Cannot retrieve the configuration value: " + config.getKey());
 
     return response.getValue();
   }
@@ -369,8 +393,10 @@ public class OServerAdmin {
   public synchronized OServerAdmin setGlobalConfiguration(final OGlobalConfiguration config, final Object iValue)
       throws IOException {
 
-    OSetGlobalConfigurationRequest request = new OSetGlobalConfigurationRequest(config.getKey(), iValue != null ? iValue.toString() : "");
-    OSetGlobalConfigurationResponse response = networkAdminOperation(request,  "Cannot set the configuration value: " + config.getKey());
+    OSetGlobalConfigurationRequest request = new OSetGlobalConfigurationRequest(config.getKey(),
+        iValue != null ? iValue.toString() : "");
+    OSetGlobalConfigurationResponse response = networkAdminOperation(request,
+        "Cannot set the configuration value: " + config.getKey());
     return this;
   }
 

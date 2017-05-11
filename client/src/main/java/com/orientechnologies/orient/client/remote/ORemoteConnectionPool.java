@@ -7,9 +7,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 
 /**
  * Created by tglman on 01/10/15.
@@ -17,14 +15,13 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 public class ORemoteConnectionPool implements OResourcePoolListener<String, OChannelBinaryAsynchClient> {
 
   private OResourcePool<String, OChannelBinaryAsynchClient> pool;
-  private ORemoteConnectionPushListener                     listener;
 
-  public ORemoteConnectionPool(int iMaxResources, final boolean createAsyncListener) {
+  public ORemoteConnectionPool(int iMaxResources) {
     pool = new OResourcePool<String, OChannelBinaryAsynchClient>(iMaxResources, this);
-    listener = createAsyncListener ? new ORemoteConnectionPushListener() : null;
   }
 
-  protected OChannelBinaryAsynchClient createNetworkConnection(String iServerURL, final OContextConfiguration clientConfiguration) throws OIOException {
+  protected OChannelBinaryAsynchClient createNetworkConnection(String iServerURL, final OContextConfiguration clientConfiguration)
+      throws OIOException {
     if (iServerURL == null)
       throw new IllegalArgumentException("server url is null");
 
@@ -53,7 +50,7 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
       final int remotePort = Integer.parseInt(serverURL.substring(sepPos + 1));
 
       final OChannelBinaryAsynchClient ch = new OChannelBinaryAsynchClient(remoteHost, remotePort, databaseName,
-          clientConfiguration, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, listener);
+          clientConfiguration, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
 
       return ch;
 
@@ -88,12 +85,8 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
     return pool;
   }
 
-
   public OChannelBinaryAsynchClient acquire(final String iServerURL, final long timeout,
-      final OContextConfiguration clientConfiguration, final OStorageRemoteAsynchEventListener iListener) {
-    final OChannelBinaryAsynchClient ret = pool.getResource(iServerURL, timeout, clientConfiguration, iListener != null);
-    if (listener != null && iListener != null)
-      listener.addListener(this, ret, iListener);
-    return ret;
+      final OContextConfiguration clientConfiguration) {
+    return pool.getResource(iServerURL, timeout, clientConfiguration);
   }
 }

@@ -30,7 +30,6 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -106,49 +105,43 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   private CONNECTION_STRATEGY connectionStrategy = CONNECTION_STRATEGY.STICKY;
 
-  private final   OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote(this);
-  protected final List<String>                   serverURLs              = new ArrayList<String>();
-  protected final Map<String, OCluster>          clusterMap              = new ConcurrentHashMap<String, OCluster>();
+  private final OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote(this);
+  private final List<String>                   serverURLs              = new ArrayList<String>();
+  private final Map<String, OCluster>          clusterMap              = new ConcurrentHashMap<String, OCluster>();
   private final ExecutorService asynchExecutor;
-  private final ODocument clusterConfiguration = new ODocument();
-  private final String clientId;
-  private final AtomicInteger users = new AtomicInteger(0);
+  private final ODocument     clusterConfiguration = new ODocument();
+  private final AtomicInteger users                = new AtomicInteger(0);
   private OContextConfiguration clientConfiguration;
   private int                   connectionRetry;
   private int                   connectionRetryDelay;
   OCluster[] clusters = OCommonConst.EMPTY_CLUSTER_ARRAY;
-  private int                               defaultClusterId;
-  public  OStorageRemoteAsynchEventListener asynchEventListener;
-  public  ORemoteConnectionManager          connectionManager;
+  private int                      defaultClusterId;
+  public  ORemoteConnectionManager connectionManager;
   private final Set<OStorageRemoteSession> sessions = Collections
       .newSetFromMap(new ConcurrentHashMap<OStorageRemoteSession, Boolean>());
 
   private volatile OStorageRemotePushThread pushThread;
 
-  public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
-    this(iClientId, iURL, iMode, null, true);
+  public OStorageRemote(final String iURL, final String iMode, ORemoteConnectionManager connectionManager) throws IOException {
+    this(iURL, iMode, connectionManager, null);
   }
 
-  public OStorageRemote(final String iClientId, final String iURL, final String iMode, final STATUS status,
-      final boolean managePushMessages) throws IOException {
-    super(iURL, iURL, iMode, 0); // NO TIMEOUT @SINCE 1.5
+  public OStorageRemote(final String iURL, final String iMode, ORemoteConnectionManager connectionManager, final STATUS status)
+      throws IOException {
+    super(iURL, iURL, iMode); // NO TIMEOUT @SINCE 1.5
     if (status != null)
       this.status = status;
 
-    clientId = iClientId;
     configuration = null;
 
     clientConfiguration = new OContextConfiguration();
     connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
     connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
-    if (managePushMessages)
-      asynchEventListener = new OStorageRemoteAsynchEventListener(this);
     parseServerURLs();
 
     asynchExecutor = Executors.newSingleThreadScheduledExecutor();
 
-    OEngineRemote engine = (OEngineRemote) Orient.instance().getRunningEngine(OEngineRemote.NAME);
-    connectionManager = engine.getConnectionManager();
+    this.connectionManager = connectionManager;
   }
 
   public <T extends OBinaryResponse> T asyncNetworkOperation(final OBinaryAsyncRequest<T> request, int mode,
@@ -429,11 +422,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     storageConfiguration.load(clientConfiguration);
 
     updateStorageConfiguration(storageConfiguration);
-//
-//    OReloadRequest request = new OReloadRequest();
-//    OReloadResponse response = networkOperation(request, "Error on reloading database information");
-//
-//    updateStorageInformations(response.getClusters());
   }
 
   public void create(OContextConfiguration contextConfiguration) {
@@ -1627,7 +1615,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OChannelBinaryAsynchClient network;
     do {
       try {
-        network = connectionManager.acquire(iCurrentURL, clientConfiguration, asynchEventListener);
+        network = connectionManager.acquire(iCurrentURL, clientConfiguration);
       } catch (OIOException cause) {
         throw cause;
       } catch (Exception cause) {
@@ -1700,23 +1688,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } finally {
       stateLock.releaseWriteLock();
     }
-  }
-
-  public void updateStorageInformations(OCluster[] clusters) {
-//    stateLock.acquireWriteLock();
-//    try {
-//      this.clusters = clusters;
-//      clusterMap.clear();
-//      for (int i = 0; i < clusters.length; ++i) {
-//        if (clusters[i] != null)
-//          clusterMap.put(clusters[i].getName(), clusters[i]);
-//      }
-//      final OCluster defaultCluster = clusterMap.get(CLUSTER_DEFAULT_NAME);
-//      if (defaultCluster != null)
-//        defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();
-//    } finally {
-//      stateLock.releaseWriteLock();
-//    }
   }
 
   protected OStorageRemoteSession getCurrentSession() {

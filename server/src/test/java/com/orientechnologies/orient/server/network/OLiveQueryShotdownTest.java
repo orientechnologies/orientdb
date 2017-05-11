@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.orientechnologies.common.exception.OException;
@@ -17,6 +18,7 @@ import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.server.OServer;
 
+@Ignore
 public class OLiveQueryShotdownTest {
 
   private static final String SERVER_DIRECTORY = "./target/db";

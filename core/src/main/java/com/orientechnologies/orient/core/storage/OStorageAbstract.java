@@ -70,7 +70,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
 
   protected final OSharedContainerImpl sharedContainer = new OSharedContainerImpl();
 
-  public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout) {
+  public OStorageAbstract(final String name, final String iURL, final String mode) {
     this.name = normalizeName(name);
 
     if (OStringSerializerHelper.contains(this.name, ','))

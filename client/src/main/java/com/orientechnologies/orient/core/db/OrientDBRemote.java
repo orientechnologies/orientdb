@@ -51,7 +51,7 @@ public class OrientDBRemote implements OrientDBInternal {
     super();
     this.hosts = hosts;
     this.orient = orient;
-    remote = (OEngineRemote) orient.getEngine("remote");
+    remote = (OEngineRemote) orient.getRunningEngine("remote");
 
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
 

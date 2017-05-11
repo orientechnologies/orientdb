@@ -24,6 +24,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.record.ORecord;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

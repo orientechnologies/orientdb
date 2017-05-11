@@ -249,35 +249,36 @@ public final class OCommandResponse implements OBinaryResponse {
           final Integer token = doc.field("token");
           final Boolean unsubscribe = doc.field("unsubscribe");
           if (token != null) {
-            OStorageRemote storage = (OStorageRemote) database.getStorage();
-            if (Boolean.TRUE.equals(unsubscribe)) {
-              if (storage.asynchEventListener != null)
-                storage.asynchEventListener.unregisterLiveListener(token);
-            } else {
-              final OLiveResultListener listener = (OLiveResultListener) this.listener;
-              final ODatabaseDocument dbCopy = database.copy();
-              ORemoteConnectionPool pool = storage.connectionManager.getPool(((OChannelBinaryAsynchClient) network).getServerURL());
-              storage.asynchEventListener.registerLiveListener(pool, token, new OLiveResultListener() {
-
-                @Override
-                public void onUnsubscribe(int iLiveToken) {
-                  listener.onUnsubscribe(iLiveToken);
-                  dbCopy.close();
-                }
-
-                @Override
-                public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
-                  dbCopy.activateOnCurrentThread();
-                  listener.onLiveResult(iLiveToken, iOp);
-                }
-
-                @Override
-                public void onError(int iLiveToken) {
-                  listener.onError(iLiveToken);
-                  dbCopy.close();
-                }
-              });
-            }
+//
+//            OStorageRemote storage = (OStorageRemote) database.getStorage();
+//            if (Boolean.TRUE.equals(unsubscribe)) {
+//              if (storage.asynchEventListener != null)
+//                storage.asynchEventListener.unregisterLiveListener(token);
+//            } else {
+//              final OLiveResultListener listener = (OLiveResultListener) this.listener;
+//              final ODatabaseDocument dbCopy = database.copy();
+//              ORemoteConnectionPool pool = storage.connectionManager.getPool(((OChannelBinaryAsynchClient) network).getServerURL());
+//              storage.asynchEventListener.registerLiveListener(pool, token, new OLiveResultListener() {
+//
+//                @Override
+//                public void onUnsubscribe(int iLiveToken) {
+//                  listener.onUnsubscribe(iLiveToken);
+//                  dbCopy.close();
+//                }
+//
+//                @Override
+//                public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
+//                  dbCopy.activateOnCurrentThread();
+//                  listener.onLiveResult(iLiveToken, iOp);
+//                }
+//
+//                @Override
+//                public void onError(int iLiveToken) {
+//                  listener.onError(iLiveToken);
+//                  dbCopy.close();
+//                }
+//              });
+//            }
           } else {
             throw new OStorageException("Cannot execute live query, returned null token");
           }
