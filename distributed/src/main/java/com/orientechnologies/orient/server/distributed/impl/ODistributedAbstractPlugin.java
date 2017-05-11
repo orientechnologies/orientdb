@@ -98,7 +98,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected int    nodeId   = -1;
   protected File defaultDatabaseConfigFile;
   protected final    ConcurrentMap<String, ODistributedStorage> storages = new ConcurrentHashMap<String, ODistributedStorage>();
-  protected volatile NODE_STATUS                                    status   = NODE_STATUS.OFFLINE;
+  protected volatile NODE_STATUS                                status   = NODE_STATUS.OFFLINE;
   protected long lastClusterChangeOn;
   protected       List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
   protected final ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
@@ -110,11 +110,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
   protected OClusterOwnershipAssignmentStrategy clusterAssignmentStrategy = new ODefaultClusterOwnershipAssignmentStrategy(this);
 
-  protected static final int                  DEPLOY_DB_MAX_RETRIES  = 10;
+  protected static final int                            DEPLOY_DB_MAX_RETRIES  = 10;
   protected              ConcurrentMap<String, Member>  activeNodes            = new ConcurrentHashMap<String, Member>();
   protected              ConcurrentMap<String, String>  activeNodesNamesByUuid = new ConcurrentHashMap<String, String>();
   protected              ConcurrentMap<String, String>  activeNodesUuidByName  = new ConcurrentHashMap<String, String>();
-  protected final        List<String>         registeredNodeById     = new CopyOnWriteArrayList<String>();
+  protected final        List<String>                   registeredNodeById     = new CopyOnWriteArrayList<String>();
   protected final        ConcurrentMap<String, Integer> registeredNodeByName   = new ConcurrentHashMap<String, Integer>();
   protected              ConcurrentMap<String, Long>    autoRemovalOfServers   = new ConcurrentHashMap<String, Long>();
   protected volatile ODistributedMessageServiceImpl messageService;
@@ -819,6 +819,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   public long getLastClusterChangeOn() {
     return lastClusterChangeOn;
+  }
+
+  @Override
+  public int getTotalNodes(final String iDatabaseName) {
+    final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabaseName);
+    if (cfg != null)
+      return cfg.getAllConfiguredServers().size();
+    return 0;
   }
 
   @Override

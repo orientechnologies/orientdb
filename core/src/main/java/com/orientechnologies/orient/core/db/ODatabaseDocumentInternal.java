@@ -27,9 +27,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollecti
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -61,12 +58,12 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
 
   int assignAndCheckCluster(ORecord record, String iClusterName);
 
-  <RET extends ORecord> RET loadIfVersionIsNotLatest(final ORID rid, final int recordVersion, String fetchPlan, boolean ignoreCache)
+  <RET extends ORecord> RET loadIfVersionIsNotLatest(ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException;
 
   void reloadUser();
 
-  ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id);
+  ORecordHook.RESULT callbackHooks(ORecordHook.TYPE type, OIdentifiable id);
 
   @Override
   OMetadataInternal getMetadata();
@@ -74,6 +71,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
   boolean isPrefetchRecords();
 
   void setPrefetchRecords(boolean prefetchRecords);
-  
-  public ODatabaseDocumentInternal copy();
+
+  ODatabaseDocumentInternal copy();
+
+  void recycle(ORecord record);
 }

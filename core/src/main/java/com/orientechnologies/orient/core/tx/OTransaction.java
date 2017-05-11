@@ -99,6 +99,8 @@ public interface OTransaction {
 
   void deleteRecord(ORecord iRecord, OPERATION_MODE iMode);
 
+  void recycleRecord(ORecord iRecord);
+
   int getId();
 
   TXSTATUS getStatus();

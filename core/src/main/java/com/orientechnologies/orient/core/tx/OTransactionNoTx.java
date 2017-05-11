@@ -284,6 +284,28 @@ public class OTransactionNoTx extends OTransactionAbstract {
     }
   }
 
+  /**
+   * Recycles the record.
+   */
+  public void recycleRecord(final ORecord iRecord) {
+    if (!iRecord.getIdentity().isPersistent())
+      return;
+
+    try {
+      database.executeRecycleRecord(iRecord);
+    } catch (Exception e) {
+      // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
+      final ORecordId rid = (ORecordId) iRecord.getIdentity();
+      if (rid.isValid())
+        database.getLocalCache().freeRecord(rid);
+
+      if (e instanceof RuntimeException)
+        throw (RuntimeException) e;
+      throw OException.wrapException(new ODatabaseException(
+          "Error during recycling of record" + (iRecord != null ? " with rid " + iRecord.getIdentity() : "")), e);
+    }
+  }
+
   public Collection<ORecordOperation> getCurrentRecordEntries() {
     return null;
   }

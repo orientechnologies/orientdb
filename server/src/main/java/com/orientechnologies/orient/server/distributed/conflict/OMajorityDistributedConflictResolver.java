@@ -37,6 +37,7 @@ import java.util.Map;
 public class OMajorityDistributedConflictResolver extends OAbstractDistributedConflictResolver {
   public static final String NAME = "majority";
 
+  @Override
   public OConflictResult onConflict(final String databaseName, final String clusterName, final ORecordId rid,
       final ODistributedServerManager dManager, final Map<Object, List<String>> candidates) {
 
@@ -95,6 +96,7 @@ public class OMajorityDistributedConflictResolver extends OAbstractDistributedCo
     return result;
   }
 
+  @Override
   public String getName() {
     return NAME;
   }

@@ -163,6 +163,9 @@ public class ODistributedTransactionManager {
                       }
                     });
 
+            if (lastResult == null)
+              throw new OTransactionException("No response received from distributed servers");
+
             processCommitResult(localNodeName, iTx, txTask, involvedClusters, uResult, nodes, lastResult.getRequestId(), lastResult,
                 ctx);
 
@@ -809,7 +812,8 @@ public class ODistributedTransactionManager {
       }
     } finally {
       final ODistributedTxContext ctx = localDistributedDatabase.popTxContext(resp.getMessageId());
-      ctx.destroy();
+      if (ctx != null)
+        ctx.destroy();
     }
   }
 }

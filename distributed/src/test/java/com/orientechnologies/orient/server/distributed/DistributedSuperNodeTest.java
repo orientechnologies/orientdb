@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -29,6 +26,8 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Distributed TX test against "plocal" protocol.
@@ -60,8 +59,8 @@ public class DistributedSuperNodeTest extends AbstractServerClusterGraphTest {
     OrientGraph graph = factory.getTx();
     try {
       OrientVertex root = graph.getVertex(rootVertexId);
-      Assert.assertEquals(((OMultiCollectionIterator) root.getEdges(Direction.OUT)).size(),
-          count * serverInstance.size() * writerCount);
+      Assert.assertEquals(count * serverInstance.size() * writerCount,
+          ((OMultiCollectionIterator) root.getEdges(Direction.OUT)).size());
     } finally {
       graph.shutdown();
     }

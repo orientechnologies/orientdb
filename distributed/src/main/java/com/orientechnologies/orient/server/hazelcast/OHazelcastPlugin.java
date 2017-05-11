@@ -409,6 +409,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
+  public boolean isWriteQuorumPresent(final String databaseName) {
+    final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+    if (cfg != null) {
+      final int availableServers = getAvailableNodes(databaseName);
+      if (availableServers == 0)
+        return false;
+
+      final int quorum = cfg.getWriteQuorum(null, cfg.getMasterServers().size(), getLocalNodeName());
+      return availableServers >= quorum;
+    }
+    return false;
+  }
+
+  @Override
   public int getNodeIdByName(final String name) {
     int id = super.getNodeIdByName(name);
     if (name == null) {
@@ -1580,7 +1594,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (joinedNodeName.startsWith("ext:"))
       // NODE HAS NOT IS YET
       return;
-
 
     if (activeNodes.putIfAbsent(joinedNodeName, member) == null) {
       // NOTIFY NODE IS GOING TO BE ADDED. IS EVERYBODY OK?

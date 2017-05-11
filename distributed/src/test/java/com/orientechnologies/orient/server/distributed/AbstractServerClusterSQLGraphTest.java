@@ -20,17 +20,12 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import com.tinkerpop.blueprints.impls.orient.*;
 import junit.framework.Assert;
 
 import java.util.Date;
@@ -64,31 +59,38 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
           if ((i + 1) % 100 == 0)
             System.out.println("\nWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
 
-          try {
-            OrientVertex person1 = createVertex(graph, serverId, threadId, i);
-            OrientVertex person2 = createVertex(graph, serverId, threadId, i + 1);
+          for (int retry = 0; retry < 10; ++retry) {
+            try {
+              OrientVertex person1 = createVertex(graph, serverId, threadId, i);
+              OrientVertex person2 = createVertex(graph, serverId, threadId, i + 1);
 
-            OrientEdge knows = createEdge(graph, person1, person2);
+              OrientEdge knows = createEdge(graph, person1, person2);
 
-            Assert.assertEquals(knows.getOutVertex(), person1.getIdentity());
-            Assert.assertEquals(knows.getInVertex(), person2.getIdentity());
+              Assert.assertEquals(knows.getOutVertex(), person1.getIdentity());
+              Assert.assertEquals(knows.getInVertex(), person2.getIdentity());
 
-            graph.commit();
+              graph.commit();
 
-            updateVertex(graph, person1);
-            checkVertex(graph, person1);
-            Assert.assertTrue(person1.getIdentity().isPersistent());
+              updateVertex(graph, person1);
+              checkVertex(graph, person1);
+              Assert.assertTrue(person1.getIdentity().isPersistent());
 
-            updateVertex(graph, person2);
-            checkVertex(graph, person2);
-            Assert.assertTrue(person2.getIdentity().isPersistent());
-          } catch (Exception e) {
-            graph.rollback();
-            throw e;
+              updateVertex(graph, person2);
+              checkVertex(graph, person2);
+              Assert.assertTrue(person2.getIdentity().isPersistent());
+            } catch (ONeedRetryException e) {
+              graph.rollback();
+              continue;
+            } catch (Exception e) {
+              graph.rollback();
+              throw e;
+            }
+
+            if (delayWriter > 0)
+              Thread.sleep(delayWriter);
+
+            break;
           }
-
-          if (delayWriter > 0)
-            Thread.sleep(delayWriter);
 
         } catch (InterruptedException e) {
           System.out.println("Writer received interrupt (db=" + databaseUrl);
@@ -147,17 +149,16 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
   protected OrientVertex createVertex(OrientGraph graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-    final Object result = graph.command(
-        new OCommandSQL("create vertex Person content {'id': '" + UUID.randomUUID().toString() + "', 'name': 'Billy" + uniqueId
-            + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '"
-            + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance().format(new Date())
-            + "', 'children': '" + uniqueId + "'}")).execute();
+    final Object result = graph.command(new OCommandSQL(
+        "create vertex Person content {'id': '" + UUID.randomUUID().toString() + "', 'name': 'Billy" + uniqueId
+            + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '" + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+            .getConfiguration().getDateFormatInstance().format(new Date()) + "', 'children': '" + uniqueId + "'}")).execute();
     return (OrientVertex) result;
   }
 
   protected OrientEdge createEdge(OrientGraph graph, OrientVertex v1, OrientVertex v2) {
-    final Iterable<OrientEdge> result = graph.command(
-        new OCommandSQL("create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
+    final Iterable<OrientEdge> result = graph
+        .command(new OCommandSQL("create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
     return result.iterator().next();
   }
 

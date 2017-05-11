@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.junit.Assert;
 import org.testng.annotations.Test;
 
 import java.util.*;
@@ -654,6 +655,40 @@ public class OCommandExecutorSQLUpdateTest {
       Set tags = doc.field("tags");
       assertEquals(tags.size(), 1);
       assertTrue(tags.contains("foo"));
+
+    } finally {
+      db.drop();
+    }
+  }
+
+  @Test
+  public void testUpdateWithTempRidInTx() throws Exception {
+    //issue #7194
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testUpdateWithTempRidInTx");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class Foo")).execute();
+
+      Object a = db.command(new OCommandSQL("insert into Foo set name = 'a'")).execute();
+      Assert.assertTrue(a instanceof ODocument);
+      db.begin();
+      Object b = db.command(new OCommandSQL("insert into Foo set name = 'b'")).execute();
+      Assert.assertTrue(b instanceof ODocument);
+      Assert.assertTrue(((ODocument) b).getIdentity().isTemporary());
+      db.command(new OCommandSQL("UPDATE " + ((ODocument) a).getIdentity() + "set link = " + ((ODocument) b).getIdentity()+" WHERE name = 'a'"))
+          .execute();
+
+      db.commit();
+
+      List<ODocument> result = db.query(new OSQLSynchQuery("SELECT FROM Foo WHERE name = 'a'"));
+
+      assertEquals(result.size(), 1);
+
+      ODocument doc = result.get(0);
+      Object link = doc.field("link");
+      Assert.assertTrue(link instanceof ODocument);
+      doc = (ODocument) link;
+      Assert.assertEquals("b", doc.field("name"));
 
     } finally {
       db.drop();

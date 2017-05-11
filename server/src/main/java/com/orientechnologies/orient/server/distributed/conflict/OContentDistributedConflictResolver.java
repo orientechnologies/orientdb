@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.distributed.conflict;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
@@ -36,8 +35,9 @@ import java.util.*;
 public class OContentDistributedConflictResolver extends OMajorityDistributedConflictResolver {
   public static final String NAME = "content";
 
+  @Override
   public OConflictResult onConflict(final String databaseName, final String clusterName, final ORecordId rid,
-      final ODistributedServerManager dManager, final Map<Object, List<String>> candidates, final ODocument config) {
+      final ODistributedServerManager dManager, final Map<Object, List<String>> candidates) {
 
     final OConflictResult result = new OConflictResult();
 
@@ -111,7 +111,7 @@ public class OContentDistributedConflictResolver extends OMajorityDistributedCon
         } else {
           result.candidates = candidates;
           OLogManager.instance().debug(this,
-              "Content Conflict Resolver cannot decide the winner for record %s, because there is no majoriy in the content", rid);
+              "Content Conflict Resolver cannot decide the winner for record %s, because there is no majority in the content", rid);
         }
       }
     }
@@ -119,6 +119,7 @@ public class OContentDistributedConflictResolver extends OMajorityDistributedCon
     return result;
   }
 
+  @Override
   public String getName() {
     return NAME;
   }
