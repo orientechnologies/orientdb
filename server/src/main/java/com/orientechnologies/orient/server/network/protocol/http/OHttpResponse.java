@@ -34,6 +34,7 @@ import java.net.Socket;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -106,6 +107,7 @@ public class OHttpResponse {
     } else {
       writeStatus(empty && iCode == 200 ? 204 : iCode, iReason);
     }
+
     writeHeaders(contentType, keepAlive);
 
     if (iHeaders != null) {
@@ -117,8 +119,21 @@ public class OHttpResponse {
 
     byte[] binaryContent = null;
     if (!empty) {
-      if (contentEncoding != null && contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
-        binaryContent = compress(content);
+      if (contentEncoding != null) {
+	      if (contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_DEFLATE_ENCODED)) {
+            binaryContent = deflate(content);
+	      } else if (contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
+            binaryContent = compress(content);
+	      } else {
+	        throw new OHttpRequestException("Not supported content encoding: " + contentEncoding);
+          }
+
+	      if (binaryContent == null) {
+            contentType = null;
+            binaryContent = content.getBytes(utf8);
+
+            OLogManager.instance().error(this, "Could not encode content with " + contentEncoding);
+          }
       } else {
         binaryContent = content.getBytes(utf8);
       }
@@ -287,20 +302,22 @@ public class OHttpResponse {
           final List<String> orderedColumns = new ArrayList<String>(colNames);
 
           try {
+            OutputStream outputStream = getOutputStream(iArgument);
+
             // WRITE THE HEADER
             for (int col = 0; col < orderedColumns.size(); ++col) {
               if (col > 0)
-                iArgument.write(',');
+                outputStream.write(',');
 
-              iArgument.write(orderedColumns.get(col).getBytes());
+              outputStream.write(orderedColumns.get(col).getBytes());
             }
-            iArgument.write(OHttpUtils.EOL);
+            outputStream.write(OHttpUtils.EOL);
 
             // WRITE EACH RECORD
             for (ODocument doc : records) {
               for (int col = 0; col < orderedColumns.size(); ++col) {
                 if (col > 0) {
-                  iArgument.write(',');
+                  outputStream.write(',');
                 }
 
                 Object value = doc.field(orderedColumns.get(col));
@@ -308,13 +325,13 @@ public class OHttpResponse {
                   if (!(value instanceof Number))
                     value = "\"" + value + "\"";
 
-                  iArgument.write(value.toString().getBytes());
+                  outputStream.write(value.toString().getBytes());
                 }
               }
-              iArgument.write(OHttpUtils.EOL);
+              outputStream.write(OHttpUtils.EOL);
             }
 
-            iArgument.flush();
+            outputStream.flush();
 
           } catch (IOException e) {
             OLogManager.instance().error(this, "HTTP response: error on writing records", e);
@@ -335,9 +352,13 @@ public class OHttpResponse {
           @Override
           public Void call(OChunkedResponse iArgument) {
             try {
-              OutputStreamWriter writer = new OutputStreamWriter(iArgument);
+              OutputStream outputStream = getOutputStream(iArgument);
+
+              OutputStreamWriter writer = new OutputStreamWriter(outputStream);
               writeRecordsOnStream(iFetchPlan, sendFormat, iAdditionalProperties, it, writer);
               writer.flush();
+              outputStream.close();
+
             } catch (IOException e) {
               e.printStackTrace();
             }
@@ -350,6 +371,30 @@ public class OHttpResponse {
         send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
       }
     }
+  }
+
+	/**
+     * Get OutputStream based on content encoding.
+     *
+     * @param iArgument
+     * @return
+     * @throws IOException
+     */
+  private OutputStream getOutputStream(OutputStream iArgument) throws IOException {
+    OutputStream outputStream;
+
+    if (contentEncoding != null) {
+      if (contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_DEFLATE_ENCODED)) {
+        outputStream = new DeflaterOutputStream(iArgument);
+      } else if (contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
+        outputStream = new GZIPOutputStream(iArgument);
+      } else {
+        throw new OHttpRequestException("Not supported content encoding: " + contentEncoding);
+      }
+    } else {
+      outputStream = iArgument;
+    }
+    return outputStream;
   }
 
   private void writeRecordsOnStream(String iFetchPlan, String iFormat, Map<String, Object> iAdditionalProperties, Iterator<Object> it,
@@ -495,6 +540,7 @@ public class OHttpResponse {
   public void sendStream(final int iCode, final String iReason, final String iContentType, final String iFileName,
       final OCallable<Void, OChunkedResponse> iWriter) throws IOException {
     writeStatus(iCode, iReason);
+
     writeHeaders(iContentType);
     writeLine("Content-Transfer-Encoding: binary");
     writeLine("Transfer-Encoding: chunked");
@@ -512,33 +558,71 @@ public class OHttpResponse {
     flush();
   }
 
+  public byte[] deflate(String jsonStr) {
+    if (jsonStr == null || jsonStr.length() == 0) {
+      return null;
+    }
+
+    ByteArrayOutputStream byteArrayOutputStream = null;
+    DeflaterOutputStream deflaterOutputStream = null;
+
+    try {
+	  byteArrayOutputStream = new ByteArrayOutputStream();
+	  deflaterOutputStream = new DeflaterOutputStream(byteArrayOutputStream);
+	  deflaterOutputStream.write(jsonStr.getBytes(utf8));
+	  deflaterOutputStream.flush();
+      deflaterOutputStream.close();
+
+	  return byteArrayOutputStream.toByteArray();
+    }  catch (IOException ex) {
+      OLogManager.instance().error(this, "Error on compressing HTTP response", ex);
+
+      try {
+        if (byteArrayOutputStream != null) {
+          byteArrayOutputStream.close();
+        }
+
+        if (deflaterOutputStream != null) {
+          deflaterOutputStream.close();
+        }
+      } catch (Exception ignore) {}
+    }
+
+    return null;
+  }
+
   // Compress content string
   public byte[] compress(String jsonStr) {
     if (jsonStr == null || jsonStr.length() == 0) {
       return null;
     }
-    GZIPOutputStream gout = null;
-    ByteArrayOutputStream baos = null;
+
+    GZIPOutputStream gzipOutputStream = null;
+    ByteArrayOutputStream byteArrayOutputStream = null;
+
     try {
-      byte[] incoming = jsonStr.getBytes("UTF-8");
-      baos = new ByteArrayOutputStream();
-      gout = new GZIPOutputStream(baos, 16384); // 16KB
-      gout.write(incoming);
-      gout.finish();
-      return baos.toByteArray();
-    } catch (Exception ex) {
+      byteArrayOutputStream = new ByteArrayOutputStream();
+      gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream);
+
+      gzipOutputStream.write(jsonStr.getBytes(utf8));
+      gzipOutputStream.flush();
+      gzipOutputStream.close();
+
+      return byteArrayOutputStream.toByteArray();
+    } catch(IOException ex){
       OLogManager.instance().error(this, "Error on compressing HTTP response", ex);
-    } finally {
+
       try {
-        if (gout != null) {
-          gout.close();
+        if (gzipOutputStream != null) {
+          gzipOutputStream.close();
         }
-        if (baos != null) {
-          baos.close();
+
+        if (byteArrayOutputStream != null) {
+          byteArrayOutputStream.close();
         }
-      } catch (Exception ex) {
-      }
+      } catch (Exception ignore) {}
     }
+
     return null;
   }
 
