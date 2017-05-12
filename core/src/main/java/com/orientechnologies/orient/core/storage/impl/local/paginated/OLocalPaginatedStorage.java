@@ -185,27 +185,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   public String getStoragePath() {
-    try {
-      return storagePath;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return storagePath;
   }
 
   public OStorageVariableParser getVariableParser() {
-    try {
-      return variableParser;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return variableParser;
   }
 
   @Override

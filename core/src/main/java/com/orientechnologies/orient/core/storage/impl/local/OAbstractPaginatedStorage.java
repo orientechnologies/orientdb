@@ -768,15 +768,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public int getId() {
-    try {
-      return id;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return id;
   }
 
   public boolean setClusterStatus(final int clusterId, final OStorageClusterConfiguration.STATUS iStatus) {
@@ -834,39 +826,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public OSBTreeCollectionManager getSBtreeCollectionManager() {
-    try {
-      return sbTreeCollectionManager;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return sbTreeCollectionManager;
   }
 
   public OReadCache getReadCache() {
-    try {
-      return readCache;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return readCache;
   }
 
   public OWriteCache getWriteCache() {
-    try {
-      return writeCache;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return writeCache;
   }
 
   public long count(final int iClusterId) {
@@ -1395,27 +1363,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public OAtomicOperationsManager getAtomicOperationsManager() {
-    try {
-      return atomicOperationsManager;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return atomicOperationsManager;
   }
 
   public OWriteAheadLog getWALInstance() {
-    try {
-      return writeAheadLog;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return writeAheadLog;
   }
 
   @Override
@@ -1482,15 +1434,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public OPerformanceStatisticManager getPerformanceStatisticManager() {
-    try {
-      return performanceStatisticManager;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return performanceStatisticManager;
   }
 
   /**
@@ -2862,15 +2806,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public int getDefaultClusterId() {
-    try {
-      return defaultClusterId;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return defaultClusterId;
   }
 
   public void setDefaultClusterId(final int defaultClusterId) {
@@ -3135,15 +3071,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public boolean isRemote() {
-    try {
-      return false;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return false;
   }
 
   public void reload() {
@@ -3160,15 +3088,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public String getMode() {
-    try {
-      return mode;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return mode;
   }
 
   @Override
@@ -3485,15 +3405,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public ORecordConflictStrategy getConflictStrategy() {
-    try {
-      return recordConflictStrategy;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return recordConflictStrategy;
   }
 
   public void setConflictStrategy(final ORecordConflictStrategy conflictResolver) {
@@ -3514,15 +3426,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected abstract boolean isWriteAllowedDuringIncrementalBackup();
 
   public OStorageRecoverListener getRecoverListener() {
-    try {
-      return recoverListener;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return recoverListener;
   }
 
   public void registerRecoverListener(final OStorageRecoverListener recoverListener) {
@@ -3598,15 +3502,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public long getFullCheckpointCount() {
-    try {
-      return fullCheckpointCount;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return fullCheckpointCount;
   }
 
   protected void preOpenSteps() throws IOException {
@@ -3640,15 +3536,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public boolean isIndexRebuildScheduled() {
-    try {
-      return false;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return false;
   }
 
   protected boolean isIndexRebuildScheduledInternal() {
@@ -5081,15 +4969,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public AtomicLong getRecordScanned() {
-    try {
-      return recordScanned;
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
+    return recordScanned;
   }
 
   protected RuntimeException logAndPrepareForRethrow(RuntimeException runtimeException) {
