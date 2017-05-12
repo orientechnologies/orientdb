@@ -214,15 +214,7 @@ public class OSharedResourceAdaptive {
 
       printWriter.flush();
       return stringWriter.toString();
-    } catch (RuntimeException e) {
-      return null;
-    } catch (NoSuchFieldException e) {
-      return null;
-    } catch (IllegalAccessException e) {
-      return null;
-    } catch (NoSuchMethodException e) {
-      return null;
-    } catch (InvocationTargetException e) {
+    } catch (RuntimeException | NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       return null;
     }
 

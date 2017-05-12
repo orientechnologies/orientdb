@@ -73,9 +73,7 @@ public class OStringSerializerEmbedded implements OStringSerializer {
         documentSerializable.fromDocument(docClone);
 
         return documentSerializable;
-      } catch (InstantiationException e) {
-        throw OException.wrapException(new OSerializationException("Cannot serialize the object"), e);
-      } catch (IllegalAccessException e) {
+      } catch (InstantiationException | IllegalAccessException e) {
         throw OException.wrapException(new OSerializationException("Cannot serialize the object"), e);
       }
     }

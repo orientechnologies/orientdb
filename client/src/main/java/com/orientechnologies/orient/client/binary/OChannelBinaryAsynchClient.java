@@ -164,9 +164,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           cause = (Exception) c.newInstance(iMessage);
 
         rootException = OException.wrapException(new OSystemException("Data processing exception"), cause);
-      } catch (InstantiationException ignored) {
-      } catch (IllegalAccessException ignored) {
-      } catch (InvocationTargetException ignored) {
+      } catch (InstantiationException | IllegalAccessException | InvocationTargetException ignored) {
       }
 
     return rootException;
@@ -448,13 +446,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         proxyInstance.addSuppressed((Exception) throwable);
         throw proxyInstance;
 
-      } catch (NoSuchMethodException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
-      } catch (InvocationTargetException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
-      } catch (InstantiationException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
-      } catch (IllegalAccessException e) {
+      } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
         OLogManager.instance().error(this, "Error during exception deserialization", e);
       }
     }

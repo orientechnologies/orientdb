@@ -109,9 +109,7 @@ public class OWALRecordsFactory {
       if (idToTypeMap.containsKey(content[0]))
         try {
           walRecord = (OWALRecord) idToTypeMap.get(content[0]).newInstance();
-        } catch (InstantiationException e) {
-          throw new IllegalStateException("Cannot deserialize passed in record", e);
-        } catch (IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException e) {
           throw new IllegalStateException("Cannot deserialize passed in record", e);
         }
       else

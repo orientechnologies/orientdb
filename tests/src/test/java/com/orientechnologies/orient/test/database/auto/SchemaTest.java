@@ -571,8 +571,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     try {
       database.getMetadata().getSchema().getClass("V").setName("OUser");
       Assert.fail();
-    } catch (OSchemaException e) {
-    } catch (OCommandExecutionException e) {
+    } catch (OSchemaException | OCommandExecutionException e) {
     }
   }
 
@@ -580,8 +579,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     try {
       database.getMetadata().getSchema().getClass("V").setShortName("OUser");
       Assert.fail();
-    } catch (IllegalArgumentException e) {
-    } catch (OCommandExecutionException e) {
+    } catch (IllegalArgumentException | OCommandExecutionException e) {
     }
   }
 

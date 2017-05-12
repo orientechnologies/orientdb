@@ -460,11 +460,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               request.write(network, session);
               endRequest(network);
               connectionManager.release(network);
-            } catch (OIOException ex) {
-              // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
-              OLogManager.instance().debug(this, "Impossible to comunicate to the server for close: %s", ex);
-              connectionManager.remove(network);
-            } catch (IOException ex) {
+            } catch (OIOException | IOException ex) {
               // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
               OLogManager.instance().debug(this, "Impossible to comunicate to the server for close: %s", ex);
               connectionManager.remove(network);

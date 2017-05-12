@@ -435,13 +435,7 @@ public class OPerformanceStatisticManager {
                   + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
         }
 
-      } catch (MalformedObjectNameException e) {
-        throw OException.wrapException(new OStorageException("Error during registration of profiler MBean"), e);
-      } catch (InstanceAlreadyExistsException e) {
-        throw OException.wrapException(new OStorageException("Error during registration of profiler MBean"), e);
-      } catch (MBeanRegistrationException e) {
-        throw OException.wrapException(new OStorageException("Error during registration of profiler MBean"), e);
-      } catch (NotCompliantMBeanException e) {
+      } catch (MalformedObjectNameException | InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
         throw OException.wrapException(new OStorageException("Error during registration of profiler MBean"), e);
       }
     }
@@ -466,11 +460,7 @@ public class OPerformanceStatisticManager {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName mbeanName = new ObjectName(getMBeanName(storageName, storageId));
         server.unregisterMBean(mbeanName);
-      } catch (MalformedObjectNameException e) {
-        throw OException.wrapException(new OStorageException("Error during unregistration of profiler MBean"), e);
-      } catch (InstanceNotFoundException e) {
-        throw OException.wrapException(new OStorageException("Error during unregistration of profiler MBean"), e);
-      } catch (MBeanRegistrationException e) {
+      } catch (MalformedObjectNameException | InstanceNotFoundException | MBeanRegistrationException e) {
         throw OException.wrapException(new OStorageException("Error during unregistration of profiler MBean"), e);
       }
     }
