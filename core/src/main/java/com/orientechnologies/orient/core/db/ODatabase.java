@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.query.live.OLiveQueryListener;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -845,14 +846,14 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Executes an SQL query. The result set has to be closed after usage
    * <br><br>
    * Sample usage:
-   *
+   * <p>
    * <code>
-   *   OResultSet rs = db.query("SELECT FROM V where name = ?", "John");
-   *   while(rs.hasNext()){
-   *     OResult item = rs.next();
-   *     ...
-   *   }
-   *   rs.close();
+   * OResultSet rs = db.query("SELECT FROM V where name = ?", "John");
+   * while(rs.hasNext()){
+   * OResult item = rs.next();
+   * ...
+   * }
+   * rs.close();
    * </code>
    *
    * @param query the query string
@@ -868,16 +869,16 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Executes an SQL query (idempotent). The result set has to be closed after usage
    * <br><br>
    * Sample usage:
-   *
+   * <p>
    * <code>
-   *   Map&lt;String, Object&gt params = new HashMapMap&lt;&gt();
-   *   params.put("name", "John");
-   *   OResultSet rs = db.query("SELECT FROM V where name = :name", params);
-   *   while(rs.hasNext()){
-   *     OResult item = rs.next();
-   *     ...
-   *   }
-   *   rs.close();
+   * Map&lt;String, Object&gt params = new HashMapMap&lt;&gt();
+   * params.put("name", "John");
+   * OResultSet rs = db.query("SELECT FROM V where name = :name", params);
+   * while(rs.hasNext()){
+   * OResult item = rs.next();
+   * ...
+   * }
+   * rs.close();
    * </code>
    *
    * @param query the query string
@@ -894,11 +895,11 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * The result set has to be closed after usage
    * <br><br>
    * Sample usage:
-   *
+   * <p>
    * <code>
-   *   OResultSet rs = db.command("INSERT INTO Person SET name = ?", "John");
-   *   ...
-   *   rs.close();
+   * OResultSet rs = db.command("INSERT INTO Person SET name = ?", "John");
+   * ...
+   * rs.close();
    * </code>
    *
    * @param query
@@ -915,13 +916,13 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * The result set has to be closed after usage
    * <br><br>
    * Sample usage:
-   *
+   * <p>
    * <code>
-   *   Map&lt;String, Object&gt params = new HashMapMap&lt;&gt();
-   *   params.put("name", "John");
-   *   OResultSet rs = db.query("INSERT INTO Person SET name = :name", params);
-   *   ...
-   *   rs.close();
+   * Map&lt;String, Object&gt params = new HashMapMap&lt;&gt();
+   * params.put("name", "John");
+   * OResultSet rs = db.query("INSERT INTO Person SET name = :name", params);
+   * ...
+   * rs.close();
    * </code>
    *
    * @param query
@@ -938,18 +939,17 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * The result set has to be closed after usage
    * <br><br>
    * Sample usage:
-   *
+   * <p>
    * <code>
-   *   String script =
-   *     "INSERT INTO Person SET name = 'foo', surname = ?;"+
-   *     "INSERT INTO Person SET name = 'bar', surname = ?;"+
-   *     "INSERT INTO Person SET name = 'baz', surname = ?;";
-   *
-   *   OResultSet rs = db.execute("sql", script, "Surname1", "Surname2", "Surname3");
-   *   ...
-   *   rs.close();
+   * String script =
+   * "INSERT INTO Person SET name = 'foo', surname = ?;"+
+   * "INSERT INTO Person SET name = 'bar', surname = ?;"+
+   * "INSERT INTO Person SET name = 'baz', surname = ?;";
+   * <p>
+   * OResultSet rs = db.execute("sql", script, "Surname1", "Surname2", "Surname3");
+   * ...
+   * rs.close();
    * </code>
-   *
    *
    * @param language
    * @param script
@@ -967,21 +967,21 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * The result set has to be closed after usage
    * <br><br>
    * Sample usage:
-   *
+   * <p>
    * <code>
-   *   Map&lt;String, Object&gt params = new HashMapMap&lt;&gt();
-   *   params.put("surname1", "Jones");
-   *   params.put("surname2", "May");
-   *   params.put("surname3", "Ali");
-   *
-   *   String script =
-   *     "INSERT INTO Person SET name = 'foo', surname = :surname1;"+
-   *     "INSERT INTO Person SET name = 'bar', surname = :surname2;"+
-   *     "INSERT INTO Person SET name = 'baz', surname = :surname3;";
-   *
-   *   OResultSet rs = db.execute("sql", script, params);
-   *   ...
-   *   rs.close();
+   * Map&lt;String, Object&gt params = new HashMapMap&lt;&gt();
+   * params.put("surname1", "Jones");
+   * params.put("surname2", "May");
+   * params.put("surname3", "Ali");
+   * <p>
+   * String script =
+   * "INSERT INTO Person SET name = 'foo', surname = :surname1;"+
+   * "INSERT INTO Person SET name = 'bar', surname = :surname2;"+
+   * "INSERT INTO Person SET name = 'baz', surname = :surname3;";
+   * <p>
+   * OResultSet rs = db.execute("sql", script, params);
+   * ...
+   * rs.close();
    * </code>
    *
    * @param language
@@ -1101,4 +1101,22 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @since 2.2
    */
   String incrementalBackup(String path);
+
+  /**
+   * Subscribe a query as a live query for future create/update event with the referred conditions
+   *
+   * @param query    live query
+   * @param listener the listener that receive the query results
+   * @param args     the live query args
+   */
+  OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args);
+
+  /**
+   * Subscribe a query as a live query for future create/update event with the referred conditions
+   *
+   * @param query    live query
+   * @param listener the listener that receive the query results
+   * @param args     the live query args
+   */
+  OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Object... args);
 }

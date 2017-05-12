@@ -334,4 +334,14 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public void fetchNextPage(ORemoteResultSet rs) {
     storage.fetchNextPage(this, rs);
   }
+
+  @Override
+  public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Object... args) {
+    return null;
+  }
+
+  @Override
+  public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
+    return null;
+  }
 }

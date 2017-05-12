@@ -1604,4 +1604,16 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     checkOpenness();
     return internal.execute(language, script, args);
   }
+
+  @Override
+  public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Object... args) {
+    checkOpenness();
+    return internal.live(query, listener, args);
+  }
+
+  @Override
+  public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
+    checkOpenness();
+    return internal.live(query, listener, args);
+  }
 }

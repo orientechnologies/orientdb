@@ -1125,4 +1125,13 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
     return this;
   }
 
+  @Override
+  public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Object... args) {
+    return underlying.live(query, listener, args);
+  }
+
+  @Override
+  public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
+    return underlying.live(query, listener, args);
+  }
 }

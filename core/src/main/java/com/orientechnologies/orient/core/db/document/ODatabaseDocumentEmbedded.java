@@ -438,4 +438,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public OrientDBConfig getConfig() {
     return config;
   }
+
+  @Override
+  public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Object... args) {
+    return null;
+  }
+
+  @Override
+  public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
+    return null;
+  }
 }
