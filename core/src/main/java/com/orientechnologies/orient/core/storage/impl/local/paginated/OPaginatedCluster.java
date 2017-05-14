@@ -1170,8 +1170,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   /**
    * Recycles a deleted record.
    */
-  public void recycleRecord(final long clusterPosition, byte[] content, final int recordVersion, final byte recordType)
-      throws IOException {
+  public void recycleRecord(final long clusterPosition) throws IOException {
     startOperation();
     OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     if (statistic != null)
@@ -1182,135 +1181,16 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       acquireExclusiveLock();
       try {
         final OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition, 1);
-        if (positionEntry != null) {
-          // NOT DELETED
+        if (positionEntry != null && positionEntry.getPageIndex() != -1) {
+          // NOT DELETED AND NOT ALLOCATED
           throw new OPaginatedClusterException("Record with rid " + new ORecordId(id, clusterPosition) + " was not deleted", this);
         }
 
-        content = compression.compress(content);
-        content = encryption.encrypt(content);
+        clusterPositionMap.resurrect(clusterPosition);
 
-        int entryContentLength = getEntryContentLength(content.length);
+        addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
 
-        if (entryContentLength < OClusterPage.MAX_RECORD_SIZE) {
-          try {
-            byte[] entryContent = new byte[entryContentLength];
-
-            int entryPosition = 0;
-            entryContent[entryPosition] = recordType;
-            entryPosition++;
-
-            OIntegerSerializer.INSTANCE.serializeNative(content.length, entryContent, entryPosition);
-            entryPosition += OIntegerSerializer.INT_SIZE;
-
-            System.arraycopy(content, 0, entryContent, entryPosition, content.length);
-            entryPosition += content.length;
-
-            entryContent[entryPosition] = 1;
-            entryPosition++;
-
-            OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryPosition);
-
-            final AddEntryResult addEntryResult = addEntry(fileId, pinnedStateEntryIndex, recordVersion, entryContent,
-                atomicOperation);
-
-            updateClusterState(fileId, pinnedStateEntryIndex, 1, addEntryResult.recordsSizeDiff, atomicOperation);
-
-            clusterPositionMap.resurrect(clusterPosition,
-                new OClusterPositionMapBucket.PositionEntry(addEntryResult.pageIndex, addEntryResult.pagePosition));
-
-            addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
-
-            endAtomicOperation(false, null);
-
-          } catch (Exception e) {
-            throw OException.wrapException(new OPaginatedClusterException("Error during record recycling", this), e);
-          }
-        } else {
-          try {
-            int entrySize = content.length + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE;
-
-            int fullEntryPosition = 0;
-            byte[] fullEntry = new byte[entrySize];
-
-            fullEntry[fullEntryPosition] = recordType;
-            fullEntryPosition++;
-
-            OIntegerSerializer.INSTANCE.serializeNative(content.length, fullEntry, fullEntryPosition);
-            fullEntryPosition += OIntegerSerializer.INT_SIZE;
-
-            System.arraycopy(content, 0, fullEntry, fullEntryPosition, content.length);
-
-            long prevPageRecordPointer = -1;
-            long firstPageIndex = -1;
-            int firstPagePosition = -1;
-
-            int from = 0;
-            int to = from + (OClusterPage.MAX_RECORD_SIZE - OByteSerializer.BYTE_SIZE - OLongSerializer.LONG_SIZE);
-
-            int recordsSizeDiff = 0;
-
-            do {
-              byte[] entryContent = new byte[to - from + OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE];
-              System.arraycopy(fullEntry, from, entryContent, 0, to - from);
-
-              if (from > 0)
-                entryContent[entryContent.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE] = 0;
-              else
-                entryContent[entryContent.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE] = 1;
-
-              OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryContent.length - OLongSerializer.LONG_SIZE);
-
-              final AddEntryResult addEntryResult = addEntry(fileId, pinnedStateEntryIndex, recordVersion, entryContent,
-                  atomicOperation);
-              recordsSizeDiff += addEntryResult.recordsSizeDiff;
-
-              if (firstPageIndex == -1) {
-                firstPageIndex = addEntryResult.pageIndex;
-                firstPagePosition = addEntryResult.pagePosition;
-              }
-
-              long addedPagePointer = createPagePointer(addEntryResult.pageIndex, addEntryResult.pagePosition);
-              if (prevPageRecordPointer >= 0) {
-                long prevPageIndex = getPageIndex(prevPageRecordPointer);
-                int prevPageRecordPosition = getRecordPosition(prevPageRecordPointer);
-
-                final OCacheEntry prevPageCacheEntry = loadPage(atomicOperation, fileId, prevPageIndex, false);
-                prevPageCacheEntry.acquireExclusiveLock();
-                try {
-                  final OClusterPage prevPage = new OClusterPage(prevPageCacheEntry, false,
-                      getChanges(atomicOperation, prevPageCacheEntry));
-                  prevPage.setRecordLongValue(prevPageRecordPosition, -OLongSerializer.LONG_SIZE, addedPagePointer);
-                } finally {
-                  prevPageCacheEntry.releaseExclusiveLock();
-                  releasePage(atomicOperation, prevPageCacheEntry);
-                }
-              }
-
-              prevPageRecordPointer = addedPagePointer;
-              from = to;
-              to = to + (OClusterPage.MAX_RECORD_SIZE - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE);
-              if (to > fullEntry.length)
-                to = fullEntry.length;
-
-            } while (from < to);
-
-            updateClusterState(fileId, pinnedStateEntryIndex, 1, recordsSizeDiff, atomicOperation);
-
-            clusterPositionMap
-                .update(clusterPosition, new OClusterPositionMapBucket.PositionEntry(firstPageIndex, firstPagePosition));
-
-            addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
-
-            endAtomicOperation(false, null);
-
-          } catch (RuntimeException e) {
-            if (e instanceof OPaginatedClusterException)
-              throw e;
-            else
-              throw OException.wrapException(new OPaginatedClusterException("Error during record recycling", this), e);
-          }
-        }
+        endAtomicOperation(false, null);
 
       } catch (RuntimeException e) {
         endAtomicOperation(true, e);

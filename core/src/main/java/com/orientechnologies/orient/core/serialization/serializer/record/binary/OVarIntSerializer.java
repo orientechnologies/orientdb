@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
-
 public class OVarIntSerializer {
 
   public static int write(BytesContainer bytes, long value) {
@@ -53,13 +51,11 @@ public class OVarIntSerializer {
    * href="http://code.google.com/apis/protocolbuffers/docs/encoding.html"> Google Protocol Buffers</a>. It uses zig-zag encoding to
    * efficiently encode signed values. If values are known to be nonnegative, {@link #writeUnsignedVarLong(long, DataOutput)} should
    * be used.
-   * 
-   * @param value
-   *          value to encode
-   * @param out
-   *          to write bytes to
-   * @throws IOException
-   *           if {@link DataOutput} throws {@link IOException}
+   *
+   * @param value value to encode
+   * @param out   to write bytes to
+   *
+   * @throws IOException if {@link DataOutput} throws {@link IOException}
    */
   private static long signedToUnsigned(long value) {
     return (value << 1) ^ (value >> 63);
@@ -70,14 +66,13 @@ public class OVarIntSerializer {
    * href="http://code.google.com/apis/protocolbuffers/docs/encoding.html"> Google Protocol Buffers</a>. Zig-zag is not used, so
    * input must not be negative. If values can be negative, use {@link #writeSignedVarLong(long, DataOutput)} instead. This method
    * treats negative input as like a large unsigned value.
-   * 
-   * @param value
-   *          value to encode
-   * @param out
-   *          to write bytes to
+   *
+   * @param value value to encode
+   * @param out   to write bytes to
+   *
    * @return the number of bytes written
-   * @throws IOException
-   *           if {@link DataOutput} throws {@link IOException}
+   *
+   * @throws IOException if {@link DataOutput} throws {@link IOException}
    */
   public static void writeUnsignedVarLong(long value, final BytesContainer bos) {
     int pos;
@@ -93,13 +88,12 @@ public class OVarIntSerializer {
   }
 
   /**
-   * @param in
-   *          to read bytes from
+   * @param in to read bytes from
+   *
    * @return decode value
-   * @throws IOException
-   *           if {@link DataInput} throws {@link IOException}
-   * @throws IllegalArgumentException
-   *           if variable-length value does not terminate after 9 bytes have been read
+   *
+   * @throws IOException              if {@link DataInput} throws {@link IOException}
+   * @throws IllegalArgumentException if variable-length value does not terminate after 9 bytes have been read
    * @see #writeSignedVarLong(long, DataOutput)
    */
   public static long readSignedVarLong(final BytesContainer bytes) {
@@ -113,16 +107,6 @@ public class OVarIntSerializer {
     return temp ^ (raw & (1L << 63));
   }
 
-  /**
-   * @param in
-   *          to read bytes from
-   * @return decode value
-   * @throws IOException
-   *           if {@link DataInput} throws {@link IOException}
-   * @throws IllegalArgumentException
-   *           if variable-length value does not terminate after 9 bytes have been read
-   * @see #writeUnsignedVarLong(long, DataOutput)
-   */
   public static long readUnsignedVarLong(final BytesContainer bytes) {
     long value = 0L;
     int i = 0;
