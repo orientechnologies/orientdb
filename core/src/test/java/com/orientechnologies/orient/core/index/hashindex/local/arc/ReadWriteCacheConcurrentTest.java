@@ -49,7 +49,7 @@ public class ReadWriteCacheConcurrentTest {
   private static final int THREAD_COUNT = 4;
   private static final int PAGE_COUNT   = 20;
   private static final int FILE_COUNT   = 8;
-  private O2QCache    readBuffer;
+  private O2QCache  readBuffer;
   private OWOWCache writeBuffer;
   private OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<Long, OFileClassic>(1024);
 
@@ -118,19 +118,23 @@ public class ReadWriteCacheConcurrentTest {
 
   @AfterClass
   public void afterClass() throws IOException {
+    deleteUsedFiles(FILE_COUNT);
+
     readBuffer.closeStorage(writeBuffer);
     readBuffer.clear();
-
-    deleteUsedFiles(FILE_COUNT);
 
     storageLocal.delete();
   }
 
-  private void deleteUsedFiles(int filesCount) {
+  private void deleteUsedFiles(int filesCount) throws IOException {
     for (int k = 0; k < filesCount; k++) {
-      File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteCacheTest" + k + ".tst");
-      if (file.exists())
-        Assert.assertTrue(file.delete());
+      final long fileId = writeBuffer.fileIdByName("readWriteCacheTest" + k + ".tst");
+      final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
+
+      readBuffer.deleteFile(fileId, writeBuffer);
+
+      File file = new File(storageLocal.getConfiguration().getDirectory() + "/" + nativeFileName);
+      Assert.assertFalse(file.exists());
     }
   }
 
@@ -206,7 +210,10 @@ public class ReadWriteCacheConcurrentTest {
   }
 
   private void validateFileContent(byte version, int k) throws IOException {
-    String path = storageLocal.getConfiguration().getDirectory() + "/readWriteCacheTest" + k + ".tst";
+    final long fileId = writeBuffer.fileIdByName("readWriteCacheTest" + k + ".tst");
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
+
+    String path = storageLocal.getConfiguration().getDirectory() + "/" + nativeFileName;
 
     OFileClassic fileClassic = new OFileClassic(path, "r");
     fileClassic.open();
