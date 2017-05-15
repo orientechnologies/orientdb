@@ -73,16 +73,40 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   @Override
   public boolean exists() {
-    return readCache != null && writeCache.exists("default" + OPaginatedCluster.DEF_EXTENSION);
+    try {
+      return readCache != null && writeCache.exists("default" + OPaginatedCluster.DEF_EXTENSION);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
   public String getType() {
-    return OEngineMemory.NAME;
+    try {
+      return OEngineMemory.NAME;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public String getURL() {
-    return OEngineMemory.NAME + ":" + url;
+    try {
+      return OEngineMemory.NAME + ":" + url;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
@@ -92,13 +116,29 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   @Override
   public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
       OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
-    throw new UnsupportedOperationException();
+    try {
+      throw new UnsupportedOperationException();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
   public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener)
       throws IOException {
-    throw new UnsupportedOperationException();
+    try {
+      throw new UnsupportedOperationException();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
@@ -132,6 +172,14 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   @Override
   public void shutdown() {
-    delete();
+    try {
+      delete();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 }

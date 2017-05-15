@@ -25,6 +25,7 @@ import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.AtomicLongOProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -213,89 +214,97 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
-    stateLock.acquireReadLock();
     try {
-      if (status == STATUS.OPEN)
-        // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
-        // REUSED
-        return;
-    } finally {
-      stateLock.releaseReadLock();
-    }
-
-    stateLock.acquireWriteLock();
-    try {
-
-      if (status == STATUS.OPEN)
-        // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
-        // REUSED
-        return;
-
-      if (!exists())
-        throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
-
-      configuration.load(iProperties);
-
-      final String cs = configuration.getConflictStrategy();
-      if (cs != null) {
-        // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
-        setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
-      }
-
-      componentsFactory = new OCurrentStorageComponentsFactory(configuration);
-
-      preOpenSteps();
-
+      stateLock.acquireReadLock();
       try {
-        performanceStatisticManager.registerMBean(name, id);
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for profiler cannot be registered.");
+        if (status == STATUS.OPEN)
+          // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
+          // REUSED
+          return;
+      } finally {
+        stateLock.releaseReadLock();
       }
 
-      initWalAndDiskCache();
-
-      atomicOperationsManager = new OAtomicOperationsManager(this);
+      stateLock.acquireWriteLock();
       try {
-        atomicOperationsManager.registerMBean();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for atomic operations manager cannot be registered", e);
-      }
 
-      recoverIfNeeded();
+        if (status == STATUS.OPEN)
+          // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
+          // REUSED
+          return;
 
-      openClusters();
-      openIndexes();
+        if (!exists())
+          throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
-      if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN.getValueAsBoolean())
-        makeFullCheckpoint();
+        configuration.load(iProperties);
 
-      writeCache.startFuzzyCheckpoints();
-
-      status = STATUS.OPEN;
-
-      readCache.loadCacheState(writeCache);
-    } catch (Exception e) {
-      for (OCluster c : clusters) {
-        try {
-          if (c != null)
-            c.close(false);
-        } catch (IOException e1) {
-          OLogManager.instance().error(this, "Cannot close cluster after exception on open");
+        final String cs = configuration.getConflictStrategy();
+        if (cs != null) {
+          // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
+          setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
         }
-      }
 
-      try {
+        componentsFactory = new OCurrentStorageComponentsFactory(configuration);
+
+        preOpenSteps();
+
+        try {
+          performanceStatisticManager.registerMBean(name, id);
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "MBean for profiler cannot be registered.");
+        }
+
+        initWalAndDiskCache();
+
+        atomicOperationsManager = new OAtomicOperationsManager(this);
+        try {
+          atomicOperationsManager.registerMBean();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "MBean for atomic operations manager cannot be registered", e);
+        }
+
+        recoverIfNeeded();
+
+        openClusters();
+        openIndexes();
+
+        if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN.getValueAsBoolean())
+          makeFullCheckpoint();
+
+        writeCache.startFuzzyCheckpoints();
+
         status = STATUS.OPEN;
-        close(true, false);
-      } catch (RuntimeException re) {
-        OLogManager.instance().error(this, "Error during storage close", e);
+
+        readCache.loadCacheState(writeCache);
+      } catch (Exception e) {
+        for (OCluster c : clusters) {
+          try {
+            if (c != null)
+              c.close(false);
+          } catch (IOException e1) {
+            OLogManager.instance().error(this, "Cannot close cluster after exception on open");
+          }
+        }
+
+        try {
+          status = STATUS.OPEN;
+          close(true, false);
+        } catch (RuntimeException re) {
+          OLogManager.instance().error(this, "Error during storage close", e);
+        }
+
+        status = STATUS.CLOSED;
+
+        throw OException.wrapException(new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode), e);
+      } finally {
+        stateLock.releaseWriteLock();
       }
-
-      status = STATUS.CLOSED;
-
-      throw OException.wrapException(new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode), e);
-    } finally {
-      stateLock.releaseWriteLock();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -363,301 +372,397 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void open(final OToken iToken, final Map<String, Object> iProperties) {
-    open(iToken.getUserName(), "", iProperties);
+    try {
+      open(iToken.getUserName(), "", iProperties);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public void create(final Map<String, Object> iProperties) {
-    stateLock.acquireWriteLock();
     try {
+      stateLock.acquireWriteLock();
+      try {
 
-      if (status != STATUS.CLOSED)
-        throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it is not closed");
+        if (status != STATUS.CLOSED)
+          throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it is not closed");
 
-      if (exists())
-        throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it already exists");
+        if (exists())
+          throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it already exists");
 
-      if (!configuration.getContextConfiguration().getContextKeys()
-          .contains(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey())) {
-        final String compression = iProperties != null ?
+        if (!configuration.getContextConfiguration().getContextKeys()
+            .contains(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey())) {
+          final String compression = iProperties != null ?
+              (String) iProperties
+                  .get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase(configuration.getLocaleInstance())) :
+              null;
+
+          if (compression != null)
+            configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compression);
+          else
+            configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD,
+                OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
+        }
+
+        if (!configuration.getContextConfiguration().getContextKeys()
+            .contains(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey())) {
+          final String encryption = iProperties != null ?
+              (String) iProperties
+                  .get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase(configuration.getLocaleInstance())) :
+              null;
+
+          if (encryption != null)
+            configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryption);
+          else
+            configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD,
+                OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getValue());
+        }
+
+        // SAVE COMPRESSION OPTIONS IF ANY. THIS IS USED FOR ENCRYPTION AT REST WHERE IN THE 'STORAGE_ENCRYPTION_KEY' IS STORED
+        // THE KEY
+        final String encryptionKey = iProperties != null ?
             (String) iProperties
-                .get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase(configuration.getLocaleInstance())) :
+                .get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase(configuration.getLocaleInstance())) :
             null;
-
-        if (compression != null)
-          configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compression);
-        else
-          configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD,
-              OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
-      }
-
-      if (!configuration.getContextConfiguration().getContextKeys()
-          .contains(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey())) {
-        final String encryption = iProperties != null ?
-            (String) iProperties
-                .get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase(configuration.getLocaleInstance())) :
-            null;
-
-        if (encryption != null)
-          configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryption);
+        if (encryptionKey != null)
+          configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
         else
           configuration.getContextConfiguration()
-              .setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getValue());
+              .setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getValue());
+
+        componentsFactory = new OCurrentStorageComponentsFactory(configuration);
+        try {
+          performanceStatisticManager.registerMBean(name, id);
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "MBean for profiler cannot be registered.");
+        }
+
+        initWalAndDiskCache();
+
+        atomicOperationsManager = new OAtomicOperationsManager(this);
+        try {
+          atomicOperationsManager.registerMBean();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "MBean for atomic operations manager cannot be registered", e);
+        }
+
+        preCreateSteps();
+
+        status = STATUS.OPEN;
+
+        // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
+        doAddCluster(OMetadataDefault.CLUSTER_INTERNAL_NAME, null);
+
+        configuration.create();
+
+        // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
+        // INDEXING
+        doAddCluster(OMetadataDefault.CLUSTER_INDEX_NAME, null);
+
+        // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
+        // INDEXING
+        doAddCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null);
+
+        // ADD THE DEFAULT CLUSTER
+        defaultClusterId = doAddCluster(CLUSTER_DEFAULT_NAME, null);
+
+        if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
+          makeFullCheckpoint();
+
+        clearStorageDirty();
+
+        writeCache.startFuzzyCheckpoints();
+        postCreateSteps();
+
+      } catch (OStorageException e) {
+        close();
+        throw e;
+      } catch (IOException e) {
+        close();
+        throw OException.wrapException(new OStorageException("Error on creation of storage '" + name + "'"), e);
+      } finally {
+        stateLock.releaseWriteLock();
       }
-
-      // SAVE COMPRESSION OPTIONS IF ANY. THIS IS USED FOR ENCRYPTION AT REST WHERE IN THE 'STORAGE_ENCRYPTION_KEY' IS STORED
-      // THE KEY
-      final String encryptionKey = iProperties != null ?
-          (String) iProperties
-              .get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase(configuration.getLocaleInstance())) :
-          null;
-      if (encryptionKey != null)
-        configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
-      else
-        configuration.getContextConfiguration()
-            .setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getValue());
-
-      componentsFactory = new OCurrentStorageComponentsFactory(configuration);
-      try {
-        performanceStatisticManager.registerMBean(name, id);
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for profiler cannot be registered.");
-      }
-
-      initWalAndDiskCache();
-
-      atomicOperationsManager = new OAtomicOperationsManager(this);
-      try {
-        atomicOperationsManager.registerMBean();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for atomic operations manager cannot be registered", e);
-      }
-
-      preCreateSteps();
-
-      status = STATUS.OPEN;
-
-      // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-      doAddCluster(OMetadataDefault.CLUSTER_INTERNAL_NAME, null);
-
-      configuration.create();
-
-      // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
-      // INDEXING
-      doAddCluster(OMetadataDefault.CLUSTER_INDEX_NAME, null);
-
-      // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
-      // INDEXING
-      doAddCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null);
-
-      // ADD THE DEFAULT CLUSTER
-      defaultClusterId = doAddCluster(CLUSTER_DEFAULT_NAME, null);
-
-      if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
-        makeFullCheckpoint();
-
-      clearStorageDirty();
-
-      writeCache.startFuzzyCheckpoints();
-      postCreateSteps();
-
-    } catch (OStorageException e) {
-      close();
-      throw e;
-    } catch (IOException e) {
-      close();
-      throw OException.wrapException(new OStorageException("Error on creation of storage '" + name + "'"), e);
-    } finally {
-      stateLock.releaseWriteLock();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
   public boolean isClosed() {
-    stateLock.acquireReadLock();
     try {
-      return super.isClosed();
-    } finally {
-      stateLock.releaseReadLock();
+      stateLock.acquireReadLock();
+      try {
+        return super.isClosed();
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
   public void onShutdown() {
-    transaction = null;
+    try {
+      transaction = null;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
   public void onStartup() {
-    if (transaction == null)
-      transaction = new ThreadLocal<OStorageTransaction>();
+    try {
+      if (transaction == null)
+        transaction = new ThreadLocal<OStorageTransaction>();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
   public void close(final boolean force, boolean onDelete) {
-    doClose(force, onDelete);
+    try {
+      doClose(force, onDelete);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public void delete() {
-    stateLock.acquireWriteLock();
     try {
+      stateLock.acquireWriteLock();
       try {
-        // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-        close(true, true);
-
         try {
-          Orient.instance().unregisterStorage(this);
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Cannot unregister storage", e);
+          // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
+          close(true, true);
+
+          try {
+            Orient.instance().unregisterStorage(this);
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Cannot unregister storage", e);
+          }
+
+          if (writeAheadLog != null)
+            writeAheadLog.delete();
+
+          if (writeCache != null) {
+            if (readCache != null)
+              readCache.deleteStorage(writeCache);
+            else
+              writeCache.delete();
+          }
+
+          postDeleteSteps();
+
+        } catch (IOException e) {
+          throw OException.wrapException(new OStorageException("Cannot delete database '" + name + "'"), e);
         }
+      } finally {
+        stateLock.releaseWriteLock();
+        Orient.instance().getProfiler().updateCounter("db." + name + ".drop", "Drop a database", +1, "db.*.drop");
 
-        if (writeAheadLog != null)
-          writeAheadLog.delete();
-
-        if (writeCache != null) {
-          if (readCache != null)
-            readCache.deleteStorage(writeCache);
-          else
-            writeCache.delete();
-        }
-
-        postDeleteSteps();
-
-      } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Cannot delete database '" + name + "'"), e);
       }
-    } finally {
-      stateLock.releaseWriteLock();
-      Orient.instance().getProfiler().updateCounter("db." + name + ".drop", "Drop a database", +1, "db.*.drop");
-
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public boolean check(final boolean verbose, final OCommandOutputListener listener) {
     checkOpeness();
-    stateLock.acquireReadLock();
     try {
-      final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
+      stateLock.acquireReadLock();
       try {
-        checkOpeness();
-        final long start = System.currentTimeMillis();
+        final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
+        try {
+          checkOpeness();
+          final long start = System.currentTimeMillis();
 
-        OPageDataVerificationError[] pageErrors = writeCache.checkStoredPages(verbose ? listener : null);
+          OPageDataVerificationError[] pageErrors = writeCache.checkStoredPages(verbose ? listener : null);
 
-        listener.onMessage(
-            "Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. " + (pageErrors.length > 0 ?
-                pageErrors.length + " with errors." :
-                " without errors."));
+          listener.onMessage(
+              "Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. " + (pageErrors.length > 0 ?
+                  pageErrors.length + " with errors." :
+                  " without errors."));
 
-        return pageErrors.length == 0;
+          return pageErrors.length == 0;
+        } finally {
+          atomicOperationsManager.releaseAtomicOperations(lockId);
+        }
       } finally {
-        atomicOperationsManager.releaseAtomicOperations(lockId);
+        stateLock.releaseReadLock();
       }
-    } finally {
-      stateLock.releaseReadLock();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public int addCluster(String clusterName, boolean forceListBased, final Object... parameters) {
-    checkOpeness();
-    checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
-
-    stateLock.acquireWriteLock();
     try {
       checkOpeness();
+      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
-      makeStorageDirty();
-      return doAddCluster(clusterName, parameters);
+      stateLock.acquireWriteLock();
+      try {
+        checkOpeness();
 
-    } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Error in creation of new cluster '" + clusterName), e);
-    } finally {
-      stateLock.releaseWriteLock();
+        makeStorageDirty();
+        return doAddCluster(clusterName, parameters);
+
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error in creation of new cluster '" + clusterName), e);
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public void compactCluster(String clusterName) {
-    final OCluster cluster = getClusterByName(clusterName);
-
-    if (cluster == null)
-      throw new OStorageException("Cluster with name `" + clusterName + "` does not exist");
-
-    checkOpeness();
-    checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
-
-    stateLock.acquireWriteLock();
     try {
+      final OCluster cluster = getClusterByName(clusterName);
+
+      if (cluster == null)
+        throw new OStorageException("Cluster with name `" + clusterName + "` does not exist");
+
       checkOpeness();
-      makeStorageDirty();
+      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
-      cluster.compact();
+      stateLock.acquireWriteLock();
+      try {
+        checkOpeness();
+        makeStorageDirty();
 
-    } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Error during compaction of new cluster '" + clusterName), e);
-    } finally {
-      stateLock.releaseWriteLock();
+        cluster.compact();
+
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error during compaction of new cluster '" + clusterName), e);
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public int addCluster(String clusterName, int requestedId, boolean forceListBased, Object... parameters) {
-    checkOpeness();
-    checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
-    stateLock.acquireWriteLock();
     try {
       checkOpeness();
+      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+      stateLock.acquireWriteLock();
+      try {
+        checkOpeness();
 
-      if (requestedId < 0) {
-        throw new OConfigurationException("Cluster id must be positive!");
+        if (requestedId < 0) {
+          throw new OConfigurationException("Cluster id must be positive!");
+        }
+        if (requestedId < clusters.size() && clusters.get(requestedId) != null) {
+          throw new OConfigurationException(
+              "Requested cluster ID [" + requestedId + "] is occupied by cluster with name [" + clusters.get(requestedId).getName()
+                  + "]");
+        }
+
+        makeStorageDirty();
+        return addClusterInternal(clusterName, requestedId, parameters);
+
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error in creation of new cluster '" + clusterName + "'"), e);
+      } finally {
+        stateLock.releaseWriteLock();
       }
-      if (requestedId < clusters.size() && clusters.get(requestedId) != null) {
-        throw new OConfigurationException(
-            "Requested cluster ID [" + requestedId + "] is occupied by cluster with name [" + clusters.get(requestedId).getName()
-                + "]");
-      }
-
-      makeStorageDirty();
-      return addClusterInternal(clusterName, requestedId, parameters);
-
-    } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Error in creation of new cluster '" + clusterName + "'"), e);
-    } finally {
-      stateLock.releaseWriteLock();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public boolean dropCluster(final int clusterId, final boolean iTruncate) {
-    checkOpeness();
-    checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
-
-    stateLock.acquireWriteLock();
     try {
-
       checkOpeness();
-      if (clusterId < 0 || clusterId >= clusters.size())
-        throw new IllegalArgumentException(
-            "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
-                + ") in database '" + name + "'");
+      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
-      final OCluster cluster = clusters.get(clusterId);
-      if (cluster == null)
-        return false;
+      stateLock.acquireWriteLock();
+      try {
 
-      if (iTruncate)
-        cluster.truncate();
-      cluster.delete();
+        checkOpeness();
+        if (clusterId < 0 || clusterId >= clusters.size())
+          throw new IllegalArgumentException(
+              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
+                  + ") in database '" + name + "'");
 
-      makeStorageDirty();
-      clusterMap.remove(cluster.getName().toLowerCase(configuration.getLocaleInstance()));
-      clusters.set(clusterId, null);
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null)
+          return false;
 
-      // UPDATE CONFIGURATION
-      configuration.dropCluster(clusterId);
+        if (iTruncate)
+          cluster.truncate();
+        cluster.delete();
 
-      return true;
-    } catch (Exception e) {
-      throw OException.wrapException(new OStorageException("Error while removing cluster '" + clusterId + "'"), e);
+        makeStorageDirty();
+        clusterMap.remove(cluster.getName().toLowerCase(configuration.getLocaleInstance()));
+        clusters.set(clusterId, null);
 
-    } finally {
-      stateLock.releaseWriteLock();
+        // UPDATE CONFIGURATION
+        configuration.dropCluster(clusterId);
+
+        return true;
+      } catch (Exception e) {
+        throw OException.wrapException(new OStorageException("Error while removing cluster '" + clusterId + "'"), e);
+
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -667,47 +772,55 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public boolean setClusterStatus(final int clusterId, final OStorageClusterConfiguration.STATUS iStatus) {
-    checkOpeness();
-    stateLock.acquireWriteLock();
     try {
       checkOpeness();
-      if (clusterId < 0 || clusterId >= clusters.size())
-        throw new IllegalArgumentException(
-            "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
-                + ") in database '" + name + "'");
+      stateLock.acquireWriteLock();
+      try {
+        checkOpeness();
+        if (clusterId < 0 || clusterId >= clusters.size())
+          throw new IllegalArgumentException(
+              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
+                  + ") in database '" + name + "'");
 
-      final OCluster cluster = clusters.get(clusterId);
-      if (cluster == null)
-        return false;
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null)
+          return false;
 
-      if (iStatus == OStorageClusterConfiguration.STATUS.OFFLINE && cluster instanceof OOfflineCluster
-          || iStatus == OStorageClusterConfiguration.STATUS.ONLINE && !(cluster instanceof OOfflineCluster))
-        return false;
+        if (iStatus == OStorageClusterConfiguration.STATUS.OFFLINE && cluster instanceof OOfflineCluster
+            || iStatus == OStorageClusterConfiguration.STATUS.ONLINE && !(cluster instanceof OOfflineCluster))
+          return false;
 
-      final OCluster newCluster;
-      if (iStatus == OStorageClusterConfiguration.STATUS.OFFLINE) {
-        cluster.close(true);
-        newCluster = new OOfflineCluster(this, clusterId, cluster.getName());
-      } else {
+        final OCluster newCluster;
+        if (iStatus == OStorageClusterConfiguration.STATUS.OFFLINE) {
+          cluster.close(true);
+          newCluster = new OOfflineCluster(this, clusterId, cluster.getName());
+        } else {
 
-        newCluster = OPaginatedClusterFactory.INSTANCE.createCluster(cluster.getName(), configuration.version, this);
-        newCluster.configure(this, clusterId, cluster.getName());
-        newCluster.open();
+          newCluster = OPaginatedClusterFactory.INSTANCE.createCluster(cluster.getName(), configuration.version, this);
+          newCluster.configure(this, clusterId, cluster.getName());
+          newCluster.open();
+        }
+
+        clusterMap.put(cluster.getName().toLowerCase(configuration.getLocaleInstance()), newCluster);
+        clusters.set(clusterId, newCluster);
+
+        // UPDATE CONFIGURATION
+        makeStorageDirty();
+        configuration.setClusterStatus(clusterId, iStatus);
+
+        makeFullCheckpoint();
+        return true;
+      } catch (Exception e) {
+        throw OException.wrapException(new OStorageException("Error while removing cluster '" + clusterId + "'"), e);
+      } finally {
+        stateLock.releaseWriteLock();
       }
-
-      clusterMap.put(cluster.getName().toLowerCase(configuration.getLocaleInstance()), newCluster);
-      clusters.set(clusterId, newCluster);
-
-      // UPDATE CONFIGURATION
-      makeStorageDirty();
-      configuration.setClusterStatus(clusterId, iStatus);
-
-      makeFullCheckpoint();
-      return true;
-    } catch (Exception e) {
-      throw OException.wrapException(new OStorageException("Error while removing cluster '" + clusterId + "'"), e);
-    } finally {
-      stateLock.releaseWriteLock();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -725,62 +838,102 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public long count(final int iClusterId) {
-    return count(iClusterId, false);
+    try {
+      return count(iClusterId, false);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
   public long count(int clusterId, boolean countTombstones) {
-    if (clusterId == -1)
-      throw new OStorageException("Cluster Id " + clusterId + " is invalid in database '" + name + "'");
-
-    // COUNT PHYSICAL CLUSTER IF ANY
-    checkOpeness();
-    stateLock.acquireReadLock();
     try {
+      if (clusterId == -1)
+        throw new OStorageException("Cluster Id " + clusterId + " is invalid in database '" + name + "'");
+
+      // COUNT PHYSICAL CLUSTER IF ANY
       checkOpeness();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
-      final OCluster cluster = clusters.get(clusterId);
-      if (cluster == null)
-        return 0;
+        final OCluster cluster = clusters.get(clusterId);
+        if (cluster == null)
+          return 0;
 
-      if (countTombstones)
-        return cluster.getEntries();
+        if (countTombstones)
+          return cluster.getEntries();
 
-      return cluster.getEntries() - cluster.getTombstonesCount();
-    } finally {
-      stateLock.releaseReadLock();
+        return cluster.getEntries() - cluster.getTombstonesCount();
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public long[] getClusterDataRange(final int iClusterId) {
-    if (iClusterId == -1)
-      return new long[] { ORID.CLUSTER_POS_INVALID, ORID.CLUSTER_POS_INVALID };
-
-    checkOpeness();
-    stateLock.acquireReadLock();
     try {
+      if (iClusterId == -1)
+        return new long[] { ORID.CLUSTER_POS_INVALID, ORID.CLUSTER_POS_INVALID };
+
       checkOpeness();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
-      return clusters.get(iClusterId) != null ?
-          new long[] { clusters.get(iClusterId).getFirstPosition(), clusters.get(iClusterId).getLastPosition() } :
-          OCommonConst.EMPTY_LONG_ARRAY;
+        return clusters.get(iClusterId) != null ?
+            new long[] { clusters.get(iClusterId).getFirstPosition(), clusters.get(iClusterId).getLastPosition() } :
+            OCommonConst.EMPTY_LONG_ARRAY;
 
-    } catch (IOException ioe) {
-      throw OException.wrapException(new OStorageException("Cannot retrieve information about data range"), ioe);
-    } finally {
-      stateLock.releaseReadLock();
+      } catch (IOException ioe) {
+        throw OException.wrapException(new OStorageException("Cannot retrieve information about data range"), ioe);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public OLogSequenceNumber getLSN() {
-    if (writeAheadLog == null)
-      return null;
+    try {
+      if (writeAheadLog == null)
+        return null;
 
-    return writeAheadLog.end();
+      return writeAheadLog.end();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public long count(final int[] iClusterIds) {
-    return count(iClusterIds, false);
+    try {
+      return count(iClusterIds, false);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   /**
@@ -813,277 +966,365 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
       final Set<String> excludedClusterIds, final OCommandOutputListener outputListener) {
-    if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
-      throw new IllegalStateException(
-          "Cannot find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
-              + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getKey()
-              + " to the true value, please note that only records"
-              + " which are stored after this property was set will be retrieved");
-
-    stateLock.acquireReadLock();
     try {
-      if (writeAheadLog == null) {
-        return null;
-      }
+      if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
+        throw new IllegalStateException(
+            "Cannot find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
+                + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getKey()
+                + " to the true value, please note that only records"
+                + " which are stored after this property was set will be retrieved");
 
-      // we iterate till the last record is contained in wal at the moment when we call this method
-      final OLogSequenceNumber endLsn = writeAheadLog.end();
-
-      if (endLsn == null || lsn.compareTo(endLsn) >= 0) {
-        OLogManager.instance()
-            .warn(this, "Cannot find requested LSN=%s for database sync operation. Last available LSN is %s", lsn, endLsn);
-        return null;
-      }
-
-      // container of rids of changed records
-      final SortedSet<ORID> sortedRids = new TreeSet<ORID>();
-
-      final OLogSequenceNumber startLsn = writeAheadLog.next(lsn);
-      if (startLsn == null) {
-        OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation", lsn);
-        return null;
-      }
-
-      writeAheadLog.preventCutTill(startLsn);
+      stateLock.acquireReadLock();
       try {
-        // start record is absent there is nothing that we can do
-        OWALRecord walRecord = writeAheadLog.read(startLsn);
-        if (walRecord == null) {
+        if (writeAheadLog == null) {
+          return null;
+        }
+
+        // we iterate till the last record is contained in wal at the moment when we call this method
+        final OLogSequenceNumber endLsn = writeAheadLog.end();
+
+        if (endLsn == null || lsn.compareTo(endLsn) >= 0) {
+          OLogManager.instance()
+              .warn(this, "Cannot find requested LSN=%s for database sync operation. Last available LSN is %s", lsn, endLsn);
+          return null;
+        }
+
+        // container of rids of changed records
+        final SortedSet<ORID> sortedRids = new TreeSet<ORID>();
+
+        final OLogSequenceNumber startLsn = writeAheadLog.next(lsn);
+        if (startLsn == null) {
           OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation", lsn);
           return null;
         }
 
-        OLogSequenceNumber currentLsn = startLsn;
-
-        // all information about changed records is contained in atomic operation metadata
-        long read = 0;
-        while (currentLsn != null && endLsn.compareTo(currentLsn) >= 0) {
-          walRecord = writeAheadLog.read(currentLsn);
-
-          if (walRecord instanceof OFileCreatedWALRecord)
-            throw new ODatabaseException(
-                "Cannot execute delta-sync because a new file has been added. Filename: " + ((OFileCreatedWALRecord) walRecord)
-                    .getFileName() + "(id=" + ((OFileCreatedWALRecord) walRecord).getFileId() + ")");
-
-          if (walRecord instanceof OFileDeletedWALRecord)
-            throw new ODatabaseException(
-                "Cannot execute delta-sync because a file has been deleted. File id: " + ((OFileDeletedWALRecord) walRecord)
-                    .getFileId());
-
-          if (walRecord instanceof OAtomicUnitEndRecord) {
-            final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
-            if (atomicUnitEndRecord.getAtomicOperationMetadata().containsKey(ORecordOperationMetadata.RID_METADATA_KEY)) {
-              final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicUnitEndRecord
-                  .getAtomicOperationMetadata().get(ORecordOperationMetadata.RID_METADATA_KEY);
-              final Set<ORID> rids = recordOperationMetadata.getValue();
-              for (ORID rid : rids) {
-                if (!excludedClusterIds.contains(getPhysicalClusterNameById(rid.getClusterId())))
-                  sortedRids.add(rid);
-              }
-            }
+        writeAheadLog.preventCutTill(startLsn);
+        try {
+          // start record is absent there is nothing that we can do
+          OWALRecord walRecord = writeAheadLog.read(startLsn);
+          if (walRecord == null) {
+            OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation", lsn);
+            return null;
           }
 
-          currentLsn = writeAheadLog.next(currentLsn);
+          OLogSequenceNumber currentLsn = startLsn;
 
-          read++;
+          // all information about changed records is contained in atomic operation metadata
+          long read = 0;
+          while (currentLsn != null && endLsn.compareTo(currentLsn) >= 0) {
+            walRecord = writeAheadLog.read(currentLsn);
 
-          if (outputListener != null)
-            outputListener.onMessage("read " + read + " records from WAL and collected " + sortedRids.size() + " records");
+            if (walRecord instanceof OFileCreatedWALRecord)
+              throw new ODatabaseException(
+                  "Cannot execute delta-sync because a new file has been added. Filename: " + ((OFileCreatedWALRecord) walRecord)
+                      .getFileName() + "(id=" + ((OFileCreatedWALRecord) walRecord).getFileId() + ")");
+
+            if (walRecord instanceof OFileDeletedWALRecord)
+              throw new ODatabaseException(
+                  "Cannot execute delta-sync because a file has been deleted. File id: " + ((OFileDeletedWALRecord) walRecord)
+                      .getFileId());
+
+            if (walRecord instanceof OAtomicUnitEndRecord) {
+              final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
+              if (atomicUnitEndRecord.getAtomicOperationMetadata().containsKey(ORecordOperationMetadata.RID_METADATA_KEY)) {
+                final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicUnitEndRecord
+                    .getAtomicOperationMetadata().get(ORecordOperationMetadata.RID_METADATA_KEY);
+                final Set<ORID> rids = recordOperationMetadata.getValue();
+                for (ORID rid : rids) {
+                  if (!excludedClusterIds.contains(getPhysicalClusterNameById(rid.getClusterId())))
+                    sortedRids.add(rid);
+                }
+              }
+            }
+
+            currentLsn = writeAheadLog.next(currentLsn);
+
+            read++;
+
+            if (outputListener != null)
+              outputListener.onMessage("read " + read + " records from WAL and collected " + sortedRids.size() + " records");
+          }
+        } finally {
+          writeAheadLog.preventCutTill(null);
         }
-      } finally {
-        writeAheadLog.preventCutTill(null);
-      }
 
-      final int totalRecords = sortedRids.size();
-      OLogManager.instance().info(this, "Exporting records after LSN=%s. Found %d records", lsn, totalRecords);
+        final int totalRecords = sortedRids.size();
+        OLogManager.instance().info(this, "Exporting records after LSN=%s. Found %d records", lsn, totalRecords);
 
-      // records may be deleted after we flag them as existing and as result rule of sorting of records
-      // (deleted records go first will be broken), so we prohibit any modifications till we do not complete method execution
-      final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
-      try {
-        final DataOutputStream dataOutputStream = new DataOutputStream(stream);
+        // records may be deleted after we flag them as existing and as result rule of sorting of records
+        // (deleted records go first will be broken), so we prohibit any modifications till we do not complete method execution
+        final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
         try {
+          final DataOutputStream dataOutputStream = new DataOutputStream(stream);
+          try {
 
-          dataOutputStream.writeLong(sortedRids.size());
+            dataOutputStream.writeLong(sortedRids.size());
 
-          long exportedRecord = 1;
-          Iterator<ORID> ridIterator = sortedRids.iterator();
-          while (ridIterator.hasNext()) {
-            final ORID rid = ridIterator.next();
-            final OCluster cluster = clusters.get(rid.getClusterId());
+            long exportedRecord = 1;
+            Iterator<ORID> ridIterator = sortedRids.iterator();
+            while (ridIterator.hasNext()) {
+              final ORID rid = ridIterator.next();
+              final OCluster cluster = clusters.get(rid.getClusterId());
 
-            // we do not need to load record only check it's presence
-            if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
+              // we do not need to load record only check it's presence
+              if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
+                dataOutputStream.writeInt(rid.getClusterId());
+                dataOutputStream.writeLong(rid.getClusterPosition());
+                dataOutputStream.write(1);
+
+                OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
+
+                if (outputListener != null)
+                  outputListener.onMessage("exporting record " + exportedRecord + "/" + totalRecords);
+
+                // delete to avoid duplication
+                ridIterator.remove();
+                exportedRecord++;
+              }
+            }
+
+            ridIterator = sortedRids.iterator();
+            while (ridIterator.hasNext()) {
+              final ORID rid = ridIterator.next();
+              final OCluster cluster = clusters.get(rid.getClusterId());
+
               dataOutputStream.writeInt(rid.getClusterId());
               dataOutputStream.writeLong(rid.getClusterPosition());
-              dataOutputStream.write(1);
 
-              OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
+              if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
+                dataOutputStream.writeBoolean(true);
+                OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
+              } else {
+                final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition(), false);
+                assert rawBuffer != null;
+
+                dataOutputStream.writeBoolean(false);
+                dataOutputStream.writeInt(rawBuffer.version);
+                dataOutputStream.write(rawBuffer.recordType);
+                dataOutputStream.writeInt(rawBuffer.buffer.length);
+                dataOutputStream.write(rawBuffer.buffer);
+
+                OLogManager.instance().debug(this, "Exporting modified record rid=%s type=%d size=%d v=%d - buffer size=%d", rid,
+                    rawBuffer.recordType, rawBuffer.buffer.length, rawBuffer.version, dataOutputStream.size());
+              }
 
               if (outputListener != null)
                 outputListener.onMessage("exporting record " + exportedRecord + "/" + totalRecords);
 
-              // delete to avoid duplication
-              ridIterator.remove();
               exportedRecord++;
             }
-          }
-
-          ridIterator = sortedRids.iterator();
-          while (ridIterator.hasNext()) {
-            final ORID rid = ridIterator.next();
-            final OCluster cluster = clusters.get(rid.getClusterId());
-
-            dataOutputStream.writeInt(rid.getClusterId());
-            dataOutputStream.writeLong(rid.getClusterPosition());
-
-            if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
-              dataOutputStream.writeBoolean(true);
-              OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
-            } else {
-              final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition(), false);
-              assert rawBuffer != null;
-
-              dataOutputStream.writeBoolean(false);
-              dataOutputStream.writeInt(rawBuffer.version);
-              dataOutputStream.write(rawBuffer.recordType);
-              dataOutputStream.writeInt(rawBuffer.buffer.length);
-              dataOutputStream.write(rawBuffer.buffer);
-
-              OLogManager.instance()
-                  .debug(this, "Exporting modified record rid=%s type=%d size=%d v=%d - buffer size=%d", rid, rawBuffer.recordType,
-                      rawBuffer.buffer.length, rawBuffer.version, dataOutputStream.size());
-            }
-
-            if (outputListener != null)
-              outputListener.onMessage("exporting record " + exportedRecord + "/" + totalRecords);
-
-            exportedRecord++;
+          } finally {
+            dataOutputStream.close();
           }
         } finally {
-          dataOutputStream.close();
+          atomicOperationsManager.releaseAtomicOperations(lockId);
         }
-      } finally {
-        atomicOperationsManager.releaseAtomicOperations(lockId);
-      }
 
-      return endLsn;
-    } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Error of reading of records changed after LSN " + lsn), e);
-    } finally {
-      stateLock.releaseReadLock();
+        return endLsn;
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error of reading of records changed after LSN " + lsn), e);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
   public long count(int[] iClusterIds, boolean countTombstones) {
-    checkOpeness();
-
-    long tot = 0;
-
-    stateLock.acquireReadLock();
     try {
       checkOpeness();
 
-      for (int iClusterId : iClusterIds) {
-        if (iClusterId >= clusters.size())
-          throw new OConfigurationException("Cluster id " + iClusterId + " was not found in database '" + name + "'");
+      long tot = 0;
 
-        if (iClusterId > -1) {
-          final OCluster c = clusters.get(iClusterId);
-          if (c != null)
-            tot += c.getEntries() - (countTombstones ? 0L : c.getTombstonesCount());
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+
+        for (int iClusterId : iClusterIds) {
+          if (iClusterId >= clusters.size())
+            throw new OConfigurationException("Cluster id " + iClusterId + " was not found in database '" + name + "'");
+
+          if (iClusterId > -1) {
+            final OCluster c = clusters.get(iClusterId);
+            if (c != null)
+              tot += c.getEntries() - (countTombstones ? 0L : c.getTombstonesCount());
+          }
         }
+
+        return tot;
+      } finally {
+        stateLock.releaseReadLock();
       }
-
-      return tot;
-    } finally {
-      stateLock.releaseReadLock();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
-
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId rid, final byte[] content, final int recordVersion,
       final byte recordType, final int mode, final ORecordCallback<Long> callback) {
-    checkOpeness();
-    checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
-
-    final OPhysicalPosition ppos = new OPhysicalPosition(recordType);
-    final OCluster cluster = getClusterById(rid.getClusterId());
-
-    if (transaction.get() != null) {
-      return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos, null);
-    }
-
-    stateLock.acquireReadLock();
     try {
       checkOpeness();
-      return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos, null);
-    } finally {
-      stateLock.releaseReadLock();
+      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+
+      final OPhysicalPosition ppos = new OPhysicalPosition(recordType);
+      final OCluster cluster = getClusterById(rid.getClusterId());
+
+      if (transaction.get() != null) {
+        return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos, null);
+      }
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos, null);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
   public ORecordMetadata getRecordMetadata(ORID rid) {
-    if (rid.isNew())
-      throw new OStorageException("Passed record with id " + rid + " is new and cannot be stored.");
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
-      final OCluster cluster = getClusterById(rid.getClusterId());
+      if (rid.isNew())
+        throw new OStorageException("Passed record with id " + rid + " is new and cannot be stored.");
+
       checkOpeness();
 
-      final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
-      if (ppos == null)
-        return null;
+      stateLock.acquireReadLock();
+      try {
+        final OCluster cluster = getClusterById(rid.getClusterId());
+        checkOpeness();
 
-      return new ORecordMetadata(rid, ppos.recordVersion);
-    } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
-    } finally {
-      stateLock.releaseReadLock();
+        final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
+        if (ppos == null)
+          return null;
+
+        return new ORecordMetadata(rid, ppos.recordVersion);
+      } catch (IOException ioe) {
+        OLogManager.instance().error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+
+      return null;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
-
-    return null;
   }
 
   @Override
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
       boolean prefetchRecords, ORecordCallback<ORawBuffer> iCallback) {
-    checkOpeness();
-    final OCluster cluster;
     try {
-      cluster = getClusterById(iRid.getClusterId());
-    } catch (IllegalArgumentException e) {
-      throw OException.wrapException(new ORecordNotFoundException(iRid), e);
-    }
+      checkOpeness();
+      final OCluster cluster;
+      try {
+        cluster = getClusterById(iRid.getClusterId());
+      } catch (IllegalArgumentException e) {
+        throw OException.wrapException(new ORecordNotFoundException(iRid), e);
+      }
 
-    return new OStorageOperationResult<ORawBuffer>(readRecord(cluster, iRid, prefetchRecords));
+      return new OStorageOperationResult<ORawBuffer>(readRecord(cluster, iRid, prefetchRecords));
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
   public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
       final boolean ignoreCache, final int recordVersion) throws ORecordNotFoundException {
-    checkOpeness();
-    return new OStorageOperationResult<ORawBuffer>(readRecordIfNotLatest(getClusterById(rid.getClusterId()), rid, recordVersion));
+    try {
+      checkOpeness();
+      return new OStorageOperationResult<ORawBuffer>(readRecordIfNotLatest(getClusterById(rid.getClusterId()), rid, recordVersion));
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
   public OStorageOperationResult<Integer> updateRecord(final ORecordId rid, final boolean updateContent, final byte[] content,
       final int version, final byte recordType, final int mode, final ORecordCallback<Integer> callback) {
-    checkOpeness();
-    checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+    try {
+      checkOpeness();
+      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
-    final OCluster cluster = getClusterById(rid.getClusterId());
+      final OCluster cluster = getClusterById(rid.getClusterId());
 
-    final OStorageOperationResult<Integer> result;
+      final OStorageOperationResult<Integer> result;
 
-    if (transaction.get() != null) {
-      result = doUpdateRecord(rid, updateContent, content, version, recordType, callback, cluster);
-    } else {
+      if (transaction.get() != null) {
+        result = doUpdateRecord(rid, updateContent, content, version, recordType, callback, cluster);
+      } else {
+        stateLock.acquireReadLock();
+        try {
+          // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
+          final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
+          try {
+            checkOpeness();
+
+            // UPDATE IT
+            result = doUpdateRecord(rid, updateContent, content, version, recordType, callback, cluster);
+
+          } finally {
+            lock.unlock();
+          }
+        } finally {
+          stateLock.releaseReadLock();
+        }
+      }
+
+      return result;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public void recyclePosition(final ORecordId rid) {
+    try {
+      checkOpeness();
+      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+
+      final OCluster cluster = getClusterById(rid.getClusterId());
+
+      if (transaction.get() != null) {
+        doRecycleRecord(rid, cluster);
+        return;
+      }
+
       stateLock.acquireReadLock();
       try {
         // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
@@ -1091,8 +1332,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         try {
           checkOpeness();
 
-          // UPDATE IT
-          result = doUpdateRecord(rid, updateContent, content, version, recordType, callback, cluster);
+          // RECYCLING IT
+          doRecycleRecord(rid, cluster);
 
         } finally {
           lock.unlock();
@@ -1100,43 +1341,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } finally {
         stateLock.releaseReadLock();
       }
-    }
-
-    return result;
-  }
-
-  @Override
-  public void recyclePosition(final ORecordId rid) {
-    checkOpeness();
-    checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
-
-    final OCluster cluster = getClusterById(rid.getClusterId());
-
-    if (transaction.get() != null) {
-      doRecycleRecord(rid, cluster);
-      return;
-    }
-
-    stateLock.acquireReadLock();
-    try {
-      // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
-      final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
-      try {
-        checkOpeness();
-
-        // RECYCLING IT
-        doRecycleRecord(rid, cluster);
-
-      } finally {
-        lock.unlock();
-      }
-    } finally {
-      stateLock.releaseReadLock();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public OStorageTransaction getStorageTransaction() {
-    return transaction.get();
+    try {
+      return transaction.get();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public OAtomicOperationsManager getAtomicOperationsManager() {
@@ -1150,47 +1373,63 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId rid, final int version, final int mode,
       ORecordCallback<Boolean> callback) {
-    checkOpeness();
-    checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
-
-    final OCluster cluster = getClusterById(rid.getClusterId());
-
-    if (transaction.get() != null) {
-      return doDeleteRecord(rid, version, cluster);
-    }
-
-    stateLock.acquireReadLock();
     try {
       checkOpeness();
-      return doDeleteRecord(rid, version, cluster);
-    } finally {
-      stateLock.releaseReadLock();
+      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+
+      final OCluster cluster = getClusterById(rid.getClusterId());
+
+      if (transaction.get() != null) {
+        return doDeleteRecord(rid, version, cluster);
+      }
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doDeleteRecord(rid, version, cluster);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
   public OStorageOperationResult<Boolean> hideRecord(final ORecordId rid, final int mode, ORecordCallback<Boolean> callback) {
-    checkOpeness();
-    checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
-
-    final OCluster cluster = getClusterById(rid.getClusterId());
-
-    if (transaction.get() != null) {
-      return doHideMethod(rid, cluster);
-    }
-
-    stateLock.acquireReadLock();
     try {
-      final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
-      try {
-        checkOpeness();
+      checkOpeness();
+      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
+      final OCluster cluster = getClusterById(rid.getClusterId());
+
+      if (transaction.get() != null) {
         return doHideMethod(rid, cluster);
-      } finally {
-        lock.unlock();
       }
-    } finally {
-      stateLock.releaseReadLock();
+
+      stateLock.acquireReadLock();
+      try {
+        final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
+        try {
+          checkOpeness();
+
+          return doHideMethod(rid, cluster);
+        } finally {
+          lock.unlock();
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -1205,7 +1444,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @see #completeGatheringPerformanceStatisticForCurrentThread()
    */
   public void startGatheringPerformanceStatisticForCurrentThread() {
-    performanceStatisticManager.startThreadMonitoring();
+    try {
+      performanceStatisticManager.startThreadMonitoring();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   /**
@@ -1216,223 +1463,261 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * <code>null</code> if profiling of storage was not started.
    */
   public OSessionStoragePerformanceStatistic completeGatheringPerformanceStatisticForCurrentThread() {
-    return performanceStatisticManager.stopThreadMonitoring();
+    try {
+      return performanceStatisticManager.stopThreadMonitoring();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
-    stateLock.acquireReadLock();
     try {
-      if (iExclusiveLock) {
-        return super.callInLock(iCallable, true);
-      } else {
-        return super.callInLock(iCallable, false);
+      stateLock.acquireReadLock();
+      try {
+        if (iExclusiveLock) {
+          return super.callInLock(iCallable, true);
+        } else {
+          return super.callInLock(iCallable, false);
+        }
+      } finally {
+        stateLock.releaseReadLock();
       }
-    } finally {
-      stateLock.releaseReadLock();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public Set<String> getClusterNames() {
-    checkOpeness();
-    stateLock.acquireReadLock();
     try {
       checkOpeness();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
-      return new LinkedHashSet<String>(clusterMap.keySet());
-    } finally {
-      stateLock.releaseReadLock();
+        return new LinkedHashSet<String>(clusterMap.keySet());
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
-
   }
 
   public int getClusterIdByName(final String clusterName) {
-    checkOpeness();
-
-    if (clusterName == null)
-      throw new IllegalArgumentException("Cluster name is null");
-
-    if (clusterName.length() == 0)
-      throw new IllegalArgumentException("Cluster name is empty");
-
-    if (Character.isDigit(clusterName.charAt(0)))
-      return Integer.parseInt(clusterName);
-
-    stateLock.acquireReadLock();
     try {
       checkOpeness();
 
-      // SEARCH IT BETWEEN PHYSICAL CLUSTERS
+      if (clusterName == null)
+        throw new IllegalArgumentException("Cluster name is null");
 
-      final OCluster segment = clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
-      if (segment != null)
-        return segment.getId();
+      if (clusterName.length() == 0)
+        throw new IllegalArgumentException("Cluster name is empty");
 
-      return -1;
-    } finally {
-      stateLock.releaseReadLock();
+      if (Character.isDigit(clusterName.charAt(0)))
+        return Integer.parseInt(clusterName);
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+
+        // SEARCH IT BETWEEN PHYSICAL CLUSTERS
+
+        final OCluster segment = clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
+        if (segment != null)
+          return segment.getId();
+
+        return -1;
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
-
   }
 
   public List<ORecordOperation> commit(final OTransaction clientTx, Runnable callback) {
-    checkOpeness();
-    checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+    try {
+      checkOpeness();
+      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
-    txBegun.incrementAndGet();
+      txBegun.incrementAndGet();
 
-    final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
-    final OIndexManagerProxy indexManager = databaseRecord.getMetadata().getIndexManager();
-    final TreeMap<String, OTransactionIndexChanges> indexesToCommit = getSortedIndexEntries(clientTx);
-    final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<ORecordOperation, Integer>();
+      final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
+      final OIndexManagerProxy indexManager = databaseRecord.getMetadata().getIndexManager();
+      final TreeMap<String, OTransactionIndexChanges> indexesToCommit = getSortedIndexEntries(clientTx);
+      final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<ORecordOperation, Integer>();
 
-    databaseRecord.getMetadata().makeThreadLocalSchemaSnapshot();
+      databaseRecord.getMetadata().makeThreadLocalSchemaSnapshot();
 
-    if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(this, "Committing transaction %d on database '%s' (items=%d thread=%d)...", clientTx.getId(),
-          databaseRecord.getName(), clientTx.getEntryCount(), Thread.currentThread().getId());
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Committing transaction %d on database '%s' (items=%d thread=%d)...", clientTx.getId(),
+            databaseRecord.getName(), clientTx.getEntryCount(), Thread.currentThread().getId());
 
-    final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
-    final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<Integer, OCluster>();
+      final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
+      final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<Integer, OCluster>();
 
-    final Set<ORecordOperation> newRecords = new TreeSet<ORecordOperation>(new Comparator<ORecordOperation>() {
-      @Override
-      public int compare(final ORecordOperation o1, final ORecordOperation o2) {
-        return o1.getRecord().getIdentity().compareTo(o2.getRecord().getIdentity());
-      }
-    });
+      final Set<ORecordOperation> newRecords = new TreeSet<ORecordOperation>(new Comparator<ORecordOperation>() {
+        @Override
+        public int compare(final ORecordOperation o1, final ORecordOperation o2) {
+          return o1.getRecord().getIdentity().compareTo(o2.getRecord().getIdentity());
+        }
+      });
 
-    for (ORecordOperation txEntry : entries) {
-      if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.RECYCLED
-          || txEntry.type == ORecordOperation.UPDATED) {
-        final ORecord record = txEntry.getRecord();
-        if (record instanceof ODocument)
-          ((ODocument) record).validate();
-      }
-
-      if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.DELETED) {
-        final int clusterId = txEntry.getRecord().getIdentity().getClusterId();
-        clustersToLock.put(clusterId, getClusterById(clusterId));
-      } else if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.RECYCLED) {
-        newRecords.add(txEntry);
-
-        final ORecord record = txEntry.getRecord();
-        final ORID rid = record.getIdentity();
-
-        int clusterId = rid.getClusterId();
-
-        if (record.isDirty() && clusterId == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
-          // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
-
-          final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
-          if (class_ != null) {
-            clusterId = class_.getClusterForNewInstance((ODocument) record);
-            clusterOverrides.put(txEntry, clusterId);
-          }
+      for (ORecordOperation txEntry : entries) {
+        if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.RECYCLED
+            || txEntry.type == ORecordOperation.UPDATED) {
+          final ORecord record = txEntry.getRecord();
+          if (record instanceof ODocument)
+            ((ODocument) record).validate();
         }
 
-        clustersToLock.put(clusterId, getClusterById(clusterId));
-      }
-    }
+        if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.DELETED) {
+          final int clusterId = txEntry.getRecord().getIdentity().getClusterId();
+          clustersToLock.put(clusterId, getClusterById(clusterId));
+        } else if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.RECYCLED) {
+          newRecords.add(txEntry);
 
-    final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
-    final List<Lock[]> indexKeyLockList = new ArrayList<Lock[]>(indexesToCommit.size());
-    stateLock.acquireReadLock();
-    try {
+          final ORecord record = txEntry.getRecord();
+          final ORID rid = record.getIdentity();
+
+          int clusterId = rid.getClusterId();
+
+          if (record.isDirty() && clusterId == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
+            // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
+
+            final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+            if (class_ != null) {
+              clusterId = class_.getClusterForNewInstance((ODocument) record);
+              clusterOverrides.put(txEntry, clusterId);
+            }
+          }
+
+          clustersToLock.put(clusterId, getClusterById(clusterId));
+        }
+      }
+
+      final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
+      final List<Lock[]> indexKeyLockList = new ArrayList<Lock[]>(indexesToCommit.size());
+      stateLock.acquireReadLock();
       try {
         try {
+          try {
 
-          checkOpeness();
+            checkOpeness();
 
-          lockIndexKeys(indexManager, indexesToCommit, indexKeyLockList);
+            lockIndexKeys(indexManager, indexesToCommit, indexKeyLockList);
 
-          makeStorageDirty();
-          startStorageTx(clientTx);
+            makeStorageDirty();
+            startStorageTx(clientTx);
 
-          lockClusters(clustersToLock);
-          lockRidBags(clustersToLock, indexesToCommit);
-          lockIndexes(indexesToCommit);
+            lockClusters(clustersToLock);
+            lockRidBags(clustersToLock, indexesToCommit);
+            lockIndexes(indexesToCommit);
 
-          Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
-          for (ORecordOperation txEntry : newRecords) {
-            ORecord rec = txEntry.getRecord();
+            Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
+            for (ORecordOperation txEntry : newRecords) {
+              ORecord rec = txEntry.getRecord();
 
-            ORecordId rid = (ORecordId) rec.getIdentity().copy();
-            ORecordId oldRID = rid.copy();
+              ORecordId rid = (ORecordId) rec.getIdentity().copy();
+              ORecordId oldRID = rid.copy();
 
-            final Integer clusterOverride = clusterOverrides.get(txEntry);
-            final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
+              final Integer clusterOverride = clusterOverrides.get(txEntry);
+              final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
 
-            final OCluster cluster = getClusterById(clusterId);
+              final OCluster cluster = getClusterById(clusterId);
 
-            final OPaginatedCluster.RECORD_STATUS recordStatus = rid.getClusterPosition() > -1 ?
-                ((OPaginatedCluster) cluster).getRecordStatus(rid.getClusterPosition()) :
-                OPaginatedCluster.RECORD_STATUS.NOT_EXISTENT;
+              final OPaginatedCluster.RECORD_STATUS recordStatus = rid.getClusterPosition() > -1 ?
+                  ((OPaginatedCluster) cluster).getRecordStatus(rid.getClusterPosition()) :
+                  OPaginatedCluster.RECORD_STATUS.NOT_EXISTENT;
 
-            OPhysicalPosition ppos = new OPhysicalPosition(rid.getClusterPosition());
+              OPhysicalPosition ppos = new OPhysicalPosition(rid.getClusterPosition());
 
-            if (recordStatus == OPaginatedCluster.RECORD_STATUS.NOT_EXISTENT) {
-              ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+              if (recordStatus == OPaginatedCluster.RECORD_STATUS.NOT_EXISTENT) {
+                ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
 
-              if (rid.getClusterPosition() > -1) {
-                // CREATE EMPTY RECORDS UNTIL THE POSITION IS REACHED. THIS IS THE CASE WHEN A SERVER IS OUT OF SYNC
-                // BECAUSE A TRANSACTION HAS BEEN ROLLED BACK BEFORE TO SEND THE REMOTE CREATES. SO THE OWNER NODE DELETED
-                // RECORD HAVING A HIGHER CLUSTER POSITION
-                while (rid.getClusterPosition() > ppos.clusterPosition) {
-                  ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+                if (rid.getClusterPosition() > -1) {
+                  // CREATE EMPTY RECORDS UNTIL THE POSITION IS REACHED. THIS IS THE CASE WHEN A SERVER IS OUT OF SYNC
+                  // BECAUSE A TRANSACTION HAS BEEN ROLLED BACK BEFORE TO SEND THE REMOTE CREATES. SO THE OWNER NODE DELETED
+                  // RECORD HAVING A HIGHER CLUSTER POSITION
+                  while (rid.getClusterPosition() > ppos.clusterPosition) {
+                    ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+                  }
+
+                  if (rid.getClusterPosition() != ppos.clusterPosition)
+                    throw new OConcurrentCreateException(rid, new ORecordId(rid.getClusterId(), ppos.clusterPosition));
                 }
-
-                if (rid.getClusterPosition() != ppos.clusterPosition)
-                  throw new OConcurrentCreateException(rid, new ORecordId(rid.getClusterId(), ppos.clusterPosition));
+              } else if (recordStatus == OPaginatedCluster.RECORD_STATUS.REMOVED) {
+                // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
+                final ORecord record = txEntry.getRecord();
+                record.setDirty();
+                recyclePosition(rid);
               }
-            } else if (recordStatus == OPaginatedCluster.RECORD_STATUS.REMOVED) {
-              // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
-              final ORecord record = txEntry.getRecord();
-              record.setDirty();
-              recyclePosition(rid);
+
+              positions.put(txEntry, ppos);
+              rid.setClusterId(cluster.getId());
+              rid.setClusterPosition(ppos.clusterPosition);
+
+              if (!oldRID.equals(rid))
+                clientTx.updateIdentityAfterCommit(oldRID, rid);
             }
 
-            positions.put(txEntry, ppos);
-            rid.setClusterId(cluster.getId());
-            rid.setClusterPosition(ppos.clusterPosition);
+            for (ORecordOperation txEntry : entries) {
+              commitEntry(txEntry, positions.get(txEntry));
+              result.add(txEntry);
+            }
 
-            if (!oldRID.equals(rid))
-              clientTx.updateIdentityAfterCommit(oldRID, rid);
+            commitIndexes(indexesToCommit);
+
+            endStorageTx();
+
+            OTransactionAbstract.updateCacheFromEntries(clientTx, entries, true);
+
+            txCommit.incrementAndGet();
+
+          } catch (IOException ioe) {
+            makeRollback(clientTx, ioe);
+          } catch (RuntimeException e) {
+            makeRollback(clientTx, e);
+          } finally {
+            unlockIndexKeys(indexesToCommit, indexKeyLockList);
+            transaction.set(null);
           }
-
-          for (ORecordOperation txEntry : entries) {
-            commitEntry(txEntry, positions.get(txEntry));
-            result.add(txEntry);
-          }
-
-          commitIndexes(indexesToCommit);
-
-          endStorageTx();
-
-          OTransactionAbstract.updateCacheFromEntries(clientTx, entries, true);
-
-          txCommit.incrementAndGet();
-
-        } catch (IOException ioe) {
-          makeRollback(clientTx, ioe);
-        } catch (RuntimeException e) {
-          makeRollback(clientTx, e);
         } finally {
-          unlockIndexKeys(indexesToCommit, indexKeyLockList);
-          transaction.set(null);
+          databaseRecord.getMetadata().clearThreadLocalSchemaSnapshot();
         }
       } finally {
-        databaseRecord.getMetadata().clearThreadLocalSchemaSnapshot();
+        stateLock.releaseReadLock();
       }
-    } finally {
-      stateLock.releaseReadLock();
+
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Committed transaction %d on database '%s' (result=%s thread=%d)", clientTx.getId(),
+            databaseRecord.getName(), result, Thread.currentThread().getId());
+
+      return result;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
-
-    if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(this, "Committed transaction %d on database '%s' (result=%s thread=%d)", clientTx.getId(),
-          databaseRecord.getName(), result, Thread.currentThread().getId());
-
-    return result;
   }
 
   private void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
@@ -1457,71 +1742,87 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public int loadIndexEngine(String name) {
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
       checkOpeness();
 
-      final OIndexEngine engine = indexEngineNameMap.get(name.toLowerCase(configuration.getLocaleInstance()));
-      if (engine == null)
-        return -1;
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
-      final int indexId = indexEngines.indexOf(engine);
-      assert indexId >= 0;
+        final OIndexEngine engine = indexEngineNameMap.get(name.toLowerCase(configuration.getLocaleInstance()));
+        if (engine == null)
+          return -1;
 
-      return indexId;
-    } finally {
-      stateLock.releaseReadLock();
+        final int indexId = indexEngines.indexOf(engine);
+        assert indexId >= 0;
+
+        return indexId;
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public int loadExternalIndexEngine(String engineName, String algorithm, String indexType, OIndexDefinition indexDefinition,
       OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version,
       Map<String, String> engineProperties) {
-    checkOpeness();
-
-    stateLock.acquireWriteLock();
     try {
       checkOpeness();
 
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+      stateLock.acquireWriteLock();
+      try {
+        checkOpeness();
 
-      // this method introduced for binary compatibility only
-      if (configuration.binaryFormatVersion > 15)
-        return -1;
+        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
-      final String originalName = engineName;
-      engineName = engineName.toLowerCase(configuration.getLocaleInstance());
+        // this method introduced for binary compatibility only
+        if (configuration.binaryFormatVersion > 15)
+          return -1;
 
-      if (indexEngineNameMap.containsKey(engineName))
-        throw new OIndexException("Index with name " + engineName + " already exists");
+        final String originalName = engineName;
+        engineName = engineName.toLowerCase(configuration.getLocaleInstance());
 
-      makeStorageDirty();
+        if (indexEngineNameMap.containsKey(engineName))
+          throw new OIndexException("Index with name " + engineName + " already exists");
 
-      final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
-      final int keySize = determineKeySize(indexDefinition);
-      final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
-      final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
+        makeStorageDirty();
 
-      final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
-          indexType, durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes,
-          nullValuesSupport, keySize, engineProperties);
+        final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
+        final int keySize = determineKeySize(indexDefinition);
+        final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
+        final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
 
-      final OIndexEngine engine = OIndexes
-          .createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, null);
-      engine.load(originalName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize,
-          engineData.getEngineProperties());
+        final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
+            indexType, durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes,
+            nullValuesSupport, keySize, engineProperties);
 
-      indexEngineNameMap.put(engineName, engine);
-      indexEngines.add(engine);
-      configuration.addIndexEngine(engineName, engineData);
+        final OIndexEngine engine = OIndexes
+            .createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, null);
+        engine.load(originalName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize,
+            engineData.getEngineProperties());
 
-      return indexEngines.size() - 1;
-    } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Cannot add index engine " + engineName + " in storage."), e);
-    } finally {
-      stateLock.releaseWriteLock();
+        indexEngineNameMap.put(engineName, engine);
+        indexEngines.add(engine);
+        configuration.addIndexEngine(engineName, engineData);
+
+        return indexEngines.size() - 1;
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Cannot add index engine " + engineName + " in storage."), e);
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -1529,62 +1830,70 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OIndexDefinition indexDefinition, final OBinarySerializer valueSerializer, final boolean isAutomatic,
       final Boolean durableInNonTxMode, final int version, final Map<String, String> engineProperties,
       final Set<String> clustersToIndex, final ODocument metadata) {
-    checkOpeness();
-
-    stateLock.acquireWriteLock();
     try {
       checkOpeness();
 
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+      stateLock.acquireWriteLock();
+      try {
+        checkOpeness();
 
-      final String originalName = engineName;
-      engineName = engineName.toLowerCase(configuration.getLocaleInstance());
+        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
-      if (indexEngineNameMap.containsKey(engineName)) {
-        // OLD INDEX FILE ARE PRESENT: THIS IS THE CASE OF PARTIAL/BROKEN INDEX
-        OLogManager.instance().warn(this, "Index with name '%s' already exists, removing it and re-create the index", engineName);
-        final OIndexEngine engine = indexEngineNameMap.remove(engineName);
-        if (engine != null) {
-          indexEngines.remove(engine);
-          configuration.deleteIndexEngine(engineName);
-          engine.delete();
+        final String originalName = engineName;
+        engineName = engineName.toLowerCase(configuration.getLocaleInstance());
+
+        if (indexEngineNameMap.containsKey(engineName)) {
+          // OLD INDEX FILE ARE PRESENT: THIS IS THE CASE OF PARTIAL/BROKEN INDEX
+          OLogManager.instance().warn(this, "Index with name '%s' already exists, removing it and re-create the index", engineName);
+          final OIndexEngine engine = indexEngineNameMap.remove(engineName);
+          if (engine != null) {
+            indexEngines.remove(engine);
+            configuration.deleteIndexEngine(engineName);
+            engine.delete();
+          }
         }
+
+        makeStorageDirty();
+
+        final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
+        final int keySize = determineKeySize(indexDefinition);
+        final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
+        final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
+        final byte serializerId;
+
+        if (valueSerializer != null)
+          serializerId = valueSerializer.getId();
+        else
+          serializerId = -1;
+
+        final OIndexEngine engine = OIndexes
+            .createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, metadata);
+
+        engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, clustersToIndex,
+            engineProperties, metadata);
+
+        indexEngineNameMap.put(engineName, engine);
+
+        indexEngines.add(engine);
+
+        final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
+            indexType, durableInNonTxMode, version, serializerId, keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
+            keySize, engineProperties);
+
+        configuration.addIndexEngine(engineName, engineData);
+
+        return indexEngines.size() - 1;
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Cannot add index engine " + engineName + " in storage."), e);
+      } finally {
+        stateLock.releaseWriteLock();
       }
-
-      makeStorageDirty();
-
-      final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
-      final int keySize = determineKeySize(indexDefinition);
-      final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
-      final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
-      final byte serializerId;
-
-      if (valueSerializer != null)
-        serializerId = valueSerializer.getId();
-      else
-        serializerId = -1;
-
-      final OIndexEngine engine = OIndexes
-          .createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, metadata);
-
-      engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, clustersToIndex,
-          engineProperties, metadata);
-
-      indexEngineNameMap.put(engineName, engine);
-
-      indexEngines.add(engine);
-
-      final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
-          indexType, durableInNonTxMode, version, serializerId, keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
-          keySize, engineProperties);
-
-      configuration.addIndexEngine(engineName, engineData);
-
-      return indexEngines.size() - 1;
-    } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Cannot add index engine " + engineName + " in storage."), e);
-    } finally {
-      stateLock.releaseWriteLock();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -1619,32 +1928,39 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void deleteIndexEngine(int indexId) throws OInvalidIndexEngineIdException {
-    checkOpeness();
-
-    stateLock.acquireWriteLock();
     try {
       checkOpeness();
 
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+      stateLock.acquireWriteLock();
+      try {
+        checkOpeness();
 
-      checkIndexId(indexId);
+        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
-      makeStorageDirty();
-      final OIndexEngine engine = indexEngines.get(indexId);
+        checkIndexId(indexId);
 
-      indexEngines.set(indexId, null);
+        makeStorageDirty();
+        final OIndexEngine engine = indexEngines.get(indexId);
 
-      engine.delete();
+        indexEngines.set(indexId, null);
 
-      final String engineName = engine.getName().toLowerCase(configuration.getLocaleInstance());
-      indexEngineNameMap.remove(engineName);
-      configuration.deleteIndexEngine(engineName);
-    } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Error on index deletion"), e);
-    } finally {
-      stateLock.releaseWriteLock();
+        engine.delete();
+
+        final String engineName = engine.getName().toLowerCase(configuration.getLocaleInstance());
+        indexEngineNameMap.remove(engineName);
+        configuration.deleteIndexEngine(engineName);
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error on index deletion"), e);
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
-
   }
 
   private void checkIndexId(int indexId) throws OInvalidIndexEngineIdException {
@@ -1653,18 +1969,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public boolean indexContainsKey(int indexId, Object key) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doIndexContainsKey(indexId, key);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doIndexContainsKey(indexId, key);
+
       checkOpeness();
 
-      return doIndexContainsKey(indexId, key);
-    } finally {
-      stateLock.releaseReadLock();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+
+        return doIndexContainsKey(indexId, key);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -1677,21 +2001,29 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public boolean removeKeyFromIndex(int indexId, Object key) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null) {
-      return doRemoveKeyFromIndex(indexId, key);
-    }
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null) {
+        return doRemoveKeyFromIndex(indexId, key);
+      }
+
       checkOpeness();
 
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
-      return doRemoveKeyFromIndex(indexId, key);
-    } finally {
-      stateLock.releaseReadLock();
+        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+
+        return doRemoveKeyFromIndex(indexId, key);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -1709,22 +2041,30 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void clearIndex(int indexId) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null) {
-      doClearIndex(indexId);
-      return;
-    }
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null) {
+        doClearIndex(indexId);
+        return;
+      }
+
       checkOpeness();
 
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
-      doClearIndex(indexId);
-    } finally {
-      stateLock.releaseReadLock();
+        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+
+        doClearIndex(indexId);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -1743,17 +2083,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public Object getIndexValue(int indexId, Object key) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doGetIndexValue(indexId, key);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doGetIndexValue(indexId, key);
+
       checkOpeness();
-      return doGetIndexValue(indexId, key);
-    } finally {
-      stateLock.releaseReadLock();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doGetIndexValue(indexId, key);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -1766,41 +2114,65 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public OIndexEngine getIndexEngine(int indexId) throws OInvalidIndexEngineIdException {
-    checkIndexId(indexId);
-    return indexEngines.get(indexId);
+    try {
+      checkIndexId(indexId);
+      return indexEngines.get(indexId);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public void updateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null) {
-      doUpdateIndexEntry(indexId, key, valueCreator);
-      return;
-    }
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
-      checkOpeness();
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+      if (transaction.get() != null) {
+        doUpdateIndexEntry(indexId, key, valueCreator);
+        return;
+      }
 
-      doUpdateIndexEntry(indexId, key, valueCreator);
-    } finally {
-      stateLock.releaseReadLock();
+      checkOpeness();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+
+        doUpdateIndexEntry(indexId, key, valueCreator);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public <T> T callIndexEngine(boolean atomicOperation, boolean readOperation, int indexId, OIndexEngineCallback<T> callback)
       throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doCallIndexEngine(atomicOperation, readOperation, indexId, callback);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
-      return doCallIndexEngine(atomicOperation, readOperation, indexId, callback);
-    } finally {
-      stateLock.releaseReadLock();
+      if (transaction.get() != null)
+        return doCallIndexEngine(atomicOperation, readOperation, indexId, callback);
+
+      checkOpeness();
+
+      stateLock.acquireReadLock();
+      try {
+        return doCallIndexEngine(atomicOperation, readOperation, indexId, callback);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -1879,22 +2251,30 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void putIndexValue(int indexId, Object key, Object value) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null) {
-      doPutIndexValue(indexId, key, value);
-      return;
-    }
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null) {
+        doPutIndexValue(indexId, key, value);
+        return;
+      }
+
       checkOpeness();
 
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
-      doPutIndexValue(indexId, key, value);
-    } finally {
-      stateLock.releaseReadLock();
+        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+
+        doPutIndexValue(indexId, key, value);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -1926,20 +2306,28 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    */
   public boolean validatedPutIndexValue(int indexId, Object key, OIdentifiable value,
       OIndexEngine.Validator<Object, OIdentifiable> validator) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doValidatedPutIndexValue(indexId, key, value, validator);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doValidatedPutIndexValue(indexId, key, value, validator);
+
       checkOpeness();
 
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
-      return doValidatedPutIndexValue(indexId, key, value, validator);
-    } finally {
-      stateLock.releaseReadLock();
+        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+
+        return doValidatedPutIndexValue(indexId, key, value, validator);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -1958,17 +2346,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public Object getIndexFirstKey(int indexId) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doGetIndexFirstKey(indexId);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doGetIndexFirstKey(indexId);
+
       checkOpeness();
-      return doGetIndexFirstKey(indexId);
-    } finally {
-      stateLock.releaseReadLock();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doGetIndexFirstKey(indexId);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -1981,17 +2377,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public Object getIndexLastKey(int indexId) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doGetIndexFirstKey(indexId);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doGetIndexFirstKey(indexId);
+
       checkOpeness();
-      return doGetIndexLastKey(indexId);
-    } finally {
-      stateLock.releaseReadLock();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doGetIndexLastKey(indexId);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -2005,17 +2409,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public OIndexCursor iterateIndexEntriesBetween(int indexId, Object rangeFrom, boolean fromInclusive, Object rangeTo,
       boolean toInclusive, boolean ascSortOrder, OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doIterateIndexEntriesBetween(indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doIterateIndexEntriesBetween(indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
+
       checkOpeness();
-      return doIterateIndexEntriesBetween(indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
-    } finally {
-      stateLock.releaseReadLock();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doIterateIndexEntriesBetween(indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -2030,17 +2442,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public OIndexCursor iterateIndexEntriesMajor(int indexId, Object fromKey, boolean isInclusive, boolean ascSortOrder,
       OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doIterateIndexEntriesMajor(indexId, fromKey, isInclusive, ascSortOrder, transformer);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doIterateIndexEntriesMajor(indexId, fromKey, isInclusive, ascSortOrder, transformer);
+
       checkOpeness();
-      return doIterateIndexEntriesMajor(indexId, fromKey, isInclusive, ascSortOrder, transformer);
-    } finally {
-      stateLock.releaseReadLock();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doIterateIndexEntriesMajor(indexId, fromKey, isInclusive, ascSortOrder, transformer);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -2055,18 +2475,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public OIndexCursor iterateIndexEntriesMinor(int indexId, final Object toKey, final boolean isInclusive, boolean ascSortOrder,
       OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
-
-    if (transaction.get() != null)
-      return doIterateIndexEntriesMinor(indexId, toKey, isInclusive, ascSortOrder, transformer);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doIterateIndexEntriesMinor(indexId, toKey, isInclusive, ascSortOrder, transformer);
+
       checkOpeness();
-      return doIterateIndexEntriesMinor(indexId, toKey, isInclusive, ascSortOrder, transformer);
-    } finally {
-      stateLock.releaseReadLock();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doIterateIndexEntriesMinor(indexId, toKey, isInclusive, ascSortOrder, transformer);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -2081,17 +2508,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public OIndexCursor getIndexCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer)
       throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doGetIndexCursor(indexId, valuesTransformer);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doGetIndexCursor(indexId, valuesTransformer);
+
       checkOpeness();
-      return doGetIndexCursor(indexId, valuesTransformer);
-    } finally {
-      stateLock.releaseReadLock();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doGetIndexCursor(indexId, valuesTransformer);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -2106,17 +2541,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public OIndexCursor getIndexDescCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer)
       throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doGetIndexDescCursor(indexId, valuesTransformer);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doGetIndexDescCursor(indexId, valuesTransformer);
+
       checkOpeness();
-      return doGetIndexDescCursor(indexId, valuesTransformer);
-    } finally {
-      stateLock.releaseReadLock();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doGetIndexDescCursor(indexId, valuesTransformer);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -2130,17 +2573,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public OIndexKeyCursor getIndexKeyCursor(int indexId) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doGetIndexKeyCursor(indexId);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doGetIndexKeyCursor(indexId);
+
       checkOpeness();
-      return doGetIndexKeyCursor(indexId);
-    } finally {
-      stateLock.releaseReadLock();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doGetIndexKeyCursor(indexId);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -2153,17 +2604,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public long getIndexSize(int indexId, OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doGetIndexSize(indexId, transformer);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doGetIndexSize(indexId, transformer);
+
       checkOpeness();
-      return doGetIndexSize(indexId, transformer);
-    } finally {
-      stateLock.releaseReadLock();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doGetIndexSize(indexId, transformer);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -2176,17 +2635,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public boolean hasIndexRangeQuerySupport(int indexId) throws OInvalidIndexEngineIdException {
-    if (transaction.get() != null)
-      return doHasRangeQuerySupport(indexId);
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (transaction.get() != null)
+        return doHasRangeQuerySupport(indexId);
+
       checkOpeness();
-      return doHasRangeQuerySupport(indexId);
-    } finally {
-      stateLock.releaseReadLock();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return doHasRangeQuerySupport(indexId);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -2211,99 +2678,131 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void rollback(final OTransaction clientTx) {
-    checkOpeness();
-    stateLock.acquireReadLock();
     try {
+      checkOpeness();
+      stateLock.acquireReadLock();
       try {
-        checkOpeness();
+        try {
+          checkOpeness();
 
-        if (transaction.get() == null)
-          return;
+          if (transaction.get() == null)
+            return;
 
-        if (writeAheadLog == null)
-          throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
+          if (writeAheadLog == null)
+            throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
 
-        if (transaction.get().getClientTx().getId() != clientTx.getId())
-          throw new OStorageException(
-              "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
+          if (transaction.get().getClientTx().getId() != clientTx.getId())
+            throw new OStorageException(
+                "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
 
-        makeStorageDirty();
-        rollbackStorageTx();
+          makeStorageDirty();
+          rollbackStorageTx();
 
-        OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
+          OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
 
-        txRollback.incrementAndGet();
+          txRollback.incrementAndGet();
 
-      } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Error during transaction rollback"), e);
+        } catch (IOException e) {
+          throw OException.wrapException(new OStorageException("Error during transaction rollback"), e);
+        } finally {
+          transaction.set(null);
+        }
       } finally {
-        transaction.set(null);
+        stateLock.releaseReadLock();
       }
-    } finally {
-      stateLock.releaseReadLock();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
-    return ppos != null && !ORecordVersionHelper.isTombstone(ppos.recordVersion);
+    try {
+      return ppos != null && !ORecordVersionHelper.isTombstone(ppos.recordVersion);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public void synch() {
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
-      final long timer = Orient.instance().getProfiler().startChrono();
-      final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
-      try {
-        checkOpeness();
+      checkOpeness();
 
-        for (OIndexEngine indexEngine : indexEngines)
-          try {
-            if (indexEngine != null)
-              indexEngine.flush();
-          } catch (Throwable t) {
-            OLogManager.instance()
-                .error(this, "Error while flushing index via index engine of class %s.", t, indexEngine.getClass().getSimpleName());
+      stateLock.acquireReadLock();
+      try {
+        final long timer = Orient.instance().getProfiler().startChrono();
+        final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
+        try {
+          checkOpeness();
+
+          for (OIndexEngine indexEngine : indexEngines)
+            try {
+              if (indexEngine != null)
+                indexEngine.flush();
+            } catch (Throwable t) {
+              OLogManager.instance().error(this, "Error while flushing index via index engine of class %s.", t,
+                  indexEngine.getClass().getSimpleName());
+            }
+
+          if (writeAheadLog != null) {
+            makeFullCheckpoint();
+            return;
           }
 
-        if (writeAheadLog != null) {
-          makeFullCheckpoint();
-          return;
+          writeCache.flush();
+
+          if (configuration != null)
+            configuration.synch();
+
+          clearStorageDirty();
+        } catch (IOException e) {
+          throw OException.wrapException(new OStorageException("Error on synch storage '" + name + "'"), e);
+
+        } finally {
+          atomicOperationsManager.releaseAtomicOperations(lockId);
+          Orient.instance().getProfiler().stopChrono("db." + name + ".synch", "Synch a database", timer, "db.*.synch");
         }
-
-        writeCache.flush();
-
-        if (configuration != null)
-          configuration.synch();
-
-        clearStorageDirty();
-      } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Error on synch storage '" + name + "'"), e);
-
       } finally {
-        atomicOperationsManager.releaseAtomicOperations(lockId);
-        Orient.instance().getProfiler().stopChrono("db." + name + ".synch", "Synch a database", timer, "db.*.synch");
+        stateLock.releaseReadLock();
       }
-    } finally {
-      stateLock.releaseReadLock();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public String getPhysicalClusterNameById(final int iClusterId) {
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
       checkOpeness();
 
-      if (iClusterId < 0 || iClusterId >= clusters.size())
-        return null;
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
-      return clusters.get(iClusterId) != null ? clusters.get(iClusterId).getName() : null;
-    } finally {
-      stateLock.releaseReadLock();
+        if (iClusterId < 0 || iClusterId >= clusters.size())
+          return null;
+
+        return clusters.get(iClusterId) != null ? clusters.get(iClusterId).getName() : null;
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -2312,97 +2811,144 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void setDefaultClusterId(final int defaultClusterId) {
-    this.defaultClusterId = defaultClusterId;
+    try {
+      this.defaultClusterId = defaultClusterId;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public OCluster getClusterById(int iClusterId) {
-    checkOpeness();
-    stateLock.acquireReadLock();
     try {
       checkOpeness();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
-      if (iClusterId == ORID.CLUSTER_ID_INVALID)
-        // GET THE DEFAULT CLUSTER
-        iClusterId = defaultClusterId;
+        if (iClusterId == ORID.CLUSTER_ID_INVALID)
+          // GET THE DEFAULT CLUSTER
+          iClusterId = defaultClusterId;
 
-      checkClusterSegmentIndexRange(iClusterId);
+        checkClusterSegmentIndexRange(iClusterId);
 
-      final OCluster cluster = clusters.get(iClusterId);
-      if (cluster == null)
-        throw new IllegalArgumentException("Cluster " + iClusterId + " is null");
+        final OCluster cluster = clusters.get(iClusterId);
+        if (cluster == null)
+          throw new IllegalArgumentException("Cluster " + iClusterId + " is null");
 
-      return cluster;
-    } finally {
-      stateLock.releaseReadLock();
+        return cluster;
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
   public OCluster getClusterByName(final String clusterName) {
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
       checkOpeness();
-      final OCluster cluster = clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
 
-      if (cluster == null)
-        throw new OStorageException("Cluster " + clusterName + " does not exist in database '" + name + "'");
-      return cluster;
-    } finally {
-      stateLock.releaseReadLock();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        final OCluster cluster = clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
+
+        if (cluster == null)
+          throw new OStorageException("Cluster " + clusterName + " does not exist in database '" + name + "'");
+        return cluster;
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public long getSize() {
     try {
-
-      long size = 0;
-
-      stateLock.acquireReadLock();
       try {
-        for (OCluster c : clusters)
-          if (c != null)
-            size += c.getRecordsSize();
-      } finally {
-        stateLock.releaseReadLock();
+
+        long size = 0;
+
+        stateLock.acquireReadLock();
+        try {
+          for (OCluster c : clusters)
+            if (c != null)
+              size += c.getRecordsSize();
+        } finally {
+          stateLock.releaseReadLock();
+        }
+
+        return size;
+
+      } catch (IOException ioe) {
+        throw OException.wrapException(new OStorageException("Cannot calculate records size"), ioe);
       }
-
-      return size;
-
-    } catch (IOException ioe) {
-      throw OException.wrapException(new OStorageException("Cannot calculate records size"), ioe);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public int getClusters() {
-    checkOpeness();
-    stateLock.acquireReadLock();
     try {
       checkOpeness();
-      return clusterMap.size();
-    } finally {
-      stateLock.releaseReadLock();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        return clusterMap.size();
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
-
   }
 
   public Set<OCluster> getClusterInstances() {
-    checkOpeness();
-    stateLock.acquireReadLock();
     try {
       checkOpeness();
-      final Set<OCluster> result = new LinkedHashSet<OCluster>();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+        final Set<OCluster> result = new LinkedHashSet<OCluster>();
 
-      // ADD ALL THE CLUSTERS
-      for (OCluster c : clusters)
-        if (c != null)
-          result.add(c);
+        // ADD ALL THE CLUSTERS
+        for (OCluster c : clusters)
+          if (c != null)
+            result.add(c);
 
-      return result;
+        return result;
 
-    } finally {
-      stateLock.releaseReadLock();
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -2411,77 +2957,117 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * INTERNAL MAPPING</strong>
    */
   public void renameCluster(final String oldName, final String newName) {
-    clusterMap.put(newName.toLowerCase(configuration.getLocaleInstance()),
-        clusterMap.remove(oldName.toLowerCase(configuration.getLocaleInstance())));
+    try {
+      clusterMap.put(newName.toLowerCase(configuration.getLocaleInstance()),
+          clusterMap.remove(oldName.toLowerCase(configuration.getLocaleInstance())));
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
   public boolean cleanOutRecord(final ORecordId recordId, final int recordVersion, final int iMode,
       final ORecordCallback<Boolean> callback) {
-    return deleteRecord(recordId, recordVersion, iMode, callback).getResult();
+    try {
+      return deleteRecord(recordId, recordVersion, iMode, callback).getResult();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public boolean isFrozen() {
-    return atomicOperationsManager.isFrozen();
+    try {
+      return atomicOperationsManager.isFrozen();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public void freeze(final boolean throwException) {
-    checkOpeness();
-    stateLock.acquireReadLock();
     try {
       checkOpeness();
-
-      final long freezeId;
-
-      if (throwException)
-        freezeId = atomicOperationsManager
-            .freezeAtomicOperations(OModificationOperationProhibitedException.class, "Modification requests are prohibited");
-      else
-        freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
-
-      final List<OFreezableStorageComponent> frozenIndexes = new ArrayList<OFreezableStorageComponent>(indexEngines.size());
+      stateLock.acquireReadLock();
       try {
-        for (OIndexEngine indexEngine : indexEngines)
-          if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent) {
-            ((OFreezableStorageComponent) indexEngine).freeze(false);
-            frozenIndexes.add((OFreezableStorageComponent) indexEngine);
-          }
-      } catch (Exception e) {
-        // RELEASE ALL THE FROZEN INDEXES
-        for (OFreezableStorageComponent indexEngine : frozenIndexes)
-          indexEngine.release();
+        checkOpeness();
 
-        throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
+        final long freezeId;
+
+        if (throwException)
+          freezeId = atomicOperationsManager
+              .freezeAtomicOperations(OModificationOperationProhibitedException.class, "Modification requests are prohibited");
+        else
+          freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
+
+        final List<OFreezableStorageComponent> frozenIndexes = new ArrayList<OFreezableStorageComponent>(indexEngines.size());
+        try {
+          for (OIndexEngine indexEngine : indexEngines)
+            if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent) {
+              ((OFreezableStorageComponent) indexEngine).freeze(false);
+              frozenIndexes.add((OFreezableStorageComponent) indexEngine);
+            }
+        } catch (Exception e) {
+          // RELEASE ALL THE FROZEN INDEXES
+          for (OFreezableStorageComponent indexEngine : frozenIndexes)
+            indexEngine.release();
+
+          throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
+        }
+
+        synch();
+        try {
+          if (configuration != null)
+            configuration.setSoftlyClosed(true);
+
+        } catch (IOException e) {
+          atomicOperationsManager.releaseAtomicOperations(freezeId);
+          throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
+        }
+      } finally {
+        stateLock.releaseReadLock();
       }
-
-      synch();
-      try {
-        if (configuration != null)
-          configuration.setSoftlyClosed(true);
-
-      } catch (IOException e) {
-        atomicOperationsManager.releaseAtomicOperations(freezeId);
-        throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
-      }
-    } finally {
-      stateLock.releaseReadLock();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public void release() {
     try {
-      for (OIndexEngine indexEngine : indexEngines)
-        if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
-          ((OFreezableStorageComponent) indexEngine).release();
+      try {
+        for (OIndexEngine indexEngine : indexEngines)
+          if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
+            ((OFreezableStorageComponent) indexEngine).release();
 
-      if (configuration != null)
-        configuration.setSoftlyClosed(false);
+        if (configuration != null)
+          configuration.setSoftlyClosed(false);
 
-    } catch (IOException e) {
-      throw OException.wrapException(new OStorageException("Error on release of storage '" + name + "'"), e);
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error on release of storage '" + name + "'"), e);
+      }
+
+      atomicOperationsManager.releaseAtomicOperations(-1);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
-
-    atomicOperationsManager.releaseAtomicOperations(-1);
   }
 
   @Override
@@ -2490,8 +3076,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void reload() {
-    close();
-    open(null, null, null);
+    try {
+      close();
+      open(null, null, null);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public String getMode() {
@@ -2500,220 +3094,315 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public void lowDiskSpace(OLowDiskSpaceInformation information) {
-    lowDiskSpace = information;
+    try {
+      lowDiskSpace = information;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
   public void requestCheckpoint() {
-    checkpointRequest = true;
+    try {
+      checkpointRequest = true;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   /**
    * Executes the command request and return the result back.
    */
   public Object command(final OCommandRequestText iCommand) {
-    while (true) {
-      try {
-        final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+    try {
+      while (true) {
+        try {
+          final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
 
-        // COPY THE CONTEXT FROM THE REQUEST
-        executor.setContext(iCommand.getContext());
+          // COPY THE CONTEXT FROM THE REQUEST
+          executor.setContext(iCommand.getContext());
 
-        executor.setProgressListener(iCommand.getProgressListener());
-        executor.parse(iCommand);
+          executor.setProgressListener(iCommand.getProgressListener());
+          executor.parse(iCommand);
 
-        return executeCommand(iCommand, executor);
-      } catch (ORetryQueryException e) {
+          return executeCommand(iCommand, executor);
+        } catch (ORetryQueryException e) {
 
-        if (iCommand instanceof OQueryAbstract) {
-          final OQueryAbstract query = (OQueryAbstract) iCommand;
-          query.reset();
+          if (iCommand instanceof OQueryAbstract) {
+            final OQueryAbstract query = (OQueryAbstract) iCommand;
+            query.reset();
+          }
+
+          continue;
         }
-
-        continue;
       }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public Object executeCommand(final OCommandRequestText iCommand, final OCommandExecutor executor) {
-    if (iCommand.isIdempotent() && !executor.isIdempotent())
-      throw new OCommandExecutionException("Cannot execute non idempotent command");
-
-    long beginTime = Orient.instance().getProfiler().startChrono();
-
     try {
+      if (iCommand.isIdempotent() && !executor.isIdempotent())
+        throw new OCommandExecutionException("Cannot execute non idempotent command");
 
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      long beginTime = Orient.instance().getProfiler().startChrono();
 
-      // CALL BEFORE COMMAND
-      Iterable<ODatabaseListener> listeners = db.getListeners();
-      for (ODatabaseListener oDatabaseListener : listeners) {
-        oDatabaseListener.onBeforeCommand(iCommand, executor);
-      }
+      try {
 
-      boolean foundInCache = false;
-      Object result = null;
-      if (iCommand.isCacheableResult() && executor.isCacheable() && iCommand.getParameters() == null) {
-        // TRY WITH COMMAND CACHE
-        result = db.getMetadata().getCommandCache().get(db.getUser(), iCommand.getText(), iCommand.getLimit());
+        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-        if (result != null) {
-          foundInCache = true;
+        // CALL BEFORE COMMAND
+        Iterable<ODatabaseListener> listeners = db.getListeners();
+        for (ODatabaseListener oDatabaseListener : listeners) {
+          oDatabaseListener.onBeforeCommand(iCommand, executor);
+        }
 
-          if (iCommand.getResultListener() != null) {
-            // INVOKE THE LISTENER IF ANY
-            if (result instanceof Collection) {
-              for (Object o : (Collection) result)
-                iCommand.getResultListener().result(o);
-            } else
-              iCommand.getResultListener().result(result);
+        boolean foundInCache = false;
+        Object result = null;
+        if (iCommand.isCacheableResult() && executor.isCacheable() && iCommand.getParameters() == null) {
+          // TRY WITH COMMAND CACHE
+          result = db.getMetadata().getCommandCache().get(db.getUser(), iCommand.getText(), iCommand.getLimit());
 
-            // RESET THE RESULT TO AVOID TO SEND IT TWICE
-            result = null;
+          if (result != null) {
+            foundInCache = true;
+
+            if (iCommand.getResultListener() != null) {
+              // INVOKE THE LISTENER IF ANY
+              if (result instanceof Collection) {
+                for (Object o : (Collection) result)
+                  iCommand.getResultListener().result(o);
+              } else
+                iCommand.getResultListener().result(result);
+
+              // RESET THE RESULT TO AVOID TO SEND IT TWICE
+              result = null;
+            }
+          }
+        }
+
+        if (!foundInCache) {
+          // EXECUTE THE COMMAND
+          result = executor.execute(iCommand.getParameters());
+
+          if (result != null && iCommand.isCacheableResult() && executor.isCacheable() && (iCommand.getParameters() == null
+              || iCommand.getParameters().isEmpty()))
+            // CACHE THE COMMAND RESULT
+            db.getMetadata().getCommandCache()
+                .put(db.getUser(), iCommand.getText(), result, iCommand.getLimit(), executor.getInvolvedClusters(),
+                    System.currentTimeMillis() - beginTime);
+        }
+
+        // CALL AFTER COMMAND
+        for (ODatabaseListener oDatabaseListener : listeners) {
+          oDatabaseListener.onAfterCommand(iCommand, executor, result);
+        }
+
+        return result;
+
+      } catch (OException e) {
+        // PASS THROUGH
+        throw e;
+      } catch (Exception e) {
+        throw OException.wrapException(new OCommandExecutionException("Error on execution of command: " + iCommand), e);
+
+      } finally {
+        if (Orient.instance().getProfiler().isRecording()) {
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          if (db != null) {
+            final OSecurityUser user = db.getUser();
+            final String userString = user != null ? user.toString() : null;
+            Orient.instance().getProfiler()
+                .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
+                    "Command executed against the database", beginTime, "db.*.command.*", null, userString);
           }
         }
       }
-
-      if (!foundInCache) {
-        // EXECUTE THE COMMAND
-        result = executor.execute(iCommand.getParameters());
-
-        if (result != null && iCommand.isCacheableResult() && executor.isCacheable() && (iCommand.getParameters() == null
-            || iCommand.getParameters().isEmpty()))
-          // CACHE THE COMMAND RESULT
-          db.getMetadata().getCommandCache()
-              .put(db.getUser(), iCommand.getText(), result, iCommand.getLimit(), executor.getInvolvedClusters(),
-                  System.currentTimeMillis() - beginTime);
-      }
-
-      // CALL AFTER COMMAND
-      for (ODatabaseListener oDatabaseListener : listeners) {
-        oDatabaseListener.onAfterCommand(iCommand, executor, result);
-      }
-
-      return result;
-
-    } catch (OException e) {
-      // PASS THROUGH
-      throw e;
-    } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Error on execution of command: " + iCommand), e);
-
-    } finally {
-      if (Orient.instance().getProfiler().isRecording()) {
-        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-        if (db != null) {
-          final OSecurityUser user = db.getUser();
-          final String userString = user != null ? user.toString() : null;
-          Orient.instance().getProfiler()
-              .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
-                  "Command executed against the database", beginTime, "db.*.command.*", null, userString);
-        }
-      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
   public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
-    if (currentClusterId == -1)
-      return new OPhysicalPosition[0];
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (currentClusterId == -1)
+        return new OPhysicalPosition[0];
+
       checkOpeness();
 
-      final OCluster cluster = getClusterById(currentClusterId);
-      return cluster.higherPositions(physicalPosition);
-    } catch (IOException ioe) {
-      throw OException
-          .wrapException(new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\''), ioe);
-    } finally {
-      stateLock.releaseReadLock();
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
+
+        final OCluster cluster = getClusterById(currentClusterId);
+        return cluster.higherPositions(physicalPosition);
+      } catch (IOException ioe) {
+        throw OException
+            .wrapException(new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\''), ioe);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
   public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
-    if (clusterId == -1)
-      return new OPhysicalPosition[0];
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (clusterId == -1)
+        return new OPhysicalPosition[0];
+
       checkOpeness();
 
-      final OCluster cluster = getClusterById(clusterId);
-      return cluster.ceilingPositions(physicalPosition);
-    } catch (IOException ioe) {
-      throw OException
-          .wrapException(new OStorageException("Cluster Id " + clusterId + " is invalid in storage '" + name + '\''), ioe);
-    } finally {
-      stateLock.releaseReadLock();
-    }
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
+        final OCluster cluster = getClusterById(clusterId);
+        return cluster.ceilingPositions(physicalPosition);
+      } catch (IOException ioe) {
+        throw OException
+            .wrapException(new OStorageException("Cluster Id " + clusterId + " is invalid in storage '" + name + '\''), ioe);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
   public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
-    if (currentClusterId == -1)
-      return new OPhysicalPosition[0];
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (currentClusterId == -1)
+        return new OPhysicalPosition[0];
+
       checkOpeness();
 
-      final OCluster cluster = getClusterById(currentClusterId);
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
-      return cluster.lowerPositions(physicalPosition);
-    } catch (IOException ioe) {
-      throw OException
-          .wrapException(new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\''), ioe);
-    } finally {
-      stateLock.releaseReadLock();
+        final OCluster cluster = getClusterById(currentClusterId);
+
+        return cluster.lowerPositions(physicalPosition);
+      } catch (IOException ioe) {
+        throw OException
+            .wrapException(new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\''), ioe);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
   public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
-    if (clusterId == -1)
-      return new OPhysicalPosition[0];
-
-    checkOpeness();
-
-    stateLock.acquireReadLock();
     try {
+      if (clusterId == -1)
+        return new OPhysicalPosition[0];
+
       checkOpeness();
 
-      final OCluster cluster = getClusterById(clusterId);
+      stateLock.acquireReadLock();
+      try {
+        checkOpeness();
 
-      return cluster.floorPositions(physicalPosition);
-    } catch (IOException ioe) {
-      throw OException
-          .wrapException(new OStorageException("Cluster Id " + clusterId + " is invalid in storage '" + name + '\''), ioe);
-    } finally {
-      stateLock.releaseReadLock();
+        final OCluster cluster = getClusterById(clusterId);
+
+        return cluster.floorPositions(physicalPosition);
+      } catch (IOException ioe) {
+        throw OException
+            .wrapException(new OStorageException("Cluster Id " + clusterId + " is invalid in storage '" + name + '\''), ioe);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   public void acquireWriteLock(final ORID rid) {
-    lockManager.acquireLock(rid, OComparableLockManager.LOCK.EXCLUSIVE, RECORD_LOCK_TIMEOUT);
+    try {
+      lockManager.acquireLock(rid, OComparableLockManager.LOCK.EXCLUSIVE, RECORD_LOCK_TIMEOUT);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public void releaseWriteLock(final ORID rid) {
-    lockManager.releaseLock(this, rid, OComparableLockManager.LOCK.EXCLUSIVE);
+    try {
+      lockManager.releaseLock(this, rid, OComparableLockManager.LOCK.EXCLUSIVE);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public void acquireReadLock(final ORID rid) {
-    lockManager.acquireLock(rid, OComparableLockManager.LOCK.SHARED, RECORD_LOCK_TIMEOUT);
+    try {
+      lockManager.acquireLock(rid, OComparableLockManager.LOCK.SHARED, RECORD_LOCK_TIMEOUT);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public void releaseReadLock(final ORID rid) {
-    lockManager.releaseLock(this, rid, OComparableLockManager.LOCK.SHARED);
+    try {
+      lockManager.releaseLock(this, rid, OComparableLockManager.LOCK.SHARED);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public ORecordConflictStrategy getConflictStrategy() {
@@ -2721,7 +3410,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void setConflictStrategy(final ORecordConflictStrategy conflictResolver) {
-    this.recordConflictStrategy = conflictResolver;
+    try {
+      this.recordConflictStrategy = conflictResolver;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   protected abstract OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment)
@@ -2734,12 +3431,28 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void registerRecoverListener(final OStorageRecoverListener recoverListener) {
-    this.recoverListener = recoverListener;
+    try {
+      this.recoverListener = recoverListener;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   public void unregisterRecoverListener(final OStorageRecoverListener recoverListener) {
-    if (this.recoverListener == recoverListener)
-      this.recoverListener = null;
+    try {
+      if (this.recoverListener == recoverListener)
+        this.recoverListener = null;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   protected abstract File createWalTempDirectory();
@@ -2889,43 +3602,51 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param iRids Set of rids to load in one shot
    */
   public Collection<OPair<ORecordId, ORawBuffer>> readRecords(final Collection<ORecordId> iRids) {
-    checkOpeness();
-
-    final List<OPair<ORecordId, ORawBuffer>> records = new ArrayList<OPair<ORecordId, ORawBuffer>>();
-
-    if (iRids == null || iRids.isEmpty())
-      return records;
-
-    if (transaction.get() != null) {
-      for (ORecordId rid : iRids) {
-        if (!rid.isPersistent())
-          throw new ORecordNotFoundException(rid,
-              "Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
-
-        records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(getClusterById(rid.getClusterId()), rid, false)));
-      }
-      return records;
-    }
-
-    // CREATE GROUP OF RIDS PER CLUSTER TO REDUCE LOCKS
-    final Map<Integer, List<ORecordId>> ridsPerCluster = getRidsGroupedByCluster(iRids);
-
-    stateLock.acquireReadLock();
     try {
+      checkOpeness();
 
-      for (Map.Entry<Integer, List<ORecordId>> entry : ridsPerCluster.entrySet()) {
-        final int clusterId = entry.getKey();
-        final OCluster clusterSegment = getClusterById(clusterId);
+      final List<OPair<ORecordId, ORawBuffer>> records = new ArrayList<OPair<ORecordId, ORawBuffer>>();
 
-        for (ORecordId rid : entry.getValue()) {
-          records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(clusterSegment, rid, false)));
+      if (iRids == null || iRids.isEmpty())
+        return records;
+
+      if (transaction.get() != null) {
+        for (ORecordId rid : iRids) {
+          if (!rid.isPersistent())
+            throw new ORecordNotFoundException(rid,
+                "Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
+
+          records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(getClusterById(rid.getClusterId()), rid, false)));
         }
+        return records;
       }
-    } finally {
-      stateLock.releaseReadLock();
-    }
 
-    return records;
+      // CREATE GROUP OF RIDS PER CLUSTER TO REDUCE LOCKS
+      final Map<Integer, List<ORecordId>> ridsPerCluster = getRidsGroupedByCluster(iRids);
+
+      stateLock.acquireReadLock();
+      try {
+
+        for (Map.Entry<Integer, List<ORecordId>> entry : ridsPerCluster.entrySet()) {
+          final int clusterId = entry.getKey();
+          final OCluster clusterSegment = getClusterById(clusterId);
+
+          for (ORecordId rid : entry.getValue()) {
+            records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(clusterSegment, rid, false)));
+          }
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
+
+      return records;
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   private void endStorageTx() throws IOException {
@@ -3421,7 +4142,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public void onException(Throwable e) {
-    dataFlushException = e;
+    try {
+      dataFlushException = e;
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   private void doClose(boolean force, boolean onDelete) {
@@ -4240,6 +4969,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public AtomicLong getRecordScanned() {
     return recordScanned;
+  }
+
+  protected RuntimeException logAndPrepareForRethrow(RuntimeException runtimeException) {
+    if (!(runtimeException instanceof OHighLevelException))
+      OLogManager.instance()
+          .error(this, "Exception `%08X` in storage `%s`", runtimeException, System.identityHashCode(runtimeException), getName());
+    return runtimeException;
+  }
+
+  protected Error logAndPrepareForRethrow(Error error) {
+    if (!(error instanceof OHighLevelException))
+      OLogManager.instance().error(this, "Exception `%08X` in storage `%s`", error, System.identityHashCode(error), getName());
+    return error;
+  }
+
+  protected RuntimeException logAndPrepareForRethrow(Throwable throwable) {
+    if (!(throwable instanceof OHighLevelException))
+      OLogManager.instance()
+          .error(this, "Exception `%08X` in storage `%s`", throwable, System.identityHashCode(throwable), getName());
+    return new RuntimeException(throwable);
   }
 
 }
