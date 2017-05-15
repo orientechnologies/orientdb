@@ -100,7 +100,7 @@ public class OUserSymmetricKeyConfig implements OSymmetricKeyConfig {
         if(ksDoc == null) throw new OSecurityException("OUserSymmetricKeyConfig() key, keyFile, and keyStore cannot all be null");
 
         this.keystoreFile = ksDoc.field("file");
-        this.keystorePassword = ksDoc.field("passsword");
+        this.keystorePassword = ksDoc.field("password");
         this.keystoreKeyAlias = ksDoc.field("keyAlias");
         this.keystoreKeyPassword = ksDoc.field("keyPassword");
         
