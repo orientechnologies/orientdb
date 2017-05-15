@@ -1270,7 +1270,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     if (nameIdMapHolderFileV2T.exists()) {
       if (!nameIdMapHolderFileV2T.delete()) {
-        throw new OStorageException("Can not deleter temporary version of registry of storage files "
+        throw new OStorageException("Can not delete temporary version of registry of storage files "
             + "during conversion of file registry from v1 binary format to v2 binary format");
       }
     }
