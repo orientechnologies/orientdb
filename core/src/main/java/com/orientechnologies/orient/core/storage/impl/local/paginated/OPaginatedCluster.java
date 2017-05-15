@@ -1000,8 +1000,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
                   updatedEntryPosition = localPage.appendRecord(recordVersion, updateEntry);
 
                   if (updatedEntryPosition < 0) {
-                    throw new IllegalStateException(
-                        "Page " + cacheEntry.getPageIndex() + " does not have enough free space to add record content");
+                    localPage.dumpToLog();
+                    throw new IllegalStateException("Page " + cacheEntry.getPageIndex()
+                        + " does not have enough free space to add record content, freePageIndex=" + freePageIndex
+                        + ", updateEntry.length=" + updateEntry.length + ", content.length=" + content.length);
                   }
                 } else {
                   updatedEntryPosition = -1;
@@ -1021,8 +1023,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               updatedEntryPosition = localPage.appendRecord(recordVersion, updateEntry);
 
               if (updatedEntryPosition < 0) {
+                localPage.dumpToLog();
                 throw new IllegalStateException(
-                    "Page " + cacheEntry.getPageIndex() + " does not have enough free space to add record content");
+                    "Page " + cacheEntry.getPageIndex() + " does not have enough free space to add record content, freePageIndex="
+                        + freePageIndex + ", updateEntry.length=" + updateEntry.length + ", content.length=" + content.length);
               }
 
               nextPageIndex = -1;
@@ -1828,8 +1832,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       position = localPage.appendRecord(recordVersion, entryContent);
 
       if (position < 0) {
+        localPage.dumpToLog();
         throw new IllegalStateException(
-            "Page " + cacheEntry.getPageIndex() + " does not have enough free space to add record content");
+            "Page " + cacheEntry.getPageIndex() + " does not have enough free space to add record content, freePageIndex="
+                + freePageIndex + ", entryContent.length=" + entryContent.length);
       }
 
       finalVersion = localPage.getRecordVersion(position);

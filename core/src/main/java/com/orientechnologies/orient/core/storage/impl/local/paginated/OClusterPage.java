@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -38,10 +39,10 @@ import java.util.List;
  */
 public class OClusterPage extends ODurablePage {
 
-  private static final int VERSION_SIZE               = ORecordVersionHelper.SERIALIZED_SIZE;
+  private static final int VERSION_SIZE = ORecordVersionHelper.SERIALIZED_SIZE;
 
-  private static final int NEXT_PAGE_OFFSET           = NEXT_FREE_POSITION;
-  private static final int PREV_PAGE_OFFSET           = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
+  private static final int PREV_PAGE_OFFSET = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int FREE_POSITION_OFFSET       = FREELIST_HEADER_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -50,14 +51,14 @@ public class OClusterPage extends ODurablePage {
   private static final int PAGE_INDEXES_LENGTH_OFFSET = ENTRIES_COUNT_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int PAGE_INDEXES_OFFSET        = PAGE_INDEXES_LENGTH_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int INDEX_ITEM_SIZE            = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
-  private static final int MARKED_AS_DELETED_FLAG     = 1 << 16;
-  private static final int POSITION_MASK              = 0xFFFF;
-  public static final int  PAGE_SIZE                  = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private static final int INDEX_ITEM_SIZE        = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
+  private static final int MARKED_AS_DELETED_FLAG = 1 << 16;
+  private static final int POSITION_MASK          = 0xFFFF;
+  public static final  int PAGE_SIZE              = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
-  public static final int  MAX_ENTRY_SIZE             = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
+  public static final int MAX_ENTRY_SIZE = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
 
-  public static final int  MAX_RECORD_SIZE            = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
+  public static final int MAX_RECORD_SIZE = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
 
   public OClusterPage(OCacheEntry cacheEntry, boolean newPage) throws IOException {
     super(cacheEntry);
@@ -396,6 +397,63 @@ public class OClusterPage extends ODurablePage {
       assert insideRecordBounds(entryPosition, recordSize + offset, OByteSerializer.BYTE_SIZE);
       return getByteValue(entryPosition + 3 * OIntegerSerializer.INT_SIZE + recordSize + offset);
     }
+  }
+
+  /**
+   * Writes binary dump of this cluster page to the log.
+   */
+  public void dumpToLog() {
+    final StringBuilder text = new StringBuilder();
+
+    text.append("Dump of ").append(this).append('\n');
+    text.append("Magic:\t\t\t").append(String.format("%016X", getLongValue(MAGIC_NUMBER_OFFSET))).append('\n');
+    text.append("CRC32:\t\t\t").append(String.format("%08X", getIntValue(CRC32_OFFSET))).append('\n');
+    text.append("WAL Segment:\t").append(String.format("%016X", getLongValue(WAL_SEGMENT_OFFSET))).append('\n');
+    text.append("WAL Position:\t").append(String.format("%016X", getLongValue(WAL_POSITION_OFFSET))).append('\n');
+    text.append("Next Page:\t\t").append(String.format("%016X", getLongValue(NEXT_PAGE_OFFSET))).append('\n');
+    text.append("Prev Page:\t\t").append(String.format("%016X", getLongValue(PREV_PAGE_OFFSET))).append('\n');
+    text.append("Free List:\t\t").append(String.format("%08X", getIntValue(FREELIST_HEADER_OFFSET))).append('\n');
+    text.append("Free Pointer:\t").append(String.format("%08X", getIntValue(FREE_POSITION_OFFSET))).append('\n');
+    text.append("Free Space:\t\t").append(String.format("%08X", getIntValue(FREE_SPACE_COUNTER_OFFSET))).append('\n');
+    text.append("Entry Count:\t").append(String.format("%08X", getIntValue(ENTRIES_COUNT_OFFSET))).append('\n');
+    final int indexCount = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
+    text.append("Index Count:\t").append(String.format("%08X", indexCount)).append("\n\n");
+
+    int foundEntries = 0;
+    for (int i = 0; i < indexCount; ++i) {
+      final int offset = getIntValue(PAGE_INDEXES_OFFSET + i * INDEX_ITEM_SIZE);
+      text.append("\tOffset:\t\t").append(String.format("%08X", offset)).append(" (").append(i).append(")\n");
+      text.append("\tVersion:\t")
+          .append(String.format("%08X", getIntValue(PAGE_INDEXES_OFFSET + i * INDEX_ITEM_SIZE + OIntegerSerializer.INT_SIZE)))
+          .append('\n');
+
+      if ((offset & MARKED_AS_DELETED_FLAG) != 0)
+        continue;
+
+      final int cleanOffset = offset & POSITION_MASK;
+
+      text.append("\t\tEntry Size:\t");
+      if (cleanOffset + OIntegerSerializer.INT_SIZE <= MAX_PAGE_SIZE_BYTES)
+        text.append(String.format("%08X", getIntValue(cleanOffset))).append(" (").append(foundEntries).append(")\n");
+      else
+        text.append("?\n");
+
+      if (cleanOffset + OIntegerSerializer.INT_SIZE * 2 <= MAX_PAGE_SIZE_BYTES)
+        text.append("\t\tIndex:\t\t").append(String.format("%08X", getIntValue(cleanOffset + OIntegerSerializer.INT_SIZE)))
+            .append('\n');
+      else
+        text.append("?\n");
+
+      if (cleanOffset + OIntegerSerializer.INT_SIZE * 3 <= MAX_PAGE_SIZE_BYTES)
+        text.append("\t\tData Size:\t").append(String.format("%08X", getIntValue(cleanOffset + OIntegerSerializer.INT_SIZE * 2)))
+            .append('\n');
+      else
+        text.append("?\n");
+
+      ++foundEntries;
+    }
+
+    OLogManager.instance().error(this, "%s", text);
   }
 
   private boolean insideRecordBounds(final int entryPosition, final int offset, final int contentSize) {
