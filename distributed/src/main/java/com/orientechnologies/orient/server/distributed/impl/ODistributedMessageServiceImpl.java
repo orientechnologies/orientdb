@@ -197,6 +197,15 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     }
   }
 
+  /**
+   * Removes a response manager because in timeout.
+   */
+  public void timeoutRequest(final long msgId) {
+    final ODistributedResponseManager asynchMgr = responsesByRequestIds.remove(msgId);
+    if (asynchMgr != null)
+      asynchMgr.timeout();
+  }
+
   @Override
   public ODocument getLatencies() {
     final ODocument doc = new ODocument();

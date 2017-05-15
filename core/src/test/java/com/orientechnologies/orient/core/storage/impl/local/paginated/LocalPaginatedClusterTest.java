@@ -2,10 +2,10 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -15,8 +15,6 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Andrey Lomakin
@@ -29,7 +27,7 @@ public class LocalPaginatedClusterTest {
 
   ODatabaseDocumentTx databaseDocumentTx;
 
-    @BeforeClass
+  @BeforeClass
   public void beforeClass() throws IOException {
     System.out.println("Start LocalPaginatedClusterTest");
     buildDirectory = System.getProperty("buildDirectory");
@@ -1153,7 +1151,7 @@ public class LocalPaginatedClusterTest {
       recordVersion++;
       smallRecord = new byte[] { 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3 };
       try {
-        paginatedCluster.recycleRecord(physicalPosition.clusterPosition, smallRecord, recordVersion, (byte) 2);
+        paginatedCluster.recycleRecord(physicalPosition.clusterPosition);
         Assert.fail("it must be not possible to resurrect a non deleted record");
       } catch (OPaginatedClusterException e) {
         // OK
@@ -1170,13 +1168,17 @@ public class LocalPaginatedClusterTest {
       ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition, false);
       Assert.assertNull(rawBuffer);
 
-      paginatedCluster.recycleRecord(physicalPosition.clusterPosition, smallRecord, recordVersion, (byte) 2);
+      paginatedCluster.recycleRecord(physicalPosition.clusterPosition);
+      Assert.assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition),
+          OPaginatedCluster.RECORD_STATUS.ALLOCATED);
+
+      paginatedCluster.createRecord(smallRecord, recordVersion, ODocument.RECORD_TYPE, new OPhysicalPosition(physicalPosition.clusterPosition));
 
       rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition, false);
       Assert.assertNotNull(rawBuffer);
       Assert.assertEquals(rawBuffer.version, recordVersion);
       Assert.assertEquals(rawBuffer.buffer, smallRecord);
-      Assert.assertEquals(rawBuffer.recordType, 2);
+      Assert.assertEquals(rawBuffer.recordType, ODocument.RECORD_TYPE);
 
       // UPDATE 10 TIMES WITH A GROWING CONTENT TO STIMULATE DEFRAG AND CHANGE OF PAGES
       for (int k = 0; k < 10; ++k) {

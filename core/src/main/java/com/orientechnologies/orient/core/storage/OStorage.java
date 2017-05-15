@@ -94,9 +94,10 @@ public interface OStorage extends OBackupable, OSharedContainer {
       byte iRecordType, int iMode, ORecordCallback<Integer> iCallback);
 
   /**
-   * Resurrects a record that was previously deleted, with a new content.
+   * Resurrects a record that was previously deleted, setting the record status = ALLOCATED, waiting for setting the content with a
+   * regular CREATE operation.
    */
-  OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType);
+  void recyclePosition(ORecordId iRecordId);
 
   OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback);
 
@@ -124,8 +125,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   /**
    * Add a new cluster into the storage.
    *
-   * @param iClusterName
-   *          name of the cluster
+   * @param iClusterName   name of the cluster
    * @param forceListBased
    * @param iParameters
    */
@@ -134,10 +134,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
   /**
    * Add a new cluster into the storage.
    *
-   * @param iClusterName
-   *          name of the cluster
-   * @param iRequestedId
-   *          requested id of the cluster
+   * @param iClusterName   name of the cluster
+   * @param iRequestedId   requested id of the cluster
    * @param forceListBased
    * @param iParameters
    */
@@ -148,8 +146,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
   /**
    * Drops a cluster.
    *
-   * @param iId
-   *          id of the cluster to delete
+   * @param iId id of the cluster to delete
+   *
    * @return true if has been removed, otherwise false
    */
   boolean dropCluster(int iId, final boolean iTruncate);
@@ -199,8 +197,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
    * Returns a pair of long values telling the begin and end positions of data in the requested cluster. Useful to know the range of
    * the records.
    *
-   * @param currentClusterId
-   *          Cluster id
+   * @param currentClusterId Cluster id
    */
   long[] getClusterDataRange(int currentClusterId);
 
@@ -251,8 +248,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
   void setConflictStrategy(ORecordConflictStrategy iResolver);
 
   /**
-   *
    * @param backupDirectory
+   *
    * @return Backup file name
    */
   String incrementalBackup(String backupDirectory);

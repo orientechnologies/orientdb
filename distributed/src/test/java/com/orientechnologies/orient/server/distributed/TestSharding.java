@@ -28,10 +28,10 @@ import org.junit.Test;
 
 public class TestSharding extends AbstractServerClusterTest {
 
-  protected final static int SERVERS     = 3;
-  protected OrientVertex[]   vertices;
-  protected int[]            versions;
-  protected long             totalAmount = 0;
+  protected final static int SERVERS = 3;
+  protected OrientVertex[] vertices;
+  protected int[]          versions;
+  protected long totalAmount = 0;
 
   @Test
   public void test() throws Exception {
@@ -158,21 +158,26 @@ public class TestSharding extends AbstractServerClusterTest {
               "create edge `Loves-Type` from " + vertices[i].getIdentity() + " to " + fishing.getIdentity() + " set real = true"))
               .execute();
 
+          graph.commit();
+
           Assert.assertTrue(result.iterator().hasNext());
           OrientEdge e = result.iterator().next();
           Assert.assertEquals(e.getProperty("real"), true);
 
           Assert.assertEquals(1, e.getRecord().getVersion());
+
           e.getOutVertex().getRecord().reload();
-          Assert.assertEquals(versions[i] + 1, e.getOutVertex().getRecord().getVersion());
+          Assert.assertEquals(
+              "Vertex " + e.getOutVertex().getIdentity() + " has version " + e.getOutVertex().getRecord().getVersion()
+                  + " instead of expected " + (versions[i] + 1), versions[i] + 1, e.getOutVertex().getRecord().getVersion());
 
           e.getInVertex().getRecord().reload();
           Assert.assertEquals(fishing.getRecord().getVersion() + i + 1, e.getInVertex().getRecord().getVersion());
 
           final Iterable<OrientVertex> explain = graph.command(new OCommandSQL("explain select from " + e.getIdentity())).execute();
 
-          System.out.println("explain select from " + e.getIdentity() + " -> "
-              + ((ODocument) explain.iterator().next().getRecord()).field("servers"));
+          System.out.println("explain select from " + e.getIdentity() + " -> " + ((ODocument) explain.iterator().next().getRecord())
+              .field("servers"));
 
           result = graph.command(new OCommandSQL("select from " + e.getIdentity())).execute();
 
@@ -242,8 +247,8 @@ public class TestSharding extends AbstractServerClusterTest {
 
             Assert.assertNotNull("set() function wasn't returned on server " + server, v.getProperty("set"));
 
-            Assert.assertEquals("Returned wrong sum of amount on server " + server, (Long) totalAmount,
-                (Long) v.getProperty("sum"));
+            Assert
+                .assertEquals("Returned wrong sum of amount on server " + server, (Long) totalAmount, (Long) v.getProperty("sum"));
 
             count++;
           }

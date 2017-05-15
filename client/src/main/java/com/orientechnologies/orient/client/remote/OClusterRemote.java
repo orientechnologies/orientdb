@@ -19,16 +19,16 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.storage.*;
 
+import java.io.IOException;
+
 /**
  * Remote cluster implementation
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OClusterRemote implements OCluster {
@@ -103,7 +103,7 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+  public void recycleRecord(long clusterPosition) throws IOException {
     throw new UnsupportedOperationException("recyclePosition");
   }
 

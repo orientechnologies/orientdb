@@ -811,7 +811,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
-  public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte recordType) {
+  public void recyclePosition(ORecordId iRecordId) {
     throw new UnsupportedOperationException("recyclePosition");
   }
 

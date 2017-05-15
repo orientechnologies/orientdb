@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.*;
 
@@ -59,7 +58,8 @@ public class VersionedDeleteTest {
     db.delete(doc.getIdentity());
 
     db.begin();
-    (db.getStorage().getUnderlying()).recyclePosition((ORecordId) doc.getIdentity(), new byte[] {}, 1, ODocument.RECORD_TYPE);
+    doc.fromStream(new byte[] {});
+    db.recycle(doc);
     db.commit();
 
     ODocument doc2 = doc.getIdentity().getRecord();

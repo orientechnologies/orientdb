@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.conflict.OAbstractDistributedConflictResolver;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolver;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 
@@ -270,7 +271,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
       rids.add(new ORecordId(clusterId, -1));
 
       // ACQUIRE LOCKS ON LOCAL SERVER FIRST
-      ODistributedTransactionManager.acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, rids, null, ctx, 2000);
+      ODistributedTransactionManager.acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, rids, null, ctx, -1);
 
       try {
 
@@ -426,7 +427,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
     try {
       // ACQUIRE LOCKS WITH A LARGER TIMEOUT
-      ODistributedTransactionManager.acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, rids, null, ctx, 2000);
+      ODistributedTransactionManager.acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, rids, null, ctx, -1);
       try {
 
         final Set<String> clusterNames = new HashSet();
@@ -513,21 +514,12 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
                   if (group == null) {
                     if (serverRecordContent instanceof ORawBuffer) {
                       if (((ORawBuffer) serverRecordContent).recordType == ODocument.RECORD_TYPE) {
-                        // DOCUMENTS COULD BE THE SAME EVEN IF THE BINARY CONTENT IS NOT, COMPARING DOCUMENTS INSTEAD
-                        final ODocument currentDocument = new ODocument().fromStream(((ORawBuffer) serverRecordContent).buffer);
 
                         for (Map.Entry<Object, List<String>> resultEntry : groupedResult.entrySet()) {
-                          if (resultEntry.getKey() instanceof ORawBuffer
-                              && ((ORawBuffer) resultEntry.getKey()).recordType == ODocument.RECORD_TYPE) {
-                            final ODocument otherDocument = new ODocument().fromStream(((ORawBuffer) resultEntry.getKey()).buffer);
-                            if (currentDocument.hasSameContentOf(otherDocument)) {
-                              // FOUND
-                              ODistributedServerLog.debug(this, dManager.getLocalNodeName(), serverName, ODistributedServerLog.DIRECTION.IN,
-                                  "Auto repairer: matched a document by its content (rid=%s)", rid);
-
-                              group = resultEntry.getValue();
-                              break;
-                            }
+                          if (resultEntry.getKey() instanceof ORawBuffer && OAbstractDistributedConflictResolver
+                              .compareRecords((ORawBuffer) serverRecordContent, (ORawBuffer) resultEntry.getKey())) {
+                            group = resultEntry.getValue();
+                            break;
                           }
                         }
                       }
@@ -681,7 +673,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
         ctx.destroy();
       }
 
-    } catch (Throwable e) {
+    } catch (Throwable e)
+
+    {
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Error executing auto repairing (error=%s, reqId=%s)", e.toString(), requestId);
       return false;

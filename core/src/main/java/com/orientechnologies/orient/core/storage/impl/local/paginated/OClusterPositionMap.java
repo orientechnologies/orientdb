@@ -333,7 +333,7 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public void resurrect(final long clusterPosition, final OClusterPositionMapBucket.PositionEntry entry) throws IOException {
+  public void resurrect(final long clusterPosition) throws IOException {
     startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
@@ -352,7 +352,7 @@ public class OClusterPositionMap extends ODurableComponent {
         try {
           final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,
               getChanges(atomicOperation, cacheEntry));
-          bucket.resurrect(index, entry);
+          bucket.resurrect(index);
         } finally {
           cacheEntry.releaseExclusiveLock();
           releasePage(atomicOperation, cacheEntry);
