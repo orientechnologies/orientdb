@@ -104,7 +104,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       nextIndex = nextIndex();
 
       final OIdentifiable identifiable = (OIdentifiable) nextValue;
-      if (convertToRecord)
+      if (convertToRecord && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
         return identifiable.getRecord();
 
       return identifiable;
@@ -344,7 +344,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         }
       }
       return sb.append(']').toString();
-
+      
     } else
       return "[size=" + size + "]";
   }

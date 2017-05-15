@@ -93,7 +93,7 @@ public interface OCluster {
   /**
    * Recycling a record position that was deleted.
    */
-  void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
+  void recycleRecord(long clusterPosition) throws IOException;
 
   ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException;
 

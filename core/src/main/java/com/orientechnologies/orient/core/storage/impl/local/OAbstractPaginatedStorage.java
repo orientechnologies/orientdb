@@ -1313,8 +1313,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public OStorageOperationResult<Integer> recyclePosition(final ORecordId rid, final byte[] content, final int version,
-      final byte recordType) {
+  public void recyclePosition(final ORecordId rid) {
     try {
       checkOpeness();
       checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
@@ -1322,7 +1321,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OCluster cluster = getClusterById(rid.getClusterId());
 
       if (transaction.get() != null) {
-        return doRecycleRecord(rid, content, version, cluster, recordType);
+        doRecycleRecord(rid, cluster);
+        return;
       }
 
       stateLock.acquireReadLock();
@@ -1333,7 +1333,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           checkOpeness();
 
           // RECYCLING IT
-          return doRecycleRecord(rid, content, version, cluster, recordType);
+          doRecycleRecord(rid, cluster);
 
         } finally {
           lock.unlock();
@@ -1665,8 +1665,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 }
               } else if (recordStatus == OPaginatedCluster.RECORD_STATUS.REMOVED) {
                 // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
-                recyclePosition(rid, new byte[] {}, txEntry.getRecord().getVersion(),
-                    ORecordInternal.getRecordType(txEntry.getRecord()));
+                final ORecord record = txEntry.getRecord();
+                record.setDirty();
+                recyclePosition(rid);
               }
 
               positions.put(txEntry, ppos);
@@ -3845,17 +3846,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OStorageOperationResult<Integer> doRecycleRecord(final ORecordId rid, byte[] content, final int version,
-      final OCluster cluster, final byte recordType) {
+  private boolean doRecycleRecord(final ORecordId rid, final OCluster cluster) {
 
     try {
-      final int recycledVersion = version < -2 ? ORecordVersionHelper.clearRollbackMode(version) : version;
-
       makeStorageDirty();
       atomicOperationsManager.startAtomicOperation((String) null, true);
       try {
         // correct version in case of distributed fix tasks before recycling the storage entry
-        cluster.recycleRecord(rid.getClusterPosition(), content, recycledVersion, recordType);
+        cluster.recycleRecord(rid.getClusterPosition());
 
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
@@ -3875,12 +3873,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Recycled record %s v.%s size=%d (thread=%d tx=%s)", rid, version, content.length,
-            Thread.currentThread().getId(), getStorageTransaction() != null);
+        OLogManager.instance().debug(this, "Recycled record %s (thread=%d tx=%s)", rid, Thread.currentThread().getId(),
+            getStorageTransaction() != null);
 
       recordRecycled.incrementAndGet();
 
-      return new OStorageOperationResult<Integer>(recycledVersion, content, false);
+      return true;
 
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", ioe);
@@ -4343,7 +4341,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       case ORecordOperation.LOADED:
         break;
 
-      case ORecordOperation.CREATED: {
+      case ORecordOperation.CREATED:
+      case ORecordOperation.RECYCLED: {
         final byte[] stream = rec.toStream();
         if (allocated != null) {
           final OPhysicalPosition ppos;

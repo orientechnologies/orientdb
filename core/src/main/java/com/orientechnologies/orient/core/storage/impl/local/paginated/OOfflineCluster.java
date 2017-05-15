@@ -138,7 +138,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+  public void recycleRecord(long clusterPosition) throws IOException {
     throw new OOfflineClusterException("Cannot resurrect a record on offline cluster '" + name + "'");
   }
 

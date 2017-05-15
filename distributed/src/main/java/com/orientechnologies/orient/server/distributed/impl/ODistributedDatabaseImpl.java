@@ -66,7 +66,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public static final  String           DISTRIBUTED_SYNC_JSON_FILENAME = "distributed-sync.json";
-  private static final String           NODE_LOCK_PREFIX               = "orientdb.reqlock.";
   private static final HashSet<Integer> ALL_QUEUES                     = new HashSet<Integer>();
   protected final ODistributedAbstractPlugin     manager;
   protected final ODistributedMessageServiceImpl msgService;
@@ -1096,6 +1095,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 try {
                   ctx.rollback(database);
                   ctx.destroy();
+
+                  if (ctx.getReqId().getNodeId() == manager.getLocalNodeId())
+                    // REQUEST WAS ORIGINATED FROM CURRENT SERVER
+                    msgService.timeoutRequest(ctx.getReqId().getMessageId());
+
                 } catch (Throwable t) {
                   ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
                       "Error on rolling back distributed transaction %s on database '%s'", ctx.getReqId(), databaseName);

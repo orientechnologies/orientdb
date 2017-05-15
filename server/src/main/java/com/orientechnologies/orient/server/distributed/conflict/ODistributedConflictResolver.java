@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,8 +39,12 @@ public interface ODistributedConflictResolver {
   Object NOT_FOUND = new Object();
 
   class OConflictResult {
-    public Object                    winner     = NOT_FOUND;
-    public Map<Object, List<String>> candidates = new HashMap<Object, List<String>>();
+    public Object winner = NOT_FOUND;
+    public Map<Object, List<String>> candidates;
+
+    public OConflictResult(final Map<Object, List<String>> candidates) {
+      this.candidates = candidates;
+    }
   }
 
   void configure(ODocument config);

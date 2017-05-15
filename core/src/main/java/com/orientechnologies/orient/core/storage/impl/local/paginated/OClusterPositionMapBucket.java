@@ -114,7 +114,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
     updateEntry(position, entry);
   }
 
-  public void resurrect(final int index, final PositionEntry entry) throws IOException {
+  public void resurrect(final int index) throws IOException {
     final int size = getIntValue(SIZE_OFFSET);
 
     if (index >= size)
@@ -123,11 +123,9 @@ public class OClusterPositionMapBucket extends ODurablePage {
     final int position = entryPosition(index);
     final byte flag = getByteValue(position);
     if (flag == REMOVED)
-      setByteValue(position, FILLED);
+      setByteValue(position, ALLOCATED);
     else
       throw new OStorageException("Cannot resurrect a record: provided index " + index + " points to a non removed entry");
-
-    updateEntry(position, entry);
   }
 
   private int entryPosition(int index) {

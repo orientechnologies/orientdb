@@ -20,20 +20,21 @@
 
 package com.orientechnologies.orient.server.distributed.conflict;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Conflict resolver implementation based on the majority of results. If there is no majority, no operation is executed.
+ * Conflict resolver implementation based on the write quorum of results. If there is no quorum, no operation is executed.
  *
  * @author Luca Garulli
  */
-public class OMajorityDistributedConflictResolver extends OAbstractDistributedConflictResolver {
-  public static final String NAME = "majority";
+public class OQuorumDistributedConflictResolver extends OAbstractDistributedConflictResolver {
+  public static final String NAME = "quorum";
 
   @Override
   public OConflictResult onConflict(final String databaseName, final String clusterName, final ORecordId rid,
@@ -45,21 +46,18 @@ public class OMajorityDistributedConflictResolver extends OAbstractDistributedCo
     if (bestResult == NOT_FOUND)
       return result;
 
+    final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);
+    final int writeQuorum = dCfg.getWriteQuorum(clusterName, dManager.getAvailableNodes(databaseName), dManager.getLocalNodeName());
+
     final int bestResultServerCount = candidates.get(bestResult).size();
-
-    final List<Object> exclude = new ArrayList<Object>();
-    exclude.add(bestResult);
-
-    final Object nextBestResult = getBestResult(candidates, exclude);
-    if (bestResult == NOT_FOUND)
-      // FIRST RESULT GROUP IS THE ONLY ONE: SELECT IT AS WINNER
+    if (bestResultServerCount >= writeQuorum) {
+      // BEST RESULT RESPECT THE QUORUM, IT'S DEFINITELY THE WINNER
+      OLogManager.instance().debug(this,
+          "Quorum Conflict Resolver decided the value '%s' is the winner for record %s, because satisfies the configured writeQuorum (%d). Servers ok=%s",
+          bestResult, rid, writeQuorum, candidates.get(result.winner));
       result.winner = bestResult;
-    else {
-      int nextResultCount = candidates.get(nextBestResult).size();
-      if (nextResultCount < bestResultServerCount)
-        // FIRST RESULT GROUP IS BIGGER: SELECT IT AS WINNER
-        result.winner = bestResult;
     }
+
     return result;
   }
 

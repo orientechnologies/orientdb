@@ -281,6 +281,9 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         waitForDatabaseIsOnline(0, serverInstances.get(SERVERS - 1).getServerInstance().getDistributedManager().getLocalNodeName(),
             getDatabaseName(), 10000);
 
+        // WAIT A LITTLE THE SERVER IS SYNCHRONIZED
+        Thread.sleep(5000);
+
         // writes on server1, server2 and server3
         executeMultipleWrites(this.executeWritesOnServers, "plocal");
 

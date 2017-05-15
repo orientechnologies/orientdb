@@ -124,8 +124,7 @@ public class StorageNamingTests {
     }
 
     @Override
-    public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType) {
-      return null;
+    public void recyclePosition(ORecordId iRecordId) {
     }
 
     @Override

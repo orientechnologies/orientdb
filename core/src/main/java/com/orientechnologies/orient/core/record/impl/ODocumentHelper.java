@@ -1575,7 +1575,8 @@ public class ODocumentHelper {
   }
 
   public static <T> T makeDbCall(final ODatabaseDocumentInternal databaseRecord, final ODbRelatedCall<T> function) {
-    databaseRecord.activateOnCurrentThread();
+    if (databaseRecord != null)
+      databaseRecord.activateOnCurrentThread();
     return function.call(databaseRecord);
   }
 }
