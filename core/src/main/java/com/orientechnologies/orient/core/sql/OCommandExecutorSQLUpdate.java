@@ -151,7 +151,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
         else if (word.equals(KEYWORD_SET))
           parseSetFields(clazz, setEntries);
         else if (word.equals(KEYWORD_ADD))
-          parseAddFields();
+          parseAddFields(clazz);
         else if (word.equals(KEYWORD_PUT))
           parsePutFields();
         else if (word.equals(KEYWORD_REMOVE))
@@ -829,7 +829,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
     return value;
   }
 
-  private void parseAddFields() {
+  private void parseAddFields(OClass iClass) {
     String fieldName;
     String fieldValue;
 
@@ -839,11 +839,11 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
 
       fieldName = parserRequiredWord(false, "Field name expected");
       parserRequiredKeyword("=");
-      fieldValue = parserRequiredWord(false, "Value expected", " =><,\r\n");
+      fieldValue = parserRequiredWord(false, "Value expected", " =><,\r\n", true);
 
       Object fVal = getFieldValueCountingParameters(fieldValue);
       fVal = reattachInTx(fVal);
-      final Object v = convertValue(clazz, fieldName, fVal);
+      final Object v = convertValue(this.clazz, fieldName, fVal);
 
       // INSERT TRANSFORMED FIELD VALUE
       addEntries.add(new OPair<String, Object>(fieldName, v));
@@ -868,7 +868,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       fieldName = parserRequiredWord(false, "Field name expected");
       parserRequiredKeyword("=");
       fieldKey = parserRequiredWord(false, "Key expected");
-      fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n"));
+      fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n", true));
 
       // INSERT TRANSFORMED FIELD VALUE
       Object val = getFieldValueCountingParameters(fieldValue);
@@ -902,7 +902,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
           parserGoBack();
           value = EMPTY_VALUE;
         } else {
-          fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n"));
+          fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n", true));
           value = getFieldValueCountingParameters(fieldValue);
         }
       else

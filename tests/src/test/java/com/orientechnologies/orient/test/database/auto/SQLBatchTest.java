@@ -18,13 +18,18 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Test
 public class SQLBatchTest extends DocumentDBBaseTest {
@@ -55,6 +60,24 @@ public class SQLBatchTest extends DocumentDBBaseTest {
     } catch (Exception e) {
       Assert.fail("Error but not what was expected");
     }
+  }
+
+  public void testNamedParamsWithQuotes() {
+    String className = "SQLBatchTest_testNamedParamsWithQuotes";
+    database.command(new OCommandSQL("create class " + className)).execute();
+
+    String batch = ""
+        + "begin;"
+        + "insert into " + className + " set names = [] ;"
+        + "update "+className+" add names = :param1;"
+        + "commit;";
+
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("param1", "foo\\\"bar");
+    database.command(new OCommandScript("sql", batch)).execute(params);
+    List<ODocument> list = database.query(new OSQLSynchQuery<Object>("select from " + className));
+    Object name = ((Collection)list.get(0).field("names")).iterator().next();
+    Assert.assertEquals(name, params.get("param1"));
   }
 
   private Object executeBatch(final String batch) {
