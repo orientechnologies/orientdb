@@ -215,6 +215,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           // IT'S FOR ME
           break;
 
+        if (iRequesterId != Integer.MIN_VALUE && currentStatus != OChannelBinaryProtocol.PUSH_DATA) {
+          // Is not the push thread and is not skipping the push data
+          throw new IOException("Dirty data in the socket, retry");
+        }
+
         try {
           if (debug)
             OLogManager.instance().debug(this, "%s - Session %d skip response, it is for %d", socket.getLocalAddress(),
