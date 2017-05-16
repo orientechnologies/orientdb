@@ -118,7 +118,7 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
     if (db.getMetadata().getSchema().existsClass("OFunction")) {
       final OClass f = db.getMetadata().getSchema().getClass("OFunction");
       OProperty prop = f.getProperty("name");
-      if (prop.getAllIndexes().isEmpty())
+      if (db.getMetadata().getIndexManager().getIndex("OFunction.name") == null)
         prop.createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
       return;
     }
