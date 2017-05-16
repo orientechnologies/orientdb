@@ -294,4 +294,13 @@ public class ODurablePage {
 
     cacheEntry.markDirty();
   }
+
+  @Override
+  public String toString() {
+    if (cacheEntry != null)
+      return getClass().getSimpleName() + "{" + "fileId=" + cacheEntry.getFileId() + ", pageIndex=" + cacheEntry.getPageIndex()
+          + '}';
+    else
+      return super.toString();
+  }
 }
