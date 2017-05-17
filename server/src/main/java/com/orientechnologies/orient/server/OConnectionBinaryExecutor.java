@@ -1220,10 +1220,20 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   @Override
+  public OBinaryResponse executeSubscribe(OSubscribeRequest request) {
+    return new OSubscribeResponse(request.getPushRequest().execute(this));
+  }
+
+  @Override
   public OBinaryResponse executeSubscribePushRequest(OSubscribeDistributedConfigurationRequest request) {
     OClientConnectionManager manager = server.getClientConnectionManager();
 
     manager.subscribeDistributeConfig((ONetworkProtocolBinary) connection.getProtocol());
     return new OSubscribeDistributedConfigurationResponse();
+  }
+
+  @Override
+  public OBinaryResponse executeSubscribeLiveQuery(OSubscribeLiveQueryRequest request) {
+    return null;
   }
 }

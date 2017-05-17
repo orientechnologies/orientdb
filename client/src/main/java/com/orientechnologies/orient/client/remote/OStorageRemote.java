@@ -30,6 +30,7 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
+import com.orientechnologies.orient.client.remote.message.live.OLiveQueryResult;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -38,11 +39,10 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
+import com.orientechnologies.orient.core.db.document.OLiveQueryMonitorRemote;
 import com.orientechnologies.orient.core.db.document.OTransactionOptimisticClient;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -120,6 +120,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private final Set<OStorageRemoteSession> sessions = Collections
       .newSetFromMap(new ConcurrentHashMap<OStorageRemoteSession, Boolean>());
 
+  private final Map<Long, OLiveQueryResultListener> liveQueryListener = new ConcurrentHashMap<>();
   private volatile OStorageRemotePushThread pushThread;
 
   public OStorageRemote(final String iURL, final String iMode, ORemoteConnectionManager connectionManager) throws IOException {
@@ -1315,18 +1316,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       stateLock.releaseWriteLock();
     }
 
-    initPush(nodeSession);
+    initPush(session);
   }
 
-  private void initPush(OStorageRemoteNodeSession nodeSession) {
+  private void initPush(OStorageRemoteSession session) {
     if (pushThread == null) {
       stateLock.acquireWriteLock();
       try {
         if (pushThread == null) {
           pushThread = new OStorageRemotePushThread(this, getCurrentServerURL());
           pushThread.start();
-          subscribeStorageConfiguration(nodeSession);
-          subscribeDistributedConfiguration(nodeSession);
+          subscribeStorageConfiguration(session);
+          subscribeDistributedConfiguration(session);
 
         }
       } finally {
@@ -1335,13 +1336,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
   }
 
-  private void subscribeDistributedConfiguration(OStorageRemoteNodeSession nodeSession) {
+  private void subscribeDistributedConfiguration(OStorageRemoteSession nodeSession) {
     pushThread.subscribe(new OSubscribeDistributedConfigurationRequest(), nodeSession);
-//    OSubscribeDistributedConfigurationResponse response = networkOperation(new OSubscribeDistributedConfigurationRequest(),"error");
   }
 
-  private void subscribeStorageConfiguration(OStorageRemoteNodeSession nodeSession) {
-
+  private void subscribeStorageConfiguration(OStorageRemoteSession nodeSession) {
+    //TODO
   }
 
   protected void openRemoteDatabase(String currentURL) {
@@ -1807,5 +1807,59 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public OBinaryPushResponse executeUpdateDistributedConfig(OPushDistributedConfigurationRequest request) {
     updateDistributedNodes(request.getHosts());
     return new OPushDistributedConfigurationResponse();
+  }
+
+  public OLiveQueryMonitor liveQuery(ODatabaseDocumentRemote database, String query, OLiveQueryResultListener listener,
+      Object[] params) {
+
+    OSubscribeLiveQueryRequest request = new OSubscribeLiveQueryRequest(query, params);
+    OSubscribeLiveQueryResponse response = pushThread.subscribe(request, getCurrentSession());
+    registerLiveListener(response.getMonitorId(), listener);
+    return new OLiveQueryMonitorRemote(response.getMonitorId());
+  }
+
+  public OLiveQueryMonitor liveQuery(ODatabaseDocumentRemote database, String query, OLiveQueryResultListener listener,
+      Map<String, ?> params) {
+    OSubscribeLiveQueryRequest request = new OSubscribeLiveQueryRequest(query, (Map<String, Object>) params);
+    OSubscribeLiveQueryResponse response = pushThread.subscribe(request, getCurrentSession());
+    registerLiveListener(response.getMonitorId(), listener);
+    return new OLiveQueryMonitorRemote(response.getMonitorId());
+  }
+
+  public void registerLiveListener(long monitorId, OLiveQueryResultListener listener) {
+    liveQueryListener.put(monitorId, listener);
+  }
+
+  public static HashMap<String, Object> paramsArrayToParamsMap(Object[] positionalParams) {
+    HashMap<String, Object> params = new HashMap<>();
+    if (positionalParams != null) {
+      for (int i = 0; i < positionalParams.length; i++) {
+        params.put(Integer.toString(i), positionalParams[i]);
+      }
+    }
+    return params;
+  }
+
+  @Override
+  public void executeLiveQueryPush(OLiveQueryPushRequest pushRequest) {
+    OLiveQueryResultListener listener = liveQueryListener.get(pushRequest.getMonitorId());
+    for (OLiveQueryResult result : pushRequest.getEvents()) {
+      switch (result.getEventType()) {
+      case OLiveQueryResult.CREATE_EVENT:
+        listener.onCreate(result.getCurrentValue());
+        break;
+      case OLiveQueryResult.UPDATE_EVENT:
+        listener.onUpdate(result.getOldValue(), result.getCurrentValue());
+        break;
+      case OLiveQueryResult.DELETE_EVENT:
+        listener.onDelete(result.getCurrentValue());
+        break;
+      }
+    }
+    if (pushRequest.getStatus() == OLiveQueryPushRequest.END) {
+      listener.onEnd();
+      liveQueryListener.remove(pushRequest.getMonitorId());
+    }
+
   }
 }

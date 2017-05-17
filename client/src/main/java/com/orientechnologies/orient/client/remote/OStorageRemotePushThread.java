@@ -1,9 +1,7 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
-import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
-import com.orientechnologies.orient.client.remote.message.OPushDistributedConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
@@ -19,7 +17,7 @@ public class OStorageRemotePushThread extends Thread {
 
   private ORemotePushHandler storage;
   private OChannelBinary     network;
-  private BlockingQueue<OBinaryResponse> blockingQueue = new SynchronousQueue<>();
+  private BlockingQueue<OSubscribeResponse> blockingQueue = new SynchronousQueue<>();
   private volatile OBinaryRequest currentRequest;
 
   public OStorageRemotePushThread(ORemotePushHandler storage, String host) {
@@ -39,7 +37,7 @@ public class OStorageRemotePushThread extends Thread {
           byte[] token = network.readBytes();
           OBinaryResponse response = currentRequest.createResponse();
           response.read(network, null);
-          blockingQueue.put(response);
+          blockingQueue.put((OSubscribeResponse) response);
         } else if (res == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
           int currentSessionId = network.readInt();
           byte[] token = network.readBytes();
@@ -52,7 +50,7 @@ public class OStorageRemotePushThread extends Thread {
           OBinaryPushResponse response = request.execute(storage);
           synchronized (this) {
             //TODO DEFINE A NUMBER
-            network.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_RESPONSE);
+            network.writeByte(OChannelBinaryProtocol.REQUEST_OK_PUSH);
             //session
             network.writeInt(-1);
             response.write(network);
@@ -69,13 +67,13 @@ public class OStorageRemotePushThread extends Thread {
 
   }
 
-  public synchronized <T extends OBinaryResponse> T subscribe(OBinaryRequest<T> request, OStorageRemoteNodeSession nodeSession) {
+  public synchronized <T extends OBinaryResponse> T subscribe(OBinaryRequest<T> request, OStorageRemoteSession session) {
     try {
-      this.currentRequest = request;
-      ((OChannelBinaryAsynchClient) network).beginRequest(request.getCommand(), nodeSession);
-      request.write(network, null);
+      this.currentRequest = new OSubscribeRequest(request.getCommand(), request);
+      ((OChannelBinaryAsynchClient) network).beginRequest(OChannelBinaryProtocol.SUBSCRIBE_PUSH, session);
+      this.currentRequest.write(network, null);
       ((OChannelBinaryAsynchClient) network).endRequest();
-      return (T) blockingQueue.take();
+      return (T) blockingQueue.take().getResponse();
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {

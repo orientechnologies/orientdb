@@ -88,11 +88,7 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_DB_LIST     = 74;                 // SINCE 1.0rc6
   public static final byte REQUEST_SERVER_INFO = 75;                 // SINCE 2.2.0
 
-  public static final byte REQUEST_PUSH_DISTRIB_CONFIG = 80;
-  public static final byte REQUEST_PUSH_LIVE_QUERY     = 81;                 // SINCE 2.1
-  public static final byte REQUEST_PUSH_STORAGE_CONFIG = 82;
-  public static final byte REQUEST_PUSH_RESPONSE       = 90;
-
+  public static final byte REQUEST_OK_PUSH = 90;
 
   // DISTRIBUTED
   public static final byte REQUEST_CLUSTER    = 92;                 // SINCE 1.0
@@ -103,7 +99,7 @@ public class OChannelBinaryProtocol {
   // IMPORT
   public static final byte REQUEST_DB_IMPORT = 98;
 
-  public static final byte SUBSCRIBE_PUSH_DISTRIB_CONFIG = 100;
+  public static final byte SUBSCRIBE_PUSH = 100;
 
   // REMOTE SB-TREE COLLECTIONS
   public static final byte REQUEST_CREATE_SBTREE_BONSAI            = 110;
@@ -151,5 +147,15 @@ public class OChannelBinaryProtocol {
   public static final int PROTOCOL_VERSION_37 = 37;
 
   public static final int CURRENT_PROTOCOL_VERSION = PROTOCOL_VERSION_37;
+
+
+  //This are specific messages inside the subscribe message
+  public static final byte SUBSCRIBE_PUSH_DISTRIB_CONFIG = 1;
+  public static final byte SUBSCRIBE_PUSH_LIVE_QUERY = 2;
+
+  //Used by the client to identify what data was pushed
+  public static final byte REQUEST_PUSH_DISTRIB_CONFIG = 80;
+  public static final byte REQUEST_PUSH_LIVE_QUERY     = 81;                 // SINCE 2.1
+  public static final byte REQUEST_PUSH_STORAGE_CONFIG = 82;
 
 }

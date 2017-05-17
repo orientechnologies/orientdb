@@ -7,4 +7,6 @@ public interface OLiveQueryMonitor {
 
   void unSubscribe();
 
+  long getMonitorId();
+
 }

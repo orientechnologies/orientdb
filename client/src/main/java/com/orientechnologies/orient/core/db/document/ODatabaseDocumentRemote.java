@@ -337,11 +337,11 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Object... args) {
-    return null;
+    return storage.liveQuery(this, query, listener, args);
   }
 
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
-    return null;
+    return storage.liveQuery(this, query, listener, args);
   }
 }

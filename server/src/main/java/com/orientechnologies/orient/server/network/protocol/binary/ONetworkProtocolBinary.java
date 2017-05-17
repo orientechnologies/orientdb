@@ -30,7 +30,6 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
 import com.orientechnologies.orient.client.remote.message.OErrorResponse;
-import com.orientechnologies.orient.client.remote.message.OPushDistributedConfigurationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -69,7 +68,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.function.Function;
@@ -164,7 +162,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         handleHandshake();
         return;
       }
-      if (requestType == OChannelBinaryProtocol.REQUEST_PUSH_RESPONSE) {
+      if (requestType == OChannelBinaryProtocol.REQUEST_OK_PUSH) {
         handlePushResponse();
         return;
       }

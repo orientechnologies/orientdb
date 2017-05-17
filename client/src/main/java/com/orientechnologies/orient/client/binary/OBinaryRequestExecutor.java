@@ -111,5 +111,9 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeRollback(ORollbackTransactionRequest request);
 
+  OBinaryResponse executeSubscribe(OSubscribeRequest request);
+
   OBinaryResponse executeSubscribePushRequest(OSubscribeDistributedConfigurationRequest request);
+
+  OBinaryResponse executeSubscribeLiveQuery(OSubscribeLiveQueryRequest request);
 }

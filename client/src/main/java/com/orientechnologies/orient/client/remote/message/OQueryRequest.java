@@ -22,6 +22,7 @@ package com.orientechnologies.orient.client.remote.message;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -30,7 +31,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
@@ -47,12 +47,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
       ORecordSerializer serializer, int recordsPerPage) {
     this.language = language;
     this.statement = iCommand;
-    params = new HashMap<>();
-    if (positionalParams != null) {
-      for (int i = 0; i < positionalParams.length; i++) {
-        params.put(Integer.toString(i), positionalParams[i]);
-      }
-    }
+    params = OStorageRemote.paramsArrayToParamsMap(positionalParams);
     namedParams = false;
     this.serializer = serializer;
     this.recordsPerPage = recordsPerPage;

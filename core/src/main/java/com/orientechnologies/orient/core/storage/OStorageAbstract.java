@@ -25,6 +25,8 @@ import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
@@ -216,6 +218,5 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   public void shutdown() {
     close(true, false);
   }
-
 
 }

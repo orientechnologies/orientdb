@@ -212,8 +212,8 @@ public class ONetworkBinaryProtocolFactory {
   public static OBinaryRequest<? extends OBinaryResponse> createRequest37(int requestType) {
     switch (requestType) {
 
-    case OChannelBinaryProtocol.SUBSCRIBE_PUSH_DISTRIB_CONFIG:
-      return new OSubscribeDistributedConfigurationRequest();
+    case OChannelBinaryProtocol.SUBSCRIBE_PUSH:
+      return new OSubscribeRequest();
 
     case OChannelBinaryProtocol.REQUEST_TX_FETCH:
       return new OFetchTransactionRequest();
