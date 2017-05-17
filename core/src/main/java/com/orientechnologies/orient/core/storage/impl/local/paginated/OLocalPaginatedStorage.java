@@ -451,7 +451,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   public static boolean exists(final Path path) {
-    return Files.exists(path.resolve(OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION));
+    return Files.exists(path.resolve("database.ocf"));
   }
 
   private class PeriodicFuzzyCheckpoint implements Runnable {

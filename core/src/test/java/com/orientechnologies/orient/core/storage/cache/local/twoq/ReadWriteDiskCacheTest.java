@@ -24,7 +24,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 public class ReadWriteDiskCacheTest {
@@ -65,6 +67,18 @@ public class ReadWriteDiskCacheTest {
 
   @AfterClass
   public static void afterClass() throws IOException {
+    long fileId = -1;
+
+    if (writeBuffer != null) {
+      fileId = writeBuffer.fileIdByName("readWriteDiskCacheTest.tst");
+    }
+
+    String nativeFileName = null;
+
+    if (fileId >= 0) {
+      nativeFileName = writeBuffer.nativeFileNameById(fileId);
+    }
+
     if (writeBuffer != null) {
       if (readBuffer != null)
         readBuffer.deleteStorage(writeBuffer);
@@ -85,10 +99,13 @@ public class ReadWriteDiskCacheTest {
 
     storageLocal.delete();
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
-    if (file.exists()) {
-      Assert.assertTrue(file.delete());
-      file.getParentFile().delete();
+    if (nativeFileName != null) {
+      File file = new File(storageLocal.getConfiguration().getDirectory() + "/" + nativeFileName);
+
+      if (file.exists()) {
+        Assert.assertTrue(file.delete());
+        file.getParentFile().delete();
+      }
     }
 
   }
@@ -104,6 +121,18 @@ public class ReadWriteDiskCacheTest {
   }
 
   private void closeBufferAndDeleteFile() throws IOException {
+    long fileId = -1;
+
+    if (writeBuffer != null) {
+      fileId = writeBuffer.fileIdByName("readWriteDiskCacheTest.tst");
+    }
+
+    String nativeFileName = null;
+
+    if (fileId >= 0) {
+      nativeFileName = writeBuffer.nativeFileNameById(fileId);
+    }
+
     if (writeBuffer != null) {
       if (readBuffer != null)
         readBuffer.closeStorage(writeBuffer);
@@ -123,12 +152,17 @@ public class ReadWriteDiskCacheTest {
     }
     files.clear();
 
-    File testFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "readWriteDiskCacheTest.tst");
+    File testFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + nativeFileName);
     if (testFile.exists()) {
       Assert.assertTrue(testFile.delete());
     }
 
     File idMapFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "name_id_map.cm");
+    if (idMapFile.exists()) {
+      Assert.assertTrue(idMapFile.delete());
+    }
+
+    idMapFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "name_id_map_v2.cm");
     if (idMapFile.exists()) {
       Assert.assertTrue(idMapFile.delete());
     }
@@ -145,6 +179,7 @@ public class ReadWriteDiskCacheTest {
   @Test
   public void testAddFourItems() throws IOException {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
 
     OCacheEntry[] entries = new OCacheEntry[4];
 
@@ -182,13 +217,111 @@ public class ReadWriteDiskCacheTest {
     writeBuffer.flush();
 
     for (int i = 0; i < 4; i++) {
-      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(0, 0));
+      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(0, 0), nativeFileName);
+    }
+  }
+
+  private void addFileName(String fileName, List<Long> fileIds, List<String> nativeFileNames) throws IOException {
+    final long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
+
+    fileIds.add(fileId);
+    nativeFileNames.add(nativeFileName);
+  }
+
+  @Test
+  public void testAddFourItemsInFourDifferentFiles() throws IOException {
+    List<Long> fileIds = new ArrayList<>();
+    List<String> nativeFileNames = new ArrayList<>();
+    List<String> fileNames = new ArrayList<>();
+
+    fileNames.add("readWriteDiskCacheTest.tst");
+    fileNames.add("readwRitedIskCacheTest.tst");
+    fileNames.add("ReadwRitedIskCacheTesT.tst");
+    fileNames.add("readwritediskcachetest.tst");
+
+    addFileName(fileNames.get(0), fileIds, nativeFileNames);
+    addFileName(fileNames.get(1), fileIds, nativeFileNames);
+    addFileName(fileNames.get(2), fileIds, nativeFileNames);
+    addFileName(fileNames.get(3), fileIds, nativeFileNames);
+
+    OCacheEntry[] entries = new OCacheEntry[4];
+
+    for (int i = 0; i < 4; i++) {
+      for (int n = 0; n < 4; n++) {
+        final long fileId = fileIds.get(n);
+
+        entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1);
+        if (entries[i] == null) {
+          entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer);
+          Assert.assertEquals(entries[i].getPageIndex(), i);
+        }
+
+        entries[i].getCachePointer().acquireExclusiveLock();
+
+        entries[i].markDirty();
+
+        final ByteBuffer buffer = entries[i].getCachePointer().getSharedBuffer();
+
+        buffer.position(systemOffset);
+        buffer.put(new byte[] { (byte) i, 1, 2, (byte) (seed + n), 4, 5, 6, (byte) (i + n) });
+
+        entries[i].getCachePointer().releaseExclusiveLock();
+
+        readBuffer.releaseFromWrite(entries[i], writeBuffer);
+      }
+    }
+
+    for (int n = 0; n < 4; n++) {
+      final long fileId = fileIds.get(n);
+      Assert.assertEquals(writeBuffer.getFilledUpTo(fileId), 4);
+    }
+
+    writeBuffer.flush();
+
+    for (int n = 0; n < 4; n++) {
+      final String nativeFileName = nativeFileNames.get(n);
+
+      for (int i = 0; i < 4; i++) {
+        assertFile(i, new byte[] { (byte) i, 1, 2, (byte) (seed + n), 4, 5, 6, (byte) (i + n) }, new OLogSequenceNumber(0, 0),
+            nativeFileName);
+      }
+    }
+
+    for (int n = 3; n >= 0; n--) {
+      for (int i = 3; i >= 0; i--) {
+        final String fileNativeName = nativeFileNames.get(i);
+
+        String path = storageLocal.getConfiguration().getDirectory() + "/" + fileNativeName;
+        final File file = new File(path);
+        if (i > n) {
+          Assert.assertFalse(file.exists());
+        } else {
+          Assert.assertTrue(file.exists());
+        }
+      }
+
+      writeBuffer.deleteFile(fileIds.get(n));
+
+      for (int i = 3; i >= 0; i--) {
+        final String fileNativeName = nativeFileNames.get(i);
+
+        String path = storageLocal.getConfiguration().getDirectory() + "/" + fileNativeName;
+        final File file = new File(path);
+        if (i >= n) {
+          Assert.assertFalse(file.exists());
+        } else {
+          Assert.assertTrue(file.exists());
+        }
+      }
     }
   }
 
   @Test
   public void testFrequentlyReadItemsAreMovedInAm() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
+
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
 
     OCacheEntry[] entries = new OCacheEntry[10];
 
@@ -214,7 +347,7 @@ public class ReadWriteDiskCacheTest {
     readBuffer.clear();
 
     for (int i = 0; i < 10; i++)
-      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(1, i));
+      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(1, i), nativeFileName);
 
     for (int i = 0; i < 8; i++) {
       entries[i] = readBuffer.loadForRead(fileId, i, false, writeBuffer, 1);
@@ -253,9 +386,10 @@ public class ReadWriteDiskCacheTest {
 
   @Test
   public void testCacheShouldCreateFileIfItIsNotExisted() throws Exception {
-    readBuffer.addFile(fileName, writeBuffer);
+    final long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
+    File file = new File(storageLocal.getConfiguration().getDirectory() + "/" + nativeFileName);
 
     Assert.assertTrue(file.exists());
     Assert.assertTrue(file.isFile());
@@ -264,6 +398,7 @@ public class ReadWriteDiskCacheTest {
   @Test
   public void testFrequentlyAddItemsAreMovedInAm() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
 
     OCacheEntry[] entries = new OCacheEntry[10];
 
@@ -330,13 +465,14 @@ public class ReadWriteDiskCacheTest {
     writeBuffer.flush();
 
     for (int i = 0; i < 10; i++)
-      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(1, i));
+      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(1, i), nativeFileName);
 
   }
 
   @Test
   public void testReadFourItems() throws IOException {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
 
     OCacheEntry[] entries = new OCacheEntry[4];
 
@@ -361,7 +497,7 @@ public class ReadWriteDiskCacheTest {
     writeBuffer.flush();
 
     for (int i = 0; i < 4; i++) {
-      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(1, i));
+      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(1, i), nativeFileName);
     }
 
     for (int i = 0; i < 4; i++) {
@@ -388,6 +524,8 @@ public class ReadWriteDiskCacheTest {
   @Test
   public void testPrefetchPagesInA1inQueue() throws Exception {
     final long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
+
     for (int i = 0; i < 4; i++) {
       OCacheEntry cacheEntry = readBuffer.allocateNewPage(fileId, writeBuffer);
       try {
@@ -416,7 +554,7 @@ public class ReadWriteDiskCacheTest {
       for (int n = 0; n < userData.length; n++) {
         userData[n] = (byte) (i + 1);
       }
-      assertFile(i, userData, new OLogSequenceNumber(1, i));
+      assertFile(i, userData, new OLogSequenceNumber(1, i), nativeFileName);
     }
 
     LRUList am = readBuffer.getAm();
@@ -451,6 +589,8 @@ public class ReadWriteDiskCacheTest {
   @Test
   public void testPrefetchPagesInA1inAmQueue() throws Exception {
     final long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
+
     Assert.assertEquals(readBuffer.getMaxSize(), 4);
 
     //create file with 8 pages, we will push some of them in different queues later
@@ -482,7 +622,7 @@ public class ReadWriteDiskCacheTest {
       for (int n = 0; n < userData.length; n++) {
         userData[n] = (byte) (i + 1);
       }
-      assertFile(i, userData, new OLogSequenceNumber(1, i));
+      assertFile(i, userData, new OLogSequenceNumber(1, i), nativeFileName);
     }
 
     LRUList am = readBuffer.getAm();
@@ -535,6 +675,8 @@ public class ReadWriteDiskCacheTest {
   @Test
   public void testStoreCacheState() throws Exception {
     final long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
+
     Assert.assertEquals(readBuffer.getMaxSize(), 4);
 
     //create file with 8 pages, we will push some of them in different queues later
@@ -566,7 +708,7 @@ public class ReadWriteDiskCacheTest {
       for (int n = 0; n < userData.length; n++) {
         userData[n] = (byte) (i + 1);
       }
-      assertFile(i, userData, new OLogSequenceNumber(1, i));
+      assertFile(i, userData, new OLogSequenceNumber(1, i), nativeFileName);
     }
 
     LRUList am = readBuffer.getAm();
@@ -639,6 +781,8 @@ public class ReadWriteDiskCacheTest {
   @Test
   public void testPrefetchPagesInPinnedPages() throws Exception {
     final long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
+
     Assert.assertEquals(readBuffer.getMaxSize(), 4);
 
     //create file with 8 pages, we will push some of them in different queues later
@@ -670,7 +814,7 @@ public class ReadWriteDiskCacheTest {
       for (int n = 0; n < userData.length; n++) {
         userData[n] = (byte) (i + 1);
       }
-      assertFile(i, userData, new OLogSequenceNumber(1, i));
+      assertFile(i, userData, new OLogSequenceNumber(1, i), nativeFileName);
     }
 
     LRUList am = readBuffer.getAm();
@@ -765,6 +909,7 @@ public class ReadWriteDiskCacheTest {
   @Test
   public void testCloseFileShouldFlushData() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
 
     OCacheEntry[] entries = new OCacheEntry[4];
 
@@ -800,13 +945,14 @@ public class ReadWriteDiskCacheTest {
     readBuffer.closeFile(fileId, true, writeBuffer);
 
     for (int i = 0; i < 4; i++) {
-      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(0, 0));
+      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(0, 0), nativeFileName);
     }
   }
 
   @Test
   public void testDeleteFileShouldDeleteFileFromHardDrive() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
 
     OCacheEntry[] entries = new OCacheEntry[4];
 
@@ -831,7 +977,7 @@ public class ReadWriteDiskCacheTest {
     writeBuffer.flush();
 
     for (int i = 0; i < 4; i++) {
-      File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
+      File file = new File(storageLocal.getConfiguration().getDirectory() + "/" + nativeFileName);
       Assert.assertFalse(file.exists());
     }
   }
@@ -839,6 +985,7 @@ public class ReadWriteDiskCacheTest {
   @Test
   public void testFlushData() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
 
     OCacheEntry[] entries = new OCacheEntry[4];
 
@@ -879,7 +1026,7 @@ public class ReadWriteDiskCacheTest {
     writeBuffer.flush(fileId);
 
     for (int i = 0; i < 4; i++) {
-      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 3, (byte) i }, new OLogSequenceNumber(0, 0));
+      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 3, (byte) i }, new OLogSequenceNumber(0, 0), nativeFileName);
     }
 
   }
@@ -887,6 +1034,7 @@ public class ReadWriteDiskCacheTest {
   @Test
   public void testIfNotEnoughSpaceOldPagesShouldBeMovedToA1Out() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
 
     OCacheEntry[] entries = new OCacheEntry[6];
 
@@ -927,7 +1075,7 @@ public class ReadWriteDiskCacheTest {
     writeBuffer.flush();
 
     for (int i = 0; i < 6; i++) {
-      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, new OLogSequenceNumber(0, 0));
+      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, new OLogSequenceNumber(0, 0), nativeFileName);
     }
   }
 
@@ -980,8 +1128,8 @@ public class ReadWriteDiskCacheTest {
         "readWriteDiskCacheTest.tst", 0);
     segmentConfiguration.fileType = OFileClassic.NAME;
 
-    writeBuffer = new OWOWCache(8 + systemOffset, new OByteBufferPool(8 + systemOffset), writeAheadLog, 100,
-        2 * (8 + systemOffset),  storageLocal, false, files, 10);
+    writeBuffer = new OWOWCache(8 + systemOffset, new OByteBufferPool(8 + systemOffset), writeAheadLog, 100, 2 * (8 + systemOffset),
+        storageLocal, false, files, 10);
 
     writeBuffer.loadRegisteredFiles();
 
@@ -1014,8 +1162,9 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals(writeAheadLog.getFlushedLsn(), lsnToFlush);
   }
 
-  private void updateFilePage(long pageIndex, long offset, byte[] value) throws IOException {
-    OFileClassic fileClassic = new OFileClassic(Paths.get(storageLocal.getConfiguration().getDirectory(), "readWriteDiskCacheTest.tst"));
+  private void updateFilePage(long pageIndex, long offset, byte[] value, String fileName) throws IOException {
+    String path = storageLocal.getConfiguration().getDirectory() + "/" + fileName;
+    OFileClassic fileClassic = new OFileClassic(Paths.get(path));
     fileClassic.open();
 
     fileClassic.write(pageIndex * (8 + systemOffset) + offset, value, value.length, 0);
@@ -1023,8 +1172,10 @@ public class ReadWriteDiskCacheTest {
     fileClassic.close();
   }
 
-  private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn) throws IOException {
-    OFileClassic fileClassic = new OFileClassic(Paths.get(storageLocal.getConfiguration().getDirectory(), "readWriteDiskCacheTest.tst"));
+  private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName) throws IOException {
+    String path = storageLocal.getConfiguration().getDirectory() + "/" + fileName;
+
+    OFileClassic fileClassic = new OFileClassic(Paths.get(path));
     fileClassic.open();
     byte[] content = new byte[userDataSize + systemOffset];
     fileClassic.read(pageIndex * (userDataSize + systemOffset), content, userDataSize + systemOffset);

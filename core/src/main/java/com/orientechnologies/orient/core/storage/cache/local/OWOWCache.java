@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OWriteCacheException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
@@ -145,9 +146,27 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   public static final String NAME_ID_MAP_EXTENSION = ".cm";
 
   /**
-   * Name of file which contains mapping between file name and file id
+   * Name for file which contains first version of binary format
    */
-  private static final String NAME_ID_MAP = "name_id_map" + NAME_ID_MAP_EXTENSION;
+  private static final String NAME_ID_MAP_V1 = "name_id_map" + NAME_ID_MAP_EXTENSION;
+
+  /**
+   * Name for file which contains second version of binary format.
+   * Second version of format contains not only file name which is used in write cache
+   * but also file name which is used in file system so those two names may be different
+   * which allows usage of case sensitive file names.
+   */
+  private static final String NAME_ID_MAP_V2 = "name_id_map_v2" + NAME_ID_MAP_EXTENSION;
+
+  /**
+   * Name of file temporary which contains second version of binary format.
+   * Temporary name is used to prevent situation when DB is crashed because of migration from first to second
+   * version of binary format and data are lost.
+   *
+   * @see #NAME_ID_MAP_V2
+   * @see #convertNameIdMapFromV1ToV2()
+   */
+  private static final String NAME_ID_MAP_V2_T = "name_id_map_v2_t" + NAME_ID_MAP_EXTENSION;
 
   /**
    * Minimum size of exclusive write cache in pages
@@ -343,11 +362,18 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final ExecutorService lowSpaceEventsPublisher;
 
   /**
-   * Local cache of name - file id map
-   *
-   * @see #nameIdMapHolder
+   * Mapping between case sensitive file names are used in write cache and file's internal id.
+   * Name of file in write cache is case sensitive and can be different from file name which is used to store file in
+   * file system.
    */
-  private volatile ConcurrentMap<String, Integer> nameIdMap;
+  private final ConcurrentMap<String, Integer> nameIdMap = new ConcurrentHashMap<>();
+
+  /**
+   * Mapping between file's internal ids and case sensitive file names are used in write cache.
+   * Name of file in write cache is case sensitive and can be different from file name which is used to store file in
+   * file system.
+   */
+  private final ConcurrentMap<Integer, String> idNameMap = new ConcurrentHashMap<>();
 
   /**
    * File which contains map between names and ids of files used in write cache.
@@ -598,8 +624,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     try {
       final Integer fileId = nameIdMap.get(fileName);
 
-      if (fileId != null && fileId < 0) {
-        return composeFileId(id, -fileId);
+      if (fileId != null) {
+        if (fileId < 0) {
+          return composeFileId(id, -fileId);
+        } else {
+          throw new OStorageException("File " + fileName + " has already been added to the storage");
+        }
       }
 
       ++nextInternalId;
@@ -641,7 +671,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           throw new OStorageException("File with given name " + fileName + " only partially registered in storage");
       }
 
-      fileClassic = createFileInstance(fileName);
+      if (fileId == null) {
+        ++nextInternalId;
+        fileId = nextInternalId;
+      } else
+        fileId = -fileId;
+
+      fileClassic = createFileInstance(fileName, fileId);
+
       if (!fileClassic.exists())
         throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
       else {
@@ -649,25 +686,15 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         OLogManager.instance().debug(this,
             "File '" + fileName + "' is not registered in 'file name - id' map, but exists in file system. Registering it");
 
-        if (fileId == null) {
-          ++nextInternalId;
-          fileId = nextInternalId;
-        } else
-          fileId = -fileId;
-
-        long externalId = composeFileId(id, fileId);
-        while (files.get(externalId) != null) {
-          ++nextInternalId;
-          fileId = nextInternalId;
-          externalId = composeFileId(id, fileId);
-        }
-
         openFile(fileClassic);
 
+        final long externalId = composeFileId(id, fileId);
         files.add(externalId, fileClassic);
 
         nameIdMap.put(fileName, fileId);
-        writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+        idNameMap.put(fileId, fileName);
+
+        writeNameIdEntry(new NameFileIdEntry(fileName, fileId, fileClassic.getName()), true);
 
         return externalId;
       }
@@ -694,14 +721,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       } else
         fileId = -fileId;
 
-      fileClassic = createFileInstance(fileName);
+      fileClassic = createFileInstance(fileName, fileId);
       createFile(fileClassic);
 
       final long externalId = composeFileId(id, fileId);
       files.add(externalId, fileClassic);
 
       nameIdMap.put(fileName, fileId);
-      writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+      idNameMap.put(fileId, fileName);
+
+      writeNameIdEntry(new NameFileIdEntry(fileName, fileId, fileClassic.getName()), true);
 
       return externalId;
     } catch (InterruptedException e) {
@@ -787,21 +816,23 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       fileClassic = files.get(fileId);
 
       if (fileClassic != null) {
-        if (!fileClassic.getName().equals(fileName))
+        if (!fileClassic.getName().equals(createInternalFileName(fileName, intId)))
           throw new OStorageException(
               "File with given id exists but has different name " + fileClassic.getName() + " vs. proposed " + fileName);
       } else {
         if (nextInternalId < intId)
           nextInternalId = intId;
 
-        fileClassic = createFileInstance(fileName);
+        fileClassic = createFileInstance(fileName, intId);
         createFile(fileClassic);
 
         files.add(fileId, fileClassic);
       }
 
       nameIdMap.put(fileName, intId);
-      writeNameIdEntry(new NameFileIdEntry(fileName, intId), true);
+      idNameMap.put(intId, fileName);
+
+      writeNameIdEntry(new NameFileIdEntry(fileName, intId, fileClassic.getName()), true);
 
       return fileId;
     } catch (InterruptedException e) {
@@ -871,13 +902,19 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     filesLock.acquireReadLock();
     try {
       if (nameIdMap != null) {
-        Integer fileId = nameIdMap.get(fileName);
+        final Integer intId = nameIdMap.get(fileName);
 
-        if (fileId != null && fileId >= 0)
-          return true;
+        if (intId != null && intId >= 0) {
+          final OFileClassic fileClassic = files.get(externalFileId(intId));
+
+          if (fileClassic == null)
+            return false;
+
+          return fileClassic.exists();
+        }
       }
 
-      return Files.exists(storagePath.resolve(fileName));
+      return false;
     } finally {
       filesLock.releaseReadLock();
     }
@@ -1202,11 +1239,15 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     filesLock.acquireWriteLock();
     try {
-      final String name = doDeleteFile(intId);
+      final String fileName = doDeleteFile(intId);
 
-      if (name != null) {
+      if (fileName != null) {
+        final String name = idNameMap.get(intId);
+
         nameIdMap.put(name, -intId);
-        writeNameIdEntry(new NameFileIdEntry(name, -intId), true);
+        idNameMap.remove(intId);
+
+        writeNameIdEntry(new NameFileIdEntry(name, -intId, fileName), true);
       }
     } finally {
       filesLock.releaseWriteLock();
@@ -1235,33 +1276,39 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   @Override
-  public void renameFile(long fileId, String oldFileName, String newFileName) throws IOException {
+  public void renameFile(long fileId, String newFileName) throws IOException {
     final int intId = extractFileId(fileId);
     fileId = composeFileId(id, intId);
 
     filesLock.acquireWriteLock();
     try {
-      OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
+      final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
+
       if (entry == null)
         return;
 
-      try {
-        OFileClassic file = entry.get();
-        final String osFileName = file.getName();
-        if (osFileName.startsWith(oldFileName)) {
+      final String oldOsFileName;
+      final String newOsFileName = createInternalFileName(newFileName, intId);
 
-          file.renameTo(Paths.get(storageLocal.getStoragePath() + File.separator + newFileName + osFileName
-              .substring(osFileName.lastIndexOf(oldFileName) + oldFileName.length())));
-        }
+      try {
+        final OFileClassic file = entry.get();
+        oldOsFileName = file.getName();
+
+        final Path newFile = storagePath.resolve(newOsFileName);
+        file.renameTo(newFile);
       } finally {
         files.release(entry);
       }
 
+      final String oldFileName = idNameMap.get(intId);
+
       nameIdMap.remove(oldFileName);
       nameIdMap.put(newFileName, intId);
 
-      writeNameIdEntry(new NameFileIdEntry(oldFileName, -1), false);
-      writeNameIdEntry(new NameFileIdEntry(newFileName, intId), true);
+      idNameMap.put(intId, newFileName);
+
+      writeNameIdEntry(new NameFileIdEntry(oldFileName, -1, oldOsFileName), false);
+      writeNameIdEntry(new NameFileIdEntry(newFileName, intId, newOsFileName), true);
     } catch (InterruptedException e) {
       throw OException.wrapException(new OStorageException("Rename of file was interrupted"), e);
     } finally {
@@ -1312,6 +1359,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
 
       nameIdMap.clear();
+      idNameMap.clear();
 
       final long[] ids = new long[closedIds.size()];
       int n = 0;
@@ -1364,99 +1412,124 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     return null;
   }
 
-  @Override
   public OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener) {
     final int notificationTimeOut = 5000;
-    final List<OPageDataVerificationError> errors = new ArrayList<>();
+
+    final List<OPageDataVerificationError> errors = new ArrayList<OPageDataVerificationError>();
 
     filesLock.acquireWriteLock();
     try {
-      for (int intId : nameIdMap.values()) {
+      for (Integer intId : nameIdMap.values()) {
         if (intId < 0)
           continue;
 
-        final long fileId = composeFileId(id, intId);
-        boolean fileIsCorrect;
-        final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
-        final OFileClassic fileClassic = entry.get();
-        try {
-
-          if (commandOutputListener != null)
-            commandOutputListener.onMessage("Flashing file " + fileClassic.getName() + "... ");
-
-          flush(fileId);
-
-          if (commandOutputListener != null)
-            commandOutputListener.onMessage("Start verification of content of " + fileClassic.getName() + "file ...");
-
-          long time = System.currentTimeMillis();
-
-          long filledUpTo = fileClassic.getFileSize();
-          fileIsCorrect = true;
-
-          for (long pos = 0; pos < filledUpTo; pos += pageSize) {
-            boolean checkSumIncorrect = false;
-            boolean magicNumberIncorrect = false;
-
-            byte[] data = new byte[pageSize];
-
-            fileClassic.read(pos, data, data.length);
-
-            long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, 0);
-
-            if (magicNumber != MAGIC_NUMBER) {
-              magicNumberIncorrect = true;
-              if (commandOutputListener != null)
-                commandOutputListener.onMessage(
-                    "Error: Magic number for page " + (pos / pageSize) + " in file " + fileClassic.getName()
-                        + " does not much !!!");
-              fileIsCorrect = false;
-            }
-
-            final int storedCRC32 = OIntegerSerializer.INSTANCE.deserializeNative(data, OLongSerializer.LONG_SIZE);
-
-            final int calculatedCRC32 = calculatePageCrc(data);
-            if (storedCRC32 != calculatedCRC32) {
-              checkSumIncorrect = true;
-              if (commandOutputListener != null)
-                commandOutputListener.onMessage(
-                    "Error: Checksum for page " + (pos / pageSize) + " in file " + fileClassic.getName() + " is incorrect !!!");
-              fileIsCorrect = false;
-            }
-
-            if (magicNumberIncorrect || checkSumIncorrect)
-              errors.add(
-                  new OPageDataVerificationError(magicNumberIncorrect, checkSumIncorrect, pos / pageSize, fileClassic.getName()));
-
-            if (commandOutputListener != null && System.currentTimeMillis() - time > notificationTimeOut) {
-              time = notificationTimeOut;
-              commandOutputListener.onMessage((pos / pageSize) + " pages were processed ...");
-            }
-          }
-        } catch (IOException ioe) {
-          if (commandOutputListener != null)
-            commandOutputListener
-                .onMessage("Error: Error during processing of file " + fileClassic.getName() + ". " + ioe.getMessage());
-
-          fileIsCorrect = false;
-        } finally {
-          files.release(entry);
-        }
-
-        if (!fileIsCorrect) {
-          if (commandOutputListener != null)
-            commandOutputListener.onMessage("Verification of file " + fileClassic.getName() + " is finished with errors.");
-        } else {
-          if (commandOutputListener != null)
-            commandOutputListener.onMessage("Verification of file " + fileClassic.getName() + " is successfully finished.");
-        }
+        checkFileStoredPages(commandOutputListener, notificationTimeOut, errors, intId);
       }
 
       return errors.toArray(new OPageDataVerificationError[errors.size()]);
     } catch (InterruptedException e) {
-      throw OException.wrapException(new OStorageException("Data verification was interrupted"), e);
+      throw OException.wrapException(new OStorageException("Thread was interrupted"), e);
     } finally {
       filesLock.releaseWriteLock();
+    }
+  }
+
+  public OPageDataVerificationError[] checkFileStoredPages(String fileName, OCommandOutputListener commandOutputListener) {
+    final int notificationTimeOut = 5000;
+
+    final List<OPageDataVerificationError> errors = new ArrayList<OPageDataVerificationError>();
+
+    filesLock.acquireWriteLock();
+    try {
+      final int intId = nameIdMap.get(fileName);
+      if (intId < 0) {
+        throw new OStorageException("File " + fileName + " does not exist in storage");
+      }
+
+      checkFileStoredPages(commandOutputListener, notificationTimeOut, errors, intId);
+
+      return errors.toArray(new OPageDataVerificationError[errors.size()]);
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Thread was interrupted"), e);
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+  }
+
+  private void checkFileStoredPages(OCommandOutputListener commandOutputListener, int notificationTimeOut,
+      List<OPageDataVerificationError> errors, Integer intId) throws InterruptedException {
+    boolean fileIsCorrect;
+    final long externalId = composeFileId(id, intId);
+    final OClosableEntry<Long, OFileClassic> entry = files.acquire(externalId);
+    final OFileClassic fileClassic = entry.get();
+    final String fileName = idNameMap.get(intId);
+
+    try {
+      if (commandOutputListener != null)
+        commandOutputListener.onMessage("Flashing file " + fileName + "... ");
+
+      flush(intId);
+
+      if (commandOutputListener != null)
+        commandOutputListener.onMessage("Start verification of content of " + fileName + "file ...");
+
+      long time = System.currentTimeMillis();
+
+      long filledUpTo = fileClassic.getFileSize();
+      fileIsCorrect = true;
+
+      for (long pos = 0; pos < filledUpTo; pos += pageSize) {
+        boolean checkSumIncorrect = false;
+        boolean magicNumberIncorrect = false;
+
+        byte[] data = new byte[pageSize];
+
+        fileClassic.read(pos, data, data.length);
+
+        long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, 0);
+
+        if (magicNumber != MAGIC_NUMBER) {
+          magicNumberIncorrect = true;
+          if (commandOutputListener != null)
+            commandOutputListener
+                .onMessage("Error: Magic number for page " + (pos / pageSize) + " in file " + fileName + " does not much !!!");
+          fileIsCorrect = false;
+        }
+
+        final int storedCRC32 = OIntegerSerializer.INSTANCE.deserializeNative(data, OLongSerializer.LONG_SIZE);
+
+        final int calculatedCRC32 = calculatePageCrc(data);
+        if (storedCRC32 != calculatedCRC32) {
+          checkSumIncorrect = true;
+          if (commandOutputListener != null)
+            commandOutputListener
+                .onMessage("Error: Checksum for page " + (pos / pageSize) + " in file " + fileName + " is incorrect !!!");
+          fileIsCorrect = false;
+        }
+
+        if (magicNumberIncorrect || checkSumIncorrect)
+          errors.add(new OPageDataVerificationError(magicNumberIncorrect, checkSumIncorrect, pos / pageSize, fileName));
+
+        if (commandOutputListener != null && System.currentTimeMillis() - time > notificationTimeOut) {
+          time = notificationTimeOut;
+          commandOutputListener.onMessage((pos / pageSize) + " pages were processed ...");
+        }
+      }
+    } catch (IOException ioe) {
+      if (commandOutputListener != null)
+        commandOutputListener.onMessage("Error: Error during processing of file " + fileName + ". " + ioe.getMessage());
+
+      fileIsCorrect = false;
+    } finally {
+      files.release(entry);
+    }
+
+    if (!fileIsCorrect) {
+      if (commandOutputListener != null)
+        commandOutputListener.onMessage("Verification of file " + fileName + " is finished with errors.");
+    } else {
+      if (commandOutputListener != null)
+        commandOutputListener.onMessage("Verification of file " + fileName + " is successfully finished.");
     }
   }
 
@@ -1514,16 +1587,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   @Override
   public String fileNameById(long fileId) {
     final int intId = extractFileId(fileId);
-    fileId = composeFileId(id, intId);
 
-    filesLock.acquireReadLock();
-    try {
+    return idNameMap.get(intId);
+  }
 
-      final OFileClassic f = files.get(fileId);
-      return f != null ? f.getName() : null;
-    } finally {
-      filesLock.releaseReadLock();
-    }
+  public String nativeFileNameById(long fileId) {
+    final OFileClassic fileClassic = files.get(fileId);
+    if (fileClassic != null)
+      return fileClassic.getName();
+
+    return null;
   }
 
   @Override
@@ -1565,35 +1638,174 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private void initNameIdMapping() throws IOException, InterruptedException {
     if (nameIdMapHolder == null) {
       final Path storagePath = storageLocal.getStoragePath();
+
       if (!Files.exists(storagePath))
         Files.createDirectories(storagePath);
 
-      nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP);
+      nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
 
-      nameIdMapHolder = FileChannel
-          .open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
-      readNameIdMap();
+      if (Files.exists(nameIdMapHolderPath)) {
+        nameIdMapHolder = FileChannel.open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ);
+
+        readNameIdMapV2();
+      } else {
+        nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V1);
+
+        if (Files.exists(nameIdMapHolderPath)) {
+          nameIdMapHolder = FileChannel.open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ);
+
+          readNameIdMapV1();
+
+          convertNameIdMapFromV1ToV2();
+
+          nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
+          nameIdMapHolder.close();
+
+          nameIdMapHolder = FileChannel.open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ);
+        } else {
+          //empty storage will use second version of format
+
+          nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
+          nameIdMapHolder = FileChannel
+              .open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
+        }
+      }
     }
   }
 
-  private OFileClassic createFileInstance(String fileName) throws IOException {
-    return new OFileClassic(storagePath.resolve(fileName));
+  private void convertNameIdMapFromV1ToV2() throws IOException, InterruptedException {
+    final Path nameIdMapHolderFileV2T = storagePath.resolve(NAME_ID_MAP_V2_T);
+
+    if (Files.exists(nameIdMapHolderFileV2T)) {
+      Files.delete(nameIdMapHolderFileV2T);
+    }
+
+    final FileChannel v2NameIdMapHolder = FileChannel
+        .open(nameIdMapHolderFileV2T, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ);
+
+    for (Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
+      final OFileClassic fileClassic = files.get(externalFileId(nameIdEntry.getValue()));
+      final String fileSystemName = fileClassic.getName();
+
+      final NameFileIdEntry nameFileIdEntry = new NameFileIdEntry(nameIdEntry.getKey(), nameIdEntry.getValue(), fileSystemName);
+      writeNameIdEntry(v2NameIdMapHolder, nameFileIdEntry, false);
+    }
+
+    v2NameIdMapHolder.force(true);
+    v2NameIdMapHolder.close();
+
+    Files.move(nameIdMapHolderFileV2T, storagePath.resolve(NAME_ID_MAP_V2));
   }
 
-  private void readNameIdMap() throws IOException, InterruptedException {
-    nameIdMap = new ConcurrentHashMap<>();
+  private OFileClassic createFileInstance(String fileName, int fileId) throws InterruptedException {
+    final String internalFileName = createInternalFileName(fileName, fileId);
+    return new OFileClassic(storagePath.resolve(internalFileName));
+  }
+
+  private String createInternalFileName(String fileName, int fileId) {
+    final int extSeparator = fileName.lastIndexOf(".");
+
+    String prefix;
+    if (extSeparator < 0) {
+      prefix = fileName;
+    } else if (extSeparator == 0) {
+      prefix = "";
+    } else {
+      prefix = fileName.substring(0, extSeparator);
+    }
+
+    final String suffix;
+    if (extSeparator < 0 || extSeparator == fileName.length() - 1) {
+      suffix = "";
+    } else {
+      suffix = fileName.substring(extSeparator + 1);
+    }
+
+    prefix = prefix + "_" + fileId;
+
+    if (extSeparator >= 0) {
+      return prefix + "." + suffix;
+    }
+
+    return prefix;
+  }
+
+  /**
+   * Read information about files are registered inside of write cache/storage
+   * <p>
+   * File consist of rows of variable length which contains following entries:
+   * <ol>
+   * <li>Internal file id, may be positive or negative depends on whether file is removed or not</li>
+   * <li>Name of file inside of write cache, this name is case sensitive</li>
+   * <li>Name of file which is used inside file system it can be different from name of file used inside write cache</li>
+   * </ol>
+   */
+  private void readNameIdMapV2() throws IOException, InterruptedException {
+    nameIdMap.clear();
+
     long localFileCounter = -1;
 
     nameIdMapHolder.position(0);
 
     NameFileIdEntry nameFileIdEntry;
-    while ((nameFileIdEntry = readNextNameIdEntry()) != null) {
+
+    final Map<Integer, String> idFileNameMap = new HashMap<Integer, String>();
+
+    while ((nameFileIdEntry = readNextNameIdEntryV2()) != null) {
+      final long absFileId = Math.abs(nameFileIdEntry.fileId);
+
+      if (localFileCounter < absFileId)
+        localFileCounter = absFileId;
+
+      nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
+
+      if (nameFileIdEntry.fileId >= 0) {
+        idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
+      }
+
+      idFileNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.fileSystemName);
+    }
+
+    if (localFileCounter > 0 && nextInternalId < localFileCounter)
+      nextInternalId = (int) localFileCounter;
+
+    for (Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
+      final int fileId = nameIdEntry.getValue();
+
+      if (fileId >= 0) {
+        final long externalId = composeFileId(id, nameIdEntry.getValue());
+
+        if (files.get(externalId) == null) {
+          OFileClassic fileClassic = createFileInstance(idFileNameMap.get(nameIdEntry.getValue()), nameIdEntry.getValue());
+
+          if (fileClassic.exists()) {
+            fileClassic.open();
+            files.add(externalId, fileClassic);
+          } else {
+            nameIdMap.put(nameIdEntry.getKey(), -fileId);
+            idNameMap.remove(fileId);
+          }
+        }
+      }
+    }
+  }
+
+  private void readNameIdMapV1() throws IOException, InterruptedException {
+    nameIdMap.clear();
+
+    long localFileCounter = -1;
+
+    nameIdMapHolder.position(0);
+
+    NameFileIdEntry nameFileIdEntry;
+    while ((nameFileIdEntry = readNextNameIdEntryV1()) != null) {
 
       final long absFileId = Math.abs(nameFileIdEntry.fileId);
       if (localFileCounter < absFileId)
         localFileCounter = absFileId;
 
       nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
+      idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
     }
 
     if (localFileCounter > 0 && nextInternalId < localFileCounter)
@@ -1604,17 +1816,19 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final long externalId = composeFileId(id, nameIdEntry.getValue());
 
         if (files.get(externalId) == null) {
-          OFileClassic fileClassic = createFileInstance(nameIdEntry.getKey());
+          final OFileClassic fileClassic = new OFileClassic(storagePath.resolve(nameIdEntry.getKey()));
 
           if (fileClassic.exists()) {
             fileClassic.open();
             files.add(externalId, fileClassic);
           } else {
-
             final Integer fileId = nameIdMap.get(nameIdEntry.getKey());
 
             if (fileId != null && fileId > 0) {
               nameIdMap.put(nameIdEntry.getKey(), -fileId);
+
+              idNameMap.remove(fileId);
+              idNameMap.put(-fileId, nameIdEntry.getKey());
             }
           }
         }
@@ -1622,7 +1836,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  private NameFileIdEntry readNextNameIdEntry() throws IOException {
+  private NameFileIdEntry readNextNameIdEntryV1() throws IOException {
     try {
       ByteBuffer buffer = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE);
       OIOUtils.readByteBuffer(buffer, nameIdMapHolder);
@@ -1635,7 +1849,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       buffer.rewind();
 
       final String name = stringSerializer.deserializeFromByteBufferObject(buffer);
-
       final int fileId = (int) buffer.getLong();
 
       return new NameFileIdEntry(name, fileId);
@@ -1644,14 +1857,69 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
+  private NameFileIdEntry readNextNameIdEntryV2() throws IOException {
+    try {
+      ByteBuffer buffer = ByteBuffer.allocate(2 * OIntegerSerializer.INT_SIZE);
+      OIOUtils.readByteBuffer(buffer, nameIdMapHolder);
+      buffer.rewind();
+
+      final int fileId = buffer.getInt();
+      final int nameSize = buffer.getInt();
+
+      buffer = ByteBuffer.allocate(nameSize);
+
+      OIOUtils.readByteBuffer(buffer, nameIdMapHolder);
+      buffer.rewind();
+
+      final String name = stringSerializer.deserializeFromByteBufferObject(buffer);
+
+      buffer = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE);
+      OIOUtils.readByteBuffer(buffer, nameIdMapHolder);
+      buffer.rewind();
+
+      final int fileNameSize = buffer.getInt();
+
+      buffer = ByteBuffer.allocate(fileNameSize);
+      OIOUtils.readByteBuffer(buffer, nameIdMapHolder);
+      buffer.rewind();
+
+      final String fileName = stringSerializer.deserializeFromByteBufferObject(buffer);
+
+      return new NameFileIdEntry(name, fileId, fileName);
+
+    } catch (EOFException eof) {
+      return null;
+    }
+  }
+
   private void writeNameIdEntry(NameFileIdEntry nameFileIdEntry, boolean sync) throws IOException {
+    writeNameIdEntry(nameIdMapHolder, nameFileIdEntry, sync);
+  }
+
+  private void writeNameIdEntry(FileChannel nameIdMapHolder, NameFileIdEntry nameFileIdEntry, boolean sync) throws IOException {
     final int nameSize = stringSerializer.getObjectSize(nameFileIdEntry.name);
-    ByteBuffer serializedRecord = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE + nameSize + OLongSerializer.LONG_SIZE);
-    serializedRecord.putInt(nameSize);
-    stringSerializer.serializeInByteBufferObject(nameFileIdEntry.name, serializedRecord);
-    serializedRecord.putLong(nameFileIdEntry.fileId);
+    final int fileNameSize = stringSerializer.getObjectSize(nameFileIdEntry.fileSystemName);
+
+    //file id size + file name size + file name + file system name size + file system name
+    ByteBuffer serializedRecord = ByteBuffer.allocate(3 * OIntegerSerializer.INT_SIZE + nameSize + fileNameSize);
+
+    //serialize file id
+    OIntegerSerializer.INSTANCE.serializeInByteBufferObject(nameFileIdEntry.fileId, serializedRecord, 0);
+
+    //serialize file name
+    OIntegerSerializer.INSTANCE.serializeInByteBufferObject(nameSize, serializedRecord, OIntegerSerializer.INT_SIZE);
+    stringSerializer.serializeInByteBufferObject(nameFileIdEntry.name, serializedRecord, 2 * OIntegerSerializer.INT_SIZE);
+
+    //serialize file system name
+    OIntegerSerializer.INSTANCE
+        .serializeInByteBufferObject(fileNameSize, serializedRecord, 2 * OIntegerSerializer.INT_SIZE + nameSize);
+    stringSerializer
+        .serializeInByteBufferObject(nameFileIdEntry.fileSystemName, serializedRecord, 3 * OIntegerSerializer.INT_SIZE + nameSize);
+
+    serializedRecord.position(0);
 
     OIOUtils.writeByteBuffer(serializedRecord, nameIdMapHolder, nameIdMapHolder.size());
+    nameIdMapHolder.write(serializedRecord);
 
     if (sync)
       nameIdMapHolder.force(true);
@@ -1814,10 +2082,18 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private static final class NameFileIdEntry {
     private final String name;
     private final int    fileId;
+    private final String fileSystemName;
 
     private NameFileIdEntry(String name, int fileId) {
       this.name = name;
       this.fileId = fileId;
+      this.fileSystemName = name;
+    }
+
+    private NameFileIdEntry(String name, int fileId, String fileSystemName) {
+      this.name = name;
+      this.fileId = fileId;
+      this.fileSystemName = fileSystemName;
     }
 
     @Override
@@ -1833,14 +2109,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         return false;
       if (!name.equals(that.name))
         return false;
-
-      return true;
+      return fileSystemName.equals(that.fileSystemName);
     }
 
     @Override
     public int hashCode() {
       int result = name.hashCode();
       result = 31 * result + fileId;
+      result = 31 * result + fileSystemName.hashCode();
       return result;
     }
   }

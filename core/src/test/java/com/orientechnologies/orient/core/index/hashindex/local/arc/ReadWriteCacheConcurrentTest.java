@@ -92,8 +92,8 @@ public class ReadWriteCacheConcurrentTest {
   }
 
   private void initBuffer() throws IOException, InterruptedException {
-    writeBuffer = new OWOWCache(8 + systemOffset, new OByteBufferPool(8 + systemOffset), null, -1,
-        15000 * (8 + systemOffset), storageLocal, true, files, 1);
+    writeBuffer = new OWOWCache(8 + systemOffset, new OByteBufferPool(8 + systemOffset), null, -1, 15000 * (8 + systemOffset),
+        storageLocal, true, files, 1);
     writeBuffer.loadRegisteredFiles();
     readBuffer = new O2QCache(4 * (8 + systemOffset), 8 + systemOffset, true, 20);
   }
@@ -108,11 +108,15 @@ public class ReadWriteCacheConcurrentTest {
     storageLocal.delete();
   }
 
-  private void deleteUsedFiles(int filesCount) {
+  private void deleteUsedFiles(int filesCount) throws IOException {
     for (int k = 0; k < filesCount; k++) {
-      File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteCacheTest" + k + ".tst");
-      if (file.exists())
-        Assert.assertTrue(file.delete());
+      final long fileId = writeBuffer.fileIdByName("readWriteCacheTest" + k + ".tst");
+      final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
+
+      readBuffer.deleteFile(fileId, writeBuffer);
+
+      File file = new File(storageLocal.getConfiguration().getDirectory() + "/" + nativeFileName);
+      Assert.assertFalse(file.exists());
     }
   }
 
@@ -188,7 +192,11 @@ public class ReadWriteCacheConcurrentTest {
   }
 
   private void validateFileContent(byte version, int k) throws IOException {
-    OFileClassic fileClassic = new OFileClassic(Paths.get(storageLocal.getConfiguration().getDirectory(), "readWriteCacheTest" + k + ".tst"));
+    final long fileId = writeBuffer.fileIdByName("readWriteCacheTest" + k + ".tst");
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
+    String path = storageLocal.getConfiguration().getDirectory() + "/" + nativeFileName;
+
+    OFileClassic fileClassic = new OFileClassic(Paths.get(path));
     fileClassic.open();
 
     for (int i = 0; i < PAGE_COUNT; i++) {
@@ -231,7 +239,6 @@ public class ReadWriteCacheConcurrentTest {
       }
 
       OCachePointer pointer = cacheEntry.getCachePointer();
-
 
       final ByteBuffer buffer = pointer.getSharedBuffer();
       buffer.position(systemOffset);

@@ -353,7 +353,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void renameFile(long fileId, String oldFileName, String newFileName) {
+  public void renameFile(long fileId, String newFileName) {
     int intId = extractFileId(fileId);
 
     metadataLock.lock();
@@ -364,10 +364,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
       fileNameIdMap.remove(fileName);
 
-      fileName = newFileName + fileName.substring(fileName.lastIndexOf(oldFileName) + fileName.length());
-
-      fileIdNameMap.put(intId, fileName);
-      fileNameIdMap.put(fileName, intId);
+      fileIdNameMap.put(intId, newFileName);
+      fileNameIdMap.put(newFileName, intId);
     } finally {
       metadataLock.unlock();
     }
