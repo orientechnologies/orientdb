@@ -10,77 +10,119 @@
     <form class="form-horizontal" id="etlForm" name="etlForm" #form="ngForm">
       <div id="stepSwitch" [ngSwitch]="getStep()">
 
+        <div class="stepZero" *ngSwitchCase="'0'">
+          <h3 align="center"><b>EXTRACT - TRANSFORM - LOAD</b></h3><br>
+          <div style="height:500px">
+            <div class="etl-intro">
+              <div style="height: 150px"></div>
+              <div class="col-md-6 text-center">
+                <button class="btn btn-lg" (click)="setStep(1)" style="border-radius: 40px;">Start New Configuration</button>
+              </div>
+              <div class="col-md-6 text-center">
+                <button class="btn btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                        aria-expanded="false" id="loadOldConfigs" style="border-radius: 40px;">
+                  Load Old configuration
+                </button>
+                <!-- Dropdown menu -->
+                <div class="dropdown-menu">
+                  <li class="list-group-item list-group-item-info">   Old configuration selection   </li>
+                  <div id="page-wrapper"><br>
+                    <div class="text-center">
+                      <h4>Select a valid json file:</h4><br><br>
+                      <div class="col-sm-5 col-sm-offset-1">
+                        <input type="file" id="fileInput" (click)=previewFile()>
+                      </div><br><br>
+
+                      <textarea id="fileDisplayArea" style="height: 100px" class="form-control" readonly></textarea><br>
+                      <div class="col-md-12 text-center">
+                        <button class="btn btn-default btn-sm" (click)="oldConfigInit(oldConfig)"
+                                style="border-radius: 40px;" [disabled]="!importReady">Select current configuration</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="stepOne" *ngSwitchCase="'1'">
           <h3 align="center">Step 1 - Configure the Source</h3><br/>
 
           <div class="form-group">
-            <label class="col-sm-2 control-label">Source Type</label>
-            <div class="col-md-5">
+            <label class="col-md-4 control-label">Source Type</label>
+            <div class="col-md-4">
               <select class="form-control" name="source" [(ngModel)]="sourcePrototype.source.value" required>
                 <option *ngFor="let sourceType of sourcePrototype.source.types" [value]="sourceType"> {{sourceType}} </option>
               </select>
             </div>
-            <div class="col-md-5">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                      [attr.data-content]="hints.sourceHint" data-animation="am-fade-and-scale"><b>?</b></button>
+            <div class="col-md-4">
+              <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.sourceHint"><i class="fa fa-question-circle"></i>
+              </button>
             </div>
           </div>
+
           <br><br><br>
 
           <!-- URL configuration -->
           <div class="form-group" *ngIf="sourcePrototype.source.value == 'url'">
-            <label class="col-sm-2 control-label">File URL</label>
-            <div class="col-md-5">
+            <label class="col-md-4 control-label">File URL</label>
+            <div class="col-md-4">
               <input type="url" id="fileURL" class="form-control" name="fileURL" [(ngModel)]="sourcePrototype.fileURL"
                      placeholder="URL of your file" pattern="https?://.+" required/>
 
             </div>
-            <div class="col-md-5">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                      [attr.data-content]="hints.URLHint" data-animation="am-fade-and-scale"><b>?</b></button>
+            <div class="col-md-4">
+              <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.URLHint"><i class="fa fa-question-circle"></i>
+              </button>
             </div>
             <br><br>
-            <label class="col-sm-2 control-label">HTTP Method</label>
-            <div class="col-md-5">
+            <label class="col-md-4 control-label">HTTP Method</label>
+            <div class="col-md-4">
               <select class="form-control" name="URLMethod" [(ngModel)]="sourcePrototype.URLMethod.value" required>
                 <option *ngFor="let URLMethod of sourcePrototype.URLMethod.types" [selected]="URLMethod == 'GET'" [value]="URLMethod"> {{URLMethod}} </option>
               </select>
             </div>
-            <div class="col-md-5">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                      [attr.data-content]="hints.URLMethodHint" data-animation="am-fade-and-scale"><b>?</b></button>
+            <div class="col-md-4">
+              <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.URLMethodHint"><i class="fa fa-question-circle"></i>
+              </button>
             </div>
           </div>
 
           <!-- Local File configuration -->
           <div class="form-group" *ngIf="sourcePrototype.source.value == 'local file'">
-            <label class="col-sm-2 control-label">File Path</label>
-            <div class="col-md-5">
+            <label class="col-md-4 control-label">File Path</label>
+            <div class="col-md-4">
               <input type="text" id="filePath" class="form-control" name="filePath" [(ngModel)]="sourcePrototype.filePath"
                      placeholder="Local path of your file" pattern="^(?:[\w]\:|\\)(\\[a-z_\-\s0-9\.]+)+\.?" required/>
             </div>
-            <div class="col-md-5">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                      [attr.data-content]="hints.pathHint" data-animation="am-fade-and-scale"><b>?</b></button>
+            <div class="col-md-4">
+              <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.pathHint"><i class="fa fa-question-circle"></i>
+              </button>
             </div>
             <br><br>
-            <label class="col-sm-2 control-label">File Locking</label>
-            <div class="col-md-5">
+            <label class="col-md-4 control-label">File Locking</label>
+            <div class="col-md-4">
               <label>
                 <input type="checkbox" name="fileLock" id="fileLock" class="checkbox" [(ngModel)]="sourcePrototype.fileLock">
               </label>
             </div>
-            <div class="col-md-5">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                      [attr.data-content]="hints.lockHint" data-animation="am-fade-and-scale"><b>?</b></button>
+            <div class="col-md-4">
+              <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.lockHint"><i class="fa fa-question-circle"></i>
+              </button>
             </div>
           </div>
-
+          <br>
           <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
+            <div class="col-sm-offset-5 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="sourceInit()" [disabled]="!form.valid">Start Configuration</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="sourceInit()" [disabled]="!form.valid">Create modules</button>
                 </div>
               </div>
             </div>
@@ -97,14 +139,15 @@
 
                   <div class="col-sm-3">
                     <h3 align="center">Extractor
-                      <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                              [attr.data-content]="hints.extractorHint" data-animation="am-fade-and-scale"><b>?</b></button>
+                      <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                              [attr.data-content]="hints.extractorHint"><i class="fa fa-question-circle"></i>
+                      </button>
                     </h3>
                     <div class="row" style="text-align: center;">
                       <div class="btn-group">
 
                         <button class="btn btn-primary btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
-                                aria-expanded="false" id="createExtractor">
+                                aria-expanded="false" id="createExtractor" style="border-radius: 50px;">
                           <b>+</b>
                         </button>
                         <!-- Dropdown menu, jdbc is shown only if selected as source -->
@@ -127,27 +170,22 @@
                       <br><br><br>
                       <div class="row">
                         <h5 id="pleaseExtractor" align="center"><b>Please create an extractor</b></h5>
-                        <div id="extractorSpace" class="row">
-                          <!--TODO spawn zone, for the library requires <br>s to make the flowchart visible-->
-                          <br><br><br><br><br><br><br><br>
-                          <canvas id="eCanvas" width="150" height="100" style="display:none" onclick="console.log('phew')"> <!-- TODO: onclick action -->
-                            Your browser does not support the HTML5 canvas tag.
-                          </canvas>
-                        </div>
+                        <div id="extractorSpace" style="height: 300px"></div>
                       </div>
                     </div>
                   </div>
 
                   <div class="col-sm-6">
                     <h3 align="center">Transformers
-                      <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                              [attr.data-content]="hints.transformerHint" data-animation="am-fade-and-scale"><b>?</b></button>
+                      <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                              [attr.data-content]="hints.transformerHint"><i class="fa fa-question-circle"></i>
+                      </button>
                     </h3>
                     <div class="row" style="text-align: center;">
                       <div class="btn-group">
 
                         <button class="btn btn-primary btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
-                                aria-expanded="false" id="createTransformer">
+                                aria-expanded="false" id="createTransformer" style="border-radius: 50px;">
                           <b>+</b>
                         </button>
                         <!-- Dropdown menu -->
@@ -170,25 +208,22 @@
                       <br><br><br>
                       <div class="row">
                         <h5 id="pleaseTransformer" align="center"><b>Please create at least one transformer</b></h5>
-                        <div id="transformerSpace" class="row">
-                          <canvas id="tCanvas" width="150" height="100" style="display:none" onclick="console.log('phew')"> <!-- TODO: onclick action -->
-                            Your browser does not support the HTML5 canvas tag.
-                          </canvas>
-                        </div>
+                        <div id="transformerSpace" style="height: 300px"></div>
                       </div>
                     </div>
                   </div>
 
                   <div class="col-sm-3">
                     <h3 align="center">Loader
-                      <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                              [attr.data-content]="hints.loaderHint" data-animation="am-fade-and-scale"><b>?</b></button>
+                      <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                              [attr.data-content]="hints.loaderHint"><i class="fa fa-question-circle"></i>
+                      </button>
                     </h3>
                     <div class="row" style="text-align: center;">
                       <div class="btn-group">
 
                         <button class="btn btn-primary btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
-                                aria-expanded="false" id="createLoader">
+                                aria-expanded="false" id="createLoader" style="border-radius: 50px;">
                           <b>+</b>
                         </button>
                         <!-- Dropdown menu -->
@@ -203,11 +238,7 @@
                     <br><br>
                     <div class="row">
                       <h5 id="pleaseLoader" align="center"><b>Please create a loader</b></h5>
-                      <div id="loaderSpace" class="row">
-                        <canvas id="lCanvas" width="150" height="100" style="display:none" onclick="console.log('phew')"> <!-- TODO: onclick action -->
-                          Your browser does not support the HTML5 canvas tag.
-                        </canvas>
-                      </div>
+                      <div id="loaderSpace" style="height: 300px"></div>
                     </div>
                   </div>
                 </div>
@@ -231,8 +262,9 @@
                     </div>
 
                     <div *ngFor="let eParameter of eKeys;">
-                      <button type="button" class="btn btn-xs btn-default" data-toggle="popover" data-html="true" style="border-radius: 40px;"
-                              [attr.data-content]="hints.extractor[eParameter]" data-animation="am-fade-and-scale"><b>?</b></button>
+                      <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                              [attr.data-content]="hints.extractor[eParameter]"><i class="fa fa-question-circle"></i>
+                      </button>
                       <label *ngIf="extractorPrototype[extractorType][eParameter]['mandatory'] == true">
                         &emsp;{{eParameter.toUpperCase()}} <b style="color:red;">*</b>
                       </label>
@@ -270,8 +302,9 @@
                     </div>
 
                     <div *ngFor="let tParameter of tKeys">
-                      <button type="button" class="btn btn-xs btn-default" data-toggle="popover" data-html="true" style="border-radius: 40px;"
-                              [attr.data-content]="hints.transformer[tParameter]" data-animation="am-fade-and-scale"><b>?</b></button>
+                      <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                              [attr.data-content]="hints.transformer[tParameter]"><i class="fa fa-question-circle"></i>
+                      </button>
                       <label *ngIf="transformerPrototype[getTransformerType(currentTransformer)][tParameter]['mandatory'] == true">
                         &emsp;{{tParameter.toUpperCase()}} <b style="color:red;">*</b>
                       </label>
@@ -311,8 +344,9 @@
                     </div>
 
                     <div *ngFor="let lParameter of lKeys">
-                      <button type="button" class="btn btn-xs btn-default" data-toggle="popover" data-html="true" style="border-radius: 40px;"
-                              [attr.data-content]="hints.loader[lParameter]" data-animation="am-fade-and-scale"><b>?</b></button>
+                      <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                              [attr.data-content]="hints.loader[lParameter]"><i class="fa fa-question-circle"></i>
+                      </button>
                       <label *ngIf="loaderPrototype[loaderType][lParameter]['mandatory'] == true">
                         &emsp;{{lParameter.toUpperCase()}} <b style="color:red;">*</b>
                       </label>
@@ -346,7 +380,7 @@
 
           <br><br><br><br>
           <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
+            <div class="col-sm-offset-3 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group">
                   <button type="button" class="btn btn-sm btn-primary" (click)="setStep('1'); reset()">Back</button>
@@ -363,8 +397,9 @@
         <div class="stepThree" *ngSwitchCase="'3'">
           <h3 align="center">Step 3 - Monitor the Execution</h3>
           <h4 align="center">Console Log
-            <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                    [attr.data-content]="hints.executionHint" data-animation="am-fade-and-scale"><b>?</b></button>
+            <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                    [attr.data-content]="hints.executionHint"><i class="fa fa-question-circle"></i>
+            </button>
           </h4>
           <div class="row row-space-2x">
             <div class="col-md-12">
@@ -383,7 +418,7 @@
             <div class="col-sm-offset-2 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="setStep(1); reset()">Restart</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="setStep(0); reset()">Restart</button>
                 </div>
                 <div class="btn-group">
                   <button type="button" class="btn btn-sm btn-primary" (click)="showSource()">Show Source</button>

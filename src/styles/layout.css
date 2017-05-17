@@ -54,6 +54,13 @@ body {
   box-shadow: 0px 0px 1px 1px #929292;
 }
 
+.etl-intro {
+  background: url("../img/etl-bg.png") #ffffff no-repeat center;
+  height: 500px;
+  width: inherit;
+  position: relative;
+}
+
 body div.container-notification {
   padding-top: 48px
 }
