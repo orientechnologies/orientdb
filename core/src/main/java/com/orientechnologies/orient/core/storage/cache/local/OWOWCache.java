@@ -922,6 +922,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     try {
       final Collection<Integer> intIds = nameIdMap.values();
 
+      final Map<Integer, String> idFileNameMap = new HashMap<Integer, String>();
+
       for (Integer intId : intIds) {
         if (intId < 0)
           continue;
@@ -929,6 +931,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final long fileId = composeFileId(id, intId);
         //we remove files because when we reopen storage we will reload them
         final OFileClassic fileClassic = files.remove(fileId);
+
+        idFileNameMap.put(intId, fileClassic.getName());
         fileClassic.close();
 
         result.add(fileId);
@@ -938,7 +942,15 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         nameIdMapHolder.setLength(0);
 
         for (Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
-          writeNameIdEntry(new NameFileIdEntry(entry.getKey(), entry.getValue()), false);
+          String fileName;
+
+          if (entry.getValue() >= 0) {
+            fileName = idFileNameMap.get(entry.getValue());
+          } else {
+            fileName = entry.getKey();
+          }
+
+          writeNameIdEntry(new NameFileIdEntry(entry.getKey(), entry.getValue(), fileName), false);
         }
         nameIdMapHolder.getFD().sync();
         nameIdMapHolder.close();
@@ -1339,7 +1351,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final long externalId = composeFileId(id, nameIdEntry.getValue());
 
         if (files.get(externalId) == null) {
-          OFileClassic fileClassic = createFileInstance(idFileNameMap.get(nameIdEntry.getValue()), nameIdEntry.getValue());
+          final String path = storageLocal.getVariableParser()
+              .resolveVariables(storageLocal.getStoragePath() + File.separator + idFileNameMap.get(nameIdEntry.getValue()));
+
+          final OFileClassic fileClassic = new OFileClassic(path, storageLocal.getMode());
 
           if (fileClassic.exists()) {
             fileClassic.open();
