@@ -133,6 +133,7 @@ public class SBTreeWALTest extends SBTreeTest {
     writeAheadLog.preventCutTill(writeAheadLog.getFlushedLsn());
 
     actualReadCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getReadCache();
+    actualWriteCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getWriteCache();
 
     sbTree = new OSBTree<Integer, OIdentifiable>("actualSBTree", ".sbt", true, ".nbt", actualStorage);
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
@@ -253,6 +254,9 @@ public class SBTreeWALTest extends SBTreeTest {
   }
 
   private void assertFileRestoreFromWAL() throws IOException {
+    long sbTreeFileId = actualWriteCache.fileIdByName(sbTree.getName() + ".sbt");
+    String nativeSBTreeFileName = ((OWOWCache) actualWriteCache).nativeFileNameById(sbTreeFileId);
+
     OStorage storage = databaseDocumentTx.getStorage();
     databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.close();
@@ -260,12 +264,15 @@ public class SBTreeWALTest extends SBTreeTest {
 
     restoreDataFromWAL();
 
+    long expectedSBTreeFileId = expectedWriteCache.fileIdByName("expectedSBTree.sbt");
+    String expectedSBTreeNativeFileName = ((OWOWCache) expectedWriteCache).nativeFileNameById(expectedSBTreeFileId);
+
     expectedDatabaseDocumentTx.activateOnCurrentThread();
     expectedDatabaseDocumentTx.close();
     storage = expectedDatabaseDocumentTx.getStorage();
     storage.close(true, false);
 
-    assertFileContentIsTheSame("expectedSBTree", sbTree.getName());
+    assertFileContentIsTheSame(expectedSBTreeNativeFileName, nativeSBTreeFileName);
   }
 
   private void restoreDataFromWAL() throws IOException {
@@ -341,10 +348,10 @@ public class SBTreeWALTest extends SBTreeTest {
     log.close();
   }
 
-  private void assertFileContentIsTheSame(String expectedBTree, String actualBTree) throws IOException {
-    File expectedFile = new File(expectedStorageDir, expectedBTree + ".sbt");
+  private void assertFileContentIsTheSame(String expectedBTreeFileName, String actualBTreeFileName) throws IOException {
+    File expectedFile = new File(expectedStorageDir, expectedBTreeFileName);
     RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r");
-    RandomAccessFile fileTwo = new RandomAccessFile(new File(actualStorageDir, actualBTree + ".sbt"), "r");
+    RandomAccessFile fileTwo = new RandomAccessFile(new File(actualStorageDir, actualBTreeFileName), "r");
 
     Assert.assertEquals(fileOne.length(), fileTwo.length());
 

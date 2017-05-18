@@ -70,7 +70,12 @@ public class WOWCacheTest {
   }
 
   private void closeCacheAndDeleteFile() throws IOException {
+    String nativeFileName = null;
+
     if (wowCache != null) {
+      long fileId = wowCache.fileIdByName(fileName);
+      nativeFileName = wowCache.nativeFileNameById(fileId);
+
       wowCache.close();
       wowCache = null;
     }
@@ -82,12 +87,19 @@ public class WOWCacheTest {
 
     storageLocal.delete();
 
-    File testFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + fileName);
-    if (testFile.exists()) {
-      Assert.assertTrue(testFile.delete());
+    if (nativeFileName != null) {
+      File testFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + nativeFileName);
+      if (testFile.exists()) {
+        Assert.assertTrue(testFile.delete());
+      }
     }
 
     File nameIdMapFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "name_id_map.cm");
+    if (nameIdMapFile.exists()) {
+      Assert.assertTrue(nameIdMapFile.delete());
+    }
+
+    nameIdMapFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "name_id_map_v2.cm");
     if (nameIdMapFile.exists()) {
       Assert.assertTrue(nameIdMapFile.delete());
     }
@@ -112,6 +124,7 @@ public class WOWCacheTest {
 
     byte[][] pageData = new byte[200][];
     long fileId = wowCache.addFile(fileName);
+    final String nativeFileName = wowCache.nativeFileNameById(fileId);
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] data = new byte[8];
@@ -148,13 +161,14 @@ public class WOWCacheTest {
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataContent = pageData[i];
-      assertFile(i, dataContent, new OLogSequenceNumber(0, 0));
+      assertFile(i, dataContent, new OLogSequenceNumber(0, 0), nativeFileName);
     }
   }
 
   public void testDataUpdate() throws Exception {
     final NavigableMap<Long, byte[]> pageIndexDataMap = new TreeMap<Long, byte[]>();
     long fileId = wowCache.addFile(fileName);
+    final String nativeFileName = wowCache.nativeFileNameById(fileId);
 
     Random random = new Random();
 
@@ -230,7 +244,7 @@ public class WOWCacheTest {
     wowCache.flush();
 
     for (Map.Entry<Long, byte[]> entry : pageIndexDataMap.entrySet()) {
-      assertFile(entry.getKey(), entry.getValue(), new OLogSequenceNumber(0, 0));
+      assertFile(entry.getKey(), entry.getValue(), new OLogSequenceNumber(0, 0), nativeFileName);
     }
 
   }
@@ -240,6 +254,7 @@ public class WOWCacheTest {
 
     byte[][] pageData = new byte[200][];
     long fileId = wowCache.addFile(fileName);
+    final String nativeFileName = wowCache.nativeFileNameById(fileId);
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] data = new byte[8];
@@ -283,7 +298,7 @@ public class WOWCacheTest {
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataContent = pageData[i];
-      assertFile(i, dataContent, new OLogSequenceNumber(0, 0));
+      assertFile(i, dataContent, new OLogSequenceNumber(0, 0), nativeFileName);
     }
   }
 
@@ -291,8 +306,10 @@ public class WOWCacheTest {
     final long nonDelFileId = wowCache.addFile(fileName);
     final long fileId = wowCache.addFile("removedFile.del");
 
+    final String removedNativeFileName = wowCache.nativeFileNameById(fileId);
+
     wowCache.deleteFile(fileId);
-    File deletedFile = new File(storageLocal.getStoragePath(), "removedFile.del");
+    File deletedFile = new File(storageLocal.getStoragePath(), removedNativeFileName);
     Assert.assertTrue(!deletedFile.exists());
 
     String fileName = wowCache.restoreFileById(fileId);
@@ -313,8 +330,10 @@ public class WOWCacheTest {
     final long nonDelFileId = wowCache.addFile(fileName);
     final long fileId = wowCache.addFile("removedFile.del");
 
+    final String removedNativeFileName = wowCache.nativeFileNameById(fileId);
+
     wowCache.deleteFile(fileId);
-    File deletedFile = new File(storageLocal.getStoragePath(), "removedFile.del");
+    File deletedFile = new File(storageLocal.getStoragePath(), removedNativeFileName);
     Assert.assertTrue(!deletedFile.exists());
 
     wowCache.close();
@@ -335,7 +354,7 @@ public class WOWCacheTest {
     Assert.assertTrue(!deletedFile.exists());
   }
 
-  private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn) throws IOException {
+  private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName) throws IOException {
     String path = storageLocal.getConfiguration().getDirectory() + File.separator + fileName;
 
     OFileClassic fileClassic = new OFileClassic(path, "r");
