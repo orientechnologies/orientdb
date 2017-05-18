@@ -91,13 +91,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private String localNodeName;
 
   public class ODistributedLock {
-    final ORawBuffer            record;
-    final ODistributedRequestId reqId;
-    final CountDownLatch        lock;
-    final long                  acquiredOn;
+    final    ODistributedRequestId reqId;
+    final    CountDownLatch        lock;
+    final    long                  acquiredOn;
+    volatile ORawBuffer            record;
 
-    private ODistributedLock(final ODistributedRequestId reqId, final ORawBuffer record) {
-      this.record = record;
+    private ODistributedLock(final ODistributedRequestId reqId) {
       this.reqId = reqId;
       this.lock = new CountDownLatch(1);
       this.acquiredOn = System.currentTimeMillis();
@@ -352,14 +351,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         workerThreads.get(0).processRequest(request);
 
     } else if (partitionKeys.length == 1 && partitionKeys[0] == -3) {
-      // SERVICE
+      // SERVICE - LOCK
       ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
           "Request %s on database '%s' dispatched to the lock worker", request, databaseName);
 
       lockThread.processRequest(request);
 
     } else if (partitionKeys.length == 1 && partitionKeys[0] == -4) {
-      // SERVICE
+      // SERVICE - FAST_NOLOCK
       ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
           "Request %s on database '%s' dispatched to the unlock worker", request, databaseName);
 
@@ -575,27 +574,17 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public boolean lockRecord(final ORID rid, final ODistributedRequestId iRequestId, final long timeout) {
-    // TODO: IMPROVE THIS BY RECEIVING THE RECORD AS PARAMETER INSTEAD OF RELOADING IT
-
-    ORawBuffer originalRecord = null;
-
-    if (rid.isPersistent()) {
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (db != null)
-        originalRecord = db.getStorage().getUnderlying().readRecord((ORecordId) rid, null, false, false, null).getResult();
-    }
-
-    final ODistributedLock lock = new ODistributedLock(iRequestId, originalRecord);
+  public boolean lockRecord(final ORID rid, final ODistributedRequestId requestId, final long timeout) {
+    final ODistributedLock lock = new ODistributedLock(requestId);
 
     boolean newLock = true;
 
     ODistributedLock currentLock = lockManager.putIfAbsent(rid, lock);
     if (currentLock != null) {
-      if (iRequestId.equals(currentLock.reqId)) {
+      if (requestId.equals(currentLock.reqId)) {
         // SAME ID, ALREADY LOCKED
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-            "Distributed transaction: %s locked record %s in database '%s' owned by %s (thread=%d)", iRequestId, rid, databaseName,
+            "Distributed transaction: %s locked record %s in database '%s' owned by %s (thread=%d)", requestId, rid, databaseName,
             currentLock.reqId, Thread.currentThread().getId());
         currentLock = null;
         newLock = false;
@@ -620,37 +609,31 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       }
     }
 
-//    if (currentLock != null) {
-//      // CHECK THE OWNER SERVER IS ONLINE. THIS AVOIDS ANY "WALKING DEAD" LOCKS
-//      final String lockingNodeName = manager.getNodeNameById(currentLock.reqId.getNodeId());
-//      if (lockingNodeName == null || !manager.isNodeAvailable(lockingNodeName)) {
-//        ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
-//            "Distributed transaction: forcing unlock of record %s in database '%s' because the owner server '%s' is offline (reqId=%s ownerReqId=%s, thread=%d)",
-//            iRecord.getIdentity(), databaseName, lockingNodeName, iRequestId, currentLock.reqId, Thread.currentThread().getId());
-//
-//        // FORCE THE UNLOCK AND LOCK OF CURRENT REQ-ID
-//        lockManager.put(rid, lock);
-//        currentLock = null;
-//      }
-//    }
-//
-    if (ODistributedServerLog.isDebugEnabled())
-      if (currentLock == null) {
+    if (currentLock == null) {
+      // SAVE CURRENT RECORD IN RAM FOR READ-ONLY ACCESS WHILE IT IS LOCKED
+      if (rid.isPersistent()) {
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+        if (db != null)
+          lock.record = db.getStorage().getUnderlying().readRecord((ORecordId) rid, null, false, false, null).getResult();
+      }
+
+      if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog
             .debug(this, localNodeName, null, DIRECTION.NONE, "Locked record %s in database '%s' (reqId=%s thread=%d)", rid,
-                databaseName, iRequestId, Thread.currentThread().getId());
-      } else {
+                databaseName, requestId, Thread.currentThread().getId());
+    } else {
+      if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
             "Cannot lock record %s in database '%s' owned by %s (reqId=%s thread=%d)", rid, databaseName, currentLock.reqId,
-            iRequestId, Thread.currentThread().getId());
-      }
+            requestId, Thread.currentThread().getId());
+    }
 
     if (currentLock != null)
       throw new ODistributedRecordLockedException(manager.getLocalNodeName(), rid, currentLock.reqId, timeout);
 
     // DUMP STACK TRACE
     // OException.dumpStackTrace(String.format("Distributed transaction: %s locked record %s in database '%s' (thread=%d)",
-    // iRequestId,
+    // requestId,
     // iRecord, databaseName, Thread.currentThread().getId()));
 
     return newLock;
@@ -661,10 +644,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (requestId == null)
       return;
 
-    final ODistributedLock owner = lockManager.remove(iRecord.getIdentity());
+    final ODistributedLock owner = lockManager.get(iRecord.getIdentity());
     if (owner != null) {
       if (!owner.reqId.equals(requestId)) {
-        ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE,
+        ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
             "Distributed transaction: cannot unlock record %s in database '%s' because owner %s <> current %s (thread=%d)", iRecord,
             databaseName, owner.reqId, requestId, Thread.currentThread().getId());
         return;
@@ -675,6 +658,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       // .dumpStackTrace(String.format("Distributed transaction: %s unlocked record %s in database '%s' (owner=%s, thread=%d)",
       // requestId, iRecord, databaseName, owner != null ? owner.reqId : "null", Thread.currentThread().getId()));
 
+      lockManager.remove(iRecord.getIdentity());
+
       // NOTIFY ANY WAITERS
       owner.lock.countDown();
     }
@@ -683,6 +668,75 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
           "Distributed transaction: %s unlocked record %s in database '%s' (owner=%s, thread=%d)", requestId, iRecord, databaseName,
           owner != null ? owner.reqId : "null", Thread.currentThread().getId());
+  }
+
+  @Override
+  public boolean forceLockRecord(final ORID rid, final ODistributedRequestId requestId) {
+    final ODistributedLock lock = new ODistributedLock(requestId);
+
+    ORawBuffer currentRecord = null;
+
+    boolean newLock = true;
+    ODistributedLock currentLock = lockManager.put(rid, lock);
+    if (currentLock != null) {
+      currentRecord = currentLock.record;
+
+      if (requestId.equals(currentLock.reqId)) {
+        // SAME ID, ALREADY LOCKED
+        ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+            "Distributed transaction: %s locked rid %s in database '%s' owned by %s (thread=%d)", requestId, rid, databaseName,
+            currentLock.reqId, Thread.currentThread().getId());
+        currentLock = null;
+        newLock = false;
+      } else {
+        ODistributedServerLog
+            .info(this, localNodeName, null, DIRECTION.NONE, "Canceling request %s in database '%s' (reqId=%s thread=%d)",
+                currentLock.reqId, databaseName, requestId, Thread.currentThread().getId());
+
+        // WAKE UP WAITERS OF PREVIOUS LOCK
+        currentLock.lock.countDown();
+
+        // CANCEL REQ-ID/TX THAT OWNED THE LOCK
+        final ODistributedTxContext lockedCtx = activeTxContexts.get(currentLock.reqId);
+        if (lockedCtx != null) {
+          // CANCEL THE ENTIRE TX/CONTEXT/REQ-ID
+
+          lockedCtx.cancel(manager, ODatabaseRecordThreadLocal.INSTANCE.get());
+
+        } else {
+          // ABORT SINGLE REQUEST
+          final ODistributedResponseManager respMgr = manager.getMessageService().getResponseManager(requestId);
+          if (respMgr != null) {
+            respMgr.cancel();
+          }
+        }
+      }
+    }
+
+    if (currentLock == null) {
+      // SAVE CURRENT RECORD IN RAM FOR READ-ONLY ACCESS WHILE IT IS LOCKED
+      if (currentRecord != null)
+        // USE THE EXISTENT
+        lock.record = currentRecord;
+      else if (rid.isPersistent()) {
+        // RELOAD IT
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+        if (db != null)
+          lock.record = db.getStorage().getUnderlying().readRecord((ORecordId) rid, null, false, false, null).getResult();
+      }
+
+      if (ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog
+            .debug(this, localNodeName, null, DIRECTION.NONE, "Locked rid %s in database '%s' (reqId=%s thread=%d)", rid,
+                databaseName, requestId, Thread.currentThread().getId());
+    } else {
+      if (ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+            "Forced locking of rid %s in database '%s' owned by %s (reqId=%s thread=%d)", rid, databaseName, currentLock.reqId,
+            requestId, Thread.currentThread().getId());
+    }
+
+    return newLock;
   }
 
   @Override
@@ -1066,6 +1120,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   private void startTxTimeoutTimerTask() {
+    final ODistributedDatabaseImpl current = this;
+
     txTimeoutTask = new TimerTask() {
       @Override
       public void run() {
@@ -1093,8 +1149,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                     "Distributed transaction %s on database '%s' is expired after %dms", ctx.getReqId(), databaseName, elapsed);
 
                 try {
-                  ctx.rollback(database);
-                  ctx.destroy();
+                  ctx.cancel(manager, database);
 
                   if (ctx.getReqId().getNodeId() == manager.getLocalNodeId())
                     // REQUEST WAS ORIGINATED FROM CURRENT SERVER

@@ -1138,8 +1138,6 @@ public class LocalPaginatedClusterTest {
   public void testResurrectRecord() throws IOException {
     byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
     int recordVersion = 0;
-    recordVersion++;
-    recordVersion++;
 
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1, null);
     Assert.assertEquals(physicalPosition.clusterPosition, 0);
@@ -1148,7 +1146,6 @@ public class LocalPaginatedClusterTest {
         .assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition), OPaginatedCluster.RECORD_STATUS.PRESENT);
 
     for (int i = 0; i < 1000; ++i) {
-      recordVersion++;
       smallRecord = new byte[] { 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3 };
       try {
         paginatedCluster.recycleRecord(physicalPosition.clusterPosition);
@@ -1172,11 +1169,12 @@ public class LocalPaginatedClusterTest {
       Assert.assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition),
           OPaginatedCluster.RECORD_STATUS.ALLOCATED);
 
-      paginatedCluster.createRecord(smallRecord, recordVersion, ODocument.RECORD_TYPE, new OPhysicalPosition(physicalPosition.clusterPosition));
+      final OPhysicalPosition ppos = paginatedCluster
+          .createRecord(smallRecord, 1, ODocument.RECORD_TYPE, new OPhysicalPosition(physicalPosition.clusterPosition));
 
       rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition, false);
       Assert.assertNotNull(rawBuffer);
-      Assert.assertEquals(rawBuffer.version, recordVersion);
+      Assert.assertEquals(rawBuffer.version, recordVersion+1);
       Assert.assertEquals(rawBuffer.buffer, smallRecord);
       Assert.assertEquals(rawBuffer.recordType, ODocument.RECORD_TYPE);
 

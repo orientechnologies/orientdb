@@ -192,10 +192,10 @@ public class OClusterHealthChecker extends TimerTask {
 
           if (result)
             ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                "Recover complete for database '%s'...", dbName);
+                "Recover complete for database '%s'", dbName);
           else
             ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                "Recover cannot be completed for database '%s'...", dbName);
+                "Recover cannot be completed for database '%s'", dbName);
         }
       }
     }

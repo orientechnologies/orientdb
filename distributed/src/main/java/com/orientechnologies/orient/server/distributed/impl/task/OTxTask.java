@@ -63,7 +63,7 @@ public class OTxTask extends OAbstract2pcTask {
 
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
 
-    // CREATE A CONTEXT OF TX
+    // CREATE A CONTEXT OF TX. IT WILL BE CLOSED BY 2PC MESSAGE
     reqContext = ddb.registerTxContext(requestId);
 
     final ODistributedConfiguration dCfg = iManager.getDatabaseConfiguration(database.getName());
@@ -129,6 +129,15 @@ public class OTxTask extends OAbstract2pcTask {
       }
 
       database.commit();
+
+      // LOCK NEW RECORDS BECAUSE ONLY AFTER COMMIT THE RID IS AVAILABLE
+      for (int i = 0; i < tasks.size(); ++i) {
+        final OAbstractRecordReplicatedTask task = tasks.get(i);
+
+        if (task instanceof OCreateRecordTask)
+          // LOCK THE NEW CREATED RECORD RIGHT AFTER HAVING THE RID
+          reqContext.lock(((OPlaceholder) result.results.get(i)).getIdentity(), getRecordLock());
+      }
 
     } catch (Throwable e) {
       // if (e instanceof ODistributedRecordLockedException)

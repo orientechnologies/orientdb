@@ -54,7 +54,7 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
   private int[] partitionKey;
 
   public OCompleted2pcTask() {
-    partitionKey = ALL;
+    partitionKey = FAST_NOLOCK;
   }
 
   public OCompleted2pcTask(final ODistributedRequestId iRequestId, final boolean iSuccess, final int[] partitionKey) {
@@ -122,7 +122,7 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
           ctx.fix(database, fixTasks);
         else
           // DON'T NEED OF THE CONTEXT TO EXECUTE A FIX
-          ODistributedTxContextImpl.executeFix(this, database, fixTasks, requestId, ddb);
+          ODistributedTxContextImpl.executeFix(this, null, database, fixTasks, requestId, ddb);
       }
     } finally {
       if (ctx != null)
@@ -192,7 +192,7 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
   public String toString() {
     return getName() + " origReqId: " + requestId + " type: " + (success ?
         "commit" :
-        (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) [" + fixTasks + "]"));
+        (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) " + fixTasks));
   }
 
   public List<ORemoteTask> getFixTasks() {

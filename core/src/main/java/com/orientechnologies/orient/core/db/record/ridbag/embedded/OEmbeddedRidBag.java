@@ -330,7 +330,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     if (size < 10) {
       final StringBuilder sb = new StringBuilder(256);
       sb.append('[');
-      for (final Iterator<OIdentifiable> it = this.iterator(); it.hasNext(); ) {
+      for (final Iterator<OIdentifiable> it = this.rawIterator(); it.hasNext(); ) {
         try {
           OIdentifiable e = it.next();
           if (e != null) {
@@ -344,7 +344,6 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         }
       }
       return sb.append(']').toString();
-      
     } else
       return "[size=" + size + "]";
   }

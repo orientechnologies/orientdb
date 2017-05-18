@@ -58,24 +58,33 @@ public interface ODistributedDatabase {
    * Locks the record to be sure distributed transactions never work concurrently against the same records in the meanwhile the
    * transaction is executed and the OCompleteTxTask is not arrived.
    *
-   * @param iRecord    Record to lock
-   * @param iRequestId Request id
-   * @param timeout    Timeout in ms to wait for the lock
+   * @param record    Record to lock
+   * @param requestId Request id
+   * @param timeout   Timeout in ms to wait for the lock
    *
    * @throws com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException if the record wasn't locked
    * @see #unlockRecord(OIdentifiable, ODistributedRequestId)
    */
-  boolean lockRecord(ORID iRecord, final ODistributedRequestId iRequestId, long timeout);
+  boolean lockRecord(ORID record, ODistributedRequestId requestId, long timeout);
 
   /**
    * Unlocks the record previously locked through #lockRecord method.
    *
-   * @param iRecord
-   * @param requestId
+   * @param record    Record to unlock
+   * @param requestId Request id
    *
    * @see #lockRecord(ORID, ODistributedRequestId, long)
    */
-  void unlockRecord(OIdentifiable iRecord, ODistributedRequestId requestId);
+  void unlockRecord(OIdentifiable record, ODistributedRequestId requestId);
+
+  /**
+   * Force the locking of a record. If the record was previously locked by a transaction (context), then that transaction is
+   * canceled.
+   *
+   * @param record    Record to lock
+   * @param requestId Request id
+   */
+  boolean forceLockRecord(ORID record, ODistributedRequestId requestId);
 
   String dump();
 

@@ -25,16 +25,19 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -70,6 +73,7 @@ public class ODistributedResponseManager {
   private volatile boolean receivedCurrentNode;
   private       ODistributedResponse quorumResponse  = null;
   private final Set<String>          followupToNodes = new HashSet<String>();
+  private       AtomicBoolean        canceled        = new AtomicBoolean(false);
 
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Collection<String> expectedResponses, final Set<String> iNodesConcurInQuorum, final int iTotalExpectedResponses,
@@ -267,11 +271,14 @@ public class ODistributedResponseManager {
 
         if (ODistributedServerLog.isDebugEnabled())
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "Waiting max %dms for collecting all synchronous responses (timeout=%d reqId=%s thread=%d)", currentTimeout,
+              "Waiting max %dms for collecting all synchronous responses... (timeout=%d reqId=%s thread=%d)", currentTimeout,
               synchTimeout, request.getId(), Thread.currentThread().getId());
 
         // WAIT FOR THE RESPONSES
         if (synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS)) {
+          if (canceled.get())
+            throw new ODistributedOperationException("Request has been canceled");
+
           // COMPLETED
           if (ODistributedServerLog.isDebugEnabled())
             ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
@@ -374,6 +381,10 @@ public class ODistributedResponseManager {
           synchronousResponsesLock.unlock();
         }
       }
+
+      if (canceled.get())
+        throw new ODistributedOperationException("Request has been canceled");
+
       return isMinimumQuorumReached(reachedTimeout);
 
     } finally {
@@ -466,6 +477,17 @@ public class ODistributedResponseManager {
     } finally {
       synchronousResponsesLock.unlock();
     }
+  }
+
+  public boolean isCanceled() {
+    return canceled.get();
+  }
+
+  public void cancel() {
+    this.canceled.set(true);
+
+    // UNLOCK WAITER
+    synchronousResponsesArrived.countDown();
   }
 
   /**
@@ -884,7 +906,7 @@ public class ODistributedResponseManager {
 
     ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
         "Detected %d conflicts, but the quorum (%d) has been reached. Checking responses and in case fixing remote records (reqId=%s)",
-        conflicts, quorum, request);
+        conflicts, quorum, request.getId());
 
     for (List<ODistributedResponse> responseGroup : responseGroups) {
       if (responseGroup != bestResponsesGroup) {
@@ -909,15 +931,33 @@ public class ODistributedResponseManager {
             return false;
           }
 
-          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), r.getExecutorNodeName(), DIRECTION.OUT,
-              "Sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
-
-          dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), fixTask,
-              dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null, null);
+          executeFix(r.getExecutorNodeName(), fixTask, r.getPayload(), goodResponse);
         }
       }
     }
     return true;
+  }
+
+  private void executeFix(final String server, final ORemoteTask fixTask, final Object r, final Object goodResponse) {
+    if (server.equals(dManager.getLocalNodeName())) {
+      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, DIRECTION.OUT,
+          "Executing the fix locally (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
+
+      final ODatabaseDocumentInternal database = dManager.getMessageService().getDatabase(getDatabaseName()).getDatabaseInstance();
+      try {
+        dManager
+            .executeOnLocalNode(new ODistributedRequestId(dManager.getLocalNodeId(), dManager.getNextMessageIdCounter()), fixTask,
+                database);
+      } finally {
+        database.close();
+      }
+    } else {
+      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, DIRECTION.OUT,
+          "Sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
+
+      dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(server), fixTask,
+          dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null, null);
+    }
   }
 
   protected boolean checkNoWinnerCase(final List<ODistributedResponse> bestResponsesGroup) {
@@ -986,7 +1026,6 @@ public class ODistributedResponseManager {
             final Object response = responses.get(s);
             if (quorumResponse != null && !quorumResponse.equals(response)) {
               // SEND FIX
-
               final Object payload = response instanceof ODistributedResponse ?
                   ((ODistributedResponse) response).getPayload() :
                   null;
@@ -1001,12 +1040,7 @@ public class ODistributedResponseManager {
                 continue;
               }
 
-              ODistributedServerLog.debug(this, localNodeName, s, DIRECTION.OUT,
-                  "Sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, response, request,
-                  quorumResponse.getPayload());
-
-              dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(s), fixTask,
-                  dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null, null);
+              executeFix(s, fixTask, response, quorumResponse.getPayload());
             }
           }
         }

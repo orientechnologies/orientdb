@@ -40,7 +40,7 @@ import java.io.IOException;
  */
 public class ORepairClusterTask extends OTxTask {
   public static final int FACTORYID = 18;
-  private int             clusterId;
+  private int clusterId;
 
   public ORepairClusterTask() {
   }
@@ -90,16 +90,18 @@ public class ORepairClusterTask extends OTxTask {
       return null;
 
     } catch (Throwable e) {
-      // if (e instanceof ODistributedRecordLockedException)
-      // ddb.dumpLocks();
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
           "Repair cluster: rolling back transaction db=%s (reqId=%s error=%s)...", database.getName(), requestId, e);
 
-      // ddb.popTxContext(requestId);
       reqContext.unlock();
 
       return e;
     } finally {
+
+      // RELEASE LOCKS AND REMOVE TX CONTEXT
+      ddb.popTxContext(requestId);
+      reqContext.destroy();
+
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
           "Repair cluster: transaction completed db=%s (reqId=%s)...", database.getName(), requestId);
     }

@@ -100,10 +100,11 @@ public class ODistributedTransactionManager {
           dManager.getNextMessageIdCounter());
 
       boolean releaseContext = false;
-      final ODistributedTxContext ctx = localDistributedDatabase.registerTxContext(requestId);
-      final AtomicBoolean lockReleased = new AtomicBoolean(true);
 
+      final AtomicBoolean lockReleased = new AtomicBoolean(true);
+      final ODistributedTxContext ctx = localDistributedDatabase.registerTxContext(requestId);
       try {
+
         acquireMultipleRecordLocks(iTx, eventListener, ctx);
         lockReleased.set(false);
 
@@ -123,7 +124,9 @@ public class ODistributedTransactionManager {
                   "Error on updating local LSN configuration for database '%s'", storage.getName());
         }
 
-        // REMOVE THE TX OBJECT FROM DATABASE TO AVOID UND OPERATIONS ARE "LOST IN TRANSACTION"
+        final OTxTask txTask = createTxTask(uResult);
+
+        // AFTER THE CREATION OF TASKS, REMOVE THE TX OBJECT FROM DATABASE TO AVOID UNDO OPERATIONS ARE "LOST IN TRANSACTION"
         database.setDefaultTransactionMode();
 
         // After commit force the clean of dirty managers due to possible copy and miss clean.
@@ -143,7 +146,6 @@ public class ODistributedTransactionManager {
 
         final OTxTaskResult localResult = createLocalTxResult(uResult);
 
-        final OTxTask txTask = createTxTask(uResult);
         txTask.setLocalUndoTasks(undoTasks);
 
         try {
@@ -163,6 +165,9 @@ public class ODistributedTransactionManager {
                         return null;
                       }
                     });
+
+            if (ctx.isCanceled())
+              throw new ODistributedOperationException("Transaction as been canceled because concurrent updates");
 
             if (lastResult == null)
               throw new OTransactionException("No response received from distributed servers");
@@ -193,9 +198,8 @@ public class ODistributedTransactionManager {
             executeAsyncTx(nodes, localResult, involvedClusters, txTask, requestId.getMessageId(), localNodeName, unlockCallback);
           }
         } catch (Throwable e) {
-//          if (responseManager != null)
-//            // WAIT THE REQUEST IS COMPLETE FIRST. THIS AVOID TO RE-EXECUTE THE SAME REQUEST WHILE FIX ARE SENT
-//            responseManager.waitForCompletion();
+          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+              "Error on executing transaction on database '%s', rollback... (reqId=%s err='%s')", storage.getName(), requestId, e);
 
           // ROLLBACK TX
           storage.executeUndoOnLocalServer(requestId, txTask);

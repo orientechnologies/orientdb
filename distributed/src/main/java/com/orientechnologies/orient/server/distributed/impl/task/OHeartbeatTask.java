@@ -75,7 +75,7 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
    */
   @Override
   public int[] getPartitionKey() {
-    return UNLOCK;
+    return FAST_NOLOCK;
   }
 
   @Override

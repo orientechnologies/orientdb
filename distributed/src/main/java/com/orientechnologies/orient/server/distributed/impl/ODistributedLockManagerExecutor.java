@@ -118,7 +118,7 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
                 nodeSource, Thread.currentThread().getId());
       } else {
         ODistributedServerLog.debug(this, localNodeName, nodeSource, DIRECTION.IN,
-            "Cannot lock resource '%s' owned by server '%s' (timeout=%d threadId=%d)", resource, nodeSource, timeout,
+            "Cannot lock resource '%s' owned by server '%s' (timeout=%d threadId=%d)", resource, currentLock.server, timeout,
             Thread.currentThread().getId());
       }
 

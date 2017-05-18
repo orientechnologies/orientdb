@@ -254,8 +254,6 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
     final String clusterName = db.getClusterNameById(clusterId);
 
-    final ODistributedTxContext ctx = localDistributedDatabase.registerTxContext(requestId);
-
     // ASSURE LOCAL NODE IS THE CLUSTER OWNER
     final String serverOwner = dCfg.getClusterOwner(clusterName);
     if (serverOwner == null || !serverOwner.equals(dManager.getLocalNodeName())) {
@@ -265,7 +263,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
       return;
     }
 
+    final ODistributedTxContext ctx = localDistributedDatabase.registerTxContext(requestId);
     try {
+
       // ACQUIRE LOCK ON THE CLUSTER (LOCKING -1 AS CLUSTER POSITION)
       final List<ORecordId> rids = new ArrayList<ORecordId>(1);
       rids.add(new ORecordId(clusterId, -1));
@@ -273,58 +273,54 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
       // ACQUIRE LOCKS ON LOCAL SERVER FIRST
       ODistributedTransactionManager.acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, rids, null, ctx, -1);
 
+      final List<String> clusterNames = new ArrayList<String>();
+      clusterNames.add(clusterName);
+
+      final Collection<String> involvedServers = dCfg.getServers(clusterNames);
+      final Set<String> nonLocalServers = new HashSet<String>(involvedServers);
+      nonLocalServers.remove(dManager.getLocalNodeName());
+
+      if (nonLocalServers.isEmpty())
+        return;
+
+      ODistributedServerLog
+          .debug(this, dManager.getLocalNodeName(), involvedServers.toString(), ODistributedServerLog.DIRECTION.OUT,
+              "Auto repairing cluster '%s' (%d) on servers %s (reqId=%s)...", clusterName, clusterId, involvedServers, requestId);
+
+      // CREATE TX TASK
+      final OClusterRepairInfoTask task = new OClusterRepairInfoTask(clusterId);
+
+      final ODistributedResponse response = dManager
+          .sendRequest(databaseName, clusterNames, nonLocalServers, task, requestId.getMessageId(),
+              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+
+      int repaired = 0;
+
       try {
-
-        final List<String> clusterNames = new ArrayList<String>();
-        clusterNames.add(clusterName);
-
-        final Collection<String> involvedServers = dCfg.getServers(clusterNames);
-        final Set<String> nonLocalServers = new HashSet<String>(involvedServers);
-        nonLocalServers.remove(dManager.getLocalNodeName());
-
-        if (nonLocalServers.isEmpty())
-          return;
-
-        ODistributedServerLog
-            .debug(this, dManager.getLocalNodeName(), involvedServers.toString(), ODistributedServerLog.DIRECTION.OUT,
-                "Auto repairing cluster '%s' (%d) on servers %s (reqId=%s)...", clusterName, clusterId, involvedServers, requestId);
-
-        // CREATE TX TASK
-        final OClusterRepairInfoTask task = new OClusterRepairInfoTask(clusterId);
-
-        final ODistributedResponse response = dManager
-            .sendRequest(databaseName, clusterNames, nonLocalServers, task, requestId.getMessageId(),
-                ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-
-        int repaired = 0;
-
-        try {
-          if (response != null) {
-            final Object payload = response.getPayload();
-            if (payload instanceof Map)
-              repaired = repairClusterAtBlocks(db, clusterNames, clusterId, (Map<String, Object>) payload);
-          }
-        } finally {
-          if (repaired == 0)
-            ODistributedServerLog
-                .debug(this, dManager.getLocalNodeName(), involvedServers.toString(), ODistributedServerLog.DIRECTION.OUT,
-                    "Auto repairing of cluster '%s' completed. No fix is needed (reqId=%s)", clusterName, repaired, requestId);
-          else
-            ODistributedServerLog
-                .info(this, dManager.getLocalNodeName(), involvedServers.toString(), ODistributedServerLog.DIRECTION.OUT,
-                    "Auto repairing of cluster '%s' completed. Repaired %d records (reqId=%s)", clusterName, repaired, requestId);
+        if (response != null) {
+          final Object payload = response.getPayload();
+          if (payload instanceof Map)
+            repaired = repairClusterAtBlocks(db, clusterNames, clusterId, (Map<String, Object>) payload);
         }
-
       } finally {
-        // RELEASE LOCKS AND REMOVE TX CONTEXT
-        localDistributedDatabase.popTxContext(requestId);
-        ctx.destroy();
+        if (repaired == 0)
+          ODistributedServerLog
+              .debug(this, dManager.getLocalNodeName(), involvedServers.toString(), ODistributedServerLog.DIRECTION.OUT,
+                  "Auto repairing of cluster '%s' completed. No fix is needed (reqId=%s)", clusterName, repaired, requestId);
+        else
+          ODistributedServerLog
+              .info(this, dManager.getLocalNodeName(), involvedServers.toString(), ODistributedServerLog.DIRECTION.OUT,
+                  "Auto repairing of cluster '%s' completed. Repaired %d records (reqId=%s)", clusterName, repaired, requestId);
       }
 
     } catch (Throwable e) {
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Error executing auto repairing on cluster '%s' (error=%s, reqId=%s)", clusterName, e.toString(), requestId);
       return;
+    } finally {
+      // RELEASE LOCKS AND REMOVE TX CONTEXT
+      localDistributedDatabase.popTxContext(requestId);
+      ctx.destroy();
     }
 
     return;
@@ -424,261 +420,257 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     final ODistributedDatabase localDistributedDatabase = dManager.getMessageService().getDatabase(databaseName);
 
     final ODistributedTxContext ctx = localDistributedDatabase.registerTxContext(requestId);
-
     try {
+
       // ACQUIRE LOCKS WITH A LARGER TIMEOUT
       ODistributedTransactionManager.acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, rids, null, ctx, -1);
+
+      final Set<String> clusterNames = new HashSet();
+      for (ORecordId rid : rids)
+        clusterNames.add(db.getClusterNameById(rid.getClusterId()));
+
+      final Collection<String> involvedServers = dCfg.getServers(clusterNames);
+      final Set<String> nonLocalServers = new HashSet<String>(involvedServers);
+      nonLocalServers.remove(dManager.getLocalNodeName());
+
+      if (nonLocalServers.isEmpty())
+        // REMOTE SERVER NOT INVOLVED, ALL ALIGNED
+        return true;
+
+      // CREATE LOCAL RESULT
+      final OTxTaskResult localResult = new OTxTaskResult();
+      for (ORecordId rid : rids) {
+        final OStorageOperationResult<ORawBuffer> res;
+        if (rid.getClusterPosition() > -1)
+          res = db.getStorage().readRecord(rid, null, true, false, null);
+        else
+          res = null;
+
+        if (res != null)
+          localResult.results.add(res.getResult());
+        else
+          localResult.results.add(null);
+      }
+
+      ODistributedServerLog
+          .debug(this, dManager.getLocalNodeName(), involvedServers.toString(), ODistributedServerLog.DIRECTION.OUT,
+              "Auto repairing records %s on servers %s (reqId=%s)...", rids, involvedServers, requestId);
+
+      // CREATE TX TASK
+      final ORepairRecordsTask tx = new ORepairRecordsTask();
+      for (ORecordId rid : rids)
+        tx.add(new OReadRecordTask(rid));
+
+      ODistributedResponse response = dManager
+          .sendRequest(databaseName, clusterNames, nonLocalServers, tx, requestId.getMessageId(),
+              ODistributedRequest.EXECUTION_MODE.RESPONSE, localResult, null, null);
+
+      // MAP OF OCompletedTxTask SERVER/RECORDS. RECORD == NULL MEANS DELETE
+      final Map<String, OCompleted2pcTask> repairMap = new HashMap<String, OCompleted2pcTask>(rids.size());
+      for (String server : involvedServers) {
+        final OCompleted2pcTask completedTask = new OCompleted2pcTask(requestId, false, tx.getPartitionKey());
+        repairMap.put(server, completedTask);
+      }
+
       try {
+        if (response != null) {
+          final Object payload = response.getPayload();
+          if (payload instanceof Map) {
 
-        final Set<String> clusterNames = new HashSet();
-        for (ORecordId rid : rids)
-          clusterNames.add(db.getClusterNameById(rid.getClusterId()));
+            final Map<String, Object> map = (Map<String, Object>) payload;
 
-        final Collection<String> involvedServers = dCfg.getServers(clusterNames);
-        final Set<String> nonLocalServers = new HashSet<String>(involvedServers);
-        nonLocalServers.remove(dManager.getLocalNodeName());
+            // BROWSE FROM LOCAL RESULT
+            for (int i = 0; i < localResult.results.size(); ++i) {
+              final Map<Object, List<String>> groupedResult = new HashMap<Object, List<String>>();
 
-        if (nonLocalServers.isEmpty())
-          // REMOTE SERVER NOT INVOLVED, ALL ALIGNED
-          return true;
+              final ORecordId rid = rids.get(i);
 
-        // CREATE LOCAL RESULT
-        final OTxTaskResult localResult = new OTxTaskResult();
-        for (ORecordId rid : rids) {
-          final OStorageOperationResult<ORawBuffer> res;
-          if (rid.getClusterPosition() > -1)
-            res = db.getStorage().readRecord(rid, null, true, false, null);
-          else
-            res = null;
+              for (Map.Entry<String, Object> entry : map.entrySet()) {
+                final String serverName = entry.getKey();
+                final Object serverResult = entry.getValue();
 
-          if (res != null)
-            localResult.results.add(res.getResult());
-          else
-            localResult.results.add(null);
-        }
+                if (serverResult instanceof Throwable) {
+                  // ABORT IT
+                  if (serverResult instanceof ONeedRetryException)
+                    ODistributedServerLog.debug(this, dManager.getLocalNodeName(), serverName, ODistributedServerLog.DIRECTION.IN,
+                        "Cannot auto repair record %s on servers %s because some of them are locked (error=%s), trying it again later",
+                        rid, serverName, serverResult);
+                  else
+                    ODistributedServerLog.info(this, dManager.getLocalNodeName(), serverName, ODistributedServerLog.DIRECTION.IN,
+                        "Cannot auto repair record %s on servers %s (error=%s), trying it again later", rid, serverName,
+                        serverResult);
+                  return false;
+                }
 
-        ODistributedServerLog
-            .debug(this, dManager.getLocalNodeName(), involvedServers.toString(), ODistributedServerLog.DIRECTION.OUT,
-                "Auto repairing records %s on servers %s (reqId=%s)...", rids, involvedServers, requestId);
+                final OTxTaskResult serverTxResult = (OTxTaskResult) serverResult;
+                final Object serverRecordContent = serverTxResult.results.get(i);
 
-        // CREATE TX TASK
-        final ORepairRecordsTask tx = new ORepairRecordsTask();
-        for (ORecordId rid : rids)
-          tx.add(new OReadRecordTask(rid));
+                List<String> group = groupedResult.get(serverRecordContent);
+                if (group == null) {
+                  if (serverRecordContent instanceof ORawBuffer) {
+                    if (((ORawBuffer) serverRecordContent).recordType == ODocument.RECORD_TYPE) {
 
-        ODistributedResponse response = dManager
-            .sendRequest(databaseName, clusterNames, nonLocalServers, tx, requestId.getMessageId(),
-                ODistributedRequest.EXECUTION_MODE.RESPONSE, localResult, null, null);
-
-        // MAP OF OCompletedTxTask SERVER/RECORDS. RECORD == NULL MEANS DELETE
-        final Map<String, OCompleted2pcTask> repairMap = new HashMap<String, OCompleted2pcTask>(rids.size());
-        for (String server : involvedServers) {
-          final OCompleted2pcTask completedTask = new OCompleted2pcTask(requestId, false, tx.getPartitionKey());
-          repairMap.put(server, completedTask);
-        }
-
-        try {
-          if (response != null) {
-            final Object payload = response.getPayload();
-            if (payload instanceof Map) {
-
-              final Map<String, Object> map = (Map<String, Object>) payload;
-
-              // BROWSE FROM LOCAL RESULT
-              for (int i = 0; i < localResult.results.size(); ++i) {
-                final Map<Object, List<String>> groupedResult = new HashMap<Object, List<String>>();
-
-                final ORecordId rid = rids.get(i);
-
-                for (Map.Entry<String, Object> entry : map.entrySet()) {
-                  final String serverName = entry.getKey();
-                  final Object serverResult = entry.getValue();
-
-                  if (serverResult instanceof Throwable) {
-                    // ABORT IT
-                    if (serverResult instanceof ONeedRetryException)
-                      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), serverName, ODistributedServerLog.DIRECTION.IN,
-                          "Cannot auto repair record %s on servers %s because some of them are locked (error=%s), trying it again later",
-                          rid, serverName, serverResult);
-                    else
-                      ODistributedServerLog.info(this, dManager.getLocalNodeName(), serverName, ODistributedServerLog.DIRECTION.IN,
-                          "Cannot auto repair record %s on servers %s (error=%s), trying it again later", rid, serverName,
-                          serverResult);
-                    return false;
-                  }
-
-                  final OTxTaskResult serverTxResult = (OTxTaskResult) serverResult;
-                  final Object serverRecordContent = serverTxResult.results.get(i);
-
-                  List<String> group = groupedResult.get(serverRecordContent);
-                  if (group == null) {
-                    if (serverRecordContent instanceof ORawBuffer) {
-                      if (((ORawBuffer) serverRecordContent).recordType == ODocument.RECORD_TYPE) {
-
-                        for (Map.Entry<Object, List<String>> resultEntry : groupedResult.entrySet()) {
-                          if (resultEntry.getKey() instanceof ORawBuffer && OAbstractDistributedConflictResolver
-                              .compareRecords((ORawBuffer) serverRecordContent, (ORawBuffer) resultEntry.getKey())) {
-                            group = resultEntry.getValue();
-                            break;
-                          }
+                      for (Map.Entry<Object, List<String>> resultEntry : groupedResult.entrySet()) {
+                        if (resultEntry.getKey() instanceof ORawBuffer && OAbstractDistributedConflictResolver
+                            .compareRecords((ORawBuffer) serverRecordContent, (ORawBuffer) resultEntry.getKey())) {
+                          group = resultEntry.getValue();
+                          break;
                         }
                       }
                     }
-
-                    if (group == null) {
-                      group = new ArrayList<String>();
-                      groupedResult.put(serverRecordContent, group);
-                    }
-                  }
-                  group.add(serverName);
-                }
-
-                if (groupedResult.size() == 1)
-                  // NO CONFLICT, SKIP IT
-                  continue;
-
-                ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                    "Auto repair found %d groups of contents, analyzing the winner...", groupedResult.size());
-
-                // EXECUTE THE CONFLICT RESOLVE PIPELINE: CONTINUE UNTIL THE WINNER IS NOT NULL (=RESOLVED)
-                Object winner = null;
-                Map<Object, List<String>> candidates = groupedResult;
-                for (ODistributedConflictResolver conflictResolver : conflictResolvers) {
-                  final ODistributedConflictResolver.OConflictResult conflictResult = conflictResolver
-                      .onConflict(databaseName, db.getClusterNameById(rid.getClusterId()), rid, dManager, candidates);
-
-                  winner = conflictResult.winner;
-                  if (winner != NOT_FOUND)
-                    // FOUND WINNER
-                    break;
-
-                  candidates = conflictResult.candidates;
-                }
-
-                if (winner == NOT_FOUND) {
-                  // NO WINNER, SKIP IT
-
-                  final StringBuilder buffer = new StringBuilder();
-                  int resultIndex = 0;
-                  for (Map.Entry<Object, List<String>> entry : groupedResult.entrySet()) {
-                    buffer.append("\n- ");
-                    buffer.append(resultIndex++);
-                    buffer.append(": ");
-
-                    if (entry.getKey() instanceof ORawBuffer) {
-                      final ORawBuffer r = ((ORawBuffer) entry.getKey());
-                      if (r.buffer != null) {
-                        buffer.append("bytes=");
-                        buffer.append(Arrays.toString(r.buffer));
-
-                        final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(r.recordType);
-                        record.fromStream(r.buffer);
-                        buffer.append(record);
-                        buffer.append(" (size=");
-                        buffer.append(r.buffer.length);
-                        buffer.append(" v=");
-                        buffer.append(r.version);
-                        buffer.append(")");
-                      } else
-                        buffer.append("(empty)");
-                    } else
-                      buffer.append(entry.getKey());
-
-                    buffer.append(" in servers ");
-                    buffer.append(entry.getValue());
                   }
 
-                  ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                      "Auto repair cannot find a winner for record %s and the following groups of contents: %s", rid, buffer);
-                  continue;
+                  if (group == null) {
+                    group = new ArrayList<String>();
+                    groupedResult.put(serverRecordContent, group);
+                  }
                 }
+                group.add(serverName);
+              }
 
+              if (groupedResult.size() == 1)
+                // NO CONFLICT, SKIP IT
+                continue;
+
+              ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                  "Auto repair found %d groups of contents, analyzing the winner...", groupedResult.size());
+
+              // EXECUTE THE CONFLICT RESOLVE PIPELINE: CONTINUE UNTIL THE WINNER IS NOT NULL (=RESOLVED)
+              Object winner = null;
+              Map<Object, List<String>> candidates = groupedResult;
+              for (ODistributedConflictResolver conflictResolver : conflictResolvers) {
+                final ODistributedConflictResolver.OConflictResult conflictResult = conflictResolver
+                    .onConflict(databaseName, db.getClusterNameById(rid.getClusterId()), rid, dManager, candidates);
+
+                winner = conflictResult.winner;
+                if (winner != NOT_FOUND)
+                  // FOUND WINNER
+                  break;
+
+                candidates = conflictResult.candidates;
+              }
+
+              if (winner == NOT_FOUND) {
+                // NO WINNER, SKIP IT
+
+                final StringBuilder buffer = new StringBuilder();
+                int resultIndex = 0;
                 for (Map.Entry<Object, List<String>> entry : groupedResult.entrySet()) {
-                  final Object value = entry.getKey();
-                  final List<String> servers = entry.getValue();
+                  buffer.append("\n- ");
+                  buffer.append(resultIndex++);
+                  buffer.append(": ");
 
-                  for (String server : servers) {
-                    if (winner == null && value != null || (winner != null && !winner.equals(value))) {
-                      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-                          "Preparing fix for record %s on servers %s, winner=%s remoteValue=%s...", rid, server, winner, value);
+                  if (entry.getKey() instanceof ORawBuffer) {
+                    final ORawBuffer r = ((ORawBuffer) entry.getKey());
+                    if (r.buffer != null) {
+                      buffer.append("bytes=");
+                      buffer.append(Arrays.toString(r.buffer));
 
-                      final OCompleted2pcTask completedTask = repairMap.get(server);
+                      final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(r.recordType);
+                      record.fromStream(r.buffer);
+                      buffer.append(record);
+                      buffer.append(" (size=");
+                      buffer.append(r.buffer.length);
+                      buffer.append(" v=");
+                      buffer.append(r.version);
+                      buffer.append(")");
+                    } else
+                      buffer.append("(empty)");
+                  } else
+                    buffer.append(entry.getKey());
 
-                      if (winner instanceof ORawBuffer && (value == null || value instanceof ORawBuffer)) {
-                        // UPDATE THE RECORD
-                        final ORawBuffer winnerRecord = (ORawBuffer) winner;
+                  buffer.append(" in servers ");
+                  buffer.append(entry.getValue());
+                }
 
-                        completedTask.addFixTask(new OFixUpdateRecordTask(rid, winnerRecord.buffer,
-                            ORecordVersionHelper.setRollbackMode(winnerRecord.version), winnerRecord.recordType));
+                ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                    "Auto repair cannot find a winner for record %s and the following groups of contents: %s", rid, buffer);
+                continue;
+              }
 
-                      } else if ((winner == null || winner instanceof ORecordNotFoundException) && value instanceof ORawBuffer) {
-                        // DELETE THE RECORD
-                        completedTask.addFixTask(new OFixCreateRecordTask(rid, -1));
+              for (Map.Entry<Object, List<String>> entry : groupedResult.entrySet()) {
+                final Object value = entry.getKey();
+                final List<String> servers = entry.getValue();
 
-                      } else if (value instanceof Throwable) {
-                        // MANAGE EXCEPTION
-                      }
+                for (String server : servers) {
+                  if (winner == null && value != null || (winner != null && !winner.equals(value))) {
+                    ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+                        "Preparing fix for record %s on servers %s, winner=%s remoteValue=%s...", rid, server, winner, value);
+
+                    final OCompleted2pcTask completedTask = repairMap.get(server);
+
+                    if (winner instanceof ORawBuffer && (value == null || value instanceof ORawBuffer)) {
+                      // UPDATE THE RECORD
+                      final ORawBuffer winnerRecord = (ORawBuffer) winner;
+
+                      completedTask.addFixTask(new OFixUpdateRecordTask(rid, winnerRecord.buffer,
+                          ORecordVersionHelper.setRollbackMode(winnerRecord.version), winnerRecord.recordType));
+
+                    } else if ((winner == null || winner instanceof ORecordNotFoundException) && value instanceof ORawBuffer) {
+                      // DELETE THE RECORD
+                      completedTask.addFixTask(new OFixCreateRecordTask(rid, -1));
+
+                    } else if (value instanceof Throwable) {
+                      // MANAGE EXCEPTION
                     }
                   }
                 }
               }
             }
           }
-        } finally {
-          int repaired = 0;
-          for (Map.Entry<String, OCompleted2pcTask> entry : repairMap.entrySet()) {
-            final String server = entry.getKey();
-            final OCompleted2pcTask task = entry.getValue();
+        }
+      } finally {
+        int repaired = 0;
+        for (Map.Entry<String, OCompleted2pcTask> entry : repairMap.entrySet()) {
+          final String server = entry.getKey();
+          final OCompleted2pcTask task = entry.getValue();
 
-            repaired += task.getFixTasks().size();
+          repaired += task.getFixTasks().size();
 
-            if (dManager.getLocalNodeName().equals(server))
-              // EXECUTE IT LOCALLY
-              dManager.executeOnLocalNode(requestId, task, db);
-            else {
-              // EXECUTE REMOTELY
-              final List<String> servers = new ArrayList<String>();
-              servers.add(server);
+          if (dManager.getLocalNodeName().equals(server))
+            // EXECUTE IT LOCALLY
+            dManager.executeOnLocalNode(requestId, task, db);
+          else {
+            // EXECUTE REMOTELY
+            final List<String> servers = new ArrayList<String>();
+            servers.add(server);
 
-              // FILTER ONLY THE SERVER ONLINE
-              dManager.getAvailableNodes(servers, databaseName);
+            // FILTER ONLY THE SERVER ONLINE
+            dManager.getAvailableNodes(servers, databaseName);
 
-              if (!servers.isEmpty()) {
-                response = dManager.sendRequest(databaseName, clusterNames, servers, task, dManager.getNextMessageIdCounter(),
-                    ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+            if (!servers.isEmpty()) {
+              response = dManager.sendRequest(databaseName, clusterNames, servers, task, dManager.getNextMessageIdCounter(),
+                  ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
-                if (response == null || response.getPayload() instanceof Throwable) {
-                  ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                      "Auto repair cannot execute the fix, retrying it later (error=%s)",
-                      response != null ? response.getPayload() : "no response");
-                  return false;
-                }
+              if (response == null || response.getPayload() instanceof Throwable) {
+                ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                    "Auto repair cannot execute the fix, retrying it later (error=%s)",
+                    response != null ? response.getPayload() : "no response");
+                return false;
               }
             }
           }
-
-          if (repaired == 0)
-            ODistributedServerLog
-                .debug(this, dManager.getLocalNodeName(), involvedServers.toString(), ODistributedServerLog.DIRECTION.OUT,
-                    "Auto repairing completed. No fix is needed (reqId=%s)", repaired, requestId);
-          else
-            ODistributedServerLog
-                .info(this, dManager.getLocalNodeName(), involvedServers.toString(), ODistributedServerLog.DIRECTION.OUT,
-                    "Auto repairing completed. Sent %d fix messages for %d records (reqId=%s)", repaired, rids.size(), requestId);
         }
 
-      } finally {
-        // RELEASE LOCKS AND REMOVE TX CONTEXT
-        localDistributedDatabase.popTxContext(requestId);
-        ctx.destroy();
+        if (repaired == 0)
+          ODistributedServerLog
+              .debug(this, dManager.getLocalNodeName(), involvedServers.toString(), ODistributedServerLog.DIRECTION.OUT,
+                  "Auto repairing completed. No fix is needed (reqId=%s)", repaired, requestId);
+        else
+          ODistributedServerLog
+              .info(this, dManager.getLocalNodeName(), involvedServers.toString(), ODistributedServerLog.DIRECTION.OUT,
+                  "Auto repairing completed. Sent %d fix messages for %d records (reqId=%s)", repaired, rids.size(), requestId);
       }
 
-    } catch (Throwable e)
-
-    {
+    } catch (Throwable e) {
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Error executing auto repairing (error=%s, reqId=%s)", e.toString(), requestId);
       return false;
+
+    } finally {
+      // RELEASE LOCKS AND REMOVE TX CONTEXT
+      localDistributedDatabase.popTxContext(requestId);
+      ctx.destroy();
     }
 
     return true;

@@ -52,4 +52,8 @@ public interface ODistributedTxContext {
   void unlock();
 
   long getStartedOn();
+
+  void cancel(ODistributedServerManager current, ODatabaseDocumentInternal database);
+
+  boolean isCanceled();
 }

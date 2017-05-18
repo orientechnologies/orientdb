@@ -3706,10 +3706,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
 
-      if (recordVersion > -1)
-        recordVersion++;
-      else
-        recordVersion = 0;
+      if (recordVersion < 1)
+        recordVersion = 1;
 
       makeStorageDirty();
       atomicOperationsManager.startAtomicOperation((String) null, true);
