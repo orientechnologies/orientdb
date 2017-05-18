@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
@@ -321,6 +322,12 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
   }
 
   private void assertFileRestoreFromWAL() throws IOException {
+    long actualDataFileId = writeCache.fileIdByName(paginatedCluster.getName() + ".pcl");
+    String actualDataFileNativeFileName = ((OWOWCache) writeCache).nativeFileNameById(actualDataFileId);
+
+    long actualClusterPositionMapId = writeCache.fileIdByName(paginatedCluster.getName() + ".cpm");
+    String actualClusterPositionMapName = ((OWOWCache) writeCache).nativeFileNameById(actualClusterPositionMapId);
+
     databaseDocumentTx.activateOnCurrentThread();
     OStorage storage = databaseDocumentTx.getStorage();
     databaseDocumentTx.close();
@@ -328,12 +335,19 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
 
     restoreClusterFromWAL();
 
+    long expectedDataFileId = expectedWriteCache.fileIdByName("expectedPaginatedClusterWithWALTest.pcl");
+    String expectedDataFileNativeFileName = ((OWOWCache) expectedWriteCache).nativeFileNameById(expectedDataFileId);
+
+    long expectedClusterPositionMapId = expectedWriteCache.fileIdByName("expectedPaginatedClusterWithWALTest.cpm");
+    String expectedClusterPositionMapName = ((OWOWCache) expectedWriteCache).nativeFileNameById(expectedClusterPositionMapId);
+
     expectedDatabase.activateOnCurrentThread();
     storage = expectedDatabase.getStorage();
     expectedDatabase.close();
     storage.close(true, false);
 
-    assertClusterContentIsTheSame("expectedPaginatedClusterWithWALTest", paginatedCluster.getName());
+    assertClusterContentIsTheSame(expectedDataFileNativeFileName, actualDataFileNativeFileName, expectedClusterPositionMapName,
+        actualClusterPositionMapName);
   }
 
   private void restoreClusterFromWAL() throws IOException {
@@ -406,19 +420,21 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
     log.close();
   }
 
-  private void assertClusterContentIsTheSame(String expectedCluster, String actualCluster) throws IOException {
-    File expectedDataFile = new File(expectedStorageDir, expectedCluster + ".pcl");
+  private void assertClusterContentIsTheSame(String expectedDataFileName, String actualDataFileName,
+      String expectedClusterPositionMapName, String actualClusterPositionMapMap) throws IOException {
+
+    File expectedDataFile = new File(expectedStorageDir, expectedDataFileName);
     RandomAccessFile datFileOne = new RandomAccessFile(expectedDataFile, "r");
-    RandomAccessFile datFileTwo = new RandomAccessFile(new File(storageDir, actualCluster + ".pcl"), "r");
+    RandomAccessFile datFileTwo = new RandomAccessFile(new File(storageDir, actualDataFileName), "r");
 
     assertFileContentIsTheSame(datFileOne, datFileTwo);
 
     datFileOne.close();
     datFileTwo.close();
 
-    File expectedRIDMapFile = new File(expectedStorageDir, expectedCluster + ".cpm");
+    File expectedRIDMapFile = new File(expectedStorageDir, expectedClusterPositionMapName);
     RandomAccessFile ridMapOne = new RandomAccessFile(expectedRIDMapFile, "r");
-    RandomAccessFile ridMapTwo = new RandomAccessFile(new File(storageDir, actualCluster + ".cpm"), "r");
+    RandomAccessFile ridMapTwo = new RandomAccessFile(new File(storageDir, actualClusterPositionMapMap), "r");
 
     assertFileContentIsTheSame(ridMapOne, ridMapTwo);
 

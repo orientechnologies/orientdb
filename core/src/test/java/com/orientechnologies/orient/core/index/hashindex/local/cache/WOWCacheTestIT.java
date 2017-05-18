@@ -6,6 +6,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
@@ -15,9 +16,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskW
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,29 +29,26 @@ import java.util.zip.CRC32;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 26.07.13
  */
-public class WOWCacheTest {
+public class WOWCacheTestIT {
   private int systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
   private int pageSize     = systemOffset + 8;
 
-  private OLocalPaginatedStorage storageLocal;
-  private String                 fileName;
+  private static OLocalPaginatedStorage storageLocal;
+  private static String                 fileName;
 
-  private ODiskWriteAheadLog writeAheadLog;
+  private static ODiskWriteAheadLog writeAheadLog;
 
-  private OWOWCache wowCache;
+  private static OWOWCache wowCache;
   private OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<Long, OFileClassic>(1024);
 
-  @Before
-  public void beforeClass() throws IOException {
+  @BeforeClass
+  public static void beforeClass() throws IOException {
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
-    String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    String buildDirectory = System.getProperty("buildDirectory", ".");
 
-    storageLocal = (OLocalPaginatedStorage) Orient.instance().getEngine("plocal")
-        .createStorage(buildDirectory + "/WOWCacheTest", null);
-//    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/WOWCacheTest");
-    storageLocal.create(null);
+    storageLocal = (OLocalPaginatedStorage) Orient.instance().getRunningEngine("plocal").
+        createStorage(buildDirectory + "/WOWCacheTest", null);
+    storageLocal.create(new OContextConfiguration());
 
     fileName = "wowCacheTest.tst";
 
@@ -66,8 +62,13 @@ public class WOWCacheTest {
     initBuffer();
   }
 
-  private void closeCacheAndDeleteFile() throws IOException {
+  private static void closeCacheAndDeleteFile() throws IOException {
+    String nativeFileName = null;
+
     if (wowCache != null) {
+      long fileId = wowCache.fileIdByName(fileName);
+      nativeFileName = wowCache.nativeFileNameById(fileId);
+
       wowCache.close();
       wowCache = null;
     }
@@ -79,19 +80,27 @@ public class WOWCacheTest {
 
     storageLocal.delete();
 
-    File testFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + fileName);
-    if (testFile.exists()) {
-      Assert.assertTrue(testFile.delete());
+    if (nativeFileName != null) {
+      File testFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + nativeFileName);
+
+      if (testFile.exists()) {
+        Assert.assertTrue(testFile.delete());
+      }
     }
 
     File nameIdMapFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "name_id_map.cm");
     if (nameIdMapFile.exists()) {
       Assert.assertTrue(nameIdMapFile.delete());
     }
+
+    nameIdMapFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "name_id_map_v2.cm");
+    if (nameIdMapFile.exists()) {
+      Assert.assertTrue(nameIdMapFile.delete());
+    }
   }
 
-  @After
-  public void afterClass() throws IOException {
+  @AfterClass
+  public static void afterClass() throws IOException {
     closeCacheAndDeleteFile();
 
     File file = new File(storageLocal.getConfiguration().getDirectory());
@@ -99,16 +108,17 @@ public class WOWCacheTest {
   }
 
   private void initBuffer() throws IOException, InterruptedException {
-    wowCache = new OWOWCache(pageSize, new OByteBufferPool(pageSize), writeAheadLog, 10, 100,
-        storageLocal, false, files, 1);
+    wowCache = new OWOWCache(pageSize, new OByteBufferPool(pageSize), writeAheadLog, 10, 100, storageLocal, false, files, 1);
     wowCache.loadRegisteredFiles();
   }
 
+  @Test
   public void testLoadStore() throws IOException {
     Random random = new Random();
 
     byte[][] pageData = new byte[200][];
     long fileId = wowCache.addFile(fileName);
+    final String nativeFileName = wowCache.nativeFileNameById(fileId);
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] data = new byte[8];
@@ -138,20 +148,22 @@ public class WOWCacheTest {
       buffer.get(dataTwo);
       cachePointer.decrementReferrer();
 
-      Assert.assertEquals(dataTwo, dataOne);
+      Assert.assertArrayEquals(dataTwo, dataOne);
     }
 
     wowCache.flush();
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataContent = pageData[i];
-      assertFile(i, dataContent, new OLogSequenceNumber(0, 0));
+      assertFile(i, dataContent, new OLogSequenceNumber(0, 0), nativeFileName);
     }
   }
 
+  @Test
   public void testDataUpdate() throws Exception {
     final NavigableMap<Long, byte[]> pageIndexDataMap = new TreeMap<Long, byte[]>();
     long fileId = wowCache.addFile(fileName);
+    final String nativeFileName = wowCache.nativeFileNameById(fileId);
 
     Random random = new Random();
 
@@ -185,7 +197,7 @@ public class WOWCacheTest {
       buffer.get(dataTwo);
 
       cachePointer.decrementReferrer();
-      Assert.assertEquals(dataTwo, dataOne);
+      Assert.assertArrayEquals(dataTwo, dataOne);
     }
 
     for (int i = 0; i < 300; i++) {
@@ -221,67 +233,26 @@ public class WOWCacheTest {
       buffer.get(dataTwo);
       cachePointer.decrementReferrer();
 
-      Assert.assertEquals(dataTwo, dataOne);
+      Assert.assertArrayEquals(dataTwo, dataOne);
     }
 
     wowCache.flush();
 
     for (Map.Entry<Long, byte[]> entry : pageIndexDataMap.entrySet()) {
-      assertFile(entry.getKey(), entry.getValue(), new OLogSequenceNumber(0, 0));
+      assertFile(entry.getKey(), entry.getValue(), new OLogSequenceNumber(0, 0), nativeFileName);
     }
 
   }
 
-  public void testFlushAllContentEventually() throws Exception {
-    Random random = new Random();
-
-    byte[][] pageData = new byte[200][];
-    long fileId = wowCache.addFile(fileName);
-
-    for (int i = 0; i < pageData.length; i++) {
-      byte[] data = new byte[8];
-      random.nextBytes(data);
-
-      pageData[i] = data;
-
-      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true, new OModifiableBoolean())[0];
-      cachePointer.acquireExclusiveLock();
-      ByteBuffer buffer = cachePointer.getSharedBuffer();
-      buffer.position(systemOffset);
-      buffer.put(data);
-      cachePointer.releaseExclusiveLock();
-
-      wowCache.store(fileId, i, cachePointer);
-      cachePointer.decrementReferrer();
-    }
-
-    for (int i = 0; i < pageData.length; i++) {
-      byte[] dataOne = pageData[i];
-
-      OCachePointer cachePointer = wowCache.load(fileId, i, 1, false, new OModifiableBoolean())[0];
-      byte[] dataTwo = new byte[8];
-      ByteBuffer buffer = cachePointer.getSharedBuffer();
-      buffer.position(systemOffset);
-      buffer.get(dataTwo);
-      cachePointer.decrementReferrer();
-
-      Assert.assertEquals(dataTwo, dataOne);
-    }
-
-    Thread.sleep(30000);
-
-    for (int i = 0; i < pageData.length; i++) {
-      byte[] dataContent = pageData[i];
-      assertFile(i, dataContent, new OLogSequenceNumber(0, 0));
-    }
-  }
-
+  @Test
   public void testFileRestore() throws IOException {
     final long nonDelFileId = wowCache.addFile(fileName);
     final long fileId = wowCache.addFile("removedFile.del");
 
+    final String removedNativeFileName = wowCache.nativeFileNameById(fileId);
+
     wowCache.deleteFile(fileId);
-    File deletedFile = storageLocal.getStoragePath().resolve("removedFile.del").toFile();
+    File deletedFile = storageLocal.getStoragePath().resolve(removedNativeFileName).toFile();
     Assert.assertTrue(!deletedFile.exists());
 
     String fileName = wowCache.restoreFileById(fileId);
@@ -298,12 +269,16 @@ public class WOWCacheTest {
     Assert.assertTrue(!deletedFile.exists());
   }
 
+  @Test
   public void testFileRestoreAfterClose() throws Exception {
     final long nonDelFileId = wowCache.addFile(fileName);
     final long fileId = wowCache.addFile("removedFile.del");
 
+    final String removedNativeFileName = wowCache.nativeFileNameById(fileId);
+
     wowCache.deleteFile(fileId);
-    File deletedFile = storageLocal.getStoragePath().resolve("removedFile.del").toFile();
+    File deletedFile = storageLocal.getStoragePath().resolve(removedNativeFileName).toFile();
+
     Assert.assertTrue(!deletedFile.exists());
 
     wowCache.close();
@@ -324,23 +299,14 @@ public class WOWCacheTest {
     Assert.assertTrue(!deletedFile.exists());
   }
 
-  private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn) throws IOException {
+  private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName) throws IOException {
     OFileClassic fileClassic = new OFileClassic(Paths.get(storageLocal.getConfiguration().getDirectory(), fileName));
     fileClassic.open();
     byte[] content = new byte[8 + systemOffset];
     fileClassic.read(pageIndex * (8 + systemOffset), content, 8 + systemOffset);
 
-    Assert.assertEquals(Arrays.copyOfRange(content, systemOffset, 8 + systemOffset), value);
+    Assert.assertArrayEquals(Arrays.copyOfRange(content, systemOffset, 8 + systemOffset), value);
 
-    long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
-
-    Assert.assertEquals(magicNumber, OWOWCache.MAGIC_NUMBER);
-    CRC32 crc32 = new CRC32();
-    crc32.update(content, OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE,
-        content.length - OIntegerSerializer.INT_SIZE - OLongSerializer.LONG_SIZE);
-
-    int crc = OIntegerSerializer.INSTANCE.deserializeNative(content, OLongSerializer.LONG_SIZE);
-    Assert.assertEquals(crc, (int) crc32.getValue());
 
     int segment = OIntegerSerializer.INSTANCE.deserializeNative(content, OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
     long position = OLongSerializer.INSTANCE

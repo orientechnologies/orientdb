@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
@@ -110,6 +111,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     writeAheadLog.preventCutTill(writeAheadLog.getFlushedLsn());
 
     actualReadCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getReadCache();
+    actualWriteCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getWriteCache();
 
     sbTree = new OSBTree<>("actualSBTree", ".sbt", true, ".nbt", actualStorage);
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
@@ -144,6 +146,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
   }
 
   @Override
+  @Test
   public void testKeyPutRandomUniform() throws Exception {
     super.testKeyPutRandomUniform();
 
@@ -151,6 +154,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
   }
 
   @Override
+  @Test
   public void testKeyPutRandomGaussian() throws Exception {
     super.testKeyPutRandomGaussian();
 
@@ -158,6 +162,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
   }
 
   @Override
+  @Test
   public void testKeyDeleteRandomUniform() throws Exception {
     super.testKeyDeleteRandomUniform();
 
@@ -172,6 +177,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     assertFileRestoreFromWAL();
   }
 
+  @Test
   @Override
   public void testKeyDelete() throws Exception {
     super.testKeyDelete();
@@ -179,6 +185,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     assertFileRestoreFromWAL();
   }
 
+  @Test
   @Override
   public void testKeyAddDelete() throws Exception {
     super.testKeyAddDelete();
@@ -186,6 +193,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     assertFileRestoreFromWAL();
   }
 
+  @Test
   @Override
   public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
     super.testAddKeyValuesInTwoBucketsAndMakeFirstEmpty();
@@ -193,6 +201,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     assertFileRestoreFromWAL();
   }
 
+  @Test
   @Override
   public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
     super.testAddKeyValuesInTwoBucketsAndMakeLastEmpty();
@@ -200,6 +209,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     assertFileRestoreFromWAL();
   }
 
+  @Test
   @Override
   public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
     super.testAddKeyValuesAndRemoveFirstMiddleAndLastPages();
@@ -236,6 +246,9 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
   }
 
   private void assertFileRestoreFromWAL() throws IOException {
+    long sbTreeFileId = actualWriteCache.fileIdByName(sbTree.getName() + ".sbt");
+    String nativeSBTreeFileName = ((OWOWCache) actualWriteCache).nativeFileNameById(sbTreeFileId);
+
     OStorage storage = databaseDocumentTx.getStorage();
     databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.close();
@@ -243,12 +256,15 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
 
     restoreDataFromWAL();
 
+    long expectedSBTreeFileId = expectedWriteCache.fileIdByName("expectedSBTree.sbt");
+    String expectedSBTreeNativeFileName = ((OWOWCache) expectedWriteCache).nativeFileNameById(expectedSBTreeFileId);
+
     expectedDatabaseDocumentTx.activateOnCurrentThread();
     expectedDatabaseDocumentTx.close();
     storage = expectedDatabaseDocumentTx.getStorage();
     storage.close(true, false);
 
-    assertFileContentIsTheSame("expectedSBTree", sbTree.getName());
+    assertFileContentIsTheSame(expectedSBTreeNativeFileName, nativeSBTreeFileName);
   }
 
   private void restoreDataFromWAL() throws IOException {
@@ -312,8 +328,8 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
         atomicUnit.clear();
       } else {
         Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof ONonTxOperationPerformedWALRecord
-            || walRecord instanceof OFileCreatedWALRecord || walRecord instanceof OFuzzyCheckpointStartRecord ||
-            walRecord instanceof OFuzzyCheckpointEndRecord);
+            || walRecord instanceof OFileCreatedWALRecord || walRecord instanceof OFuzzyCheckpointStartRecord
+            || walRecord instanceof OFuzzyCheckpointEndRecord);
       }
 
       lsn = log.next(lsn);
@@ -323,10 +339,10 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     log.close();
   }
 
-  private void assertFileContentIsTheSame(String expectedBTree, String actualBTree) throws IOException {
-    File expectedFile = new File(expectedStorageDir, expectedBTree + ".sbt");
+  private void assertFileContentIsTheSame(String expectedBTreeFileName, String actualBTreeFileName) throws IOException {
+    File expectedFile = new File(expectedStorageDir, expectedBTreeFileName);
     RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r");
-    RandomAccessFile fileTwo = new RandomAccessFile(new File(actualStorageDir, actualBTree + ".sbt"), "r");
+    RandomAccessFile fileTwo = new RandomAccessFile(new File(actualStorageDir, actualBTreeFileName), "r");
 
     Assert.assertEquals(fileOne.length(), fileTwo.length());
 
