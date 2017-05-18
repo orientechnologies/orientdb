@@ -1,6 +1,6 @@
 import * as $ from "jquery"
 
-import "../../util/diagram-editor/jquery.flowchart.min.js";
+import "../../util/diagram-editor/jquery.flowchart.js";
 import "../../util/diagram-editor/jquery.flowchart.min.css";
 import "../../util/diagram-editor/flowchart.jquery.json";
 import "../../util/diagram-editor/jquery-ui.min.css";
@@ -12,7 +12,7 @@ import {downgradeComponent} from "@angular/upgrade/static";
 import {EtlService} from "../../core/services";
 import {AgentService} from "../../core/services/agent.service";
 
-declare var angular:any;
+declare const angular:any;
 
 @Component({
   selector: 'etl',
@@ -33,7 +33,6 @@ class EtlComponent {
 
   // Types needed for controls
   private extractorType;
-  private transformerTypes = [];
   private loaderType;
 
   // Keys to iterate TODO try a pipe-style implementation
@@ -42,17 +41,20 @@ class EtlComponent {
   private lKeys;
 
   // Flowchart stuff
-  private eFlowchart = $("#extractorSpace");
-  private tFlowchart;
-  private lFlowchart;
+  private $eFlowchart;
+  private $tFlowchart;
+  private $lFlowchart;
 
   private step;
   private hints;
 
+  // Control booleans
   private ready;
   private importReady;
+
+  // Execution related variables
   private oldConfig;
-  private finalJson; // The final json, it will be passed to the launch function
+  private finalJson;
   private job;
   private jobRunning;
 
@@ -79,7 +81,7 @@ class EtlComponent {
       filePath: undefined,
       fileLock: false,
       oldConfigLocation: undefined
-    }
+    };
 
     this.extractorPrototype = {
       row: {
@@ -189,7 +191,7 @@ class EtlComponent {
         }
       }
 
-    }
+    };
 
     this.transformerPrototype = {
       customLabel: undefined,
@@ -362,7 +364,7 @@ class EtlComponent {
         },
       }
 
-    }
+    };
 
     this.loaderPrototype = {
       // Log has no parameters
@@ -455,7 +457,7 @@ class EtlComponent {
         }
       }
 
-    }
+    };
 
     // User support
     this.ready = false;
@@ -553,7 +555,7 @@ class EtlComponent {
   sourceInit() {
     this.step = 2;
 
-    if (this.sourcePrototype.source.value === "jdbc") this.source = null
+    if (this.sourcePrototype.source.value === "jdbc") this.source = null;
 
     if (this.sourcePrototype.source.value === "local file")
       this.source = {
@@ -562,9 +564,9 @@ class EtlComponent {
           lock: this.sourcePrototype.fileLock,
           encoding: "UTF-8"
         }
-      }
+      };
 
-    if (this.sourcePrototype.source.value === "url") {
+    if (this.sourcePrototype.source.value === "url")
       this.source = {
         http: {
           url: this.sourcePrototype.fileURL,
@@ -573,9 +575,20 @@ class EtlComponent {
             "User-Agent": ""
           }
         }
-      }
-    }
+      };
 
+    // Jquery
+    $(document).ready(function () { // TODO not working
+      if (this.oldConfig) {
+        $("#pleaseExtractor").hide();
+        $("#pleaseTransformer").hide();
+        $("#pleaseLoader").hide();
+        $("#createExtractor").hide();
+        $("#createLoader").hide();
+        $("#panelPlaceholder").hide();
+        $("#extractorOptions").show();
+      }
+    });
   }
 
   extractorInit(type) {
@@ -586,7 +599,7 @@ class EtlComponent {
           multiline: this.extractorPrototype.row.multiline.value,
           linefeed: this.extractorPrototype.row.linefeed.value
         }
-      }
+      };
 
     if (type === "csv")
       this.extractor = {
@@ -604,7 +617,7 @@ class EtlComponent {
           ignoreMissingColumns: this.extractorPrototype.csv.ignoreMissingColumns.value,
           predefinedFormat: this.extractorPrototype.csv.predefinedFormat.value
         }
-      }
+      };
 
     if (type === "jdbc")
       this.extractor = {
@@ -616,12 +629,12 @@ class EtlComponent {
           query: this.extractorPrototype.jdbc.query.value,
           queryCount: this.extractorPrototype.jdbc.queryCount.value
         }
-      }
+      };
 
     if (type === "json")
       this.extractor = {
         json: {}
-      }
+      };
 
     if (type === "xml")
       this.extractor = {
@@ -629,21 +642,23 @@ class EtlComponent {
           rootNode: this.extractorPrototype.xml.rootNode.value,
           tagsAsAttribute: this.extractorPrototype.xml.tagsAsAttribute.value
         }
-      }
+      };
 
+    let context = this;
+    this.$eFlowchart = $("#extractorSpace");
 
     // Flowchart
-    $(document).ready(function () { // TODO atm this blocks the instructions that follow.
-      var dataExtractor = {
+    $(document).ready(function () {
+      let dataExtractor = {
         operators: {
           operator: {
-            top: 30,
+            top: 90,
             left: 40,
             properties: {
               title: type + ' extractor',
               outputs: {
                 output_1: {
-                  label: 'click to configure'
+                  label: 'OUTPUT'
                 }
               }
             }
@@ -651,16 +666,20 @@ class EtlComponent {
         }
       };
 
-      var eFlowchart = $('#extractorSpace');
-      (<any>eFlowchart).flowchart({
-        data: dataExtractor,
+      (<any>context.$eFlowchart).flowchart({
+        data: {},
+        canUserEditLinks: false,
+        canUserMoveOperators: false,
         onOperatorSelect: function(operatorId) {
+          $("#panelPlaceholder").hide();
           $("#extractorOptions").slideDown(800);
           $("#transformerOptions").slideUp(800);
           $("#loaderOptions").slideUp(800);
           return true;
         },
       });
+
+      (<any>context.$eFlowchart).flowchart('setData', dataExtractor);
     });
 
     this.eKeys = Object.keys(this.extractor[type]);
@@ -677,8 +696,7 @@ class EtlComponent {
   }
 
   transformerInit(type) { // Block and Code aren't active atm. Csv is deprecated.
-    var transformer;
-    // TODO: custom labels. Probably another parallel array could be useful
+    let transformer;
 
     // Variable creation
     if (type === "field")
@@ -690,7 +708,7 @@ class EtlComponent {
           operation: this.transformerPrototype.field.operation.value,
           save: this.transformerPrototype.field.save.value
         }
-      }
+      };
 
     if (type === "merge")
       transformer = {
@@ -699,7 +717,7 @@ class EtlComponent {
           lookup: this.transformerPrototype.merge.lookup.value,
           unresolvedLinkAction: this.transformerPrototype.merge.unresolvedLinkAction.value
         }
-      }
+      };
 
     if (type === "vertex")
       transformer = {
@@ -707,7 +725,7 @@ class EtlComponent {
           class: this.transformerPrototype.vertex.class.value,
           skipDuplicates: this.transformerPrototype.vertex.skipDuplicates.value
         }
-      }
+      };
 
     if (type === "code")
       transformer = {
@@ -715,7 +733,7 @@ class EtlComponent {
           language: this.transformerPrototype.code.language.value,
           code: this.transformerPrototype.code.code.value,
         }
-      }
+      };
 
     if (type === "link")
       transformer = {
@@ -727,7 +745,7 @@ class EtlComponent {
           lookup: this.transformerPrototype.link.lookup.value,
           unresolvedLinkAction: this.transformerPrototype.link.unresolvedLinkAction.value
         }
-      }
+      };
 
     if (type === "edge")
       transformer = {
@@ -741,7 +759,7 @@ class EtlComponent {
           skipDuplicates: this.transformerPrototype.edge.skipDuplicates.value,
           unresolvedLinkAction: this.transformerPrototype.edge.unresolvedLinkAction.value
         }
-      }
+      };
 
     if (type === "flow")
       transformer = {
@@ -749,7 +767,7 @@ class EtlComponent {
           if: this.transformerPrototype.flow.if.value,
           operation: this.transformerPrototype.flow.operation.value
         }
-      }
+      };
 
     if (type === "log")
       transformer = {
@@ -757,12 +775,12 @@ class EtlComponent {
           prefix: this.transformerPrototype.log.prefix.value,
           postfix: this.transformerPrototype.log.postfix.value
         }
-      }
+      };
 
     if (type === "block")
       transformer = {
         block: {}
-      }
+      };
 
     if (type === "command")
       transformer = {
@@ -770,54 +788,75 @@ class EtlComponent {
           language: this.transformerPrototype.command.language.value,
           command: this.transformerPrototype.command.command.value
         }
-      }
+      };
 
+    // Push into the arrays
+    this.transformers.push(transformer);
+    this.currentTransformer = transformer;
+    this.tKeys = this.getTKeys(transformer);
+    this.readyForExecution();
 
-    // Flowchart
-    $(document).ready(function() {
-      var dataTransformer = {
-        operators: {
-          operator: {
-            top: 20,
-            left: 160,
-            properties: {
-              title: type + ' transformer',
-              inputs: {
-                input1: {
-                  label: ""
-                }
-              },
-              outputs: {
-                output_1: {
-                  label: 'click to configure'
-                }
-              }
+    let tData = {
+      operators: {},
+      links: {}
+    };
+
+    for(let i = 0; i < this.transformers.length; i++) {
+      tData.operators[i] = {
+        top: Math.round(i / 2 - 0.1) * 60,
+        left: (i % 2) * 220 + 10,
+        properties: {
+          title: this.getTransformerType(this.transformers[i]) + " transformer",
+          inputs: {
+            input1: {
+              label:"INPUT"
+            }
+          },
+          outputs: {
+            output1: {
+              label:"OUTPUT"
             }
           }
         }
       };
+      if(i > 0) // don't create links for the first transformer
+        tData.links[i] = {
+          fromOperator: (i-1),
+          fromConnector: 'output1',
+          toOperator: i,
+          toConnector: 'input1',
+        }
+    }
 
-      var $tFlowchart = $('#transformerSpace');
-      (<any>$tFlowchart).flowchart({
-        data: dataTransformer,
+    let context = this;
+    this.$tFlowchart = $("#transformerSpace");
+
+    // Flowchart
+    $(document).ready(function() {
+      let dataTransformer = tData;
+
+      (<any>context.$tFlowchart).flowchart({
+        data: {},
         onOperatorSelect: function(operatorId) {
+          context.currentTransformer = context.transformers[operatorId];
+          context.tKeys = context.getTKeys(context.currentTransformer);
+          console.log(context.transformers[operatorId])
+          $("#panelPlaceholder").hide();
           $("#transformerOptions").slideDown(800);
           $("#extractorOptions").slideUp(800);
           $("#loaderOptions").slideUp(800);
           return true;
         },
+        onLinkCreate: function(linkId) {
+          console.log(linkId); // TODO remove
+          return true;
+        }
       });
+
+      (<any>context.$tFlowchart).flowchart('setData', tData);
     });
 
-    // Push into the arrays
-    this.transformers.push(transformer);
-    this.transformerTypes.push(type);
-    this.currentTransformer = transformer;
-    this.tKeys = Object.keys(this.currentTransformer[type]);
-    this.readyForExecution();
-
     $("#pleaseTransformer").hide();
-
     $("#panelPlaceholder").hide(); // Shows the options for the extractor, hides the placeholder
     $("#loaderOptions").hide();
     $("#extractorOptions").hide();
@@ -830,7 +869,7 @@ class EtlComponent {
     if (type === "log")
       this.loader = {
         log: {}
-      }
+      };
 
     if (type === "orientDb")
       this.loader = {
@@ -855,20 +894,23 @@ class EtlComponent {
           useLightweightEdges: this.loaderPrototype.orientDb.useLightweightEdges.value,
           standardElementConstraints: this.loaderPrototype.orientDb.standardElementConstraints.value
         }
-      }
+      };
+
+    let context = this;
+    this.$lFlowchart = $("#loaderSpace");
 
     // Flowchart
     $(document).ready(function() {
-      var dataLoader = {
+      let dataLoader = {
         operators: {
           operator: {
-            top: 30,
+            top: 90,
             left: 40,
             properties: {
               title: type + ' loader',
               inputs: {
                 input1: {
-                  label: 'click to configure'
+                  label: 'INPUT'
                 }
               }
             }
@@ -876,16 +918,21 @@ class EtlComponent {
         }
       };
 
-      var $lFlowchart = $('#loaderSpace');
-      (<any>$lFlowchart).flowchart({
-        data: dataLoader,
+
+      (<any>context.$lFlowchart).flowchart({
+        data: {},
+        canUserEditLinks: false,
+        canUserMoveOperators: false,
         onOperatorSelect: function(operatorId) {
+          $("#panelPlaceholder").hide();
           $("#loaderOptions").slideDown(800);
           $("#transformerOptions").slideUp(800);
           $("#extractorOptions").slideUp(800);
           return true;
-        },
+        }
       });
+
+      (<any>context.$lFlowchart).flowchart('setData', dataLoader);
     });
 
     this.lKeys = Object.keys(this.loader[type]);
@@ -910,19 +957,24 @@ class EtlComponent {
     $("#pleaseExtractor").show();
     $("#extractorOptions").hide();
     $("#panelPlaceholder").show();
+
+
+    (<any>this.$eFlowchart).flowchart('setData', {});
   }
 
-  deleteTransformer() {
-    var index = this.transformers.indexOf(this.currentTransformer);
+  deleteTransformer() { // TODO flowchart operators selection stops working when a transformer before the last one is deleted (index mismatch)
+    let index = this.transformers.indexOf(this.currentTransformer);
     if (index > -1) {
       this.transformers.splice(index, 1);
-      this.transformerTypes.splice(index, 1);
     }
     this.currentTransformer = undefined;
+    this.tKeys = undefined;
 
     // Jquery hide/show
     $("#transformerOptions").hide();
     $("#panelPlaceholder").show();
+
+    (<any>this.$tFlowchart).flowchart('deleteOperator', index);
 
     if (this.transformers.length == 0) $("#pleaseTransformer").show();
   }
@@ -936,18 +988,17 @@ class EtlComponent {
     $("#pleaseLoader").show();
     $("#loaderOptions").hide();
     $("#panelPlaceholder").show();
+
+    (<any>this.$lFlowchart).flowchart('setData', {});
   }
 
   oldConfigInit(oldConfig) { // TODO draw corresponding flowcharts, test, direct run feature?
-    var etl = JSON.parse(oldConfig);
+    let etl = JSON.parse(oldConfig);
 
     this.extractor = etl.extractor;
     this.transformers = etl.transformers;
     this.loader = etl.loader;
     this.extractorType = Object.getOwnPropertyNames(etl.extractor)[0];
-    for(var i = 0; i < etl.transformers.length; i++) {
-      this.transformerTypes.push(Object.getOwnPropertyNames(etl.transformers[i])[0]);
-    }
     this.currentTransformer = etl.transformers[etl.transformers.length -1];
     this.loaderType = Object.getOwnPropertyNames(etl.loader)[0];
 
@@ -959,20 +1010,11 @@ class EtlComponent {
     }
     else {
       this.sourcePrototype.source.value = "jdbc";
-      this.setStep(2);
+      this.sourceInit();
     }
 
     // control to eventually activate the run button
     this.readyForExecution();
-
-    // Jquery // TODO move it
-    $("#pleaseExtractor").hide();
-    $("#pleaseTransformer").hide();
-    $("#pleaseLoader").hide();
-    $("#createExtractor").hide();
-    $("#createLoader").hide();
-    $("#panelPlaceholder").hide();
-    $("#extractorOptions").show();
   }
 
 
@@ -984,7 +1026,7 @@ class EtlComponent {
     if (this.extractor && this.transformers.length > 0 && this.loader) {
       // Controls, for every property of every module, if it's mandatory and has a value
       // Extractor control
-      for (var property in this.extractorPrototype[this.extractorType]) {
+      for (let property in this.extractorPrototype[this.extractorType]) {
         if (this.extractorPrototype[this.extractorType].hasOwnProperty(property)) {
           if (this.extractorPrototype[this.extractorType][property]["mandatory"] && !this.extractor[this.extractorType][property]) {
             this.ready = false;
@@ -993,9 +1035,9 @@ class EtlComponent {
         }
       }
       // Transformers control
-      for (var i = 0; i < this.transformers.length; i++) {
-        var type = this.getTransformerType(this.transformers[i]);
-        for (var property in this.transformerPrototype[type]) {
+      for (let i = 0; i < this.transformers.length; i++) {
+        let type = this.getTransformerType(this.transformers[i]);
+        for (let property in this.transformerPrototype[type]) {
           if (this.transformerPrototype[type].hasOwnProperty(property)) {
             if (this.transformerPrototype[type][property]["mandatory"] && !this.transformers[i][type][property]) {
               this.ready = false;
@@ -1005,7 +1047,7 @@ class EtlComponent {
         }
       }
       // Loader control
-      for (var property in this.loaderPrototype[this.loaderType]) {
+      for (let property in this.loaderPrototype[this.loaderType]) {
         if (this.loaderPrototype[this.loaderType].hasOwnProperty(property)) {
           if (this.loaderPrototype[this.loaderType][property]["mandatory"] && !this.loader[this.loaderType][property]) {
             this.ready = false;
@@ -1018,7 +1060,7 @@ class EtlComponent {
   }
 
   launch() {
-    var etl = {}; // optional source control. Is that needed?
+    let etl = {}; // optional source control. Is that needed?
 
     if(this.source)
       etl = {
@@ -1081,8 +1123,8 @@ class EtlComponent {
     this.extractor = undefined;
     this.loader = undefined;
     this.source = undefined;
+    this.sourcePrototype.source.value = undefined;
     this.extractorType = undefined;
-    this.transformerTypes = [];
     this.loaderType = undefined;
     this.eKeys = undefined;
     this.tKeys = undefined;
@@ -1104,37 +1146,43 @@ class EtlComponent {
   }
 
   getTransformerType(transformer) {
-    var index = -1;
-    for (var i = 0; i < this.transformers.length; i++) {
-      for (var property in this.transformers[i]) {
-        if (this.transformers[i][property] === transformer[property]) {
-          index = i;
-          break;
+    if(!transformer) return undefined;
+    // for every transformer, and every property of every transformer (just the type), return the property (i.e. the type) if it's equal
+    for (let i = 0; i < this.transformers.length; i++) {
+      for (let property in this.transformers[i]) {
+        if (this.transformers[i].hasOwnProperty(property)) {
+          if (this.transformers[i][property] === transformer[property]) return property;
         }
       }
     }
-    return this.transformerTypes[index];
+    return undefined;
+  }
+
+  getTKeys(transformer) {
+    if(transformer)
+      return Object.keys(this.currentTransformer[this.getTransformerType(this.currentTransformer)]);
+    return undefined;
   }
 
   // Misc
 
   previewFile() {
-    var fileInput = document.getElementById('fileInput');
-    var fileDisplayArea = document.getElementById('fileDisplayArea');
-    var context = this;
+    let fileInput = document.getElementById('fileInput');
+    let fileDisplayArea = document.getElementById('fileDisplayArea');
+    let context = this;
 
     fileInput.addEventListener('change', function(e) {
-      var file = (<any>fileInput).files[0];
-      var textType = /json.*/;
+      let file = (<any>fileInput).files[0];
+      let textType = /json.*/;
 
       if (file.type.match(textType)) {
-        var reader = new FileReader();
+        let reader = new FileReader();
 
-        reader.onload = function(e) {
+        reader.onload = function() {
           fileDisplayArea.innerText = reader.result;
           context.importReady = true;
           context.oldConfig = reader.result;
-        }
+        };
 
         reader.readAsText(file);
       }
@@ -1150,7 +1198,7 @@ class EtlComponent {
   }
 
   scrollLogAreaDown() {
-    var logArea = $("#logArea");
+    let logArea = $("#logArea");
     logArea.scrollTop(9999999);
   }
 

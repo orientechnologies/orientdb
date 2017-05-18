@@ -4,14 +4,14 @@ $(function () {
     $.widget("flowchart.flowchart", {
         // default options
         options: {
-            canUserEditLinks: false,
+            canUserEditLinks: true,
             canUserMoveOperators: true,
             data: {},
             distanceFromArrow: 3,
             defaultOperatorClass: 'flowchart-default-operator',
-            defaultLinkColor: '#3366ff',
+            defaultLinkColor: '#ff9966',
             defaultSelectedLinkColor: 'red',
-            linkWidth: 0,
+            linkWidth: 4,
             grid: 20,
             multipleLinksOnOutput: false,
             multipleLinksOnInput: false,

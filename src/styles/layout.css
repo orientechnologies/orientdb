@@ -61,6 +61,13 @@ body {
   position: relative;
 }
 
+.etl-panel {
+  background: url("../img/etl-panel-bg.png") #ffffff no-repeat center;
+  height: 400px;
+  width: inherit;
+  position: relative;
+}
+
 body div.container-notification {
   padding-top: 48px
 }

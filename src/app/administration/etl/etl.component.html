@@ -25,15 +25,14 @@
                 </button>
                 <!-- Dropdown menu -->
                 <div class="dropdown-menu">
-                  <li class="list-group-item list-group-item-info">   Old configuration selection   </li>
                   <div id="page-wrapper"><br>
                     <div class="text-center">
-                      <h4>Select a valid json file:</h4><br><br>
+                      <h4>Select a valid json file:</h4><br>
                       <div class="col-sm-5 col-sm-offset-1">
                         <input type="file" id="fileInput" (click)=previewFile()>
                       </div><br><br>
 
-                      <textarea id="fileDisplayArea" style="height: 100px" class="form-control" readonly></textarea><br>
+                      <textarea id="fileDisplayArea" style="height: 160px; width: 450px" class="form-control" readonly></textarea><br>
                       <div class="col-md-12 text-center">
                         <button class="btn btn-default btn-sm" (click)="oldConfigInit(oldConfig)"
                                 style="border-radius: 40px;" [disabled]="!importReady">Select current configuration</button>
@@ -138,11 +137,11 @@
                 <div class="row">
 
                   <div class="col-sm-3">
-                    <h3 align="center">Extractor
+                    <h4 align="center"><b>Extractor</b>
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.extractorHint"><i class="fa fa-question-circle"></i>
                       </button>
-                    </h3>
+                    </h4>
                     <div class="row" style="text-align: center;">
                       <div class="btn-group">
 
@@ -175,12 +174,12 @@
                     </div>
                   </div>
 
-                  <div class="col-sm-6">
-                    <h3 align="center">Transformers
+                  <div class="col-sm-6" style="background-color: #fafafa; height: 440px">
+                    <h4 align="center"><b>Transformers</b>
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.transformerHint"><i class="fa fa-question-circle"></i>
                       </button>
-                    </h3>
+                    </h4>
                     <div class="row" style="text-align: center;">
                       <div class="btn-group">
 
@@ -214,11 +213,11 @@
                   </div>
 
                   <div class="col-sm-3">
-                    <h3 align="center">Loader
+                    <h4 align="center"><b>Loader</b>
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.loaderHint"><i class="fa fa-question-circle"></i>
                       </button>
-                    </h3>
+                    </h4>
                     <div class="row" style="text-align: center;">
                       <div class="btn-group">
 
@@ -245,12 +244,11 @@
               </div>
             </div>
           </div>
-          <div class="col-sm-4">
+          <div class="col-md-4">
             <div class="panel panel-info" style="overflow:auto; height:500px">
               <div class="panel-heading" align="center"><b>PARAMETER CONFIGURATION</b></div>
               <div class="panel-body">
-                <div id="panelPlaceholder"><br><br><br><br><br><br><br><h4 align="center"><b>PARAMETERS CONFIGURATION PANEL<br>
-                </b></h4> <br><br><br><br><br><br><br><br> </div>
+                <div id="panelPlaceholder" class="etl-panel"></div>
 
                 <!-- Extractor advanced configuration -->
                 <div id="extractorOptions" style="display:none">
@@ -287,7 +285,7 @@
                   </div><br><br>
                   <div class="col-md-12 text-center">
                     <div class="btn-group">
-                      <button type="button" class="btn btn-xs btn-danger" (click)="deleteExtractor()">Delete Extractor</button>
+                      <button id="deleteExtractor" type="button" class="btn btn-xs btn-danger" (click)="deleteExtractor()">Delete Extractor</button>
                     </div>
                   </div>
                 </div>
@@ -329,7 +327,7 @@
                   </div><br><br>
                   <div class="col-md-12 text-center">
                     <div class="btn-group">
-                      <button type="button" class="btn btn-xs btn-danger" (click)="deleteTransformer()">Delete Transformer</button>
+                      <button id="deleteTransformer" type="button" class="btn btn-xs btn-danger" (click)="deleteTransformer()">Delete Transformer</button>
                     </div>
                   </div>
                 </div>
@@ -369,7 +367,7 @@
                   </div><br><br>
                   <div class="col-md-12 text-center">
                     <div class="btn-group">
-                      <button type="button" class="btn btn-xs btn-danger" (click)="deleteLoader()">Delete Loader</button>
+                      <button id="deleteLoader" type="button" class="btn btn-xs btn-danger" (click)="deleteLoader()">Delete Loader</button>
                     </div>
                   </div>
                 </div>
@@ -380,15 +378,16 @@
 
           <br><br><br><br>
           <div class="form-group">
-            <div class="col-sm-offset-3 col-sm-10">
+            <div class="col-sm-offset-3 col-sm-9">
               <div class="btn-toolbar">
+                <h5 class="text-center"><b style="color:red;">*</b><b style="color:grey;"> means that the parameter is mandatory for a correct configuration.</b></h5>
+                <h5 class="text-center"><b style="color:grey;">Make sure you connected every transformer without creating loops.</b></h5>
                 <div class="btn-group">
                   <button type="button" class="btn btn-sm btn-primary" (click)="setStep('1'); reset()">Back</button>
                 </div>
                 <div class="btn-group">
                   <button type="button" class="btn btn-sm btn-primary" (click)="launch()" [disabled]="!ready">Run Etl</button>
                 </div>
-                <h5>&emsp;&emsp;&emsp;<b style="color:red;">*</b><b style="color:grey;"> means that the parameter is mandatory for a correct configuration.</b></h5>
               </div>
             </div>
           </div>
