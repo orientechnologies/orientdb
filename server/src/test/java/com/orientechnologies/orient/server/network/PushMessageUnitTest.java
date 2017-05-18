@@ -22,6 +22,7 @@ import java.io.PipedOutputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -73,18 +74,46 @@ public class PushMessageUnitTest {
     }
   }
 
-  private CountDownLatch requestWritten = new CountDownLatch(1);
-  private CountDownLatch responseRead   = new CountDownLatch(1);
+  public class MockPushRequestNoResponse implements OBinaryPushRequest<OBinaryPushResponse> {
+    @Override
+    public void write(OChannelDataOutput channel) throws IOException {
+      System.out.println("written");
+      requestWritten.countDown();
+    }
+
+    @Override
+    public byte getPushCommand() {
+      return 101;
+    }
+
+    @Override
+    public void read(OChannelDataInput network) throws IOException {
+
+    }
+
+    @Override
+    public OBinaryPushResponse execute(ORemotePushHandler remote) {
+      executed.countDown();
+      System.out.println("executed");
+      return null;
+    }
+
+    @Override
+    public OBinaryPushResponse createResponse() {
+      return null;
+    }
+  }
+
+  private CountDownLatch  requestWritten;
+  private CountDownLatch  responseRead;
+  private CountDownLatch  executed;
   private MockPipeChannel channelBinaryServer;
   private MockPipeChannel channelBinaryClient;
-
   @Mock
-  private OServer server;
+  private OServer         server;
 
   @Mock
   private ORemotePushHandler remote;
-
-  private CountDownLatch executed = new CountDownLatch(1);
 
   @Before
   public void before() throws IOException {
@@ -97,7 +126,11 @@ public class PushMessageUnitTest {
     this.channelBinaryServer = new MockPipeChannel(inputServer, outputServer);
     Mockito.when(server.getContextConfiguration()).thenReturn(new OContextConfiguration());
     Mockito.when(remote.getNetwork(Mockito.anyString())).thenReturn(channelBinaryClient);
-    Mockito.when(remote.createPush(Mockito.anyByte())).thenReturn(new MockPushRequest());
+    Mockito.when(remote.createPush((byte) 100)).thenReturn(new MockPushRequest());
+    Mockito.when(remote.createPush((byte) 101)).thenReturn(new MockPushRequestNoResponse());
+    requestWritten = new CountDownLatch(1);
+    responseRead = new CountDownLatch(1);
+    executed = new CountDownLatch(1);
   }
 
   @Test
@@ -120,6 +153,32 @@ public class PushMessageUnitTest {
     assertTrue(responseRead.await(10, TimeUnit.SECONDS));
     Mockito.verify(remote).createPush((byte) 100);
     pushThread.shutdown();
+    binary.shutdown();
+
+  }
+
+  @Test
+  public void testPushMessageNoResponse() throws IOException, InterruptedException {
+    ONetworkProtocolBinary binary = new ONetworkProtocolBinary(server);
+    binary.initVariables(server, channelBinaryServer);
+    Thread thread = new Thread(() -> {
+      try {
+        assertNull(binary.push(new MockPushRequestNoResponse()));
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    });
+    thread.start();
+    binary.start();
+    assertTrue(requestWritten.await(10, TimeUnit.SECONDS));
+    OStorageRemotePushThread pushThread = new OStorageRemotePushThread(remote, "none");
+    pushThread.start();
+
+    assertTrue(executed.await(10, TimeUnit.SECONDS));
+    Mockito.verify(remote).createPush((byte) 101);
+    thread.join(1000);
+    pushThread.shutdown();
+    pushThread.join(1000);
     binary.shutdown();
 
   }

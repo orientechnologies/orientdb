@@ -82,8 +82,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected          boolean        okSent;
   private boolean tokenConnection = true;
   private long    requests        = 0;
-  private          HandshakeInfo                           handshakeInfo;
-  private volatile OBinaryPushRequest<OBinaryPushResponse> pushRequest;
+  private          HandshakeInfo       handshakeInfo;
+  private volatile OBinaryPushResponse expectedPushResponse;
   private BlockingQueue<OBinaryPushResponse> pushResponse = new SynchronousQueue<OBinaryPushResponse>();
 
   private Function<Integer, OBinaryRequest<? extends OBinaryResponse>> factory = ONetworkBinaryProtocolFactory.defaultProtocol();
@@ -757,25 +757,26 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   public OBinaryPushResponse push(OBinaryPushRequest request) throws IOException {
-    this.pushRequest = request;
+    expectedPushResponse = request.createResponse();
     channel.acquireWriteLock();
     channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
     channel.writeByte(request.getPushCommand());
     request.write(channel);
     channel.flush();
-    channel.releaseWriteLock();
-    try {
-      return pushResponse.take();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+    if (expectedPushResponse != null) {
+      try {
+        return pushResponse.take();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
+    channel.releaseWriteLock();
     return null;
   }
 
   private void handlePushResponse() throws IOException {
-    OBinaryPushResponse response = pushRequest.createResponse();
-    response.read(channel);
-    this.pushResponse.offer(response);
+    expectedPushResponse.read(channel);
+    this.pushResponse.offer(expectedPushResponse);
   }
 
 }

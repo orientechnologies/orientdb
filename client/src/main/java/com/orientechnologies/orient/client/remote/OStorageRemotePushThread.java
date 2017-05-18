@@ -48,12 +48,14 @@ public class OStorageRemotePushThread extends Thread {
           OBinaryPushRequest request = storage.createPush(push);
           request.read(network);
           OBinaryPushResponse response = request.execute(storage);
-          synchronized (this) {
-            //TODO DEFINE A NUMBER
-            network.writeByte(OChannelBinaryProtocol.REQUEST_OK_PUSH);
-            //session
-            network.writeInt(-1);
-            response.write(network);
+          if (response != null) {
+            synchronized (this) {
+              //TODO DEFINE A NUMBER
+              network.writeByte(OChannelBinaryProtocol.REQUEST_OK_PUSH);
+              //session
+              network.writeInt(-1);
+              response.write(network);
+            }
           }
         }
       }
