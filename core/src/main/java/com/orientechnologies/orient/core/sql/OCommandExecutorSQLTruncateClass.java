@@ -177,7 +177,7 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
   }
 
   @Override public String getSyntax() {
-    return "TRUNCATE CLASS <class-name>";
+    return "TRUNCATE CLASS <class-name> [UNSAFE] [POLYMORPHIC]";
   }
 
   @Override public QUORUM_TYPE getQuorumType() {

@@ -2096,7 +2096,6 @@ public class ODocument extends ORecordAbstract
             buffer.append(((ODocument) record).toString(inspected));
           else
             buffer.append(record.toString());
-        } else if (f.getValue().value instanceof ORecord) {
         } else
           buffer.append(f.getValue().value);
 

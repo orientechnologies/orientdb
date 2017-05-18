@@ -1169,12 +1169,11 @@ public class LocalPaginatedClusterTest {
       Assert.assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition),
           OPaginatedCluster.RECORD_STATUS.ALLOCATED);
 
-      final OPhysicalPosition ppos = paginatedCluster
-          .createRecord(smallRecord, 1, ODocument.RECORD_TYPE, new OPhysicalPosition(physicalPosition.clusterPosition));
+      paginatedCluster.createRecord(smallRecord, 1, ODocument.RECORD_TYPE, new OPhysicalPosition(physicalPosition.clusterPosition));
 
       rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition, false);
       Assert.assertNotNull(rawBuffer);
-      Assert.assertEquals(rawBuffer.version, recordVersion+1);
+      Assert.assertEquals(rawBuffer.version, recordVersion + 1);
       Assert.assertEquals(rawBuffer.buffer, smallRecord);
       Assert.assertEquals(rawBuffer.recordType, ODocument.RECORD_TYPE);
 

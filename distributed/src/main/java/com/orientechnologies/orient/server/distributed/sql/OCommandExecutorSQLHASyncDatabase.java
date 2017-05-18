@@ -102,6 +102,6 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
 
   @Override
   public String getSyntax() {
-    return "HA SYNC DATABASE";
+    return "HA SYNC DATABASE [-force] [-full]";
   }
 }

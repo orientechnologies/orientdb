@@ -91,10 +91,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private String localNodeName;
 
   public class ODistributedLock {
-    final    ODistributedRequestId reqId;
-    final    CountDownLatch        lock;
-    final    long                  acquiredOn;
-    volatile ORawBuffer            record;
+    protected final    ODistributedRequestId reqId;
+    protected final    CountDownLatch        lock;
+    protected final    long                  acquiredOn;
+    protected volatile ORawBuffer            record;
 
     private ODistributedLock(final ODistributedRequestId reqId) {
       this.reqId = reqId;
@@ -1120,8 +1120,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   private void startTxTimeoutTimerTask() {
-    final ODistributedDatabaseImpl current = this;
-
     txTimeoutTask = new TimerTask() {
       @Override
       public void run() {
