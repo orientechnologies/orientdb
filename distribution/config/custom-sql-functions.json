@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "functions": [
+    {
+      "prefix": "math",
+      "class": "java.lang.Math"
+    }
+  ]
+}
