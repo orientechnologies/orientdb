@@ -3684,7 +3684,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (isDirty()) {
       OLogManager.instance().warn(this, "Storage '" + name + "' was not closed properly. Will try to recover from write ahead log");
       try {
-        restoreFromWAL();
+
+        writeCache.beginRestore();
+        try {
+          restoreFromWAL();
+        } finally {
+          writeCache.endRestore();
+        }
 
         if (recoverListener != null)
           recoverListener.onStorageRecover();

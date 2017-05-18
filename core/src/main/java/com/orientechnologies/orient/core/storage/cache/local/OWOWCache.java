@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OWriteCacheException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
@@ -55,7 +56,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -96,15 +100,40 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private static final int MIN_CACHE_SIZE = 16;
 
-  public static final long MAGIC_NUMBER = 0xFACB03FEL;
+  /**
+   * Marks pages which have a checksum stored.
+   */
+  public static final long MAGIC_NUMBER_WITH_CHECKSUM = 0xFACB03FEL;
+
+  /**
+   * Marks pages which have no checksum stored.
+   */
+  public static final long MAGIC_NUMBER_WITHOUT_CHECKSUM = 0xEF30BCAFL;
 
   private static final double MAX_LSN_SEGMENT_DISTANCE_FACTOR = 0.75;
 
+  private static final Method CRC32_UPDATE_BYTE_BUFFER;
+
+  // XXX: We are forced to use Java 6 on 2.2.x branch, java.util.zip.CRC32 on Java 6 supports only arrays. But we use direct
+  // ByteBuffers and it's slow to read their content into arrays just to compute the CRC32. Use the reflection, Luke.
+  static {
+    Method crc32UpdateByteBuffer;
+    try {
+      crc32UpdateByteBuffer = CRC32.class.getMethod("update", ByteBuffer.class);
+      crc32UpdateByteBuffer.setAccessible(true);
+    } catch (NoSuchMethodException e) {
+      crc32UpdateByteBuffer = null;
+    }
+    CRC32_UPDATE_BYTE_BUFFER = crc32UpdateByteBuffer;
+  }
+
+  private static final int PAGE_OFFSET_TO_CHECKSUM_FROM = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
+
   private final long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024L * 1024L;
 
-  private final int                                        diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES
-      .getValueAsInteger();
-  private final List<WeakReference<OLowDiskSpaceListener>> listeners             = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
+  private final int diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES.getValueAsInteger();
+
+  private final List<WeakReference<OLowDiskSpaceListener>> listeners = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
 
   private final AtomicLong lastDiskSpaceCheck = new AtomicLong(0);
   private final String storagePath;
@@ -162,6 +191,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final OPerformanceStatisticManager performanceStatisticManager;
 
   private final OByteBufferPool bufferPool;
+
+  private OChecksumMode checksumMode = OGlobalConfiguration.STORAGE_CHECKSUM_MODE.getValue();
 
   /**
    * Listeners which are called when exception in background data flush thread is happened.
@@ -293,6 +324,17 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     return performanceStatisticManager;
   }
 
+  @Override
+  public void beginRestore() {
+    final OChecksumMode configuredMode = OGlobalConfiguration.STORAGE_CHECKSUM_MODE.getValue();
+    checksumMode = configuredMode == OChecksumMode.Off ? OChecksumMode.Off : OChecksumMode.Store;
+  }
+
+  @Override
+  public void endRestore() {
+    checksumMode = OGlobalConfiguration.STORAGE_CHECKSUM_MODE.getValue();
+  }
+
   public void startFuzzyCheckpoints() {
     if (writeAheadLog != null) {
       final long fuzzyCheckPointInterval = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
@@ -358,11 +400,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private static int calculatePageCrc(byte[] pageData) {
-    final int systemSize = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
-
     final CRC32 crc32 = new CRC32();
-    crc32.update(pageData, systemSize, pageData.length - systemSize);
-
+    crc32.update(pageData, PAGE_OFFSET_TO_CHECKSUM_FROM, pageData.length - PAGE_OFFSET_TO_CHECKSUM_FROM);
     return (int) crc32.getValue();
   }
 
@@ -1072,23 +1111,25 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, 0);
 
-        if (magicNumber != MAGIC_NUMBER) {
+        if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
           magicNumberIncorrect = true;
           if (commandOutputListener != null)
             commandOutputListener
-                .onMessage("Error: Magic number for page " + (pos / pageSize) + " in file " + fileName + " does not much !!!");
+                .onMessage("Error: Magic number for page " + (pos / pageSize) + " in file " + fileName + " does not match !!!");
           fileIsCorrect = false;
         }
 
-        final int storedCRC32 = OIntegerSerializer.INSTANCE.deserializeNative(data, OLongSerializer.LONG_SIZE);
+        if (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
+          final int storedCRC32 = OIntegerSerializer.INSTANCE.deserializeNative(data, OLongSerializer.LONG_SIZE);
+          final int calculatedCRC32 = calculatePageCrc(data);
 
-        final int calculatedCRC32 = calculatePageCrc(data);
-        if (storedCRC32 != calculatedCRC32) {
-          checkSumIncorrect = true;
-          if (commandOutputListener != null)
-            commandOutputListener
-                .onMessage("Error: Checksum for page " + (pos / pageSize) + " in file " + fileName + " is incorrect !!!");
-          fileIsCorrect = false;
+          if (storedCRC32 != calculatedCRC32) {
+            checkSumIncorrect = true;
+            if (commandOutputListener != null)
+              commandOutputListener
+                  .onMessage("Error: Checksum for page " + (pos / pageSize) + " in file " + fileName + " is incorrect !!!");
+            fileIsCorrect = false;
+          }
         }
 
         if (magicNumberIncorrect || checkSumIncorrect)
@@ -1540,7 +1581,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         try {
           if (pageCount == 1) {
             final ByteBuffer buffer = bufferPool.acquireDirect(false);
+            assert buffer.position() == 0;
             fileClassic.read(firstPageStartPosition, buffer);
+
+            if (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow)
+              verifyChecksum(buffer, fileId, startPageIndex);
+
             buffer.position(0);
 
             final OCachePointer dataPointer = new OCachePointer(buffer, bufferPool, lastLsn, fileId, startPageIndex);
@@ -1558,6 +1604,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           }
 
           fileClassic.read(firstPageStartPosition, buffers);
+
+          if (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow)
+            for (int i = 0; i < buffers.length; ++i)
+              verifyChecksum(buffers[i], fileId, startPageIndex + i);
 
           final OCachePointer[] dataPointers = new OCachePointer[buffers.length];
           for (int n = 0; n < buffers.length; n++) {
@@ -1593,6 +1643,58 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
+  private void verifyChecksum(ByteBuffer buffer, long fileId, long pageIndex) {
+    assert buffer.order() == ByteOrder.nativeOrder();
+
+    buffer.position(0);
+    final long magicNumber = OLongSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
+    if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM) {
+      if (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
+        final String message = "Magic number verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
+        OLogManager.instance().error(this, "%s", message);
+        if (checksumMode == OChecksumMode.StoreAndThrow)
+          throw new OStorageException(message);
+      }
+
+      return;
+    }
+
+    buffer.position(OLongSerializer.LONG_SIZE);
+    final int storedChecksum = OIntegerSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
+
+    final CRC32 crc32 = new CRC32();
+    buffer.position(PAGE_OFFSET_TO_CHECKSUM_FROM);
+
+    boolean fallbackToArray = true;
+
+    if (CRC32_UPDATE_BYTE_BUFFER != null) {
+      try {
+        CRC32_UPDATE_BYTE_BUFFER.invoke(crc32, buffer);
+        fallbackToArray = false;
+      } catch (IllegalAccessException e) {
+        // do nothing
+      } catch (InvocationTargetException e) {
+        // do nothing
+      }
+    }
+
+    if (fallbackToArray) {
+      final int dataLength = buffer.limit() - PAGE_OFFSET_TO_CHECKSUM_FROM;
+      final byte[] data = new byte[dataLength];
+      buffer.get(data, PAGE_OFFSET_TO_CHECKSUM_FROM, dataLength);
+      crc32.update(data);
+    }
+
+    final int computedChecksum = (int) crc32.getValue();
+
+    if (computedChecksum != storedChecksum) {
+      final String message = "Checksum verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
+      OLogManager.instance().error(this, "%s", message);
+      if (checksumMode == OChecksumMode.StoreAndThrow)
+        throw new OStorageException(message);
+    }
+  }
+
   private void flushPage(final int fileId, final long pageIndex, final ByteBuffer buffer) throws IOException, InterruptedException {
     if (writeAheadLog != null) {
       final OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
@@ -1606,10 +1708,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     buffer.position(0);
     buffer.get(content);
 
-    OLongSerializer.INSTANCE.serializeNative(MAGIC_NUMBER, content, 0);
+    OLongSerializer.INSTANCE
+        .serializeNative(checksumMode == OChecksumMode.Off ? MAGIC_NUMBER_WITHOUT_CHECKSUM : MAGIC_NUMBER_WITH_CHECKSUM, content,
+            0);
 
-    final int crc32 = calculatePageCrc(content);
-    OIntegerSerializer.INSTANCE.serializeNative(crc32, content, OLongSerializer.LONG_SIZE);
+    if (checksumMode != OChecksumMode.Off) {
+      final int crc32 = calculatePageCrc(content);
+      OIntegerSerializer.INSTANCE.serializeNative(crc32, content, OLongSerializer.LONG_SIZE);
+    }
 
     final long externalId = composeFileId(id, fileId);
     final OClosableEntry<Long, OFileClassic> entry = files.acquire(externalId);
@@ -2221,6 +2327,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         }
       }
     }
+  }
+
+  public void setChecksumMode(OChecksumMode checksumMode) { // for testing purposes only
+    this.checksumMode = checksumMode;
   }
 
   private static class FlushThreadFactory implements ThreadFactory {

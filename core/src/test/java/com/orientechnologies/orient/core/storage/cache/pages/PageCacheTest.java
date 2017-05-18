@@ -550,6 +550,14 @@ public class PageCacheTest {
     public OPerformanceStatisticManager getPerformanceStatisticManager() {
       return null;
     }
+
+    @Override
+    public void beginRestore() {
+    }
+
+    @Override
+    public void endRestore() {
+    }
   }
 
   private class AtomicOperation extends OAtomicOperation {

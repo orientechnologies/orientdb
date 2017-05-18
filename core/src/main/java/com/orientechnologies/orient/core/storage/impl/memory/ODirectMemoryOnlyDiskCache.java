@@ -76,6 +76,16 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     return performanceStatisticManager;
   }
 
+  @Override
+  public void beginRestore() {
+    // do nothing
+  }
+
+  @Override
+  public void endRestore() {
+    // do nothing
+  }
+
   /**
    * {@inheritDoc}
    */
