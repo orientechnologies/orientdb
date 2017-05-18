@@ -1380,6 +1380,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         if (dDatabase.getRecordIfLocked(e.getRid()) != null) {
           throw new OPossibleDuplicatedRecordException(e);
         }
+        throw e;
       }
     }
 
