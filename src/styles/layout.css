@@ -1337,3 +1337,7 @@ table.table-backup {
   color: #f5f5f5;
   text-align: center;
 }
+
+teleporter .popover {
+  max-width: 100%;
+}

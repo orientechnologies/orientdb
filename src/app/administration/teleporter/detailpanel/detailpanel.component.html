@@ -1,23 +1,434 @@
-<div class="panel panel-success" style="margin-bottom: 0px">
+<div id="panelArea" class="panel panel-success" style="margin-bottom: 0px">
 
   <div class="panel-heading">
     <span class="h4 center">Details</span>
   </div>
-  <div class="panel-body" style="height: 255px;">
+  <div id="upperArea" class="panel-body" style="height: 255px; overflow: auto;">
 
     <div *ngIf="selectedElement">
-      <div *ngIf="selectedElement.name">Vertex Class: {{selectedElement.name}}</div>
-      <div *ngIf="!selectedElement.name">Edge Class: {{edgeName}}</div>
+
+      <!--Vertex rendering-->
+      <div *ngIf="selectedElement.name">
+
+        <div class="row">
+          <div class="col-md-8">
+            <div class="col-md-3" style="margin: 0px; padding: 0px;">
+              <u>Vertex Class:</u>
+            </div>
+            <div class="col-md-9" style="padding-left: 10px; padding-right: 10px;" >
+            <span class="hideOverflow" data-toggle="popover"
+                  data-placement="top"
+                  data-trigger="hover"
+                  data-container="#panelArea"
+                  [attr.data-content]="selectedElement.name">
+              <b>{{selectedElement.name}}</b><br><br>
+            </span>
+            </div>
+          </div>
+          <div class="col-md-4 btn-group">
+            <button class="btn  btn-default btn-xs">
+              <i class="fa fa-plus"></i>
+              New Property
+            </button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            <table class="table table-bordered table-hover table-responsive propAndColumnTable">
+              <thead>
+              <tr>
+                <th class="firstColumn">Property name</th>
+                <th class="secondColumn">Property type</th>
+                <th class="thirdColumn">Actions</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr *ngFor="let propName of propertiesName">
+                <td class="firstColumn">{{propName}}</td>
+                <td class="secondColumn">{{selectedElement.properties[propName].type}}</td>
+                <td class="thirdColumn">
+                  <div class="btn-group">
+                    <button class="btn btn-primary btn-xs">
+                      Edit
+                    </button>
+                  </div>
+                  <div class="btn-group">
+                    <button class="btn btn-danger btn-xs">
+                      <i class="fa fa-trash-o"></i>
+                      Drop
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!--Edge rendering-->
+      <div *ngIf="!selectedElement.name">
+
+        <div class="row">
+          <div class="col-md-8">
+            <div class="col-md-3" style="margin: 0px; padding: 0px;">
+              <u>Vertex Class:</u>
+            </div>
+            <div class="col-md-9" style="padding-left: 10px; padding-right: 10px;" >
+            <span class="hideOverflow" data-toggle="popover"
+                  data-placement="top"
+                  data-trigger="hover"
+                  data-container="#panelArea"
+                  [attr.data-content]="edgeName">
+              <b>{{edgeName}}</b><br><br>
+            </span>
+            </div>
+          </div>
+          <div class="col-md-4 btn-group">
+            <button class="btn  btn-default btn-xs">
+              <i class="fa fa-plus"></i>
+              New Property
+            </button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            <table class="table table-bordered table-hover table-responsive propAndColumnTable">
+              <thead>
+              <tr>
+                <th class="firstColumn">Property name</th>
+                <th class="secondColumn">Property type</th>
+                <th class="thirdColumn">Actions</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr *ngFor="let propName of propertiesName">
+                <td class="firstColumn">{{propName}}</td>
+                <td class="secondColumn">{{selectedElement[edgeName].properties[propName].type}}</td>
+                <td class="thirdColumn">
+                  <div class="btn-group">
+                    <button class="btn btn-primary btn-xs">
+                      Edit
+                    </button>
+                  </div>
+                  <div class="btn-group">
+                    <button class="btn btn-danger btn-xs">
+                      <i class="fa fa-trash-o"></i>
+                      Drop
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
     </div>
 
   </div>
 </div>
 <div class="panel panel-success">
-  <div class="panel-body" style="height: 256px;">
+  <div id="lowerArea" class="panel-body" style="height: 256px; overflow: auto;">
     <div *ngIf="selectedElement">
-      <div *ngIf="!edgeName">Table: {{selectedElement.mapping.sourceTables[0].tableName}}</div>
-      <div *ngIf="edgeName">Relationship: {{selectedElement[edgeName].mapping[0].fromTable}}  -->
-        {{selectedElement[edgeName].mapping[0].toTable}}</div>
+
+      <!--Table rendering-->
+      <div *ngIf="!edgeName">
+
+        <div class="row">
+          <div class="col-md-8">
+            <div class="col-md-2" style="margin: 0px; padding: 0px;">
+              <u>Table:</u>
+            </div>
+            <div class="col-md-10" style="padding-left: 0px;" >
+            <span class="hideOverflow" data-toggle="popover"
+                  data-placement="top"
+                  data-trigger="hover"
+                  data-container="#panelArea"
+                  [attr.data-content]="selectedElement.name">
+              <b>{{selectedElement.name}}</b><br><br>
+            </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            <table class="table table-bordered table-hover table-responsive propAndColumnTable">
+              <thead>
+              <tr>
+                <th class="firstColumn">Column name</th>
+                <th class="secondColumn">Column type</th>
+                <th class="thirdColumn">Include</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr *ngFor="let propName of propertiesName">
+                <td class="firstColumn">{{selectedElement.properties[propName].mapping.columnName}}</td>
+                <td class="secondColumn">{{selectedElement.properties[propName].mapping.type}}</td>
+                <td class="thirdColumn"><input type="checkbox" [(ngModel)]="selectedElement.properties[propName].include" disabled></td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!--Relationship rendering-->
+      <div *ngIf="edgeName">
+
+        <svg width="0" height="0" viewBox="0 0 0 0">
+          <defs>
+            <marker id="arrow-head" viewBox="0 -5 10 10" refX="6" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,-5L10,0L0,5" fill="#000" class="arrow-head"></path>
+            </marker>
+          </defs>
+        </svg>
+
+        <div *ngIf="!selectedElement[edgeName].mapping[0].joinTable">
+          <b>1-N Relationship</b><br/><br/>
+
+          <div id="divRow" class="row" align="center">
+            <div style="width: 150px; height: 180px; display: table-cell;">
+              <label class="OneNRelTableLabel" for="fromTable"
+                     data-toggle="popover"
+                     data-placement="top"
+                     data-trigger="hover"
+                     [attr.data-content]="selectedElement[edgeName].mapping[0].fromTable">{{selectedElement[edgeName].mapping[0].fromTable}}</label>
+              <table id="fromTable" class="table table-bordered table-hover table-responsive OneNRelTable">
+                <thead>
+                <tr height="25">
+                  <th>&nbsp;</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr height="100">&nbsp;</tr>
+                </tbody>
+              </table>
+
+              <table class="OneNRelInfoTable">
+                <tfoot>
+                <tr>
+                  <td>
+                    <span *ngIf="fromTableInfo"><u>{{fromTableInfo.label}}</u></span>
+                    <ul *ngIf="fromTableInfo && fromTableInfo.columns.length > 0">
+                      <li *ngFor="let column of fromTableInfo.columns"
+                          data-toggle="popover"
+                          data-placement="top"
+                          data-trigger="hover"
+                          [attr.data-content]="column">{{column}}
+                      </li>
+                    </ul>
+                  </td>
+                </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div style="width: 75px; height: 180px; display: table-cell;">
+              &nbsp;
+              <svg width="75px">
+                <g (click)="render1NRelationshipInfo(selectedElement[edgeName].mapping[0])" style="cursor: pointer;">
+                  <text font-family="FontAwesome" fill="#99ccff" x="30" y="70">
+                    &#xf059;
+                  </text>
+                  <path id="arrow" class="arrow-stem" stroke="#000" stroke-width="1.5px" style="marker-end: url('#arrow-head');"
+                        d="M7,80L65,80"></path>
+                </g>
+              </svg>
+            </div>
+
+            <div style="width: 150px; height: 180px; display: table-cell;">
+              <label class="OneNRelTableLabel" for="toTable"
+                     data-toggle="popover"
+                     data-placement="top"
+                     data-trigger="hover"
+                     [attr.data-content]="selectedElement[edgeName].mapping[0].toTable">{{selectedElement[edgeName].mapping[0].toTable}}</label>
+              <table id="toTable" class="table table-bordered table-hover table-responsive OneNRelTable">
+                <thead>
+                <tr height="25">
+                  <th>&nbsp;</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr height="100">&nbsp;</tr>
+                </tbody>
+              </table>
+
+              <table class="OneNRelInfoTable">
+                <tfoot>
+                <tr>
+                  <td>
+                    <span *ngIf="toTableInfo"><u>{{toTableInfo.label}}</u></span>
+                    <ul *ngIf="toTableInfo && toTableInfo.columns.length > 0">
+                      <li *ngFor="let column of toTableInfo.columns"
+                          data-toggle="popover"
+                          data-placement="top"
+                          data-trigger="hover"
+                          [attr.data-content]="column">{{column}}
+                      </li>
+                    </ul>
+                  </td>
+                </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <div *ngIf="selectedElement[edgeName].mapping[0].joinTable">
+          <b>N-N Relationship</b><br/><br/>
+
+          <div class="row" align="center">
+            <div style="width: 75px; height: 90px; display: table-cell;">
+              <label class="NNRelTableLabel" for="extTable1"
+                     data-toggle="popover"
+                     data-placement="top"
+                     data-trigger="hover"
+                     [attr.data-content]="selectedElement[edgeName].mapping[0].fromTable">{{selectedElement[edgeName].mapping[0].fromTable}}</label>
+              <table id="extTable1" class="table table-bordered table-hover table-responsive NNRelTable">
+                <thead>
+                <tr height="16">
+                  <th>&nbsp;</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr height="75">&nbsp;</tr>
+                </tbody>
+              </table>
+
+              <table class="NNRelInfoTable">
+                <tfoot>
+                <tr>
+                  <td>
+                    <span *ngIf="leftTableInfo"><u>{{leftTableInfo.label}}</u></span>
+                    <ul *ngIf="leftTableInfo && leftTableInfo.columns.length > 0">
+                      <li *ngFor="let column of leftTableInfo.columns"
+                          data-toggle="popover"
+                          data-placement="top"
+                          data-trigger="hover"
+                          [attr.data-content]="column">{{column}}
+                      </li>
+                    </ul>
+                  </td>
+                </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div style="width: 33px; height: 90px; display: table-cell;">
+              &nbsp;
+              <svg width="50px">
+                <style>
+                  .arrow .arrow-stem { cursor: pointer; } /* specific elements */
+                </style>
+                <g class="arrow"(click)="renderNNRelationshipInfo(selectedElement[edgeName].mapping[0], 'left')" style="cursor: pointer;">
+                  <text font-family="FontAwesome" fill="#99ccff" x="20" y="55">
+                    &#xf059;
+                  </text>
+                  <path id="leftArrow" class="arrow-stem" stroke="#000" stroke-width="1.5px" style="marker-end: url('#arrow-head');"
+                        d="M45,65L7,65"></path>
+                </g>
+              </svg>
+            </div>
+
+            <div style="width: 75px; height: 90px; display: table-cell;">
+              <label class="NNRelTableLabel" for="joinTable"
+                     data-toggle="popover"
+                     data-placement="top"
+                     data-trigger="hover"
+                     [attr.data-content]="selectedElement[edgeName].mapping[0].joinTable.tableName">{{selectedElement[edgeName].mapping[0].joinTable.tableName}}</label>
+              <table id="joinTable" class="table table-bordered table-hover table-responsive NNRelTable">
+                <thead>
+                <tr height="16">
+                  <th>&nbsp;</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr height="75">&nbsp;</tr>
+                </tbody>
+              </table>
+
+              <table class="NNRelInfoTable">
+                <tfoot>
+                <tr>
+                  <td>
+                    <span *ngIf="joinTableInfo"><u>{{joinTableInfo.label}}</u></span>
+                    <ul *ngIf="joinTableInfo && joinTableInfo.columns.length > 0">
+                      <li *ngFor="let column of joinTableInfo.columns"
+                          data-toggle="popover"
+                          data-placement="top"
+                          data-trigger="hover"
+                          [attr.data-content]="column">{{column}}
+                      </li>
+                    </ul>
+                  </td>
+                </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div style="width: 33px; height: 90px; display: table-cell;">
+              &nbsp;
+              <svg width="50px">
+                <style>
+                  .arrow .arrow-stem { cursor: pointer; } /* specific elements */
+                </style>
+                <g class="arrow" (click)="renderNNRelationshipInfo(selectedElement[edgeName].mapping[0], 'right')" style="cursor: pointer;">
+                  <text font-family="FontAwesome" fill="#99ccff" x="20" y="55">
+                    &#xf059;
+                  </text>
+                  <path id="rightArrow" class="arrow-stem" stroke="#000" stroke-width="1.5px" style="marker-end: url('#arrow-head');"
+                        d="M5,65L43,65"></path>
+                </g>
+              </svg>
+            </div>
+
+            <div style="width: 75px; height: 90px; display: table-cell;">
+              <label class="NNRelTableLabel" for="extTable2"
+                     data-toggle="popover"
+                     data-placement="top"
+                     data-trigger="hover"
+                     [attr.data-content]="selectedElement[edgeName].mapping[0].toTable">{{selectedElement[edgeName].mapping[0].toTable}}</label>
+              <table id="extTable2" class="table table-bordered table-hover table-responsive NNRelTable">
+                <thead>
+                <tr height="16">
+                  <th>&nbsp;</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr height="75">&nbsp;</tr>
+                </tbody>
+              </table>
+
+              <table class="NNRelInfoTable">
+                <tfoot>
+                <tr>
+                  <td>
+                    <span *ngIf="rightTableInfo"><u>{{rightTableInfo.label}}</u></span>
+                    <ul *ngIf="rightTableInfo && rightTableInfo.columns.length > 0">
+                      <li *ngFor="let column of rightTableInfo.columns"
+                          data-toggle="popover"
+                          data-placement="top"
+                          data-trigger="hover"
+                          [attr.data-content]="column">{{column}}
+                      </li>
+                    </ul>
+                  </td>
+                </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   </div>
 </div>

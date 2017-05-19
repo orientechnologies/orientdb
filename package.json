@@ -46,6 +46,7 @@
     "ng-table": "^1.0.0",
     "ng-tags-input": "^3.1.1",
     "ng2-bootstrap": "^1.3.3",
+    "ng2-bootstrap-modal": "^1.0.1",
     "ng2-codemirror": "^1.1.1",
     "ng2-select2": "^1.0.0-beta.10",
     "ng2-tag-input": "^0.8.4",

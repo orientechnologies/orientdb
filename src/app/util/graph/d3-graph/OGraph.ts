@@ -90,7 +90,7 @@ export class OGraph {
 
     this.force = d3.layout.force()
       .size([this.config.width, this.config.height])
-      .linkStrength(0.1)
+      .linkStrength(this.config.linkStrength)
       .charge(this.config.charge)
       .friction(this.config.friction)
       .linkDistance(this.config.linkDistance)
@@ -205,6 +205,14 @@ export class OGraph {
       .attr("id", function(d) {return Object.keys(d)[0];})
       .attr("class", "link")
       .attr("stroke", "#000")
+      .attr("stroke-dasharray", function(d) {
+        if(d[Object.keys(d)[0]].mapping[0].joinTable) {
+          return "5";
+        }
+        else {
+          return "";
+        }
+      })
       .attr("stroke-width", "1.5px")
       .style("marker-end", "url(#end-arrow)");
 
@@ -351,6 +359,10 @@ export class OGraph {
     this.force.start();
   }
 
+  stop() {
+    this.force.stop();
+    console.log("force stopped")
+  }
 
   getVertexClassBySourceTableName(tableName) {
 

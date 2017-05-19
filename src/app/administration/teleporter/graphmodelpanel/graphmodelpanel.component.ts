@@ -1,4 +1,4 @@
-import {Component, Input, Output, EventEmitter, ViewChild, OnChanges} from '@angular/core';
+import {Component, Input, Output, EventEmitter, ViewChild, OnInit, OnChanges} from '@angular/core';
 import {Select2OptionData} from 'ng2-select2';
 
 import * as $ from "jquery"
@@ -15,7 +15,7 @@ declare var angular:any
   styleUrls: []
 })
 
-class GraphModelPanelComponent implements OnChanges {
+class GraphModelPanelComponent implements OnInit, OnChanges {
 
   @Input() modellingConfig = this.modellingConfig !== 'undefined' ? this.modellingConfig : 'no config from parent.';
   @Output() modellingConfigChange = new EventEmitter();
@@ -23,28 +23,56 @@ class GraphModelPanelComponent implements OnChanges {
   @Input() selectedElement = this.selectedElement !== 'undefined' ? this.selectedElement : 'undefined';
   @Output() onSelectedElement = new EventEmitter();
 
+  @Input() onMigrationConfigFetched;
+
+  private dataLoaded:boolean;
+
   public searchOptions: Array<Select2OptionData>;
+  private searchOptionsLoaded;
   private selectOptions;
-  private value;
+  private searchValue;
 
   @ViewChild('graph') graphComponent;
 
   constructor() {
 
+    this.dataLoaded = false;
     this.searchOptions = [];
-    this.value = "";
+    this.searchOptionsLoaded = false;
+    this.searchValue = "";
 
     this.selectOptions = {
       multiple: false,
       theme: 'classic',
       closeOnSelect: true,
-      maximumSelectionSize: 1,
-      placeholder: "Class or Table name"
+      placeholder: "Insert Class or Table name"
     }
 
   }
 
   ngOnChanges(changes) {
+    if(changes.modellingConfig) {
+      if (changes.modellingConfig.currentValue && this.searchOptions.length === 0) {
+        this.prepareSearchOptions();
+      }
+    }
+  }
+
+  ngOnInit() {
+
+    // if modellingConfig is undefined the migration config is not fetched yet, thus we can subscribe to the event emitter and wait for completion
+    if(!this.modellingConfig) {
+      this.onMigrationConfigFetched.subscribe(() => {
+        this.dataLoaded = true;
+      })
+    }
+    else {
+      // migration config is already fetched, thus we don't need to subscribe to the event emitter
+      this.dataLoaded = true;
+    }
+  }
+
+  prepareSearchOptions() {
 
     // collect all the node names for search auto-complete
     for (var i = 0; i < this.modellingConfig.vertices.length; i++) {
@@ -66,6 +94,8 @@ class GraphModelPanelComponent implements OnChanges {
     this.searchOptions = this.searchOptions.sort(function (a, b) {
       return a.id.localeCompare(b.id);
     });
+    this.searchOptionsLoaded = true;
+    console.log(this.searchOptions);
   }
 
   updateSelectedElement(e) {
@@ -74,8 +104,8 @@ class GraphModelPanelComponent implements OnChanges {
   }
 
   searchNode(e: any) {
-    this.value = e.value;
-    this.graphComponent.searchNode(this.value);
+    this.searchValue = e.value;
+    this.graphComponent.searchNode(this.searchValue);
   }
 
 }

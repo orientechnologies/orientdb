@@ -41,7 +41,20 @@ class TeleporterService {
   }
 
   getTablesNames(params) {
-    let url = API + 'teleporter/tables'
+    let url = API + 'teleporter/tables';
+    return this.http.post(url, params).toPromise().then((data) => {
+      return data.json();
+    })
+  }
+
+  getMigrationConfig(params) {
+    let url = API + 'teleporter/job';
+    if(params.strategy === "naive") {
+      params.strategy = "interactive";
+    }
+    else if(params.strategy === "naive-aggregate") {
+      params.strategy = "interactive-aggr";
+    }
     return this.http.post(url, params).toPromise().then((data) => {
       return data.json();
     })

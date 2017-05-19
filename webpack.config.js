@@ -76,8 +76,9 @@ module.exports = function (options) {
           loaders: ["babel-loader?" + babelPresets.map((preset) => `presets[]=${preset}`).join("&")]
         },
         {
-          test: /.css$/,
+          test: /\.css$/,
           loader: "style-loader!css-loader"
+          // loader: "raw-loader!css-loader"
         },
         {
           test: /\.(eot|svg|ttf|woff(2)?)(\?v=\d+\.\d+\.\d+)?/,

@@ -1,4 +1,4 @@
-import {Component, NgZone, AfterViewChecked} from '@angular/core';
+import {Component, NgZone, AfterViewChecked, EventEmitter, Output, ViewChild} from '@angular/core';
 
 import * as $ from "jquery"
 
@@ -16,6 +16,8 @@ declare var angular:any
 })
 
 class TeleporterComponent implements AfterViewChecked {
+
+  private popoversEnabled:boolean;
 
   private protocols;
   private strategies;
@@ -48,6 +50,12 @@ class TeleporterComponent implements AfterViewChecked {
   // JSON configuration for modelling
   private modellingConfig;
   private selectedElement;
+  private configFetched:boolean;
+
+  // Event Emitter
+  @Output() onMigrationConfigFetched = new EventEmitter();
+
+  @ViewChild('detailPanel') detailPanel;
 
   constructor(private teleporterService: TeleporterService, private notification: NotificationService,
               private agentService: AgentService, private zone: NgZone) {
@@ -60,6 +68,9 @@ class TeleporterComponent implements AfterViewChecked {
   }
 
   init() {
+
+    this.popoversEnabled = false;
+
     this.protocols = ["plocal", "memory"];
     this.strategies = ["naive", "naive-aggregate"];
     this.nameResolvers = ["original", "java"];
@@ -80,11 +91,11 @@ class TeleporterComponent implements AfterViewChecked {
       "username": "postgres",
       "password": "postgres",
       "protocol": "plocal",
-      "outDBName": "dvdrental",
+      "outDBName": "testdb",
       "outDbUrl": "",
-      "strategy": "naive",
+      "strategy": "naive-aggregate",
       "mapper": "basicDBMapper",
-      "xmlPath": "a",
+      "xmlPath": "",
       "nameResolver": "original",
       "level": "2",
       "includedTables": [],
@@ -139,10 +150,14 @@ class TeleporterComponent implements AfterViewChecked {
     this.buildConfigJSON();
 
     this.selectedElement = undefined;
+    this.configFetched = false;
   }
 
   ngAfterViewChecked() {
-    this.enablePopovers();
+    if(!this.popoversEnabled) {
+      this.enablePopovers();
+      this.popoversEnabled = true;
+    }
   }
 
   enablePopovers() {
@@ -159,11 +174,19 @@ class TeleporterComponent implements AfterViewChecked {
 
   switchConfigStep(step) {
 
-    if(step === '5') {
+    if(step === '3') {
 
       // fetching tables' names
       this.getTablesNames().then((data) => {
         this.sourceDBTables = data["tables"];
+      })
+    }
+    else if(step === '4') {
+
+      // fetching migration config
+      this.getMigrationConfig().then((data) => {
+        this.modellingConfig = data;
+        this.onMigrationConfigFetched.emit();
       })
     }
     this.step = step;
@@ -171,6 +194,7 @@ class TeleporterComponent implements AfterViewChecked {
 
   changeSelectedElement(e) {
     this.selectedElement = e;
+    this.detailPanel.changeSelectedElement(e);
   }
 
   drivers() {
@@ -179,6 +203,10 @@ class TeleporterComponent implements AfterViewChecked {
 
   getTablesNames() {
     return this.teleporterService.getTablesNames(this.config);
+  }
+
+  getMigrationConfig() {
+    return this.teleporterService.getMigrationConfig(this.config);
   }
 
   changeJurlAccordingToDriver() {
@@ -267,309 +295,126 @@ class TeleporterComponent implements AfterViewChecked {
     this.modellingConfig = {
       "vertices": [
         {
-          "name": "Project",
-          "mapping": {
-            "sourceTables": [
-              {
-                "name": "hsqldb_PROJECT",
-                "dataSource": "hsqldb",
-                "tableName": "PROJECT",
-                "primaryKey": [
-                  "ID"
-                ]
-              }
-            ]
-          },
-          "externalKey": [
-            "id"
-          ],
-          "properties": {
-            "id": {
-              "include": true,
-              "type": "STRING",
-              "ordinalPosition": 1,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_PROJECT",
-                "columnName": "ID",
-                "type": "VARCHAR"
-              }
-            },
-            "projectName": {
-              "include": true,
-              "type": "STRING",
-              "ordinalPosition": 2,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_PROJECT",
-                "columnName": "PROJECT_NAME",
-                "type": "VARCHAR"
-              }
-            },
-            "description": {
-              "include": true,
-              "type": "STRING",
-              "ordinalPosition": 3,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_PROJECT",
-                "columnName": "DESCRIPTION",
-                "type": "VARCHAR"
-              }
-            },
-            "startDate": {
-              "include": true,
-              "type": "DATE",
-              "ordinalPosition": 4,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_PROJECT",
-                "columnName": "START_DATE",
-                "type": "DATE"
-              }
-            },
-            "expectedEndDate": {
-              "include": true,
-              "type": "DATE",
-              "ordinalPosition": 5,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_PROJECT",
-                "columnName": "EXPECTED_END_DATE",
-                "type": "DATE"
-              }
-            }
-          }
+          "externalKey": ["address_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_address","dataSource":"PostgreSQL","tableName":"address","primaryKey":["address_id"]}]},
+          "name": "address",
+          "properties": {"address":{"include":true,"mapping":{"source":"PostgreSQL_address","type":"varchar","columnName":"address"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":2,"mandatory":false},"address2":{"include":true,"mapping":{"source":"PostgreSQL_address","type":"varchar","columnName":"address2"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":3,"mandatory":false},"phone":{"include":true,"mapping":{"source":"PostgreSQL_address","type":"varchar","columnName":"phone"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":7,"mandatory":false},"district":{"include":true,"mapping":{"source":"PostgreSQL_address","type":"varchar","columnName":"district"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":4,"mandatory":false},"last_update":{"include":true,"mapping":{"source":"PostgreSQL_address","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":8,"mandatory":false},"address_id":{"include":true,"mapping":{"source":"PostgreSQL_address","type":"serial","columnName":"address_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false},"postal_code":{"include":true,"mapping":{"source":"PostgreSQL_address","type":"varchar","columnName":"postal_code"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":6,"mandatory":false},"city_id":{"include":true,"mapping":{"source":"PostgreSQL_address","type":"int2","columnName":"city_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":5,"mandatory":false}}
         },
         {
-          "name": "Department",
-          "mapping": {
-            "sourceTables": [
-              {
-                "name": "hsqldb_DEPARTMENT",
-                "dataSource": "hsqldb",
-                "tableName": "DEPARTMENT",
-                "primaryKey": [
-                  "ID"
-                ]
-              }
-            ]
-          },
-          "externalKey": [
-            "id"
-          ],
-          "properties": {
-            "id": {
-              "include": true,
-              "type": "STRING",
-              "ordinalPosition": 1,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_DEPARTMENT",
-                "columnName": "ID",
-                "type": "VARCHAR"
-              }
-            },
-            "departmentName": {
-              "include": true,
-              "type": "STRING",
-              "ordinalPosition": 2,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_DEPARTMENT",
-                "columnName": "DEPARTMENT_NAME",
-                "type": "VARCHAR"
-              }
-            },
-            "location": {
-              "include": true,
-              "type": "STRING",
-              "ordinalPosition": 3,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_DEPARTMENT",
-                "columnName": "LOCATION",
-                "type": "VARCHAR"
-              }
-            }
-          }
+          "externalKey": ["country_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_country","dataSource":"PostgreSQL","tableName":"country","primaryKey":["country_id"]}]},
+          "name": "country",
+          "properties": {"country":{"include":true,"mapping":{"source":"PostgreSQL_country","type":"varchar","columnName":"country"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":2,"mandatory":false},"last_update":{"include":true,"mapping":{"source":"PostgreSQL_country","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":3,"mandatory":false},"country_id":{"include":true,"mapping":{"source":"PostgreSQL_country","type":"serial","columnName":"country_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false}}
         },
         {
-          "name": "Employee",
-          "mapping": {
-            "sourceTables": [
-              {
-                "name": "hsqldb_EMPLOYEE",
-                "dataSource": "hsqldb",
-                "tableName": "EMPLOYEE",
-                "primaryKey": [
-                  "ID"
-                ]
-              }
-            ]
-          },
-          "externalKey": [
-            "id"
-          ],
-          "properties": {
-            "id": {
-              "include": true,
-              "type": "STRING",
-              "ordinalPosition": 1,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_EMPLOYEE",
-                "columnName": "ID",
-                "type": "VARCHAR"
-              }
-            },
-            "firstName": {
-              "include": true,
-              "type": "STRING",
-              "ordinalPosition": 2,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_EMPLOYEE",
-                "columnName": "FIRST_NAME",
-                "type": "VARCHAR"
-              }
-            },
-            "lastName": {
-              "include": true,
-              "type": "STRING",
-              "ordinalPosition": 3,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_EMPLOYEE",
-                "columnName": "LAST_NAME",
-                "type": "VARCHAR"
-              }
-            },
-            "salary": {
-              "include": true,
-              "type": "DOUBLE",
-              "ordinalPosition": 4,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_EMPLOYEE",
-                "columnName": "SALARY",
-                "type": "DOUBLE"
-              }
-            },
-            "email": {
-              "include": true,
-              "type": "STRING",
-              "ordinalPosition": 5,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_EMPLOYEE",
-                "columnName": "EMAIL",
-                "type": "VARCHAR"
-              }
-            },
-            "department": {
-              "include": true,
-              "type": "STRING",
-              "ordinalPosition": 6,
-              "mandatory": false,
-              "readOnly": false,
-              "notNull": false,
-              "mapping": {
-                "source": "hsqldb_EMPLOYEE",
-                "columnName": "DEPARTMENT",
-                "type": "VARCHAR"
-              }
-            }
-          }
+          "externalKey": ["rental_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_rental","dataSource":"PostgreSQL","tableName":"rental","primaryKey":["rental_id"]}]},
+          "name": "rental",
+          "properties": {"inventory_id":{"include":true,"mapping":{"source":"PostgreSQL_rental","type":"int4","columnName":"inventory_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":3,"mandatory":false},"staff_id":{"include":true,"mapping":{"source":"PostgreSQL_rental","type":"int2","columnName":"staff_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":6,"mandatory":false},"last_update":{"include":true,"mapping":{"source":"PostgreSQL_rental","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":7,"mandatory":false},"rental_date":{"include":true,"mapping":{"source":"PostgreSQL_rental","type":"timestamp","columnName":"rental_date"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":2,"mandatory":false},"customer_id":{"include":true,"mapping":{"source":"PostgreSQL_rental","type":"int2","columnName":"customer_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":4,"mandatory":false},"rental_id":{"include":true,"mapping":{"source":"PostgreSQL_rental","type":"serial","columnName":"rental_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false},"return_date":{"include":true,"mapping":{"source":"PostgreSQL_rental","type":"timestamp","columnName":"return_date"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":5,"mandatory":false}}
+        },
+        {
+          "externalKey": ["store_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_store","dataSource":"PostgreSQL","tableName":"store","primaryKey":["store_id"]}]},
+          "name": "store",
+          "properties": {"store_id":{"include":true,"mapping":{"source":"PostgreSQL_store","type":"serial","columnName":"store_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false},"manager_staff_id":{"include":true,"mapping":{"source":"PostgreSQL_store","type":"int2","columnName":"manager_staff_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":2,"mandatory":false},"last_update":{"include":true,"mapping":{"source":"PostgreSQL_store","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":4,"mandatory":false},"address_id":{"include":true,"mapping":{"source":"PostgreSQL_store","type":"int2","columnName":"address_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":3,"mandatory":false}}
+        },
+        {
+          "externalKey": ["film_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_film","dataSource":"PostgreSQL","tableName":"film","primaryKey":["film_id"]}]},
+          "name": "film",
+          "properties": {"special_features":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"_text","columnName":"special_features"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":12,"mandatory":false},"rental_duration":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"int2","columnName":"rental_duration"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":6,"mandatory":false},"rental_rate":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"numeric","columnName":"rental_rate"},"notNull":false,"readOnly":false,"type":"DECIMAL","ordinalPosition":7,"mandatory":false},"release_year":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"year","columnName":"release_year"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":4,"mandatory":false},"length":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"int2","columnName":"length"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":8,"mandatory":false},"replacement_cost":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"numeric","columnName":"replacement_cost"},"notNull":false,"readOnly":false,"type":"DECIMAL","ordinalPosition":9,"mandatory":false},"rating":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"mpaa_rating","columnName":"rating"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":10,"mandatory":false},"description":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"text","columnName":"description"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":3,"mandatory":false},"language_id":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"int2","columnName":"language_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":5,"mandatory":false},"title":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"varchar","columnName":"title"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":2,"mandatory":false},"last_update":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":11,"mandatory":false},"fulltext":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"tsvector","columnName":"fulltext"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":13,"mandatory":false},"film_id":{"include":true,"mapping":{"source":"PostgreSQL_film","type":"serial","columnName":"film_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false}}
+        },
+        {
+          "externalKey": ["inventory_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_inventory","dataSource":"PostgreSQL","tableName":"inventory","primaryKey":["inventory_id"]}]},
+          "name": "inventory",
+          "properties": {"store_id":{"include":true,"mapping":{"source":"PostgreSQL_inventory","type":"int2","columnName":"store_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":3,"mandatory":false},"inventory_id":{"include":true,"mapping":{"source":"PostgreSQL_inventory","type":"serial","columnName":"inventory_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false},"last_update":{"include":true,"mapping":{"source":"PostgreSQL_inventory","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":4,"mandatory":false},"film_id":{"include":true,"mapping":{"source":"PostgreSQL_inventory","type":"int2","columnName":"film_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":2,"mandatory":false}}
+        },
+        {
+          "externalKey": ["customer_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_customer","dataSource":"PostgreSQL","tableName":"customer","primaryKey":["customer_id"]}]},
+          "name": "customer",
+          "properties": {"store_id":{"include":true,"mapping":{"source":"PostgreSQL_customer","type":"int2","columnName":"store_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":2,"mandatory":false},"last_update":{"include":true,"mapping":{"source":"PostgreSQL_customer","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":9,"mandatory":false},"address_id":{"include":true,"mapping":{"source":"PostgreSQL_customer","type":"int2","columnName":"address_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":6,"mandatory":false},"last_name":{"include":true,"mapping":{"source":"PostgreSQL_customer","type":"varchar","columnName":"last_name"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":4,"mandatory":false},"active":{"include":true,"mapping":{"source":"PostgreSQL_customer","type":"int4","columnName":"active"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":10,"mandatory":false},"activebool":{"include":true,"mapping":{"source":"PostgreSQL_customer","type":"bool","columnName":"activebool"},"notNull":false,"readOnly":false,"type":"BOOLEAN","ordinalPosition":7,"mandatory":false},"customer_id":{"include":true,"mapping":{"source":"PostgreSQL_customer","type":"serial","columnName":"customer_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false},"create_date":{"include":true,"mapping":{"source":"PostgreSQL_customer","type":"date","columnName":"create_date"},"notNull":false,"readOnly":false,"type":"DATE","ordinalPosition":8,"mandatory":false},"first_name":{"include":true,"mapping":{"source":"PostgreSQL_customer","type":"varchar","columnName":"first_name"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":3,"mandatory":false},"email":{"include":true,"mapping":{"source":"PostgreSQL_customer","type":"varchar","columnName":"email"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":5,"mandatory":false}}
+        },
+        {
+          "externalKey": ["payment_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_payment","dataSource":"PostgreSQL","tableName":"payment","primaryKey":["payment_id"]}]},
+          "name": "payment",
+          "properties": {"amount":{"include":true,"mapping":{"source":"PostgreSQL_payment","type":"numeric","columnName":"amount"},"notNull":false,"readOnly":false,"type":"DECIMAL","ordinalPosition":5,"mandatory":false},"payment_id":{"include":true,"mapping":{"source":"PostgreSQL_payment","type":"serial","columnName":"payment_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false},"staff_id":{"include":true,"mapping":{"source":"PostgreSQL_payment","type":"int2","columnName":"staff_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":3,"mandatory":false},"customer_id":{"include":true,"mapping":{"source":"PostgreSQL_payment","type":"int2","columnName":"customer_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":2,"mandatory":false},"payment_date":{"include":true,"mapping":{"source":"PostgreSQL_payment","type":"timestamp","columnName":"payment_date"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":6,"mandatory":false},"rental_id":{"include":true,"mapping":{"source":"PostgreSQL_payment","type":"int4","columnName":"rental_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":4,"mandatory":false}}
+        },
+        {
+          "externalKey": ["actor_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_actor","dataSource":"PostgreSQL","tableName":"actor","primaryKey":["actor_id"]}]},
+          "name": "actor",
+          "properties": {"last_update":{"include":true,"mapping":{"source":"PostgreSQL_actor","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":4,"mandatory":false},"last_name":{"include":true,"mapping":{"source":"PostgreSQL_actor","type":"varchar","columnName":"last_name"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":3,"mandatory":false},"actor_id":{"include":true,"mapping":{"source":"PostgreSQL_actor","type":"serial","columnName":"actor_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false},"first_name":{"include":true,"mapping":{"source":"PostgreSQL_actor","type":"varchar","columnName":"first_name"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":2,"mandatory":false}}
+        },
+        {
+          "externalKey": ["city_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_city","dataSource":"PostgreSQL","tableName":"city","primaryKey":["city_id"]}]},
+          "name": "city",
+          "properties": {"city":{"include":true,"mapping":{"source":"PostgreSQL_city","type":"varchar","columnName":"city"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":2,"mandatory":false},"last_update":{"include":true,"mapping":{"source":"PostgreSQL_city","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":4,"mandatory":false},"country_id":{"include":true,"mapping":{"source":"PostgreSQL_city","type":"int2","columnName":"country_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":3,"mandatory":false},"city_id":{"include":true,"mapping":{"source":"PostgreSQL_city","type":"serial","columnName":"city_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false}}
+        },
+        {
+          "externalKey": ["language_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_language","dataSource":"PostgreSQL","tableName":"language","primaryKey":["language_id"]}]},
+          "name": "language",
+          "properties": {"last_update":{"include":true,"mapping":{"source":"PostgreSQL_language","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":3,"mandatory":false},"name":{"include":true,"mapping":{"source":"PostgreSQL_language","type":"bpchar","columnName":"name"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":2,"mandatory":false},"language_id":{"include":true,"mapping":{"source":"PostgreSQL_language","type":"serial","columnName":"language_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false}}
+        },
+        {
+          "externalKey": ["staff_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_staff","dataSource":"PostgreSQL","tableName":"staff","primaryKey":["staff_id"]}]},
+          "name": "staff",
+          "properties": {"store_id":{"include":true,"mapping":{"source":"PostgreSQL_staff","type":"int2","columnName":"store_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":6,"mandatory":false},"password":{"include":true,"mapping":{"source":"PostgreSQL_staff","type":"varchar","columnName":"password"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":9,"mandatory":false},"staff_id":{"include":true,"mapping":{"source":"PostgreSQL_staff","type":"serial","columnName":"staff_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false},"last_update":{"include":true,"mapping":{"source":"PostgreSQL_staff","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":10,"mandatory":false},"address_id":{"include":true,"mapping":{"source":"PostgreSQL_staff","type":"int2","columnName":"address_id"},"notNull":false,"readOnly":false,"type":"SHORT","ordinalPosition":4,"mandatory":false},"last_name":{"include":true,"mapping":{"source":"PostgreSQL_staff","type":"varchar","columnName":"last_name"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":3,"mandatory":false},"active":{"include":true,"mapping":{"source":"PostgreSQL_staff","type":"bool","columnName":"active"},"notNull":false,"readOnly":false,"type":"BOOLEAN","ordinalPosition":7,"mandatory":false},"first_name":{"include":true,"mapping":{"source":"PostgreSQL_staff","type":"varchar","columnName":"first_name"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":2,"mandatory":false},"email":{"include":true,"mapping":{"source":"PostgreSQL_staff","type":"varchar","columnName":"email"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":5,"mandatory":false},"picture":{"include":true,"mapping":{"source":"PostgreSQL_staff","type":"bytea","columnName":"picture"},"notNull":false,"readOnly":false,"type":"BINARY","ordinalPosition":11,"mandatory":false},"username":{"include":true,"mapping":{"source":"PostgreSQL_staff","type":"varchar","columnName":"username"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":8,"mandatory":false}}
+        },
+        {
+          "externalKey": ["category_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_category","dataSource":"PostgreSQL","tableName":"category","primaryKey":["category_id"]}]},
+          "name": "category",
+          "properties": {"category_id":{"include":true,"mapping":{"source":"PostgreSQL_category","type":"serial","columnName":"category_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false},"last_update":{"include":true,"mapping":{"source":"PostgreSQL_category","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":3,"mandatory":false},"name":{"include":true,"mapping":{"source":"PostgreSQL_category","type":"varchar","columnName":"name"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":2,"mandatory":false}}
+        },
+        {
+          "externalKey": ["subtitle_id"],
+          "mapping": {"sourceTables":[{"name":"PostgreSQL_subtitle","dataSource":"PostgreSQL","tableName":"subtitle","primaryKey":["subtitle_id"]}]},
+          "name": "subtitle",
+          "properties": {"name":{"include":true,"mapping":{"source":"PostgreSQL_subtitle","type":"bpchar","columnName":"name"},"notNull":false,"readOnly":false,"type":"STRING","ordinalPosition":2,"mandatory":false},"subtitle_id":{"include":true,"mapping":{"source":"PostgreSQL_subtitle","type":"serial","columnName":"subtitle_id"},"notNull":false,"readOnly":false,"type":"INTEGER","ordinalPosition":1,"mandatory":false}}
         }
       ],
       "edges": [
         {
-          "HasDepartment": {
-            "isLogical": false,
-            "mapping": [
-              {
-                "fromTable": "EMPLOYEE",
-                "fromColumns": [
-                  "DEPARTMENT"
-                ],
-                "toTable": "DEPARTMENT",
-                "toColumns": [
-                  "ID"
-                ],
-                "direction": "direct"
-              }
-            ],
-            "properties": {}
-          }
+          "has_city": {"mapping":[{"fromColumns":["city_id"],"toTable":"city","toColumns":["city_id"],"fromTable":"address","direction":"direct"}],"isLogical":false,"properties":{}}
         },
         {
-          "EmployeeProject": {
-            "isLogical": false,
-            "mapping": [
-              {
-                "fromTable": "EMPLOYEE",
-                "fromColumns": [
-                  "ID"
-                ],
-                "toTable": "PROJECT",
-                "toColumns": [
-                  "ID"
-                ],
-                "joinTable": {
-                  "tableName": "EMPLOYEE_PROJECT",
-                  "fromColumns": [
-                    "EMPLOYEE_ID"
-                  ],
-                  "toColumns": [
-                    "PROJECT_ID"
-                  ]
-                },
-                "direction": "direct"
-              }
-            ],
-            "properties": {
-              "role": {
-                "include": true,
-                "type": "STRING",
-                "ordinalPosition": 1,
-                "mandatory": false,
-                "readOnly": false,
-                "notNull": false,
-                "mapping": {
-                  "source": "hsqldb_EMPLOYEE_PROJECT",
-                  "columnName": "ROLE",
-                  "type": "VARCHAR"
-                }
-              }
-            }
-          }
+          "has_country": {"mapping":[{"fromColumns":["country_id"],"toTable":"country","toColumns":["country_id"],"fromTable":"city","direction":"direct"}],"isLogical":false,"properties":{}}
+        },
+        {
+          "has_address": {"mapping":[{"fromColumns":["address_id"],"toTable":"address","toColumns":["address_id"],"fromTable":"store","direction":"direct"},{"fromColumns":["address_id"],"toTable":"address","toColumns":["address_id"],"fromTable":"store","direction":"direct"},{"fromColumns":["address_id"],"toTable":"address","toColumns":["address_id"],"fromTable":"store","direction":"direct"}],"isLogical":false,"properties":{}}
+        },
+        {
+          "has_language": {"mapping":[{"fromColumns":["language_id"],"toTable":"language","toColumns":["language_id"],"fromTable":"film","direction":"direct"}],"isLogical":false,"properties":{}}
+        },
+        {
+          "has_film": {"mapping":[{"fromColumns":["film_id"],"toTable":"film","toColumns":["film_id"],"fromTable":"inventory","direction":"direct"},{"fromColumns":["film_id"],"toTable":"film","toColumns":["film_id"],"fromTable":"inventory","direction":"direct"},{"fromColumns":["film_id"],"toTable":"film","toColumns":["film_id"],"fromTable":"inventory","direction":"direct"}],"isLogical":false,"properties":{}}
+        },
+        {
+          "has_customer": {"mapping":[{"fromColumns":["customer_id"],"toTable":"customer","toColumns":["customer_id"],"fromTable":"rental","direction":"direct"},{"fromColumns":["customer_id"],"toTable":"customer","toColumns":["customer_id"],"fromTable":"rental","direction":"direct"}],"isLogical":false,"properties":{}}
+        },
+        {
+          "has_rental": {"mapping":[{"fromColumns":["rental_id"],"toTable":"rental","toColumns":["rental_id"],"fromTable":"payment","direction":"direct"}],"isLogical":false,"properties":{}}
+        },
+        {
+          "has_staff": {"mapping":[{"fromColumns":["staff_id"],"toTable":"staff","toColumns":["staff_id"],"fromTable":"rental","direction":"direct"},{"fromColumns":["staff_id"],"toTable":"staff","toColumns":["staff_id"],"fromTable":"rental","direction":"direct"}],"isLogical":false,"properties":{}}
+        },
+        {
+          "has_inventory": {"mapping":[{"fromColumns":["inventory_id"],"toTable":"inventory","toColumns":["inventory_id"],"fromTable":"rental","direction":"direct"}],"isLogical":false,"properties":{}}
+        },
+        {
+          "has_manager_staff": {"mapping":[{"fromColumns":["manager_staff_id"],"toTable":"staff","toColumns":["staff_id"],"fromTable":"store","direction":"direct"}],"isLogical":false,"properties":{}}
+        },
+        {
+          "film_actor": {"mapping":[{"fromColumns":["actor_id"],"toTable":"film","toColumns":["film_id"],"joinTable":{"fromColumns":["actor_id"],"toColumns":["film_id"],"tableName":"film_actor"},"fromTable":"actor","direction":"direct"}],"isLogical":false,"properties":{"last_update":{"include":true,"mapping":{"source":"PostgreSQL_film_actor","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":1,"mandatory":false}}}
+        },
+        {
+          "film_category": {"mapping":[{"fromColumns":["category_id"],"toTable":"film","toColumns":["film_id"],"joinTable":{"fromColumns":["category_id"],"toColumns":["film_id"],"tableName":"film_category"},"fromTable":"category","direction":"direct"}],"isLogical":false,"properties":{"last_update":{"include":true,"mapping":{"source":"PostgreSQL_film_category","type":"timestamp","columnName":"last_update"},"notNull":false,"readOnly":false,"type":"DATETIME","ordinalPosition":1,"mandatory":false}}}
         }
       ]
     }

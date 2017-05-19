@@ -1,4 +1,4 @@
-import {Component, Input, ElementRef, AfterViewInit, Output, EventEmitter} from '@angular/core';
+import {Component, Input, AfterViewInit, OnChanges, Output, EventEmitter, NgZone} from '@angular/core';
 import {OGraph} from './d3-graph/OGraph';
 
 import * as $ from "jquery"
@@ -29,7 +29,7 @@ class GraphComponent implements AfterViewInit {
   private elementId = '#graph';
   private opts;
 
-  constructor(private notification: NotificationService) {
+  constructor(private notification: NotificationService, private zone: NgZone) {
     this.init();
   }
 
@@ -45,6 +45,7 @@ class GraphComponent implements AfterViewInit {
           r: 15
         },
         linkDistance: 350,
+        linkStrength: 0.1,
         charge: -1000,
         friction: 0.9,
         gravity: 0.1
@@ -361,6 +362,18 @@ class GraphComponent implements AfterViewInit {
     this.selectedElement = selectedElement;
     this.onSelectedElement.emit(this.selectedElement);
   }
+
+  // executeFunctionWhenConfigReady(funct) {
+  //   if(!this.modellingConfig) {
+  //
+  //     // wait and retry
+  //     setTimeout(() => {
+  //       this.zone.run(() => {this.executeFunctionWhenConfigReady}); // checks config every 100 ms
+  //     }, 100)
+  //   } else {
+  //     funct();
+  //   }
+  // }
 
 }
 
