@@ -28,6 +28,7 @@ class EtlComponent {
   private source; // Source variable
   private extractor; // Extractor variable
   private currentTransformer; // Current transformer TODO probably removable with a different logic
+  private selectedLink; // Link selected for deletion
   private transformers = []; // Array containing every transformer
   private loader; // Loader variable
 
@@ -45,18 +46,21 @@ class EtlComponent {
   private $tFlowchart;
   private $lFlowchart;
 
-  private step;
-  private hints;
-
   // Control booleans
   private ready;
   private importReady;
+  private linkSelected;
 
   // Execution related variables
   private oldConfig;
   private finalJson;
   private job;
   private jobRunning;
+
+  // Misc
+  private step;
+  private hints;
+  private linkColors = ['#ffbf80', '#ff80aa', '#df80ff', '#9f80ff', '#809fff', '#00cccc', '#00ffbf', '#8cd98c', '#e6e600', '#ffd480'];
 
   constructor(private agentService: AgentService, private etlService: EtlService, private zone: NgZone) {
 
@@ -820,7 +824,7 @@ class EtlComponent {
         }
       };
       if(i > 0) // don't create links for the first transformer
-        tData.links[i] = {
+        tData.links[i-1] = {
           fromOperator: (i-1),
           fromConnector: 'output1',
           toOperator: i,
@@ -840,15 +844,29 @@ class EtlComponent {
         onOperatorSelect: function(operatorId) {
           context.currentTransformer = context.transformers[operatorId];
           context.tKeys = context.getTKeys(context.currentTransformer);
-          console.log(context.transformers[operatorId])
           $("#panelPlaceholder").hide();
           $("#transformerOptions").slideDown(800);
           $("#extractorOptions").slideUp(800);
           $("#loaderOptions").slideUp(800);
           return true;
         },
-        onLinkCreate: function(linkId) {
-          console.log(linkId); // TODO remove
+        onLinkSelect: function(linkId) {
+          context.selectedLink = linkId;
+          context.linkSelected = true;
+          return true;
+        },
+        onLinkCreate: function(linkId, linkData) { // TODO only partly working sort
+          linkData.color = context.linkColors[linkData.toOperator % 10]; // color every link of a different color
+
+          console.log(linkId + ") from operator " + linkData.fromOperator + " to operator " + linkData.toOperator);
+          if(context.transformers.length > 1) {
+            context.sortTransformers(linkData.toOperator, linkData.fromOperator + 1);
+            /*let newLink = {
+              toOperator: linkData.toOperator - 1,
+              fromOperator: linkData.toOperator
+            };
+            (<any>context.$tFlowchart).flowchart('createLink', 0, newLink);*/
+          }
           return true;
         }
       });
@@ -948,7 +966,13 @@ class EtlComponent {
     $("#loaderOptions").show();
   }
 
-  deleteExtractor() { // TODO delete the flowchart too
+  deleteLink() {
+    this.$lFlowchart = $("#transformerSpace");
+    (<any>this.$lFlowchart).flowchart('deleteLink', this.selectedLink);
+    this.linkSelected = false;
+  }
+
+  deleteExtractor() {
     this.extractor = undefined;
     this.extractorType = undefined;
 
@@ -962,7 +986,7 @@ class EtlComponent {
     (<any>this.$eFlowchart).flowchart('setData', {});
   }
 
-  deleteTransformer() { // TODO flowchart operators selection stops working when a transformer before the last one is deleted (index mismatch)
+  deleteTransformer() {
     let index = this.transformers.indexOf(this.currentTransformer);
     if (index > -1) {
       this.transformers.splice(index, 1);
@@ -974,7 +998,40 @@ class EtlComponent {
     $("#transformerOptions").hide();
     $("#panelPlaceholder").show();
 
-    (<any>this.$tFlowchart).flowchart('deleteOperator', index);
+    // Rebuild the flowchart to avoid disorder and index mismatches
+    let tData = {
+      operators: {},
+      links: {}
+    };
+
+    for(let i = 0; i < this.transformers.length; i++) {
+      tData.operators[i] = {
+        top: Math.round(i / 2 - 0.1) * 60,
+        left: (i % 2) * 220 + 10,
+        properties: {
+          title: this.getTransformerType(this.transformers[i]) + " transformer",
+          inputs: {
+            input1: {
+              label:"INPUT"
+            }
+          },
+          outputs: {
+            output1: {
+              label:"OUTPUT"
+            }
+          }
+        }
+      };
+      if(i > 0) // don't create links for the first transformer
+        tData.links[i-1] = {
+          fromOperator: (i-1),
+          fromConnector: 'output1',
+          toOperator: i,
+          toConnector: 'input1',
+        }
+    }
+
+    (<any>this.$tFlowchart).flowchart('setData', tData);
 
     if (this.transformers.length == 0) $("#pleaseTransformer").show();
   }
@@ -1131,8 +1188,26 @@ class EtlComponent {
     this.lKeys = undefined;
   }
 
-  sortTransformers() { // TODO thinking about the implementation for the transformers sort
-
+  sortTransformers(oldIndex, newIndex) {
+    /*
+     TODO problems:
+     - changing the order causes an index mismatch when a transformer is deleted
+     - changing the first with the last causes wrong sorting
+     - changing the first with any other one causes wrong sorting
+     */
+    while (oldIndex < 0) {
+      oldIndex += this.transformers.length;
+    }
+    while (newIndex < 0) {
+      newIndex += this.transformers.length;
+    }
+    if (newIndex >= this.transformers.length) {
+      newIndex--;
+    }
+    console.log("sposto" + this.transformers[oldIndex] + "in posizione" + newIndex);
+    this.transformers.splice(newIndex, 0, this.transformers.splice(oldIndex, 1)[0]);
+    console.log("ora in old index ho" + this.transformers[oldIndex]);
+    console.log(this.transformers); // TODO remove
   }
 
   // Getters and setters
