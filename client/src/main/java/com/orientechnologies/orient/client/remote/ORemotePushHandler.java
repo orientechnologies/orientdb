@@ -19,4 +19,6 @@ public interface ORemotePushHandler {
   OBinaryPushResponse executeUpdateDistributedConfig(OPushDistributedConfigurationRequest request);
 
   void executeLiveQueryPush(OLiveQueryPushRequest pushRequest);
+
+  void onReconnect(String host);
 }

@@ -1862,4 +1862,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
 
   }
+
+  @Override
+  public void onReconnect(String host) {
+    //TODO:
+  }
 }
