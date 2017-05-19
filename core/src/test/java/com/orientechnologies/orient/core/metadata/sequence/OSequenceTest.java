@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
+import com.orientechnologies.orient.core.record.OVertex;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -243,5 +244,44 @@ public class OSequenceTest {
     mtSeq.reloadSequence();
     assertThat(mtSeq.getDocument().getVersion()).isEqualTo(1001);
     assertThat(mtSeq.current()).isEqualTo(1000);
+  }
+
+  @Test
+  public void shouldSequenceWithDefaultValueNoTx(){
+
+    db.command("CREATE CLASS Person EXTENDS V");
+    db.command("CREATE SEQUENCE personIdSequence TYPE ORDERED;");
+    db.command("CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");");
+    db.command("CREATE INDEX Person.id ON Person (id) UNIQUE");
+
+
+    for (int i = 0; i < 10; i++) {
+      OVertex person = db.newVertex("Person");
+      person.setProperty("name", "Foo" + i);
+      person.save();
+    }
+
+    assertThat(db.countClass("Person")).isEqualTo(10);
+  }
+  @Test
+  public void shouldSequenceWithDefaultValueTx(){
+
+    db.command("CREATE CLASS Person EXTENDS V");
+    db.command("CREATE SEQUENCE personIdSequence TYPE ORDERED;");
+    db.command("CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");");
+    db.command("CREATE INDEX Person.id ON Person (id) UNIQUE");
+
+
+    db.begin();
+
+    for (int i = 0; i < 10; i++) {
+      OVertex person = db.newVertex("Person");
+      person.setProperty("name", "Foo" + i);
+      person.save();
+    }
+
+    db.commit();
+
+    assertThat(db.countClass("Person")).isEqualTo(10);
   }
 }

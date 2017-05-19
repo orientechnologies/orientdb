@@ -122,7 +122,9 @@ public abstract class OSequence {
   }
 
   void bindOnLocalThread() {
-    tlDocument.set(document.copy());
+    if (tlDocument.get() == null) {
+      tlDocument.set(document.copy());
+    }
   }
 
   public ODocument getDocument() {
