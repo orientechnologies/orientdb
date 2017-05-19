@@ -1238,32 +1238,38 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         if (!storagePath.mkdirs())
           throw new OStorageException("Cannot create directories for the path '" + storagePath + "'");
 
-      nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP_V2);
+      final File nameIdMapHolderV1 = new File(storagePath, NAME_ID_MAP_V1);
+      final File nameIdMapHolderV2 = new File(storagePath, NAME_ID_MAP_V2);
 
-      if (nameIdMapHolderFile.exists()) {
+      if (nameIdMapHolderV1.exists()) {
+        if (nameIdMapHolderV2.exists()) {
+          if (!nameIdMapHolderV2.delete()) {
+            throw new OStorageException("Can not delete out of dated file registry");
+          }
+        }
+
+        nameIdMapHolderFile = nameIdMapHolderV1;
+        nameIdMapHolder = new RandomAccessFile(nameIdMapHolderFile, "rw");
+
+        readNameIdMapV1();
+
+        convertNameIdMapFromV1ToV2();
+
+        nameIdMapHolder.close();
+        nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP_V2);
+
+        if (nameIdMapHolderV1.exists()) {
+          if (!nameIdMapHolderV1.delete()) {
+            throw new OStorageException("Can not delete previous version of file registry format");
+          }
+        }
+
+        nameIdMapHolder = new RandomAccessFile(nameIdMapHolderFile, "rw");
+      } else {
         nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP_V2);
         nameIdMapHolder = new RandomAccessFile(nameIdMapHolderFile, "rw");
 
         readNameIdMapV2();
-      } else {
-        nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP_V1);
-
-        if (nameIdMapHolderFile.exists()) {
-          nameIdMapHolder = new RandomAccessFile(nameIdMapHolderFile, "rw");
-          readNameIdMapV1();
-
-          convertNameIdMapFromV1ToV2();
-
-          nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP_V2);
-          nameIdMapHolder.close();
-
-          nameIdMapHolder = new RandomAccessFile(nameIdMapHolderFile, "rw");
-        } else {
-          //empty storage will use second version of format
-
-          nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP_V2);
-          nameIdMapHolder = new RandomAccessFile(nameIdMapHolderFile, "rw");
-        }
       }
     }
   }
