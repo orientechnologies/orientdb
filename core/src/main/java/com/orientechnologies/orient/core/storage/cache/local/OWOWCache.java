@@ -1338,11 +1338,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final Collection<Integer> fileIds = nameIdMap.values();
 
       final List<Long> closedIds = new ArrayList<>();
+      final Map<Integer, String> idFileNameMap = new HashMap<>();
 
       for (Integer intId : fileIds) {
         if (intId >= 0) {
           final long extId = composeFileId(id, intId);
           final OFileClassic fileClassic = files.remove(extId);
+
+          idFileNameMap.put(intId, fileClassic.getName());
           fileClassic.close();
           closedIds.add(extId);
         }
@@ -1352,8 +1355,17 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         nameIdMapHolder.truncate(0);
 
         for (Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
-          writeNameIdEntry(new NameFileIdEntry(entry.getKey(), entry.getValue()), false);
+          String fileName;
+
+          if (entry.getValue() >= 0) {
+            fileName = idFileNameMap.get(entry.getValue());
+          } else {
+            fileName = entry.getKey();
+          }
+
+          writeNameIdEntry(new NameFileIdEntry(entry.getKey(), entry.getValue(), fileName), false);
         }
+
         nameIdMapHolder.force(true);
         nameIdMapHolder.close();
       }
@@ -1776,7 +1788,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final long externalId = composeFileId(id, nameIdEntry.getValue());
 
         if (files.get(externalId) == null) {
-          OFileClassic fileClassic = createFileInstance(idFileNameMap.get(nameIdEntry.getValue()), nameIdEntry.getValue());
+          final String path = storageLocal.getVariableParser()
+              .resolveVariables(storageLocal.getStoragePath() + File.separator + idFileNameMap.get(nameIdEntry.getValue()));
+
+          final OFileClassic fileClassic = new OFileClassic(Paths.get(path));
 
           if (fileClassic.exists()) {
             fileClassic.open();
