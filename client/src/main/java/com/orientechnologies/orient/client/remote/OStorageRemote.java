@@ -1865,6 +1865,30 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   @Override
   public void onReconnect(String host) {
-    //TODO:
+    OStorageRemoteSession aValidSession = null;
+    for (OStorageRemoteSession session : sessions) {
+      if (session.getServerSession(host) != null) {
+        aValidSession = session;
+        break;
+      }
+    }
+    if (aValidSession != null) {
+      subscribeDistributedConfiguration(aValidSession);
+      subscribeStorageConfiguration(aValidSession);
+    } else {
+      OLogManager.instance().warn(this,
+          "Cannot find a valid session for subscribe for event to host '%s' forward the subscribe for the next session open ",
+          host);
+      OStorageRemotePushThread old;
+      stateLock.acquireWriteLock();
+      try {
+        old = pushThread;
+        pushThread = null;
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+      old.shutdown();
+    }
+    //TODO: Handle error on live query
   }
 }
