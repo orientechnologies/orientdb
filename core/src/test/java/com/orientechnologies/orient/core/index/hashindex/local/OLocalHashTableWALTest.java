@@ -19,7 +19,6 @@ import org.testng.Assert;
 import org.testng.annotations.*;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -310,10 +309,10 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
+            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1, true);
             if (cacheEntry == null)
               do {
-                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
+                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, true);
               } while (cacheEntry.getPageIndex() != pageIndex);
 
             cacheEntry.acquireExclusiveLock();

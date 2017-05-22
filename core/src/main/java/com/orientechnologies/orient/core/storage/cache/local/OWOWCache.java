@@ -324,17 +324,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     return performanceStatisticManager;
   }
 
-  @Override
-  public void beginRestore() {
-    final OChecksumMode configuredMode = OGlobalConfiguration.STORAGE_CHECKSUM_MODE.getValue();
-    checksumMode = configuredMode == OChecksumMode.Off ? OChecksumMode.Off : OChecksumMode.Store;
-  }
-
-  @Override
-  public void endRestore() {
-    checksumMode = OGlobalConfiguration.STORAGE_CHECKSUM_MODE.getValue();
-  }
-
   public void startFuzzyCheckpoints() {
     if (writeAheadLog != null) {
       final long fuzzyCheckPointInterval = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
@@ -739,8 +728,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit)
-      throws IOException {
+  public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
+      boolean verifyChecksums) throws IOException {
     final int intId = extractFileId(fileId);
     if (pageCount < 1)
       throw new IllegalArgumentException("Amount of pages to load should be not less than 1 but provided value is " + pageCount);
@@ -757,7 +746,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         PageGroup pageGroup = writeCachePages.get(pageKeys[0]);
 
         if (pageGroup == null) {
-          final OCachePointer pagePointers[] = cacheFileContent(intId, startPageIndex, pageCount, addNewPages, cacheHit);
+          final OCachePointer pagePointers[] = cacheFileContent(intId, startPageIndex, pageCount, addNewPages, cacheHit,
+              verifyChecksums);
 
           if (pagePointers.length == 0)
             return pagePointers;
@@ -1551,7 +1541,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private OCachePointer[] cacheFileContent(final int intId, final long startPageIndex, final int pageCount,
-      final boolean addNewPages, OModifiableBoolean cacheHit) throws IOException, InterruptedException {
+      final boolean addNewPages, OModifiableBoolean cacheHit, boolean verifyChecksums) throws IOException, InterruptedException {
 
     final long fileId = composeFileId(id, intId);
     final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
@@ -1584,7 +1574,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             assert buffer.position() == 0;
             fileClassic.read(firstPageStartPosition, buffer);
 
-            if (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow)
+            if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow))
               verifyChecksum(buffer, fileId, startPageIndex);
 
             buffer.position(0);
@@ -1605,7 +1595,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
           fileClassic.read(firstPageStartPosition, buffers);
 
-          if (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow)
+          if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow))
             for (int i = 0; i < buffers.length; ++i)
               verifyChecksum(buffers[i], fileId, startPageIndex + i);
 

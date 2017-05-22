@@ -80,8 +80,8 @@ public interface OWriteCache {
 
   Future store(long fileId, long pageIndex, OCachePointer dataPointer);
 
-  OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit)
-      throws IOException;
+  OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
+      boolean verifyChecksums) throws IOException;
 
   void flush(long fileId);
 
@@ -170,14 +170,4 @@ public interface OWriteCache {
   long externalFileId(int fileId);
 
   OPerformanceStatisticManager getPerformanceStatisticManager();
-
-  /**
-   * Notifies this write cache about the beginning of the restore procedure.
-   */
-  void beginRestore();
-
-  /**
-   * Notifies this write cache about the end of the restore procedure.
-   */
-  void endRestore();
 }

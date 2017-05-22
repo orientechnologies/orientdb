@@ -47,7 +47,7 @@ public class OPassthroughPageCache implements OPageCache {
   @Override
   public OCacheEntry loadPage(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount)
       throws IOException {
-    return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount);
+    return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
   }
 
   @Override

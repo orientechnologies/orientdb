@@ -64,11 +64,12 @@ public interface OReadCache {
 
   long addFile(String fileName, long fileId, OWriteCache writeCache) throws IOException;
 
-  OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount) throws IOException;
+  OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
+      boolean verifyChecksums) throws IOException;
 
   void pinPage(OCacheEntry cacheEntry) throws IOException;
 
-  OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) throws IOException;
+  OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums) throws IOException;
 
   void release(OCacheEntry cacheEntry, OWriteCache writeCache);
 
