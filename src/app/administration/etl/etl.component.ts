@@ -861,11 +861,7 @@ class EtlComponent {
           console.log(linkId + ") from operator " + linkData.fromOperator + " to operator " + linkData.toOperator);
           if(context.transformers.length > 1) {
             context.sortTransformers(linkData.toOperator, linkData.fromOperator + 1);
-            /*let newLink = {
-              toOperator: linkData.toOperator - 1,
-              fromOperator: linkData.toOperator
-            };
-            (<any>context.$tFlowchart).flowchart('createLink', 0, newLink);*/
+
           }
           return true;
         }
@@ -1188,26 +1184,32 @@ class EtlComponent {
     this.lKeys = undefined;
   }
 
-  sortTransformers(oldIndex, newIndex) {
+  sortTransformers(oldIndex, newIndex) { // toOperator, fromOperator + 1
     /*
      TODO problems:
      - changing the order causes an index mismatch when a transformer is deleted
      - changing the first with the last causes wrong sorting
      - changing the first with any other one causes wrong sorting
+     - just the first link created is sorted correctly
+     - change the order of two non-adjacent transformers cause wrong sorting
      */
-    while (oldIndex < 0) {
-      oldIndex += this.transformers.length;
-    }
-    while (newIndex < 0) {
-      newIndex += this.transformers.length;
-    }
-    if (newIndex >= this.transformers.length) {
-      newIndex--;
-    }
-    console.log("sposto" + this.transformers[oldIndex] + "in posizione" + newIndex);
     this.transformers.splice(newIndex, 0, this.transformers.splice(oldIndex, 1)[0]);
-    console.log("ora in old index ho" + this.transformers[oldIndex]);
     console.log(this.transformers); // TODO remove
+
+    // SORT
+    // [ 0 1 2 3 ]
+    // move(3,2)
+    // [ 0 1 2 | 3 ]
+    // [ 0 1 2 |]
+    // [ 0 1 2 3 ]
+
+    // CREATION
+    // [ 0 1 ]
+    // [ 0 1 2 ]
+    // create -> move (2,2)
+    // [ 0 1 2 |]
+    // [ 0 1 |]
+    // [ 0 1 2 ]
   }
 
   // Getters and setters

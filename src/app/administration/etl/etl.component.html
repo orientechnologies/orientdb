@@ -34,9 +34,9 @@
 
                       <textarea id="fileDisplayArea" style="height: 160px; width: 450px" class="form-control" readonly></textarea><br>
                       <div class="col-md-12 text-center">
-                        <button class="btn btn-default btn-sm" (click)="oldConfigInit(oldConfig)"
+                        <button class="btn btn-default btn-sm" (click)="oldConfigInit(oldConfig); launch()"
                                 style="border-radius: 40px;" [disabled]="!importReady">Select current configuration</button>
-                      </div>
+                      </div> <!-- TODO remove launch and let the user configure the imported configuration -->
                     </div>
                   </div>
                 </div>
@@ -151,7 +151,7 @@
                         </button>
                         <!-- Dropdown menu, jdbc is shown only if selected as source -->
                         <div class="dropdown-menu">
-                          <li class="list-group-item list-group-item-info">Extractor Type</li>
+                          <div class="list-group-item list-group-item-info">Extractor Type</div>
                           <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('jdbc')" *ngIf="sourcePrototype.source.value == 'jdbc'">jdbc</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('csv')" *ngIf="sourcePrototype.source.value != 'jdbc'">csv</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('json')" *ngIf="sourcePrototype.source.value != 'jdbc'">json</button>
@@ -189,7 +189,7 @@
                         </button>
                         <!-- Dropdown menu -->
                         <div class="dropdown-menu">
-                          <li class="list-group-item list-group-item-info">Transformer Type</li>
+                          <div class="list-group-item list-group-item-info">Transformer Type</div>
 
                           <!-- csv transformer is deprecated -->
                           <!--<button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('block')">block</button>-->
@@ -227,7 +227,7 @@
                         </button>
                         <!-- Dropdown menu -->
                         <div class="dropdown-menu">
-                          <li class="list-group-item list-group-item-info">Loader Type</li>
+                          <div class="list-group-item list-group-item-info">Loader Type</div>
 
                           <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('log')">log</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('orientDb')">OrientDB</button>
