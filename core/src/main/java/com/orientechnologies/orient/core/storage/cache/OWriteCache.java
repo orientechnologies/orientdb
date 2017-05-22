@@ -72,7 +72,6 @@ public interface OWriteCache {
 
   void makeFuzzyCheckpoint();
 
-
   boolean exists(String fileName);
 
   boolean exists(long fileId);

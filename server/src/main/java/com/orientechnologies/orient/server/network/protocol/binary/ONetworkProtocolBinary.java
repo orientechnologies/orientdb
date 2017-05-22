@@ -995,7 +995,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog
           .debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), ODistributedServerLog.DIRECTION.IN,
-              "Executing distributed response %s", response);
+              "Remote protocol: executing distributed response %s", response);
 
     // WHILE MSG SERVICE IS UP & RUNNING
     while (manager.getMessageService() == null)

@@ -785,7 +785,7 @@ public enum OGlobalConfiguration {
    * @Since 2.2.7
    */
   @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_ATOMIC_LOCK_TIMEOUT("distributed.atomicLockTimeout",
-      "Timeout (in ms) to acquire a distributed lock on a record. (0=infinite)", Integer.class, 150, true),
+      "Timeout (in ms) to acquire a distributed lock on a record. (0=infinite)", Integer.class, 50, true),
 
   /**
    * @Since 2.1

@@ -165,7 +165,7 @@ public class LocalPaginatedStorageIncrementalSync {
             do {
               newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
 
-              ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), recordVersion - 1, recordContent, true);
+              ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), recordVersion, recordContent, true);
 
               newRecord.save();
 

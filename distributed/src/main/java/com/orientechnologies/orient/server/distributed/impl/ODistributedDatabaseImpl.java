@@ -360,7 +360,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     } else if (partitionKeys.length == 1 && partitionKeys[0] == -4) {
       // SERVICE - FAST_NOLOCK
       ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
-          "Request %s on database '%s' dispatched to the unlock worker", request, databaseName);
+          "Request %s on database '%s' dispatched to the nowait worker", request, databaseName);
 
       unlockThread.processRequest(request);
 
@@ -689,8 +689,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         currentLock = null;
         newLock = false;
       } else {
+        if (currentLock.reqId.getNodeId() == requestId.getNodeId())
+          // BOTH REQUESTS COME FROM THE SAME SERVER, AVOID TO CANCEL THE REQUEST BECAUSE IS THE ONLY CASE WHEN IT SHOULD WAIT FOR COMPLETION
+          return lockRecord(rid, requestId, 0);
+
         ODistributedServerLog
-            .info(this, localNodeName, null, DIRECTION.NONE, "Canceling request %s in database '%s' (reqId=%s thread=%d)",
+            .debug(this, localNodeName, null, DIRECTION.NONE, "Canceling request %s in database '%s' (reqId=%s thread=%d)",
                 currentLock.reqId, databaseName, requestId, Thread.currentThread().getId());
 
         // WAKE UP WAITERS OF PREVIOUS LOCK

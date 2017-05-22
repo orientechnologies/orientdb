@@ -394,10 +394,10 @@ public class ODistributedResponseManager {
     }
   }
 
-  public void executeInLock(final OCallable<Void, ODistributedResponseManager> callback) {
+  public boolean executeInLock(final OCallable<Boolean, ODistributedResponseManager> callback) {
     synchronousResponsesLock.lock();
     try {
-      callback.call(this);
+      return callback.call(this);
     } finally {
       synchronousResponsesLock.unlock();
     }
@@ -800,7 +800,8 @@ public class ODistributedResponseManager {
       // RESPONSE IS ALREADY AN EXCEPTION: THROW THIS
       return (RuntimeException) goodResponsePayload;
     else if (goodResponsePayload instanceof Throwable)
-      return OException.wrapException(new ODistributedException(composeConflictMessage()), (Throwable) goodResponsePayload);
+      return OException
+          .wrapException(new ODistributedOperationException(composeConflictMessage()), (Throwable) goodResponsePayload);
     else {
       if (responseGroups.size() <= 2) {
         // CHECK IF THE BAD RESPONSE IS AN EXCEPTION, THEN PROPAGATE IT
@@ -813,7 +814,7 @@ public class ODistributedResponseManager {
         }
       }
 
-      return new ODistributedException(composeConflictMessage());
+      return new ODistributedOperationException(composeConflictMessage());
     }
   }
 

@@ -91,7 +91,7 @@ public abstract class OAbstract2pcTask extends OAbstractReplicatedTask {
       return null;
     }
 
-    final OCompleted2pcTask fixTask = new OCompleted2pcTask(iRequest.getId(), false, null);
+    final OCompleted2pcTask fixTask = new OCompleted2pcTask(iRequest.getId(), false, getPartitionKey());
 
     for (int i = 0; i < tasks.size(); ++i) {
       final OAbstractRecordReplicatedTask t = tasks.get(i);
@@ -113,7 +113,7 @@ public abstract class OAbstract2pcTask extends OAbstractReplicatedTask {
 
   @Override
   public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
-    final OCompleted2pcTask fixTask = new OCompleted2pcTask(reqId, false, null);
+    final OCompleted2pcTask fixTask = new OCompleted2pcTask(reqId, false, getPartitionKey());
 
     for (ORemoteTask undoTask : localUndoTasks)
       fixTask.addFixTask(undoTask);

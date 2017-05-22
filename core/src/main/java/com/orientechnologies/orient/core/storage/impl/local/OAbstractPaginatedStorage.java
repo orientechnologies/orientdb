@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.lock.OComparableLockManager;
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -1091,9 +1092,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               dataOutputStream.writeInt(rid.getClusterId());
               dataOutputStream.writeLong(rid.getClusterPosition());
 
-              if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
+              final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
+              if (ppos == null || ppos == NO_POSITION) {
                 dataOutputStream.writeBoolean(true);
-                OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
+                OLogManager.instance().debug(this, "Exporting non existent record %s", rid);
               } else {
                 final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition(), false);
                 assert rawBuffer != null;
@@ -4970,7 +4972,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected RuntimeException logAndPrepareForRethrow(RuntimeException runtimeException) {
-    if (!(runtimeException instanceof OHighLevelException))
+    if (!(runtimeException instanceof OHighLevelException || runtimeException instanceof ONeedRetryException))
       OLogManager.instance()
           .error(this, "Exception `%08X` in storage `%s`", runtimeException, System.identityHashCode(runtimeException), getName());
     return runtimeException;
@@ -4983,7 +4985,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected RuntimeException logAndPrepareForRethrow(Throwable throwable) {
-    if (!(throwable instanceof OHighLevelException))
+    if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException))
       OLogManager.instance()
           .error(this, "Exception `%08X` in storage `%s`", throwable, System.identityHashCode(throwable), getName());
     return new RuntimeException(throwable);

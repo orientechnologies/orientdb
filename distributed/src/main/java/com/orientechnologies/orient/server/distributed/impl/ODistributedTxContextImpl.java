@@ -166,8 +166,8 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     for (ORemoteTask fixTask : fixTasks) {
       if (fixTask instanceof OAbstractRecordReplicatedTask) {
         final ORecordId rid = ((OAbstractRecordReplicatedTask) fixTask).getRid();
-        if (ddb.forceLockRecord(rid, requestId))
-          locked.add(rid);
+        locked.add(rid);
+        ddb.forceLockRecord(rid, requestId);
       }
     }
 
@@ -186,10 +186,9 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
         }
       }
     } finally {
-      // UNLOCK THE RECORD ACQUIRED IN THIS METHOD ONLY
+      // UNLOCK ALL THE RECORDS (THE TX IS FINISHED)
       for (ORID r : locked)
         ddb.unlockRecord(r, requestId);
-
     }
   }
 }

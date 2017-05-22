@@ -67,9 +67,6 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
   @Override
   public void executeTest() throws Exception {
 
-    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(SERVERS - 1)))
-        .open("admin", "admin");
-
     try {
 
       TestQuorum2 tq2 = new TestQuorum2(serverInstance);     // Connection to dbServer3
@@ -146,7 +143,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         // trying write on server3, writes must be served from the first available node
         try {
           ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
-          new ODocument("Person").fields("name", "Joe", "surname", "Black").save();
+          ODocument doc = new ODocument("Person").fields("name", "Joe", "surname", "Black").save();
           this.initialCount++;
           result = dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
           assertEquals(1, result.size());
@@ -281,11 +278,20 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         waitForDatabaseIsOnline(0, serverInstances.get(SERVERS - 1).getServerInstance().getDistributedManager().getLocalNodeName(),
             getDatabaseName(), 10000);
 
+        System.out.println("Server 3 database is online.");
+
         // WAIT A LITTLE THE SERVER IS SYNCHRONIZED
         Thread.sleep(5000);
 
+        System.out.println("Starting new tests...");
+
         // writes on server1, server2 and server3
         executeMultipleWrites(this.executeWritesOnServers, "plocal");
+
+        // WAIT A LITTLE THE SERVER IS SYNCHRONIZED
+        Thread.sleep(5000);
+
+        System.out.println("Checking consistency...");
 
         // check consistency
         ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
