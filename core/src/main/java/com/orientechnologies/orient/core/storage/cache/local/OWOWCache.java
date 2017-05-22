@@ -1296,11 +1296,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     final RandomAccessFile v2NameIdMapHolder = new RandomAccessFile(nameIdMapHolderFileV2T, "rw");
 
     for (Map.Entry<String, Integer> nameIdEntry : nameIdMap.entrySet()) {
-      final OFileClassic fileClassic = files.get(externalFileId(nameIdEntry.getValue()));
-      final String fileSystemName = fileClassic.getName();
+      if (nameIdEntry.getValue() >= 0) {
+        final OFileClassic fileClassic = files.get(externalFileId(nameIdEntry.getValue()));
+        final String fileSystemName = fileClassic.getName();
 
-      final NameFileIdEntry nameFileIdEntry = new NameFileIdEntry(nameIdEntry.getKey(), nameIdEntry.getValue(), fileSystemName);
-      writeNameIdEntry(v2NameIdMapHolder, nameFileIdEntry, false);
+        final NameFileIdEntry nameFileIdEntry = new NameFileIdEntry(nameIdEntry.getKey(), nameIdEntry.getValue(), fileSystemName);
+        writeNameIdEntry(v2NameIdMapHolder, nameFileIdEntry, false);
+      } else {
+        final NameFileIdEntry nameFileIdEntry = new NameFileIdEntry(nameIdEntry.getKey(), nameIdEntry.getValue(), "");
+        writeNameIdEntry(v2NameIdMapHolder, nameFileIdEntry, false);
+      }
     }
 
     v2NameIdMapHolder.getFD().sync();
