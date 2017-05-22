@@ -1,16 +1,14 @@
 import * as $ from "jquery"
 
-import "../../util/diagram-editor/jquery.flowchart.js";
-import "../../util/diagram-editor/jquery.flowchart.min.css";
-import "../../util/diagram-editor/flowchart.jquery.json";
-import "../../util/diagram-editor/jquery-ui.min.css";
-import "../../util/diagram-editor/jquery-ui.min.js";
-
 import {Component, NgZone} from '@angular/core';
 
 import {downgradeComponent} from "@angular/upgrade/static";
 import {EtlService} from "../../core/services";
 import {AgentService} from "../../core/services/agent.service";
+
+import "../../util/draggable-sortable/jquery-sortable.js";
+import "../../util/draggable-sortable/jquery-ui.css";
+import "../../util/draggable-sortable/jquery-ui.js";
 
 declare const angular:any;
 
@@ -21,35 +19,36 @@ declare const angular:any;
 })
 
 class EtlComponent {
+
+  // Prototypes
+  private configPrototype;
+  private beginPrototype;
+  private endPrototype;
   private sourcePrototype;
   private extractorPrototype;
   private transformerPrototype;
   private loaderPrototype;
-  private source; // Source variable
-  private extractor; // Extractor variable
-  private currentTransformer; // Current transformer TODO probably removable with a different logic
-  private selectedLink; // Link selected for deletion
-  private transformers = []; // Array containing every transformer
-  private loader; // Loader variable
+
+  // Configuration parts
+  private config;
+  private source;
+  private extractor;
+  private currentTransformer;
+  private transformers = [];
+  private loader;
 
   // Types needed for controls
   private extractorType;
   private loaderType;
 
-  // Keys to iterate TODO try a pipe-style implementation
+  // Keys to iterate
   private eKeys;
   private tKeys;
   private lKeys;
 
-  // Flowchart stuff
-  private $eFlowchart;
-  private $tFlowchart;
-  private $lFlowchart;
-
   // Control booleans
   private ready;
   private importReady;
-  private linkSelected;
 
   // Execution related variables
   private oldConfig;
@@ -60,7 +59,6 @@ class EtlComponent {
   // Misc
   private step;
   private hints;
-  private linkColors = ['#ffbf80', '#ff80aa', '#df80ff', '#9f80ff', '#809fff', '#00cccc', '#00ffbf', '#8cd98c', '#e6e600', '#ffd480'];
 
   constructor(private agentService: AgentService, private etlService: EtlService, private zone: NgZone) {
 
@@ -72,6 +70,40 @@ class EtlComponent {
   }
 
   init() {
+    this.configPrototype = {
+      config: {
+        log: {
+          mandatory: false,
+          value: "INFO",
+          types: ["NONE", "ERROR", "INFO", "DEBUG"]
+        },
+        maxRetries: {
+          mandatory: false,
+          value: 10
+        },
+        parallel: {
+          mandatory: false,
+          value: false,
+        },
+        haltOnError: {
+          mandatory: false,
+          value: true,
+        }
+      }
+    };
+
+    this.beginPrototype = { // TODO add this module
+      begin: {
+
+      }
+    };
+
+    this.endPrototype = { // TODO add this module
+      end: {
+
+      }
+    };
+
     this.sourcePrototype = {
       source: {
         value: undefined,
@@ -303,10 +335,11 @@ class EtlComponent {
         },
       },
 
-      code: { // TODO probably unadoptable
+      code: {
         language: {
           mandatory: false,
-          value: "JavaScript"
+          value: "JavaScript",
+          types: ["JavaScript"]
         },
         code: {
           mandatory: true,
@@ -354,7 +387,20 @@ class EtlComponent {
         }
       },
 
-      // Block has no parameters
+      block: { // TODO current implementation doesn't work
+        let: {
+          mandatory: false,
+          value: undefined
+        },
+        code: {
+          mandatory: false,
+          value: undefined
+        },
+        console: {
+          mandatory: false,
+          value: undefined
+        }
+      },
 
       command: {
         language: {
@@ -477,6 +523,7 @@ class EtlComponent {
       loaderHint: "The loader is the final part of the process. You can use a debug mode or directly persist your data to OrientDB.",
       executionHint: "Etl is running, and its output is displayed here.",
       // Specific hints
+      advancedHint: "The ETL module binds all values declared in the config block to the execution context and are accessible to ETL processing.",
       URLHint: "Defines the URL to look to for source data.",
       URLMethodHint: "Defines the HTTP method to use in extracting data.",
       pathHint: "Defines the path to the local file.",
@@ -551,7 +598,10 @@ class EtlComponent {
         useLightweightEdges: "Defines whether it changes the default setting for Lightweight Edges",
         standardElementConstraints: "Defines whether it changes the default setting for TinkerPop Blueprint constraints. Value cannot be null and you cannot use id as a property name"
       }
-    }
+    };
+    $(function  () { // TODO test
+      (<any>$("ol.example")).sortable();
+    });
   }
 
   // Dynamic creations
@@ -648,47 +698,28 @@ class EtlComponent {
         }
       };
 
-    let context = this;
-    this.$eFlowchart = $("#extractorSpace");
-
-    // Flowchart
-    $(document).ready(function () {
-      let dataExtractor = {
-        operators: {
-          operator: {
-            top: 90,
-            left: 40,
-            properties: {
-              title: type + ' extractor',
-              outputs: {
-                output_1: {
-                  label: 'OUTPUT'
-                }
-              }
-            }
-          }
-        }
-      };
-
-      (<any>context.$eFlowchart).flowchart({
-        data: {},
-        canUserEditLinks: false,
-        canUserMoveOperators: false,
-        onOperatorSelect: function(operatorId) {
-          $("#panelPlaceholder").hide();
-          $("#extractorOptions").slideDown(800);
-          $("#transformerOptions").slideUp(800);
-          $("#loaderOptions").slideUp(800);
-          return true;
-        },
-      });
-
-      (<any>context.$eFlowchart).flowchart('setData', dataExtractor);
-    });
-
     this.eKeys = Object.keys(this.extractor[type]);
     this.extractorType = type;
     this.readyForExecution();
+
+    // Canvas
+    let canvas = <HTMLCanvasElement> document.getElementById("eCanvas");
+    let ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.rect(0, 0, 200, 80);
+    ctx.fillStyle = "#444444";
+    ctx.fill();
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillStyle = "#ff9900";
+    ctx.fillText(type.toUpperCase(),20,30);
+    ctx.font = "bold 12px sans-serif";
+    ctx.fillStyle = "#eeeeee";
+    ctx.fillText("click to configure",10,60);
+
+    let eCanvas = $('#eCanvas');
+    (<any>eCanvas).draggable({
+      containment: "parent"
+    });
 
     $("#createExtractor").hide();
     $("#pleaseExtractor").hide();
@@ -697,9 +728,10 @@ class EtlComponent {
     $("#loaderOptions").hide();
     $("#transformerOptions").hide();
     $("#extractorOptions").show();
+    (<any>eCanvas).slideDown(1000); // Canvas animation
   }
 
-  transformerInit(type) { // Block and Code aren't active atm. Csv is deprecated.
+  transformerInit(type) { // Csv is deprecated.
     let transformer;
 
     // Variable creation
@@ -781,9 +813,13 @@ class EtlComponent {
         }
       };
 
-    if (type === "block")
+    if (type === "block") // TODO rethink this transformer, current implementation doesn't work
       transformer = {
-        block: {}
+        block: {
+          let: this.transformerPrototype.block.let.value,
+          code: this.transformerPrototype.block.code.value,
+          console: this.transformerPrototype.block.console.value
+        }
       };
 
     if (type === "command")
@@ -800,74 +836,26 @@ class EtlComponent {
     this.tKeys = this.getTKeys(transformer);
     this.readyForExecution();
 
-    let tData = {
-      operators: {},
-      links: {}
-    };
+    // Canvas
+    let canvas = <HTMLCanvasElement> document.getElementById("tCanvas");
+    let ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.rect(0, (this.transformers.indexOf(this.currentTransformer) * 50), 200, 80);
+    ctx.fillStyle = "#444444";
+    ctx.fill();
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillStyle = "#ff9900";
+    ctx.fillText(type.toUpperCase(),20,30);
+    ctx.font = "bold 12px sans-serif";
+    ctx.fillStyle = "#eeeeee";
+    ctx.fillText("click to configure",10,60);
 
-    for(let i = 0; i < this.transformers.length; i++) {
-      tData.operators[i] = {
-        top: Math.round(i / 2 - 0.1) * 60,
-        left: (i % 2) * 220 + 10,
-        properties: {
-          title: this.getTransformerType(this.transformers[i]) + " transformer",
-          inputs: {
-            input1: {
-              label:"INPUT"
-            }
-          },
-          outputs: {
-            output1: {
-              label:"OUTPUT"
-            }
-          }
-        }
-      };
-      if(i > 0) // don't create links for the first transformer
-        tData.links[i-1] = {
-          fromOperator: (i-1),
-          fromConnector: 'output1',
-          toOperator: i,
-          toConnector: 'input1',
-        }
-    }
+    let body = document.getElementById("transformerList");
+    body.appendChild(canvas);
 
-    let context = this;
-    this.$tFlowchart = $("#transformerSpace");
-
-    // Flowchart
-    $(document).ready(function() {
-      let dataTransformer = tData;
-
-      (<any>context.$tFlowchart).flowchart({
-        data: {},
-        onOperatorSelect: function(operatorId) {
-          context.currentTransformer = context.transformers[operatorId];
-          context.tKeys = context.getTKeys(context.currentTransformer);
-          $("#panelPlaceholder").hide();
-          $("#transformerOptions").slideDown(800);
-          $("#extractorOptions").slideUp(800);
-          $("#loaderOptions").slideUp(800);
-          return true;
-        },
-        onLinkSelect: function(linkId) {
-          context.selectedLink = linkId;
-          context.linkSelected = true;
-          return true;
-        },
-        onLinkCreate: function(linkId, linkData) { // TODO only partly working sort
-          linkData.color = context.linkColors[linkData.toOperator % 10]; // color every link of a different color
-
-          console.log(linkId + ") from operator " + linkData.fromOperator + " to operator " + linkData.toOperator);
-          if(context.transformers.length > 1) {
-            context.sortTransformers(linkData.toOperator, linkData.fromOperator + 1);
-
-          }
-          return true;
-        }
-      });
-
-      (<any>context.$tFlowchart).flowchart('setData', tData);
+    let tCanvas = $('#tCanvas');
+    (<any>tCanvas).draggable({
+      containment: "parent"
     });
 
     $("#pleaseTransformer").hide();
@@ -875,6 +863,7 @@ class EtlComponent {
     $("#loaderOptions").hide();
     $("#extractorOptions").hide();
     $("#transformerOptions").show();
+    (<any>tCanvas).slideDown(1000); // Canvas animation
 
   }
 
@@ -910,48 +899,28 @@ class EtlComponent {
         }
       };
 
-    let context = this;
-    this.$lFlowchart = $("#loaderSpace");
-
-    // Flowchart
-    $(document).ready(function() {
-      let dataLoader = {
-        operators: {
-          operator: {
-            top: 90,
-            left: 40,
-            properties: {
-              title: type + ' loader',
-              inputs: {
-                input1: {
-                  label: 'INPUT'
-                }
-              }
-            }
-          }
-        }
-      };
-
-
-      (<any>context.$lFlowchart).flowchart({
-        data: {},
-        canUserEditLinks: false,
-        canUserMoveOperators: false,
-        onOperatorSelect: function(operatorId) {
-          $("#panelPlaceholder").hide();
-          $("#loaderOptions").slideDown(800);
-          $("#transformerOptions").slideUp(800);
-          $("#extractorOptions").slideUp(800);
-          return true;
-        }
-      });
-
-      (<any>context.$lFlowchart).flowchart('setData', dataLoader);
-    });
-
     this.lKeys = Object.keys(this.loader[type]);
     this.loaderType = type;
     this.readyForExecution();
+
+    // Canvas
+    let canvas = <HTMLCanvasElement> document.getElementById("lCanvas");
+    let ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.rect(0, 0, 200, 80);
+    ctx.fillStyle = "#444444";
+    ctx.fill();
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillStyle = "#ff9900";
+    ctx.fillText(type.toUpperCase(),20,30);
+    ctx.font = "bold 12px sans-serif";
+    ctx.fillStyle = "#eeeeee";
+    ctx.fillText("click to configure",10,60);
+
+    let lCanvas = $('#lCanvas');
+    (<any>lCanvas).draggable({
+      containment: "parent"
+    });
 
     $("#pleaseLoader").hide();
     $("#createLoader").hide();
@@ -960,12 +929,7 @@ class EtlComponent {
     $("#extractorOptions").hide();
     $("#transformerOptions").hide();
     $("#loaderOptions").show();
-  }
-
-  deleteLink() {
-    this.$lFlowchart = $("#transformerSpace");
-    (<any>this.$lFlowchart).flowchart('deleteLink', this.selectedLink);
-    this.linkSelected = false;
+    (<any>lCanvas).slideDown(1000); // Canvas animation
   }
 
   deleteExtractor() {
@@ -977,9 +941,8 @@ class EtlComponent {
     $("#pleaseExtractor").show();
     $("#extractorOptions").hide();
     $("#panelPlaceholder").show();
+    $("#eCanvas").fadeOut(1000);
 
-
-    (<any>this.$eFlowchart).flowchart('setData', {});
   }
 
   deleteTransformer() {
@@ -993,41 +956,7 @@ class EtlComponent {
     // Jquery hide/show
     $("#transformerOptions").hide();
     $("#panelPlaceholder").show();
-
-    // Rebuild the flowchart to avoid disorder and index mismatches
-    let tData = {
-      operators: {},
-      links: {}
-    };
-
-    for(let i = 0; i < this.transformers.length; i++) {
-      tData.operators[i] = {
-        top: Math.round(i / 2 - 0.1) * 60,
-        left: (i % 2) * 220 + 10,
-        properties: {
-          title: this.getTransformerType(this.transformers[i]) + " transformer",
-          inputs: {
-            input1: {
-              label:"INPUT"
-            }
-          },
-          outputs: {
-            output1: {
-              label:"OUTPUT"
-            }
-          }
-        }
-      };
-      if(i > 0) // don't create links for the first transformer
-        tData.links[i-1] = {
-          fromOperator: (i-1),
-          fromConnector: 'output1',
-          toOperator: i,
-          toConnector: 'input1',
-        }
-    }
-
-    (<any>this.$tFlowchart).flowchart('setData', tData);
+    $("#tCanvas").fadeOut(1000);
 
     if (this.transformers.length == 0) $("#pleaseTransformer").show();
   }
@@ -1038,14 +967,13 @@ class EtlComponent {
 
     // Jquery hide/show
     $("#createLoader").show();
-    $("#pleaseLoader").show();
+    $("#pleaseLoader").show()
     $("#loaderOptions").hide();
     $("#panelPlaceholder").show();
-
-    (<any>this.$lFlowchart).flowchart('setData', {});
+    $("#lCanvas").fadeOut(1000);
   }
 
-  oldConfigInit(oldConfig) { // TODO draw corresponding flowcharts, test, direct run feature?
+  oldConfigInit(oldConfig) { // TODO test, direct run feature?
     let etl = JSON.parse(oldConfig);
 
     this.extractor = etl.extractor;
@@ -1054,6 +982,7 @@ class EtlComponent {
     this.extractorType = Object.getOwnPropertyNames(etl.extractor)[0];
     this.currentTransformer = etl.transformers[etl.transformers.length -1];
     this.loaderType = Object.getOwnPropertyNames(etl.loader)[0];
+    if(etl.config) this.config = etl.config;
 
     // Skip step 1 if the old configuration uses a jdbc source
     if(etl.source) {
@@ -1115,14 +1044,31 @@ class EtlComponent {
   launch() {
     let etl = {}; // optional source control. Is that needed?
 
-    if(this.source)
+    if(this.source && this.config)
+      etl = {
+        config: this.config,
+        source: this.source,
+        extractor: this.extractor,
+        transformers: this.transformers,
+        loader: this.loader
+      };
+
+    if(!this.source && this.config)
+      etl = {
+        config: this.config,
+        extractor: this.extractor,
+        transformers: this.transformers,
+        loader: this.loader
+      };
+
+    if(this.source && !this.config)
       etl = {
         source: this.source,
         extractor: this.extractor,
         transformers: this.transformers,
         loader: this.loader
       };
-    else
+    if(!this.source && !this.config)
       etl = {
         extractor: this.extractor,
         transformers: this.transformers,
@@ -1184,32 +1130,10 @@ class EtlComponent {
     this.lKeys = undefined;
   }
 
-  sortTransformers(oldIndex, newIndex) { // toOperator, fromOperator + 1
-    /*
-     TODO problems:
-     - changing the order causes an index mismatch when a transformer is deleted
-     - changing the first with the last causes wrong sorting
-     - changing the first with any other one causes wrong sorting
-     - just the first link created is sorted correctly
-     - change the order of two non-adjacent transformers cause wrong sorting
-     */
+  sortTransformers(oldIndex, newIndex) {
     this.transformers.splice(newIndex, 0, this.transformers.splice(oldIndex, 1)[0]);
     console.log(this.transformers); // TODO remove
 
-    // SORT
-    // [ 0 1 2 3 ]
-    // move(3,2)
-    // [ 0 1 2 | 3 ]
-    // [ 0 1 2 |]
-    // [ 0 1 2 3 ]
-
-    // CREATION
-    // [ 0 1 ]
-    // [ 0 1 2 ]
-    // create -> move (2,2)
-    // [ 0 1 2 |]
-    // [ 0 1 |]
-    // [ 0 1 2 ]
   }
 
   // Getters and setters
@@ -1269,9 +1193,40 @@ class EtlComponent {
   }
 
 
+  showAdvanced() {
+    $("#advancedConfig").fadeIn(800);
+
+    this.config = {
+      log: this.configPrototype.config.log.value,
+      maxRetries: this.configPrototype.config.maxRetries.value,
+      haltOnError: this.configPrototype.config.haltOnError.value,
+      parallel: this.configPrototype.config.parallel.value
+    }
+  }
 
   showSource() {
     $("#sourceArea").fadeIn(1000);
+  }
+
+  selectExtractor() {
+    $("#extractorOptions").slideDown(800);
+    $("#transformerOptions").slideUp(800);
+    $("#loaderOptions").slideUp(800);
+    $("#panelPlaceholder").slideUp(800);
+  }
+
+  selectTransformer() {
+    $("#extractorOptions").slideUp(800);
+    $("#transformerOptions").slideDown(800);
+    $("#loaderOptions").slideUp(800);
+    $("#panelPlaceholder").slideUp(800);
+  }
+
+  selectLoader() {
+    $("#extractorOptions").slideUp(800);
+    $("#transformerOptions").slideUp(800);
+    $("#loaderOptions").slideDown(800);
+    $("#panelPlaceholder").slideUp(800);
   }
 
   scrollLogAreaDown() {

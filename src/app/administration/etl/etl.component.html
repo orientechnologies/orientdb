@@ -16,12 +16,12 @@
             <div class="etl-intro">
               <div style="height: 150px"></div>
               <div class="col-md-6 text-center">
-                <button class="btn btn-lg" (click)="setStep(1)" style="border-radius: 40px;">Start New Configuration</button>
+                <button class="btn btn-lg" (click)="setStep(1)" style="border-radius: 40px;">New Configuration</button>
               </div>
               <div class="col-md-6 text-center">
                 <button class="btn btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
                         aria-expanded="false" id="loadOldConfigs" style="border-radius: 40px;">
-                  Load Old configuration
+                  Load Existing json
                 </button>
                 <!-- Dropdown menu -->
                 <div class="dropdown-menu">
@@ -118,14 +118,52 @@
           </div>
           <br>
           <div class="form-group">
-            <div class="col-sm-offset-5 col-sm-10">
-              <div class="btn-toolbar">
+            <div class="col-sm-offset-5 col-sm-7">
+              <div class="btn-toolbar" style="height:80px">
                 <div class="btn-group">
                   <button type="button" class="btn btn-sm btn-primary" (click)="sourceInit()" [disabled]="!form.valid">Create modules</button>
+                </div>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-default" (click)="showAdvanced()">Add Advanced</button>
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- Advanced preliminary configuration -->
+          <div class="row">
+            <div id="advancedConfig" class="text-center" style="display:none">
+              <h4>Advanced preliminary configuration
+                <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                        [attr.data-content]="hints.advancedHint"><i class="fa fa-question-circle"></i>
+                </button></h4><br>
+              <div class="col-md-offset-2 col-md-4">
+                <label class="col-md-6 control-label">Max Retries</label>
+                <div class="col-md-3">
+                  <input type="number" min="0" step="1" id="maxRetries" class="form-control" name="maxRetries"
+                         [(ngModel)]="configPrototype.config.maxRetries.value"/>
+                </div><br><br><br>
+                <label class="col-md-6 control-label">Log Level</label>
+                <div class="col-md-4">
+                  <select class="form-control" name="logLevel" [(ngModel)]="configPrototype.config.log.value" required>
+                    <option *ngFor="let logLevel of configPrototype.config.log.types" [value]="logLevel"> {{logLevel}} </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="col-md-6 control-label">Halt on Error</label>
+                <div class="col-md-4">
+                  <input type="checkbox" name="haltOnError" id="haltOnError" class="checkbox" [(ngModel)]="configPrototype.config.haltOnError.value">
+                </div><br><br><br>
+                <label class="col-md-6 control-label">Parallel Execution</label>
+                <div class="col-md-4">
+                  <input type="checkbox" name="parallel" id="parallel" class="checkbox" [(ngModel)]="configPrototype.config.parallel.value">
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <div class="stepTwo" *ngSwitchCase="'2'">
@@ -169,12 +207,16 @@
                       <br><br><br>
                       <div class="row">
                         <h5 id="pleaseExtractor" align="center"><b>Please create an extractor</b></h5>
-                        <div id="extractorSpace" style="height: 300px"></div>
+                        <div id="extractorSpace" style="height: 300px">
+                          <canvas id="eCanvas" width="200" height="80" style="display:none" (click)="selectExtractor()">
+                            Your browser does not support the HTML5 canvas tag.
+                          </canvas>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div class="col-sm-6" style="background-color: #fafafa; height: 440px">
+                  <div class="col-sm-6 etl-transformers">
                     <h4 align="center"><b>Transformers</b>
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.transformerHint"><i class="fa fa-question-circle"></i>
@@ -192,8 +234,8 @@
                           <div class="list-group-item list-group-item-info">Transformer Type</div>
 
                           <!-- csv transformer is deprecated -->
-                          <!--<button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('block')">block</button>-->
-                          <!-- <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('code')">code</button> -->
+                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('block')">block</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('code')">code</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('command')">command</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('edge')">edge</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('flow')">flow</button>
@@ -207,7 +249,13 @@
                       <br><br><br>
                       <div class="row">
                         <h5 id="pleaseTransformer" align="center"><b>Please create at least one transformer</b></h5>
-                        <div id="transformerSpace" style="height: 300px"></div>
+                        <div id="transformerSpace" style="height: 300px; overflow:auto">
+                          <ol id="transformerList">
+                          <canvas id="tCanvas" width="inherit" height="80" style="display:none" (click)="selectTransformer()">
+                            Your browser does not support the HTML5 canvas tag.
+                          </canvas>
+                          </ol>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -237,7 +285,11 @@
                     <br><br>
                     <div class="row">
                       <h5 id="pleaseLoader" align="center"><b>Please create a loader</b></h5>
-                      <div id="loaderSpace" style="height: 300px"></div>
+                      <div id="loaderSpace" style="height: 300px">
+                        <canvas id="lCanvas" width="200" height="80" style="display:none" (click)="selectLoader()">
+                          Your browser does not support the HTML5 canvas tag.
+                        </canvas>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -318,9 +370,9 @@
                         </option>
                       </select>
 
-                      <input *ngIf="!transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']" type="text" class="form-control"
-                             name="tTextConfig-{{tParameter}}" [(ngModel)]="currentTransformer[getTransformerType(currentTransformer)][tParameter]"
-                             placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
+                      <textarea *ngIf="!transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']" rows="1" type="text" class="form-control"
+                                name="tTextConfig-{{tParameter}}" [(ngModel)]="currentTransformer[getTransformerType(currentTransformer)][tParameter]"
+                                placeholder="enter your value" (ngModelChange)="readyForExecution()" style="resize: vertical"></textarea>
                       <br>
 
                     </div>
@@ -381,9 +433,6 @@
             <div class="col-sm-offset-2 col-sm-4">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-danger" (click)="deleteLink()" [disabled]="!linkSelected">Delete Link</button>
-                </div>
-                <div class="btn-group">
                   <button type="button" class="btn btn-sm btn-primary" (click)="setStep('1'); reset()">Back</button>
                 </div>
                 <div class="btn-group">
@@ -394,7 +443,6 @@
             <div class="col-sm-6">
               <div class="panel panel-default text-center">
                 <b style="color:red;">*</b><b style="color:grey;"> means that the parameter is mandatory for a correct configuration.<br>
-                Make sure you connected every transformer without creating loops.<br>
                 Click on an element to configure or delete it in the side panel.</b></div>
             </div>
           </div>
