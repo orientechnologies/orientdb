@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.*;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
@@ -16,14 +18,16 @@ public class OStorageRemotePushThread extends Thread {
 
   private final ORemotePushHandler pushHandler;
   private final String             host;
+  private final int                retryDelay;
   private       OChannelBinary     network;
   private BlockingQueue<OSubscribeResponse> blockingQueue = new SynchronousQueue<>();
   private volatile OBinaryRequest currentRequest;
 
-  public OStorageRemotePushThread(ORemotePushHandler storage, String host) {
+  public OStorageRemotePushThread(ORemotePushHandler storage, String host, int retryDelay) {
     this.pushHandler = storage;
     this.host = host;
     network = storage.getNetwork(this.host);
+    this.retryDelay = retryDelay;
   }
 
   @Override
@@ -58,16 +62,29 @@ public class OStorageRemotePushThread extends Thread {
           }
         }
       } catch (IOException e) {
-        if (!currentThread().isInterrupted()) {
-          synchronized (this) {
-            try {
-              network.close();
-            } catch (RuntimeException ignore) {
-              //IGNORE
-            }
-            network = pushHandler.getNetwork(this.host);
+        while (true) {
+          try {
+            Thread.sleep(retryDelay);
+          } catch (InterruptedException x) {
+            currentThread().interrupt();
           }
-          pushHandler.onReconnect(this.host);
+          if (!currentThread().isInterrupted()) {
+            try {
+              synchronized (this) {
+                try {
+                  network.close();
+                } catch (RuntimeException ignore) {
+                  //IGNORE
+                }
+                network = pushHandler.getNetwork(this.host);
+              }
+              pushHandler.onReconnect(this.host);
+              break;
+            } catch (OIOException ex) {
+              //Noting it jus retry
+            }
+          } else
+            break;
         }
       } catch (InterruptedException e) {
         currentThread().interrupt();

@@ -1324,7 +1324,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       stateLock.acquireWriteLock();
       try {
         if (pushThread == null) {
-          pushThread = new OStorageRemotePushThread(this, getCurrentServerURL());
+          pushThread = new OStorageRemotePushThread(this, getCurrentServerURL(), connectionRetryDelay);
           pushThread.start();
           subscribeStorageConfiguration(session);
           subscribeDistributedConfiguration(session);

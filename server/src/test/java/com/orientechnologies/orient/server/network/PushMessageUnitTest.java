@@ -40,14 +40,12 @@ public class PushMessageUnitTest {
     @Override
     public void read(OChannelDataInput channel) throws IOException {
       responseRead.countDown();
-      System.out.println("response read");
     }
   }
 
   public class MockPushRequest implements OBinaryPushRequest<OBinaryPushResponse> {
     @Override
     public void write(OChannelDataOutput channel) throws IOException {
-      System.out.println("written");
       requestWritten.countDown();
     }
 
@@ -64,7 +62,6 @@ public class PushMessageUnitTest {
     @Override
     public OBinaryPushResponse execute(ORemotePushHandler remote) {
       executed.countDown();
-      System.out.println("executed");
       return new MockPushResponse();
     }
 
@@ -77,7 +74,6 @@ public class PushMessageUnitTest {
   public class MockPushRequestNoResponse implements OBinaryPushRequest<OBinaryPushResponse> {
     @Override
     public void write(OChannelDataOutput channel) throws IOException {
-      System.out.println("written");
       requestWritten.countDown();
     }
 
@@ -94,7 +90,6 @@ public class PushMessageUnitTest {
     @Override
     public OBinaryPushResponse execute(ORemotePushHandler remote) {
       executed.countDown();
-      System.out.println("executed");
       return null;
     }
 
@@ -146,7 +141,7 @@ public class PushMessageUnitTest {
     }).start();
     binary.start();
     assertTrue(requestWritten.await(10, TimeUnit.SECONDS));
-    OStorageRemotePushThread pushThread = new OStorageRemotePushThread(remote, "none");
+    OStorageRemotePushThread pushThread = new OStorageRemotePushThread(remote, "none", 10);
     pushThread.start();
 
     assertTrue(executed.await(10, TimeUnit.SECONDS));
@@ -171,7 +166,7 @@ public class PushMessageUnitTest {
     thread.start();
     binary.start();
     assertTrue(requestWritten.await(10, TimeUnit.SECONDS));
-    OStorageRemotePushThread pushThread = new OStorageRemotePushThread(remote, "none");
+    OStorageRemotePushThread pushThread = new OStorageRemotePushThread(remote, "none", 10);
     pushThread.start();
 
     assertTrue(executed.await(10, TimeUnit.SECONDS));
