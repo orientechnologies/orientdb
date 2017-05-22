@@ -1654,33 +1654,33 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       if (!Files.exists(storagePath))
         Files.createDirectories(storagePath);
 
-      nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
+      final Path nameIdMapHolderV1 = storagePath.resolve(NAME_ID_MAP_V1);
+      final Path nameIdMapHolderV2 = storagePath.resolve(NAME_ID_MAP_V2);
 
-      if (Files.exists(nameIdMapHolderPath)) {
-        nameIdMapHolder = FileChannel.open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ);
+      if (Files.exists(nameIdMapHolderV1)) {
+        if (Files.exists(nameIdMapHolderV2)) {
+          Files.delete(nameIdMapHolderV2);
+        }
+
+        nameIdMapHolderPath = nameIdMapHolderV1;
+        nameIdMapHolder = FileChannel.open(nameIdMapHolderPath, StandardOpenOption.READ);
+
+        readNameIdMapV1();
+        convertNameIdMapFromV1ToV2();
+
+        nameIdMapHolder.close();
+
+        nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
+
+        Files.delete(nameIdMapHolderV1);
+
+        nameIdMapHolder = FileChannel.open(nameIdMapHolderPath, StandardOpenOption.READ, StandardOpenOption.WRITE);
+      } else {
+        nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
+        nameIdMapHolder = FileChannel
+            .open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
 
         readNameIdMapV2();
-      } else {
-        nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V1);
-
-        if (Files.exists(nameIdMapHolderPath)) {
-          nameIdMapHolder = FileChannel.open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ);
-
-          readNameIdMapV1();
-
-          convertNameIdMapFromV1ToV2();
-
-          nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
-          nameIdMapHolder.close();
-
-          nameIdMapHolder = FileChannel.open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ);
-        } else {
-          //empty storage will use second version of format
-
-          nameIdMapHolderPath = storagePath.resolve(NAME_ID_MAP_V2);
-          nameIdMapHolder = FileChannel
-              .open(nameIdMapHolderPath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
-        }
       }
     }
   }
@@ -1761,7 +1761,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     NameFileIdEntry nameFileIdEntry;
 
-    final Map<Integer, String> idFileNameMap = new HashMap<Integer, String>();
+    final Map<Integer, String> idFileNameMap = new HashMap<>();
 
     while ((nameFileIdEntry = readNextNameIdEntryV2()) != null) {
       final long absFileId = Math.abs(nameFileIdEntry.fileId);
