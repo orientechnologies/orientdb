@@ -576,7 +576,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   public static boolean exists(final String path) {
-    return new File(path + "/database.ocf").exists();
+    return new File(path + "/" + OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION).exists();
   }
 
   private static class FullCheckpointThreadFactory implements ThreadFactory {

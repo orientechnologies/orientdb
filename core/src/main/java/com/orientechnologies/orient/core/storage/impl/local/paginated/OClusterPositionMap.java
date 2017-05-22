@@ -169,7 +169,7 @@ public class OClusterPositionMap extends ODurableComponent {
       startAtomicOperation(true);
       acquireExclusiveLock();
       try {
-        writeCache.renameFile(fileId, newName + getExtension());
+        writeCache.renameFile(fileId, getFullName(), newName + getExtension());
         setName(newName);
         endAtomicOperation(false, null);
       } catch (IOException ioe) {

@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
@@ -39,9 +38,6 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
 
   private String actualStorageDir;
   private String expectedStorageDir;
-
-  private OWOWCache actualWriteCache;
-  private OWOWCache expectedWriteCache;
 
   private ODatabaseDocumentTx expectedDatabaseDocumentTx;
 
@@ -86,10 +82,7 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
     expectedDatabaseDocumentTx.create();
 
     actualStorageDir = ((OLocalPaginatedStorage) databaseDocumentTx.getStorage()).getStoragePath();
-    actualWriteCache = (OWOWCache) ((OLocalPaginatedStorage) databaseDocumentTx.getStorage()).getWriteCache();
-
     expectedStorageDir = ((OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getStoragePath();
-    expectedWriteCache = (OWOWCache) ((OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
 
     createActualHashTable();
 
@@ -209,35 +202,11 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
   }
 
   private void assertFileRestoreFromWAL() throws IOException {
-    final long imcFileId = actualWriteCache.fileIdByName(localHashTable.getName() + ".imc");
-    final String nativeImcFileName = actualWriteCache.nativeFileNameById(imcFileId);
-
-    final long tscFileId = actualWriteCache.fileIdByName(localHashTable.getName() + ".tsc");
-    final String nativeTscFileName = actualWriteCache.nativeFileNameById(tscFileId);
-
-    final long nbhFileId = actualWriteCache.fileIdByName(localHashTable.getName() + ".nbh");
-    final String nativeNBHFileName = actualWriteCache.nativeFileNameById(nbhFileId);
-
-    final long obfFileId = actualWriteCache.fileIdByName(localHashTable.getName() + ".obf");
-    final String nativeOBFFileName = actualWriteCache.nativeFileNameById(obfFileId);
-
     localHashTable.close();
 
     System.out.println("Start data restore");
     restoreDataFromWAL();
     System.out.println("Stop data restore");
-
-    final long expectedImcFileId = expectedWriteCache.fileIdByName("expectedLocalHashTable.imc");
-    final String nativeExpectedImcFileName = expectedWriteCache.nativeFileNameById(expectedImcFileId);
-
-    final long expectedTscFileId = expectedWriteCache.fileIdByName("expectedLocalHashTable.tsc");
-    final String nativeExpectedTscFileName = expectedWriteCache.nativeFileNameById(expectedTscFileId);
-
-    final long expectedNbhFileId = expectedWriteCache.fileIdByName("expectedLocalHashTable.nbh");
-    final String nativeExpectedNBHFileName = expectedWriteCache.nativeFileNameById(expectedNbhFileId);
-
-    final long expectedObfFileId = expectedWriteCache.fileIdByName("expectedLocalHashTable.obf");
-    final String nativeExpectedOBFFile = expectedWriteCache.nativeFileNameById(expectedObfFileId);
 
     databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.close();
@@ -245,9 +214,7 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
     expectedDatabaseDocumentTx.close();
 
     System.out.println("Start data comparison");
-
-    assertFileContentIsTheSame(nativeExpectedImcFileName, nativeImcFileName, nativeExpectedTscFileName, nativeTscFileName,
-        nativeExpectedNBHFileName, nativeNBHFileName, nativeExpectedOBFFile, nativeOBFFileName);
+    assertFileContentIsTheSame("expectedLocalHashTable", "actualLocalHashTable");
     System.out.println("Stop data comparison");
   }
 
@@ -347,14 +314,27 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
     return atomicChangeIsProcessed;
   }
 
-  private void assertFileContentIsTheSame(String expectedIMCFile, String actualIMCFile, String expectedTSCFile,
-      String actualTSCFile, String expectedNBHFile, String actualNBHFile, String expectedOBFFile, String actualOBFFile)
-      throws IOException {
+  private void assertFileContentIsTheSame(String expectedLocalHashTable, String actualLocalHashTable) throws IOException {
+    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedLocalHashTable + ".imc"),
+        new File(actualStorageDir, actualLocalHashTable + ".imc"));
+    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedLocalHashTable + ".tsc"),
+        new File(actualStorageDir, actualLocalHashTable + ".tsc"));
+    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedLocalHashTable + ".nbh"),
+        new File(actualStorageDir, actualLocalHashTable + ".nbh"));
 
-    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedIMCFile), new File(actualStorageDir, actualIMCFile));
-    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedTSCFile), new File(actualStorageDir, actualTSCFile));
-    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedNBHFile), new File(actualStorageDir, actualNBHFile));
-    assertCompareFilesAreTheSame(new File(expectedStorageDir, expectedOBFFile), new File(actualStorageDir, actualOBFFile));
+    File expectedStorageDirFile = new File(expectedStorageDir);
+
+    File[] expectedDataFiles = expectedStorageDirFile.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return name.endsWith(".obf");
+      }
+    });
+
+    for (File expectedDataFile : expectedDataFiles) {
+      File actualDataFile = new File(actualStorageDir, "actualLocalHashTable.obf");
+      assertCompareFilesAreTheSame(expectedDataFile, actualDataFile);
+    }
   }
 
   private void assertCompareFilesAreTheSame(File expectedFile, File actualFile) throws IOException {

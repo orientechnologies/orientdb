@@ -118,23 +118,19 @@ public class ReadWriteCacheConcurrentTest {
 
   @AfterClass
   public void afterClass() throws IOException {
-    deleteUsedFiles(FILE_COUNT);
-
     readBuffer.closeStorage(writeBuffer);
     readBuffer.clear();
+
+    deleteUsedFiles(FILE_COUNT);
 
     storageLocal.delete();
   }
 
-  private void deleteUsedFiles(int filesCount) throws IOException {
+  private void deleteUsedFiles(int filesCount) {
     for (int k = 0; k < filesCount; k++) {
-      final long fileId = writeBuffer.fileIdByName("readWriteCacheTest" + k + ".tst");
-      final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
-
-      readBuffer.deleteFile(fileId, writeBuffer);
-
-      File file = new File(storageLocal.getConfiguration().getDirectory() + "/" + nativeFileName);
-      Assert.assertFalse(file.exists());
+      File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteCacheTest" + k + ".tst");
+      if (file.exists())
+        Assert.assertTrue(file.delete());
     }
   }
 
@@ -210,10 +206,7 @@ public class ReadWriteCacheConcurrentTest {
   }
 
   private void validateFileContent(byte version, int k) throws IOException {
-    final long fileId = writeBuffer.fileIdByName("readWriteCacheTest" + k + ".tst");
-    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
-
-    String path = storageLocal.getConfiguration().getDirectory() + "/" + nativeFileName;
+    String path = storageLocal.getConfiguration().getDirectory() + "/readWriteCacheTest" + k + ".tst";
 
     OFileClassic fileClassic = new OFileClassic(path, "r");
     fileClassic.open();
