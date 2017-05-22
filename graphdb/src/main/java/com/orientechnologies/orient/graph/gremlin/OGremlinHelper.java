@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -89,6 +91,9 @@ public class OGremlinHelper {
           if (!iBeforeExecution.call(engine, graph))
             return null;
 
+        if (iText == null) {
+          return null;
+        }
         final Object scriptResult = engine.eval(iText);
 
         if (iAfterExecution != null)
@@ -119,12 +124,21 @@ public class OGremlinHelper {
           final Iterator<?> it = ((GremlinPipeline<?, ?>) scriptResult).iterator();
           Object finalResult = null;
           List<Object> resultCollection = null;
-
+          int cursor = -1;
           while (it.hasNext()) {
             Object current = it.next();
 
             // if (current instanceof OrientElement)
             // current = ((OrientElement) current).getRawElement();
+            if (current instanceof Map) {
+              ODocument doc = new ODocument().fromMap((Map<String, ? extends Object>) current);
+              ORecordInternal.setIdentity(doc, new ORecordId(-2, cursor--));
+              current = doc;
+            } else if (current instanceof List) {
+              ODocument doc = new ODocument().field("value", current);
+              ORecordInternal.setIdentity(doc, new ORecordId(-2, cursor--));
+              current = doc;
+            }
 
             if (finalResult != null) {
               if (resultCollection == null) {
