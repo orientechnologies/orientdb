@@ -110,22 +110,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
    */
   public static final long MAGIC_NUMBER_WITHOUT_CHECKSUM = 0xEF30BCAFL;
 
+  private static final int MAGIC_NUMBER_OFFSET = 0;
+
+  private static final int CHECKSUM_OFFSET = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+
   private static final double MAX_LSN_SEGMENT_DISTANCE_FACTOR = 0.75;
-
-  private static final Method CRC32_UPDATE_BYTE_BUFFER;
-
-  // XXX: We are forced to use Java 6 on 2.2.x branch, java.util.zip.CRC32 on Java 6 supports only arrays. But we use direct
-  // ByteBuffers and it's slow to read their content into arrays just to compute the CRC32. Use the reflection, Luke.
-  static {
-    Method crc32UpdateByteBuffer;
-    try {
-      crc32UpdateByteBuffer = CRC32.class.getMethod("update", ByteBuffer.class);
-      crc32UpdateByteBuffer.setAccessible(true);
-    } catch (NoSuchMethodException e) {
-      crc32UpdateByteBuffer = null;
-    }
-    CRC32_UPDATE_BYTE_BUFFER = crc32UpdateByteBuffer;
-  }
 
   private static final int PAGE_OFFSET_TO_CHECKSUM_FROM = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
@@ -194,6 +183,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private OChecksumMode checksumMode = OGlobalConfiguration.STORAGE_CHECKSUM_MODE.getValue();
 
+  private Method crc32UpdateByteBuffer;
+
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
@@ -231,6 +222,15 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       final OBinarySerializerFactory binarySerializerFactory = storageLocal.getComponentsFactory().binarySerializerFactory;
       this.stringSerializer = binarySerializerFactory.getObjectSerializer(OType.STRING);
+
+      // XXX: We are forced to use Java 6 on 2.2.x branch, java.util.zip.CRC32 on Java 6 supports only arrays. But we use direct
+      // ByteBuffers and it's slow to read their content into arrays just to compute the CRC32. Use the reflection, Luke.
+      try {
+        crc32UpdateByteBuffer = CRC32.class.getMethod("update", ByteBuffer.class);
+        crc32UpdateByteBuffer.setAccessible(true);
+      } catch (NoSuchMethodException e) {
+        logCrc32ArraysWarningAndSwitchToArrays(e);
+      }
 
       commitExecutor = Executors.newSingleThreadScheduledExecutor(new FlushThreadFactory(storageLocal.getName()));
       lowSpaceEventsPublisher = Executors.newCachedThreadPool(new LowSpaceEventsPublisherFactory(storageLocal.getName()));
@@ -1109,7 +1109,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         fileClassic.read(pos, data, data.length);
 
-        long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, 0);
+        long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, MAGIC_NUMBER_OFFSET);
 
         if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM && magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
           magicNumberIncorrect = true;
@@ -1120,7 +1120,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         }
 
         if (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
-          final int storedCRC32 = OIntegerSerializer.INSTANCE.deserializeNative(data, OLongSerializer.LONG_SIZE);
+          final int storedCRC32 = OIntegerSerializer.INSTANCE.deserializeNative(data, CHECKSUM_OFFSET);
           final int calculatedCRC32 = calculatePageCrc(data);
 
           if (storedCRC32 != calculatedCRC32) {
@@ -1646,7 +1646,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private void verifyChecksum(ByteBuffer buffer, long fileId, long pageIndex) {
     assert buffer.order() == ByteOrder.nativeOrder();
 
-    buffer.position(0);
+    buffer.position(MAGIC_NUMBER_OFFSET);
     final long magicNumber = OLongSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
     if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM) {
       if (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
@@ -1659,7 +1659,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       return;
     }
 
-    buffer.position(OLongSerializer.LONG_SIZE);
+    buffer.position(CHECKSUM_OFFSET);
     final int storedChecksum = OIntegerSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
 
     final CRC32 crc32 = new CRC32();
@@ -1667,14 +1667,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     boolean fallbackToArray = true;
 
-    if (CRC32_UPDATE_BYTE_BUFFER != null) {
+    if (crc32UpdateByteBuffer != null) {
       try {
-        CRC32_UPDATE_BYTE_BUFFER.invoke(crc32, buffer);
+        crc32UpdateByteBuffer.invoke(crc32, buffer);
         fallbackToArray = false;
       } catch (IllegalAccessException e) {
-        // do nothing
+        logCrc32ArraysWarningAndSwitchToArrays(e);
       } catch (InvocationTargetException e) {
-        // do nothing
+        logCrc32ArraysWarningAndSwitchToArrays(e);
       }
     }
 
@@ -1710,11 +1710,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     OLongSerializer.INSTANCE
         .serializeNative(checksumMode == OChecksumMode.Off ? MAGIC_NUMBER_WITHOUT_CHECKSUM : MAGIC_NUMBER_WITH_CHECKSUM, content,
-            0);
+            MAGIC_NUMBER_OFFSET);
 
     if (checksumMode != OChecksumMode.Off) {
       final int crc32 = calculatePageCrc(content);
-      OIntegerSerializer.INSTANCE.serializeNative(crc32, content, OLongSerializer.LONG_SIZE);
+      OIntegerSerializer.INSTANCE.serializeNative(crc32, content, CHECKSUM_OFFSET);
     }
 
     final long externalId = composeFileId(id, fileId);
@@ -2331,6 +2331,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   public void setChecksumMode(OChecksumMode checksumMode) { // for testing purposes only
     this.checksumMode = checksumMode;
+  }
+
+  private void logCrc32ArraysWarningAndSwitchToArrays(Exception e) {
+    crc32UpdateByteBuffer = null;
+    OLogManager.instance().warn(this, "Unable to use java.util.zip.CRC32 on byte buffers, switching to arrays. Using arrays "
+        + "instead of byte buffers may produce noticeable performance hit. Consider upgrading to Java 8 or newer.", e);
   }
 
   private static class FlushThreadFactory implements ThreadFactory {
