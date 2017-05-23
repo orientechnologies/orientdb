@@ -1313,7 +1313,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             fileClassic.read(firstPageStartPosition, buffer);
 
             if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow))
-              verifyChecksum(buffer, fileId, startPageIndex);
+              verifyChecksum(buffer, fileId, startPageIndex, new ByteBuffer[] { buffer });
 
             buffer.position(0);
 
@@ -1335,7 +1335,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
           if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow))
             for (int i = 0; i < buffers.length; ++i)
-              verifyChecksum(buffers[i], fileId, startPageIndex + i);
+              verifyChecksum(buffers[i], fileId, startPageIndex + i, buffers);
 
           final OCachePointer[] dataPointers = new OCachePointer[buffers.length];
           for (int n = 0; n < buffers.length; n++) {
@@ -1371,7 +1371,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  private void verifyChecksum(ByteBuffer buffer, long fileId, long pageIndex) {
+  private void verifyChecksum(ByteBuffer buffer, long fileId, long pageIndex, ByteBuffer[] buffersToRelease) {
     assert buffer.order() == ByteOrder.nativeOrder();
 
     buffer.position(MAGIC_NUMBER_OFFSET);
@@ -1418,8 +1418,15 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     if (computedChecksum != storedChecksum) {
       final String message = "Checksum verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
       OLogManager.instance().error(this, "%s", message);
-      if (checksumMode == OChecksumMode.StoreAndThrow)
+      if (checksumMode == OChecksumMode.StoreAndThrow) {
+
+        for (ByteBuffer rb : buffersToRelease) {
+          bufferPool.release(rb);
+        }
+
         throw new OStorageException(message);
+      }
+
     }
   }
 
