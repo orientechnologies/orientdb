@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.impls.orient.*;
-import org.apache.commons.collections.IteratorUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -360,19 +359,25 @@ public class GraphTest {
       Iterable<Vertex> vertices = graph.command(new OCommandSQL("select from index:account.composite where key = [ 'foo', 'baz' ]"))
           .execute();
 
-      List list = IteratorUtils.toList(vertices.iterator());
+      List<Vertex> list = new ArrayList<>();
+
+      vertices.forEach(list::add);
 
       Assert.assertEquals(1, list.size());
 
       vertices = graph.getVertices("account.composite", new Object[] { "foo", "baz" });
 
-      list = IteratorUtils.toList(vertices.iterator());
+      list = new ArrayList<>();
+
+      vertices.forEach(list::add);
 
       Assert.assertEquals(1, list.size());
 
       vertices = graph.getVertices("account.composite", new OCompositeKey("foo", "baz"));
 
-      list = IteratorUtils.toList(vertices.iterator());
+      list = new ArrayList<>();
+
+      vertices.forEach(list::add);
 
       Assert.assertEquals(1, list.size());
 
@@ -402,7 +407,10 @@ public class GraphTest {
       Iterable<Vertex> vertices = graph.command(new OCommandSQL("select from index:account.composite where key = [ 'foo', 'baz' ]"))
           .execute();
 
-      List list = IteratorUtils.toList(vertices.iterator());
+
+
+      List<Vertex> list = new ArrayList<>();
+      vertices.forEach(list::add);
 
       Assert.assertEquals(1, list.size());
 
