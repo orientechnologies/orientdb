@@ -62,6 +62,13 @@
                 <parameter name="allowedLanguages" value="SQL"/>
             </parameters>
         </handler>
+        <!-- CUSTOM SQL FUNCTIONS -->
+        <handler class="com.orientechnologies.orient.server.handler.OCustomSQLFunctionPlugin">
+            <parameters>
+                <!-- LOCATION OF JSON CONFIGURATION FILE -->
+                <parameter name="config" value="${ORIENTDB_HOME}/config/custom-sql-functions.json"/>
+            </parameters>
+        </handler>
 
     </handlers>
     <network>
