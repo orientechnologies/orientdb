@@ -84,11 +84,11 @@ body.dragging, body.dragging * {
   z-index: 2000;
 }
 
-ol.example li.placeholder {
+ol.transformer-list canvas.placeholder {
   position: relative;
   /** More li styles **/
 }
-ol.example li.placeholder:before {
+ol.transformer-list canvas.placeholder:before {
   position: absolute;
   /** Define arrowhead **/
 }

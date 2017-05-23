@@ -598,10 +598,7 @@ class EtlComponent {
         useLightweightEdges: "Defines whether it changes the default setting for Lightweight Edges",
         standardElementConstraints: "Defines whether it changes the default setting for TinkerPop Blueprint constraints. Value cannot be null and you cannot use id as a property name"
       }
-    };
-    $(function  () { // TODO test
-      (<any>$("ol.example")).sortable();
-    });
+    }
   }
 
   // Dynamic creations
@@ -837,10 +834,20 @@ class EtlComponent {
     this.readyForExecution();
 
     // Canvas
-    let canvas = <HTMLCanvasElement> document.getElementById("tCanvas");
-    let ctx = canvas.getContext("2d");
+
+    let index = this.transformers.indexOf(transformer).toString();
+    let canvas = document.createElement('canvas');
+    let ctx = canvas.getContext('2d');
+
+    canvas.width = 200;
+    canvas.height = 80;
+    canvas.style.width = 200 + "px";
+    canvas.style.height = 80 + "px";
+    canvas.style.position = "relative";
+    canvas.id = index;
+
     ctx.beginPath();
-    ctx.rect(0, (this.transformers.indexOf(this.currentTransformer) * 50), 200, 80);
+    ctx.rect(0, 0, 200, 80);
     ctx.fillStyle = "#444444";
     ctx.fill();
     ctx.font = "bold 20px sans-serif";
@@ -850,11 +857,14 @@ class EtlComponent {
     ctx.fillStyle = "#eeeeee";
     ctx.fillText("click to configure",10,60);
 
-    let body = document.getElementById("transformerList");
-    body.appendChild(canvas);
+    let list = document.getElementById("transformerList");
+    list.appendChild(canvas);
 
-    let tCanvas = $('#tCanvas');
-    (<any>tCanvas).draggable({
+    let tCanvas = $('#' + index);
+
+    tCanvas.on('click', () => {this.selectTransformer(index)});
+
+    (<any>(tCanvas)).draggable({
       containment: "parent"
     });
 
@@ -863,8 +873,7 @@ class EtlComponent {
     $("#loaderOptions").hide();
     $("#extractorOptions").hide();
     $("#transformerOptions").show();
-    (<any>tCanvas).slideDown(1000); // Canvas animation
-
+    
   }
 
   loaderInit(type) {
@@ -956,7 +965,7 @@ class EtlComponent {
     // Jquery hide/show
     $("#transformerOptions").hide();
     $("#panelPlaceholder").show();
-    $("#tCanvas").fadeOut(1000);
+    $("#" + index).remove();
 
     if (this.transformers.length == 0) $("#pleaseTransformer").show();
   }
@@ -967,7 +976,7 @@ class EtlComponent {
 
     // Jquery hide/show
     $("#createLoader").show();
-    $("#pleaseLoader").show()
+    $("#pleaseLoader").show();
     $("#loaderOptions").hide();
     $("#panelPlaceholder").show();
     $("#lCanvas").fadeOut(1000);
@@ -1215,7 +1224,10 @@ class EtlComponent {
     $("#panelPlaceholder").slideUp(800);
   }
 
-  selectTransformer() {
+  selectTransformer(transformer) {
+    this.currentTransformer = this.transformers[transformer];
+    this.tKeys = this.getTKeys(this.currentTransformer);
+
     $("#extractorOptions").slideUp(800);
     $("#transformerOptions").slideDown(800);
     $("#loaderOptions").slideUp(800);

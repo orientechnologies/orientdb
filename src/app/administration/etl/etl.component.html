@@ -222,7 +222,7 @@
                               [attr.data-content]="hints.transformerHint"><i class="fa fa-question-circle"></i>
                       </button>
                     </h4>
-                    <div class="row" style="text-align: center;">
+                    <div class="row" style="text-align:center;">
                       <div class="btn-group">
 
                         <button class="btn btn-primary btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
@@ -247,14 +247,10 @@
                         </div>
                       </div>
                       <br><br><br>
-                      <div class="row">
+                      <div class="col-md-12" style="overflow:auto">
                         <h5 id="pleaseTransformer" align="center"><b>Please create at least one transformer</b></h5>
-                        <div id="transformerSpace" style="height: 300px; overflow:auto">
-                          <ol id="transformerList">
-                          <canvas id="tCanvas" width="inherit" height="80" style="display:none" (click)="selectTransformer()">
-                            Your browser does not support the HTML5 canvas tag.
-                          </canvas>
-                          </ol>
+                        <div id="transformerSpace" style="height: 300px">
+                          <ol id="transformerList" class="transformer-list"></ol> <script src='../../util/draggable-sortable/jquery-sortable.js'></script>
                         </div>
                       </div>
                     </div>
