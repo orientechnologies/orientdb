@@ -22,13 +22,12 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 import java.util.Collection;
 import java.util.Locale;
@@ -70,7 +69,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       reload();
 
       final Locale locale = getServerLocale();
-      return preProcessBeforeReturn(getDatabase(), indexes.get(iName.toLowerCase(locale)));
+      return preProcessBeforeReturn(getDatabase(), indexes.get(iName));
     } finally {
       releaseExclusiveLock();
     }
@@ -90,7 +89,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
       // REMOVE THE INDEX LOCALLY
       final Locale locale = getServerLocale();
-      indexes.remove(iIndexName.toLowerCase(locale));
+      indexes.remove(iIndexName);
       reload();
 
       return this;

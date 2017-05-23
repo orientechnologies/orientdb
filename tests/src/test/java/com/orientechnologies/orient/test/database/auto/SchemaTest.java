@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -31,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import org.testng.Assert;
@@ -39,7 +41,9 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Test(groups = "schema")
 public class SchemaTest extends DocumentDBBaseTest {
@@ -86,7 +90,6 @@ public class SchemaTest extends DocumentDBBaseTest {
   public void checkInvalidNamesBefore30() {
 
     OSchema schema = database.getMetadata().getSchema();
-
 
     schema.createClass("TestInvalidName,");
     Assert.assertNotNull(schema.getClass("TestInvalidName,"));
@@ -255,13 +258,13 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("equal", "this = that");
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"),
-        "this = that");
+    Assert
+        .assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"), "this = that");
 
     // TEST CUSTOM PROPERTY WITH = AFTER REOPEN
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"),
-        "this = that");
+    Assert
+        .assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"), "this = that");
 
   }
 
@@ -533,9 +536,9 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   public void testWrongClassNameWithAt() {
 //    try {
-      database.command(new OCommandSQL("create class `Ant@ni`")).execute();
+    database.command(new OCommandSQL("create class `Ant@ni`")).execute();
 //      Assert.fail();
-      //why...? it can be allowed now with backtick quoting...
+    //why...? it can be allowed now with backtick quoting...
     //TODO review this
 //    } catch (Exception e) {
 //      Assert.assertTrue(e instanceof OSchemaException);
@@ -544,24 +547,23 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   public void testWrongClassNameWithSpace() {
 //    try {
-      database.getMetadata().getSchema().createClass("Anta ni");
+    database.getMetadata().getSchema().createClass("Anta ni");
 //      Assert.fail();
     //TODO review//
 //    } catch (Exception e) {
 //      Assert.assertTrue(e instanceof OSchemaException);
 //    }
   }
-  
+
   public void testWrongClassNameWithComma() {
 //    try {
-      database.getMetadata().getSchema().createClass("Anta,ni");
+    database.getMetadata().getSchema().createClass("Anta,ni");
 //      Assert.fail();
 //    TODO review
 //    } catch (Exception e) {
 //      Assert.assertTrue(e instanceof OSchemaException);
 //    }
   }
-
 
   public void testRenameWithSameNameIsNop() {
     database.getMetadata().getSchema().getClass("V").setName("V");
@@ -592,6 +594,61 @@ public class SchemaTest extends DocumentDBBaseTest {
     OClass classA = schema.createClass("TestDeletionOfDependentClassA", oRestricted);
     OClass classB = schema.createClass("TestDeletionOfDependentClassB", classA);
     schema.dropClass(classB.getName());
+  }
+
+  @Test
+  public void testCaseSensitivePropNames() {
+    String className = "TestCaseSensitivePropNames";
+    String propertyName = "propName";
+    database.command("create class " + className);
+    database.command("create property " + className + "." + propertyName.toUpperCase() + " STRING");
+    database.command("create property " + className + "." + propertyName.toLowerCase() + " STRING");
+
+    database.command(
+        "create index " + className + "." + propertyName.toLowerCase() + " on " + className + "(" + propertyName.toLowerCase()
+            + ") NOTUNIQUE");
+    database.command(
+        "create index " + className + "." + propertyName.toUpperCase() + " on " + className + "(" + propertyName.toUpperCase()
+            + ") NOTUNIQUE");
+
+    database.command(
+        "insert into " + className + " set " + propertyName.toUpperCase() + " = 'FOO', " + propertyName.toLowerCase() + " = 'foo'");
+    database.command(
+        "insert into " + className + " set " + propertyName.toUpperCase() + " = 'BAR', " + propertyName.toLowerCase() + " = 'bar'");
+
+    try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toLowerCase() + " = 'foo'")) {
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertFalse(rs.hasNext());
+    }
+
+    try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toLowerCase() + " = 'FOO'")) {
+      Assert.assertFalse(rs.hasNext());
+    }
+
+    try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toUpperCase() + " = 'FOO'")) {
+      Assert.assertTrue(rs.hasNext());
+      rs.next();
+      Assert.assertFalse(rs.hasNext());
+    }
+
+    try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toUpperCase() + " = 'foo'")) {
+      Assert.assertFalse(rs.hasNext());
+    }
+
+    OMetadataInternal md = database.getMetadata();
+    md.reload();
+    OSchema schema = md.getSchema();
+    schema.reload();
+    OClass clazz = schema.getClass(className);
+    Set<OIndex<?>> idx = clazz.getIndexes();
+    Set<String> indexes = new HashSet<>();
+    for (OIndex id : idx) {
+      indexes.add(id.getName());
+    }
+    Assert.assertTrue(indexes.contains(className + "." + propertyName.toLowerCase()));
+    Assert.assertTrue(indexes.contains(className + "." + propertyName.toUpperCase()));
+    schema.dropClass(className);
   }
 
   private void swapClusters(ODatabaseDocumentTx databaseDocumentTx, int i) {

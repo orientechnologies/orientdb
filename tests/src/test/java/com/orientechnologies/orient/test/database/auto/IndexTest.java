@@ -186,7 +186,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testDuplicatedIndexOnNotUnique")
   public void testQueryIndex() {
-    List<?> result = database.query(new OSQLSynchQuery<Object>("select from index:profile.nick where key = 'Jay'"));
+    List<?> result = database.query(new OSQLSynchQuery<Object>("select from index:Profile.nick where key = 'Jay'"));
     Assert.assertTrue(result.size() > 0);
   }
 
@@ -198,10 +198,10 @@ public class IndexTest extends ObjectDBBaseTest {
 
     final List<Long> positions = getValidPositions(3);
 
-    database.command(new OCommandSQL("insert into index:IDX (key,rid) values (10,#3:" + positions.get(0) + ')')).execute();
-    database.command(new OCommandSQL("insert into index:IDX (key,rid) values (20,#3:" + positions.get(1) + ')')).execute();
+    database.command(new OCommandSQL("insert into index:idx (key,rid) values (10,#3:" + positions.get(0) + ')')).execute();
+    database.command(new OCommandSQL("insert into index:idx (key,rid) values (20,#3:" + positions.get(1) + ')')).execute();
 
-    List<ODocument> result = database.command(new OCommandSQL("select from index:IDX")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select from index:idx")).execute();
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 2);
     for (ODocument d : result) {
@@ -216,7 +216,7 @@ public class IndexTest extends ObjectDBBaseTest {
         Assert.assertTrue(false);
     }
 
-    result = database.command(new OCommandSQL("select key, rid from index:IDX")).execute();
+    result = database.command(new OCommandSQL("select key, rid from index:idx")).execute();
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 2);
     for (ODocument d : result) {
@@ -231,7 +231,7 @@ public class IndexTest extends ObjectDBBaseTest {
         Assert.assertTrue(false);
     }
 
-    result = database.command(new OCommandSQL("select key from index:IDX")).execute();
+    result = database.command(new OCommandSQL("select key from index:idx")).execute();
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 2);
     for (ODocument d : result) {
@@ -239,7 +239,7 @@ public class IndexTest extends ObjectDBBaseTest {
       Assert.assertFalse(d.containsField("rid"));
     }
 
-    result = database.command(new OCommandSQL("select rid from index:IDX")).execute();
+    result = database.command(new OCommandSQL("select rid from index:idx")).execute();
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 2);
     for (ODocument d : result) {
@@ -247,7 +247,7 @@ public class IndexTest extends ObjectDBBaseTest {
       Assert.assertTrue(d.containsField("rid"));
     }
 
-    result = database.command(new OCommandSQL("select rid from index:IDX where key = 10")).execute();
+    result = database.command(new OCommandSQL("select rid from index:idx where key = 10")).execute();
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 1);
     for (ODocument d : result) {

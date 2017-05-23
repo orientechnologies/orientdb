@@ -417,7 +417,7 @@ public class OStorageConfiguration implements OSerializableStream {
         final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, indexType, durableInNonTxMode, version,
             valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize, engineProperties);
 
-        indexEngines.put(name.toLowerCase(getLocaleInstance()), indexEngineData);
+        indexEngines.put(name, indexEngineData);
       }
     }
   }

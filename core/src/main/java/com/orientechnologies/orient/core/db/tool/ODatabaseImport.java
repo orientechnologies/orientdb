@@ -57,7 +57,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -398,7 +397,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes()) {
         if (index.isAutomatic())
-          indexesToRebuild.add(index.getName().toLowerCase());
+          indexesToRebuild.add(index.getName());
       }
 
       String tag;
@@ -1492,7 +1491,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         listener.onMessage("\n- Index '" + indexName + "'...");
 
         indexManager.dropIndex(indexName);
-        indexesToRebuild.remove(indexName.toLowerCase());
+        indexesToRebuild.remove(indexName);
         List<Integer> clusterIds = new ArrayList<Integer>();
 
         for (final String clusterName : clustersToIndex) {

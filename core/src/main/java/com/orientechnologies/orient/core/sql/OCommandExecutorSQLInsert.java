@@ -93,18 +93,19 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       parserRequiredKeyword("INSERT");
       parserRequiredKeyword("INTO");
 
-      String subjectName = parserRequiredWord(true, "Invalid subject name. Expected cluster, class or index");
-      if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX))
+      String subjectName = parserRequiredWord(false, "Invalid subject name. Expected cluster, class or index");
+      String subjectNameUpper = subjectName.toUpperCase();
+      if (subjectNameUpper.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX))
         // CLUSTER
         clusterName = subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());
 
-      else if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX))
+      else if (subjectNameUpper.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX))
         // INDEX
         indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
 
       else {
         // CLASS
-        if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
+        if (subjectNameUpper.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
           subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
         final OClass cls = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName);

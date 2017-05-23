@@ -1298,8 +1298,8 @@ public class OSelectExecutionPlanner {
     }
 
     for (int i = 0; i < orderedFields.size(); i++) {
-      final String orderFieldName = orderedFields.get(i).toLowerCase();//toLowerCase...? remove this?
-      final String indexFieldName = fields.get(i).toLowerCase();//toLowerCase...?
+      final String orderFieldName = orderedFields.get(i);
+      final String indexFieldName = fields.get(i);
       if (!orderFieldName.equals(indexFieldName)) {
         return false;
       }

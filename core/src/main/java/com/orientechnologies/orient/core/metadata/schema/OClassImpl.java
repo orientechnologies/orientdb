@@ -744,23 +744,21 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     acquireSchemaReadLock();
     try {
       final Map<String, OProperty> props = new HashMap<String, OProperty>(20);
-      propertiesMap(props, true);
+      propertiesMap(props);
       return props;
     } finally {
       releaseSchemaReadLock();
     }
   }
 
-  private void propertiesMap(Map<String, OProperty> propertiesMap, boolean keepCase) {
+  private void propertiesMap(Map<String, OProperty> propertiesMap) {
     for (OProperty p : properties.values()) {
       String propName = p.getName();
-      if (!keepCase)
-        propName = propName.toLowerCase();
       if (!propertiesMap.containsKey(propName))
         propertiesMap.put(propName, p);
     }
     for (OClassImpl superClass : superClasses) {
-      superClass.propertiesMap(propertiesMap, keepCase);
+      superClass.propertiesMap(propertiesMap);
     }
   }
 
@@ -810,7 +808,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public OProperty getProperty(String propertyName) {
     acquireSchemaReadLock();
     try {
-      propertyName = propertyName.toLowerCase();
 
       OProperty p = properties.get(propertyName);
       if (p != null)
@@ -848,7 +845,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public boolean existsProperty(String propertyName) {
     acquireSchemaReadLock();
     try {
-      propertyName = propertyName.toLowerCase();
       boolean result = properties.containsKey(propertyName);
       if (result)
         return true;
@@ -869,11 +865,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
-    final String lowerName = propertyName.toLowerCase();
-
     acquireSchemaWriteLock();
     try {
-      if (!properties.containsKey(lowerName))
+      if (!properties.containsKey(propertyName))
         throw new OSchemaException("Property '" + propertyName + "' not found in class " + name + "'");
 
       final ODatabaseDocumentInternal database = getDatabase();
@@ -966,11 +960,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         prop.fromStream();
 
         if (properties.containsKey(prop.getName())) {
-          prop = (OPropertyImpl) properties.get(prop.getName().toLowerCase());
+          prop = (OPropertyImpl) properties.get(prop.getName());
           prop.fromStream(p);
         }
 
-        newProperties.put(prop.getName().toLowerCase(), prop);
+        newProperties.put(prop.getName(), prop);
       }
 
     properties.clear();
@@ -1084,9 +1078,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void renameProperty(final String iOldName, final String iNewName) {
-    final OProperty p = properties.remove(iOldName.toLowerCase());
+    final OProperty p = properties.remove(iOldName);
     if (p != null)
-      properties.put(iNewName.toLowerCase(), p);
+      properties.put(iNewName, p);
   }
 
   public OClass addClusterId(final int clusterId) {
@@ -1803,8 +1797,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (!unsafe)
       checkPersistentPropertyType(getDatabase(), name, type);
 
-    final String lowerName = name.toLowerCase();
-
     final OPropertyImpl prop;
 
     // This check are doubled because used by sql commands
@@ -1818,14 +1810,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     try {
       checkEmbedded();
 
-      if (properties.containsKey(lowerName))
+      if (properties.containsKey(name))
         throw new OSchemaException("Class '" + this.name + "' already has property '" + name + "'");
 
       OGlobalProperty global = owner.findOrCreateGlobalProperty(name, type);
 
       prop = new OPropertyImpl(this, global);
 
-      properties.put(lowerName, prop);
+      properties.put(name, prop);
 
       if (linkedType != null)
         prop.setLinkedTypeInternal(linkedType);
@@ -2345,7 +2337,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     try {
       checkEmbedded();
 
-      final OProperty prop = properties.remove(iPropertyName.toLowerCase());
+      final OProperty prop = properties.remove(iPropertyName);
 
       if (prop == null)
         throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
@@ -2673,7 +2665,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         impl = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
       else
         impl = (OClassImpl) superClass;
-      impl.propertiesMap(properties, false);
+      impl.propertiesMap(properties);
       for (Map.Entry<String, OProperty> entry : properties.entrySet()) {
         if (comulative.containsKey(entry.getKey())) {
           final String property = entry.getKey();
@@ -2781,7 +2773,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     for (String fieldName : fieldNames) {
       if (!fieldName.equals("@rid"))
-        types.add(getProperty(decodeClassName(OIndexDefinitionFactory.extractFieldName(fieldName)).toLowerCase()).getType());
+        types.add(getProperty(decodeClassName(OIndexDefinitionFactory.extractFieldName(fieldName))).getType());
       else
         types.add(OType.LINK);
     }

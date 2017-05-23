@@ -1,13 +1,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
-import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
-import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -23,12 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 @Test
 public class IndexManagerTest extends DocumentDBBaseTest {
@@ -205,7 +194,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testAreIndexedThreePropertiesBrokenFiledNameCase() {
     final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
-    final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("ftwO", "Fone", "fThrEE"));
+    final boolean result = indexManager.areIndexed(CLASS_NAME, Arrays.asList("fTwo", "fOne", "fThree"));
 
     assertTrue(result);
   }
@@ -433,7 +422,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   public void testGetClassInvolvedIndexesThreePropertiesBrokenFiledNameTest() {
     final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
-    final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, Arrays.asList("ftwO", "foNe", "fThrEE"));
+    final Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(CLASS_NAME, Arrays.asList("fTwo", "fOne", "fThree"));
 
     assertEquals(result.size(), 1);
     assertEquals(result.iterator().next().getName(), "compositetwo");

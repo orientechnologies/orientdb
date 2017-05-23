@@ -195,7 +195,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public OIndex<?> getIndex(final String iName) {
     final Locale locale = getServerLocale();
 
-    final OIndex<?> index = indexes.get(iName.toLowerCase(locale));
+    final OIndex<?> index = indexes.get(iName);
     if (index == null)
       return null;
     return preProcessBeforeReturn(getDatabase(), index);
@@ -205,7 +205,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public void addClusterToIndex(final String clusterName, final String indexName) {
     final Locale locale = getServerLocale();
 
-    final OIndex<?> index = indexes.get(indexName.toLowerCase(locale));
+    final OIndex<?> index = indexes.get(indexName);
     if (index == null)
       throw new OIndexException("Index with name " + indexName + " does not exist.");
 
@@ -221,7 +221,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public void removeClusterFromIndex(final String clusterName, final String indexName) {
     final Locale locale = getServerLocale();
 
-    final OIndex<?> index = indexes.get(indexName.toLowerCase(locale));
+    final OIndex<?> index = indexes.get(indexName);
     if (index == null)
       throw new OIndexException("Index with name " + indexName + " does not exist.");
     index.getInternal().removeCluster(clusterName);
@@ -230,7 +230,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   public boolean existsIndex(final String iName) {
     final Locale locale = getServerLocale();
-    return indexes.containsKey(iName.toLowerCase(locale));
+    return indexes.containsKey(iName);
   }
 
   public String getDefaultClusterName() {
@@ -370,7 +370,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public OIndex<?> getClassIndex(String className, String indexName) {
     final Locale locale = getServerLocale();
     className = className.toLowerCase(locale);
-    indexName = indexName.toLowerCase(locale);
 
     final OIndex<?> index = indexes.get(indexName);
     if (index != null && index.getDefinition() != null && index.getDefinition().getClassName() != null && className
@@ -451,7 +450,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     acquireExclusiveLock();
     try {
       final Locale locale = getServerLocale();
-      indexes.put(index.getName().toLowerCase(locale), index);
+      indexes.put(index.getName(), index);
 
       final OIndexDefinition indexDefinition = index.getDefinition();
       if (indexDefinition == null || indexDefinition.getClassName() == null)
@@ -506,7 +505,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     final Locale locale = getServerLocale();
     final ArrayList<String> result = new ArrayList<String>(fieldNames.size());
     for (final String fieldName : fieldNames)
-      result.add(fieldName.toLowerCase(locale));
+      result.add(fieldName);
     return result;
   }
 

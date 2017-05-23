@@ -227,7 +227,7 @@ public class OSQLTarget extends OBaseParser {
 
         } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
           // REGISTER AS INDEX
-          targetIndex = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
+          targetIndex = originalSubjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
         } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.METADATA_PREFIX)) {
           // METADATA
           final String metadataTarget = subjectName.substring(OCommandExecutorSQLAbstract.METADATA_PREFIX.length());
@@ -252,13 +252,13 @@ public class OSQLTarget extends OBaseParser {
             ((List<OIdentifiable>) targetRecords).add(value);
 
         } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_VALUES_PREFIX)) {
-          targetIndexValues = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_PREFIX.length());
+          targetIndexValues = originalSubjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_PREFIX.length());
           targetIndexValuesAsc = true;
         } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_VALUES_ASC_PREFIX)) {
-          targetIndexValues = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_ASC_PREFIX.length());
+          targetIndexValues = originalSubjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_ASC_PREFIX.length());
           targetIndexValuesAsc = true;
         } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_VALUES_DESC_PREFIX)) {
-          targetIndexValues = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_DESC_PREFIX.length());
+          targetIndexValues = originalSubjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_DESC_PREFIX.length());
           targetIndexValuesAsc = false;
         } else {
           if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))

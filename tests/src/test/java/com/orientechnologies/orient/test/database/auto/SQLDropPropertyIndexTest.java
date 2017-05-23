@@ -15,12 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Arrays;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -29,7 +23,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
+import java.util.Arrays;
 
 @Test(groups = { "index" })
 public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
@@ -91,7 +88,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
         .getClassIndex("DropPropertyIndexCompositeIndex");
     Assert.assertNotNull(index);
 
-    database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndextestclasS.pRoP1 FORCE")).execute();
+    database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndextestclasS.prop1 FORCE")).execute();
     database.getMetadata().getIndexManager().reload();
 
     index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
@@ -142,7 +139,7 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
         .execute();
 
     try {
-      database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndextestclaSS.proP1")).execute();
+      database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndextestclass.prop1")).execute();
       Assert.fail();
     } catch (OCommandExecutionException e) {
       Assert.assertTrue(e.getMessage().contains(

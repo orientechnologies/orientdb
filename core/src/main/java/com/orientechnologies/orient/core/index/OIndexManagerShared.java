@@ -63,7 +63,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     acquireSharedLock();
     try {
       final Locale locale = getServerLocale();
-      return indexes.get(name.toLowerCase(locale));
+      return indexes.get(name);
     } finally {
       releaseSharedLock();
     }
@@ -129,8 +129,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     acquireExclusiveLock();
     try {
 
-      if (indexes.containsKey(iName.toLowerCase(locale)))
-        throw new OIndexException("Index with name " + iName.toLowerCase(locale) + " already exists.");
+      if (indexes.containsKey(iName))
+        throw new OIndexException("Index with name " + iName+ " already exists.");
 
       // manual indexes are always durable
       if (clusterIdsToIndex == null || clusterIdsToIndex.length == 0) {
@@ -237,7 +237,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     acquireExclusiveLock();
     try {
       final Locale locale = getServerLocale();
-      final OIndex<?> idx = indexes.remove(iIndexName.toLowerCase(locale));
+      final OIndex<?> idx = indexes.remove(iIndexName);
       if (idx != null) {
         final Set<String> clusters = idx.getClusters();
         if (clusters != null && !clusters.isEmpty()) {
@@ -385,7 +385,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
                 .createIndex(getStorage(), newIndexMetadata.getName(), newIndexMetadata.getType(), newIndexMetadata.getAlgorithm(),
                     newIndexMetadata.getValueContainerAlgorithm(), (ODocument) d.field(OIndexInternal.METADATA), indexVersion);
 
-            final String normalizedName = newIndexMetadata.getName().toLowerCase(locale);
+            final String normalizedName = newIndexMetadata.getName();
 
             OIndex<?> oldIndex = oldIndexes.remove(normalizedName);
             if (oldIndex != null) {
