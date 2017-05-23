@@ -304,13 +304,13 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1, true);
+            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1, false);
             if (cacheEntry == null) {
               do {
                 if (cacheEntry != null)
                   expectedReadCache.release(cacheEntry, expectedWriteCache);
 
-                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, true);
+                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false);
               } while (cacheEntry.getPageIndex() != pageIndex);
             }
 

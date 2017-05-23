@@ -309,10 +309,10 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1, true);
+            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1, false);
             if (cacheEntry == null)
               do {
-                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, true);
+                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false);
               } while (cacheEntry.getPageIndex() != pageIndex);
 
             cacheEntry.acquireExclusiveLock();
