@@ -119,6 +119,8 @@ public class ORemoteTransactionMessagesTest {
 
     List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(new ODocument(), ORecordOperation.CREATED));
+    operations.add(new ORecordOperation(new ODocument(new ORecordId(10, 2)), ORecordOperation.UPDATED));
+    operations.add(new ORecordOperation(new ODocument(new ORecordId(10, 1)), ORecordOperation.DELETED));
     Map<String, OTransactionIndexChanges> changes = new HashMap<>();
     OTransactionIndexChanges change = new OTransactionIndexChanges();
     change.cleared = false;
@@ -138,7 +140,13 @@ public class ORemoteTransactionMessagesTest {
     OFetchTransactionResponse readResponse = new OFetchTransactionResponse(10, operations, changes);
     readResponse.read(channel, null);
 
-    assertEquals(readResponse.getOperations().size(), 1);
+    assertEquals(readResponse.getOperations().size(), 3);
+    assertEquals(readResponse.getOperations().get(0).getType(), ORecordOperation.CREATED);
+    assertNotNull(readResponse.getOperations().get(0).getRecord());
+    assertEquals(readResponse.getOperations().get(1).getType(), ORecordOperation.UPDATED);
+    assertNotNull(readResponse.getOperations().get(1).getRecord());
+    assertEquals(readResponse.getOperations().get(2).getType(), ORecordOperation.DELETED);
+    assertNotNull(readResponse.getOperations().get(2).getRecord());
     assertEquals(readResponse.getTxId(), 10);
     assertEquals(readResponse.getIndexChanges().size(), 1);
     assertEquals(readResponse.getIndexChanges().get(0).getName(), "some");
@@ -154,7 +162,5 @@ public class ORemoteTransactionMessagesTest {
     assertEquals(entryChange.entries.get(1).operation, OPERATION.REMOVE);
 
   }
-
-
 
 }

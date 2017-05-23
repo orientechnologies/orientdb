@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
@@ -145,6 +146,25 @@ public class RemoteTransactionSupportTest {
     assertTrue(result1.hasNext());
     assertEquals(result1.next().getProperty("name"), "July");
     assertFalse(result.hasNext());
+  }
+
+  @Test
+  public void testQueryDeleteTxSQLTransaction() {
+
+    OElement someTx = database.newElement("SomeTx");
+    someTx.setProperty("name", "foo");
+
+    someTx.save();
+
+    database.begin();
+
+    database.command("delete from SomeTx");
+
+    database.commit();
+
+    OResultSet result = database.command("select from SomeTx");
+    assertFalse(result.hasNext());
+
   }
 
   @After
