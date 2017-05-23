@@ -20,6 +20,7 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -428,7 +429,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param indexName  Index name
    * @param indexClass Class as one or subclass of Vertex.class and Edge.class
-   *
    * @return Index instance
    */
   @SuppressWarnings("unchecked")
@@ -499,7 +499,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Creates a new unconnected vertex with no fields in the Graph.
    *
    * @param id Optional, can contains the Vertex's class name by prefixing with "class:"
-   *
    * @return The new OrientVertex created
    */
   @Override
@@ -534,7 +533,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param id   Optional, can contains the Vertex's class name by prefixing with "class:"
    * @param prop Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
-   *
    * @return The new OrientVertex created
    */
   public OrientVertex addVertex(Object id, final Object... prop) {
@@ -584,7 +582,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iClassName   Vertex class name
    * @param iClusterName Vertex cluster name
-   *
    * @return New vertex created
    */
   public OrientVertex addVertex(final String iClassName, final String iClusterName) {
@@ -609,7 +606,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iClassName Vertex's class name
    * @param prop       Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
-   *
    * @return added vertex
    */
   public OrientVertex addTemporaryVertex(final String iClassName, final Object... prop) {
@@ -630,7 +626,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param outVertex Source vertex
    * @param inVertex  Destination vertex
    * @param label     Edge's label
-   *
    * @return
    */
   @Override
@@ -753,7 +748,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Get all the Vertices in Graph specifying if consider or not sub-classes of V.
    *
    * @param iPolymorphic If true then get all the vertices of any sub-class
-   *
    * @return Vertices as Iterable
    */
   public Iterable<Vertex> getVertices(final boolean iPolymorphic) {
@@ -766,7 +760,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Get all the Vertices in Graph of a specific vertex class and all sub-classes.
    *
    * @param iClassName Vertex class name to filter
-   *
    * @return Vertices as Iterable
    */
   public Iterable<Vertex> getVerticesOfClass(final String iClassName) {
@@ -780,7 +773,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iClassName   Vertex class name to filter
    * @param iPolymorphic If true consider also Vertex iClassName sub-classes
-   *
    * @return Vertices as Iterable
    */
   public Iterable<Vertex> getVerticesOfClass(final String iClassName, final boolean iPolymorphic) {
@@ -803,7 +795,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iKey   Field name
    * @param iValue Field value
-   *
    * @return Vertices as Iterable
    */
   public Iterable<Vertex> getVertices(final String iKey, Object iValue) {
@@ -862,9 +853,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iKey   Name of the indexed property
    * @param iValue Field value
-   *
    * @return Vertex instance if found, otherwise null
-   *
    * @see #getVertices(String, Object)
    */
   @Deprecated
@@ -896,7 +885,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iKey   Fields name
    * @param iValue Fields value
-   *
    * @return Vertices as Iterable
    */
   public Iterable<Vertex> getVertices(final String label, final String[] iKey, Object[] iValue) {
@@ -957,7 +945,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Get all the Edges in Graph specifying if consider or not sub-classes of E.
    *
    * @param iPolymorphic If true then get all the edge of any sub-class
-   *
    * @return Edges as Iterable
    */
   public Iterable<Edge> getEdges(final boolean iPolymorphic) {
@@ -970,7 +957,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Get all the Edges in Graph of a specific edge class and all sub-classes.
    *
    * @param iClassName Edge class name to filter
-   *
    * @return Edges as Iterable
    */
   public Iterable<Edge> getEdgesOfClass(final String iClassName) {
@@ -984,7 +970,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iClassName   Edge class name to filter
    * @param iPolymorphic If true consider also iClassName Edge sub-classes
-   *
    * @return Edges as Iterable
    */
   public Iterable<Edge> getEdgesOfClass(final String iClassName, final boolean iPolymorphic) {
@@ -1007,7 +992,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iKey   Field name
    * @param iValue Field value
-   *
    * @return Edges as Iterable
    */
   public Iterable<Edge> getEdges(final String iKey, Object iValue) {
@@ -1263,7 +1247,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Creates a new Vertex persistent class.
    *
    * @param iClassName Vertex class name
-   *
    * @return OrientVertexType instance representing the persistent class
    */
   public OrientVertexType createVertexType(final String iClassName) {
@@ -1278,7 +1261,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iClassName Vertex class name
    * @param clusters   The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used.
    *                   In v2.2 and later, the number of clusters are proportioned to the amount of cores found on the machine
-   *
    * @return OrientVertexType instance representing the persistent class
    */
   public OrientVertexType createVertexType(final String iClassName, final int clusters) {
@@ -1291,7 +1273,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iClassName      Vertex class name
    * @param iSuperClassName Vertex class name to extend
-   *
    * @return OrientVertexType instance representing the persistent class
    */
   public OrientVertexType createVertexType(final String iClassName, final String iSuperClassName) {
@@ -1307,7 +1288,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param clusters        The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is
    *                        used. In v2.2 and later, the number of clusters are proportioned to the amount of cores found on the
    *                        machine
-   *
    * @return OrientVertexType instance representing the persistent class
    */
   public OrientVertexType createVertexType(final String iClassName, final String iSuperClassName, final int clusters) {
@@ -1320,7 +1300,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iClassName  Vertex class name
    * @param iSuperClass OClass Vertex to extend
-   *
    * @return OrientVertexType instance representing the persistent class
    */
   public OrientVertexType createVertexType(final String iClassName, final OClass iSuperClass) {
@@ -1340,7 +1319,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iClassName  Vertex class name
    * @param iSuperClass OClass Vertex to extend
-   *
    * @return OrientVertexType instance representing the persistent class
    */
   public OrientVertexType createVertexType(final String iClassName, final OClass iSuperClass, final int clusters) {
@@ -1407,7 +1385,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Creates a new Edge persistent class.
    *
    * @param iClassName Edge class name
-   *
    * @return OrientEdgeType instance representing the persistent class
    */
   public OrientEdgeType createEdgeType(final String iClassName) {
@@ -1421,7 +1398,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iClassName Edge class name
    * @param clusters   The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used.
    *                   In v2.2 and later, the number of clusters are proportioned to the amount of cores found on the machine
-   *
    * @return OrientEdgeType instance representing the persistent class
    */
   public OrientEdgeType createEdgeType(final String iClassName, final int clusters) {
@@ -1434,7 +1410,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iClassName      Edge class name
    * @param iSuperClassName Edge class name to extend
-   *
    * @return OrientEdgeType instance representing the persistent class
    */
   public OrientEdgeType createEdgeType(final String iClassName, final String iSuperClassName) {
@@ -1450,7 +1425,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param clusters        The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is
    *                        used. In v2.2 and later, the number of clusters are proportioned to the amount of cores found on the
    *                        machine
-   *
    * @return OrientEdgeType instance representing the persistent class
    */
   public OrientEdgeType createEdgeType(final String iClassName, final String iSuperClassName, final int clusters) {
@@ -1465,7 +1439,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iSuperClass OClass Edge to extend
    * @param clusters    The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used.
    *                    In v2.2 and later, the number of clusters are proportioned to the amount of cores found on the machine
-   *
    * @return OrientEdgeType instance representing the persistent class
    */
   public OrientEdgeType createEdgeType(final String iClassName, final OClass iSuperClass, final int clusters) {
@@ -1485,7 +1458,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param iClassName  Edge class name
    * @param iSuperClass OClass Edge to extend
-   *
    * @return OrientEdgeType instance representing the persistent class
    */
   public OrientEdgeType createEdgeType(final String iClassName, final OClass iSuperClass) {
@@ -1524,9 +1496,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Detaches a Graph Element to be used offline. All the changes will be committed on further @attach call.
    *
    * @param iElement Graph element to detach
-   *
    * @return The detached element
-   *
    * @see #attach(OrientElement)
    */
   public OrientElement detach(final OrientElement iElement) {
@@ -1540,9 +1510,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Attaches a previously detached Graph Element to the current Graph. All the pending changes will be committed.
    *
    * @param iElement Graph element to attach
-   *
    * @return The attached element
-   *
    * @see #detach(OrientElement)
    */
   public OrientElement attach(final OrientElement iElement) {
@@ -1555,7 +1523,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Returns a graph element, vertex or edge, starting from an ID.
    *
    * @param id Can by a String, ODocument or an OIdentifiable object.
-   *
    * @return OrientElement subclass such as OrientVertex or OrientEdge
    */
   public OrientElement getElement(final Object id) {
@@ -1690,7 +1657,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Returns the indexed properties.
    *
    * @param elementClass the element class that the index is for
-   *
    * @return Set of String containing the indexed properties
    */
   @Override
@@ -1705,7 +1671,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *
    * @param elementClass      the element class that the index is for
    * @param includeClassNames If true includes also the class name as prefix of fields
-   *
    * @return Set of String containing the indexed properties
    */
   public <T extends Element> Set<String> getIndexedKeys(final Class<T> elementClass, final boolean includeClassNames) {
@@ -1867,8 +1832,27 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final OType[] types = idx.getKeyTypes();
       if (types.length == 0)
         iValue = iValue.toString();
-      else
+      else if (types.length == 1) {
         iValue = OType.convert(iValue, types[0].getDefaultJavaType());
+      } else {
+        // if it's a composite key let it through. Otherwise build a composite key for the multivalue
+        if (!(iValue instanceof OCompositeKey) && OMultiValue.isMultiValue(iValue)) {
+          Iterable<Object> values = OMultiValue.getMultiValueIterable(iValue);
+          List<Object> keys = new ArrayList<Object>();
+          for (Object value : values) {
+            keys.add(value);
+          }
+          if (keys.size() <= types.length) {
+            for (int i = 0; i < types.length; i++) {
+              keys.set(i, OType.convert(keys.get(i), types[i].getDefaultJavaType()));
+            }
+          } else {
+            throw new IllegalArgumentException(
+                "Cannot build a composite key from the input. The size of the parameters is major than the number indexed fields");
+          }
+          iValue = new OCompositeKey(keys);
+        }
+      }
     }
     return iValue;
   }
