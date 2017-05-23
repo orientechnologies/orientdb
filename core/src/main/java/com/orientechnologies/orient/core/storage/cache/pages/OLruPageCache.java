@@ -68,7 +68,7 @@ public class OLruPageCache implements OPageCache {
       return record.cacheEntry;
     }
 
-    final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount);
+    final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
     if (cacheEntry == null)
       return null;
 

@@ -3686,6 +3686,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (isDirty()) {
       OLogManager.instance().warn(this, "Storage '" + name + "' was not closed properly. Will try to recover from write ahead log");
       try {
+
         restoreFromWAL();
 
         if (recoverListener != null)
@@ -4766,13 +4767,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
 
-        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
+        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, false);
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null)
               readCache.release(cacheEntry, writeCache);
 
-            cacheEntry = readCache.allocateNewPage(fileId, writeCache);
+            cacheEntry = readCache.allocateNewPage(fileId, writeCache, false);
           } while (cacheEntry.getPageIndex() != pageIndex);
         }
 

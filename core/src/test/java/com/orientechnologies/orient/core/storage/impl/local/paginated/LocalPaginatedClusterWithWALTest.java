@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -17,8 +17,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Andrey Lomakin
@@ -372,13 +370,13 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
+            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1, false);
             if (cacheEntry == null) {
               do {
                 if (cacheEntry != null)
                   readCache.release(cacheEntry, expectedWriteCache);
 
-                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
+                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false);
               } while (cacheEntry.getPageIndex() != pageIndex);
             }
             cacheEntry.acquireExclusiveLock();

@@ -8,9 +8,8 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import org.testng.Assert;
@@ -22,22 +21,9 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Queue;
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.concurrent.atomic.AtomicLongArray;
-import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 /**
  * @author Artem Loginov
@@ -235,19 +221,19 @@ public class ReadWriteCacheConcurrentTest {
     }
 
     private void writeToFile(int fileNumber, long pageIndex) throws IOException {
-      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
+      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, true);
       if (cacheEntry == null) {
         do {
           if (cacheEntry != null)
             readBuffer.release(cacheEntry, writeBuffer);
 
-          cacheEntry = readBuffer.allocateNewPage(fileIds.get(fileNumber), writeBuffer);
+          cacheEntry = readBuffer.allocateNewPage(fileIds.get(fileNumber), writeBuffer, true);
         } while (cacheEntry.getPageIndex() < pageIndex);
       }
 
       if (cacheEntry.getPageIndex() > pageIndex) {
         readBuffer.release(cacheEntry, writeBuffer);
-        cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
+        cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, true);
       }
 
       OCachePointer pointer = cacheEntry.getCachePointer();
@@ -306,7 +292,7 @@ public class ReadWriteCacheConcurrentTest {
       long pageIndex = Math.abs(new Random().nextInt() % PAGE_COUNT);
       int fileNumber = new Random().nextInt(FILE_COUNT);
 
-      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
+      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, true);
       OCachePointer pointer = cacheEntry.getCachePointer();
 
       final ByteBuffer buffer = pointer.getSharedBuffer();

@@ -424,14 +424,14 @@ public class OAtomicOperation {
 
           OCacheEntry cacheEntry = filePageChanges.isNew ? null : pageCache.purgePage(fileId, pageIndex, writeCache);
           if (cacheEntry == null) {
-            cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
+            cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, true);
             if (cacheEntry == null) {
               assert filePageChanges.isNew;
               do {
                 if (cacheEntry != null)
                   readCache.release(cacheEntry, writeCache);
 
-                cacheEntry = readCache.allocateNewPage(fileId, writeCache);
+                cacheEntry = readCache.allocateNewPage(fileId, writeCache, true);
               } while (cacheEntry.getPageIndex() != pageIndex);
             }
           }

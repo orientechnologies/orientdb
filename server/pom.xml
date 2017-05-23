@@ -43,6 +43,7 @@
             -Dsecurity.userPasswordSaltIterations=10
             -Dmemory.directMemory.trackMode=true
             -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager
+            -Dstorage.diskCache.checksumMode=storeAndThrow
         </argLine>
     </properties>
 

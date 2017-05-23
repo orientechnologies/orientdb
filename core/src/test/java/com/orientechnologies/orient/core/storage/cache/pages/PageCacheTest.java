@@ -123,12 +123,12 @@ public class PageCacheTest {
     this.writeAheadLog = new WriteAheadLog();
 
     writeCache.addFile("file");
-    readCache.allocateNewPage(0, writeCache);
-    readCache.allocateNewPage(0, writeCache);
-    readCache.allocateNewPage(0, writeCache);
-    readCache.allocateNewPage(0, writeCache);
-    readCache.allocateNewPage(0, writeCache);
-    readCache.allocateNewPage(0, writeCache);
+    readCache.allocateNewPage(0, writeCache, true);
+    readCache.allocateNewPage(0, writeCache, true);
+    readCache.allocateNewPage(0, writeCache, true);
+    readCache.allocateNewPage(0, writeCache, true);
+    readCache.allocateNewPage(0, writeCache, true);
+    readCache.allocateNewPage(0, writeCache, true);
   }
 
   @After
@@ -260,9 +260,9 @@ public class PageCacheTest {
     }
 
     @Override
-    public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount)
-        throws IOException {
-      final OCachePointer[] pointers = writeCache.load(fileId, pageIndex, pageCount, false, null);
+    public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
+        boolean verifyChecksums) throws IOException {
+      final OCachePointer[] pointers = writeCache.load(fileId, pageIndex, pageCount, false, null, verifyChecksums);
       return pointers == null || pointers.length == 0 ? null : new OCacheEntry(fileId, pageIndex, pointers[0], false);
     }
 
@@ -272,8 +272,8 @@ public class PageCacheTest {
     }
 
     @Override
-    public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) throws IOException {
-      final OCachePointer[] pointers = writeCache.load(fileId, writeCache.getFilledUpTo(fileId), 1, true, null);
+    public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums) throws IOException {
+      final OCachePointer[] pointers = writeCache.load(fileId, writeCache.getFilledUpTo(fileId), 1, true, null, verifyChecksums);
       return new OCacheEntry(fileId, pointers[0].getPageIndex(), pointers[0], false);
     }
 
@@ -412,8 +412,8 @@ public class PageCacheTest {
     }
 
     @Override
-    public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit)
-        throws IOException {
+    public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
+        boolean verifyChecksums) throws IOException {
 
       final long size = getFilledUpTo(fileId);
       final boolean exists = startPageIndex < size;

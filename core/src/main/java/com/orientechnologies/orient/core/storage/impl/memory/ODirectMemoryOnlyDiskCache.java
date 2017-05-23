@@ -198,7 +198,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public OCacheEntry load(final long fileId, final long pageIndex, final boolean checkPinnedPages, final OWriteCache writeCache,
-      final int pageCount) {
+      final int pageCount, boolean verifyChecksums) {
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
         .getSessionPerformanceStatistic();
 
@@ -231,7 +231,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OCacheEntry allocateNewPage(final long fileId, final OWriteCache writeCache) {
+  public OCacheEntry allocateNewPage(final long fileId, final OWriteCache writeCache, boolean verifyChecksums) {
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
         .getSessionPerformanceStatistic();
 
@@ -606,7 +606,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit) {
+  public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
+      boolean verifyChecksums) {
     throw new UnsupportedOperationException();
   }
 

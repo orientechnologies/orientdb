@@ -52,6 +52,7 @@ public interface OWriteCache {
    * If file with the same name is deleted and then new file is created this file with have the same internal id.
    *
    * @param fileName Name of file to register inside storage.
+   *
    * @return Id of registered file
    */
   long loadFile(String fileName) throws IOException;
@@ -64,6 +65,7 @@ public interface OWriteCache {
    * Returns id associated with given file or value &lt; 0 if such file does not exist.
    *
    * @param fileName File name id of which has to be returned.
+   *
    * @return id associated with given file or value &lt; 0 if such file does not exist.
    */
   long fileIdByName(String fileName);
@@ -78,8 +80,8 @@ public interface OWriteCache {
 
   Future store(long fileId, long pageIndex, OCachePointer dataPointer);
 
-  OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit)
-      throws IOException;
+  OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
+      boolean verifyChecksums) throws IOException;
 
   void flush(long fileId);
 
@@ -116,6 +118,7 @@ public interface OWriteCache {
    * If such file exists it creates new file with the same name at it was in deleted file.
    *
    * @param fileId If of file which should be restored
+   *
    * @return Name of restored file or <code>null</code> if such name does not exist
    */
   String restoreFileById(long fileId) throws IOException;
@@ -148,6 +151,7 @@ public interface OWriteCache {
    * in contrary to external id which changes over close/open cycle of cache.
    *
    * @param fileId External file id.
+   *
    * @return Internal file id.
    */
   int internalFileId(long fileId);
@@ -157,7 +161,9 @@ public interface OWriteCache {
    * External id is combination of internal id and write cache id, which changes every time when cache is closed and opened again.
    *
    * @param fileId Internal file id.
+   *
    * @return External file id.
+   *
    * @see #internalFileId(long)
    * @see #getId()
    */
