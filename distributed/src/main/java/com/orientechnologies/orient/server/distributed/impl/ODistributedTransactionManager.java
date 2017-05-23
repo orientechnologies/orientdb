@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -89,15 +88,16 @@ public class ODistributedTransactionManager {
       // CHECK THE LOCAL NODE IS THE OWNER OF THE CLUSTER IDS
       checkForClusterIds(iTx, localNodeName, dbCfg);
 
-      // CREATE UNDO CONTENT FOR DISTRIBUTED 2-PHASE ROLLBACK
-      final List<OAbstractRemoteTask> undoTasks = createUndoTasksFromTx(iTx);
-
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(null);
       if (executionModeSynch == null)
         executionModeSynch = Boolean.TRUE;
 
       final ODistributedRequestId requestId = new ODistributedRequestId(dManager.getLocalNodeId(),
           dManager.getNextMessageIdCounter());
+
+      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Starting distributed transaction on database '%s'... (reqId=%s thread=%d)", storage.getName(), requestId,
+          Thread.currentThread().getId());
 
       final AtomicBoolean releaseContext = new AtomicBoolean(false);
 
@@ -107,6 +107,9 @@ public class ODistributedTransactionManager {
 
         acquireMultipleRecordLocks(iTx, eventListener, ctx);
         lockReleased.set(false);
+
+        // CREATE UNDO CONTENT AFTER LOCK FOR DISTRIBUTED 2-PHASE ROLLBACK
+        final List<OAbstractRemoteTask> undoTasks = createUndoTasksFromTx(iTx, localDistributedDatabase, requestId);
 
         final List<ORecordOperation> uResult = (List<ORecordOperation>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
           @Override
@@ -209,12 +212,15 @@ public class ODistributedTransactionManager {
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
               "Error on executing transaction on database '%s', rollback... (reqId=%s err='%s')", storage.getName(), requestId, e);
 
-          // ROLLBACK TX
-          storage.executeUndoOnLocalServer(requestId, txTask);
-          sendTxCompleted(localNodeName, involvedClusters, nodes,
-              new OCompleted2pcTask(requestId, false, txTask.getPartitionKey()));
-
           releaseContext.set(true);
+
+          try {
+            // ROLLBACK TX
+            sendTxCompleted(localNodeName, involvedClusters, nodes,
+                new OCompleted2pcTask(requestId, false, txTask.getPartitionKey()));
+          } finally {
+            storage.executeUndoOnLocalServer(requestId, txTask);
+          }
 
           if (e instanceof RuntimeException)
             throw (RuntimeException) e;
@@ -574,13 +580,16 @@ public class ODistributedTransactionManager {
    * Create undo content for distributed 2-phase rollback. This list of undo tasks is sent to all the nodes to revert a transaction
    * and it's also applied locally.
    *
-   * @param iTx Current transaction
+   * @param iTx       Current transaction
+   * @param database
+   * @param requestId
    *
    * @return List of remote undo tasks
    */
-  protected List<OAbstractRemoteTask> createUndoTasksFromTx(final OTransaction iTx) {
+  protected List<OAbstractRemoteTask> createUndoTasksFromTx(final OTransaction iTx, final ODistributedDatabase database,
+      final ODistributedRequestId requestId) {
     final List<OAbstractRemoteTask> undoTasks = new ArrayList<OAbstractRemoteTask>();
-    for (ORecordOperation op : iTx.getAllRecordEntries()) {
+    for (final ORecordOperation op : iTx.getAllRecordEntries()) {
       OAbstractRemoteTask undoTask = null;
 
       final ORecord record = op.getRecord();
@@ -601,21 +610,28 @@ public class ODistributedTransactionManager {
           public Object call() throws Exception {
             final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
             final ORecordOperation txEntry = db.getTransaction().getRecordEntry(rid);
+
+            final ORecord record;
+
             if (txEntry != null && txEntry.type == ORecordOperation.DELETED)
               // GET DELETED RECORD FROM TX
-              previousRecord.set(txEntry.getRecord());
+              record = txEntry.getRecord();
             else {
-              final OStorageOperationResult<ORawBuffer> loadedBuffer = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-                  .getUnderlying().readRecord(rid, null, true, false, null);
-              if (loadedBuffer != null && loadedBuffer.getResult() != null) {
+              final ORawBuffer loadedBuffer = database.getRecordIfLocked(rid);
+              if (loadedBuffer != null) {
                 // LOAD THE RECORD FROM THE STORAGE AVOIDING USING THE DB TO GET THE TRANSACTIONAL CHANGES
-                final ORecord loaded = Orient.instance().getRecordFactoryManager().newInstance(loadedBuffer.getResult().recordType);
-                ORecordInternal.fill(loaded, rid, loadedBuffer.getResult().version, loadedBuffer.getResult().getBuffer(), false);
-                previousRecord.set(loaded);
+                record = Orient.instance().getRecordFactoryManager().newInstance(loadedBuffer.recordType);
+                ORecordInternal.fill(record, rid, loadedBuffer.version, loadedBuffer.getBuffer(), false);
+                previousRecord.set(record);
               } else
                 // RECORD NOT FOUND ON LOCAL STORAGE, ASK TO DB BECAUSE IT COULD BE SHARDED AND RESIDE ON ANOTHER SERVER
-                previousRecord.set(db.load(rid));
+                record = db.load(rid);
             }
+
+            ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                "Setting previous record for undo: %s (reqId=%s op=%s)", record, requestId, op);
+
+            previousRecord.set(record);
 
             return null;
           }

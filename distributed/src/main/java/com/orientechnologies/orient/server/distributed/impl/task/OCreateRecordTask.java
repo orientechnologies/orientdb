@@ -130,7 +130,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       // FORCE CREATION
       if (record.getVersion() < 0)
         // INCREMENT THE VERSION IN CASE OF ROLLBACK
-        ORecordInternal.setVersion(record, record.getVersion() - 1);
+        ORecordInternal.setVersion(record, record.getVersion() + 1);
       record.save();
       break;
 

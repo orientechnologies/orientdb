@@ -577,10 +577,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public boolean lockRecord(final ORID rid, final ODistributedRequestId requestId, final long timeout) {
     final ODistributedLock lock = new ODistributedLock(requestId);
 
+    ORawBuffer currentRecord = null;
     boolean newLock = true;
 
     ODistributedLock currentLock = lockManager.putIfAbsent(rid, lock);
     if (currentLock != null) {
+      currentRecord = currentLock.record;
+
       if (requestId.equals(currentLock.reqId)) {
         // SAME ID, ALREADY LOCKED
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
@@ -611,7 +614,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     if (currentLock == null) {
       // SAVE CURRENT RECORD IN RAM FOR READ-ONLY ACCESS WHILE IT IS LOCKED
-      if (rid.isPersistent()) {
+      if (currentRecord != null)
+        // USE THE EXISTENT
+        lock.record = currentRecord;
+      else if (rid.isPersistent()) {
         final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
         if (db != null)
           lock.record = db.getStorage().getUnderlying().readRecord((ORecordId) rid, null, false, false, null).getResult();
@@ -684,8 +690,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (requestId.equals(currentLock.reqId)) {
         // SAME ID, ALREADY LOCKED
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-            "Distributed transaction: %s locked rid %s in database '%s' owned by %s (thread=%d)", requestId, rid, databaseName,
-            currentLock.reqId, Thread.currentThread().getId());
+            "Distributed transaction: rid %s was already locked by %s in database '%s' owned by %s (thread=%d)", rid, requestId,
+            databaseName, currentLock.reqId, Thread.currentThread().getId());
         currentLock = null;
         newLock = false;
       } else {
@@ -729,7 +735,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           lock.record = db.getStorage().getUnderlying().readRecord((ORecordId) rid, null, false, false, null).getResult();
       }
 
-      if (ODistributedServerLog.isDebugEnabled())
+      if (newLock && ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog
             .debug(this, localNodeName, null, DIRECTION.NONE, "Locked rid %s in database '%s' (reqId=%s thread=%d)", rid,
                 databaseName, requestId, Thread.currentThread().getId());

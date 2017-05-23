@@ -166,8 +166,8 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     for (ORemoteTask fixTask : fixTasks) {
       if (fixTask instanceof OAbstractRecordReplicatedTask) {
         final ORecordId rid = ((OAbstractRecordReplicatedTask) fixTask).getRid();
-        locked.add(rid);
-        ddb.forceLockRecord(rid, requestId);
+        if (ddb.forceLockRecord(rid, requestId))
+          locked.add(rid);
       }
     }
 
