@@ -112,4 +112,17 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     }
     traversed.add(res.getElement().get().getIdentity());
   }
+
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    String spaces = OExecutionStepInternal.getIndent(depth, indent);
+    StringBuilder result = new StringBuilder();
+    result.append(spaces);
+    result.append("+ BREADTH-FIRST TRAVERSE \n");
+    if (whileClause != null) {
+      result.append(spaces);
+      result.append("WHILE " + whileClause.toString());
+    }
+    return result.toString();
+  }
 }
