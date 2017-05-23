@@ -1,5 +1,11 @@
 package com.orientechnologies.orient.core.sql.functions.misc;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -7,12 +13,6 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
  * This {@link OSQLFunction} is able to invoke a static method using reflection. If contains more than one {@link Method} it tries
@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
 
   private static final Map<Class<?>, Class<?>> PRIMITIVE_TO_WRAPPER = new HashMap<>();
+
   static {
     PRIMITIVE_TO_WRAPPER.put(Boolean.TYPE, Boolean.class);
     PRIMITIVE_TO_WRAPPER.put(Byte.TYPE, Byte.class);
@@ -36,6 +37,7 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
   }
 
   private static final Map<Class<?>, Class<?>> WRAPPER_TO_PRIMITIVE = new HashMap<>();
+
   static {
     for (Class<?> primitive : PRIMITIVE_TO_WRAPPER.keySet()) {
       Class<?> wrapper = PRIMITIVE_TO_WRAPPER.get(primitive);
@@ -45,7 +47,8 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
     }
   }
 
-  private static final Map<Class<?>, Integer>  PRIMITIVE_WEIGHT     = new HashMap<>();
+  private static final Map<Class<?>, Integer> PRIMITIVE_WEIGHT = new HashMap<>();
+
   static {
     PRIMITIVE_WEIGHT.put(boolean.class, 1);
     PRIMITIVE_WEIGHT.put(char.class, 2);
@@ -58,7 +61,7 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
     PRIMITIVE_WEIGHT.put(void.class, 9);
   }
 
-  private Method[]                             methods;
+  private Method[] methods;
 
   public OSQLStaticReflectiveFunction(String name, int minParams, int maxParams, Method... methods) {
     super(name, minParams, maxParams);
@@ -85,8 +88,8 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
 
-    final Supplier<String> paramsPrettyPrint = () ->
-        Arrays.stream(iParams).map(p -> p + " [ " + p.getClass().getName() + " ]").collect(Collectors.joining(", ", "(", ")"));
+    final Supplier<String> paramsPrettyPrint = () -> Arrays.stream(iParams).map(p -> p + " [ " + p.getClass().getName() + " ]")
+        .collect(Collectors.joining(", ", "(", ")"));
 
     Method method = pickMethod(iParams);
 
@@ -96,9 +99,11 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
 
     try {
       return method.invoke(null, iParams);
-    } catch (ReflectiveOperationException | IllegalArgumentException e) {
+    } catch (ReflectiveOperationException e) {
       e.printStackTrace();
       throw new OQueryParsingException("Error executing function " + name + paramsPrettyPrint.get());
+    } catch (IllegalArgumentException x) {
+      return null; //if a function fails for given input, just return null to avoid breaking the query execution
     }
 
   }
@@ -109,27 +114,24 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
   }
 
   private Method pickMethod(Object[] iParams) {
-    Method method = null;
-
-    boolean match = false;
     for (Method m : methods) {
       Class<?>[] parameterTypes = m.getParameterTypes();
       if (iParams.length == parameterTypes.length) {
+        boolean match = true;
         for (int i = 0; i < parameterTypes.length; i++) {
-          if (isAssignable(iParams[i].getClass(), parameterTypes[i])) {
-            match = true;
+          if (iParams[i] != null && !isAssignable(iParams[i].getClass(), parameterTypes[i])) {
+            match = false;
             break;
           }
         }
 
-        if (iParams.length == 0 || match) {
-          method = m;
-          break;
+        if (match) {
+          return m;
         }
       }
     }
 
-    return method;
+    return null;
   }
 
   private static boolean isAssignable(final Class<?> iFromClass, final Class<?> iToClass) {
@@ -139,7 +141,8 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
         return PRIMITIVE_TO_WRAPPER.get(from);
       } else if (to.isPrimitive() && !from.isPrimitive()) {
         return WRAPPER_TO_PRIMITIVE.get(from);
-      } else return from;
+      } else
+        return from;
     };
 
     final Class<?> fromClass = autoboxer.apply(iFromClass, iToClass);
@@ -162,14 +165,14 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
       } else if (Float.TYPE.equals(fromClass)) {
         return Double.TYPE.equals(iToClass);
       } else if (Character.TYPE.equals(fromClass)) {
-        return Integer.TYPE.equals(iToClass) || Long.TYPE.equals(iToClass) || Float.TYPE.equals(iToClass)
-            || Double.TYPE.equals(iToClass);
+        return Integer.TYPE.equals(iToClass) || Long.TYPE.equals(iToClass) || Float.TYPE.equals(iToClass) || Double.TYPE
+            .equals(iToClass);
       } else if (Short.TYPE.equals(fromClass)) {
-        return Integer.TYPE.equals(iToClass) || Long.TYPE.equals(iToClass) || Float.TYPE.equals(iToClass)
-            || Double.TYPE.equals(iToClass);
+        return Integer.TYPE.equals(iToClass) || Long.TYPE.equals(iToClass) || Float.TYPE.equals(iToClass) || Double.TYPE
+            .equals(iToClass);
       } else if (Byte.TYPE.equals(fromClass)) {
-        return Short.TYPE.equals(iToClass) || Integer.TYPE.equals(iToClass) || Long.TYPE.equals(iToClass)
-            || Float.TYPE.equals(iToClass) || Double.TYPE.equals(iToClass);
+        return Short.TYPE.equals(iToClass) || Integer.TYPE.equals(iToClass) || Long.TYPE.equals(iToClass) || Float.TYPE
+            .equals(iToClass) || Double.TYPE.equals(iToClass);
       }
       // this should never happen
       return false;

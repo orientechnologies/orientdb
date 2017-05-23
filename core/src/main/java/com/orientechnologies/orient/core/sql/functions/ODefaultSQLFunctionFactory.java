@@ -92,6 +92,8 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionShortestPath.NAME, OSQLFunctionShortestPath.class);
     register(OSQLFunctionDijkstra.NAME, OSQLFunctionDijkstra.class);
     register(OSQLFunctionAstar.NAME, OSQLFunctionAstar.class);
+
+    OCustomSQLFunctionFactory.register("math_" , Math.class);
   }
 
   public static void register(final String iName, final Object iImplementation) {

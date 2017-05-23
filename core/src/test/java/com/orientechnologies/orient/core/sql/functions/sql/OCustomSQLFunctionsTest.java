@@ -1,17 +1,17 @@
 package com.orientechnologies.orient.core.sql.functions.sql;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.functions.OCustomSQLFunctionFactory;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class OCustomSQLFunctionsTest {
 
@@ -19,7 +19,6 @@ public class OCustomSQLFunctionsTest {
 
   @BeforeClass
   public static void beforeClass() {
-    OCustomSQLFunctionFactory.register("math_", Math.class);
     db = new ODatabaseDocumentTx("memory:" + OCustomSQLFunctionsTest.class.getSimpleName());
     db.create();
   }
