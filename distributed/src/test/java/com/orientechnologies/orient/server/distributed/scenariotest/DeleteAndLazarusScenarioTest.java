@@ -218,6 +218,9 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     assertEquals("Darth", r1onServer3.field("firstName"));
     assertEquals("Vader", r1onServer3.field("lastName"));
 
+    waitForDatabaseIsOnline(0, serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
+        getDatabaseName(), 10000);
+
     // delete request on server1 for r1
     dbServer1 = poolFactory.get(getRemoteDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
     try {

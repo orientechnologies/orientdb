@@ -53,28 +53,28 @@ import java.util.*;
  * @author Luca Garulli
  */
 public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty {
-  private final OClassImpl    owner;
+  private final OClassImpl owner;
 
   // private String name;
   // private OType type;
 
-  private OType               linkedType;
-  private OClass              linkedClass;
-  transient private String    linkedClassName;
+  private           OType  linkedType;
+  private           OClass linkedClass;
+  transient private String linkedClassName;
 
-  private String              description;
-  private boolean             mandatory;
-  private boolean             notNull = false;
+  private String  description;
+  private boolean mandatory;
+  private boolean notNull = false;
   private String              min;
   private String              max;
   private String              defaultValue;
   private String              regexp;
   private boolean             readonly;
   private Map<String, String> customFields;
-  private OCollate            collate = new ODefaultCollate();
-  private OGlobalProperty     globalRef;
+  private OCollate collate = new ODefaultCollate();
+  private OGlobalProperty globalRef;
 
-  private volatile int        hashCode;
+  private volatile int hashCode;
 
   @Deprecated
   OPropertyImpl(final OClassImpl owner, final String name, final OType type) {
@@ -176,14 +176,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
    * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
    * suggest to remove the index, make the massive insert and recreate it.
    *
-   * @param iType
-   *          One of types supported.
-   *          <ul>
-   *          <li>UNIQUE: Doesn't allow duplicates</li>
-   *          <li>NOTUNIQUE: Allow duplicates</li>
-   *          <li>FULLTEXT: Indexes single word for full text search</li>
-   *          </ul>
+   * @param iType One of types supported. <ul> <li>UNIQUE: Doesn't allow duplicates</li> <li>NOTUNIQUE: Allow duplicates</li>
+   *              <li>FULLTEXT: Indexes single word for full text search</li> </ul>
+   *
    * @return
+   *
    * @see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)} instead.
    */
   public OIndex<?> createIndex(final OClass.INDEX_TYPE iType) {
@@ -195,7 +192,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
    * suggest to remove the index, make the massive insert and recreate it.
    *
    * @param iType
+   *
    * @return
+   *
    * @see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)} instead.
    */
   public OIndex<?> createIndex(final String iType) {
@@ -884,7 +883,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       setLinkedClass(getDatabase().getMetadata().getSchema().getClass(stringValue));
       break;
     case LINKEDTYPE:
-      if(stringValue == null)
+      if (stringValue == null)
         setLinkedType(null);
       else
         setLinkedType(OType.valueOf(stringValue));
@@ -1110,9 +1109,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     if (document.field("type") != null)
       type = OType.getById(((Integer) document.field("type")).byteValue());
     Integer globalId = document.field("globalId");
-    if (globalId != null)
+    if (globalId != null) {
       globalRef = owner.owner.getGlobalPropertyById(globalId);
-    else {
+
+      if (globalRef == null)
+        throw new OSchemaException(
+            "Cannot find global property id " + globalId + " in class '" + name + "'. Property data: " + document);
+    } else {
       if (type == null)
         type = OType.ANY;
       globalRef = owner.owner.findOrCreateGlobalProperty(name, type);
@@ -1130,8 +1133,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     regexp = (String) (document.containsField("regexp") ? document.field("regexp") : null);
     linkedClassName = (String) (document.containsField("linkedClass") ? document.field("linkedClass") : null);
     linkedType = document.field("linkedType") != null ? OType.getById(((Integer) document.field("linkedType")).byteValue()) : null;
-    customFields = (Map<String, String>) (document.containsField("customFields") ? document.field("customFields", OType.EMBEDDEDMAP)
-        : null);
+    customFields = (Map<String, String>) (document.containsField("customFields") ?
+        document.field("customFields", OType.EMBEDDEDMAP) :
+        null);
     description = (String) (document.containsField("description") ? document.field("description") : null);
   }
 
@@ -1168,7 +1172,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
       document.field("min", min);
       document.field("max", max);
-      if(regexp != null) {
+      if (regexp != null) {
         document.field("regexp", regexp);
       } else {
         document.removeField("regexp");
@@ -1179,7 +1183,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
 
       document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
-      if(collate!=null) {
+      if (collate != null) {
         document.field("collate", collate.getName());
       }
       document.field("description", description);
@@ -1440,8 +1444,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         try {
           getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
-          throw OException.wrapException(new OSchemaException("Invalid date format while formatting date '" + iDateAsString + "'"),
-              e);
+          throw OException
+              .wrapException(new OSchemaException("Invalid date format while formatting date '" + iDateAsString + "'"), e);
         }
       } else if (globalRef.getType() == OType.DATETIME) {
         try {

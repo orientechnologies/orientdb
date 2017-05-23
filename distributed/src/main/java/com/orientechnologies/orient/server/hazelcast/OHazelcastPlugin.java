@@ -816,6 +816,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         // IGNORE IT
         return;
 
+      final String eventNodeName = getNodeName(iEvent.getMember());
+      if ("?".equals(eventNodeName))
+        // MOM ALWAYS SAYS: DON'T ACCEPT CHANGES FROM STRANGERS NODES
+        return;
+
       final String key = iEvent.getKey();
       if (key.startsWith(CONFIG_NODE_PREFIX)) {
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
@@ -823,7 +828,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           final String joinedNodeName = (String) cfg.field("name");
 
           if (this.nodeName.equals(joinedNodeName)) {
-            ODistributedServerLog.error(this, joinedNodeName, getNodeName(iEvent.getMember()), DIRECTION.IN,
+            ODistributedServerLog.error(this, joinedNodeName, eventNodeName, DIRECTION.IN,
                 "Found a new node (%s) with the same name as current: '" + joinedNodeName
                     + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file",
                 iEvent.getMember());
@@ -837,7 +842,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
 
       } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
-        ODistributedServerLog.info(this, nodeName, getNodeName(iEvent.getMember()), DIRECTION.IN, "Received new status %s=%s",
+        ODistributedServerLog.info(this, nodeName, eventNodeName, DIRECTION.IN, "Received new status %s=%s",
             key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());
 
         // REASSIGN HIS CLUSTER
@@ -872,7 +877,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     try {
       final String key = iEvent.getKey();
+
       final String eventNodeName = getNodeName(iEvent.getMember());
+      if ("?".equals(eventNodeName))
+        // MOM ALWAYS SAYS: DON'T ACCEPT CHANGES FROM STRANGERS NODES
+        return;
 
       if (key.startsWith(CONFIG_NODE_PREFIX)) {
         ODistributedServerLog
@@ -937,15 +946,21 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     try {
       final String key = iEvent.getKey();
+
+      final String eventNodeName = getNodeName(iEvent.getMember());
+      if ("?".equals(eventNodeName))
+        // MOM ALWAYS SAYS: DON'T ACCEPT CHANGES FROM STRANGERS NODES
+        return;
+
       if (key.startsWith(CONFIG_NODE_PREFIX)) {
-        final String nName = getNodeName(iEvent.getMember());
-        if (nName != null) {
+        if (eventNodeName != null) {
           ODistributedServerLog
-              .debug(this, nodeName, null, DIRECTION.NONE, "Removed node configuration id=%s name=%s", iEvent.getMember(), nName);
-          activeNodes.remove(nName);
+              .debug(this, nodeName, null, DIRECTION.NONE, "Removed node configuration id=%s name=%s", iEvent.getMember(),
+                  eventNodeName);
+          activeNodes.remove(eventNodeName);
           activeNodesNamesByUuid.remove(iEvent.getMember().getUuid());
-          activeNodesUuidByName.remove(nName);
-          closeRemoteServer(nName);
+          activeNodesUuidByName.remove(eventNodeName);
+          closeRemoteServer(eventNodeName);
         }
 
         updateLastClusterChange();
