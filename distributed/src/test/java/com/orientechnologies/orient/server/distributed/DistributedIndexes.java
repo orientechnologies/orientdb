@@ -1,13 +1,15 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import junit.framework.Assert;
-
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.tinkerpop.blueprints.impls.orient.*;
+import junit.framework.Assert;
+import org.junit.Test;
+
+import static org.junit.Assert.fail;
 
 /*
  *
@@ -60,6 +62,7 @@ public class DistributedIndexes extends AbstractServerClusterTest {
     } finally {
       db.close();
     }
+    testODistributedRecordLockedExceptionExceptionThrown();
   }
 
   @Override
@@ -142,4 +145,68 @@ public class DistributedIndexes extends AbstractServerClusterTest {
       Assert.fail(e.toString());
     }
   }
+
+  private void testODistributedRecordLockedExceptionExceptionThrown() {
+    OrientBaseGraph orientGraph = new OrientGraphNoTx("remote:localhost/" + getDatabaseName());
+    orientGraph.command(new OCommandSQL("ALTER DATABASE custom strictSQL=false")).execute();
+    orientGraph.shutdown();
+
+    OrientBaseGraph orientGraph2 = new OrientGraphNoTx("remote:localhost/" + getDatabaseName());
+
+    orientGraph2.createVertexType("Toy");
+    final OrientVertexType vertexType = orientGraph2.getVertexType("Toy");
+
+    vertexType.createProperty("name", OType.STRING);
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("CREATE INDEX ").append("Toy.name.index").append(" ON ");
+    sb.append("Toy").append(" (").append("name");
+    sb.append(" COLLATE CI");
+    sb.append(") UNIQUE");
+
+    orientGraph2.command(new OCommandSQL(sb.toString())).execute();
+
+    final OrientGraphFactory orientGraphFactory = new OrientGraphFactory("remote:localhost/" + getDatabaseName()).setupPool(1, 10);
+
+    final OrientGraph orientGraph1 = orientGraphFactory.getTx();
+
+    orientGraph1.addVertex("class:Toy", "name", "toy1");
+
+    orientGraph1.commit();
+    orientGraph1.shutdown();
+
+    final OrientGraph orientGraph3 = orientGraphFactory.getTx();
+    try {
+      orientGraph3.addVertex("class:Toy", "name", "toy1");
+
+      orientGraph3.commit();
+    } catch (ORecordDuplicatedException e) {
+
+    } catch (Exception e) {
+      fail("Expected ORecordDuplicatedException but got " + e.getClass().toString());
+    } finally {
+      orientGraph3.shutdown();
+    }
+
+    final OrientGraph orientGraph4 = orientGraphFactory.getTx();
+
+    orientGraph4.command(new OCommandSQL("insert into Toy ('name') values ('toy2')")).execute();
+
+    orientGraph4.commit();
+    orientGraph4.shutdown();
+
+    final OrientGraph orientGraph5 = orientGraphFactory.getTx();
+    try {
+      orientGraph5.command(new OCommandSQL("insert into Toy ('name') values ('toy2')")).execute();
+
+      orientGraph5.commit();
+    } catch (ORecordDuplicatedException e) {
+
+    } catch (Exception e) {
+      fail("Expected ORecordDuplicatedException but got " + e.getClass().toString());
+    } finally {
+      orientGraph5.shutdown();
+    }
+  }
+
 }

@@ -29,14 +29,13 @@ import java.util.List;
 /**
  * Computes the sum of field. Uses the context to save the last sum number. When different Number class are used, take the class
  * with most precision.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
   public static final String NAME = "sum";
 
-  private Number             sum;
+  private Number sum;
 
   public OSQLFunctionSum() {
     super(NAME, 1, -1);
@@ -79,7 +78,7 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
 
   @Override
   public Object getResult() {
-    return sum;
+    return sum == null ? 0 : sum;
   }
 
   @Override

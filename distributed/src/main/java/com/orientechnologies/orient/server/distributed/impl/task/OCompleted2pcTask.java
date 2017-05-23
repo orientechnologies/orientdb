@@ -51,24 +51,22 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
   private ODistributedRequestId requestId;
   private boolean               success;
   private List<ORemoteTask> fixTasks = new ArrayList<ORemoteTask>();
-  private int[] partitionKey;
 
   public OCompleted2pcTask() {
-    partitionKey = FAST_NOLOCK;
   }
 
   public OCompleted2pcTask(final ODistributedRequestId iRequestId, final boolean iSuccess, final int[] partitionKey) {
     this.requestId = iRequestId;
     this.success = iSuccess;
-    this.partitionKey = partitionKey != null ? partitionKey : ALL;
   }
 
   /**
-   * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
+   * In case of commit and rollback uses the FAST_NOLOCK, because there are no locking operation. In case of fix, the locks could be
+   * necessary, so uses ALL.
    */
   @Override
   public int[] getPartitionKey() {
-    return partitionKey;
+    return success || fixTasks.isEmpty() ? FAST_NOLOCK : ALL;
   }
 
   public void addFixTask(final ORemoteTask fixTask) {
@@ -146,9 +144,6 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
       out.writeByte(task.getFactoryId());
       task.toStream(out);
     }
-    out.writeInt(partitionKey.length);
-    for (int pk : partitionKey)
-      out.writeInt(pk);
   }
 
   @Override
@@ -162,10 +157,6 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
       task.fromStream(in, taskFactory);
       fixTasks.add(task);
     }
-    final int pkSize = in.readInt();
-    partitionKey = new int[pkSize];
-    for (int i = 0; i < pkSize; ++i)
-      partitionKey[i] = in.readInt();
   }
 
   /**

@@ -104,9 +104,9 @@ public class OExpression extends SimpleNode {
       ((SimpleNode) value).toString(params, builder);
     } else if (value instanceof String) {
       if (Boolean.TRUE.equals(singleQuotes)) {
-        builder.append("'" + value + "'");
+        builder.append("'" + encode((String)value) + "'");
       } else {
-        builder.append("\"" + value + "\"");
+        builder.append("\"" + encode((String)value) + "\"");
       }
     } else {
       builder.append("" + value);
@@ -124,7 +124,7 @@ public class OExpression extends SimpleNode {
         builder.append("\\t");
         continue;
       }
-      if (c == '\\' || c == '"') {
+      if (c == '\\' || c == '"'|| c == '\'') {
         builder.append("\\");
       }
       builder.append(c);

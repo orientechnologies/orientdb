@@ -42,12 +42,12 @@ import static org.junit.Assert.*;
 
 public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTest {
 
-  protected final static int       SERVERS                               = 3;
-  protected final static ODocument MISSING_DOCUMENT                      = new ODocument();
+  protected final static int       SERVERS          = 3;
+  protected final static ODocument MISSING_DOCUMENT = new ODocument();
 
   // FIXME: these should be parameters read from configuration file (or, if missing, defaulted to some values)
-  private final long               PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT = 15000;
-  protected final long             DOCUMENT_WRITE_TIMEOUT                = 10000;
+  private final   long PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT = 15000;
+  protected final long DOCUMENT_WRITE_TIMEOUT                = 10000;
 
   protected ODocument loadRecord(ODatabaseDocumentTx database, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
@@ -205,8 +205,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     List<ODocument> docsToCompare = new LinkedList<ODocument>();
 
-    super.banner("Checking consistency among servers...\nChecking on servers {" + checkOnServer
-        + "} that all the records written on {" + writtenServer + "} are consistent.");
+    super.banner(
+        "Checking consistency among servers...\nChecking on servers {" + checkOnServer + "} that all the records written on {"
+            + writtenServer + "} are consistent.");
 
     try {
 
@@ -242,20 +243,20 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
             int k = 0;
             while (k <= docsToCompare.size() - 2) {
               assertEquals(
-                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  docsToCompare.get(k).field("@version"), docsToCompare.get(k + 1).field("@version"));
+                  "Inconsistency detected on version. Record: " + docsToCompare.get(k).toString() + "; Servers: " + (k + 1) + ","
+                      + (k + 2), docsToCompare.get(k).field("@version"), docsToCompare.get(k + 1).field("@version"));
               assertEquals(
-                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  docsToCompare.get(k).field("name"), docsToCompare.get(k + 1).field("name"));
+                  "Inconsistency detected on name. Record: " + docsToCompare.get(k).toString() + "; Servers: " + (k + 1) + "," + (k
+                      + 2), docsToCompare.get(k).field("name"), docsToCompare.get(k + 1).field("name"));
               assertEquals(
-                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  docsToCompare.get(k).field("surname"), docsToCompare.get(k + 1).field("surname"));
+                  "Inconsistency detected on surname. Record: " + docsToCompare.get(k).toString() + "; Servers: " + (k + 1) + ","
+                      + (k + 2), docsToCompare.get(k).field("surname"), docsToCompare.get(k + 1).field("surname"));
               assertEquals(
-                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  docsToCompare.get(k).field("birthday"), docsToCompare.get(k + 1).field("birthday"));
+                  "Inconsistency detected on birthday. Record: " + docsToCompare.get(k).toString() + "; Servers: " + (k + 1) + ","
+                      + (k + 2), docsToCompare.get(k).field("birthday"), docsToCompare.get(k + 1).field("birthday"));
               assertEquals(
-                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  docsToCompare.get(k).field("children"), docsToCompare.get(k + 1).field("children"));
+                  "Inconsistency detected on children. Record: " + docsToCompare.get(k).toString() + "; Servers: " + (k + 1) + ","
+                      + (k + 2), docsToCompare.get(k).field("children"), docsToCompare.get(k + 1).field("children"));
               k++;
             }
             docsToCompare.clear();
@@ -341,15 +342,16 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
           ODocument document = retrieveRecordOrReturnMissing(getDatabaseURL(server), recordId);
           final String storedValue = document.field(fieldName);
 
-          OLogManager.instance().debug(this, "Read record [%s] from server%s - %s: %s ", recordId, server.getServerId(), fieldName,
-              storedValue);
+          OLogManager.instance()
+              .debug(this, "Read record [%s] from server%s - %s: %s ", recordId, server.getServerId(), fieldName, storedValue);
 
           if (document == MISSING_DOCUMENT) {
             return false;
           }
 
-          OLogManager.instance().info(this, "Waiting for updated document propagation on record %s. Found %s=%s, expected %s",
-              recordId, fieldName, storedValue, expectedFieldValue);
+          OLogManager.instance()
+              .info(this, "Waiting for updated document propagation on record %s. Found %s=%s, expected %s", recordId, fieldName,
+                  storedValue, expectedFieldValue);
 
           if (storedValue != null && !storedValue.equals(expectedFieldValue) || storedValue == null && expectedFieldValue != null)
             return false;
@@ -454,17 +456,22 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       @Override
       public void run() {
         try {
+          waitForDatabaseIsOnline(0, serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName(),
+              getDatabaseName(), 10000);
+
           ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
-          db.open("admin", "admin");
-          try {
-            totalVertices.set(db.countClass(iClassName));
-          } catch (Exception e) {
-            e.printStackTrace();
-          } finally {
-            db.close();
+          if (db.exists()) {
+            db.open("admin", "admin");
+            try {
+              totalVertices.set(db.countClass(iClassName));
+            } catch (Exception e) {
+              e.printStackTrace();
+            } finally {
+              db.close();
+            }
           }
         } catch (Exception e) {
-          // IGNORE IT
+          // RETRY
         }
       }
     }, 1000, 1000);
@@ -493,8 +500,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   protected void waitFor(final int serverId, OCallable<Boolean, ODatabaseDocumentTx> condition) {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(serverId))).open("admin",
-        "admin");
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(serverId)))
+        .open("admin", "admin");
     try {
 
       while (true) {
@@ -626,23 +633,24 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     public AfterRecordLockDelayer(String serverName, long delay) {
       this.serverName = serverName;
       this.delay = delay;
-      OLogManager.instance().info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName,
-          Thread.currentThread().getId());
+      OLogManager.instance()
+          .info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName, Thread.currentThread().getId());
     }
 
     public AfterRecordLockDelayer(String serverName) {
       this.serverName = serverName;
       this.delay = DOCUMENT_WRITE_TIMEOUT;
-      OLogManager.instance().info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName,
-          Thread.currentThread().getId());
+      OLogManager.instance()
+          .info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName, Thread.currentThread().getId());
     }
 
     @Override
     public void onAfterRecordLock(ORecordId rid) {
       if (delay > 0)
         try {
-          OLogManager.instance().info(this, "Thread [%s-%d] waiting for %dms with locked record [%s]", serverName,
-              Thread.currentThread().getId(), delay, rid.toString());
+          OLogManager.instance()
+              .info(this, "Thread [%s-%d] waiting for %dms with locked record [%s]", serverName, Thread.currentThread().getId(),
+                  delay, rid.toString());
           Thread.sleep(delay);
 
           OLogManager.instance().info(this, "Thread [%s-%d] finished waiting for %dms with locked record [%s]", serverName,

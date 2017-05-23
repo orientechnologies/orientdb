@@ -186,10 +186,9 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
         }
       }
     } finally {
-      // UNLOCK THE RECORD ACQUIRED IN THIS METHOD ONLY
+      // UNLOCK ALL THE RECORDS (THE TX IS FINISHED)
       for (ORID r : locked)
         ddb.unlockRecord(r, requestId);
-
     }
   }
 }

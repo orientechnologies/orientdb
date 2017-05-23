@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -36,6 +37,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.DataInput;
@@ -126,6 +128,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     case ALLOCATED:
       getRecord();
       // FORCE CREATION
+      if (record.getVersion() < 0)
+        // INCREMENT THE VERSION IN CASE OF ROLLBACK
+        ORecordInternal.setVersion(record, record.getVersion() + 1);
       record.save();
       break;
 
@@ -233,8 +238,14 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             toUpdateRecord = toUpdateRid.getRecord();
 
           if (toUpdateRecord != null)
-            result = new OFixUpdateRecordTask(toUpdateRid, toUpdateRecord.toStream(), toUpdateRecord.getVersion(),
-                ORecordInternal.getRecordType(toUpdateRecord));
+            try {
+              new OFixUpdateRecordTask(toUpdateRid, toUpdateRecord.toStream(), toUpdateRecord.getVersion(),
+                  ORecordInternal.getRecordType(toUpdateRecord))
+                  .execute(iRequest.getId(), dManager.getServerInstance(), dManager, ODatabaseRecordThreadLocal.INSTANCE.get());
+            } catch (Exception e) {
+              throw OException.wrapException(
+                  new ODistributedOperationException("Cannot create record " + rid + " because assigned RID is different"), e);
+            }
         }
 
         // CREATE LAST RECORD

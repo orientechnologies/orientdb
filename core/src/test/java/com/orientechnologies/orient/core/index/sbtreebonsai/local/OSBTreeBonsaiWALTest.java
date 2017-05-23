@@ -9,7 +9,6 @@ import java.util.List;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -243,20 +242,12 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
   }
 
   private void assertFileRestoreFromWAL() throws IOException {
-    OWOWCache actualWriteCache = (OWOWCache) ((OLocalPaginatedStorage) (databaseDocumentTx.getStorage())).getWriteCache();
-
-    final long sbtreeFileId = actualWriteCache.fileIdByName(sbTree.getName() + ".sbt");
-    final String nativeSBTreeFileName = actualWriteCache.nativeFileNameById(sbtreeFileId);
-
     OStorage storage = databaseDocumentTx.getStorage();
     databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.close();
     storage.close(true, false);
 
     restoreDataFromWAL();
-
-    final long nativeExpectedSBTreeFileId = expectedWriteCache.fileIdByName("expectedSBTree.sbt");
-    final String nativeExpectedSBTreeFileName = ((OWOWCache) expectedWriteCache).nativeFileNameById(nativeExpectedSBTreeFileId);
 
     expectedDatabaseDocumentTx.activateOnCurrentThread();
     expectedDatabaseDocumentTx.close();
@@ -265,7 +256,7 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
 
     expectedReadCache.clear();
 
-    assertFileContentIsTheSame(nativeExpectedSBTreeFileName, nativeSBTreeFileName);
+    assertFileContentIsTheSame("expectedSBTree", sbTree.getName());
   }
 
   private void restoreDataFromWAL() throws IOException {
@@ -341,10 +332,10 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
     log.close();
   }
 
-  private void assertFileContentIsTheSame(String expectedBTreeFile, String actualBTreeFile) throws IOException {
-    File expectedFile = new File(expectedStorageDir, expectedBTreeFile);
+  private void assertFileContentIsTheSame(String expectedBTree, String actualBTree) throws IOException {
+    File expectedFile = new File(expectedStorageDir, expectedBTree + ".sbt");
     RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r");
-    RandomAccessFile fileTwo = new RandomAccessFile(new File(actualStorageDir, actualBTreeFile), "r");
+    RandomAccessFile fileTwo = new RandomAccessFile(new File(actualStorageDir, actualBTree + ".sbt"), "r");
 
     Assert.assertEquals(fileOne.length(), fileTwo.length());
 

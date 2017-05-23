@@ -590,7 +590,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
           if (result instanceof Throwable && !(result instanceof OException))
             // EXCEPTION
-            ODistributedServerLog.error(this, nodeName, getNodeNameById(reqId.getNodeId()), DIRECTION.IN,
+            ODistributedServerLog.debug(this, nodeName, getNodeNameById(reqId.getNodeId()), DIRECTION.IN,
                 "Error on executing request %d (%s) on local node: ", (Throwable) result, reqId, task);
           else {
             // OK

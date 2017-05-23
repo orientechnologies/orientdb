@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -51,11 +53,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class OGremlinHelper {
-  private static final String                     PARAM_OUTPUT = "output";
+  private static final String PARAM_OUTPUT = "output";
   private static GremlinGroovyScriptEngineFactory factory;
-  private static OGremlinHelper                   instance     = new OGremlinHelper();
+  private static OGremlinHelper instance = new OGremlinHelper();
 
-  private int                                     maxPool      = 50;
+  private int maxPool = 50;
 
   public interface OGremlinCallback {
     boolean call(ScriptEngine iEngine, OrientBaseGraph iGraph);
@@ -64,14 +66,14 @@ public class OGremlinHelper {
   public OGremlinHelper() {
     try {
       factory = new GremlinGroovyScriptEngineFactory();
-    }catch( java.lang.NoClassDefFoundError e ){
+    } catch (java.lang.NoClassDefFoundError e) {
       OLogManager.instance().warn(this, "GREMLIN language not available (not in classpath)");
     }
     OCommandManager.instance().registerRequester("gremlin", OCommandGremlin.class);
     OCommandManager.instance().registerExecutor(OCommandGremlin.class, OCommandGremlinExecutor.class);
   }
 
-  public static boolean isGremlinAvailable(){
+  public static boolean isGremlinAvailable() {
     return factory != null;
   }
 
@@ -96,7 +98,7 @@ public class OGremlinHelper {
           if (!iBeforeExecution.call(engine, graph))
             return null;
 
-        if(iText==null){
+        if (iText == null) {
           return null;
         }
         final Object scriptResult = engine.eval(iText);
@@ -129,12 +131,21 @@ public class OGremlinHelper {
           final Iterator<?> it = ((GremlinPipeline<?, ?>) scriptResult).iterator();
           Object finalResult = null;
           List<Object> resultCollection = null;
-
+          int cursor = -1;
           while (it.hasNext()) {
             Object current = it.next();
 
             // if (current instanceof OrientElement)
             // current = ((OrientElement) current).getRawElement();
+            if (current instanceof Map) {
+              ODocument doc = new ODocument().fromMap((Map<String, ? extends Object>) current);
+              ORecordInternal.setIdentity(doc, new ORecordId(-2, cursor--));
+              current = doc;
+            } else if (current instanceof List) {
+              ODocument doc = new ODocument().field("value", current);
+              ORecordInternal.setIdentity(doc, new ORecordId(-2, cursor--));
+              current = doc;
+            }
 
             if (finalResult != null) {
               if (resultCollection == null) {
@@ -282,8 +293,8 @@ public class OGremlinHelper {
           // 4. Impossible to clone
           // ***************************************************************************************************************************************
         } catch (Throwable e2) {
-          OLogManager.instance().error(null, "[GremlinHelper] error on cloning object %s, previous %s", e2, objectToClone,
-              previousClone);
+          OLogManager.instance()
+              .error(null, "[GremlinHelper] error on cloning object %s, previous %s", e2, objectToClone, previousClone);
           return null;
         }
       }

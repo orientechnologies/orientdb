@@ -66,18 +66,61 @@ public class SQLBatchTest extends DocumentDBBaseTest {
     String className = "SQLBatchTest_testNamedParamsWithQuotes";
     database.command(new OCommandSQL("create class " + className)).execute();
 
-    String batch = ""
-        + "begin;"
-        + "insert into " + className + " set names = [] ;"
-        + "update "+className+" add names = :param1;"
-        + "commit;";
+    String batch =
+        "" + "begin;" + "insert into " + className + " set names = [] ;" + "update " + className + " add names = :param1;"
+            + "commit;";
 
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "foo\\\"bar");
     database.command(new OCommandScript("sql", batch)).execute(params);
     List<ODocument> list = database.query(new OSQLSynchQuery<Object>("select from " + className));
-    Object name = ((Collection)list.get(0).field("names")).iterator().next();
+    Object name = ((Collection) list.get(0).field("names")).iterator().next();
     Assert.assertEquals(name, params.get("param1"));
+  }
+
+  public void testNamedParamsWithQuotesInMap() {
+    String className = "SQLBatchTest_testNamedParamsWithQuotesInMap";
+    database.command(new OCommandSQL("create class " + className)).execute();
+    database.command(new OCommandSQL("create property " + className + ".themap EMBEDDEDMAP")).execute();
+
+    String batch = "" + "begin;" + "insert into " + className + " set themap = :param1 ;"
+        + "commit;";
+
+    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, String> values = new HashMap<String, String>();
+    values.put("foo",
+        "<span class=\\\"locality\\\">New York<\\/span>, <span class=\\\"region\\\">NY<\\/span>, <span class=\\\"country-name\\\">USA<\\/span>");
+    values.put("bar", "<span class=\"locality\">New York</span>, <span class=\"region\">NY</span>, <span class=\"country-name\">USA</span>");
+    values.put("baz", "<span class=\\\"locality\\\">New York<\\/span>, <span class=\\\"region\\\">NY<\\/span>, <span class=\\\"country-name\\\">USA<\\/span>");
+    values.put("ziz", "<span class=\"locality\">New York</span>, <span class=\"region\">NY</span>, <span class=\"country-name\">USA</span>");
+    params.put("param1", values);
+    database.command(new OCommandScript("sql", batch)).execute(params);
+    List<ODocument> list = database.query(new OSQLSynchQuery<Object>("select from " + className));
+    Object result = list.get(0).field("themap");
+    Assert.assertEquals(result, params.get("param1"));
+  }
+
+  public void testNamedParamsWithQuotesInMap2() {
+    String className = "SQLBatchTest_testNamedParamsWithQuotesInMap2";
+    database.command(new OCommandSQL("create class " + className)).execute();
+    database.command(new OCommandSQL("create property " + className + ".themap EMBEDDEDMAP")).execute();
+
+    String batch = "" + "begin;" + "insert into " + className + " set themap = {} ;"
+        + "update "+className+" set themap = :param1;"
+        + "commit;";
+
+    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, String> values = new HashMap<String, String>();
+    values.put("foo",
+        "<span class=\\\"locality\\\">New York<\\/span>, <span class=\\\"region\\\">NY<\\/span>, <span class=\\\"country-name\\\">USA<\\/span>");
+    values.put("bar", "<span class=\"locality\">New York</span>, <span class=\"region\">NY</span>, <span class=\"country-name\">USA</span>");
+    values.put("baz", "<span class=\\\"locality\\\">New York<\\/span>, <span class=\\\"region\\\">NY<\\/span>, <span class=\\\"country-name\\\">USA<\\/span>");
+    values.put("ziz", "<span class=\"locality\">New York</span>, <span class=\"region\">NY</span>, <span class=\"country-name\">USA</span>");
+    params.put("param1", values);
+    database.command(new OCommandScript("sql", batch)).execute(params);
+    List<ODocument> list = database.query(new OSQLSynchQuery<Object>("select from " + className));
+    Object result = list.get(0).field("themap");
+    Assert.assertEquals(result, params.get("param1"));
   }
 
   private Object executeBatch(final String batch) {
