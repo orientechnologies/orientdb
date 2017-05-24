@@ -83,16 +83,18 @@ public class SQLBatchTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("create class " + className)).execute();
     database.command(new OCommandSQL("create property " + className + ".themap EMBEDDEDMAP")).execute();
 
-    String batch = "" + "begin;" + "insert into " + className + " set themap = :param1 ;"
-        + "commit;";
+    String batch = "" + "begin;" + "insert into " + className + " set themap = :param1 ;" + "commit;";
 
     Map<String, Object> params = new HashMap<String, Object>();
     Map<String, String> values = new HashMap<String, String>();
     values.put("foo",
         "<span class=\\\"locality\\\">New York<\\/span>, <span class=\\\"region\\\">NY<\\/span>, <span class=\\\"country-name\\\">USA<\\/span>");
-    values.put("bar", "<span class=\"locality\">New York</span>, <span class=\"region\">NY</span>, <span class=\"country-name\">USA</span>");
-    values.put("baz", "<span class=\\\"locality\\\">New York<\\/span>, <span class=\\\"region\\\">NY<\\/span>, <span class=\\\"country-name\\\">USA<\\/span>");
-    values.put("ziz", "<span class=\"locality\">New York</span>, <span class=\"region\">NY</span>, <span class=\"country-name\">USA</span>");
+    values.put("bar",
+        "<span class=\"locality\">New York</span>, <span class=\"region\">NY</span>, <span class=\"country-name\">USA</span>");
+    values.put("baz",
+        "<span class=\\\"locality\\\">New York<\\/span>, <span class=\\\"region\\\">NY<\\/span>, <span class=\\\"country-name\\\">USA<\\/span>");
+    values.put("ziz",
+        "<span class=\"locality\">New York</span>, <span class=\"region\">NY</span>, <span class=\"country-name\">USA</span>");
     params.put("param1", values);
     database.command(new OCommandScript("sql", batch)).execute(params);
     List<ODocument> list = database.query(new OSQLSynchQuery<Object>("select from " + className));
@@ -105,22 +107,71 @@ public class SQLBatchTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("create class " + className)).execute();
     database.command(new OCommandSQL("create property " + className + ".themap EMBEDDEDMAP")).execute();
 
-    String batch = "" + "begin;" + "insert into " + className + " set themap = {} ;"
-        + "update "+className+" set themap = :param1;"
-        + "commit;";
+    String batch =
+        "" + "begin;" + "insert into " + className + " set themap = {} ;" + "update " + className + " set themap = :param1;"
+            + "commit;";
 
     Map<String, Object> params = new HashMap<String, Object>();
     Map<String, String> values = new HashMap<String, String>();
     values.put("foo",
         "<span class=\\\"locality\\\">New York<\\/span>, <span class=\\\"region\\\">NY<\\/span>, <span class=\\\"country-name\\\">USA<\\/span>");
-    values.put("bar", "<span class=\"locality\">New York</span>, <span class=\"region\">NY</span>, <span class=\"country-name\">USA</span>");
-    values.put("baz", "<span class=\\\"locality\\\">New York<\\/span>, <span class=\\\"region\\\">NY<\\/span>, <span class=\\\"country-name\\\">USA<\\/span>");
-    values.put("ziz", "<span class=\"locality\">New York</span>, <span class=\"region\">NY</span>, <span class=\"country-name\">USA</span>");
+    values.put("bar",
+        "<span class=\"locality\">New York</span>, <span class=\"region\">NY</span>, <span class=\"country-name\">USA</span>");
+    values.put("baz",
+        "<span class=\\\"locality\\\">New York<\\/span>, <span class=\\\"region\\\">NY<\\/span>, <span class=\\\"country-name\\\">USA<\\/span>");
+    values.put("ziz",
+        "<span class=\"locality\">New York</span>, <span class=\"region\">NY</span>, <span class=\"country-name\">USA</span>");
     params.put("param1", values);
     database.command(new OCommandScript("sql", batch)).execute(params);
     List<ODocument> list = database.query(new OSQLSynchQuery<Object>("select from " + className));
     Object result = list.get(0).field("themap");
     Assert.assertEquals(result, params.get("param1"));
+  }
+
+  public void testInlineArray() {
+    //issue #7435
+    String className1 = "SQLBatchTest_testInlineArray1";
+    String className2 = "SQLBatchTest_testInlineArray2";
+    database.command(new OCommandSQL("CREATE CLASS " + className1 + " EXTENDS V")).execute();
+    database.command(new OCommandSQL("CREATE CLASS " + className2 + " EXTENDS V")).execute();
+    database.command(new OCommandSQL("CREATE PROPERTY " + className2 + ".foos LinkList " + className1)).execute();
+
+    String script = "" + "BEGIN;" + "LET a = CREATE VERTEX " + className1 + ";" + "LET b = CREATE VERTEX " + className1 + ";"
+        + "LET c = CREATE VERTEX " + className1 + ";" + "CREATE VERTEX " + className2 + " SET foos=[$a,$b,$c];" + "COMMIT";
+
+    database.command(new OCommandScript(script)).execute();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from " + className2));
+    Assert.assertEquals(result.size(), 1);
+    List foos = result.get(0).field("foos");
+    Assert.assertEquals(foos.size(), 3);
+    Assert.assertTrue(foos.get(0) instanceof OIdentifiable);
+    Assert.assertTrue(foos.get(1) instanceof OIdentifiable);
+    Assert.assertTrue(foos.get(2) instanceof OIdentifiable);
+  }
+
+  public void testInlineArray2() {
+    //issue #7435
+    String className1 = "SQLBatchTest_testInlineArray21";
+    String className2 = "SQLBatchTest_testInlineArray22";
+    database.command(new OCommandSQL("CREATE CLASS " + className1 + " EXTENDS V")).execute();
+    database.command(new OCommandSQL("CREATE CLASS " + className2 + " EXTENDS V")).execute();
+    database.command(new OCommandSQL("CREATE PROPERTY " + className2 + ".foos LinkList " + className1)).execute();
+
+    String script = "" + "BEGIN;" + "LET a = CREATE VERTEX " + className1 + ";" + "LET b = CREATE VERTEX " + className1 + ";"
+        + "LET c = CREATE VERTEX " + className1 + ";" +
+        "LET foos = [$a,$b,$c];"+
+        "CREATE VERTEX " + className2 + " SET foos= $foos;" + "COMMIT";
+
+    database.command(new OCommandScript(script)).execute();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from " + className2));
+    Assert.assertEquals(result.size(), 1);
+    List foos = result.get(0).field("foos");
+    Assert.assertEquals(foos.size(), 3);
+    Assert.assertTrue(foos.get(0) instanceof OIdentifiable);
+    Assert.assertTrue(foos.get(1) instanceof OIdentifiable);
+    Assert.assertTrue(foos.get(2) instanceof OIdentifiable);
   }
 
   private Object executeBatch(final String batch) {
