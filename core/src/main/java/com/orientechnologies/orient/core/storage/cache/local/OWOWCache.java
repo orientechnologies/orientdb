@@ -2074,7 +2074,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     crc32UpdateByteBuffer = null;
     OLogManager.instance().warn(this, "Unable to use java.util.zip.CRC32 on byte buffers, switching to arrays. Using arrays "
             + "instead of byte buffers may produce noticeable performance hit. Consider upgrading to Java 8 or newer. Cause: %s",
-        e.getMessage());
+        e.toString());
   }
 
   private static class FlushThreadFactory implements ThreadFactory {
