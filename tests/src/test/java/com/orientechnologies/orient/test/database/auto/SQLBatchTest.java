@@ -18,6 +18,8 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
@@ -55,6 +57,52 @@ public class SQLBatchTest extends DocumentDBBaseTest {
     } catch (Exception e) {
       Assert.fail("Error but not what was expected");
     }
+  }
+
+  public void testInlineArray() {
+    //issue #7435
+    String className1 = "SQLBatchTest_testInlineArray1";
+    String className2 = "SQLBatchTest_testInlineArray2";
+    database.command(new OCommandSQL("CREATE CLASS " + className1 + " EXTENDS V")).execute();
+    database.command(new OCommandSQL("CREATE CLASS " + className2 + " EXTENDS V")).execute();
+    database.command(new OCommandSQL("CREATE PROPERTY " + className2 + ".foos LinkList " + className1)).execute();
+
+    String script = "" + "BEGIN;" + "LET a = CREATE VERTEX " + className1 + ";" + "LET b = CREATE VERTEX " + className1 + ";"
+        + "LET c = CREATE VERTEX " + className1 + ";" + "CREATE VERTEX " + className2 + " SET foos=[$a,$b,$c];" + "COMMIT";
+
+    database.command(new OCommandScript(script)).execute();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from " + className2));
+    Assert.assertEquals(result.size(), 1);
+    List foos = result.get(0).field("foos");
+    Assert.assertEquals(foos.size(), 3);
+    Assert.assertTrue(foos.get(0) instanceof OIdentifiable);
+    Assert.assertTrue(foos.get(1) instanceof OIdentifiable);
+    Assert.assertTrue(foos.get(2) instanceof OIdentifiable);
+  }
+
+  public void testInlineArray2() {
+    //issue #7435
+    String className1 = "SQLBatchTest_testInlineArray21";
+    String className2 = "SQLBatchTest_testInlineArray22";
+    database.command(new OCommandSQL("CREATE CLASS " + className1 + " EXTENDS V")).execute();
+    database.command(new OCommandSQL("CREATE CLASS " + className2 + " EXTENDS V")).execute();
+    database.command(new OCommandSQL("CREATE PROPERTY " + className2 + ".foos LinkList " + className1)).execute();
+
+    String script = "" + "BEGIN;" + "LET a = CREATE VERTEX " + className1 + ";" + "LET b = CREATE VERTEX " + className1 + ";"
+        + "LET c = CREATE VERTEX " + className1 + ";" +
+        "LET foos = [$a,$b,$c];"+
+        "CREATE VERTEX " + className2 + " SET foos= $foos;" + "COMMIT";
+
+    database.command(new OCommandScript(script)).execute();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from " + className2));
+    Assert.assertEquals(result.size(), 1);
+    List foos = result.get(0).field("foos");
+    Assert.assertEquals(foos.size(), 3);
+    Assert.assertTrue(foos.get(0) instanceof OIdentifiable);
+    Assert.assertTrue(foos.get(1) instanceof OIdentifiable);
+    Assert.assertTrue(foos.get(2) instanceof OIdentifiable);
   }
 
   private Object executeBatch(final String batch) {

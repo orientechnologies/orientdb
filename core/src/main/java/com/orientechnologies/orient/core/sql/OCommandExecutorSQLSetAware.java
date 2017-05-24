@@ -219,7 +219,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
   protected Object getFieldValueCountingParameters(String fieldValue) {
     if (fieldValue.trim().equals("?"))
       parameterCounter++;
-    return OSQLHelper.parseValue(this, fieldValue, context);
+    return OSQLHelper.parseValue(this, fieldValue, context, true);
   }
 
   protected ODocument parseJSON() {
