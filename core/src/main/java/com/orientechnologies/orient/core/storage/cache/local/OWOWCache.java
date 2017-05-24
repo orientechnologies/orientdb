@@ -1313,7 +1313,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             fileClassic.read(firstPageStartPosition, buffer);
 
             if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow))
-              verifyChecksum(buffer, fileId, startPageIndex, new ByteBuffer[] { buffer });
+              verifyChecksum(buffer, fileId, startPageIndex, null);
 
             buffer.position(0);
 
@@ -1381,8 +1381,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final String message = "Magic number verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
         OLogManager.instance().error(this, "%s", message);
         if (checksumMode == OChecksumMode.StoreAndThrow) {
-          for (ByteBuffer rb : buffersToRelease)
-            bufferPool.release(rb);
+
+          if (buffersToRelease == null)
+            bufferPool.release(buffer);
+          else
+            for (ByteBuffer bufferToRelease : buffersToRelease)
+              bufferPool.release(bufferToRelease);
+
           throw new OStorageException(message);
         }
       }
@@ -1412,7 +1417,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     if (fallbackToArray) {
       final int dataLength = buffer.limit() - PAGE_OFFSET_TO_CHECKSUM_FROM;
       final byte[] data = new byte[dataLength];
-      buffer.get(data, PAGE_OFFSET_TO_CHECKSUM_FROM, dataLength);
+      buffer.get(data, 0, dataLength);
       crc32.update(data);
     }
 
@@ -1422,8 +1427,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final String message = "Checksum verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
       OLogManager.instance().error(this, "%s", message);
       if (checksumMode == OChecksumMode.StoreAndThrow) {
-        for (ByteBuffer rb : buffersToRelease)
-          bufferPool.release(rb);
+
+        if (buffersToRelease == null)
+          bufferPool.release(buffer);
+        else
+          for (ByteBuffer bufferToRelease : buffersToRelease)
+            bufferPool.release(bufferToRelease);
+
         throw new OStorageException(message);
       }
 
@@ -2063,7 +2073,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private void logCrc32ArraysWarningAndSwitchToArrays(Exception e) {
     crc32UpdateByteBuffer = null;
     OLogManager.instance().warn(this, "Unable to use java.util.zip.CRC32 on byte buffers, switching to arrays. Using arrays "
-        + "instead of byte buffers may produce noticeable performance hit. Consider upgrading to Java 8 or newer.", e);
+            + "instead of byte buffers may produce noticeable performance hit. Consider upgrading to Java 8 or newer. Cause: %s",
+        e.getMessage());
   }
 
   private static class FlushThreadFactory implements ThreadFactory {
