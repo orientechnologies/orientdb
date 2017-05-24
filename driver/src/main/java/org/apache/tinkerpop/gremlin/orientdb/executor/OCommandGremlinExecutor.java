@@ -145,7 +145,7 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
     public OrientGraph acquireGraph(final ODatabaseDocument database) {
         return new OrientGraph(null, database, new BaseConfiguration() {
             {
-                setProperty(OrientGraph.CONFIG_TRANSACTIONAL, true);
+                setProperty(OrientGraph.CONFIG_TRANSACTIONAL, database.getTransaction().isActive());
             }
         }, null, null);
     }

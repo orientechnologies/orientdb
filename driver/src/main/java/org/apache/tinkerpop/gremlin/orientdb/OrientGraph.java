@@ -4,6 +4,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -123,6 +124,7 @@ public final class OrientGraph implements Graph {
         this.configuration = configuration;
         this.connectionFailed = false;
         if (configuration.getBoolean(CONFIG_TRANSACTIONAL, false)) {
+            ensureTransaction();
             this.features = ODBFeatures.OrientFeatures.INSTANCE_TX;
         } else {
             this.features = ODBFeatures.OrientFeatures.INSTANCE_NOTX;
@@ -143,6 +145,7 @@ public final class OrientGraph implements Graph {
         this.configuration = configuration;
         if (configuration.getBoolean(CONFIG_TRANSACTIONAL, false)) {
             this.features = ODBFeatures.OrientFeatures.INSTANCE_TX;
+            ensureTransaction();
         } else {
             this.features = ODBFeatures.OrientFeatures.INSTANCE_NOTX;
         }
@@ -169,14 +172,19 @@ public final class OrientGraph implements Graph {
 
         if (this.connectionFailed) {
             this.connectionFailed = false;
-
             try {
-
                 this.database = this.factory.getDatabase(true, true);
                 makeActiveDb();
             } catch (OException e) {
                 OLogManager.instance().info(this, "Recreation of connection resulted in exception", e);
             }
+        }
+    }
+
+    private void ensureTransaction() {
+        final boolean txBegun = getRawDatabase().getTransaction().isActive();
+        if (!txBegun) {
+            getRawDatabase().begin();
         }
     }
 
@@ -189,6 +197,26 @@ public final class OrientGraph implements Graph {
             this.connectionFailed = true;
             OLogManager.instance().info(this, "Error during db request", e);
             throw e;
+        }
+    }
+
+    private <R> R executeOutsideTx(Function<ODatabaseDocument, R> lamba) {
+
+        if (isTransactionActive()) {
+            ODatabaseDocument oldDb = getRawDatabase();
+            ODatabaseDocument newDb = null;
+            try {
+                newDb = ((ODatabaseDocumentInternal) oldDb).copy();
+                newDb.activateOnCurrentThread();
+                return lamba.apply(newDb);
+            } finally {
+                if (newDb != null) {
+                    newDb.close();
+                }
+                oldDb.activateOnCurrentThread();
+            }
+        } else {
+            return lamba.apply(getRawDatabase());
         }
     }
 
@@ -590,7 +618,13 @@ public final class OrientGraph implements Graph {
         OClass cls = schema.getClass(className);
         if (cls == null) {
             try {
-                schema.createClass(className, superClass);
+                executeOutsideTx((db) -> {
+                    OSchema s = db.getMetadata().getSchema();
+                    s.createClass(className, superClass);
+                    return null;
+                });
+                if (isTransactionActive())
+                    schema.reload();
             } catch (OException e) {
                 throw new IllegalArgumentException(e);
             }
@@ -706,4 +740,7 @@ public final class OrientGraph implements Graph {
         return StringFactory.graphString(this, database.getURL());
     }
 
+    protected boolean isTransactionActive() {
+        return getRawDatabase().getTransaction().isActive();
+    }
 }
