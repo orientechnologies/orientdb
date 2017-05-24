@@ -106,7 +106,7 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
     if (index != null && query != null) {
 
       if (args.length == 3) {
-        ODocument metadata = new ODocument().fromJSON(args[2].toString());
+        ODocument metadata = new ODocument().fromJSON(args[1].toString());
 
         //TODO handle metadata
         System.out.println("metadata.toJSON() = " + metadata.toJSON());

@@ -18,34 +18,31 @@
 
 package com.orientechnologies.lucene.query;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import org.apache.lucene.facet.FacetsConfig;
-import org.apache.lucene.facet.taxonomy.TaxonomyReader;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * Created by Enrico Risa on 08/01/15.
  */
 public class OLuceneQueryContext {
 
-  private final OCommandContext  context;
-  private final IndexSearcher    searcher;
-  private final Query            query;
-  private final Sort             sort;
-  private       OLuceneTxChanges changes;
-  private       QueryContextCFG  cfg;
-  private       TaxonomyReader   reader;
-  private       FacetsConfig     facetConfig;
-  private       String           facetField;
-  private       String           drillDownQuery;
-  private       boolean          facet;
-  private       boolean          drillDown;
+  private final OCommandContext            context;
+  private final IndexSearcher              searcher;
+  private final Query                      query;
+  private final Sort                       sort;
+  private final QueryContextCFG            cfg;
+  private       Optional<OLuceneTxChanges> changes;
 
   public OLuceneQueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
     this(context, searcher, query, null);
@@ -61,47 +58,8 @@ public class OLuceneQueryContext {
     else
       cfg = QueryContextCFG.FILTER;
 
-    facet = false;
-    drillDown = false;
-  }
+    changes = Optional.empty();
 
-  public OLuceneQueryContext setFacet(boolean facet) {
-    this.facet = facet;
-    return this;
-  }
-
-  public OLuceneQueryContext setReader(TaxonomyReader reader) {
-    this.reader = reader;
-    return this;
-  }
-
-  public FacetsConfig getFacetConfig() {
-    return facetConfig;
-  }
-
-  public void setFacetConfig(FacetsConfig facetConfig) {
-    this.facetConfig = facetConfig;
-  }
-
-  public String getFacetField() {
-    return facetField;
-  }
-
-  public void setFacetField(String facetField) {
-    this.facetField = facetField;
-  }
-
-  public boolean isDrillDown() {
-    return drillDown;
-  }
-
-  public String getDrillDownQuery() {
-    return drillDownQuery;
-  }
-
-  public void setDrillDownQuery(String drillDownQuery) {
-    this.drillDownQuery = drillDownQuery;
-    drillDown = drillDownQuery != null;
   }
 
   public boolean isInTx() {
@@ -109,12 +67,8 @@ public class OLuceneQueryContext {
   }
 
   public OLuceneQueryContext withChanges(OLuceneTxChanges changes) {
-    this.changes = changes;
+    this.changes = Optional.ofNullable(changes);
     return this;
-  }
-
-  public OLuceneTxChanges changes() {
-    return changes;
   }
 
   public OCommandContext getContext() {
@@ -129,15 +83,40 @@ public class OLuceneQueryContext {
     return sort;
   }
 
-  public IndexSearcher getSearcher() throws IOException {
+  public IndexSearcher getSearcher() {
 
-    return changes == null ?
-        searcher :
-        new IndexSearcher(new MultiReader(searcher.getIndexReader(), changes.searcher().getIndexReader()));
+    return changes.map(c -> new IndexSearcher(multiReader(c)))
+        .orElse(searcher);
+
+  }
+
+  private MultiReader multiReader(OLuceneTxChanges c) {
+    try {
+      return new MultiReader(searcher.getIndexReader(), c.searcher().getIndexReader());
+    } catch (IOException e) {
+      throw OException.wrapException(new OLuceneIndexException("unable to create reader on changes"), e);
+    }
   }
 
   public QueryContextCFG getCfg() {
     return cfg;
+  }
+
+  public int deletedDocs(Query query) {
+
+    return changes.map(c -> c.deletedDocs(query)).orElse(0);
+  }
+
+  public boolean isUpdated(Document doc, Object key, OIdentifiable value) {
+
+    return changes.map(c -> c.isUpdated(doc, key, value)).orElse(false);
+
+  }
+
+  public boolean isDeleted(Document doc, Object key, OIdentifiable value) {
+
+    return changes.map(c -> c.isDeleted(doc, key, value)).orElse(false);
+
   }
 
   public enum QueryContextCFG {

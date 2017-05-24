@@ -16,19 +16,12 @@
 
 package com.orientechnologies.lucene.exception;
 
-public class OLuceneIndexException extends Exception {
-  public OLuceneIndexException() {
-  }
+import com.orientechnologies.common.exception.OException;
+
+public class OLuceneIndexException extends OException {
 
   public OLuceneIndexException(String message) {
     super(message);
   }
 
-  public OLuceneIndexException(Throwable cause) {
-    super(cause);
-  }
-
-  public OLuceneIndexException(String message, Throwable cause) {
-    super(message, cause);
-  }
 }

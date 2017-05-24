@@ -17,17 +17,18 @@
 package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
 import com.orientechnologies.lucene.builder.OLuceneIndexType;
+import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesMultiRid;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesSingleRid;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -70,28 +71,28 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   public static final String OLUCENE_BASE_DIR = "luceneIndexes";
 
   protected SearcherManager                searcherManager;
-  protected OIndexDefinition               index;
+  protected OIndexDefinition               indexDefinition;
   protected String                         name;
   protected String                         clusterIndexName;
-  protected boolean                        automatic;
+  protected boolean                        isAutomatic;
   protected ControlledRealTimeReopenThread nrt;
   protected ODocument                      metadata;
   protected Version                        version;
   protected Map<String, Boolean> collectionFields = new HashMap<String, Boolean>();
   protected TimerTask commitTask;
   protected AtomicBoolean closed = new AtomicBoolean(false);
-  protected OStorage    storage;
-  private   long        reopenToken;
-  private   Analyzer    indexAnalyzer;
-  private   Analyzer    queryAnalyzer;
-  private   Directory   directory;
-  private   IndexWriter indexWriter;
+  protected        OStorage    storage;
+  private volatile long        reopenToken;
+  private          Analyzer    indexAnalyzer;
+  private          Analyzer    queryAnalyzer;
+  private          Directory   directory;
+  private          IndexWriter indexWriter;
 
-  public OLuceneIndexEngineAbstract(OStorage storage, String indexName) {
+  public OLuceneIndexEngineAbstract(OStorage storage, String name) {
     super(true, 0, true);
 
     this.storage = storage;
-    this.name = indexName;
+    this.name = name;
 
   }
 
@@ -119,8 +120,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     };
     Orient.instance().scheduleTask(commitTask, 10000, 10000);
 
-    this.index = indexDefinition;
-    this.automatic = isAutomatic;
+    this.indexDefinition = indexDefinition;
+    this.isAutomatic = isAutomatic;
     this.metadata = metadata;
 
     OLuceneAnalyzerFactory fc = new OLuceneAnalyzerFactory();
@@ -128,8 +129,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     queryAnalyzer = fc.createAnalyzer(indexDefinition, QUERY, metadata);
 
     try {
-
-      this.index = indexDefinition;
 
       checkCollectionIndex(indexDefinition);
       reOpen(metadata);
@@ -320,33 +319,28 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   @Override
-  public IndexSearcher searcher() throws IOException {
+  public IndexSearcher searcher() {
     try {
       nrt.waitForGeneration(reopenToken);
       return searcherManager.acquire();
-    } catch (InterruptedException e) {
+    } catch (Exception e) {
       OLogManager.instance().error(this, "Error on get searcher from Lucene index", e);
+      throw OException.wrapException(new OLuceneIndexException("Error on get searcher from Lucene index"), e);
     }
-    return null;
 
   }
 
   @Override
   public long sizeInTx(OLuceneTxChanges changes) {
-    IndexReader reader = null;
-    IndexSearcher searcher = null;
+    IndexSearcher searcher = searcher();
     try {
-      searcher = searcher();
-      if (searcher != null)
-        reader = searcher.getIndexReader();
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on getting size of Lucene index", e);
+      IndexReader reader = searcher.getIndexReader();
+
+      return changes == null ? reader.numDocs() : reader.numDocs() + changes.numDocs();
     } finally {
-      if (searcher != null) {
-        release(searcher);
-      }
+
+      release(searcher);
     }
-    return changes == null ? reader.numDocs() : reader.numDocs() + changes.numDocs();
   }
 
   @Override
@@ -361,7 +355,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   @Override
   public Query deleteQuery(Object key, OIdentifiable value) {
     if (isCollectionDelete()) {
-      return OLuceneIndexType.createDeleteQuery(value, index.getFields(), key);
+      return OLuceneIndexType.createDeleteQuery(value, indexDefinition.getFields(), key);
     }
     return OLuceneIndexType.createQueryId(value);
   }
@@ -387,7 +381,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties) {
-    // initIndex(indexName, indexDefinition, isAutomatic, metadata);
   }
 
   @Override
@@ -435,7 +428,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     return sizeInTx(null);
   }
 
-  protected void release(IndexSearcher searcher) {
+  @Override
+  public void release(IndexSearcher searcher) {
     try {
       searcherManager.release(searcher);
     } catch (IOException e) {

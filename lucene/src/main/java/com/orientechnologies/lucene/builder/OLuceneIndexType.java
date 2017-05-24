@@ -28,6 +28,7 @@ import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.BooleanClause.Occur;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -109,7 +110,7 @@ public class OLuceneIndexType {
 
     queryBuilder.add(createQueryId(value), BooleanClause.Occur.MUST);
 
-    Map<String, String> values = new HashMap<String, String>();
+    Map<String, String> values = new HashMap<>();
     // TODO Implementation of Composite keys with Collection
     if (key instanceof OCompositeKey) {
 
@@ -117,7 +118,7 @@ public class OLuceneIndexType {
       values.put(fields.iterator().next(), key.toString());
     }
     for (String s : values.keySet()) {
-      queryBuilder.add(new TermQuery(new Term(s, values.get(s).toLowerCase())), BooleanClause.Occur.MUST);
+      queryBuilder.add(new TermQuery(new Term(s, values.get(s).toLowerCase())), Occur.MUST);
     }
     return queryBuilder.build();
   }

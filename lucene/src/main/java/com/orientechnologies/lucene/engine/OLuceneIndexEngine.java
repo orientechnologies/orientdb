@@ -52,7 +52,9 @@ public interface OLuceneIndexEngine extends OIndexEngine, OFreezableStorageCompo
 
   boolean remove(Object key, OIdentifiable value);
 
-  IndexSearcher searcher() throws IOException;
+  IndexSearcher searcher();
+
+  void release(IndexSearcher searcher);
 
   Set<OIdentifiable> getInTx(Object key, OLuceneTxChanges changes);
 

@@ -18,7 +18,6 @@ package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneTxOperations;
@@ -71,11 +70,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
 
         transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, encodeKey(key), value);
         OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
-        try {
-          transactionChanges.remove(key, value);
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "Error while removing", e);
-        }
+        transactionChanges.remove(key, value);
         return true;
       } else {
         while (true) {
@@ -303,11 +298,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
           }
         }
 
-        try {
-          transactionChanges.put(key, singleValue, luceneDoc);
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
+        transactionChanges.put(key, singleValue, luceneDoc);
 
       } else {
         while (true) {
@@ -433,11 +424,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
       try {
         return storage.callIndexEngine(false, false, indexId, engine -> {
           OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-          try {
-            return indexEngine.searcher();
-          } catch (IOException e) {
-            throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
-          }
+          return indexEngine.searcher();
         });
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();

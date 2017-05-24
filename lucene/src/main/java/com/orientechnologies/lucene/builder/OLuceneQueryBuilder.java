@@ -85,7 +85,8 @@ public class OLuceneQueryBuilder {
     return getQueryParser(index, query, analyzer);
   }
 
-  protected Query getQueryParser(OIndexDefinition index, String query, Analyzer analyzer) throws ParseException {
+  protected Query getQueryParser(OIndexDefinition index, String query, Analyzer analyzer)
+      throws ParseException {
 
     String[] fields;
     if (index.isAutomatic()) {
@@ -106,6 +107,7 @@ public class OLuceneQueryBuilder {
     }
 
     final OLuceneMultiFieldQueryParser queryParser = new OLuceneMultiFieldQueryParser(types, fields, analyzer, new HashMap<>());
+
     queryParser.setAllowLeadingWildcard(allowLeadingWildcard);
 
     queryParser.setLowercaseExpandedTerms(lowercaseExpandedTerms);

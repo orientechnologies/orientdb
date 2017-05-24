@@ -23,7 +23,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
-import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -31,19 +31,25 @@ import java.util.Set;
  */
 public interface OLuceneTxChanges {
 
-  void put(Object key, OIdentifiable value, Document doc) throws IOException;
+  void put(Object key, OIdentifiable value, Document doc);
 
-  void remove(Object key, OIdentifiable value) throws IOException;
+  void remove(Object key, OIdentifiable value);
 
-  IndexSearcher searcher() throws IOException;
+  IndexSearcher searcher();
 
-  long numDocs();
+  default long numDocs() {
+    return 0;
+  }
 
-  Set<Document> getDeletedDocs();
+  default Set<Document> getDeletedDocs() {
+    return Collections.emptySet();
+  }
 
   boolean isDeleted(Document document, Object key, OIdentifiable value);
 
   boolean isUpdated(Document document, Object key, OIdentifiable value);
 
-  long deletedDocs(Query query);
+  default int deletedDocs(Query query) {
+    return 0;
+  }
 }

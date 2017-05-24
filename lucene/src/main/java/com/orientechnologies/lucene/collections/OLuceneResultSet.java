@@ -20,79 +20,212 @@ package com.orientechnologies.lucene.collections;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineUtils;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
+import com.orientechnologies.lucene.tx.OLuceneTxChangesAbstract;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.highlight.Highlighter;
+import org.apache.lucene.search.highlight.QueryTermScorer;
+import org.apache.lucene.search.highlight.Scorer;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Iterator;
-
-import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
+import java.util.Set;
 
 /**
- * Created by Enrico Risa on 28/10/14.
+ * Created by Enrico Risa on 16/09/15.
  */
-public class OLuceneResultSet extends OLuceneAbstractResultSet {
+public class OLuceneResultSet implements Set<OIdentifiable> {
+
+  private static Integer PAGE_SIZE = 10000;
+  private final Query               query;
+  private final OLuceneIndexEngine  engine;
+  private final OLuceneQueryContext queryContext;
+  private final String              indexName;
+  private final Highlighter         highlighter;
+  private       TopDocs             topDocs;
+  private int deletedMatchCount = 0;
 
   public OLuceneResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext) {
-    super(engine, queryContext);
+    this.engine = engine;
+    this.queryContext = queryContext;
+    this.query = queryContext.getQuery();
+
+    indexName = engine.indexName();
+    fetchFirstBatch();
+    deletedMatchCount = calculateDeletedMatch();
+
+    Scorer scorer = new QueryTermScorer(queryContext.getQuery());
+    highlighter = new Highlighter(scorer);
+
+  }
+
+  protected void fetchFirstBatch() {
+    try {
+
+      IndexSearcher searcher = queryContext.getSearcher();
+      switch (queryContext.getCfg()) {
+
+      case FILTER:
+        topDocs = searcher.search(query, PAGE_SIZE);
+        break;
+      case SORT:
+        topDocs = searcher.search(query, PAGE_SIZE, queryContext.getSort());
+        break;
+      }
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
+    }
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return size() == 0;
+  }
+
+  @Override
+  public boolean contains(Object o) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Object[] toArray() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public <T> T[] toArray(T[] a) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean add(OIdentifiable oIdentifiable) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean remove(Object o) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean containsAll(Collection<?> c) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean addAll(Collection<? extends OIdentifiable> c) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean retainAll(Collection<?> c) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean removeAll(Collection<?> c) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void clear() {
+    throw new UnsupportedOperationException();
+  }
+
+  public void sendLookupTime(OCommandContext commandContext, long start) {
+    OLuceneIndexEngineUtils.sendLookupTime(indexName, commandContext, topDocs, -1, start);
+  }
+
+  protected int calculateDeletedMatch() {
+    return queryContext.deletedDocs(query);
   }
 
   @Override
   public int size() {
-    return topDocs.totalHits;
+    return Math.max(0, topDocs.totalHits - deletedMatchCount);
   }
 
   @Override
   public Iterator<OIdentifiable> iterator() {
-    return new OLuceneResultSetIterator();
+    return new OLuceneResultSetIteratorTx();
   }
 
-  private class OLuceneResultSetIterator implements Iterator<OIdentifiable> {
+  private class OLuceneResultSetIteratorTx implements Iterator<OIdentifiable> {
 
     private ScoreDoc[] scoreDocs;
     private int        index;
     private int        localIndex;
     private int        totalHits;
 
-    public OLuceneResultSetIterator() {
+    public OLuceneResultSetIteratorTx() {
       totalHits = topDocs.totalHits;
       index = 0;
       localIndex = 0;
       scoreDocs = topDocs.scoreDocs;
-      OLuceneIndexEngineUtils.sendTotalHits(indexName, queryContext.getContext(), topDocs.totalHits);
+      OLuceneIndexEngineUtils.sendTotalHits(indexName, queryContext.getContext(), topDocs.totalHits - deletedMatchCount);
     }
 
     @Override
     public boolean hasNext() {
-      return index < totalHits;
+      return index < (totalHits - deletedMatchCount);
     }
 
     @Override
     public OIdentifiable next() {
+      ScoreDoc scoreDoc;
+      OContextualRecordId res;
+      Document doc;
+      do {
+        scoreDoc = fetchNext();
+        doc = toDocument(scoreDoc);
+
+//        highlighter.getBestFragments()
+        res = toRecordId(doc, scoreDoc);
+      } while (isToSkip(res, doc));
+      index++;
+      return res;
+    }
+
+    protected ScoreDoc fetchNext() {
       if (localIndex == scoreDocs.length) {
         localIndex = 0;
         fetchMoreResult();
       }
-      final ScoreDoc score = topDocs.scoreDocs[localIndex++];
-      OContextualRecordId res = null;
+      final ScoreDoc score = scoreDocs[localIndex++];
+      return score;
+    }
+
+    private Document toDocument(ScoreDoc score) {
+      Document ret = null;
+
       try {
-        Document ret = queryContext.getSearcher().doc(score.doc);
-        res = new OContextualRecordId(ret.get(RID));
-        engine.onRecordAddedToResultSet(queryContext, res, ret, score);
+        ret = queryContext.getSearcher().doc(score.doc);
 
       } catch (IOException e) {
-        //TODO handle in a proper way
         e.printStackTrace();
       }
-      index++;
+      return ret;
+    }
 
+    private OContextualRecordId toRecordId(Document doc, ScoreDoc score) {
+      String rId = doc.get(OLuceneIndexEngineAbstract.RID);
+      OContextualRecordId res = new OContextualRecordId(rId);
+      engine.onRecordAddedToResultSet(queryContext, res, doc, score);
       return res;
+    }
+
+    private boolean isToSkip(OContextualRecordId res, Document doc) {
+      return isDeleted(res, doc) || isUpdatedDiskMatch(res, doc);
     }
 
     private void fetchMoreResult() {
@@ -117,9 +250,26 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
 
     }
 
+    private boolean isDeleted(OIdentifiable value, Document doc) {
+      return queryContext.isDeleted(doc, null, value);
+    }
+
+    private boolean isUpdatedDiskMatch(OIdentifiable value, Document doc) {
+      return isUpdated(value) && !isTempMatch(doc);
+    }
+
+    private boolean isUpdated(OIdentifiable value) {
+      return queryContext.isUpdated(null, null, value);
+    }
+
+    private boolean isTempMatch(Document doc) {
+      return doc.get(OLuceneTxChangesAbstract.TMP) != null;
+    }
+
     @Override
     public void remove() {
 
     }
+
   }
 }

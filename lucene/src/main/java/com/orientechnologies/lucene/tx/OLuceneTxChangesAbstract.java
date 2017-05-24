@@ -18,8 +18,10 @@
 
 package com.orientechnologies.lucene.tx;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
+import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
@@ -35,13 +37,13 @@ public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
 
   public static final String TMP = "_tmp_rid";
 
-  protected final IndexWriter        writer;
   protected final OLuceneIndexEngine engine;
+  protected final IndexWriter        writer;
   protected final IndexWriter        deletedIdx;
 
   public OLuceneTxChangesAbstract(OLuceneIndexEngine engine, IndexWriter writer, IndexWriter deletedIdx) {
-    this.writer = writer;
     this.engine = engine;
+    this.writer = writer;
     this.deletedIdx = deletedIdx;
   }
 
@@ -50,14 +52,14 @@ public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
     try {
       return new IndexSearcher(DirectoryReader.open(writer, true, true));
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error during searcher instantiation", e);
+//      OLogManager.instance().error(this, "Error during searcher index instantiation on new documents", e);
+      throw OException.wrapException(new OLuceneIndexException("Error during searcher index instantiation on new documents"), e);
     }
 
-    return null;
   }
 
   @Override
-  public long deletedDocs(Query query) {
+  public int deletedDocs(Query query) {
 
     try {
       IndexSearcher indexSearcher = new IndexSearcher(DirectoryReader.open(deletedIdx, true, true));
@@ -65,7 +67,9 @@ public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
       TopDocs search = indexSearcher.search(query, Integer.MAX_VALUE);
       return search.totalHits;
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error during searcher instantiation", e);
+      OLogManager.instance().error(this, "Error during searcher index instantiation on deleted documents ", e);
+    } finally {
+
     }
 
     return 0;

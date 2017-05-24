@@ -50,6 +50,7 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
 
     OElement element = result.toElement();
 
+    System.out.println("element = " + element);
     String className = element.getSchemaType().get().getName();
 
     OLuceneFullTextIndex index = searchForIndex(ctx, className);
@@ -105,15 +106,17 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
     if (index != null) {
 
       if (args.length == 2) {
-        ODocument metadata = new ODocument().fromJSON(args[2].toString());
+        ODocument metadata = new ODocument().fromJSON(args[1].toString());
 
         //TODO handle metadata
         System.out.println("metadata.toJSON() = " + metadata.toJSON());
         Set<OIdentifiable> luceneResultSet = index.get(query.toString());
       }
 
+
       Set<OIdentifiable> luceneResultSet = index.get(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx));
 
+      System.out.println("luceneResultSet.size() = " + luceneResultSet.size());
       return luceneResultSet;
     }
     return Collections.emptySet();
@@ -149,7 +152,6 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
 
   @Override
   public Object getResult() {
-    System.out.println("getResult");
     return super.getResult();
   }
 
