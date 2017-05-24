@@ -10,6 +10,7 @@
     <form class="form-horizontal" id="etlForm" name="etlForm" #form="ngForm">
       <div id="stepSwitch" [ngSwitch]="getStep()">
 
+        <!-- Step 0 - welcome screen and choice between new config and existing one -->
         <div class="stepZero" *ngSwitchCase="'0'">
           <h3 align="center"><b>EXTRACT - TRANSFORM - LOAD</b></h3><br>
           <div style="height:500px">
@@ -34,9 +35,11 @@
 
                       <textarea id="fileDisplayArea" style="height: 160px; width: 450px" class="form-control" readonly></textarea><br>
                       <div class="col-md-12 text-center">
+                        <button class="btn btn-default btn-sm" (click)="oldConfigInit(oldConfig)"
+                                style="border-radius: 40px;" [disabled]="!importReady">Modify Selected</button>
                         <button class="btn btn-default btn-sm" (click)="oldConfigInit(oldConfig); launch()"
-                                style="border-radius: 40px;" [disabled]="!importReady">Select current configuration</button>
-                      </div> <!-- TODO remove launch and let the user configure the imported configuration -->
+                                style="border-radius: 40px;" [disabled]="!importReady">Direct Run</button><br><br>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -45,6 +48,7 @@
           </div>
         </div>
 
+        <!-- Step 1 - source configuration, advanced parameters configuration -->
         <div class="stepOne" *ngSwitchCase="'1'">
           <h3 align="center">Step 1 - Configure the Source</h3><br/>
 
@@ -70,7 +74,6 @@
             <div class="col-md-4">
               <input type="url" id="fileURL" class="form-control" name="fileURL" [(ngModel)]="sourcePrototype.fileURL"
                      placeholder="URL of your file" pattern="https?://.+" required/>
-
             </div>
             <div class="col-md-4">
               <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
@@ -116,7 +119,9 @@
               </button>
             </div>
           </div>
+
           <br>
+
           <div class="form-group">
             <div class="col-sm-offset-5 col-sm-7">
               <div class="btn-toolbar" style="height:80px">
@@ -163,9 +168,9 @@
               </div>
             </div>
           </div>
-
         </div>
 
+        <!-- Step 2 - Etl modules creation, configuration and sorting -->
         <div class="stepTwo" *ngSwitchCase="'2'">
           <h3 align="center">Step 2 - Configure the ETL Parameters</h3><br>
           <div class="col-md-8">
@@ -195,7 +200,7 @@
                           <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('json')" *ngIf="sourcePrototype.source.value != 'jdbc'">json</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('row')" *ngIf="sourcePrototype.source.value != 'jdbc'">row</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('xml')" *ngIf="sourcePrototype.source.value != 'jdbc'">xml</button>
-                          <a class="list-group-item list-group-item-action flex-column align-items-start active" *ngIf="sourcePrototype.source.value == 'jdbc'">
+                          <a class="list-group-item list-group-item-action flex-column align-items-start disabled" *ngIf="sourcePrototype.source.value == 'jdbc'">
                             <div class="d-flex w-100 justify-content-between">
                               <small>Hint:</small>
                             </div>
@@ -208,7 +213,7 @@
                       <div class="row">
                         <h5 id="pleaseExtractor" align="center"><b>Please create an extractor</b></h5>
                         <div id="extractorSpace" style="height: 300px">
-                          <canvas id="eCanvas" width="200" height="80" style="display:none" (click)="selectExtractor()">
+                          <canvas id="eCanvas" style="display:none" (click)="selectExtractor()">
                             Your browser does not support the HTML5 canvas tag.
                           </canvas>
                         </div>
@@ -234,7 +239,8 @@
                           <div class="list-group-item list-group-item-info">Transformer Type</div>
 
                           <!-- csv transformer is deprecated -->
-                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('block')">block</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('let')">let block</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('console')">console block</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('code')">code</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('command')">command</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('edge')">edge</button>
@@ -247,10 +253,13 @@
                         </div>
                       </div>
                       <br><br><br>
-                      <div class="col-md-12" style="overflow:auto">
+
+                      <!-- Canvas list generation area -->
+                      <div class="col-md-12" style="overflow-y:auto; overflow-x: hidden">
                         <h5 id="pleaseTransformer" align="center"><b>Please create at least one transformer</b></h5>
                         <div id="transformerSpace" style="height: 300px">
-                          <ol id="transformerList" class="transformer-list"></ol> <script src='../../util/draggable-sortable/jquery-sortable.js'></script>
+                          <ol id="transformerList" class="transformer-list list-unstyled">
+                          </ol>
                         </div>
                       </div>
                     </div>
@@ -282,7 +291,7 @@
                     <div class="row">
                       <h5 id="pleaseLoader" align="center"><b>Please create a loader</b></h5>
                       <div id="loaderSpace" style="height: 300px">
-                        <canvas id="lCanvas" width="200" height="80" style="display:none" (click)="selectLoader()">
+                        <canvas id="lCanvas" style="display:none" (click)="selectLoader()">
                           Your browser does not support the HTML5 canvas tag.
                         </canvas>
                       </div>
@@ -292,6 +301,7 @@
               </div>
             </div>
           </div>
+
           <div class="col-md-4">
             <div class="panel panel-info" style="overflow:auto; height:500px">
               <div class="panel-heading" align="center"><b>PARAMETER CONFIGURATION</b></div>
@@ -325,8 +335,13 @@
                         </option>
                       </select>
 
-                      <input *ngIf="!extractorPrototype[extractorType][eParameter]['types']" type="text" class="form-control" name="eTextConfig-{{eParameter}}"
-                             [(ngModel)]="extractor[extractorType][eParameter]" placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
+                      <input *ngIf="!extractorPrototype[extractorType][eParameter]['types'] && !extractorPrototype[extractorType][eParameter]['array']"
+                             type="text" class="form-control" name="eTextConfig-{{eParameter}}" [(ngModel)]="extractor[extractorType][eParameter]"
+                             placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
+
+                      <input *ngIf="extractorPrototype[extractorType][eParameter]['array']" type="text" data-role="tagsinput" class="form-control"
+                             name="eTextConfig-{{eParameter}}" [(ngModel)]="extractor[extractorType][eParameter]" placeholder="enter your tags"
+                             (ngModelChange)="readyForExecution()"/>
                       <br>
 
                     </div>
@@ -366,9 +381,10 @@
                         </option>
                       </select>
 
-                      <textarea *ngIf="!transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']" rows="1" type="text" class="form-control"
+                      <textarea *ngIf="!transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']" rows="2" type="text" class="form-control"
                                 name="tTextConfig-{{tParameter}}" [(ngModel)]="currentTransformer[getTransformerType(currentTransformer)][tParameter]"
                                 placeholder="enter your value" (ngModelChange)="readyForExecution()" style="resize: vertical"></textarea>
+
                       <br>
 
                     </div>
@@ -407,8 +423,13 @@
                         </option>
                       </select>
 
-                      <input *ngIf="!loaderPrototype[loaderType][lParameter]['types']" type="text" class="form-control" name="lTextConfig-{{lParameter}}"
-                             [(ngModel)]="loader[loaderType][lParameter]" placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
+                      <input *ngIf="!loaderPrototype[loaderType][lParameter]['types'] && !loaderPrototype[loaderType][lParameter]['object']"
+                             type="text" class="form-control" name="lTextConfig-{{lParameter}}" [(ngModel)]="loader[loaderType][lParameter]"
+                             placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
+
+                      <div *ngIf="loaderPrototype[loaderType][lParameter]['object']" (ngModelChange)="readyForExecution()">
+                        OBJECTS AREN'T CONFIGURABLE AT THE MOMENT
+                      </div>
                       <br>
 
                     </div>
@@ -436,6 +457,8 @@
                 </div>
               </div>
             </div>
+
+            <!-- Quick tips panel -->
             <div class="col-sm-6">
               <div class="panel panel-default text-center">
                 <b style="color:red;">*</b><b style="color:grey;"> means that the parameter is mandatory for a correct configuration.<br>
@@ -444,6 +467,7 @@
           </div>
         </div>
 
+        <!-- Step 3 - execution, logging and source inspection -->
         <div class="stepThree" *ngSwitchCase="'3'">
           <h3 align="center">Step 3 - Monitor the Execution</h3>
           <h4 align="center">Console Log

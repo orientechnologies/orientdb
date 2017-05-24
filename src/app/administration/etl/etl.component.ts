@@ -7,8 +7,6 @@ import {EtlService} from "../../core/services";
 import {AgentService} from "../../core/services/agent.service";
 
 import "../../util/draggable-sortable/jquery-sortable.js";
-import "../../util/draggable-sortable/jquery-ui.css";
-import "../../util/draggable-sortable/jquery-ui.js";
 
 declare const angular:any;
 
@@ -49,6 +47,7 @@ class EtlComponent {
   // Control booleans
   private ready;
   private importReady;
+  private OldConfigJquery;
 
   // Execution related variables
   private oldConfig;
@@ -92,13 +91,13 @@ class EtlComponent {
       }
     };
 
-    this.beginPrototype = { // TODO add this module
+    this.beginPrototype = { // TODO add this module. it's an array of blocks
       begin: {
 
       }
     };
 
-    this.endPrototype = { // TODO add this module
+    this.endPrototype = { // TODO add this module. it's an array of blocks
       end: {
 
       }
@@ -144,7 +143,8 @@ class EtlComponent {
         },
         columns: {
           mandatory: false,
-          value: undefined
+          value: [],
+          array: true
         },
         nullValue: {
           mandatory: false,
@@ -223,7 +223,8 @@ class EtlComponent {
         },
         tagsAsAttribute: {
           mandatory: false,
-          value: []
+          value: [],
+          array: true
         }
       }
 
@@ -335,18 +336,6 @@ class EtlComponent {
         },
       },
 
-      code: {
-        language: {
-          mandatory: false,
-          value: "JavaScript",
-          types: ["JavaScript"]
-        },
-        code: {
-          mandatory: true,
-          value: undefined
-        },
-      },
-
       link: {
         joinFieldName: {
           mandatory: false,
@@ -387,18 +376,43 @@ class EtlComponent {
         }
       },
 
-      block: { // TODO current implementation doesn't work
-        let: {
+      // The 3 possible blocks. It's a special transformer, the implementation is different
+      let: {
+        name: {
+          mandatory: true,
+          value: undefined
+        },
+        value: {
           mandatory: false,
           value: undefined
+        },
+        expression: {
+          mandatory: false,
+          value: undefined
+        }
+      },
+
+      code: {
+        language: {
+          mandatory: false,
+          value: "JavaScript",
+          types: ["JavaScript"]
         },
         code: {
+          mandatory: true,
+          value: undefined
+        },
+      },
+
+      console: {
+        file: {
           mandatory: false,
           value: undefined
         },
-        console: {
+        commands: {
           mandatory: false,
-          value: undefined
+          value: undefined,
+          array: true
         }
       },
 
@@ -489,11 +503,48 @@ class EtlComponent {
         },
         classes: {
           mandatory: false,
-          value: undefined
+          value: {
+            name: {
+              mandatory: true,
+              value: undefined
+            },
+            extends: {
+              mandatory: false,
+              value:undefined
+            },
+            clusters: {
+              mandatory: false,
+              value: 1
+            }
+          },
+          object: true
         },
         indexes: {
           mandatory: false,
-          value: undefined
+          value: {
+            name: {
+              mandatory: false,
+              value: undefined
+            },
+            class: {
+              mandatory: true,
+              value: undefined
+            },
+            type: {
+              mandatory: true,
+              value: undefined
+            },
+            fields: {
+              mandatory: true,
+              value: undefined,
+              array: true
+            },
+            metadata: {
+              mandatory: false,
+              value: undefined
+            }
+          },
+          object: true
         },
         useLightweightEdges: {
           mandatory: false,
@@ -512,6 +563,7 @@ class EtlComponent {
     // User support
     this.ready = false;
     this.importReady = false;
+    this.OldConfigJquery = true;
     this.job = {};
     this.jobRunning = false;
     this.step = 0;
@@ -554,6 +606,9 @@ class EtlComponent {
         tagsAsAttribute: "Defines an array of elements, where child elements are considered as attributes of the document and the attribute values as the text within the element"
       },
       transformer: {
+        name: "Defines the variable name. The ETL process ignores any values with the $ prefix",
+        file: "Defines the path to a file containing the commands you want to execute",
+        commands: "Defines an array of commands, as strings, to execute in sequence",
         fieldName: "Defines the document field name to use",
         expression: "Defines the expression you want to evaluate, using OrientDB SQL",
         value: "Defines the value to set. If the value is taken or computed at run-time, use 'expression' instead",
@@ -627,19 +682,6 @@ class EtlComponent {
           }
         }
       };
-
-    // Jquery
-    $(document).ready(function () { // TODO not working
-      if (this.oldConfig) {
-        $("#pleaseExtractor").hide();
-        $("#pleaseTransformer").hide();
-        $("#pleaseLoader").hide();
-        $("#createExtractor").hide();
-        $("#createLoader").hide();
-        $("#panelPlaceholder").hide();
-        $("#extractorOptions").show();
-      }
-    });
   }
 
   extractorInit(type) {
@@ -701,27 +743,35 @@ class EtlComponent {
 
     // Canvas
     let canvas = <HTMLCanvasElement> document.getElementById("eCanvas");
+    canvas.width = 300;
+    canvas.height = 120;
+    canvas.style.width = 200 + "px";
+    canvas.style.height = 80 + "px";
+    canvas.style.position = "relative";
+    canvas.style.top = "70px";
+    canvas.style.left = "20px";
+
     let ctx = canvas.getContext("2d");
     ctx.beginPath();
-    ctx.rect(0, 0, 200, 80);
-    ctx.fillStyle = "#444444";
+    ctx.rect(10, 10, 220, 100);
+    ctx.fillStyle = '#eeeeee';
     ctx.fill();
-    ctx.font = "bold 20px sans-serif";
-    ctx.fillStyle = "#ff9900";
-    ctx.fillText(type.toUpperCase(),20,30);
-    ctx.font = "bold 12px sans-serif";
-    ctx.fillStyle = "#eeeeee";
-    ctx.fillText("click to configure",10,60);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#444444';
+    ctx.stroke();
+    ctx.font = "bold 24px sans-serif";
+    ctx.fillStyle = "#ff9966";
+    ctx.fillText(type.toUpperCase(),50,50);
+    ctx.font = "18px sans-serif";
+    ctx.fillStyle = "#444444";
+    ctx.fillText("click to configure",50,85);
 
     let eCanvas = $('#eCanvas');
-    (<any>eCanvas).draggable({
-      containment: "parent"
-    });
 
+    // Jquery
     $("#createExtractor").hide();
     $("#pleaseExtractor").hide();
-
-    $("#panelPlaceholder").hide(); // Shows the options for the extractor, hides the placeholder
+    $("#panelPlaceholder").hide();
     $("#loaderOptions").hide();
     $("#transformerOptions").hide();
     $("#extractorOptions").show();
@@ -757,14 +807,6 @@ class EtlComponent {
         vertex: {
           class: this.transformerPrototype.vertex.class.value,
           skipDuplicates: this.transformerPrototype.vertex.skipDuplicates.value
-        }
-      };
-
-    if (type === "code")
-      transformer = {
-        code: {
-          language: this.transformerPrototype.code.language.value,
-          code: this.transformerPrototype.code.code.value,
         }
       };
 
@@ -810,12 +852,29 @@ class EtlComponent {
         }
       };
 
-    if (type === "block") // TODO rethink this transformer, current implementation doesn't work
+    // let, code and console are part of the block transformer, they need a different management
+    if (type === "let")
       transformer = {
-        block: {
-          let: this.transformerPrototype.block.let.value,
-          code: this.transformerPrototype.block.code.value,
-          console: this.transformerPrototype.block.console.value
+        let: {
+          name: this.transformerPrototype.let.name.value,
+          value: this.transformerPrototype.let.value.value,
+          expression: this.transformerPrototype.let.expression.value
+        }
+      };
+
+    if (type === "console")
+      transformer = {
+        console: {
+          file: this.transformerPrototype.console.file.value,
+          commands: this.transformerPrototype.console.commands.value
+        }
+      };
+
+    if (type === "code")
+      transformer = {
+        code: {
+          language: this.transformerPrototype.code.language.value,
+          code: this.transformerPrototype.code.code.value,
         }
       };
 
@@ -834,46 +893,82 @@ class EtlComponent {
     this.readyForExecution();
 
     // Canvas
-
     let index = this.transformers.indexOf(transformer).toString();
+    let listEntry = document.createElement('li');
     let canvas = document.createElement('canvas');
     let ctx = canvas.getContext('2d');
 
-    canvas.width = 200;
-    canvas.height = 80;
+    listEntry.id = 'listEntry' + index;
+
+    canvas.width = 300;
+    canvas.height = 120;
     canvas.style.width = 200 + "px";
     canvas.style.height = 80 + "px";
     canvas.style.position = "relative";
     canvas.id = index;
 
     ctx.beginPath();
-    ctx.rect(0, 0, 200, 80);
-    ctx.fillStyle = "#444444";
+    ctx.rect(10, 10, 220, 100);
+    ctx.fillStyle = '#eeeeee';
     ctx.fill();
-    ctx.font = "bold 20px sans-serif";
-    ctx.fillStyle = "#ff9900";
-    ctx.fillText(type.toUpperCase(),20,30);
-    ctx.font = "bold 12px sans-serif";
-    ctx.fillStyle = "#eeeeee";
-    ctx.fillText("click to configure",10,60);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#444444';
+    ctx.stroke();
+    ctx.font = "bold 24px sans-serif";
+    ctx.fillStyle = "#00b386";
+    ctx.fillText(type.toUpperCase(),50,50);
+    ctx.font = "18px sans-serif";
+    ctx.fillStyle = "#444444";
+    ctx.fillText("click to configure",50,85);
 
     let list = document.getElementById("transformerList");
-    list.appendChild(canvas);
+    list.appendChild(listEntry);
+    listEntry.appendChild(canvas);
 
     let tCanvas = $('#' + index);
 
-    tCanvas.on('click', () => {this.selectTransformer(index)});
+    tCanvas.on('click', () => {this.selectTransformer(Number(canvas.id))});
 
-    (<any>(tCanvas)).draggable({
-      containment: "parent"
+    // Sortable, custom animations
+    let adjustment;
+    (<any>$("#transformerList")).sortable({
+      group: 'transformerList',
+      pullPlaceholder: false,
+      // animation on drop
+      onDrop: function  ($item, container, _super) {
+        let $clonedItem = $('<li/>').css({height: 0});
+        $item.before($clonedItem);
+        $clonedItem.animate({'height': $item.height()});
+        $item.animate($clonedItem.position(), function  () {
+          $clonedItem.detach();
+          _super($item, container);
+        });
+      },
+      // set $item relative to cursor position
+      onDragStart: function ($item, container, _super) {
+        let offset = $item.offset(),
+          pointer = container.rootGroup.pointer;
+
+        adjustment = {
+          left: pointer.left - offset.left,
+          top: pointer.top - offset.top
+        };
+        _super($item, container);
+      },
+      onDrag: function ($item, position) {
+        $item.css({
+          left: position.left - adjustment.left,
+          top: position.top - adjustment.top
+        });
+      }
     });
 
+    // Jquery
     $("#pleaseTransformer").hide();
-    $("#panelPlaceholder").hide(); // Shows the options for the extractor, hides the placeholder
+    $("#panelPlaceholder").hide();
     $("#loaderOptions").hide();
     $("#extractorOptions").hide();
     $("#transformerOptions").show();
-    
   }
 
   loaderInit(type) {
@@ -901,8 +996,8 @@ class EtlComponent {
           dbType: this.loaderPrototype.orientDb.dbType.value,
           class: this.loaderPrototype.orientDb.class.value,
           cluster: this.loaderPrototype.orientDb.cluster.value,
-          classes: this.loaderPrototype.orientDb.classes.value,
-          indexes: this.loaderPrototype.orientDb.indexes.value,
+          classes: [], // empty arrays. The default value of the related object is pushed and modified when the user click on the add button
+          indexes: [],
           useLightweightEdges: this.loaderPrototype.orientDb.useLightweightEdges.value,
           standardElementConstraints: this.loaderPrototype.orientDb.standardElementConstraints.value
         }
@@ -914,27 +1009,35 @@ class EtlComponent {
 
     // Canvas
     let canvas = <HTMLCanvasElement> document.getElementById("lCanvas");
+    canvas.width = 300;
+    canvas.height = 120;
+    canvas.style.width = 200 + "px";
+    canvas.style.height = 80 + "px";
+    canvas.style.position = "relative";
+    canvas.style.top = "70px";
+    canvas.style.left = "20px";
+
     let ctx = canvas.getContext("2d");
     ctx.beginPath();
-    ctx.rect(0, 0, 200, 80);
-    ctx.fillStyle = "#444444";
+    ctx.rect(10, 10, 220, 100);
+    ctx.fillStyle = '#eeeeee';
     ctx.fill();
-    ctx.font = "bold 20px sans-serif";
-    ctx.fillStyle = "#ff9900";
-    ctx.fillText(type.toUpperCase(),20,30);
-    ctx.font = "bold 12px sans-serif";
-    ctx.fillStyle = "#eeeeee";
-    ctx.fillText("click to configure",10,60);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#444444';
+    ctx.stroke();
+    ctx.font = "bold 24px sans-serif";
+    ctx.fillStyle = "#bf80ff";
+    ctx.fillText(type.toUpperCase(),50,50);
+    ctx.font = "18px sans-serif";
+    ctx.fillStyle = "#444444";
+    ctx.fillText("click to configure",50,85);
 
     let lCanvas = $('#lCanvas');
-    (<any>lCanvas).draggable({
-      containment: "parent"
-    });
 
+    // Jquery
     $("#pleaseLoader").hide();
     $("#createLoader").hide();
-
-    $("#panelPlaceholder").hide(); // Shows the options for the extractor, hides the placeholder
+    $("#panelPlaceholder").hide();
     $("#extractorOptions").hide();
     $("#transformerOptions").hide();
     $("#loaderOptions").show();
@@ -962,11 +1065,17 @@ class EtlComponent {
     this.currentTransformer = undefined;
     this.tKeys = undefined;
 
+    // remove the canvas and update the ids to match the array indexes
+    $("#" + index).remove();
+
+    let canvas = $("#transformerList").find("canvas");
+    for(let i = index; i < this.transformers.length; i++) {
+      (<any>canvas[i]).setAttribute("id", i);
+    }
+
     // Jquery hide/show
     $("#transformerOptions").hide();
     $("#panelPlaceholder").show();
-    $("#" + index).remove();
-
     if (this.transformers.length == 0) $("#pleaseTransformer").show();
   }
 
@@ -982,7 +1091,7 @@ class EtlComponent {
     $("#lCanvas").fadeOut(1000);
   }
 
-  oldConfigInit(oldConfig) { // TODO test, direct run feature?
+  oldConfigInit(oldConfig) { // TODO generate corresponding canvas
     let etl = JSON.parse(oldConfig);
 
     this.extractor = etl.extractor;
@@ -1004,10 +1113,13 @@ class EtlComponent {
       this.sourceInit();
     }
 
-    // control to eventually activate the run button
+    // eventually activate the run button, the jquery part is triggered by the viewchecked event
     this.readyForExecution();
   }
 
+  restoreTransformers() { // TODO creates the canvases without resetting any parameter in transformers
+
+  }
 
   // Core Functions
 
@@ -1052,6 +1164,9 @@ class EtlComponent {
 
   launch() {
     let etl = {}; // optional source control. Is that needed?
+
+    this.sortTransformers(); // Sorts transformer starting from the indexes
+    this.blockFix(); // Fixes the different behavior of block transformers
 
     if(this.source && this.config)
       etl = {
@@ -1128,6 +1243,7 @@ class EtlComponent {
     // useful assignations to reset the configuration
     this.transformers = [];
     this.currentTransformer = undefined;
+    this.config = undefined;
     this.extractor = undefined;
     this.loader = undefined;
     this.source = undefined;
@@ -1139,10 +1255,28 @@ class EtlComponent {
     this.lKeys = undefined;
   }
 
-  sortTransformers(oldIndex, newIndex) {
-    this.transformers.splice(newIndex, 0, this.transformers.splice(oldIndex, 1)[0]);
-    console.log(this.transformers); // TODO remove
+  blockFix() {
+    let tmp = [];
+    let tmpBlock;
+    for(let i = 0; i < this.transformers.length; i++) {
+      if(this.getTransformerType(this.transformers[i]) === ('let') || this.getTransformerType(this.transformers[i]) === ('console')) { // even code transformer could be included
+        tmpBlock = {block: this.transformers[i]};
+        tmp.push(tmpBlock);
+      }
+      else tmp.push(this.transformers[i]);
+    }
+    this.transformers = tmp;
+    console.log(this.transformers);
+  }
 
+  sortTransformers() {
+    let IDs = [];
+    let tmp = [];
+    $("#transformerList").find("canvas").each(function(){ IDs.push(this.id); });
+    for(let i = 0; i < this.transformers.length; i++) {
+      tmp.push(this.transformers[Number(IDs[i])]);
+    }
+    this.transformers = tmp;
   }
 
   // Getters and setters
@@ -1157,6 +1291,7 @@ class EtlComponent {
 
   getTransformerType(transformer) {
     if(!transformer) return undefined;
+
     // for every transformer, and every property of every transformer (just the type), return the property (i.e. the type) if it's equal
     for (let i = 0; i < this.transformers.length; i++) {
       for (let property in this.transformers[i]) {
@@ -1224,8 +1359,8 @@ class EtlComponent {
     $("#panelPlaceholder").slideUp(800);
   }
 
-  selectTransformer(transformer) {
-    this.currentTransformer = this.transformers[transformer];
+  selectTransformer(index) {
+    this.currentTransformer = this.transformers[index];
     this.tKeys = this.getTKeys(this.currentTransformer);
 
     $("#extractorOptions").slideUp(800);
@@ -1248,6 +1383,18 @@ class EtlComponent {
 
   ngAfterViewChecked() {
     this.enablePopovers();
+    if(this.oldConfig && this.step == 2 && this.OldConfigJquery) { // execute the Jquery part just one time
+      // Jquery
+      $(document).ready(function () {
+        $("#pleaseExtractor").hide();
+        $("#pleaseTransformer").hide();
+        $("#pleaseLoader").hide();
+        $("#createExtractor").hide();
+        $("#createLoader").hide();
+        $("#panelPlaceholder").show();
+      });
+      this.OldConfigJquery = false;
+    }
   }
 
   enablePopovers() {
