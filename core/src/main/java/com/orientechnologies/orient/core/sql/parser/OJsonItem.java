@@ -77,4 +77,28 @@ public class OJsonItem {
   public boolean refersToParent() {
     return right != null && right.refersToParent();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OJsonItem oJsonItem = (OJsonItem) o;
+
+    if (leftIdentifier != null ? !leftIdentifier.equals(oJsonItem.leftIdentifier) : oJsonItem.leftIdentifier != null)
+      return false;
+    if (leftString != null ? !leftString.equals(oJsonItem.leftString) : oJsonItem.leftString != null)
+      return false;
+    return right != null ? right.equals(oJsonItem.right) : oJsonItem.right == null;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = leftIdentifier != null ? leftIdentifier.hashCode() : 0;
+    result = 31 * result + (leftString != null ? leftString.hashCode() : 0);
+    result = 31 * result + (right != null ? right.hashCode() : 0);
+    return result;
+  }
 }
