@@ -1380,8 +1380,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       if (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
         final String message = "Magic number verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
         OLogManager.instance().error(this, "%s", message);
-        if (checksumMode == OChecksumMode.StoreAndThrow)
+        if (checksumMode == OChecksumMode.StoreAndThrow) {
+          for (ByteBuffer rb : buffersToRelease)
+            bufferPool.release(rb);
           throw new OStorageException(message);
+        }
       }
 
       return;
@@ -1419,11 +1422,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final String message = "Checksum verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
       OLogManager.instance().error(this, "%s", message);
       if (checksumMode == OChecksumMode.StoreAndThrow) {
-
-        for (ByteBuffer rb : buffersToRelease) {
+        for (ByteBuffer rb : buffersToRelease)
           bufferPool.release(rb);
-        }
-
         throw new OStorageException(message);
       }
 
