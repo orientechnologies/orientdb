@@ -99,6 +99,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private static final int PAGE_OFFSET_TO_CHECKSUM_FROM = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
+  private static boolean crc32ArraysWarningLogged = false;
+
   private final long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024L * 1024L;
 
   private final int diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES.getValueAsInteger();
@@ -2072,9 +2074,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private void logCrc32ArraysWarningAndSwitchToArrays(Exception e) {
     crc32UpdateByteBuffer = null;
-    OLogManager.instance().warn(this, "Unable to use java.util.zip.CRC32 on byte buffers, switching to arrays. Using arrays "
-            + "instead of byte buffers may produce noticeable performance hit. Consider upgrading to Java 8 or newer. Cause: %s",
-        e.toString());
+
+    if (!crc32ArraysWarningLogged) {
+      crc32ArraysWarningLogged = true;
+      OLogManager.instance().warn(this, "Unable to use java.util.zip.CRC32 on byte buffers, switching to arrays. Using arrays "
+              + "instead of byte buffers may produce noticeable performance hit. Consider upgrading to Java 8 or newer. Cause: %s",
+          e.toString());
+    }
   }
 
   private static class FlushThreadFactory implements ThreadFactory {
