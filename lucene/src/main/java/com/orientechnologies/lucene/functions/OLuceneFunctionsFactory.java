@@ -15,64 +15,17 @@
  */
 package com.orientechnologies.lucene.functions;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactoryTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+public class OLuceneFunctionsFactory extends OSQLFunctionFactoryTemplate {
 
-public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
+  public OLuceneFunctionsFactory() {
 
-  private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
-
-  static {
-    register(OLuceneSearchOnIndexFunction.NAME, new OLuceneSearchOnIndexFunction());
-    register(OLuceneSearchOnFieldsFunction.NAME, new OLuceneSearchOnFieldsFunction());
-    register(OLuceneSearchOnClassFunction.NAME, new OLuceneSearchOnClassFunction());
-    register(OLuceneSearchMoreLikeThisFunction.NAME, new OLuceneSearchMoreLikeThisFunction());
-  }
-
-  public static void register(final String name, final Object function) {
-    FUNCTIONS.put(name.toLowerCase(), function);
-  }
-
-  @Override
-  public boolean hasFunction(final String name) {
-    return FUNCTIONS.containsKey(name);
-  }
-
-  @Override
-  public Set<String> getFunctionNames() {
-    return FUNCTIONS.keySet();
-  }
-
-  @Override
-  public OSQLFunction createFunction(final String name) throws OCommandExecutionException {
-    final Object obj = FUNCTIONS.get(name);
-
-    if (obj == null)
-      throw new OCommandExecutionException("Unknown function name :" + name);
-
-    if (obj instanceof OSQLFunction)
-      return (OSQLFunction) obj;
-    else {
-      // it's a class
-      final Class<?> clazz = (Class<?>) obj;
-      try {
-        return (OSQLFunction) clazz.newInstance();
-      } catch (Exception e) {
-        throw OException.wrapException(new OCommandExecutionException("Error in creation of function " + name
-            + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
-
-      }
-    }
+    register(new OLuceneSearchOnIndexFunction());
+    register(new OLuceneSearchOnFieldsFunction());
+    register(new OLuceneSearchOnClassFunction());
+    register(new OLuceneSearchMoreLikeThisFunction());
 
   }
 
-  public Map<String, Object> getFunctions() {
-    return FUNCTIONS;
-  }
 }

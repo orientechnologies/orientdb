@@ -32,4 +32,3 @@ EXPOSE 2480
 # Default command start the server
 CMD ["server.sh"]
 
-HEALTHCHECK CMD curl --fail http://localhost:2480/ || exit 1

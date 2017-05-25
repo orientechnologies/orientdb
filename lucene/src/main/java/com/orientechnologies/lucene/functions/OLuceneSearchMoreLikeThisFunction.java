@@ -18,8 +18,12 @@ import com.orientechnologies.orient.core.sql.parser.OFromItem;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.mlt.MoreLikeThis;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.*;
+import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery.Builder;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -34,12 +38,12 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
   public static final String NAME = "search_more";
 
   public OLuceneSearchMoreLikeThisFunction() {
-    super(NAME, 1, 2);
+    super(OLuceneSearchMoreLikeThisFunction.NAME, 1, 2);
   }
 
   @Override
   public String getName() {
-    return NAME;
+    return OLuceneSearchMoreLikeThisFunction.NAME;
   }
 
   @Override
@@ -55,7 +59,7 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
 
     String className = element.getSchemaType().get().getName();
 
-    OLuceneFullTextIndex index = searchForIndex(ctx, className);
+    OLuceneFullTextIndex index = this.searchForIndex(ctx, className);
 
     System.out.println("element = " + element.toJSON());
     if (index == null)
@@ -98,7 +102,7 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
 
     System.out.println("target = " + target);
     System.out.println("rightValue = " + rightValue);
-    OLuceneFullTextIndex index = searchForIndex(target, ctx);
+    OLuceneFullTextIndex index = this.searchForIndex(target, ctx);
 
     if (index == null)
       return Collections.emptySet();
@@ -107,19 +111,19 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
 
     OExpression expression = args[0];
 
-    ODocument metadata = parseMetadata(args);
+    ODocument metadata = this.parseMetadata(args);
 
-    List<String> ridsAsString = parseRids(ctx, expression);
+    List<String> ridsAsString = this.parseRids(ctx, expression);
 
-    Set<OIdentifiable> others = index.get("RID:( " + QueryParser.escape(String.join(" ", ridsAsString)) + ")");
+    Set<OIdentifiable> others = index.get("RID:( " + QueryParserBase.escape(String.join(" ", ridsAsString)) + ")");
 
-    MoreLikeThis mlt = buildMoreLikeThis(index, searcher, metadata);
+    MoreLikeThis mlt = this.buildMoreLikeThis(index, searcher, metadata);
 
-    BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+    Builder queryBuilder = new Builder();
 
-    excludeOtherFromResults(ridsAsString, queryBuilder);
+    this.excludeOtherFromResults(ridsAsString, queryBuilder);
 
-    addLikeQueries(index, others, mlt, queryBuilder);
+    this.addLikeQueries(index, others, mlt, queryBuilder);
 
     Query mltQuery = queryBuilder.build();
 
@@ -189,35 +193,30 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
   }
 
   private void addLikeQueries(OLuceneFullTextIndex index, Set<OIdentifiable> others, MoreLikeThis mlt,
-      BooleanQuery.Builder queryBuilder) {
+      Builder queryBuilder) {
     others.stream()
-        .forEach(oi ->
-            Arrays.stream(mlt.getFieldNames())
+        .forEach(oi -> Arrays.stream(mlt.getFieldNames())
+            .forEach(fieldName -> {
+              OElement element = oi.getRecord().load();
+              String property = element.getProperty(fieldName);
 
-                .forEach(fieldName -> {
-                  OElement element = oi.getRecord().load();
-                  String property = element.getProperty(fieldName);
+              try {
+                Query fieldQuery = mlt.like(fieldName, new StringReader(property));
+                if (!fieldQuery.toString().isEmpty())
+                  queryBuilder.add(fieldQuery, Occur.SHOULD);
+              } catch (IOException e) {
+                e.printStackTrace();
+              }
 
-                  try {
-                    Query fieldQuery = mlt.like(fieldName, new StringReader(property));
-                    if (!fieldQuery.toString().isEmpty())
-                      queryBuilder.add(fieldQuery, Occur.SHOULD);
-                  } catch (IOException e) {
-                    e.printStackTrace();
-                  }
-
-                })
+            })
 
         );
   }
 
-  private void excludeOtherFromResults(List<String> ridsAsString, BooleanQuery.Builder queryBuilder) {
+  private void excludeOtherFromResults(List<String> ridsAsString, Builder queryBuilder) {
     ridsAsString.stream()
         .forEach(rid ->
-            {
-              Term rid1 = new Term("RID", QueryParser.escape(rid));
-              queryBuilder.add(new TermQuery(rid1), BooleanClause.Occur.MUST_NOT);
-            }
+            queryBuilder.add(new TermQuery(new Term("RID", QueryParser.escape(rid))), Occur.MUST_NOT)
 
         );
   }
@@ -250,15 +249,9 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
   }
 
   @Override
-  public Object getResult() {
-    System.out.println("getResult");
-    return super.getResult();
-  }
-
-  @Override
   public long estimate(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args) {
-    OLuceneFullTextIndex index = searchForIndex(target, ctx);
+    OLuceneFullTextIndex index = this.searchForIndex(target, ctx);
 
     if (index != null)
       return index.getSize();
@@ -278,7 +271,7 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
   public boolean allowsIndexedExecution(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args) {
 
-    OLuceneFullTextIndex index = searchForIndex(target, ctx);
+    OLuceneFullTextIndex index = this.searchForIndex(target, ctx);
 
     return index != null;
   }

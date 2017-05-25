@@ -9,8 +9,6 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
@@ -26,7 +24,7 @@ import static com.orientechnologies.lucene.functions.OLuceneFunctionsUtils.getOr
 /**
  * Created by frank on 15/01/2017.
  */
-public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
+public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate {
 
   public static final String NAME = "search_class";
 
@@ -50,7 +48,6 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
 
     OElement element = result.toElement();
 
-    System.out.println("element = " + element);
     String className = element.getSchemaType().get().getName();
 
     OLuceneFullTextIndex index = searchForIndex(ctx, className);
@@ -113,17 +110,16 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
         Set<OIdentifiable> luceneResultSet = index.get(query.toString());
       }
 
-
       Set<OIdentifiable> luceneResultSet = index.get(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx));
 
-      System.out.println("luceneResultSet.size() = " + luceneResultSet.size());
       return luceneResultSet;
     }
     return Collections.emptySet();
 
   }
 
-  private OLuceneFullTextIndex searchForIndex(OFromClause target, OCommandContext ctx) {
+  @Override
+  protected OLuceneFullTextIndex searchForIndex(OFromClause target, OCommandContext ctx, OExpression... args) {
     OFromItem item = target.getItem();
 
     String className = item.getIdentifier().getStringValue();
@@ -150,41 +146,5 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
     return indices.size() == 0 ? null : indices.get(0);
   }
 
-  @Override
-  public Object getResult() {
-    return super.getResult();
-  }
-
-  @Override
-  public long estimate(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
-      OExpression... args) {
-    OLuceneFullTextIndex index = searchForIndex(target, ctx);
-
-    if (index != null)
-      return index.getSize();
-    return 0;
-
-  }
-
-  @Override
-  public boolean canExecuteInline(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
-      OExpression... args) {
-    return allowsIndexedExecution(target, operator, rightValue, ctx, args);
-  }
-
-  @Override
-  public boolean allowsIndexedExecution(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
-      OExpression... args) {
-
-    OLuceneFullTextIndex index = searchForIndex(target, ctx);
-
-    return index != null;
-  }
-
-  @Override
-  public boolean shouldExecuteAfterSearch(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
-      OCommandContext ctx, OExpression... args) {
-    return false;
-  }
 
 }

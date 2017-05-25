@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.*;
 import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
 import com.orientechnologies.orient.core.sql.functions.graph.*;
@@ -27,17 +25,13 @@ import com.orientechnologies.orient.core.sql.functions.stat.*;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionConcat;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
 
-import java.util.*;
-
 /**
  * Default set of SQL function.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  */
-public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
-
-  private static final Map<String, Object> FUNCTIONS = new HashMap<>();
-  static {
+public final class ODefaultSQLFunctionFactory extends OSQLFunctionFactoryTemplate {
+  public ODefaultSQLFunctionFactory() {
     // MISC FUNCTIONS
     register(OSQLFunctionAverage.NAME, OSQLFunctionAverage.class);
     register(OSQLFunctionCoalesce.NAME, new OSQLFunctionCoalesce());
@@ -92,43 +86,6 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionShortestPath.NAME, OSQLFunctionShortestPath.class);
     register(OSQLFunctionDijkstra.NAME, OSQLFunctionDijkstra.class);
     register(OSQLFunctionAstar.NAME, OSQLFunctionAstar.class);
-
-    OCustomSQLFunctionFactory.register("math_" , Math.class);
-  }
-
-  public static void register(final String iName, final Object iImplementation) {
-    FUNCTIONS.put(iName.toLowerCase(), iImplementation);
-  }
-
-  @Override
-  public Set<String> getFunctionNames() {
-    return FUNCTIONS.keySet();
-  }
-
-  @Override
-  public boolean hasFunction(final String name) {
-    return FUNCTIONS.containsKey(name);
-  }
-
-  @Override
-  public OSQLFunction createFunction(final String name) {
-    final Object obj = FUNCTIONS.get(name);
-
-    if (obj == null)
-      throw new OCommandExecutionException("Unknown function name :" + name);
-
-    if (obj instanceof OSQLFunction)
-      return (OSQLFunction) obj;
-    else {
-      // it's a class
-      final Class<?> clazz = (Class<?>) obj;
-      try {
-        return (OSQLFunction) clazz.newInstance();
-      } catch (Exception e) {
-        throw OException.wrapException(new OCommandExecutionException("Error in creation of function " + name
-            + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
-      }
-    }
 
   }
 

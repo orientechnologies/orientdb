@@ -15,71 +15,17 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
-
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactoryTemplate;
 
 /**
- * 
  * @author Johann Sorel (Geomatys)
  * @module pending
  */
-public class OGraphFunctionFactory implements OSQLFunctionFactory {
+public class OGraphFunctionFactory extends OSQLFunctionFactoryTemplate {
 
-  private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
-  static {
+  public OGraphFunctionFactory() {
     register(OSQLFunctionGremlin.NAME, OSQLFunctionGremlin.class);
-//    register(OSQLFunctionDijkstra.NAME, new OSQLFunctionDijkstra());
-//    register(OSQLFunctionAstar.NAME, OSQLFunctionAstar.class);
-//    register(OSQLFunctionShortestPath.NAME, new OSQLFunctionShortestPath());
-
-    register(OSQLFunctionLabel.NAME, new OSQLFunctionLabel());
-//    register(OSQLFunctionOut.NAME, new OSQLFunctionOut());
-//    register(OSQLFunctionIn.NAME, new OSQLFunctionIn());
-//    register(OSQLFunctionBoth.NAME, new OSQLFunctionBoth());
-//    register(OSQLFunctionOutE.NAME, new OSQLFunctionOutE());
-//    register(OSQLFunctionInE.NAME, new OSQLFunctionInE());
-//    register(OSQLFunctionBothE.NAME, new OSQLFunctionBothE());
-//    register(OSQLFunctionOutV.NAME, new OSQLFunctionOutV());
-//    register(OSQLFunctionInV.NAME, new OSQLFunctionInV());
-//    register(OSQLFunctionBothV.NAME, new OSQLFunctionBothV());
+    register(new OSQLFunctionLabel());
   }
 
-  public static void register(final String iName, final Object iImplementation) {
-    FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iImplementation);
-  }
-
-  public Set<String> getFunctionNames() {
-    return FUNCTIONS.keySet();
-  }
-
-  public boolean hasFunction(final String name) {
-    return FUNCTIONS.containsKey(name.toLowerCase());
-  }
-
-  public OSQLFunction createFunction(final String name) {
-    final Object obj = FUNCTIONS.get(name.toLowerCase());
-
-    if (obj == null)
-      throw new OCommandExecutionException("Unknown function name :" + name);
-
-    if (obj instanceof OSQLFunction)
-      return (OSQLFunction) obj;
-    else {
-      // it's a class
-      final Class<?> clazz = (Class<?>) obj;
-      try {
-        return (OSQLFunction) clazz.newInstance();
-      } catch (Exception e) {
-        throw OException.wrapException(new OCommandExecutionException("Error in creation of function " + name
-            + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
-      }
-    }
-  }
 }

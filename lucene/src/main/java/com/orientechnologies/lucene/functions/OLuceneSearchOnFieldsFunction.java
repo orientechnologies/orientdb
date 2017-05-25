@@ -9,8 +9,6 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
@@ -26,7 +24,7 @@ import static com.orientechnologies.lucene.functions.OLuceneFunctionsUtils.getOr
 /**
  * Created by frank on 15/01/2017.
  */
-public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
+public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate {
 
   public static final String NAME = "search_fields";
 
@@ -88,10 +86,6 @@ public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implemen
     return "SEARCH_INDEX( indexName, [ metdatada {} ] )";
   }
 
-  @Override
-  public boolean filterResult() {
-    return true;
-  }
 
   @Override
   public Iterable<OIdentifiable> searchFromTarget(OFromClause target,
@@ -122,7 +116,8 @@ public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implemen
 
   }
 
-  private OLuceneFullTextIndex searchForIndex(OFromClause target, OCommandContext ctx, OExpression... args) {
+  @Override
+  protected OLuceneFullTextIndex searchForIndex(OFromClause target, OCommandContext ctx, OExpression... args) {
     List<String> fieldNames = (List<String>) args[0].execute((OIdentifiable) null, ctx);
     OFromItem item = target.getItem();
     String className = item.getIdentifier().getStringValue();
@@ -149,43 +144,6 @@ public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implemen
 
     return indices.size() == 0 ? null : indices.get(0);
   }
-
-  @Override
-  public Object getResult() {
-    System.out.println("getResult");
-    return super.getResult();
-  }
-
-  @Override
-  public long estimate(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
-      OExpression... args) {
-
-    OLuceneFullTextIndex index = searchForIndex(target, ctx, args);
-
-    if (index != null)
-      return index.getSize();
-    return 0;
-  }
-
-  @Override
-  public boolean canExecuteInline(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
-      OExpression... args) {
-    return allowsIndexedExecution(target, operator, rightValue, ctx, args);
-  }
-
-  @Override
-  public boolean allowsIndexedExecution(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
-      OExpression... args) {
-    OLuceneFullTextIndex index = searchForIndex(target, ctx, args);
-    return index != null;
-  }
-
-  @Override
-  public boolean shouldExecuteAfterSearch(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
-      OCommandContext ctx, OExpression... args) {
-    return false;
-  }
-
 
 
   public <T> List<T> intersection(List<T> list1, List<T> list2) {

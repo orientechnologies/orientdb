@@ -18,6 +18,11 @@ import java.util.stream.Collectors;
 public class OCustomSQLFunctionFactory implements OSQLFunctionFactory {
   private static final Map<String, Object> FUNCTIONS = new HashMap<>();
 
+  static {
+    register("math_", Math.class);
+
+  }
+
   public static void register(final String prefix, final Class<?> clazz) {
     final Map<String, List<Method>> methodsMap = Arrays.stream(clazz.getMethods())
         .filter(m -> Modifier.isStatic(m.getModifiers()))
