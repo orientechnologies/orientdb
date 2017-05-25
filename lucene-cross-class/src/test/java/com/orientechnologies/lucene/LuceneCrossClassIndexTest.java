@@ -118,4 +118,9 @@ public class LuceneCrossClassIndexTest extends BaseLuceneTest {
         });
   }
 
+  @Test
+  public void emptyTest() throws Exception {
+
+    //just an empty test
+  }
 }
