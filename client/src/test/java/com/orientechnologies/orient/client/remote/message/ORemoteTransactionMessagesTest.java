@@ -132,12 +132,12 @@ public class ORemoteTransactionMessagesTest {
     changes.put("some", change);
 
     MockChannel channel = new MockChannel();
-    OFetchTransactionResponse response = new OFetchTransactionResponse(10, operations, changes);
+    OFetchTransactionResponse response = new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
     response.write(channel, 0, ORecordSerializerNetworkV37.INSTANCE);
 
     channel.close();
 
-    OFetchTransactionResponse readResponse = new OFetchTransactionResponse(10, operations, changes);
+    OFetchTransactionResponse readResponse = new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
     readResponse.read(channel, null);
 
     assertEquals(readResponse.getOperations().size(), 3);
@@ -177,12 +177,12 @@ public class ORemoteTransactionMessagesTest {
     changes.put("some", change);
 
     MockChannel channel = new MockChannel();
-    OFetchTransactionResponse response = new OFetchTransactionResponse(10, operations, changes);
+    OFetchTransactionResponse response = new OFetchTransactionResponse(10, operations, changes,new HashMap<>());
     response.write(channel, 0, ORecordSerializerNetworkV37.INSTANCE);
 
     channel.close();
 
-    OFetchTransactionResponse readResponse = new OFetchTransactionResponse(10, operations, changes);
+    OFetchTransactionResponse readResponse = new OFetchTransactionResponse(10, operations, changes,new HashMap<>());
     readResponse.read(channel, null);
 
     assertEquals(readResponse.getTxId(), 10);

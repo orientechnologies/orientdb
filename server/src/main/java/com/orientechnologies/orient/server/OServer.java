@@ -892,6 +892,10 @@ public class OServer {
     hookManager = new OConfigurableHooksManager(cfg);
   }
 
+  public OConfigurableHooksManager getHookManager() {
+    return hookManager;
+  }
+
   protected void loadUsers() throws IOException {
     try {
       final OServerConfiguration configuration = serverCfg.getConfiguration();

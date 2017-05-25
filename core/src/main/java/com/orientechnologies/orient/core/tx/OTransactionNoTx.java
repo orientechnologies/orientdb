@@ -382,4 +382,14 @@ public class OTransactionNoTx extends OTransactionAbstract {
   @Override
   public void rollback(boolean force, int commitLevelDiff) {
   }
+
+  @Override
+  public OTransactionIndexChanges getIndexChangesInternal(String iName) {
+    return null;
+  }
+
+  @Override
+  public void internalRollback() {
+
+  }
 }

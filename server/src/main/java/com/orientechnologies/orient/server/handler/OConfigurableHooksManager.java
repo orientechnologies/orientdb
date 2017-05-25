@@ -20,18 +20,16 @@
 
 package com.orientechnologies.orient.server.handler;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -41,9 +39,9 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 
 /**
  * User: kasper fock Date: 09/11/12 Time: 22:35 Registers hooks defined the in xml configuration.
- *
+ * <p>
  * Hooks can be defined in xml as :
- *
+ * <p>
  * <hooks> <hook class="HookClass"> <parameters> <parameter name="foo" value="bar" /> </parameters> </hook> </hooks> In case any
  * parameters is defined the hook class should have a method with following signature: public void config(OServer oServer,
  * OServerParameterConfiguration[] iParams)
@@ -56,6 +54,14 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
     configuredHooks = iCfg.hooks;
     if (configuredHooks != null && !configuredHooks.isEmpty())
       Orient.instance().addDbLifecycleListener(this);
+  }
+
+  public void addHook(OServerHookConfiguration configuration) {
+    if (this.configuredHooks == null) {
+      configuredHooks = new ArrayList<>();
+      Orient.instance().addDbLifecycleListener(this);
+    }
+    configuredHooks.add(configuration);
   }
 
   @Override
@@ -74,7 +80,20 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
       for (OServerHookConfiguration hook : configuredHooks) {
         try {
           final ORecordHook.HOOK_POSITION pos = ORecordHook.HOOK_POSITION.valueOf(hook.position);
-          final ORecordHook h = (ORecordHook) Class.forName(hook.clazz).newInstance();
+          Class<?> klass = Class.forName(hook.clazz);
+          final ORecordHook h;
+          Constructor constructor = null;
+          try {
+            constructor = klass.getConstructor(ODatabaseDocument.class);
+          } catch (NoSuchMethodException ex) {
+            //Ignore
+          }
+
+          if (constructor != null) {
+            h = (ORecordHook) constructor.newInstance(iDatabase);
+          } else {
+            h = (ORecordHook) klass.newInstance();
+          }
           if (hook.parameters != null && hook.parameters.length > 0)
             try {
               final Method m = h.getClass().getDeclaredMethod("config", new Class[] { OServerParameterConfiguration[].class });
@@ -87,8 +106,8 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
             }
           db.registerHook(h, pos);
         } catch (Exception e) {
-          OLogManager.instance().error(this, "[configure] Failed to configure hook '%s' due to the an error : ", e, hook.clazz,
-              e.getMessage());
+          OLogManager.instance()
+              .error(this, "[configure] Failed to configure hook '%s' due to the an error : ", e, hook.clazz, e.getMessage());
         }
       }
     }
@@ -101,7 +120,6 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
   @Override
   public void onDrop(ODatabaseInternal iDatabase) {
   }
-
 
   @Override
   public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {

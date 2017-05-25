@@ -7,6 +7,7 @@ public class ORecordOperationRequest {
   private byte    type;
   private byte    recordType;
   private ORID    id;
+  private ORID    oldId;
   private ORecord record;
   private int     version;
   private boolean contentChanged;
@@ -17,6 +18,14 @@ public class ORecordOperationRequest {
 
   public void setId(ORID id) {
     this.id = id;
+  }
+
+  public ORID getOldId() {
+    return oldId;
+  }
+
+  public void setOldId(ORID oldId) {
+    this.oldId = oldId;
   }
 
   public ORecord getRecord() {

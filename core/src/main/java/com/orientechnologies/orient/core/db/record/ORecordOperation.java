@@ -115,6 +115,10 @@ public class ORecordOperation implements Comparable {
     return -1;
   }
 
+  public byte getType() {
+    return type;
+  }
+
   @Override
   public int compareTo(Object o) {
     return record.compareTo(((ORecordOperation) o).record);

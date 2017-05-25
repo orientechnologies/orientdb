@@ -72,10 +72,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
-import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionNoTx;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
+import com.orientechnologies.orient.core.tx.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -2606,7 +2603,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         }
 
       // ROLLBACK TX AT DB LEVEL
-      currentTx.rollback(false, 0);
+      ((OTransactionAbstract) currentTx).internalRollback();
       getLocalCache().clear();
 
       // WAKE UP ROLLBACK LISTENERS

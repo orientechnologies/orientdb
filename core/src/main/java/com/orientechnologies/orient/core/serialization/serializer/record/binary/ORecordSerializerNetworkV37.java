@@ -82,7 +82,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       if (ODocumentInternal.rawContainsField(document, fieldName)) {
         continue;
       }
-      ODocumentInternal.rawField(document,fieldName,value,type);
+      ODocumentInternal.rawField(document, fieldName, value, type);
 
       for (String field : iFields) {
         if (field.equals(fieldName)) {
@@ -116,7 +116,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       if (ODocumentInternal.rawContainsField(document, fieldName)) {
         continue;
       }
-      ODocumentInternal.rawField(document,fieldName,value,type);
+      ODocumentInternal.rawField(document, fieldName, value, type);
     }
 
     ORecordInternal.clearSource(document);
@@ -336,7 +336,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     while ((size--) > 0) {
       OType keyType = readOType(bytes);
       Object key = deserializeValue(bytes, keyType, document);
-      ORecordId value = readOptimizedLink(bytes);
+      OIdentifiable value = readOptimizedLink(bytes);
       if (value.equals(NULL_RECORD_ID))
         result.put(key, null);
       else
@@ -363,7 +363,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   private Collection<OIdentifiable> readLinkCollection(BytesContainer bytes, Collection<OIdentifiable> found) {
     final int items = OVarIntSerializer.readAsInteger(bytes);
     for (int i = 0; i < items; i++) {
-      ORecordId id = readOptimizedLink(bytes);
+      OIdentifiable id = readOptimizedLink(bytes);
       if (id.equals(NULL_RECORD_ID))
         found.add(null);
       else
@@ -372,8 +372,12 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     return found;
   }
 
-  private ORecordId readOptimizedLink(final BytesContainer bytes) {
-    return new ORecordId(OVarIntSerializer.readAsInteger(bytes), OVarIntSerializer.readAsLong(bytes));
+  private OIdentifiable readOptimizedLink(final BytesContainer bytes) {
+    ORecordId id = new ORecordId(OVarIntSerializer.readAsInteger(bytes), OVarIntSerializer.readAsLong(bytes));
+    if (id.isTemporary()) {
+      return id.getRecord();
+    }
+    return id;
   }
 
   private Collection<?> readEmbeddedCollection(final BytesContainer bytes, final Collection<Object> found,

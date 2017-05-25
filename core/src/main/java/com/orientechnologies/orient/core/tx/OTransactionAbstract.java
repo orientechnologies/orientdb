@@ -42,16 +42,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class OTransactionAbstract implements OTransaction {
-  protected final ODatabaseDocumentInternal           database;
+  protected final ODatabaseDocumentInternal database;
   protected TXSTATUS                            status         = TXSTATUS.INVALID;
   protected ISOLATION_LEVEL                     isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
   protected HashMap<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
 
-
-
   private static final class LockedRecordMetadata {
     private final OStorage.LOCKING_STRATEGY strategy;
-    private int                             locksCount;
+    private       int                       locksCount;
 
     public LockedRecordMetadata(OStorage.LOCKING_STRATEGY strategy) {
       this.strategy = strategy;
@@ -252,5 +250,7 @@ public abstract class OTransactionAbstract implements OTransaction {
       return database.getClusterNameById(clusterId);
     }
   }
+
+  public abstract void internalRollback();
 
 }

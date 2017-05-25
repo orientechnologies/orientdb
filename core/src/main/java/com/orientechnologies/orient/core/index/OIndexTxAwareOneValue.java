@@ -265,7 +265,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
   @Override
   public OIdentifiable get(Object key) {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
       return super.get(key);
 
@@ -295,7 +295,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   @Override
   public OIndexCursor iterateEntriesBetween(Object fromKey, final boolean fromInclusive, Object toKey, final boolean toInclusive,
       final boolean ascOrder) {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
       return super.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
 
@@ -318,7 +318,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
       return super.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
 
@@ -342,7 +342,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
       return super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
 
@@ -365,7 +365,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
   @Override
   public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
       return super.iterateEntries(keys, ascSortOrder);
 
@@ -411,15 +411,15 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
   private Map.Entry<Object, OIdentifiable> calculateTxIndexEntry(final Object key, final OIdentifiable backendValue,
       final OTransactionIndexChanges indexChanges) {
+    OIdentifiable result = backendValue;
     final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
     if (changesPerKey.entries.isEmpty()) {
-      if (backendValue == null)
+      if (backendValue == null) {
         return null;
-      else
+      } else {
         return createMapEntry(key, backendValue);
+      }
     }
-
-    OIdentifiable result = backendValue;
 
     for (OTransactionIndexEntry entry : changesPerKey.entries) {
       if (entry.operation == OPERATION.REMOVE)

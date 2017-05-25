@@ -59,7 +59,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial       = new AtomicInteger();
-  private        boolean       changed        = true;
+  protected      boolean       changed        = true;
   private        boolean       alreadyCleared = false;
   private        boolean       usingLog       = true;
   private int txStartCounter;
@@ -123,6 +123,27 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     rollback(false, -1);
   }
 
+  public void internalRollback() {
+    status = TXSTATUS.ROLLBACKING;
+    // CLEAR THE CACHE
+    database.getLocalCache().clear();
+
+    // REMOVE ALL THE DIRTY ENTRIES AND UNDO ANY DIRTY DOCUMENT IF POSSIBLE.
+    for (ORecordOperation v : allEntries.values()) {
+      final ORecord rec = v.getRecord();
+      if (rec.isDirty())
+        if (rec instanceof ODocument && ((ODocument) rec).isTrackingChanges())
+          ((ODocument) rec).undo();
+        else
+          rec.unload();
+    }
+
+    close();
+
+    status = TXSTATUS.ROLLED_BACK;
+
+  }
+
   @Override
   public void rollback(boolean force, int commitLevelDiff) {
     if (txStartCounter < 0)
@@ -150,22 +171,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       }
     }, true);
 
-    // CLEAR THE CACHE
-    database.getLocalCache().clear();
-
-    // REMOVE ALL THE DIRTY ENTRIES AND UNDO ANY DIRTY DOCUMENT IF POSSIBLE.
-    for (ORecordOperation v : allEntries.values()) {
-      final ORecord rec = v.getRecord();
-      if (rec.isDirty())
-        if (rec instanceof ODocument && ((ODocument) rec).isTrackingChanges())
-          ((ODocument) rec).undo();
-        else
-          rec.unload();
-    }
-
-    close();
-
-    status = TXSTATUS.ROLLED_BACK;
+    internalRollback();
   }
 
   public ORecord loadRecord(final ORID rid, final ORecord iRecord, final String fetchPlan, final boolean ignoreCache,
@@ -417,7 +423,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       try {
         final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
-        if (!rid.isValid()) {
+        if (!rid.isPersistent() && !rid.isTemporary()) {
           ORecordInternal.onBeforeIdentityChanged(iRecord);
           database.assignAndCheckCluster(iRecord, iClusterName);
 

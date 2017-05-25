@@ -6,6 +6,7 @@ import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -18,8 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static com.orientechnologies.orient.client.remote.message.OMessageHelper.writeTransactionEntry;
 
 /**
  * Created by tglman on 30/12/16.
@@ -35,7 +34,7 @@ public class OFetchTransactionResponse implements OBinaryResponse {
   }
 
   public OFetchTransactionResponse(int txId, Iterable<ORecordOperation> operations,
-      Map<String, OTransactionIndexChanges> indexChanges) {
+      Map<String, OTransactionIndexChanges> indexChanges, Map<ORID, ORID> updatedRids) {
     this.txId = txId;
     this.indexChanges = new ArrayList<>();
     List<ORecordOperationRequest> netOperations = new ArrayList<>();
@@ -45,7 +44,9 @@ public class OFetchTransactionResponse implements OBinaryResponse {
       ORecordOperationRequest request = new ORecordOperationRequest();
       request.setType(txEntry.type);
       request.setVersion(txEntry.getRecord().getVersion());
-      request.setId(txEntry.getRecord().getIdentity());
+      request.setId(txEntry.getRID());
+      ORID oldID = updatedRids.get(txEntry.getRID());
+      request.setOldId(oldID!= null?oldID:txEntry.getRID());
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
       request.setRecord(txEntry.getRecord());
       request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
@@ -78,6 +79,7 @@ public class OFetchTransactionResponse implements OBinaryResponse {
     iNetwork.writeByte((byte) 1);
     iNetwork.writeByte(txEntry.getType());
     iNetwork.writeRID(txEntry.getId());
+    iNetwork.writeRID(txEntry.getOldId());
     iNetwork.writeByte(txEntry.getRecordType());
 
     switch (txEntry.getType()) {
@@ -120,6 +122,7 @@ public class OFetchTransactionResponse implements OBinaryResponse {
     ORecordOperationRequest entry = new ORecordOperationRequest();
     entry.setType(channel.readByte());
     entry.setId(channel.readRID());
+    entry.setOldId(channel.readRID());
     entry.setRecordType(channel.readByte());
     ORecord record = Orient.instance().getRecordFactoryManager().newInstance(entry.getRecordType());
     switch (entry.getType()) {

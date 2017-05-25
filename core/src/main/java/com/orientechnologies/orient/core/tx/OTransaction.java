@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public interface OTransaction {
+
   enum TXTYPE {
     NOTX, OPTIMISTIC, PESSIMISTIC
   }
@@ -128,6 +129,7 @@ public interface OTransaction {
   void clearIndexEntries();
 
   OTransactionIndexChanges getIndexChanges(String iName);
+  OTransactionIndexChanges getIndexChangesInternal(String iName);
 
   /**
    * Tells if the transaction is active.
