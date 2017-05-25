@@ -29,17 +29,17 @@ import com.orientechnologies.orient.core.command.script.formatter.OGroovyScriptF
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
 import org.apache.tinkerpop.gremlin.jsr223.CachedGremlinScriptEngineManager;
-import org.apache.tinkerpop.gremlin.orientdb.OrientElement;
-import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
-import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
-import org.apache.tinkerpop.gremlin.orientdb.OrientVertexProperty;
+import org.apache.tinkerpop.gremlin.orientdb.*;
 import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OElementTransformer;
 import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OrientPropertyTransformer;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
+import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
@@ -75,6 +75,7 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
 
     private void initCustomTransformer(OScriptManager scriptManager) {
 
+        scriptManager.getTransformer().registerResultTransformer(OrientEdge.class, new OElementTransformer());
         scriptManager.getTransformer().registerResultTransformer(OrientVertex.class, new OElementTransformer());
         scriptManager.getTransformer().registerResultTransformer(OrientElement.class, new OElementTransformer());
         scriptManager.getTransformer().registerResultTransformer(OrientVertexProperty.class, new OrientPropertyTransformer());
@@ -94,9 +95,31 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
             ScriptEngine engine = entry.object;
             bindParameters(engine, params);
 
-            final Traversal result = (Traversal) engine.eval(iText);
+            Object eval = engine.eval(iText);
 
-            return new OGremlinResultSet(result, scriptManager.getTransformer(), true);
+            if(eval instanceof Traversal){
+
+
+                Traversal result = (Traversal) eval;
+
+                return new OGremlinResultSet(result, scriptManager.getTransformer(), true);
+            }else if(eval instanceof TraversalExplanation){
+                OInternalResultSet resultSet = new OInternalResultSet();
+                resultSet.setPlan(new OGremlinExecutionPlan((TraversalExplanation) eval));
+                OResultInternal item = new OResultInternal();
+                item.setProperty("executionPlan", ((TraversalExplanation) eval).prettyPrint());
+                resultSet.add(item);
+                return resultSet;
+            }else {
+                OInternalResultSet resultSet = new OInternalResultSet();
+                OResultInternal item = new OResultInternal();
+                item.setProperty("value", eval);
+                return resultSet;
+            }
+
+
+
+
 
         } catch (Exception e) {
             throw OException.wrapException(new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
