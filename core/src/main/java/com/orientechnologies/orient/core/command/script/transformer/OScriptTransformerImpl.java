@@ -11,10 +11,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Enrico Risa on 27/01/17.
@@ -27,6 +24,7 @@ public class OScriptTransformerImpl implements OScriptTransformer {
   public OScriptTransformerImpl() {
 
     registerResultTransformer(HashMap.class, new MapTransformer(this));
+    registerResultTransformer(LinkedHashMap.class, new MapTransformer(this));
     registerResultSetTransformer(ScriptObjectMirror.class, new ONashornObjectMirrorTransformer(this));
   }
 
