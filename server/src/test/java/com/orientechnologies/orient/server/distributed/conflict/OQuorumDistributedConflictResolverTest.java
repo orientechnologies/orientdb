@@ -84,6 +84,11 @@ public class OQuorumDistributedConflictResolverTest {
     }
 
     @Override
+    public String getLockManagerServer() {
+      return null;
+    }
+
+    @Override
     public String getCoordinatorServer() {
       return null;
     }

@@ -38,21 +38,23 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Task to manage the end of distributed transaction when no fix is needed (OFixTxTask) and all the locks must be released. Locks
- * are necessary to prevent concurrent modification of records before the transaction is finished. <br>
- * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
+ * Gossip message between server to exchange lock manager server and update latency table.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OHeartbeatTask extends OAbstractRemoteTask {
-  private static final long serialVersionUID = 1L;
+public class OGossipTask extends OAbstractRemoteTask {
   public static final  int  FACTORYID        = 16;
 
   private long timestamp = System.currentTimeMillis();
+  private String lockManagerServer;
 
   private final static SimpleDateFormat dateFormat = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
 
-  public OHeartbeatTask() {
+  public OGossipTask() {
+  }
+
+  public OGossipTask(final String lockManagerServer) {
+    this.lockManagerServer = lockManagerServer;
   }
 
   @Override
@@ -61,13 +63,13 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
 
     if (ODistributedServerLog.isDebugEnabled())
       synchronized (dateFormat) {
-        ODistributedServerLog
-            .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Received heartbeat (sourceTimeStamp=%s)",
-                dateFormat.format(new Date(timestamp)));
+        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+            "Received gossip message (sourceTimeStamp=%s lockManagerServer=%s)", dateFormat.format(new Date(timestamp)),
+            lockManagerServer);
       }
 
     // RETURN LOCAL TIME
-    return System.currentTimeMillis();
+    return lockManagerServer;
   }
 
   /**
@@ -96,11 +98,13 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
   @Override
   public void toStream(final DataOutput out) throws IOException {
     out.writeLong(timestamp);
+    out.writeUTF(lockManagerServer);
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     timestamp = in.readLong();
+    lockManagerServer = in.readUTF();
   }
 
   /**
@@ -130,7 +134,7 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
 
   @Override
   public String getName() {
-    return "heartbeat";
+    return "gossip";
   }
 
   @Override
@@ -140,7 +144,7 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
 
   @Override
   public String toString() {
-    return getName() + " timestamp: " + timestamp;
+    return getName() + " timestamp: " + timestamp + " lockManagerServer: " + lockManagerServer;
   }
 
 }

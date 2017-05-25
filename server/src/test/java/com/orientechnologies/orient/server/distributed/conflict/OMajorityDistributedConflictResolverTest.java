@@ -106,6 +106,11 @@ public class OMajorityDistributedConflictResolverTest {
     }
 
     @Override
+    public String getLockManagerServer() {
+      return null;
+    }
+
+    @Override
     public void waitUntilNodeOnline() throws InterruptedException {
 
     }

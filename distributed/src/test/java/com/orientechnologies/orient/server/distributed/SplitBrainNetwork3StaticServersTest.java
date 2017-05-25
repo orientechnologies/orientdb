@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.util.OCallable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,9 +38,9 @@ public class SplitBrainNetwork3StaticServersTest extends AbstractHARemoveNode {
 
   @Override
   protected void onAfterExecution() throws Exception {
-    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-0", serverInstance.get(2).getServerInstance().getDistributedManager().getCoordinatorServer());
+    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getLockManagerServer());
+    Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getLockManagerServer());
+    Assert.assertEquals("europe-0", serverInstance.get(2).getServerInstance().getDistributedManager().getLockManagerServer());
 
     checkInsertedEntries();
     checkIndexedEntries();
@@ -67,9 +68,18 @@ public class SplitBrainNetwork3StaticServersTest extends AbstractHARemoveNode {
     waitForDatabaseStatus(2, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE, 20000);
     assertDatabaseStatusEquals(2, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
 
-    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-2", serverInstance.get(2).getServerInstance().getDistributedManager().getCoordinatorServer());
+    waitFor(60000, new OCallable<Boolean, Void>() {
+      @Override
+      public Boolean call(Void iArgument) {
+        return "europe-0".equals(serverInstance.get(0).getServerInstance().getDistributedManager().getLockManagerServer())
+            && "europe-0".equals(serverInstance.get(1).getServerInstance().getDistributedManager().getLockManagerServer())
+            && "europe-2".equals(serverInstance.get(2).getServerInstance().getDistributedManager().getLockManagerServer());
+      }
+    }, "alignment of lock managers");
+
+    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getLockManagerServer());
+    Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getLockManagerServer());
+    Assert.assertEquals("europe-2", serverInstance.get(2).getServerInstance().getDistributedManager().getLockManagerServer());
 
     banner("RUN TEST WITHOUT THE OFFLINE SERVER " + (SERVERS - 1) + "...");
 
@@ -120,9 +130,9 @@ public class SplitBrainNetwork3StaticServersTest extends AbstractHARemoveNode {
     assertDatabaseStatusEquals(1, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
     assertDatabaseStatusEquals(2, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
 
-    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-0", serverInstance.get(2).getServerInstance().getDistributedManager().getCoordinatorServer());
+    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getLockManagerServer());
+    Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getLockManagerServer());
+    Assert.assertEquals("europe-0", serverInstance.get(2).getServerInstance().getDistributedManager().getLockManagerServer());
 
     banner("NETWORK FOR THE ISOLATED NODE " + (SERVERS - 1) + " HAS BEEN RESTORED");
 

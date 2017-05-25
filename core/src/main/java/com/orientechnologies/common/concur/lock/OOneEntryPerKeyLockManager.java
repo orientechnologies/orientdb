@@ -34,7 +34,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Original Lock Manager implementation that uses a concurrent linked hash map to store one entry per key. This could be very
  * expensive in case the number of locks are a lot. This implementation works better than {@link OPartitionedLockManager} when
- * running distributed because there is no way to
+ * running distributed because there is no way to cause a deadlock based on different keys.
  *
  * @param <T>
  *          Type of keys

@@ -19,12 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,9 +62,9 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
     if (localNodeName == null)
       localNodeName = manager.getLocalNodeName();
 
-    if (!localNodeName.equals(manager.getCoordinatorServer()))
-      throw new OLockException(
-          "Cannot lock resource '" + resource + "' because current server '" + localNodeName + "' is not the coordinator");
+    if (!localNodeName.equals(manager.getLockManagerServer()))
+      throw new ODistributedLockException(
+          "Cannot lock resource '" + resource + "' because current server '" + localNodeName + "' is not the Lock Manager");
 
     final ODistributedLock lock = new ODistributedLock(nodeSource);
 
@@ -123,7 +123,7 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
       }
 
     if (currentLock != null)
-      throw new OLockException(
+      throw new ODistributedLockException(
           "Cannot lock resource '" + resource + "' owned by server '" + nodeSource + "' (timeout=" + timeout + " threadId=" + Thread
               .currentThread().getId() + ")");
   }

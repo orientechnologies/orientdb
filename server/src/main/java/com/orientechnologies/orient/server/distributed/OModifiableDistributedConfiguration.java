@@ -188,11 +188,11 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
    *
    * @param iNode
    *          Server name
-   * @param newServerCoordinator
-   *          New coordinator server name
+   * @param newLockManagerServer
+   *          New Lock Manager server name
    * @return
    */
-  public List<String> setServerOffline(final String iNode, final String newServerCoordinator) {
+  public List<String> setServerOffline(final String iNode, final String newLockManagerServer) {
     final List<String> changedPartitions = new ArrayList<String>();
 
     final String[] clusters = getClusterNames();
@@ -213,10 +213,10 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
                 // REINSERT NEW NODE TAG AT THE END
                 nodes.add(NEW_NODE_TAG);
 
-              if (newServerCoordinator != null) {
-                // ASSURE THE NEW COORDINATOR IS THE FIRST IN THE LIST
-                if (nodes.remove(newServerCoordinator))
-                  nodes.add(0, newServerCoordinator);
+              if (newLockManagerServer != null) {
+                // ASSURE THE NEW LOCK MANAGER IS THE FIRST IN THE LIST
+                if (nodes.remove(newLockManagerServer))
+                  nodes.add(0, newLockManagerServer);
               }
 
               changedPartitions.add(clusterName);

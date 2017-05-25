@@ -78,8 +78,8 @@ public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
     case OCopyDatabaseChunkTask.FACTORYID: // 15
       return new OCopyDatabaseChunkTask();
 
-    case OHeartbeatTask.FACTORYID: // 16
-      return new OHeartbeatTask();
+    case OGossipTask.FACTORYID: // 16
+      return new OGossipTask();
 
     case ORepairRecordsTask.FACTORYID: // 17
       return new ORepairRecordsTask();

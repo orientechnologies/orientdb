@@ -509,6 +509,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         }
       }
 
+      if (currentResponseMgr.getExpectedNodes().isEmpty())
+        // NO SERVER TO SEND A MESSAGE
+        throw new ODistributedException(
+            "No server active for distributed request (" + iRequest + ") against database '" + databaseName + (
+                iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes);
+
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, localNodeName, iNodes.toString(), DIRECTION.OUT, "Sent request %s", iRequest);
 

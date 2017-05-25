@@ -46,13 +46,13 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   private String  resource;
   private long    timeout;
   private boolean acquire;
-  private String  coordinator;
+  private String lockManagerServer;
 
   public ODistributedLockTask() {
   }
 
-  public ODistributedLockTask(final String coordinator, final String resource, final long timeout, final boolean acquire) {
-    this.coordinator = coordinator;
+  public ODistributedLockTask(final String lockManagerServer, final String resource, final long timeout, final boolean acquire) {
+    this.lockManagerServer = lockManagerServer;
     this.resource = resource;
     this.timeout = timeout;
     this.acquire = acquire;
@@ -74,7 +74,7 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
     if (acquire)
       // RELEASE
-      return new ODistributedLockTask(coordinator, resource, timeout, false);
+      return new ODistributedLockTask(lockManagerServer, resource, timeout, false);
 
     return null;
   }
@@ -126,9 +126,9 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
 
   @Override
   public void checkIsValid(final ODistributedServerManager dManager) {
-    // CHECKS THE COORDINATOR IS STILL AVAILABLE
-    if (!dManager.isNodeAvailable(dManager.getCoordinatorServer()))
-      throw new ODistributedOperationException("Coordinator server changed during lock " + (acquire ? "acquire" : "release"));
+    // CHECKS THE LOCK MANAGER SERVER IS STILL AVAILABLE
+    if (!dManager.isNodeAvailable(dManager.getLockManagerServer()))
+      throw new ODistributedOperationException("Lock Manager server changed during lock " + (acquire ? "acquire" : "release"));
   }
 
   @Override

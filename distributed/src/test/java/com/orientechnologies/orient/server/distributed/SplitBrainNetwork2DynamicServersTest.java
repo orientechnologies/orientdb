@@ -39,8 +39,8 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
 
   @Override
   protected void onAfterExecution() throws Exception {
-    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
+    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getLockManagerServer());
+    Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getLockManagerServer());
 
     banner("SIMULATE ISOLATION OF SERVER " + (SERVERS - 1) + "...");
 
@@ -61,8 +61,8 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
     assertDatabaseStatusEquals(1, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
     assertDatabaseStatusEquals(1, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
 
-    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-1", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
+    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getLockManagerServer());
+    Assert.assertEquals("europe-1", serverInstance.get(1).getServerInstance().getDistributedManager().getLockManagerServer());
 
     banner("RUN TEST WITHOUT THE OFFLINE SERVER " + (SERVERS - 1) + "...");
 
@@ -105,8 +105,8 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
     waitForDatabaseIsOnline(1, "europe-1", getDatabaseName(), 30000);
     assertDatabaseStatusEquals(1, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
 
-    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
+    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getLockManagerServer());
+    Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getLockManagerServer());
 
     banner("NETWORK FOR THE ISOLATED NODE " + (SERVERS - 1) + " HAS BEEN RESTORED");
 

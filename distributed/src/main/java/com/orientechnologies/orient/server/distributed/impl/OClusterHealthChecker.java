@@ -24,7 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.task.OHeartbeatTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OGossipTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORequestDatabaseConfigurationTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -220,16 +220,27 @@ public class OClusterHealthChecker extends TimerTask {
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, manager.getLocalNodeName(), servers.toString(), ODistributedServerLog.DIRECTION.OUT,
-            "Sending heartbeat message to servers (db=%s)", dbName);
+            "Sending gossip message to servers (db=%s)", dbName);
 
       try {
         final ODistributedResponse response = manager
-            .sendRequest(dbName, null, servers, new OHeartbeatTask(), manager.getNextMessageIdCounter(),
+            .sendRequest(dbName, null, servers, new OGossipTask(manager.getLockManagerServer()), manager.getNextMessageIdCounter(),
                 ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
         final Object payload = response != null ? response.getPayload() : null;
         if (payload instanceof Map) {
           final Map<String, Object> responses = (Map<String, Object>) payload;
+
+          final String lockManagerServer = manager.getLockManagerServer();
+          if (lockManagerServer != null)
+            for (Map.Entry<String, Object> r : responses.entrySet()) {
+              if (!lockManagerServer.equals(r.getValue().toString())) {
+                ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                    "Server '%s' is using server '%s' as lock manager, while current server is using '%s'", r.getKey(),
+                    r.getValue(), lockManagerServer);
+              }
+            }
+
           servers.removeAll(responses.keySet());
         }
 
@@ -249,15 +260,15 @@ public class OClusterHealthChecker extends TimerTask {
 
     if (OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER.getValueAsBoolean()) {
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-          "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms). Setting the database as NOT_AVAILABLE",
-          server, dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
+          "Server '%s' did not respond to the gossip message (db=%s, timeout=%dms). Setting the database as NOT_AVAILABLE", server,
+          dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
 
       manager.setDatabaseStatus(server, dbName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
     } else {
 
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-          "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms), but cannot be set OFFLINE by configuration",
+          "Server '%s' did not respond to the gossip message (db=%s, timeout=%dms), but cannot be set OFFLINE by configuration",
           server, dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
     }
   }

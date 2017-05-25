@@ -186,26 +186,28 @@ public class ODistributedResponseManager {
       // FOR EVERY RESPONSE COLLECTED, COMPUTE THE FINAL QUORUM RESPONSE IF POSSIBLE
       computeQuorumResponse(false);
 
-      final boolean completed = getExpectedResponses() == receivedResponses;
-
-      if (completed)
-        // FINALIZE THE REQUEST
-        end();
-
-      if (completed || isMinimumQuorumReached(false)) {
-        // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
-        ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-            "Sending signal of synchronous request completed (reqId=%s thread=%d)", request.getId(),
-            Thread.currentThread().getId());
-
-        synchronousResponsesArrived.countDown();
-      }
-
-      return completed;
+      return checkForCompletion();
 
     } finally {
       synchronousResponsesLock.unlock();
     }
+  }
+
+  private boolean checkForCompletion() {
+    final boolean completed = getExpectedResponses() == receivedResponses;
+
+    if (completed)
+      // FINALIZE THE REQUEST
+      end();
+
+    if (completed || isMinimumQuorumReached(false)) {
+      // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
+      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+          "Sending signal of synchronous request completed (reqId=%s thread=%d)", request.getId(), Thread.currentThread().getId());
+
+      synchronousResponsesArrived.countDown();
+    }
+    return completed;
   }
 
   public ODistributedRequestId getMessageId() {
@@ -239,6 +241,8 @@ public class ODistributedResponseManager {
       if (responses.remove(node) != null) {
         totalExpectedResponses--;
         nodesConcurInQuorum.remove(node);
+
+        checkForCompletion();
       }
 
     } finally {

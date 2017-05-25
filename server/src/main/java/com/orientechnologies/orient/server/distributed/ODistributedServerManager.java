@@ -124,7 +124,10 @@ public interface ODistributedServerManager {
 
   Set<String> getAvailableNodeNames(String databaseName);
 
+  @Deprecated
   String getCoordinatorServer();
+
+  String getLockManagerServer();
 
   void waitUntilNodeOnline() throws InterruptedException;
 

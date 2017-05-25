@@ -181,8 +181,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   @Override
+  @Deprecated
   public String getCoordinatorServer() {
-    return lockManagerRequester.getCoordinatorServer();
+    return getLockManagerServer();
+  }
+
+  @Override
+  public String getLockManagerServer() {
+    return lockManagerRequester.getServer();
   }
 
   public File getDefaultDatabaseConfigFile() {
@@ -2011,8 +2017,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       lastServerDump = compactStatus;
 
       ODistributedServerLog
-          .info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status (*=current @=coordinator[%s]):\n%s",
-              getCoordinatorServer(), ODistributedOutput.formatServerStatus(this, cfg));
+          .info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status (*=current @=lockmgr[%s]):\n%s",
+              getLockManagerServer(), ODistributedOutput.formatServerStatus(this, cfg));
     }
   }
 

@@ -134,16 +134,16 @@ public class HaSyncClusterTest extends AbstractServerClusterTest {
             public Boolean call(Void iArgument) {
               ODocument messageStats = messageService.getMessageStats();
 
-              long heartbeat = 0;
+              long gossip = 0;
               long deploy_cluster = 0;
-              if (messageStats != null && messageStats.containsField("heartbeat")) {
-                heartbeat = messageStats.field("heartbeat");
+              if (messageStats != null && messageStats.containsField("gossip")) {
+                gossip = messageStats.field("gossip");
               }
 
               if (messageStats != null && messageStats.containsField("deploy_cluster")) {
                 deploy_cluster = messageStats.field("deploy_cluster");
               }
-              long processed = messageService.getProcessedRequests() - heartbeat - deploy_cluster;
+              long processed = messageService.getProcessedRequests() - gossip - deploy_cluster;
 
               OLogManager.instance()
                   .info(this, "Waiting for processed requests to be [%d], actual [%d] with stats [%s] ", NUM_RECORDS, processed,
