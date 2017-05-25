@@ -808,23 +808,23 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getColumnPrivileges(final String catalog, final String schema, final String table,
       final String columnNamePattern)
       throws SQLException {
-    return null;
+    return getEmptyResultSet();
   }
 
   public ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
 
-    return null;
+    return getEmptyResultSet();
   }
 
   public ResultSet getBestRowIdentifier(String catalog, String schema, String table, int scope, boolean nullable)
       throws SQLException {
 
-    return null;
+    return getEmptyResultSet();
   }
 
   public ResultSet getVersionColumns(String catalog, String schema, String table) throws SQLException {
 
-    return null;
+    return getEmptyResultSet();
   }
 
   @Override
@@ -862,17 +862,31 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
-    return null;
+
+    database.activateOnCurrentThread();
+
+    OClass aClass = database.getMetadata().getSchema().getClass(table);
+
+    aClass.declaredProperties().stream().forEach(p-> p.getType());
+    return getEmptyResultSet();
+  }
+
+  private ResultSet getEmptyResultSet() throws SQLException {
+    database.activateOnCurrentThread();
+
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), new OInternalResultSet(), ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException {
-    return null;
+
+    return getEmptyResultSet();
   }
 
   public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog,
       String foreignSchema, String foreignTable) throws SQLException {
 
-    return null;
+    return getEmptyResultSet();
   }
 
   public ResultSet getTypeInfo() throws SQLException {
@@ -1188,7 +1202,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getAttributes(String catalog, String schemaPattern, String typeNamePattern, String attributeNamePattern)
       throws SQLException {
 
-    return null;
+    return getEmptyResultSet();
   }
 
   public boolean supportsResultSetHoldability(int holdability) throws SQLException {
@@ -1241,7 +1255,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
   public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
 
-    return null;
+    return getEmptyResultSet();
   }
 
   public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
@@ -1255,7 +1269,8 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
   public ResultSet getClientInfoProperties() throws SQLException {
 
-    return null;
+    return getEmptyResultSet();
+
   }
 
   public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
@@ -1314,7 +1329,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public ResultSet getPseudoColumns(String arg0, String arg1, String arg2, String arg3) throws SQLException {
-    return null;
+    return getEmptyResultSet();
   }
 
   public boolean generatedKeyAlwaysReturned() throws SQLException {
