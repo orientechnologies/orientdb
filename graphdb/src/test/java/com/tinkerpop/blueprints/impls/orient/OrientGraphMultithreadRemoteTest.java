@@ -15,6 +15,8 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.tinkerpop.blueprints.Vertex;
 
+import static org.junit.Assert.assertEquals;
+
 public class OrientGraphMultithreadRemoteTest {
   private static final String serverPort = System.getProperty("orient.server.port", "3080");
   private static OServer     server;
@@ -131,29 +133,7 @@ public class OrientGraphMultithreadRemoteTest {
       }
     }
     OrientGraph graph = graphFactory.getTx();
-
-    long actualRecords = graph.countVertices();
-
-    if (actualRecords != records) {
-      System.out
-          .println("Count of records on server does not equal to expected count of records. Try to reproduce it next 10 times");
-
-      int reproduced = 0;
-      while (true) {
-        if (graph.countVertices() != records)
-          reproduced++;
-        else
-          break;
-        if (reproduced == 10) {
-          System.out.println("Test goes in forever loop to investigate reason of this error.");
-          while (true)
-            ;
-        }
-      }
-
-      Assert.fail();
-    }
-
+    assertEquals(graph.countVertices(), records);
     graph.shutdown();
 
   }
