@@ -53,10 +53,6 @@ public class OIndexOneEntryPerKeyLockManagerTest {
       lockMgr.acquireSharedLock(this);
       try {
         countRead.incrementAndGet();
-        // try {
-        // Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
-        // } catch (Exception e) {
-        // }
         if (verbose)
           System.out.println("ResourceRead locked by " + Thread.currentThread());
       } finally {
@@ -75,10 +71,6 @@ public class OIndexOneEntryPerKeyLockManagerTest {
       lockMgr.acquireExclusiveLock(this);
       try {
         countWrite.incrementAndGet();
-        // try {
-        // Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
-        // } catch (Exception e) {
-        // }
         if (verbose)
           System.out.println("ResourceWrite locked by " + Thread.currentThread());
         if (countWrite.get() != 1)
@@ -126,10 +118,6 @@ public class OIndexOneEntryPerKeyLockManagerTest {
       lockMgr.acquireExclusiveLock(this);
       try {
         countWrite.incrementAndGet();
-        // try {
-        // Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
-        // } catch (Exception e) {
-        // }
         if (verbose)
           System.out.println("ResourceReadWrite EXCLUSIVE locked by " + Thread.currentThread());
         if (countWrite.get() != 1)
@@ -160,10 +148,6 @@ public class OIndexOneEntryPerKeyLockManagerTest {
       lockMgr.acquireSharedLock(this);
       try {
         countRead.incrementAndGet();
-        // while (countRead < 3) {
-        // // wait for 3 concurrent threads at this point.
-        // Thread.yield();
-        // }
         reentrantRead();
       } catch (RuntimeException e) {
         e.printStackTrace();
@@ -178,11 +162,6 @@ public class OIndexOneEntryPerKeyLockManagerTest {
       lockMgr.acquireSharedLock(this);
       try {
         countReentrantRead.incrementAndGet();
-        // while (countRead < 2) {
-        // // wait an other thread.
-        // Thread.yield();
-        // }
-        // write();
       } finally {
         countReentrantRead.decrementAndGet();
         lockMgr.releaseSharedLock(this);
@@ -194,9 +173,6 @@ public class OIndexOneEntryPerKeyLockManagerTest {
       try {
         countWrite.incrementAndGet();
         reentrantWrite();
-        // for (int i = 0; i < 10000000; i++) {
-        // }
-        // if(log) System.out.println("ResourceReantrance locked by " + Thread.currentThread());
         if (countWrite.get() != 1)
           throw new AssertionError("countWrite:" + countWrite);
       } finally {
@@ -210,10 +186,6 @@ public class OIndexOneEntryPerKeyLockManagerTest {
       try {
         countReentrantWrite.incrementAndGet();
         read();
-        // try {
-        // Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
-        // } catch (Exception e) {
-        // }
         if (verbose)
           System.out.println("ResourceReantrance locked by " + Thread.currentThread());
         if (countReentrantWrite.get() != 1)
@@ -251,7 +223,6 @@ public class OIndexOneEntryPerKeyLockManagerTest {
 
     final long start = System.currentTimeMillis();
 
-    // for (int i = 0; i < 10; i++)
     resources.add(new ResourceRead());
     resources.add(new ResourceWrite());
     resources.add(new ResourceReadWrite());
@@ -282,7 +253,7 @@ public class OIndexOneEntryPerKeyLockManagerTest {
     System.out
         .println("\nOk, all threads back : " + counter.get() + " in: " + ((System.currentTimeMillis() - start) / 1000f) + " secs");
 
-    // Pulish exceptions.
+    // Publish exceptions.
     if (exceptions.size() > 0) {
       for (Throwable exc : exceptions) {
         exc.printStackTrace();
