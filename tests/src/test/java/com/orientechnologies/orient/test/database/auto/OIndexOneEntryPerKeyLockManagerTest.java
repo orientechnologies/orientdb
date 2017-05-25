@@ -1,19 +1,27 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2010-2017 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.test.database.auto;
+
+import com.orientechnologies.common.concur.lock.OIndexOneEntryPerKeyLockManager;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,50 +29,35 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
-import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager.LOCK;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-
 /**
- * Test class for OLockManager
- * 
- * @author Sylvain Spinelli
- * 
+ * "Stolen" from OOneEntryPerKeyLockManagerTest.
  */
-public class LockManagerTest {
+public class OIndexOneEntryPerKeyLockManagerTest {
 
-  public static final int                                     THREADS         = 64;
-  public static       int                                     cyclesByProcess = 10000000;
-  public static       boolean                                 verbose         = false;
-  public static       OOneEntryPerKeyLockManager<Callable<?>> lockMgr         = new OOneEntryPerKeyLockManager<Callable<?>>(
-                                                                        OGlobalConfiguration.ENVIRONMENT_CONCURRENT
-                                                                            .getValueAsBoolean(),
-                                                                        5000, 10000);
-  protected           List<Callable<?>>                       resources       = new ArrayList<Callable<?>>();
-  protected           List<Thread>                            processes       = Collections.synchronizedList(new ArrayList<Thread>());
-  protected List<Throwable>                         exceptions      = Collections.synchronizedList(new ArrayList<Throwable>());
-  protected AtomicInteger                           counter         = new AtomicInteger();
+  public static final int                                          THREADS         = 64;
+  public static       int                                          cyclesByProcess = 1000000;
+  public static       boolean                                      verbose         = false;
+  public static       OIndexOneEntryPerKeyLockManager<Callable<?>> lockMgr         = new OIndexOneEntryPerKeyLockManager<Callable<?>>();
+  protected           List<Callable<?>>                            resources       = new ArrayList<Callable<?>>();
+  protected           List<Thread>                                 processes       = Collections
+      .synchronizedList(new ArrayList<Thread>());
+  protected           List<Throwable>                              exceptions      = Collections
+      .synchronizedList(new ArrayList<Throwable>());
+  protected           AtomicInteger                                counter         = new AtomicInteger();
 
   public static class ResourceRead implements Callable<Void> {
     AtomicInteger countRead = new AtomicInteger(0);
 
     @Override
     public Void call() throws Exception {
-      lockMgr.acquireLock(this, LOCK.SHARED);
+      lockMgr.acquireSharedLock(this);
       try {
         countRead.incrementAndGet();
-        // try {
-        // Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
-        // } catch (Exception e) {
-        // }
         if (verbose)
           System.out.println("ResourceRead locked by " + Thread.currentThread());
       } finally {
         countRead.decrementAndGet();
-        lockMgr.releaseLock(Thread.currentThread(), this, LOCK.SHARED);
+        lockMgr.releaseSharedLock(this);
       }
       return null;
     }
@@ -75,28 +68,24 @@ public class LockManagerTest {
 
     @Override
     public Void call() throws Exception {
-      lockMgr.acquireLock(this, LOCK.EXCLUSIVE);
+      lockMgr.acquireExclusiveLock(this);
       try {
         countWrite.incrementAndGet();
-        // try {
-        // Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
-        // } catch (Exception e) {
-        // }
         if (verbose)
           System.out.println("ResourceWrite locked by " + Thread.currentThread());
         if (countWrite.get() != 1)
           throw new AssertionError("countWrite:" + countWrite);
       } finally {
         countWrite.decrementAndGet();
-        lockMgr.releaseLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
+        lockMgr.releaseExclusiveLock(this);
       }
       return null;
     }
   }
 
   public static class ResourceReadWrite implements Callable<Void> {
-    AtomicInteger    countRead  = new AtomicInteger(0);
-    AtomicInteger    countWrite = new AtomicInteger(0);
+    AtomicInteger countRead  = new AtomicInteger(0);
+    AtomicInteger countWrite = new AtomicInteger(0);
     volatile boolean lastWasRead;
 
     @Override
@@ -111,7 +100,7 @@ public class LockManagerTest {
     }
 
     void read() {
-      lockMgr.acquireLock(this, LOCK.SHARED);
+      lockMgr.acquireSharedLock(this);
       try {
         countRead.incrementAndGet();
         if (verbose)
@@ -121,18 +110,14 @@ public class LockManagerTest {
         throw e;
       } finally {
         countRead.decrementAndGet();
-        lockMgr.releaseLock(Thread.currentThread(), this, LOCK.SHARED);
+        lockMgr.releaseSharedLock(this);
       }
     }
 
     void write() {
-      lockMgr.acquireLock(this, LOCK.EXCLUSIVE);
+      lockMgr.acquireExclusiveLock(this);
       try {
         countWrite.incrementAndGet();
-        // try {
-        // Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
-        // } catch (Exception e) {
-        // }
         if (verbose)
           System.out.println("ResourceReadWrite EXCLUSIVE locked by " + Thread.currentThread());
         if (countWrite.get() != 1)
@@ -141,7 +126,7 @@ public class LockManagerTest {
           throw new AssertionError("countRead:" + countRead);
       } finally {
         countWrite.decrementAndGet();
-        lockMgr.releaseLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
+        lockMgr.releaseExclusiveLock(this);
       }
     }
   }
@@ -160,70 +145,54 @@ public class LockManagerTest {
     }
 
     void read() {
-      lockMgr.acquireLock(this, LOCK.SHARED);
+      lockMgr.acquireSharedLock(this);
       try {
         countRead.incrementAndGet();
-        // while (countRead < 3) {
-        // // wait for 3 concurrent threads at this point.
-        // Thread.yield();
-        // }
         reentrantRead();
       } catch (RuntimeException e) {
         e.printStackTrace();
         throw e;
       } finally {
         countRead.decrementAndGet();
-        lockMgr.releaseLock(Thread.currentThread(), this, LOCK.SHARED);
+        lockMgr.releaseSharedLock(this);
       }
     }
 
     void reentrantRead() {
-      lockMgr.acquireLock(this, LOCK.SHARED);
+      lockMgr.acquireSharedLock(this);
       try {
         countReentrantRead.incrementAndGet();
-        // while (countRead < 2) {
-        // // wait an other thread.
-        // Thread.yield();
-        // }
-        // write();
       } finally {
         countReentrantRead.decrementAndGet();
-        lockMgr.releaseLock(Thread.currentThread(), this, LOCK.SHARED);
+        lockMgr.releaseSharedLock(this);
       }
     }
 
     void write() {
-      lockMgr.acquireLock(this, LOCK.EXCLUSIVE);
+      lockMgr.acquireExclusiveLock(this);
       try {
         countWrite.incrementAndGet();
         reentrantWrite();
-        // for (int i = 0; i < 10000000; i++) {
-        // }
-        // if(log) System.out.println("ResourceReantrance locked by " + Thread.currentThread());
         if (countWrite.get() != 1)
           throw new AssertionError("countWrite:" + countWrite);
       } finally {
         countWrite.decrementAndGet();
-        lockMgr.releaseLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
+        lockMgr.releaseExclusiveLock(this);
       }
     }
 
     void reentrantWrite() {
-      lockMgr.acquireLock(this, LOCK.EXCLUSIVE);
+      lockMgr.acquireExclusiveLock(this);
       try {
         countReentrantWrite.incrementAndGet();
         read();
-        // try {
-        // Thread.sleep(1 + Math.abs(new Random().nextInt() % 3));
-        // } catch (Exception e) {
-        // }
         if (verbose)
           System.out.println("ResourceReantrance locked by " + Thread.currentThread());
         if (countReentrantWrite.get() != 1)
           throw new AssertionError("countReentrantWrite:" + countReentrantWrite);
       } finally {
         countReentrantWrite.decrementAndGet();
-        lockMgr.releaseLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
+        lockMgr.releaseExclusiveLock(this);
       }
     }
   }
@@ -254,7 +223,6 @@ public class LockManagerTest {
 
     final long start = System.currentTimeMillis();
 
-    // for (int i = 0; i < 10; i++)
     resources.add(new ResourceRead());
     resources.add(new ResourceWrite());
     resources.add(new ResourceReadWrite());
@@ -282,10 +250,10 @@ public class LockManagerTest {
       processes.get(i).join();
     }
 
-    System.out.println("\nOk, all threads back : " + counter.get() + " in: " + ((System.currentTimeMillis() - start) / 1000f)
-        + " secs");
+    System.out
+        .println("\nOk, all threads back : " + counter.get() + " in: " + ((System.currentTimeMillis() - start) / 1000f) + " secs");
 
-    // Pulish exceptions.
+    // Publish exceptions.
     if (exceptions.size() > 0) {
       for (Throwable exc : exceptions) {
         exc.printStackTrace();
@@ -295,6 +263,6 @@ public class LockManagerTest {
 
     Assert.assertEquals(counter.get(), processes.size() * resources.size() * cyclesByProcess);
 
-    Assert.assertEquals(lockMgr.getCountCurrentLocks(), 0);
+    Assert.assertEquals(lockMgr.getLockCount(), 0);
   }
 }
