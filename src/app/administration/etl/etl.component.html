@@ -311,13 +311,13 @@
                 <!-- Extractor advanced configuration -->
                 <div id="extractorOptions" style="display:none">
 
-                  <div *ngIf="extractorType && eKeys">
+                  <div *ngIf="extractorType && extractor">
                     <h5 align="center"><b>{{extractorType.toUpperCase()}} EXTRACTOR OPTIONS</b></h5><br>
-                    <div *ngIf="eKeys.length == 0">
+                    <div *ngIf="objectKeys.transform(extractor[extractorType]).length == 0">
                       <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters</h6>
                     </div>
 
-                    <div *ngFor="let eParameter of eKeys;">
+                    <div *ngFor="let eParameter of objectKeys.transform(extractor[extractorType]);">
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.extractor[eParameter]"><i class="fa fa-question-circle"></i>
                       </button>
@@ -339,7 +339,7 @@
                              type="text" class="form-control" name="eTextConfig-{{eParameter}}" [(ngModel)]="extractor[extractorType][eParameter]"
                              placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
 
-                      <input *ngIf="extractorPrototype[extractorType][eParameter]['array']" type="text" data-role="tagsinput" class="form-control"
+                      <input *ngIf="extractorPrototype[extractorType][eParameter]['array']" type="text" class="form-control"
                              name="eTextConfig-{{eParameter}}" [(ngModel)]="extractor[extractorType][eParameter]" placeholder="enter your tags"
                              (ngModelChange)="readyForExecution()"/>
                       <br>
@@ -356,13 +356,13 @@
                 <!-- Transformer advanced configuration -->
                 <div id="transformerOptions" style="display:none">
 
-                  <div *ngIf="getTransformerType(currentTransformer) && tKeys">
+                  <div *ngIf="getTransformerType(currentTransformer) && transformers">
                     <h5 align="center"><b>{{getTransformerType(currentTransformer).toUpperCase()}} TRANSFORMER OPTIONS</b></h5><br>
-                    <div *ngIf="tKeys.length == 0">
+                    <div *ngIf="objectKeys.transform(currentTransformer[getTransformerType(this.currentTransformer)]).length == 0">
                       <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters</h6>
                     </div>
 
-                    <div *ngFor="let tParameter of tKeys">
+                    <div *ngFor="let tParameter of objectKeys.transform(currentTransformer[getTransformerType(this.currentTransformer)])">
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.transformer[tParameter]"><i class="fa fa-question-circle"></i>
                       </button>
@@ -399,13 +399,13 @@
                 <!-- Loader advanced configuration -->
                 <div id="loaderOptions" style="display:none">
 
-                  <div *ngIf="loaderType && lKeys">
+                  <div *ngIf="loaderType && loader">
                     <h5 align="center"><b>{{loaderType.toUpperCase()}} LOADER OPTIONS</b></h5><br>
-                    <div *ngIf="lKeys.length == 0">
+                    <div *ngIf="objectKeys.transform(loader[loaderType]).length == 0">
                       <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters</h6>
                     </div>
 
-                    <div *ngFor="let lParameter of lKeys">
+                    <div *ngFor="let lParameter of objectKeys.transform(loader[loaderType])">
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.loader[lParameter]"><i class="fa fa-question-circle"></i>
                       </button>
@@ -427,8 +427,40 @@
                              type="text" class="form-control" name="lTextConfig-{{lParameter}}" [(ngModel)]="loader[loaderType][lParameter]"
                              placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
 
-                      <div *ngIf="loaderPrototype[loaderType][lParameter]['object']" (ngModelChange)="readyForExecution()">
-                        OBJECTS AREN'T CONFIGURABLE AT THE MOMENT
+
+                      <!-- Objects creation (classes and indexes) -->
+                      <div *ngIf="loaderPrototype[loaderType][lParameter]['object']">
+                        <div *ngFor="let oParameter of objectKeys.transform(loaderPrototype[loaderType][lParameter]['value'])">
+                          &emsp;&emsp;<button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                                  [attr.data-content]="hints.loader[oParameter]"><i class="fa fa-question-circle"></i>
+                          </button>
+                          <label *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['mandatory'] == true">
+                            &emsp;{{oParameter}} <b style="color:red;">*</b>
+                          </label>
+                          <label *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['mandatory'] == false">
+                            &emsp;{{oParameter}}
+                          </label>
+
+                          <input *ngIf="!loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
+                                 type="text" class="form-control" name="lTextConfig-{{lParameter}}-{{oParameter}}"
+                                 [(ngModel)]="[lParameter + 'Element'][oParameter]" placeholder="enter your value"
+                                 (ngModelChange)="readyForExecution()"/>
+
+                          <input *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
+                                 type="text" class="form-control" name="lTextConfig-{{lParameter}}-{{oParameter}}"
+                                 [(ngModel)]="[lParameter + 'Element'][oParameter]" placeholder="enter your tags"
+                                 (ngModelChange)="readyForExecution()"/>
+
+                        </div><br>
+                        <div class="btn-group-xs">
+                          <button type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderAddTo(lParameter)">
+                            Add to {{lParameter}}
+                          </button>
+                          &emsp;&emsp;
+                          <button type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderEmpty(lParameter)">
+                            Empty {{lParameter}}
+                          </button>
+                        </div><br>
                       </div>
                       <br>
 

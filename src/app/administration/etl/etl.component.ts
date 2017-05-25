@@ -5,6 +5,7 @@ import {Component, NgZone} from '@angular/core';
 import {downgradeComponent} from "@angular/upgrade/static";
 import {EtlService} from "../../core/services";
 import {AgentService} from "../../core/services/agent.service";
+import {ObjectKeysPipe} from "../../core/pipes";
 
 import "../../util/draggable-sortable/jquery-sortable.js";
 
@@ -34,15 +35,12 @@ class EtlComponent {
   private currentTransformer;
   private transformers = [];
   private loader;
+  private classesElement;
+  private indexesElement;
 
   // Types needed for controls
   private extractorType;
   private loaderType;
-
-  // Keys to iterate
-  private eKeys;
-  private tKeys;
-  private lKeys;
 
   // Control booleans
   private ready;
@@ -59,7 +57,8 @@ class EtlComponent {
   private step;
   private hints;
 
-  constructor(private agentService: AgentService, private etlService: EtlService, private zone: NgZone) {
+  constructor(private agentService: AgentService, private etlService: EtlService, private zone: NgZone, private objectKeys: ObjectKeysPipe) {
+    this.objectKeys = objectKeys;
 
     this.init();
 
@@ -646,12 +645,18 @@ class EtlComponent {
         wal: "Defines whether it uses write ahead logging. disable to achieve better performance",
         batchCommit: "When using tansactions, defines the batch of entries it commits. Helps avoid having one large transaction in memory",
         dbType: "Defines the database type, graph or document",
-        class: "Defines the class to use in storing new record",
         cluster: "Defines the cluster in which to store the new record",
         classes: "Defines whether it creates classes, if not defined already in the database",
         indexes: "Defines indexes to use on the ETL process. Before starting, it creates any declared indexes not present in the database. Indexes must have 'type', 'class' and 'fields'",
         useLightweightEdges: "Defines whether it changes the default setting for Lightweight Edges",
-        standardElementConstraints: "Defines whether it changes the default setting for TinkerPop Blueprint constraints. Value cannot be null and you cannot use id as a property name"
+        standardElementConstraints: "Defines whether it changes the default setting for TinkerPop Blueprint constraints. Value cannot be null and you cannot use id as a property name",
+        name: "Defines the name",
+        extends: "Defines the super-class name",
+        clusters: "Defines the number of cluster to create under the class",
+        metadata: "Defines additional index metadata",
+        fields: "Defines an array of fields to index. To specify the field type, use the syntax: field.type",
+        type: "Defines the index type",
+        class: "Defines the class name in which to create the index ot the class to use in storing new record"
       }
     }
   }
@@ -737,7 +742,6 @@ class EtlComponent {
         }
       };
 
-    this.eKeys = Object.keys(this.extractor[type]);
     this.extractorType = type;
     this.readyForExecution();
 
@@ -889,7 +893,6 @@ class EtlComponent {
     // Push into the arrays
     this.transformers.push(transformer);
     this.currentTransformer = transformer;
-    this.tKeys = this.getTKeys(transformer);
     this.readyForExecution();
 
     // Canvas
@@ -978,7 +981,7 @@ class EtlComponent {
         log: {}
       };
 
-    if (type === "orientDb")
+    if (type === "orientDb") {
       this.loader = {
         orientDb: {
           dbURL: this.loaderPrototype.orientDb.dbURL.value,
@@ -1003,7 +1006,21 @@ class EtlComponent {
         }
       };
 
-    this.lKeys = Object.keys(this.loader[type]);
+      this.classesElement = {
+        name: this.loaderPrototype.orientDb.classes.value.name.value,
+        extends: this.loaderPrototype.orientDb.classes.value.extends.value,
+        clusters: this.loaderPrototype.orientDb.classes.value.clusters.value
+      };
+
+      this.indexesElement = {
+        name: this.loaderPrototype.orientDb.indexes.value.name.value,
+        class: this.loaderPrototype.orientDb.indexes.value.class.value,
+        type: this.loaderPrototype.orientDb.indexes.value.type.value,
+        fields: this.loaderPrototype.orientDb.indexes.value.fields.value,
+        metadata: this.loaderPrototype.orientDb.indexes.value.metadata.value
+      };
+    }
+
     this.loaderType = type;
     this.readyForExecution();
 
@@ -1063,7 +1080,6 @@ class EtlComponent {
       this.transformers.splice(index, 1);
     }
     this.currentTransformer = undefined;
-    this.tKeys = undefined;
 
     // remove the canvas and update the ids to match the array indexes
     $("#" + index).remove();
@@ -1250,9 +1266,6 @@ class EtlComponent {
     this.sourcePrototype.source.value = undefined;
     this.extractorType = undefined;
     this.loaderType = undefined;
-    this.eKeys = undefined;
-    this.tKeys = undefined;
-    this.lKeys = undefined;
   }
 
   blockFix() {
@@ -1279,6 +1292,32 @@ class EtlComponent {
     this.transformers = tmp;
   }
 
+  loaderAddTo(type) {
+    if(type === "classes") {
+      this.loader.orientDb.classes.push(this.classesElement);
+      this.classesElement = {
+        name: this.loaderPrototype.orientDb.classes.value.name.value,
+        extends: this.loaderPrototype.orientDb.classes.value.extends.value,
+        clusters: this.loaderPrototype.orientDb.classes.value.clusters.value
+      };
+    }
+    if(type === "indexes") {
+      this.loader.orientDb.indexes.push(this.indexesElement);
+      this.indexesElement = {
+        name: this.loaderPrototype.orientDb.indexes.value.name.value,
+        class: this.loaderPrototype.orientDb.indexes.value.class.value,
+        type: this.loaderPrototype.orientDb.indexes.value.type.value,
+        fields: this.loaderPrototype.orientDb.indexes.value.fields.value,
+        metadata: this.loaderPrototype.orientDb.indexes.value.metadata.value
+      };
+    }
+  }
+
+  loaderEmpty(type) {
+    if(type === "classes") this.loader.orientDb.classes = [];
+    if(type === "indexes") this.loader.orientDb.indexes = [];
+  }
+
   // Getters and setters
 
   getStep() {
@@ -1300,12 +1339,6 @@ class EtlComponent {
         }
       }
     }
-    return undefined;
-  }
-
-  getTKeys(transformer) {
-    if(transformer)
-      return Object.keys(this.currentTransformer[this.getTransformerType(this.currentTransformer)]);
     return undefined;
   }
 
@@ -1361,7 +1394,6 @@ class EtlComponent {
 
   selectTransformer(index) {
     this.currentTransformer = this.transformers[index];
-    this.tKeys = this.getTKeys(this.currentTransformer);
 
     $("#extractorOptions").slideUp(800);
     $("#transformerOptions").slideDown(800);
