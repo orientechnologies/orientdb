@@ -19,6 +19,8 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Locale;
 
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -56,8 +58,8 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("create property account.knows embeddedmap account")).execute();
 
     Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("knows").getType(), OType.EMBEDDEDMAP);
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("knows").getLinkedClass(), database
-        .getMetadata().getSchema().getClass("account"));
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("knows").getLinkedClass(),
+        database.getMetadata().getSchema().getClass("account"));
   }
 
   @Test(dependsOnMethods = "createLinkedClassProperty")
@@ -114,8 +116,13 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
 
     if (database.getURL().startsWith("plocal:")) {
       String storagePath = database.getStorage().getConfiguration().getDirectory();
-      File dataFile = new File(storagePath, "testClusterRename42" + OPaginatedCluster.DEF_EXTENSION);
-      File mapFile = new File(storagePath, "testClusterRename42" + OClusterPositionMap.DEF_EXTENSION);
+
+      final OWOWCache wowCache = (OWOWCache) ((OLocalPaginatedStorage) database.getStorage()).getWriteCache();
+
+      File dataFile = new File(storagePath,
+          wowCache.nativeFileNameById(wowCache.fileIdByName("testClusterRename42" + OPaginatedCluster.DEF_EXTENSION)));
+      File mapFile = new File(storagePath,
+          wowCache.nativeFileNameById(wowCache.fileIdByName("testClusterRename42" + OClusterPositionMap.DEF_EXTENSION)));
 
       Assert.assertTrue(dataFile.exists());
       Assert.assertTrue(mapFile.exists());
