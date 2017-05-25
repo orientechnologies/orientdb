@@ -168,7 +168,7 @@ public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implemen
   }
 
   @Override
-  public boolean canExecuteWithoutIndex(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
+  public boolean canExecuteInline(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args) {
     return allowsIndexedExecution(target, operator, rightValue, ctx, args);
   }

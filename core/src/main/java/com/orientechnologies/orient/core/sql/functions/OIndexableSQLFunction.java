@@ -59,7 +59,7 @@ public interface OIndexableSQLFunction extends OSQLFunction {
       OExpression... args);
 
   /**
-   * checks if the function can be used even on single records, without index usage (even if the index does not exist at all)
+   * checks if the function can be used even on single records, not as an indexed function (even if the index does not exist at all)
    * @param target the query target
    * @param operator the operator after the function, eg. in <code>select from Foo where myFunction(name) &gt; 4</code> the operator is &gt;
    * @param rightValue the value that has to be compared to the function result, eg. in <code>select from Foo where myFunction(name) &gt; 4</code> the right value is 4
@@ -67,7 +67,7 @@ public interface OIndexableSQLFunction extends OSQLFunction {
    * @param args the function arguments, eg. in <code>select from Foo where myFunction(name) &gt; 4</code> the arguments are [name]
    * @return true if the funciton can be calculated without the index. False otherwise
    */
-  public boolean canExecuteWithoutIndex(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
+  public boolean canExecuteInline(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args);
 
   /**

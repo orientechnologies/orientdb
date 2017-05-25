@@ -187,7 +187,7 @@ public class OFunctionCall extends SimpleNode {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     if (function instanceof OIndexableSQLFunction) {
       return ((OIndexableSQLFunction) function)
-          .canExecuteWithoutIndex(target, operator, right, context, this.getParams().toArray(new OExpression[] {}));
+          .canExecuteInline(target, operator, right, context, this.getParams().toArray(new OExpression[] {}));
     }
     return false;
   }
