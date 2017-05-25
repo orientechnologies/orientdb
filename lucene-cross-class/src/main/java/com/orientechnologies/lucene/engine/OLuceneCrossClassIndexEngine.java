@@ -31,14 +31,9 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import static com.orientechnologies.lucene.OLuceneIndexFactory.*;
+import static com.orientechnologies.lucene.OLuceneIndexFactory.LUCENE_ALGORITHM;
 
 /**
  * Created by frank on 03/11/2016.
@@ -71,7 +66,6 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
       ODocument metadata) {
-
 
   }
 
@@ -139,11 +133,7 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
 
           globalAnalyzer.add((OLucenePerFieldAnalyzerWrapper) fullTextIndex.queryAnalyzer());
 
-          try {
-            readers.add(fullTextIndex.searcher().getIndexReader());
-          } catch (IOException e) {
-            OLogManager.instance().error(this, "unable to get IndexReader for index " + index.getName(), e);
-          }
+          readers.add(fullTextIndex.searcher().getIndexReader());
 
         }
 
@@ -294,12 +284,17 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   }
 
   @Override
-  public IndexSearcher searcher() throws IOException {
+  public IndexSearcher searcher() {
     return null;
   }
 
   @Override
-  public Object getInTx(Object key, OLuceneTxChanges changes) {
+  public void release(IndexSearcher searcher) {
+
+  }
+
+  @Override
+  public Set<OIdentifiable> getInTx(Object key, OLuceneTxChanges changes) {
     return null;
   }
 
