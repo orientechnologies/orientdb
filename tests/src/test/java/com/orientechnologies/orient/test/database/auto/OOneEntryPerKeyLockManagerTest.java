@@ -34,10 +34,10 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * @author Sylvain Spinelli
  * 
  */
-public class LockManagerTest {
+public class OOneEntryPerKeyLockManagerTest {
 
   public static final int                                     THREADS         = 64;
-  public static       int                                     cyclesByProcess = 10000000;
+  public static       int                                     cyclesByProcess = 1000000;
   public static       boolean                                 verbose         = false;
   public static       OOneEntryPerKeyLockManager<Callable<?>> lockMgr         = new OOneEntryPerKeyLockManager<Callable<?>>(
                                                                         OGlobalConfiguration.ENVIRONMENT_CONCURRENT

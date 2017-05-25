@@ -20,10 +20,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
-import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
-import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
+import com.orientechnologies.common.concur.lock.*;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -31,7 +28,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -110,7 +106,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       this.valueContainerAlgorithm = valueContainerAlgorithm;
       this.storage = (OAbstractPaginatedStorage) storage.getUnderlying();
       this.keyLockManager = Orient.instance().isRunningDistributed() ?
-          new OOneEntryPerKeyLockManager<Object>(true, -1, OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger()) :
+          new OIndexOneEntryPerKeyLockManager<Object>() :
           new OPartitionedLockManager<Object>();
 
       Orient.instance().registerWeakOrientStartupListener(this);
