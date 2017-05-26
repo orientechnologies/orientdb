@@ -52,11 +52,13 @@ public class OInsertExecutionPlanner {
     return result;
   }
 
-  private void handleSave(OInsertExecutionPlan result, OIdentifier targetClusterName, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleSave(OInsertExecutionPlan result, OIdentifier targetClusterName, OCommandContext ctx,
+      boolean profilingEnabled) {
     result.chain(new SaveElementStep(ctx, targetClusterName, profilingEnabled));
   }
 
-  private void handleReturn(OInsertExecutionPlan result, OProjection returnStatement, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleReturn(OInsertExecutionPlan result, OProjection returnStatement, OCommandContext ctx,
+      boolean profilingEnabled) {
     if (returnStatement != null) {
       result.chain(new ProjectionCalculationStep(returnStatement, ctx, profilingEnabled));
     }
@@ -83,7 +85,8 @@ public class OInsertExecutionPlanner {
     }
   }
 
-  private void handleTargetClass(OInsertExecutionPlan result, OIdentifier targetClass, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleTargetClass(OInsertExecutionPlan result, OIdentifier targetClass, OCommandContext ctx,
+      boolean profilingEnabled) {
     if (targetClass != null) {
       result.chain(new SetDocumentClassStep(targetClass, ctx, profilingEnabled));
     }
@@ -91,13 +94,15 @@ public class OInsertExecutionPlanner {
 
   private void handleCreateRecord(OInsertExecutionPlan result, OInsertBody body, OCommandContext ctx, boolean profilingEnabled) {
     int tot = 1;
-    if (body.getValueExpressions() != null && body.getValueExpressions().size() > 0) {
+
+    if (body != null && body.getValueExpressions() != null && body.getValueExpressions().size() > 0) {
       tot = body.getValueExpressions().size();
     }
     result.chain(new CreateRecordStep(ctx, tot, profilingEnabled));
   }
 
-  private void handleInsertSelect(OInsertExecutionPlan result, OSelectStatement selectStatement, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleInsertSelect(OInsertExecutionPlan result, OSelectStatement selectStatement, OCommandContext ctx,
+      boolean profilingEnabled) {
     OInternalExecutionPlan subPlan = selectStatement.createExecutionPlan(ctx, profilingEnabled);
     result.chain(new SubQueryStep(subPlan, ctx, ctx, profilingEnabled));
     result.chain(new CopyDocumentStep(result, ctx, profilingEnabled));

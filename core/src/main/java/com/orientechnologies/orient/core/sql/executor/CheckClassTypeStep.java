@@ -48,10 +48,14 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
         throw new OCommandExecutionException("Class not found: " + this.targetClass);
       }
 
-      for (OClass sublcass : parentClazz.getAllSubclasses()) {
-        if (sublcass.equals(targetClazz)) {
-          this.found = true;
-          break;
+      if (parentClazz.equals(targetClazz)) {
+        found = true;
+      } else {
+        for (OClass sublcass : parentClazz.getAllSubclasses()) {
+          if (sublcass.equals(targetClazz)) {
+            this.found = true;
+            break;
+          }
         }
       }
       if (!found) {
