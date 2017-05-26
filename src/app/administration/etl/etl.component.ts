@@ -46,6 +46,8 @@ class EtlComponent {
 
   // Control booleans
   private ready;
+  private classReady;
+  private indexReady;
   private importReady;
   private OldConfigJquery;
 
@@ -434,7 +436,7 @@ class EtlComponent {
     this.loaderPrototype = {
       // Log has no parameters
 
-      orientDb: {
+      orientdb: {
         dbURL: {
           mandatory: true,
           value: undefined
@@ -563,6 +565,8 @@ class EtlComponent {
 
     // User support
     this.ready = false;
+    this.classReady = false;
+    this.indexReady = false;
     this.importReady = false;
     this.OldConfigJquery = true;
     this.job = {};
@@ -656,7 +660,7 @@ class EtlComponent {
         extends: "Defines the super-class name",
         clusters: "Defines the number of cluster to create under the class",
         metadata: "Defines additional index metadata",
-        fields: "Defines an array of fields to index. To specify the field type, use the syntax: field.type",
+        fields: "Defines an array of fields to index. To specify the field type, use the syntax: field.type, separing the fields with a comma",
         type: "Defines the index type",
         class: "Defines the class name in which to create the index ot the class to use in storing new record"
       }
@@ -983,43 +987,43 @@ class EtlComponent {
         log: {}
       };
 
-    if (type === "orientDb") {
+    if (type === "orientdb") {
       this.loader = {
-        orientDb: {
-          dbURL: this.loaderPrototype.orientDb.dbURL.value,
-          dbUser: this.loaderPrototype.orientDb.dbUser.value,
-          dbPassword: this.loaderPrototype.orientDb.dbPassword.value,
-          serverUser: this.loaderPrototype.orientDb.serverUser.value,
-          serverPassword: this.loaderPrototype.orientDb.serverPassword.value,
-          dbAutoCreate: this.loaderPrototype.orientDb.dbAutoCreate.value,
-          dbAutoCreateProperties: this.loaderPrototype.orientDb.dbAutoCreateProperties.value,
-          dbAutoDropIfExists: this.loaderPrototype.orientDb.dbAutoDropIfExists.value,
-          tx: this.loaderPrototype.orientDb.tx.value,
-          txUseLog: this.loaderPrototype.orientDb.txUseLog.value,
-          wal: this.loaderPrototype.orientDb.wal.value,
-          batchCommit: this.loaderPrototype.orientDb.batchCommit.value,
-          dbType: this.loaderPrototype.orientDb.dbType.value,
-          class: this.loaderPrototype.orientDb.class.value,
-          cluster: this.loaderPrototype.orientDb.cluster.value,
+        orientdb: {
+          dbURL: this.loaderPrototype.orientdb.dbURL.value,
+          dbUser: this.loaderPrototype.orientdb.dbUser.value,
+          dbPassword: this.loaderPrototype.orientdb.dbPassword.value,
+          serverUser: this.loaderPrototype.orientdb.serverUser.value,
+          serverPassword: this.loaderPrototype.orientdb.serverPassword.value,
+          dbAutoCreate: this.loaderPrototype.orientdb.dbAutoCreate.value,
+          dbAutoCreateProperties: this.loaderPrototype.orientdb.dbAutoCreateProperties.value,
+          dbAutoDropIfExists: this.loaderPrototype.orientdb.dbAutoDropIfExists.value,
+          tx: this.loaderPrototype.orientdb.tx.value,
+          txUseLog: this.loaderPrototype.orientdb.txUseLog.value,
+          wal: this.loaderPrototype.orientdb.wal.value,
+          batchCommit: this.loaderPrototype.orientdb.batchCommit.value,
+          dbType: this.loaderPrototype.orientdb.dbType.value,
+          class: this.loaderPrototype.orientdb.class.value,
+          cluster: this.loaderPrototype.orientdb.cluster.value,
           classes: [], // empty arrays. The default value of the related object is pushed and modified when the user click on the add button
           indexes: [],
-          useLightweightEdges: this.loaderPrototype.orientDb.useLightweightEdges.value,
-          standardElementConstraints: this.loaderPrototype.orientDb.standardElementConstraints.value
+          useLightweightEdges: this.loaderPrototype.orientdb.useLightweightEdges.value,
+          standardElementConstraints: this.loaderPrototype.orientdb.standardElementConstraints.value
         }
       };
 
       this.classes = {
-        name: this.loaderPrototype.orientDb.classes.value.name.value,
-        extends: this.loaderPrototype.orientDb.classes.value.extends.value,
-        clusters: this.loaderPrototype.orientDb.classes.value.clusters.value
+        name: this.loaderPrototype.orientdb.classes.value.name.value,
+        extends: this.loaderPrototype.orientdb.classes.value.extends.value,
+        clusters: this.loaderPrototype.orientdb.classes.value.clusters.value
       };
 
       this.indexes = {
-        name: this.loaderPrototype.orientDb.indexes.value.name.value,
-        class: this.loaderPrototype.orientDb.indexes.value.class.value,
-        type: this.loaderPrototype.orientDb.indexes.value.type.value,
-        fields: this.loaderPrototype.orientDb.indexes.value.fields.value,
-        metadata: this.loaderPrototype.orientDb.indexes.value.metadata.value
+        name: this.loaderPrototype.orientdb.indexes.value.name.value,
+        class: this.loaderPrototype.orientdb.indexes.value.class.value,
+        type: this.loaderPrototype.orientdb.indexes.value.type.value,
+        fields: this.loaderPrototype.orientdb.indexes.value.fields.value,
+        metadata: this.loaderPrototype.orientdb.indexes.value.metadata.value
       };
     }
 
@@ -1147,20 +1151,20 @@ class EtlComponent {
     if (this.extractor && this.transformers.length > 0 && this.loader) {
       // Controls, for every property of every module, if it's mandatory and has a value
       // Extractor control
-      for (let property in this.extractorPrototype[this.extractorType]) {
-        if (this.extractorPrototype[this.extractorType].hasOwnProperty(property)) {
-          if (this.extractorPrototype[this.extractorType][property]["mandatory"] && !this.extractor[this.extractorType][property]) {
+      for(let property in this.extractorPrototype[this.extractorType]) {
+        if(this.extractorPrototype[this.extractorType].hasOwnProperty(property)) {
+          if(this.extractorPrototype[this.extractorType][property]["mandatory"] && !this.extractor[this.extractorType][property]) {
             this.ready = false;
             return;
           }
         }
       }
       // Transformers control
-      for (let i = 0; i < this.transformers.length; i++) {
+      for(let i = 0; i < this.transformers.length; i++) {
         let type = this.getTransformerType(this.transformers[i]);
-        for (let property in this.transformerPrototype[type]) {
-          if (this.transformerPrototype[type].hasOwnProperty(property)) {
-            if (this.transformerPrototype[type][property]["mandatory"] && !this.transformers[i][type][property]) {
+        for(let property in this.transformerPrototype[type]) {
+          if(this.transformerPrototype[type].hasOwnProperty(property)) {
+            if(this.transformerPrototype[type][property]["mandatory"] && !this.transformers[i][type][property]) {
               this.ready = false;
               return;
             }
@@ -1168,15 +1172,43 @@ class EtlComponent {
         }
       }
       // Loader control
-      for (let property in this.loaderPrototype[this.loaderType]) {
-        if (this.loaderPrototype[this.loaderType].hasOwnProperty(property)) {
-          if (this.loaderPrototype[this.loaderType][property]["mandatory"] && !this.loader[this.loaderType][property]) {
+      for(let property in this.loaderPrototype[this.loaderType]) {
+        if(this.loaderPrototype[this.loaderType].hasOwnProperty(property)) {
+          if(this.loaderPrototype[this.loaderType][property]["mandatory"] && !this.loader[this.loaderType][property]) {
             this.ready = false;
             return;
           }
         }
       }
       this.ready = true;
+    }
+  }
+
+  subReadyForExecution() {
+
+    // Controls that the objects in OrientDB loader are correctly created
+    for(let property in this.classes) {
+      if(this.classes.hasOwnProperty(property))
+        if(this.loaderPrototype.orientdb.classes["value"][property]["mandatory"] && !this.classes[property]) {
+          this.classReady = false;
+          break;
+        }
+      this.classReady = true;
+    }
+
+    for(let property in this.indexes) {
+      if(this.indexes.hasOwnProperty(property)) {
+        if(property === "fields" && this.indexes.fields)
+          if(this.indexes.fields.length == 0) {
+            this.indexReady = false;
+            break;
+          }
+        if(this.loaderPrototype.orientdb.indexes["value"][property]["mandatory"] && !this.indexes[property]) {
+          this.indexReady = false;
+          break;
+        }
+      }
+      this.indexReady = true;
     }
   }
 
@@ -1232,14 +1264,14 @@ class EtlComponent {
   }
 
   status() {
-    if (this.jobRunning) {
+    if(this.jobRunning) {
       this.etlService.status().then((data) => {
-        if (data.jobs.length > 0) {
+        if(data.jobs.length > 0) {
           this.job = data.jobs[0];
           this.scrollLogAreaDown();
         }
         else {
-          if (this.job) {
+          if(this.job) {
             this.job.finished = true;
             this.jobRunning = false;
             this.scrollLogAreaDown();
@@ -1297,28 +1329,30 @@ class EtlComponent {
 
   loaderAddTo(type) {
     if(type === "classes") {
-      this.loader.orientDb.classes.push(this.classes);
+      this.loader.orientdb.classes.push(this.classes);
       this.classes = {
-        name: this.loaderPrototype.orientDb.classes.value.name.value,
-        extends: this.loaderPrototype.orientDb.classes.value.extends.value,
-        clusters: this.loaderPrototype.orientDb.classes.value.clusters.value
+        name: this.loaderPrototype.orientdb.classes.value.name.value,
+        extends: this.loaderPrototype.orientdb.classes.value.extends.value,
+        clusters: this.loaderPrototype.orientdb.classes.value.clusters.value
       };
+      this.classReady = false;
     }
     if(type === "indexes") {
-      this.loader.orientDb.indexes.push(this.indexes);
+      this.loader.orientdb.indexes.push(this.indexes);
       this.indexes = {
-        name: this.loaderPrototype.orientDb.indexes.value.name.value,
-        class: this.loaderPrototype.orientDb.indexes.value.class.value,
-        type: this.loaderPrototype.orientDb.indexes.value.type.value,
-        fields: this.loaderPrototype.orientDb.indexes.value.fields.value,
-        metadata: this.loaderPrototype.orientDb.indexes.value.metadata.value
+        name: this.loaderPrototype.orientdb.indexes.value.name.value,
+        class: this.loaderPrototype.orientdb.indexes.value.class.value,
+        type: this.loaderPrototype.orientdb.indexes.value.type.value,
+        fields: this.loaderPrototype.orientdb.indexes.value.fields.value,
+        metadata: this.loaderPrototype.orientdb.indexes.value.metadata.value
       };
+      this.indexReady = false;
     }
   }
 
   loaderEmpty(type) {
-    if(type === "classes") this.loader.orientDb.classes = [];
-    if(type === "indexes") this.loader.orientDb.indexes = [];
+    if(type === "classes") this.loader.orientdb.classes = [];
+    if(type === "indexes") this.loader.orientdb.indexes = [];
   }
 
   // Getters and setters
@@ -1346,6 +1380,11 @@ class EtlComponent {
   }
 
   // Misc
+
+  separeCaps(string) {
+    string = string.split(/(?=[A-Z])/).join(" ");
+    return string;
+  }
 
   previewFile() {
     let fileInput = document.getElementById('fileInput');

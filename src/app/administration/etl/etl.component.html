@@ -283,7 +283,7 @@
                           <div class="list-group-item list-group-item-info">Loader Type</div>
 
                           <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('log')">log</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('orientDb')">OrientDB</button>
+                          <button type="button" class="list-group-item list-group-item-action" (click)="loaderInit('orientdb')">OrientDB</button>
                         </div>
                       </div>
                     </div>
@@ -322,10 +322,10 @@
                               [attr.data-content]="hints.extractor[eParameter]"><i class="fa fa-question-circle"></i>
                       </button>
                       <label *ngIf="extractorPrototype[extractorType][eParameter]['mandatory'] == true">
-                        &emsp;{{eParameter.toUpperCase()}} <b style="color:red;">*</b>
+                        &emsp;{{separeCaps(eParameter).toUpperCase()}} <b style="color:red;">*</b>
                       </label>
                       <label *ngIf="extractorPrototype[extractorType][eParameter]['mandatory'] == false">
-                        &emsp;{{eParameter.toUpperCase()}}
+                        &emsp;{{separeCaps(eParameter).toUpperCase()}}
                       </label>
 
                       <select *ngIf="extractorPrototype[extractorType][eParameter]['types']" class="form-control"
@@ -340,9 +340,8 @@
                              placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
 
                       <tag-input *ngIf="extractorPrototype[extractorType][eParameter]['array']" name="eTextConfig-{{eParameter}}"
-                                 [(ngModel)]="extractor[extractorType][eParameter]" (ngModelChange)="readyForExecution()"
-                                 placeholder="new item" secondaryPlaceholder="enter new item"
-                                 modelAsStrings="true">
+                                 [(ngModel)]="extractor[extractorType][eParameter]" placeholder="new item" secondaryPlaceholder="enter new item"
+                                 modelAsStrings="true" [separatorKeys]="[188]">
                       </tag-input>
                       <br>
 
@@ -369,10 +368,10 @@
                               [attr.data-content]="hints.transformer[tParameter]"><i class="fa fa-question-circle"></i>
                       </button>
                       <label *ngIf="transformerPrototype[getTransformerType(currentTransformer)][tParameter]['mandatory'] == true">
-                        &emsp;{{tParameter.toUpperCase()}} <b style="color:red;">*</b>
+                        &emsp;{{separeCaps(tParameter).toUpperCase()}} <b style="color:red;">*</b>
                       </label>
                       <label *ngIf="transformerPrototype[getTransformerType(currentTransformer)][tParameter]['mandatory'] == false">
-                        &emsp;{{tParameter.toUpperCase()}}
+                        &emsp;{{separeCaps(tParameter).toUpperCase()}}
                       </label>
 
                       <select *ngIf="transformerPrototype[getTransformerType(currentTransformer)][tParameter]['types']" class="form-control"
@@ -412,10 +411,10 @@
                               [attr.data-content]="hints.loader[lParameter]"><i class="fa fa-question-circle"></i>
                       </button>
                       <label *ngIf="loaderPrototype[loaderType][lParameter]['mandatory'] == true">
-                        &emsp;{{lParameter.toUpperCase()}} <b style="color:red;">*</b>
+                        &emsp;{{separeCaps(lParameter).toUpperCase()}} <b style="color:red;">*</b>
                       </label>
                       <label *ngIf="loaderPrototype[loaderType][lParameter]['mandatory'] == false">
-                        &emsp;{{lParameter.toUpperCase()}}
+                        &emsp;{{separeCaps(lParameter).toUpperCase()}}
                       </label>
 
                       <select *ngIf="loaderPrototype[loaderType][lParameter]['types']"
@@ -435,34 +434,41 @@
                         <h6 style="color:grey;"><b>Created {{lParameter}}: {{loader[loaderType][lParameter].length}}</b></h6>
                         <div *ngFor="let oParameter of objectKeys.transform(loaderPrototype[loaderType][lParameter]['value'])">
                           &emsp;&emsp;<button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
-                                  [attr.data-content]="hints.loader[oParameter]"><i class="fa fa-question-circle"></i>
-                          </button>
+                                              [attr.data-content]="hints.loader[oParameter]"><i class="fa fa-question-circle"></i>
+                        </button>
                           <label *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['mandatory'] == true">
                             &emsp;{{oParameter}} <b style="color:red;">*</b>
                           </label>
                           <label *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['mandatory'] == false">
                             &emsp;{{oParameter}}
                           </label>
+                          <div class="col-md-offset-1 col-md-11">
+                            <input *ngIf="!loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
+                                   type="text" class="form-control" name="lTextConfig-{{lParameter}}-{{oParameter}}"
+                                   [(ngModel)]="this[lParameter][oParameter]" placeholder="enter your value"
+                                   (ngModelChange)="subReadyForExecution()"/>
 
-                          <input *ngIf="!loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
-                                 type="text" class="form-control" name="lTextConfig-{{lParameter}}-{{oParameter}}"
-                                 [(ngModel)]="this[lParameter][oParameter]" placeholder="enter your value"
-                                 (ngModelChange)="readyForExecution()"/>
-
-                          <tag-input *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
-                                 name="lTextConfig-{{lParameter}}-{{oParameter}}" [(ngModel)]="this[lParameter][oParameter]"
-                                 (ngModelChange)="readyForExecution()" placeholder="new item" secondaryPlaceholder="enter new item"
-                                 modelAsStrings="true">
-                          </tag-input>
-
-                        </div><br>
+                            <tag-input *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
+                                       name="lTextConfig-{{lParameter}}-{{oParameter}}" [(ngModel)]="this[lParameter][oParameter]"
+                                       (onAdd)="subReadyForExecution()" (onRemove)="subReadyForExecution()" placeholder="new item"
+                                       secondaryPlaceholder="enter new item" modelAsStrings="true" [separatorKeys]="[188]">
+                            </tag-input>
+                          </div>
+                        </div>
+                        <br><br><br>
                         <div class="btn-group-xs">
-                          <button type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderAddTo(lParameter)">
-                            Add to {{lParameter}}
-                          </button>
-                          &emsp;&emsp;
+                          &emsp;&emsp;&emsp;
                           <button type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderEmpty(lParameter)">
                             Empty {{lParameter}}
+                          </button>
+                          &emsp;
+                          <button *ngIf="lParameter === 'classes'" type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderAddTo(lParameter)"
+                                  [disabled]="!classReady">
+                            Add to {{lParameter}}
+                          </button>
+                          <button *ngIf="lParameter === 'indexes'" type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderAddTo(lParameter)"
+                                  [disabled]="!indexReady">
+                            Add to {{lParameter}}
                           </button>
                         </div><br>
                       </div>
