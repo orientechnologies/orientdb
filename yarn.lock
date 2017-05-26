@@ -2678,9 +2678,9 @@ ng2-select2@^1.0.0-beta.10:
     "@types/jquery" "^2.0.39"
     "@types/select2" "^4.0.31"
 
-ng2-tag-input@^0.8.4:
-  version "0.8.6"
-  resolved "https://registry.yarnpkg.com/ng2-tag-input/-/ng2-tag-input-0.8.6.tgz#d0f457fdc3e31743ddda24c9d2ba5d46f14ff801"
+ng2-tag-input@^0.8.8:
+  version "0.8.8"
+  resolved "https://registry.yarnpkg.com/ng2-tag-input/-/ng2-tag-input-0.8.8.tgz#32bce763a1118da3820f0a2d49841a3c5a049bb6"
   dependencies:
     ng2-material-dropdown "0.7.3"
 

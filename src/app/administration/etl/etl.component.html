@@ -339,16 +339,18 @@
                              type="text" class="form-control" name="eTextConfig-{{eParameter}}" [(ngModel)]="extractor[extractorType][eParameter]"
                              placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
 
-                      <input *ngIf="extractorPrototype[extractorType][eParameter]['array']" type="text" class="form-control"
-                             name="eTextConfig-{{eParameter}}" [(ngModel)]="extractor[extractorType][eParameter]" placeholder="enter your tags"
-                             (ngModelChange)="readyForExecution()"/>
+                      <tag-input *ngIf="extractorPrototype[extractorType][eParameter]['array']" name="eTextConfig-{{eParameter}}"
+                                 [(ngModel)]="extractor[extractorType][eParameter]" (ngModelChange)="readyForExecution()"
+                                 placeholder="new item" secondaryPlaceholder="enter new item"
+                                 modelAsStrings="true">
+                      </tag-input>
                       <br>
 
                     </div>
                   </div><br><br>
                   <div class="col-md-12 text-center">
                     <div class="btn-group">
-                      <button id="deleteExtractor" type="button" class="btn btn-xs btn-danger" (click)="deleteExtractor()">Delete Extractor</button>
+                      <button id="deleteExtractor" type="button" class="btn btn-xs btn-danger" style="border-radius: 40px;" (click)="deleteExtractor()">Delete Extractor</button>
                     </div>
                   </div>
                 </div>
@@ -391,7 +393,7 @@
                   </div><br><br>
                   <div class="col-md-12 text-center">
                     <div class="btn-group">
-                      <button id="deleteTransformer" type="button" class="btn btn-xs btn-danger" (click)="deleteTransformer()">Delete Transformer</button>
+                      <button id="deleteTransformer" type="button" class="btn btn-xs btn-danger" style="border-radius: 40px;" (click)="deleteTransformer()">Delete Transformer</button>
                     </div>
                   </div>
                 </div>
@@ -430,6 +432,7 @@
 
                       <!-- Objects creation (classes and indexes) -->
                       <div *ngIf="loaderPrototype[loaderType][lParameter]['object']">
+                        <h6 style="color:grey;"><b>Created {{lParameter}}: {{loader[loaderType][lParameter].length}}</b></h6>
                         <div *ngFor="let oParameter of objectKeys.transform(loaderPrototype[loaderType][lParameter]['value'])">
                           &emsp;&emsp;<button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                                   [attr.data-content]="hints.loader[oParameter]"><i class="fa fa-question-circle"></i>
@@ -443,13 +446,14 @@
 
                           <input *ngIf="!loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
                                  type="text" class="form-control" name="lTextConfig-{{lParameter}}-{{oParameter}}"
-                                 [(ngModel)]="[lParameter + 'Element'][oParameter]" placeholder="enter your value"
+                                 [(ngModel)]="this[lParameter][oParameter]" placeholder="enter your value"
                                  (ngModelChange)="readyForExecution()"/>
 
-                          <input *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
-                                 type="text" class="form-control" name="lTextConfig-{{lParameter}}-{{oParameter}}"
-                                 [(ngModel)]="[lParameter + 'Element'][oParameter]" placeholder="enter your tags"
-                                 (ngModelChange)="readyForExecution()"/>
+                          <tag-input *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
+                                 name="lTextConfig-{{lParameter}}-{{oParameter}}" [(ngModel)]="this[lParameter][oParameter]"
+                                 (ngModelChange)="readyForExecution()" placeholder="new item" secondaryPlaceholder="enter new item"
+                                 modelAsStrings="true">
+                          </tag-input>
 
                         </div><br>
                         <div class="btn-group-xs">
@@ -468,7 +472,7 @@
                   </div><br><br>
                   <div class="col-md-12 text-center">
                     <div class="btn-group">
-                      <button id="deleteLoader" type="button" class="btn btn-xs btn-danger" (click)="deleteLoader()">Delete Loader</button>
+                      <button id="deleteLoader" type="button" class="btn btn-xs btn-danger" style="border-radius: 40px;" (click)="deleteLoader()">Delete Loader</button>
                     </div>
                   </div>
                 </div>

@@ -51,7 +51,7 @@
     "ng2-bs3-modal": "^0.10.4",
     "ng2-codemirror": "^1.1.1",
     "ng2-select2": "^1.0.0-beta.10",
-    "ng2-tag-input": "^0.8.4",
+    "ng2-tag-input": "^0.8.8",
     "noty": "^2.3.8",
     "nprogress": "^0.2.0",
     "raw-loader": "^0.5.1",

@@ -6,7 +6,6 @@ import {downgradeComponent} from "@angular/upgrade/static";
 import {EtlService} from "../../core/services";
 import {AgentService} from "../../core/services/agent.service";
 import {ObjectKeysPipe} from "../../core/pipes";
-
 import "../../util/draggable-sortable/jquery-sortable.js";
 
 declare const angular:any;
@@ -31,12 +30,15 @@ class EtlComponent {
   // Configuration parts
   private config;
   private source;
+
   private extractor;
+
   private currentTransformer;
   private transformers = [];
+
   private loader;
-  private classesElement;
-  private indexesElement;
+  private classes;
+  private indexes;
 
   // Types needed for controls
   private extractorType;
@@ -1006,13 +1008,13 @@ class EtlComponent {
         }
       };
 
-      this.classesElement = {
+      this.classes = {
         name: this.loaderPrototype.orientDb.classes.value.name.value,
         extends: this.loaderPrototype.orientDb.classes.value.extends.value,
         clusters: this.loaderPrototype.orientDb.classes.value.clusters.value
       };
 
-      this.indexesElement = {
+      this.indexes = {
         name: this.loaderPrototype.orientDb.indexes.value.name.value,
         class: this.loaderPrototype.orientDb.indexes.value.class.value,
         type: this.loaderPrototype.orientDb.indexes.value.type.value,
@@ -1272,14 +1274,15 @@ class EtlComponent {
     let tmp = [];
     let tmpBlock;
     for(let i = 0; i < this.transformers.length; i++) {
-      if(this.getTransformerType(this.transformers[i]) === ('let') || this.getTransformerType(this.transformers[i]) === ('console')) { // even code transformer could be included
+      if(this.getTransformerType(this.transformers[i]) === ('let') || this.getTransformerType(this.transformers[i]) === ('console')) {
+        // even code transformer could be included in if statement
         tmpBlock = {block: this.transformers[i]};
         tmp.push(tmpBlock);
       }
       else tmp.push(this.transformers[i]);
     }
     this.transformers = tmp;
-    console.log(this.transformers);
+    console.log(this.transformers); // TODO remove
   }
 
   sortTransformers() {
@@ -1294,16 +1297,16 @@ class EtlComponent {
 
   loaderAddTo(type) {
     if(type === "classes") {
-      this.loader.orientDb.classes.push(this.classesElement);
-      this.classesElement = {
+      this.loader.orientDb.classes.push(this.classes);
+      this.classes = {
         name: this.loaderPrototype.orientDb.classes.value.name.value,
         extends: this.loaderPrototype.orientDb.classes.value.extends.value,
         clusters: this.loaderPrototype.orientDb.classes.value.clusters.value
       };
     }
     if(type === "indexes") {
-      this.loader.orientDb.indexes.push(this.indexesElement);
-      this.indexesElement = {
+      this.loader.orientDb.indexes.push(this.indexes);
+      this.indexes = {
         name: this.loaderPrototype.orientDb.indexes.value.name.value,
         class: this.loaderPrototype.orientDb.indexes.value.class.value,
         type: this.loaderPrototype.orientDb.indexes.value.type.value,
