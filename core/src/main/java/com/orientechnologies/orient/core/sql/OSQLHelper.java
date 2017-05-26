@@ -26,7 +26,9 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -308,6 +310,22 @@ public class OSQLHelper {
     if (iFieldValue instanceof OSQLFilterItem)
       return ((OSQLFilterItem) iFieldValue).getValue(iDocument, null, iContext);
 
+    // Handle 'in' and 'out' properties for edges
+    OClass cls = iDocument.getSchemaClass();
+    if (cls != null) {
+      boolean isEdge = cls.isSubClassOf(OImmutableClass.EDGE_CLASS_NAME);
+      if (isEdge && ("in".equals(iFieldName) || "out".equals(iFieldName)) &&
+        (iFieldValue instanceof ArrayList)) {
+        ArrayList lst = (ArrayList) iFieldValue;
+        if (lst.size() > 1) {
+          throw new OCommandExecutionException("Can't set property '" + iFieldName +
+            "' of edge class " + cls.getName());
+        }
+        return lst.get(0);
+      }
+    }
+
+    //
     return iFieldValue;
   }
 
