@@ -73,6 +73,7 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
 
     while (continueTraversing()) {
       final OrientVertex node = getMinimum(unSettledNodes);
+      if (node.getIdentity().equals(paramDestinationVertex.getIdentity())) break; // terminate when destination is found
       unSettledNodes.remove(node);
       findMinimalDistances(node);
 

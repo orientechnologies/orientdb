@@ -5,6 +5,8 @@ target
 */test-output
 out
 */databases
+*/plugins
+*/config
 *.gz
 *.patch
 
