@@ -11,12 +11,16 @@ public class HandshakeInfo {
   private short             protocolVersion;
   private String            driverName;
   private String            driverVersion;
+  private byte              encoding;
+  private byte              errorEncoding;
   private ORecordSerializer serializer;
 
-  public HandshakeInfo(short protocolVersion, String driverName, String driverVersion) {
+  public HandshakeInfo(short protocolVersion, String driverName, String driverVersion, byte encoding, byte errorEncoding) {
     this.protocolVersion = protocolVersion;
     this.driverName = driverName;
     this.driverVersion = driverVersion;
+    this.encoding = encoding;
+    this.errorEncoding = errorEncoding;
     this.serializer = ORecordSerializerNetworkFactory.INSTANCE.forProtocol(protocolVersion);
   }
 
@@ -46,5 +50,13 @@ public class HandshakeInfo {
 
   public ORecordSerializer getSerializer() {
     return serializer;
+  }
+
+  public byte getEncoding() {
+    return encoding;
+  }
+
+  public byte getErrorEncoding() {
+    return errorEncoding;
   }
 }

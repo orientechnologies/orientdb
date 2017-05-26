@@ -61,11 +61,11 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -185,7 +185,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     short protocolVersion = channel.readShort();
     String driverName = channel.readString();
     String driverVersion = channel.readString();
-    this.handshakeInfo = new HandshakeInfo(protocolVersion, driverName, driverVersion);
+    byte encoding = channel.readByte();
+    byte errorEncoding = channel.readByte();
+    this.handshakeInfo = new HandshakeInfo(protocolVersion, driverName, driverVersion, encoding, errorEncoding);
     this.factory = ONetworkBinaryProtocolFactory.matchProtocol(protocolVersion);
   }
 
@@ -561,13 +563,21 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         messages.put(current.getClass().getName(), current.getMessage());
         it = it.getCause();
       }
-      final OMemoryStream memoryStream = new OMemoryStream();
-      final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
-
-      objectOutputStream.writeObject(current);
-      objectOutputStream.flush();
-      final byte[] result = memoryStream.toByteArray();
-      objectOutputStream.close();
+      final byte[] result;
+      if (handshakeInfo == null || handshakeInfo.getErrorEncoding() == OChannelBinaryProtocol.ERROR_MESSAGE_JAVA) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        objectOutputStream.writeObject(current);
+        objectOutputStream.flush();
+        objectOutputStream.close();
+        result = outputStream.toByteArray();
+      } else if (handshakeInfo.getErrorEncoding() == OChannelBinaryProtocol.ERROR_MESSAGE_STRING) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        current.printStackTrace(new PrintStream(outputStream));
+        result = outputStream.toByteArray();
+      } else {
+        result = new byte[] {};
+      }
 
       OBinaryResponse error = new OErrorResponse(messages, result);
       int protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;

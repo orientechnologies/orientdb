@@ -31,11 +31,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
 
-import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
@@ -96,6 +92,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         writeShort((short) iProtocolVersion);
         writeString("Java Client");
         writeString(OConstants.getVersion());
+        writeByte(OChannelBinaryProtocol.ENCODING_DEFAULT);
+        writeByte(OChannelBinaryProtocol.ERROR_MESSAGE_JAVA);
         flush();
       } catch (IOException e) {
         throw new ONetworkProtocolException(
