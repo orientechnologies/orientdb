@@ -19,17 +19,17 @@
   */
 package com.orientechnologies.orient.core.command.traverse;
 
-import java.util.Collection;
-import java.util.Iterator;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 public class OTraverseRecordSetProcess extends OTraverseAbstractProcess<Iterator<OIdentifiable>> {
   private final OTraversePath path;
-  protected OIdentifiable     record;
-  protected int               index = -1;
+  protected     OIdentifiable record;
+  protected int index = -1;
 
   public OTraverseRecordSetProcess(final OTraverse iCommand, final Iterator<OIdentifiable> iTarget, OTraversePath parentPath) {
     super(iCommand, iTarget);
@@ -46,15 +46,15 @@ public class OTraverseRecordSetProcess extends OTraverseAbstractProcess<Iterator
       final ORecord rec = record.getRecord();
       if (rec instanceof ODocument) {
         ODocument doc = (ODocument) rec;
-        if (!doc.getIdentity().isPersistent() && doc.fields() == 1) {
+        if (doc.getIdentity().getClusterId() == -2 && doc.fields() == 1) { // projection
           // EXTRACT THE FIELD CONTEXT
           Object fieldvalue = doc.field(doc.fieldNames()[0]);
           if (fieldvalue instanceof Collection<?>) {
-            command.getContext().push(
-                new OTraverseRecordSetProcess(command, ((Collection<OIdentifiable>) fieldvalue).iterator(), getPath()));
+            command.getContext()
+                .push(new OTraverseRecordSetProcess(command, ((Collection<OIdentifiable>) fieldvalue).iterator(), getPath()));
 
           } else if (fieldvalue instanceof ODocument) {
-            command.getContext().push(new OTraverseRecordProcess(command, (ODocument) rec, getPath()));
+            command.getContext().push(new OTraverseRecordProcess(command, (ODocument) fieldvalue, getPath()));
           }
         } else {
           command.getContext().push(new OTraverseRecordProcess(command, (ODocument) rec, getPath()));
