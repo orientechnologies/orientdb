@@ -45,11 +45,12 @@ class EtlComponent {
   private loaderType;
 
   // Control booleans
+  private advanced;
   private ready;
   private classReady;
   private indexReady;
   private importReady;
-  private OldConfigJquery;
+  private oldConfigJquery;
 
   // Execution related variables
   private oldConfig;
@@ -167,11 +168,13 @@ class EtlComponent {
         },
         skipFrom: {
           mandatory: false,
-          value: undefined
+          value: undefined,
+          number: true
         },
         skipTo: {
           mandatory: false,
-          value: undefined
+          value: undefined,
+          number: true
         },
         ignoreEmptyLines: {
           mandatory: false,
@@ -489,7 +492,8 @@ class EtlComponent {
         },
         batchCommit: {
           mandatory: false,
-          value: 0
+          value: 0,
+          number: true
         },
         dbType: {
           mandatory: false,
@@ -517,7 +521,8 @@ class EtlComponent {
             },
             clusters: {
               mandatory: false,
-              value: 1
+              value: 1,
+              number: true
             }
           },
           object: true
@@ -564,11 +569,12 @@ class EtlComponent {
     };
 
     // User support
+    this.advanced = false;
     this.ready = false;
     this.classReady = false;
     this.indexReady = false;
     this.importReady = false;
-    this.OldConfigJquery = true;
+    this.oldConfigJquery = false;
     this.job = {};
     this.jobRunning = false;
     this.step = 0;
@@ -1137,6 +1143,7 @@ class EtlComponent {
 
     // eventually activate the run button, the jquery part is triggered by the viewchecked event
     this.readyForExecution();
+    this.oldConfigJquery = true;
   }
 
   restoreTransformers() { // TODO creates the canvases without resetting any parameter in transformers
@@ -1300,6 +1307,13 @@ class EtlComponent {
     this.sourcePrototype.source.value = undefined;
     this.extractorType = undefined;
     this.loaderType = undefined;
+    this.advanced = false;
+    this.ready = false;
+    this.classReady = false;
+    this.indexReady = false;
+    this.importReady = false;
+    this.oldConfigJquery = false;
+    this.oldConfig = undefined;
   }
 
   blockFix() {
@@ -1412,8 +1426,8 @@ class EtlComponent {
   }
 
 
-  showAdvanced() {
-    $("#advancedConfig").fadeIn(800);
+  addAdvanced() {
+    this.advanced = true;
 
     this.config = {
       log: this.configPrototype.config.log.value,
@@ -1457,7 +1471,7 @@ class EtlComponent {
 
   ngAfterViewChecked() {
     this.enablePopovers();
-    if(this.oldConfig && this.step == 2 && this.OldConfigJquery) { // execute the Jquery part just one time
+    if(this.oldConfig && this.step == 2 && this.oldConfigJquery) { // execute the Jquery part just one time
       // Jquery
       $(document).ready(function () {
         $("#pleaseExtractor").hide();
@@ -1467,7 +1481,7 @@ class EtlComponent {
         $("#createLoader").hide();
         $("#panelPlaceholder").show();
       });
-      this.OldConfigJquery = false;
+      this.oldConfigJquery = false;
     }
   }
 

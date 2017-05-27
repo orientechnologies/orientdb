@@ -129,7 +129,7 @@
                   <button type="button" class="btn btn-sm btn-primary" (click)="sourceInit()" [disabled]="!form.valid">Create modules</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-default" (click)="showAdvanced()">Add Advanced</button>
+                  <button type="button" class="btn btn-sm btn-default" (click)="addAdvanced()">Add Advanced</button>
                 </div>
               </div>
             </div>
@@ -137,7 +137,7 @@
 
           <!-- Advanced preliminary configuration -->
           <div class="row">
-            <div id="advancedConfig" class="text-center" style="display:none">
+            <div *ngIf="advanced" class="text-center">
               <h4>Advanced preliminary configuration
                 <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                         [attr.data-content]="hints.advancedHint"><i class="fa fa-question-circle"></i>
@@ -146,11 +146,11 @@
                 <label class="col-md-6 control-label">Max Retries</label>
                 <div class="col-md-3">
                   <input type="number" min="0" step="1" id="maxRetries" class="form-control" name="maxRetries"
-                         [(ngModel)]="configPrototype.config.maxRetries.value"/>
+                         [(ngModel)]="config.maxRetries"/>
                 </div><br><br><br>
                 <label class="col-md-6 control-label">Log Level</label>
                 <div class="col-md-4">
-                  <select class="form-control" name="logLevel" [(ngModel)]="configPrototype.config.log.value" required>
+                  <select class="form-control" name="logLevel" [(ngModel)]="config.log" required>
                     <option *ngFor="let logLevel of configPrototype.config.log.types" [value]="logLevel"> {{logLevel}} </option>
                   </select>
                 </div>
@@ -159,11 +159,11 @@
               <div class="col-md-4">
                 <label class="col-md-6 control-label">Halt on Error</label>
                 <div class="col-md-4">
-                  <input type="checkbox" name="haltOnError" id="haltOnError" class="checkbox" [(ngModel)]="configPrototype.config.haltOnError.value">
+                  <input type="checkbox" name="haltOnError" id="haltOnError" class="checkbox" [(ngModel)]="config.haltOnError">
                 </div><br><br><br>
                 <label class="col-md-6 control-label">Parallel Execution</label>
                 <div class="col-md-4">
-                  <input type="checkbox" name="parallel" id="parallel" class="checkbox" [(ngModel)]="configPrototype.config.parallel.value">
+                  <input type="checkbox" name="parallel" id="parallel" class="checkbox" [(ngModel)]="config.parallel">
                 </div>
               </div>
             </div>
@@ -335,14 +335,19 @@
                         </option>
                       </select>
 
-                      <input *ngIf="!extractorPrototype[extractorType][eParameter]['types'] && !extractorPrototype[extractorType][eParameter]['array']"
-                             type="text" class="form-control" name="eTextConfig-{{eParameter}}" [(ngModel)]="extractor[extractorType][eParameter]"
-                             placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
+                      <input *ngIf="extractorPrototype[extractorType][eParameter]['number']"
+                             type="number" min="0" step="1" class="form-control" name="lTextConfig-{{lParameter}}"
+                             [(ngModel)]="extractor[extractorType][eParameter]" placeholder="enter a number" (ngModelChange)="subReadyForExecution()"/>
 
                       <tag-input *ngIf="extractorPrototype[extractorType][eParameter]['array']" name="eTextConfig-{{eParameter}}"
                                  [(ngModel)]="extractor[extractorType][eParameter]" placeholder="new item" secondaryPlaceholder="enter new item"
                                  modelAsStrings="true" [separatorKeys]="[188]">
                       </tag-input>
+
+                      <input *ngIf="!extractorPrototype[extractorType][eParameter]['types'] && !extractorPrototype[extractorType][eParameter]['array']
+                             && !extractorPrototype[extractorType][eParameter]['number']"
+                             type="text" class="form-control" name="eTextConfig-{{eParameter}}" [(ngModel)]="extractor[extractorType][eParameter]"
+                             placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
                       <br>
 
                     </div>
@@ -424,10 +429,14 @@
                         </option>
                       </select>
 
-                      <input *ngIf="!loaderPrototype[loaderType][lParameter]['types'] && !loaderPrototype[loaderType][lParameter]['object']"
+                      <input *ngIf="loaderPrototype[loaderType][lParameter]['number']"
+                             type="number" min="0" step="1" class="form-control" name="lTextConfig-{{lParameter}}"
+                             [(ngModel)]="loader[loaderType][lParameter]" placeholder="enter a number" (ngModelChange)="readyForExecution()"/>
+
+                      <input *ngIf="!loaderPrototype[loaderType][lParameter]['types'] && !loaderPrototype[loaderType][lParameter]['object']
+                             && !loaderPrototype[loaderType][lParameter]['number']"
                              type="text" class="form-control" name="lTextConfig-{{lParameter}}" [(ngModel)]="loader[loaderType][lParameter]"
                              placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
-
 
                       <!-- Objects creation (classes and indexes) -->
                       <div *ngIf="loaderPrototype[loaderType][lParameter]['object']">
@@ -443,10 +452,15 @@
                             &emsp;{{oParameter}}
                           </label>
                           <div class="col-md-offset-1 col-md-11">
-                            <input *ngIf="!loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
+                            <input *ngIf="!loaderPrototype[loaderType][lParameter]['value'][oParameter]['array'] &&
+                             !loaderPrototype[loaderType][lParameter]['value'][oParameter]['number']"
                                    type="text" class="form-control" name="lTextConfig-{{lParameter}}-{{oParameter}}"
                                    [(ngModel)]="this[lParameter][oParameter]" placeholder="enter your value"
                                    (ngModelChange)="subReadyForExecution()"/>
+
+                            <input *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['number']"
+                                   type="number" min="0" step="1" class="form-control" name="lTextConfig-{{lParameter}}"
+                                   [(ngModel)]="this[lParameter][oParameter]" placeholder="enter a number" (ngModelChange)="subReadyForExecution()"/>
 
                             <tag-input *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
                                        name="lTextConfig-{{lParameter}}-{{oParameter}}" [(ngModel)]="this[lParameter][oParameter]"
