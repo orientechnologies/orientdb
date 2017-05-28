@@ -120,7 +120,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private final Set<OStorageRemoteSession> sessions = Collections
       .newSetFromMap(new ConcurrentHashMap<OStorageRemoteSession, Boolean>());
 
-  private final Map<Long, OLiveQueryResultListener> liveQueryListener = new ConcurrentHashMap<>();
+  private final Map<Long, OLiveQueryClientListener> liveQueryListener = new ConcurrentHashMap<>();
   private volatile OStorageRemotePushThread pushThread;
 
   public OStorageRemote(final String iURL, final String iMode, ORemoteConnectionManager connectionManager) throws IOException {
@@ -1809,7 +1809,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return new OPushDistributedConfigurationResponse();
   }
 
-  public OLiveQueryMonitor liveQuery(ODatabaseDocumentRemote database, String query, OLiveQueryResultListener listener,
+  public OLiveQueryMonitor liveQuery(ODatabaseDocumentRemote database, String query, OLiveQueryClientListener listener,
       Object[] params) {
 
     OSubscribeLiveQueryRequest request = new OSubscribeLiveQueryRequest(query, params);
@@ -1818,7 +1818,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return new OLiveQueryMonitorRemote(response.getMonitorId());
   }
 
-  public OLiveQueryMonitor liveQuery(ODatabaseDocumentRemote database, String query, OLiveQueryResultListener listener,
+  public OLiveQueryMonitor liveQuery(ODatabaseDocumentRemote database, String query, OLiveQueryClientListener listener,
       Map<String, ?> params) {
     OSubscribeLiveQueryRequest request = new OSubscribeLiveQueryRequest(query, (Map<String, Object>) params);
     OSubscribeLiveQueryResponse response = pushThread.subscribe(request, getCurrentSession());
@@ -1826,7 +1826,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return new OLiveQueryMonitorRemote(response.getMonitorId());
   }
 
-  public void registerLiveListener(long monitorId, OLiveQueryResultListener listener) {
+  public void registerLiveListener(long monitorId, OLiveQueryClientListener listener) {
     liveQueryListener.put(monitorId, listener);
   }
 
@@ -1842,29 +1842,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   @Override
   public void executeLiveQueryPush(OLiveQueryPushRequest pushRequest) {
-    OLiveQueryResultListener listener = liveQueryListener.get(pushRequest.getMonitorId());
-    for (OLiveQueryResult result : pushRequest.getEvents()) {
-      switch (result.getEventType()) {
-      case OLiveQueryResult.CREATE_EVENT:
-        listener.onCreate(result.getCurrentValue());
-        break;
-      case OLiveQueryResult.UPDATE_EVENT:
-        listener.onUpdate(result.getOldValue(), result.getCurrentValue());
-        break;
-      case OLiveQueryResult.DELETE_EVENT:
-        listener.onDelete(result.getCurrentValue());
-        break;
-      }
-    }
-    if (pushRequest.getStatus() == OLiveQueryPushRequest.END) {
-      listener.onEnd();
+    OLiveQueryClientListener listener = liveQueryListener.get(pushRequest.getMonitorId());
+    if (listener.onEvent(pushRequest)) {
       liveQueryListener.remove(pushRequest.getMonitorId());
     }
-
   }
 
   @Override
-  public void onReconnect(String host) {
+  public void onPushReconnect(String host) {
     OStorageRemoteSession aValidSession = null;
     for (OStorageRemoteSession session : sessions) {
       if (session.getServerSession(host) != null) {
@@ -1889,6 +1874,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       }
       old.shutdown();
     }
-    //TODO: Handle error on live query
+  }
+
+  @Override
+  public void onPushDisconnect(Exception e) {
+    if (e instanceof InterruptedException) {
+      for (OLiveQueryClientListener liveListener : liveQueryListener.values()) {
+        liveListener.onEnd();
+      }
+    } else {
+      for (OLiveQueryClientListener liveListener : liveQueryListener.values()) {
+        liveListener.onError();
+      }
+    }
   }
 }

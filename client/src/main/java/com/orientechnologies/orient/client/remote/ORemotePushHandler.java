@@ -20,5 +20,7 @@ public interface ORemotePushHandler {
 
   void executeLiveQueryPush(OLiveQueryPushRequest pushRequest);
 
-  void onReconnect(String host);
+  void onPushReconnect(String host);
+
+  void onPushDisconnect(Exception e);
 }

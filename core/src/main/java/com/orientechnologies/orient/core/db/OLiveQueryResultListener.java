@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 /**
@@ -7,14 +8,14 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
  */
 public interface OLiveQueryResultListener {
 
-  void onCreate(OResult data);
+  void onCreate(ODatabaseDocument database, OResult data);
 
-  void onUpdate(OResult before, OResult after);
+  void onUpdate(ODatabaseDocument database, OResult before, OResult after);
 
-  void onDelete(OResult data);
+  void onDelete(ODatabaseDocument database, OResult data);
 
-  void onError();
+  void onError(ODatabaseDocument database);
 
-  void onEnd();
+  void onEnd(ODatabaseDocument database);
 
 }

@@ -3,12 +3,12 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.orient.client.remote.message.OLiveQueryPushRequest;
 import com.orientechnologies.orient.client.remote.message.live.OLiveQueryResult;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
@@ -30,27 +30,27 @@ public class ORemoteLiveQueryPushTest {
     public boolean end;
 
     @Override
-    public void onCreate(OResult data) {
+    public void onCreate(ODatabaseDocument database, OResult data) {
       countCreate++;
     }
 
     @Override
-    public void onUpdate(OResult before, OResult after) {
+    public void onUpdate(ODatabaseDocument database, OResult before, OResult after) {
       countUpdate++;
     }
 
     @Override
-    public void onDelete(OResult data) {
+    public void onDelete(ODatabaseDocument database, OResult data) {
       countDelete++;
     }
 
     @Override
-    public void onError() {
+    public void onError(ODatabaseDocument database) {
 
     }
 
     @Override
-    public void onEnd() {
+    public void onEnd(ODatabaseDocument database) {
       assertFalse(end);
       end = true;
     }
@@ -60,6 +60,9 @@ public class ORemoteLiveQueryPushTest {
 
   @Mock
   private ORemoteConnectionManager connectionManager;
+
+  @Mock
+  private ODatabaseDocument database;
 
   @Before
   public void before() throws IOException {
@@ -71,7 +74,7 @@ public class ORemoteLiveQueryPushTest {
   @Test
   public void testLiveEvents() {
     MockLiveListener mock = new MockLiveListener();
-    storage.registerLiveListener(10, mock);
+    storage.registerLiveListener(10, new OLiveQueryClientListener(database, mock));
     List<OLiveQueryResult> events = new ArrayList<>();
     events.add(new OLiveQueryResult(OLiveQueryResult.CREATE_EVENT, new OResultInternal(), null));
     events.add(new OLiveQueryResult(OLiveQueryResult.UPDATE_EVENT, new OResultInternal(), new OResultInternal()));
@@ -85,3 +88,4 @@ public class ORemoteLiveQueryPushTest {
   }
 
 }
+

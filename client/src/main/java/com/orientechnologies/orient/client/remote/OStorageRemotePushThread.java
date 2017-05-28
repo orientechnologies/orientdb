@@ -3,7 +3,6 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.*;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
@@ -62,6 +61,7 @@ public class OStorageRemotePushThread extends Thread {
           }
         }
       } catch (IOException e) {
+        pushHandler.onPushDisconnect(e);
         while (true) {
           try {
             Thread.sleep(retryDelay);
@@ -78,7 +78,7 @@ public class OStorageRemotePushThread extends Thread {
                 }
                 network = pushHandler.getNetwork(this.host);
               }
-              pushHandler.onReconnect(this.host);
+              pushHandler.onPushReconnect(this.host);
               break;
             } catch (OIOException ex) {
               //Noting it jus retry
@@ -87,6 +87,7 @@ public class OStorageRemotePushThread extends Thread {
             break;
         }
       } catch (InterruptedException e) {
+        pushHandler.onPushDisconnect(e);
         currentThread().interrupt();
       }
     }

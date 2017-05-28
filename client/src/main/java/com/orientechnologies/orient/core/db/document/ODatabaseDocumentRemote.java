@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.remote.OLiveQueryClientListener;
 import com.orientechnologies.orient.client.remote.ORemoteQueryResult;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
@@ -337,11 +338,11 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Object... args) {
-    return storage.liveQuery(this, query, listener, args);
+    return storage.liveQuery(this, query, new OLiveQueryClientListener(this.copy(), listener), args);
   }
 
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
-    return storage.liveQuery(this, query, listener, args);
+    return storage.liveQuery(this, query, new OLiveQueryClientListener(this.copy(), listener), args);
   }
 }
