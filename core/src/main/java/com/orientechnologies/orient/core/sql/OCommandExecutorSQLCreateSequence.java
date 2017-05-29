@@ -28,7 +28,8 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
   private SEQUENCE_TYPE          sequenceType;
   private OSequence.CreateParams params;
 
-  @Override public OCommandExecutorSQLCreateSequence parse(OCommandRequest iRequest) {
+  @Override
+  public OCommandExecutorSQLCreateSequence parse(OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
     String queryText = textRequest.getText();
@@ -80,7 +81,8 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
     return this;
   }
 
-  @Override public Object execute(Map<Object, Object> iArgs) {
+  @Override
+  public Object execute(Map<Object, Object> iArgs) {
     if (this.sequenceName == null) {
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
     }
@@ -92,11 +94,18 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
     return database.getMetadata().getSequenceLibrary().getSequenceCount();
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "CREATE SEQUENCE <sequence> [TYPE <CACHED|ORDERED>] [START <value>] [INCREMENT <value>] [CACHE <value>]";
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.LOCAL;
+  }
+
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
 }

@@ -47,35 +47,35 @@ import java.util.regex.Pattern;
 public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_CREATE   = "CREATE";
   public static final String KEYWORD_PROPERTY = "PROPERTY";
-  
+
   public static final String KEYWORD_MANDATORY = "MANDATORY";
-  public static final String KEYWORD_READONLY = "READONLY";
-  public static final String KEYWORD_NOTNULL = "NOTNULL";
-  public static final String KEYWORD_MIN = "MIN";
-  public static final String KEYWORD_MAX = "MAX";
-  public static final String KEYWORD_DEFAULT = "DEFAULT";
-  public static final String KEYWORD_COLLATE = "COLLATE";
-  public static final String KEYWORD_REGEX = "REGEX";
+  public static final String KEYWORD_READONLY  = "READONLY";
+  public static final String KEYWORD_NOTNULL   = "NOTNULL";
+  public static final String KEYWORD_MIN       = "MIN";
+  public static final String KEYWORD_MAX       = "MAX";
+  public static final String KEYWORD_DEFAULT   = "DEFAULT";
+  public static final String KEYWORD_COLLATE   = "COLLATE";
+  public static final String KEYWORD_REGEX     = "REGEX";
 
-  private String             className;
-  private String             fieldName;
+  private String className;
+  private String fieldName;
 
-  private boolean            ifNotExists = false;
+  private boolean ifNotExists = false;
 
-  private OType              type;
-  private String             linked;
+  private OType  type;
+  private String linked;
 
-  private boolean            readonly         = false;
-  private boolean            mandatory        = false;
-  private boolean            notnull          = false;
+  private boolean readonly  = false;
+  private boolean mandatory = false;
+  private boolean notnull   = false;
 
-  private String             max              = null;
-  private String             min              = null;
-  private String             defaultValue     = null;
-  private String             collate          = null;
-  private String             regex            = null;
+  private String max          = null;
+  private String min          = null;
+  private String defaultValue = null;
+  private String collate      = null;
+  private String regex        = null;
 
-  private boolean            unsafe           = false;
+  private boolean unsafe = false;
 
   public OCommandExecutorSQLCreateProperty parse(final OCommandRequest iRequest) {
 
@@ -119,19 +119,19 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1)
         throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
-      if("IF".equalsIgnoreCase(word.toString())){
+      if ("IF".equalsIgnoreCase(word.toString())) {
         oldPos = pos;
         pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
         if (pos == -1)
           throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
-        if(!"NOT".equalsIgnoreCase(word.toString())){
+        if (!"NOT".equalsIgnoreCase(word.toString())) {
           throw new OCommandSQLParsingException("Expected NOT EXISTS after IF", parserText, oldPos);
         }
         oldPos = pos;
         pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
         if (pos == -1)
           throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
-        if(!"EXISTS".equalsIgnoreCase(word.toString())){
+        if (!"EXISTS".equalsIgnoreCase(word.toString())) {
           throw new OCommandSQLParsingException("Expected EXISTS after IF NOT", parserText, oldPos);
         }
         this.ifNotExists = true;
@@ -181,12 +181,12 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
   private void processAtts(String atts) {
     String[] split = atts.split(",");
-    for (String attDef: split) {
+    for (String attDef : split) {
       String[] parts = attDef.trim().split("\\s+");
       if (parts.length > 2) {
         onInvalidAttributeDefinition(attDef);
       }
-      
+
       String att = parts[0].trim();
       if (att.equalsIgnoreCase(KEYWORD_MANDATORY)) {
         this.mandatory = getOptionalBoolean(parts);
@@ -209,42 +209,42 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       }
     }
   }
-  
+
   private void onInvalidAttributeDefinition(String attDef) {
     throw new OCommandSQLParsingException("Invalid attribute definition: '" + attDef + "'");
   }
-  
+
   private boolean getOptionalBoolean(String[] parts) {
     if (parts.length < 2) {
       return true;
     }
-    
+
     String trimmed = parts[1].trim();
     if (trimmed.length() == 0) {
       return true;
     }
-    
+
     return Boolean.parseBoolean(trimmed);
   }
-  
+
   private String getRequiredValue(String attDef, String[] parts) {
     if (parts.length < 2) {
       onInvalidAttributeDefinition(attDef);
     }
-    
+
     String value = parts[1].trim();
     if (value.length() == 0) {
       onInvalidAttributeDefinition(attDef);
     }
-    
+
     if (value.equalsIgnoreCase("null")) {
       value = null;
     }
-    
+
     if (value != null && isQuoted(value)) {
       value = removeQuotes(value);
     }
-    
+
     return value;
   }
 
@@ -300,7 +300,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     OPropertyImpl prop = (OPropertyImpl) sourceClass.getProperty(fieldName);
 
     if (prop != null) {
-      if(ifNotExists){
+      if (ifNotExists) {
         return sourceClass.properties().size();
       }
       throw new OCommandExecutionException(
@@ -351,29 +351,29 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       internalProp.setDefaultValue(defaultValue);
       toSave = true;
     }
-    
+
     if (collate != null) {
       internalProp.setCollate(collate);
       toSave = true;
     }
-    
+
     if (regex != null) {
       internalProp.setRegexp(regex);
       toSave = true;
     }
 
-    if(toSave) {
+    if (toSave) {
       internalProp.save();
     }
 
     return sourceClass.properties().size();
   }
-  
+
   private String removeQuotes(String s) {
     s = s.trim();
     return s.substring(1, s.length() - 1).replaceAll("\\\\\"", "\"");
   }
-  
+
   private boolean isQuoted(String s) {
     s = s.trim();
     if (s.startsWith("\"") && s.endsWith("\""))
@@ -384,6 +384,11 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       return true;
 
     return false;
+  }
+
+  @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   @Override
@@ -398,8 +403,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
   @Override
   public String getSyntax() {
-    return "CREATE PROPERTY <class>.<property> [IF NOT EXISTS] <type> [<linked-type>|<linked-class>] " +
-        "[(mandatory <true|false>, notnull <true|false>, <true|false>, default <value>, min <value>, max <value>)] " + 
-        "[UNSAFE]";
+    return "CREATE PROPERTY <class>.<property> [IF NOT EXISTS] <type> [<linked-type>|<linked-class>] "
+        + "[(mandatory <true|false>, notnull <true|false>, <true|false>, default <value>, min <value>, max <value>)] " + "[UNSAFE]";
   }
 }

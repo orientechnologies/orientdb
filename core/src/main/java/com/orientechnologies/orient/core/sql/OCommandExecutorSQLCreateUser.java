@@ -11,17 +11,17 @@ import java.util.Map;
 
 /**
  * Creates a new user.
- * 
+ *
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 4/22/2015
  */
 public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String  KEYWORD_CREATE      = "CREATE";
-  public static final String  KEYWORD_USER        = "USER";
-  public static final String  KEYWORD_IDENTIFIED  = "IDENTIFIED";
-  public static final String  KEYWORD_BY          = "BY";
-  public static final String  KEYWORD_ROLE        = "ROLE";
-  public static final String  SYNTAX              = "CREATE USER <user-name> IDENTIFIED BY <user-password> [ ROLE <role-name> ]";
+  public static final String KEYWORD_CREATE     = "CREATE";
+  public static final String KEYWORD_USER       = "USER";
+  public static final String KEYWORD_IDENTIFIED = "IDENTIFIED";
+  public static final String KEYWORD_BY         = "BY";
+  public static final String KEYWORD_ROLE       = "ROLE";
+  public static final String SYNTAX             = "CREATE USER <user-name> IDENTIFIED BY <user-password> [ ROLE <role-name> ]";
 
   private static final String USER_CLASS          = "OUser";
   private static final String USER_FIELD_NAME     = "name";
@@ -29,14 +29,14 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
   private static final String USER_FIELD_STATUS   = "status";
   private static final String USER_FIELD_ROLES    = "roles";
 
-  private static final String DEFAULT_STATUS      = "ACTIVE";
-  private static final String DEFAULT_ROLE        = "writer";
-  private static final String ROLE_CLASS          = "ORole";
-  private static final String ROLE_FIELD_NAME     = "name";
+  private static final String DEFAULT_STATUS  = "ACTIVE";
+  private static final String DEFAULT_ROLE    = "writer";
+  private static final String ROLE_CLASS      = "ORole";
+  private static final String ROLE_FIELD_NAME = "name";
 
-  private String              userName;
-  private String              pass;
-  private List<String>        roles;
+  private String       userName;
+  private String       pass;
+  private List<String> roles;
 
   @Override
   public OCommandExecutorSQLCreateUser parse(OCommandRequest iRequest) {
@@ -148,6 +148,11 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
   @Override
   public String getSyntax() {
     return SYNTAX;
+  }
+
+  @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   @Override
