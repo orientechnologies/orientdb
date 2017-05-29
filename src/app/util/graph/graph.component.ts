@@ -363,6 +363,10 @@ class GraphComponent implements AfterViewInit {
     this.onSelectedElement.emit(this.selectedElement);
   }
 
+  renameElementInGraph(oldClassName, newClassName, classType) {
+    this.orientGraph.updateElementsAccordingToRenamedClassed(oldClassName, newClassName, classType);
+  }
+
   // executeFunctionWhenConfigReady(funct) {
   //   if(!this.modellingConfig) {
   //

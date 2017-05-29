@@ -12,7 +12,9 @@ declare var angular:any
 @Component({
   selector: 'graph-model-panel',
   templateUrl: "./graphmodelpanel.component.html",
-  styleUrls: []
+  styles: [
+    '.actions-dropdown-item:hover {cursor: pointer}'
+  ]
 })
 
 class GraphModelPanelComponent implements OnInit, OnChanges {
@@ -31,6 +33,9 @@ class GraphModelPanelComponent implements OnInit, OnChanges {
   private searchOptionsLoaded;
   private selectOptions;
   private searchValue;
+  private searchAllowed;
+
+  private legendShown = false;
 
   @ViewChild('graph') graphComponent;
 
@@ -40,6 +45,7 @@ class GraphModelPanelComponent implements OnInit, OnChanges {
     this.searchOptions = [];
     this.searchOptionsLoaded = false;
     this.searchValue = "";
+    this.searchAllowed = true;
 
     this.selectOptions = {
       multiple: false,
@@ -103,9 +109,73 @@ class GraphModelPanelComponent implements OnInit, OnChanges {
     this.onSelectedElement.emit(this.selectedElement);
   }
 
-  searchNode(e: any) {
-    this.searchValue = e.value;
-    this.graphComponent.searchNode(this.searchValue);
+  renameElementInGraph(event) {
+    var oldClassName = event.oldClassName;
+    var newClassName = event.newClassName;
+    var classType = event.classType;
+
+    this.graphComponent.renameElementInGraph(oldClassName, newClassName, classType);
+
+    if(classType === 'vertexClass') {
+      // updating the searchOptions (used a new variable so the child component will refresh as a new referenced object will be detected)
+      var newSearchOptions = JSON.parse(JSON.stringify(this.searchOptions));
+
+      // updating searchOptions
+      for (var i = 0; newSearchOptions.length; i++) {
+        if (newSearchOptions[i].text === oldClassName + " [Vertex-Class]") {
+          newSearchOptions[i].id = newClassName;
+          newSearchOptions[i].text = newClassName + " [Vertex-Class]";
+          break;
+        }
+      }
+
+      this.searchAllowed = false;   // to avoid a new search during the select2 child component reloading
+      this.searchOptions = newSearchOptions;    // new reference, select2 child component should reload!
+      this.searchValue = newClassName;
+      setTimeout(() => {
+        this.searchAllowed = true;
+      }, 500);
+    }
+
+  }
+
+  searchNodeOnEvent(e: any) {
+    if(this.searchAllowed) {
+      this.searchValue = e.value;
+      this.searchNode();
+    }
+  }
+
+  searchNodeOnButtonClick() {
+    if(this.searchValue) {
+      this.searchNode();
+    }
+    else {
+      alert("Please select a value first!")
+    }
+  }
+
+  searchNode() {
+    if (this.searchValue) {
+      if (this.selectedElement) {    // check to avoid double selection due to double event launching
+        if (this.selectedElement.name !== this.searchValue) {
+          this.graphComponent.searchNode(this.searchValue);
+        }
+      }
+      else {
+        this.graphComponent.searchNode(this.searchValue);
+      }
+    }
+  }
+
+  showLegend() {
+    this.legendShown = true;
+    (<any>$('.graph-legend')).fadeTo(0, 1);
+  }
+
+  hideLegend() {
+    this.legendShown = false;
+    (<any>$('.graph-legend')).fadeTo(0, 0);
   }
 
 }

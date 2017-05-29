@@ -58,13 +58,19 @@
   version "2.5.41"
   resolved "https://registry.yarnpkg.com/@types/jasmine/-/jasmine-2.5.41.tgz#d5e86161a0af80d52062b310a33ed65b051a0713"
 
-"@types/jquery@*":
+"@types/jquery@*", "@types/jquery@^2.0.39":
   version "2.0.40"
   resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-2.0.40.tgz#acdd69e29b74cdec15dc3c074bcb064bc1b87213"
 
 "@types/node@*", "@types/node@^7.0.5":
   version "7.0.5"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.5.tgz#96a0f0a618b7b606f1ec547403c00650210bfbb7"
+
+"@types/select2@^4.0.31":
+  version "4.0.35"
+  resolved "https://registry.yarnpkg.com/@types/select2/-/select2-4.0.35.tgz#646e0a6d2088eb76a39e255b1c130b2563e11b5d"
+  dependencies:
+    "@types/jquery" "*"
 
 "@types/selenium-webdriver@^2.53.39":
   version "2.53.39"
@@ -135,6 +141,10 @@ align-text@^0.1.1, align-text@^0.1.3:
     kind-of "^3.0.2"
     longest "^1.0.1"
     repeat-string "^1.5.2"
+
+almond@~0.3.1:
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/almond/-/almond-0.3.3.tgz#a0e7c95ac7624d6417b4494b1e68bff693168a20"
 
 alphanum-sort@^1.0.1, alphanum-sort@^1.0.2:
   version "1.0.2"
@@ -2284,6 +2294,10 @@ jodid25519@^1.0.0:
   dependencies:
     jsbn "~0.1.0"
 
+jquery-mousewheel@~3.1.13:
+  version "3.1.13"
+  resolved "https://registry.yarnpkg.com/jquery-mousewheel/-/jquery-mousewheel-3.1.13.tgz#06f0335f16e353a695e7206bf50503cb523a6ee5"
+
 jquery@2.1.3, jquery@>=1.9.0, jquery@>=2.0.0:
   version "2.1.3"
   resolved "https://registry.yarnpkg.com/jquery/-/jquery-2.1.3.tgz#6ec55204673d505d39432c5bf5cfad10e1dbad2e"
@@ -2445,11 +2459,15 @@ lodash.words@^3.0.0:
   dependencies:
     lodash._root "^3.0.0"
 
+lodash@^3.10.0, lodash@^3.10.1:
+  version "3.10.1"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-3.10.1.tgz#5bf45e8e49ba4189e17d482789dfd15bd140b7b6"
+
 lodash@^4.13.1:
   version "4.17.2"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.2.tgz#34a3055babe04ce42467b607d700072c7ff6bf42"
 
-lodash@^4.14.0, lodash@^4.17.2, lodash@^4.17.3, lodash@^4.17.4, lodash@^4.2.0:
+lodash@^4.14.0, lodash@^4.17.2, lodash@^4.17.4, lodash@^4.2.0:
   version "4.17.4"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
 
@@ -2625,6 +2643,10 @@ ng-tags-input@^3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/ng-tags-input/-/ng-tags-input-3.1.1.tgz#3f6a737e73467e2241971d5cad1db43b8237910f"
 
+ng2-bootstrap-modal@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ng2-bootstrap-modal/-/ng2-bootstrap-modal-1.0.1.tgz#f3166fca63fd3b3aeacb29b8d5e3b872ab6ab1e4"
+
 ng2-bootstrap@^1.3.3:
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/ng2-bootstrap/-/ng2-bootstrap-1.3.3.tgz#2c66781d2e4d4620237bd455250105dab97ee94f"
@@ -2640,6 +2662,13 @@ ng2-codemirror@^1.1.1:
 ng2-material-dropdown@0.7.3:
   version "0.7.3"
   resolved "https://registry.yarnpkg.com/ng2-material-dropdown/-/ng2-material-dropdown-0.7.3.tgz#4993e8c3598a6bdf4c3ef13b79b1923c90c65787"
+
+ng2-select2@^1.0.0-beta.10:
+  version "1.0.0-beta.10"
+  resolved "https://registry.yarnpkg.com/ng2-select2/-/ng2-select2-1.0.0-beta.10.tgz#908b0b8a9f8cd06736f3bca16b1e35a1f696a145"
+  dependencies:
+    "@types/jquery" "^2.0.39"
+    "@types/select2" "^4.0.31"
 
 ng2-tag-input@^0.8.4:
   version "0.8.6"
@@ -3522,6 +3551,13 @@ sax@~1.2.1:
 select-hose@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/select-hose/-/select-hose-2.0.0.tgz#625d8658f865af43ec962bfc376a37359a4994ca"
+
+select2@^4.0.3:
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/select2/-/select2-4.0.3.tgz#207733fe91eacb9cb1a13f12463401f472449e0f"
+  dependencies:
+    almond "~0.3.1"
+    jquery-mousewheel "~3.1.13"
 
 "semver@2 || 3 || 4 || 5", semver@~5.3.0:
   version "5.3.0"

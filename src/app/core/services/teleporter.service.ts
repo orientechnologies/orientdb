@@ -48,14 +48,15 @@ class TeleporterService {
   }
 
   getMigrationConfig(params) {
+    var args = angular.copy(params);
     let url = API + 'teleporter/job';
-    if(params.strategy === "naive") {
-      params.strategy = "interactive";
+    if(args.strategy === "naive") {
+      args.strategy = "interactive";
     }
-    else if(params.strategy === "naive-aggregate") {
-      params.strategy = "interactive-aggr";
+    else if(args.strategy === "naive-aggregate") {
+      args.strategy = "interactive-aggr";
     }
-    return this.http.post(url, params).toPromise().then((data) => {
+    return this.http.post(url, args).toPromise().then((data) => {
       return data.json();
     })
   }

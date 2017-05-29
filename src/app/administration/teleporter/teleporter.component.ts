@@ -56,6 +56,7 @@ class TeleporterComponent implements AfterViewChecked {
   @Output() onMigrationConfigFetched = new EventEmitter();
 
   @ViewChild('detailPanel') detailPanel;
+  @ViewChild('graphPanel') graphPanel;
 
   constructor(private teleporterService: TeleporterService, private notification: NotificationService,
               private agentService: AgentService, private zone: NgZone) {
@@ -98,11 +99,11 @@ class TeleporterComponent implements AfterViewChecked {
       "xmlPath": "",
       "nameResolver": "original",
       "level": "2",
-      "includedTables": [],
+      "includedTables": []
     }
 
     this.config = angular.copy(this.defaultConfig);
-    this.step = '4';
+    this.step = '1';
 
     // fetching driver name and jurl pattern
     this.drivers().then((data) => {
@@ -147,7 +148,7 @@ class TeleporterComponent implements AfterViewChecked {
     this.key = "id";
     this.fieldToDisplay = "tableName";
 
-    this.buildConfigJSON();
+    // this.buildConfigJSON();
 
     this.selectedElement = undefined;
     this.configFetched = false;
@@ -242,6 +243,17 @@ class TeleporterComponent implements AfterViewChecked {
 
   launch() {
 
+    // fetching modelling config if it's not undefined
+    if(this.modellingConfig) {
+
+      // deleting source and target for each edge definition
+      for(var edge of this.modellingConfig.edges) {
+        delete edge.source;
+        delete edge.target;
+      }
+      this.config.migrationConfig = JSON.stringify(this.modellingConfig);
+    }
+
     this.config.outDbUrl = this.config.protocol + ":" + this.config.outDBName;
 
     // transforming includedTables if set
@@ -289,6 +301,14 @@ class TeleporterComponent implements AfterViewChecked {
   scrollLogAreaDown() {
     var logArea = $("#logArea");
     logArea.scrollTop(9999999);
+  }
+
+  /**
+   *
+   * @param $event
+   */
+  renameElementInGraph(event) {
+    this.graphPanel.renameElementInGraph(event);
   }
 
   buildConfigJSON() {

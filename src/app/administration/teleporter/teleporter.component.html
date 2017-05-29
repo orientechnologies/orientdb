@@ -280,12 +280,12 @@
           </h4><br/><br/>
           <div class="border">
             <div class="col-sm-7">
-              <graph-model-panel [(modellingConfig)]="modellingConfig" [(selectedElement)]="selectedElement"
+              <graph-model-panel #graphPanel [(modellingConfig)]="modellingConfig" [(selectedElement)]="selectedElement"
                                  [(onMigrationConfigFetched)]="onMigrationConfigFetched"
                                  (onSelectedElement)="changeSelectedElement($event)"></graph-model-panel>
             </div>
             <div class="col-md-5">
-              <detail-panel #detailPanel [(modellingConfig)]="modellingConfig" [(selectedElement)]="selectedElement"></detail-panel>
+              <detail-panel #detailPanel [(modellingConfig)]="modellingConfig" [(selectedElement)]="selectedElement" (onElementRenamed)="renameElementInGraph($event)"></detail-panel>
             </div>
           </div>
 
@@ -296,8 +296,8 @@
           <h3>Migration to OrientDB</h3><br/>
 
           <div class="row ">
-            <div class="col-md-12">
-              <div class="studio-well-tips-sm ">
+            <div class="col-md-10" *ngIf="job.cfg">
+              <div class="studio-well-tips-sm col-md-6">
                 <h5>
             <span class="tab">
               <b> Status</b>: {{ job.status }}
@@ -316,6 +316,11 @@
               <b>To</b>: {{job.cfg.protocol}}:{{job.cfg.outDBName}}
             </span>
                 </h5>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="btn-group">
+                <button type="button" class="btn btn-md btn-primary" (click)="switchConfigStep('1')" [disabled]="jobRunning">New Migration</button>
               </div>
             </div>
           </div>

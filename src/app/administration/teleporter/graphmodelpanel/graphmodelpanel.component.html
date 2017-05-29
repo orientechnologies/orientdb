@@ -4,12 +4,8 @@
     <div class="row" id="firstRow">
       <div class="col-md-9">
         <div *ngIf="searchOptionsLoaded" class="input-group">
-          <span class="input-group-addon">Search</span>
-          <!--
-          <input type="text" id="search" name="modelClass" class="form-control"
-                 placeholder="Class or Table name"/>
-          -->
-          <select2 id="search" [data]="searchOptions" [width]="300" (valueChanged)="searchNode($event)"
+          <span class="input-group-addon" (click)="searchNodeOnButtonClick()" style="cursor:pointer">Search</span>
+          <select2 id="search" [data]="searchOptions" [width]="300" (valueChanged)="searchNodeOnEvent($event)"
                    [value]="searchValue" [options]="selectOptions"></select2>
         </div>
       </div>
@@ -21,9 +17,12 @@
           <div class="btn-group">
             <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
               Actions <span class="caret"></span></button>
+
             <ul class="dropdown-menu" role="menu">
-              <li><a href="#">Aggregate Classes</a></li>
-              <li><a href="#">Split Class</a></li>
+              <li *ngIf="!legendShown" class="dropdown-item actions-dropdown-item" (click)="showLegend()"><a>Show Legend</a></li>
+              <li *ngIf="legendShown" class="dropdown-item actions-dropdown-item" (click)="hideLegend()"><a>Hide Legend</a></li>
+              <li class="dropdown-item actions-dropdown-item"><a>Aggregate Classes</a></li>
+              <li class="dropdown-item actions-dropdown-item"><a>Split Class</a></li>
             </ul>
           </div>
         </div>
@@ -32,7 +31,6 @@
   </div>
 
   <div id="canvas" class="panel-body svg-content-responsive" style="height: 485px;">
-
     <graph *ngIf="dataLoaded" #graph id="graph" [(modellingConfig)]="modellingConfig" [(selectedElement)]="selectedElement" (onSelectedElement)="updateSelectedElement($event)"
            style="height: 100%; width: 100%;"></graph>
 
