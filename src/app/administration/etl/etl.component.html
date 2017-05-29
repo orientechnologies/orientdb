@@ -317,7 +317,8 @@
                       <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters</h6>
                     </div>
 
-                    <div *ngFor="let eParameter of objectKeys.transform(extractor[extractorType]);">
+                    <div *ngFor="let eParameter of objectKeys.transform(extractorPrototype[extractorType]);">
+                      <!-- Take the paremeters from the prototype to avoid the lack of parameters when restoring an old config -->
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.extractor[eParameter]"><i class="fa fa-question-circle"></i>
                       </button>
@@ -535,7 +536,7 @@
             <div class="col-md-12">
               <textarea  #logArea class="form-control" id="logArea" name="logArea" rows="10" readonly>
 
-              </textarea> <!-- TODO object containing the log, finalJson is just a placeholder -->
+              </textarea> <!-- TODO object containing the log -->
             </div>
             <div class="col-md-12"><br><br>
               <textarea  #sourceArea class="form-control" id="sourceArea" name="sourceArea" rows="10" readonly style="display:none">

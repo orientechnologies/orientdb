@@ -755,34 +755,8 @@ class EtlComponent {
       };
 
     this.extractorType = type;
+    this.drawExtractorCanvas();
     this.readyForExecution();
-
-    // Canvas
-    let canvas = <HTMLCanvasElement> document.getElementById("eCanvas");
-    canvas.width = 300;
-    canvas.height = 120;
-    canvas.style.width = 200 + "px";
-    canvas.style.height = 80 + "px";
-    canvas.style.position = "relative";
-    canvas.style.top = "70px";
-    canvas.style.left = "20px";
-
-    let ctx = canvas.getContext("2d");
-    ctx.beginPath();
-    ctx.rect(10, 10, 220, 100);
-    ctx.fillStyle = '#eeeeee';
-    ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#444444';
-    ctx.stroke();
-    ctx.font = "bold 24px sans-serif";
-    ctx.fillStyle = "#ff9966";
-    ctx.fillText(type.toUpperCase(),50,50);
-    ctx.font = "18px sans-serif";
-    ctx.fillStyle = "#444444";
-    ctx.fillText("click to configure",50,85);
-
-    let eCanvas = $('#eCanvas');
 
     // Jquery
     $("#createExtractor").hide();
@@ -791,7 +765,6 @@ class EtlComponent {
     $("#loaderOptions").hide();
     $("#transformerOptions").hide();
     $("#extractorOptions").show();
-    (<any>eCanvas).slideDown(1000); // Canvas animation
   }
 
   transformerInit(type) { // Csv is deprecated.
@@ -944,40 +917,6 @@ class EtlComponent {
 
     tCanvas.on('click', () => {this.selectTransformer(Number(canvas.id))});
 
-    // Sortable, custom animations
-    let adjustment;
-    (<any>$("#transformerList")).sortable({
-      group: 'transformerList',
-      pullPlaceholder: false,
-      // animation on drop
-      onDrop: function  ($item, container, _super) {
-        let $clonedItem = $('<li/>').css({height: 0});
-        $item.before($clonedItem);
-        $clonedItem.animate({'height': $item.height()});
-        $item.animate($clonedItem.position(), function  () {
-          $clonedItem.detach();
-          _super($item, container);
-        });
-      },
-      // set $item relative to cursor position
-      onDragStart: function ($item, container, _super) {
-        let offset = $item.offset(),
-          pointer = container.rootGroup.pointer;
-
-        adjustment = {
-          left: pointer.left - offset.left,
-          top: pointer.top - offset.top
-        };
-        _super($item, container);
-      },
-      onDrag: function ($item, position) {
-        $item.css({
-          left: position.left - adjustment.left,
-          top: position.top - adjustment.top
-        });
-      }
-    });
-
     // Jquery
     $("#pleaseTransformer").hide();
     $("#panelPlaceholder").hide();
@@ -1034,34 +973,8 @@ class EtlComponent {
     }
 
     this.loaderType = type;
+    this.drawLoaderCanvas();
     this.readyForExecution();
-
-    // Canvas
-    let canvas = <HTMLCanvasElement> document.getElementById("lCanvas");
-    canvas.width = 300;
-    canvas.height = 120;
-    canvas.style.width = 200 + "px";
-    canvas.style.height = 80 + "px";
-    canvas.style.position = "relative";
-    canvas.style.top = "70px";
-    canvas.style.left = "20px";
-
-    let ctx = canvas.getContext("2d");
-    ctx.beginPath();
-    ctx.rect(10, 10, 220, 100);
-    ctx.fillStyle = '#eeeeee';
-    ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#444444';
-    ctx.stroke();
-    ctx.font = "bold 24px sans-serif";
-    ctx.fillStyle = "#bf80ff";
-    ctx.fillText(type.toUpperCase(),50,50);
-    ctx.font = "18px sans-serif";
-    ctx.fillStyle = "#444444";
-    ctx.fillText("click to configure",50,85);
-
-    let lCanvas = $('#lCanvas');
 
     // Jquery
     $("#pleaseLoader").hide();
@@ -1070,7 +983,6 @@ class EtlComponent {
     $("#extractorOptions").hide();
     $("#transformerOptions").hide();
     $("#loaderOptions").show();
-    (<any>lCanvas).slideDown(1000); // Canvas animation
   }
 
   deleteExtractor() {
@@ -1119,17 +1031,14 @@ class EtlComponent {
     $("#lCanvas").fadeOut(1000);
   }
 
-  oldConfigInit(oldConfig) { // TODO generate corresponding canvas
+  oldConfigInit(oldConfig) {
     let etl = JSON.parse(oldConfig);
 
-    this.extractor = etl.extractor;
-    this.transformers = etl.transformers;
-    this.loader = etl.loader;
     this.extractorType = Object.getOwnPropertyNames(etl.extractor)[0];
     this.currentTransformer = etl.transformers[etl.transformers.length -1];
     this.loaderType = Object.getOwnPropertyNames(etl.loader)[0];
-    if(etl.config) this.config = etl.config;
 
+    if(etl.config) this.config = etl.config;
     // Skip step 1 if the old configuration uses a jdbc source
     if(etl.source) {
       this.source = etl.source;
@@ -1140,13 +1049,128 @@ class EtlComponent {
       this.sourcePrototype.source.value = "jdbc";
       this.sourceInit();
     }
+    this.extractor = etl.extractor;
+    this.transformers = etl.transformers;
+    this.reverseBlockFix();
+    this.loader = etl.loader; // TODO manage objects inside
+    // initialize the inner objects
+    if(this.loaderType === 'orientdb') {
+      this.classes = {
+        name: this.loaderPrototype.orientdb.classes.value.name.value,
+        extends: this.loaderPrototype.orientdb.classes.value.extends.value,
+        clusters: this.loaderPrototype.orientdb.classes.value.clusters.value
+      };
+      this.indexes = {
+        name: this.loaderPrototype.orientdb.indexes.value.name.value,
+        class: this.loaderPrototype.orientdb.indexes.value.class.value,
+        type: this.loaderPrototype.orientdb.indexes.value.type.value,
+        fields: this.loaderPrototype.orientdb.indexes.value.fields.value,
+        metadata: this.loaderPrototype.orientdb.indexes.value.metadata.value
+      };
+    }
 
     // eventually activate the run button, the jquery part is triggered by the viewchecked event
     this.readyForExecution();
     this.oldConfigJquery = true;
   }
 
-  restoreTransformers() { // TODO creates the canvases without resetting any parameter in transformers
+  drawExtractorCanvas() {
+    let canvas = <HTMLCanvasElement> document.getElementById("eCanvas");
+    canvas.width = 300;
+    canvas.height = 120;
+    canvas.style.width = 200 + "px";
+    canvas.style.height = 80 + "px";
+    canvas.style.position = "relative";
+    canvas.style.top = "70px";
+    canvas.style.left = "20px";
+
+    let ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.rect(10, 10, 220, 100);
+    ctx.fillStyle = '#eeeeee';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#444444';
+    ctx.stroke();
+    ctx.font = "bold 24px sans-serif";
+    ctx.fillStyle = "#ff9966";
+    ctx.fillText(this.extractorType.toUpperCase(),50,50);
+    ctx.font = "18px sans-serif";
+    ctx.fillStyle = "#444444";
+    ctx.fillText("click to configure",50,85);
+
+    (<any>$("#eCanvas")).slideDown(1000); // Canvas animation
+  }
+
+  drawTransformerCanvas() { // TODO wrong interaction and they are unsortable with any new created transformer
+    for(let i = 0; i < this.transformers.length; i++) {
+      let listEntry = document.createElement('li');
+      let canvas = document.createElement('canvas');
+      let ctx = canvas.getContext('2d');
+
+      listEntry.id = 'listEntry' + i;
+
+      canvas.width = 300;
+      canvas.height = 120;
+      canvas.style.width = 200 + "px";
+      canvas.style.height = 80 + "px";
+      canvas.style.position = "relative";
+      canvas.id = String(i);
+
+      ctx.beginPath();
+      ctx.rect(10, 10, 220, 100);
+      ctx.fillStyle = '#eeeeee';
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#444444';
+      ctx.stroke();
+      ctx.font = "bold 24px sans-serif";
+      ctx.fillStyle = "#00b386";
+      ctx.fillText(this.getTransformerType(this.transformers[i]).toUpperCase(), 50, 50);
+      ctx.font = "18px sans-serif";
+      ctx.fillStyle = "#444444";
+      ctx.fillText("click to configure", 50, 85);
+
+      let list = document.getElementById("transformerList");
+      list.appendChild(listEntry);
+      listEntry.appendChild(canvas);
+
+
+      let tCanvas = $('#' + i);
+
+      tCanvas.on('click', () => {
+        this.selectTransformer(Number(canvas.id))
+      });
+    }
+  }
+
+  drawLoaderCanvas() {
+    let canvas = <HTMLCanvasElement> document.getElementById("lCanvas");
+    canvas.width = 300;
+    canvas.height = 120;
+    canvas.style.width = 200 + "px";
+    canvas.style.height = 80 + "px";
+    canvas.style.position = "relative";
+    canvas.style.top = "70px";
+    canvas.style.left = "20px";
+
+    let ctx = canvas.getContext("2d");
+    ctx.beginPath();
+    ctx.rect(10, 10, 220, 100);
+    ctx.fillStyle = '#eeeeee';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#444444';
+    ctx.stroke();
+    ctx.font = "bold 24px sans-serif";
+    ctx.fillStyle = "#bf80ff";
+    ctx.fillText(this.loaderType.toUpperCase(),50,50);
+    ctx.font = "18px sans-serif";
+    ctx.fillStyle = "#444444";
+    ctx.fillText("click to configure",50,85);
+
+    let lCanvas = $('#lCanvas');
+    (<any>lCanvas).slideDown(1000); // Canvas animation
 
   }
 
@@ -1320,7 +1344,7 @@ class EtlComponent {
     let tmp = [];
     let tmpBlock;
     for(let i = 0; i < this.transformers.length; i++) {
-      if(this.getTransformerType(this.transformers[i]) === ('let') || this.getTransformerType(this.transformers[i]) === ('console')) {
+      if(this.transformers[i]['let'] || this.transformers[i]['console']) {
         // even code transformer could be included in if statement
         tmpBlock = {block: this.transformers[i]};
         tmp.push(tmpBlock);
@@ -1328,7 +1352,19 @@ class EtlComponent {
       else tmp.push(this.transformers[i]);
     }
     this.transformers = tmp;
-    console.log(this.transformers); // TODO remove
+  }
+
+  reverseBlockFix() {
+    let tmp = [];
+    let tmpBlock;
+    for(let i = 0; i < this.transformers.length; i++) {
+      if(this.transformers[i]['block']) {
+        tmpBlock = this.transformers[i]['block'];
+        tmp.push(tmpBlock);
+      }
+      else tmp.push(this.transformers[i]);
+    }
+    this.transformers = tmp;
   }
 
   sortTransformers() {
@@ -1471,7 +1507,44 @@ class EtlComponent {
 
   ngAfterViewChecked() {
     this.enablePopovers();
-    if(this.oldConfig && this.step == 2 && this.oldConfigJquery) { // execute the Jquery part just one time
+
+    // Activate sortable and custom animations
+    if(this.step == 2) {
+      let adjustment;
+      (<any>$("#transformerList")).sortable({
+        group: 'transformerList',
+        pullPlaceholder: false,
+        // animation on drop
+        onDrop: function ($item, container, _super) {
+          let $clonedItem = $('<li/>').css({height: 0});
+          $item.before($clonedItem);
+          $clonedItem.animate({'height': $item.height()});
+          $item.animate($clonedItem.position(), function () {
+            $clonedItem.detach();
+            _super($item, container);
+          });
+        },
+        // set $item relative to cursor position
+        onDragStart: function ($item, container, _super) {
+          let offset = $item.offset(),
+            pointer = container.rootGroup.pointer;
+
+          adjustment = {
+            left: pointer.left - offset.left,
+            top: pointer.top - offset.top
+          };
+          _super($item, container);
+        },
+        onDrag: function ($item, position) {
+          $item.css({
+            left: position.left - adjustment.left,
+            top: position.top - adjustment.top
+          });
+        }
+      });
+    }
+    // Execute the Jquery part just one time
+    if(this.oldConfig && this.step == 2 && this.oldConfigJquery) {
       // Jquery
       $(document).ready(function () {
         $("#pleaseExtractor").hide();
@@ -1481,6 +1554,10 @@ class EtlComponent {
         $("#createLoader").hide();
         $("#panelPlaceholder").show();
       });
+
+      this.drawExtractorCanvas();
+      this.drawTransformerCanvas();
+      this.drawLoaderCanvas();
       this.oldConfigJquery = false;
     }
   }
