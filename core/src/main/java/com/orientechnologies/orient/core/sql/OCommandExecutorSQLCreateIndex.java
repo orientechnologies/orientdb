@@ -332,11 +332,6 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
   }
 
   @Override
-  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.LOCAL;
-  }
-
-  @Override
   public String getUndoCommand() {
     return "drop index " + indexName;
   }

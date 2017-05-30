@@ -54,11 +54,11 @@ import java.util.Map.Entry;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
-  private static final String       CHARSET_UTF_8    = "UTF-8";
-  private static final ORecordId    NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
-  protected static final long       MILLISEC_PER_DAY = 86400000;
+  private static final   String    CHARSET_UTF_8    = "UTF-8";
+  private static final   ORecordId NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
+  protected static final long      MILLISEC_PER_DAY = 86400000;
 
-  private final OBinaryComparatorV0 comparator       = new OBinaryComparatorV0();
+  private final OBinaryComparatorV0 comparator = new OBinaryComparatorV0();
 
   public ORecordSerializerBinaryV0() {
   }
@@ -257,6 +257,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       } else {
         // LOAD GLOBAL PROPERTY BY ID
         prop = getGlobalProperty(document, len);
+        if (prop == null)
+          throw new OSerializationException("Missing property definition for property id '" + ((len * -1) - 1) + "'");
         fieldName = prop.getName();
         valuePos = readInteger(bytes);
         if (prop.getType() != OType.ANY)
@@ -782,8 +784,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   private int writeLinkMap(final BytesContainer bytes, final Map<Object, OIdentifiable> map) {
-    final boolean disabledAutoConversion = map instanceof ORecordLazyMultiValue
-        && ((ORecordLazyMultiValue) map).isAutoConvertToRecord();
+    final boolean disabledAutoConversion =
+        map instanceof ORecordLazyMultiValue && ((ORecordLazyMultiValue) map).isAutoConvertToRecord();
 
     if (disabledAutoConversion)
       // AVOID TO FETCH RECORD
@@ -872,8 +874,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   private int writeLinkCollection(final BytesContainer bytes, final Collection<OIdentifiable> value) {
     final int pos = OVarIntSerializer.write(bytes, value.size());
 
-    final boolean disabledAutoConversion = value instanceof ORecordLazyMultiValue
-        && ((ORecordLazyMultiValue) value).isAutoConvertToRecord();
+    final boolean disabledAutoConversion =
+        value instanceof ORecordLazyMultiValue && ((ORecordLazyMultiValue) value).isAutoConvertToRecord();
 
     if (disabledAutoConversion)
       // AVOID TO FETCH RECORD

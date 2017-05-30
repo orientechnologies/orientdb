@@ -100,11 +100,6 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
   }
 
   @Override
-  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.LOCAL;
-  }
-
-  @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
