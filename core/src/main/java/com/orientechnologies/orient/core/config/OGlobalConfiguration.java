@@ -158,7 +158,7 @@ public enum OGlobalConfiguration {
       + "checks; 'storeAndVerify' (default) – checksums are calculated and stored on page flushes, verification is performed on "
       + "each page load, errors are reported in the log; 'storeAndThrow' – same as `storeAndVerify` with addition of exceptions "
       + "thrown on errors, this mode is useful for debugging and testing, but should be avoided in a production "
-      + "environment.", OChecksumMode.class, OChecksumMode.StoreAndVerify, false),
+      + "environment.", OChecksumMode.class, OChecksumMode.Store, false),
 
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Indicates a force sync should be performed for each update on the storage configuration", Boolean.class, true),
