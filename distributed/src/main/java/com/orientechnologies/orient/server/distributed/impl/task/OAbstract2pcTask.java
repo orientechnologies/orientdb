@@ -66,7 +66,7 @@ public abstract class OAbstract2pcTask extends OAbstractReplicatedTask {
       // ONE TASK, USE THE INNER TASK'S PARTITION KEY
       return tasks.get(0).getPartitionKey();
 
-    // MULTIPLE PARTITION
+    // MULTIPLE PARTITIONS
     final int[] partitions = new int[tasks.size()];
     for (int i = 0; i < tasks.size(); ++i) {
       final OAbstractRecordReplicatedTask task = tasks.get(i);
