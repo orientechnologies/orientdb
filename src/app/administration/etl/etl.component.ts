@@ -1031,7 +1031,7 @@ class EtlComponent {
     $("#lCanvas").fadeOut(1000);
   }
 
-  oldConfigInit(oldConfig) {
+  oldConfigInit(oldConfig, direct = 0) {
     let etl = JSON.parse(oldConfig);
 
     this.extractorType = Object.getOwnPropertyNames(etl.extractor)[0];
@@ -1039,16 +1039,6 @@ class EtlComponent {
     this.loaderType = Object.getOwnPropertyNames(etl.loader)[0];
 
     if(etl.config) this.config = etl.config;
-    // Skip step 1 if the old configuration uses a jdbc source
-    if(etl.source) {
-      this.source = etl.source;
-      this.sourcePrototype.source.value = Object.getOwnPropertyNames(etl.source)[0];
-      this.setStep(1);
-    }
-    else {
-      this.sourcePrototype.source.value = "jdbc";
-      this.sourceInit();
-    }
     this.extractor = etl.extractor;
     this.transformers = etl.transformers;
     this.reverseBlockFix();
@@ -1067,6 +1057,26 @@ class EtlComponent {
         fields: this.loaderPrototype.orientdb.indexes.value.fields.value,
         metadata: this.loaderPrototype.orientdb.indexes.value.metadata.value
       };
+    }
+
+
+    // Skip step 1 if the old configuration uses a jdbc source
+    if(etl.source) {
+      this.source = etl.source;
+      this.sourcePrototype.source.value = Object.getOwnPropertyNames(etl.source)[0];
+      if(direct) {
+        this.launch();
+        return;
+      }
+      this.setStep(1);
+    }
+    else {
+      this.sourcePrototype.source.value = "jdbc";
+      if(direct) {
+        this.launch();
+        return;
+      }
+      this.setStep(2);
     }
 
     // eventually activate the run button, the jquery part is triggered by the viewchecked event
@@ -1371,6 +1381,7 @@ class EtlComponent {
     let IDs = [];
     let tmp = [];
     $("#transformerList").find("canvas").each(function(){ IDs.push(this.id); });
+    if(IDs.length == 0) return; // useful for direct run feature
     for(let i = 0; i < this.transformers.length; i++) {
       tmp.push(this.transformers[Number(IDs[i])]);
     }
