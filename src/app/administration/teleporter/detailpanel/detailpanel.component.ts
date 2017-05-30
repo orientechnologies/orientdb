@@ -313,6 +313,26 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
   }
 
 
+  canBeExcluded(propertyName) {
+
+    if(this.selectedElement.externalKey) {
+
+      // looking for the property among the current selected element's external key list.
+
+      for (var currExternalKey of this.selectedElement.externalKey) {
+        if (currExternalKey === propertyName) {
+          return false;
+        }
+      }
+      return true;
+    }
+    else {
+      return true;
+    }
+
+  }
+
+
   /**
    * ----------------------------------------------------------
    *
@@ -588,6 +608,16 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
 
       // copying temporary property definition into the current property being edited
       this.selectedElement.properties[newPropertyName] = JSON.parse(JSON.stringify(this.tmpPropertyDefinition));
+
+      // if the current editing property is an external key property, update it also the other JSON declaration
+      for(var i=0; i<this.selectedElement.externalKey.length; i++) {
+        var currExternalKey = this.selectedElement.externalKey[i];
+        if(oldPropertyName === currExternalKey) {
+          // update it with the new property name
+          this.selectedElement.externalKey[i] = newPropertyName;
+          break;
+        }
+      }
     }
     else {      // editing a property in an edge class
 

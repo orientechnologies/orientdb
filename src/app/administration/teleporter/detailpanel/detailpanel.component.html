@@ -228,7 +228,7 @@
                       </button>
                     </div>
                     <div class="btn-group">
-                      <button class="btn btn-danger btn-xs" (click)=prepareAndOpenDropModal(propName)>
+                      <button class="btn btn-danger btn-xs" (click)=prepareAndOpenDropModal(propName) [disabled]="!canBeExcluded(propName)">
                         <i class="fa fa-trash-o"></i>
                         Drop
                       </button>
@@ -350,7 +350,8 @@
                 <tr *ngIf="selectedElement.properties[propName].mapping">
                   <td class="firstColumn">{{selectedElement.properties[propName].mapping.columnName}}</td>
                   <td class="secondColumn">{{selectedElement.properties[propName].mapping.type}}</td>
-                  <td class="thirdColumn"><input type="checkbox" [(ngModel)]="selectedElement.properties[propName].include" (click)="setSelectedElementPropsUpdated(true)"></td>
+                  <td class="thirdColumn"><input type="checkbox" [(ngModel)]="selectedElement.properties[propName].include"
+                                                 (click)="setSelectedElementPropsUpdated(true)" [disabled]="!canBeExcluded(propName)"></td>
                 </tr>
               </ng-container>
               </tbody>
