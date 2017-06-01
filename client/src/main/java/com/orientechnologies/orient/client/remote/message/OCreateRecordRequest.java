@@ -19,22 +19,20 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+
+import java.io.IOException;
 
 public class OCreateRecordRequest implements OBinaryAsyncRequest<OCreateRecordResponse> {
   private ORecord   content;
@@ -62,6 +60,11 @@ public class OCreateRecordRequest implements OBinaryAsyncRequest<OCreateRecordRe
 
   public OCreateRecordRequest(byte[] iContent, ORecordId iRid, byte iRecordType) {
     this.rawContent = iContent;
+    this.rid = iRid;
+    this.recordType = iRecordType;
+  }
+  public OCreateRecordRequest(ORecord iContent, ORecordId iRid, byte iRecordType) {
+    this.content = iContent;
     this.rid = iRid;
     this.recordType = iRecordType;
   }

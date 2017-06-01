@@ -19,21 +19,19 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+
+import java.io.IOException;
 
 public class OUpdateRecordRequest implements OBinaryAsyncRequest<OUpdateRecordResponse> {
   private ORecordId rid;
@@ -49,6 +47,13 @@ public class OUpdateRecordRequest implements OBinaryAsyncRequest<OUpdateRecordRe
     this.rawContent = iContent;
     this.version = iVersion;
     this.updateContent = updateContent;
+    this.recordType = iRecordType;
+  }
+  public OUpdateRecordRequest(ORecordId iRid, ORecord iContent, int iVersion, boolean updateContent, byte iRecordType) {
+    this.rid = iRid;
+    this.version = iVersion;
+    this.updateContent = updateContent;
+    this.content = iContent;
     this.recordType = iRecordType;
   }
 
