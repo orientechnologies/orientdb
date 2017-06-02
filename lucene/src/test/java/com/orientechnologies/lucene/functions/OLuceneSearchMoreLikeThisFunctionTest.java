@@ -89,10 +89,14 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
   @Ignore
   public void shouldSearchMoreLikeThisWithInnerQuery() throws Exception {
 
+    db.command("create index Song.multi on Song (title,author) FULLTEXT ENGINE LUCENE ");
+
 //    db.query("SELECT @RID FROM Song WHERE author = 'Hunter' ").stream().forEach(e-> System.out.println("e = " + e.toElement().toJSON()));
 
+
+    //for Luigi: execution plan doesn't bind $a correctly
     OResultSet resultSet = db
-        .query("SELECT from Song   where SEARCH_More( (SELECT @rid FROM Song WHERE author = 'Hunter') ) = true");
+        .query("SELECT from Song  let $a=(SELECT @rid FROM Song WHERE author = 'Hunter')  where SEARCH_More( $a ) = true");
 
     assertThat(resultSet).hasSize(2);
 
