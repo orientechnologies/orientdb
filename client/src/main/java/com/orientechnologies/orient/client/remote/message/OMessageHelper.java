@@ -358,22 +358,22 @@ public class OMessageHelper {
 
   static void writeBlob(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(OQueryResponse.RECORD_TYPE_BLOB);
-    channel.writeBytes(row.getBlob().get().toStream());
+    writeIdentifiable(channel, row.getBlob().get(), recordSerializer);
   }
 
   static void writeVertex(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(OQueryResponse.RECORD_TYPE_VERTEX);
-    writeDocument(channel, (ODocument) row.getElement().get().getRecord(), recordSerializer);
+    writeDocument(channel, row.getElement().get().getRecord(), recordSerializer);
   }
 
   static void writeElement(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(OQueryResponse.RECORD_TYPE_ELEMENT);
-    writeDocument(channel, (ODocument) row.getElement().get().getRecord(), recordSerializer);
+    writeDocument(channel, row.getElement().get().getRecord(), recordSerializer);
   }
 
   static void writeEdge(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(OQueryResponse.RECORD_TYPE_EDGE);
-    writeDocument(channel, (ODocument) row.getElement().get().getRecord(), recordSerializer);
+    writeDocument(channel, row.getElement().get().getRecord(), recordSerializer);
   }
 
   private static void writeDocument(OChannelDataOutput channel, ODocument doc, ORecordSerializer serializer) throws IOException {
@@ -395,10 +395,9 @@ public class OMessageHelper {
   }
 
   private static OResult readBlob(OChannelDataInput channel) throws IOException {
-    ORecordBytes bytes = new ORecordBytes();
-    bytes.fromStream(channel.readBytes());
+    ORecordSerializer serializer = ORecordSerializerNetworkV37.INSTANCE;
     OResultInternal result = new OResultInternal();
-    result.setElement(bytes);
+    result.setElement(readIdentifiable(channel, serializer));
     return result;
   }
 
