@@ -34,7 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-public class GraphCommands extends GraphNoTxAbstractTest {
+public class GraphCommandsTest extends GraphNoTxAbstractTest {
 
   @Test
   public void testEmptyParams() {

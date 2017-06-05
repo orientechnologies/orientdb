@@ -21,8 +21,6 @@ import org.junit.Test;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLNonBlockingQuery;
@@ -30,12 +28,11 @@ import com.orientechnologies.orient.server.OServer;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphRemoteTest;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.TestSelectProjectionVertexRemote;
 
 /**
  * Created by tglman on 01/07/16.
  */
-public class GraphNonBlockingQueryRemote {
+public class GraphNonBlockingQueryRemoteTest {
 
   private OServer server;
 
@@ -48,7 +45,7 @@ public class GraphNonBlockingQueryRemote {
     server.activate();
     OServerAdmin admin = new OServerAdmin("remote:localhost:3064");
     admin.connect("root", "root");
-    admin.createDatabase(GraphNonBlockingQueryRemote.class.getSimpleName(), "graph", "memory");
+    admin.createDatabase(GraphNonBlockingQueryRemoteTest.class.getSimpleName(), "graph", "memory");
     admin.close();
   }
 
@@ -60,7 +57,7 @@ public class GraphNonBlockingQueryRemote {
 
   @Test
   public void testNonBlockingClose() throws ExecutionException, InterruptedException {
-    OrientGraph database = new OrientGraph("remote:localhost:3064/" + GraphNonBlockingQueryRemote.class.getSimpleName());
+    OrientGraph database = new OrientGraph("remote:localhost:3064/" + GraphNonBlockingQueryRemoteTest.class.getSimpleName());
     database.createVertexType("Prod").createProperty("something", OType.STRING);
     for (int i = 0; i < 21; i++) {
       OrientVertex vertex = database.addVertex("class:Prod");

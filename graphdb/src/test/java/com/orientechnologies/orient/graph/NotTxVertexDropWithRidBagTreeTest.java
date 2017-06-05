@@ -12,13 +12,13 @@ import static org.junit.Assert.assertNull;
 /**
  * Created by tglman on 06/01/17.
  */
-public class TestNotTxVertexDropWithRidBagTree {
+public class NotTxVertexDropWithRidBagTreeTest {
 
   private OrientGraphNoTx graph;
 
   @Before
   public void before() {
-    graph = new OrientGraphNoTx("memory:" + TestNotTxVertexDropWithRidBagTree.class.getSimpleName());
+    graph = new OrientGraphNoTx("memory:" + NotTxVertexDropWithRidBagTreeTest.class.getSimpleName());
     graph.createVertexType("Test");
     graph.createEdgeType("Ref");
   }

@@ -15,7 +15,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public class TestGraphRecovering {
+public class GraphRecoveringTest {
 
   private class TestListener implements OStorageRecoverEventListener {
     public long scannedEdges     = 0;

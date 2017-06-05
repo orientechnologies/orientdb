@@ -36,7 +36,7 @@ import static org.junit.Assert.assertEquals;
  *
  */
 
-public class GraphGetVertices {
+public class GraphGetVerticesTest {
 
   @Test
   public void test() {

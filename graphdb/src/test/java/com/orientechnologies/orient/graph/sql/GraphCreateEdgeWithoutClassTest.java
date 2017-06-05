@@ -10,11 +10,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class TestGraphCreateEdgeWithoutClass {
+public class GraphCreateEdgeWithoutClassTest {
 
   @Test
   public void testCreateEdgeWithoutClass() {
-    OrientGraph graph = new OrientGraph("memory:" + TestGraphCreateEdgeWithoutClass.class.getSimpleName());
+    OrientGraph graph = new OrientGraph("memory:" + GraphCreateEdgeWithoutClassTest.class.getSimpleName());
     graph.setUseVertexFieldsForEdgeLabels(true);
     try {
 

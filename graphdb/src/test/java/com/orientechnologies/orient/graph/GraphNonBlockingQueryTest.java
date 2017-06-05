@@ -16,11 +16,11 @@ import java.util.concurrent.ExecutionException;
 /**
  * Created by tglman on 01/07/16.
  */
-public class GraphNonBlockingQuery {
+public class GraphNonBlockingQueryTest {
 
   @Test
   public void testNonBlockingClose() throws ExecutionException, InterruptedException {
-    OrientGraph database = new OrientGraph("memory:" + GraphNonBlockingQuery.class.getSimpleName());
+    OrientGraph database = new OrientGraph("memory:" + GraphNonBlockingQueryTest.class.getSimpleName());
     database.createVertexType("Prod").createProperty("something", OType.STRING);
     for (int i = 0; i < 21; i++) {
       OrientVertex vertex = database.addVertex(null);

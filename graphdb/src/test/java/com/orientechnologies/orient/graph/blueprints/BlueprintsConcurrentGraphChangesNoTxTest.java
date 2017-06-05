@@ -22,6 +22,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -40,11 +41,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class BlueprintsConcurrentGraphChangesTestNoTx {
+public class BlueprintsConcurrentGraphChangesNoTxTest {
   protected static final int    VERTEXES_COUNT = 1000;
   protected static final int    EDGES_COUNT    = 5 * VERTEXES_COUNT;
   protected static final int    THREADS        = 8;
-  protected static final String URL            = "plocal:./target/databases/BlueprintsConcurrentGraphChangesTestNoTx";
+  protected static final String URL            = "plocal:./target/databases/BlueprintsConcurrentGraphChangesNoTxTest";
 
   protected final ConcurrentSkipListMap<String, TestVertex> vertexesToCreate = new ConcurrentSkipListMap<String, TestVertex>();
   protected final List<TestVertex>                          vertexes         = new ArrayList<TestVertex>();
@@ -72,6 +73,7 @@ public class BlueprintsConcurrentGraphChangesTestNoTx {
   }
 
   @Test
+  @Ignore
   public void testCreateEdge() throws Exception {
     createGraphAndDeleteEdges();
     createGraphAndDeleteVertices();

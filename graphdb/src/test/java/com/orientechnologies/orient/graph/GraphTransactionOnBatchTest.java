@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.graph;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
@@ -21,7 +20,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class TestGraphTransactionOnBatch {
+public class GraphTransactionOnBatchTest {
   private ODatabaseDocument db;
   private OClass            V;
   private OClass            E;
@@ -29,7 +28,7 @@ public class TestGraphTransactionOnBatch {
   @Before
   public void before() {
     OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
-    db = new ODatabaseDocumentTx("memory:" + TestGraphTransactionOnBatch.class.getSimpleName());
+    db = new ODatabaseDocumentTx("memory:" + GraphTransactionOnBatchTest.class.getSimpleName());
     db.create();
     V = db.getMetadata().getSchema().getClass("V");
     E = db.getMetadata().getSchema().getClass("E");

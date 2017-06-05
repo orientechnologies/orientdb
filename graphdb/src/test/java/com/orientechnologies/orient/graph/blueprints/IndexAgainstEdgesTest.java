@@ -28,9 +28,9 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
 
-public class IndexAgainstEdges {
+public class IndexAgainstEdgesTest {
 
-  public static final String URL = "memory:" + IndexAgainstEdges.class.getSimpleName();
+  public static final String URL = "memory:" + IndexAgainstEdgesTest.class.getSimpleName();
 
   @Test
   public void indexes() {

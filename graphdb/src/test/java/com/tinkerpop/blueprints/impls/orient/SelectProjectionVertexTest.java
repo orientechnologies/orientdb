@@ -10,11 +10,11 @@ import org.junit.Test;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
-public class TestSelectProjectionVertex {
+public class SelectProjectionVertexTest {
 
   @Test
   public void test() {
-    OrientGraph graph = new OrientGraph("memory:" + TestSelectProjectionVertex.class.getSimpleName());
+    OrientGraph graph = new OrientGraph("memory:" + SelectProjectionVertexTest.class.getSimpleName());
     try {
       graph.createVertexType("VertA");
       graph.createVertexType("VertB");

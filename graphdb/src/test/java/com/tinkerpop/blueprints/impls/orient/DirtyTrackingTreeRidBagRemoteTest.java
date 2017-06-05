@@ -27,7 +27,7 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Created by tglman on 04/05/16.
  */
-public class TestDirtyTrackingTreeRidBagRemote {
+public class DirtyTrackingTreeRidBagRemoteTest {
 
   private OServer server;
 
@@ -40,7 +40,7 @@ public class TestDirtyTrackingTreeRidBagRemote {
     server.activate();
     OServerAdmin admin = new OServerAdmin("remote:localhost:3064");
     admin.connect("root", "root");
-    admin.createDatabase(TestDirtyTrackingTreeRidBagRemote.class.getSimpleName(), "graph", "memory");
+    admin.createDatabase(DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName(), "graph", "memory");
     admin.close();
   }
 
@@ -54,7 +54,7 @@ public class TestDirtyTrackingTreeRidBagRemote {
   public void test() {
 
     final int max = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
-    OrientGraph graph = new OrientGraph("remote:localhost:3064/" + TestDirtyTrackingTreeRidBagRemote.class.getSimpleName(), "root",
+    OrientGraph graph = new OrientGraph("remote:localhost:3064/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName(), "root",
         "root");
 
     try {

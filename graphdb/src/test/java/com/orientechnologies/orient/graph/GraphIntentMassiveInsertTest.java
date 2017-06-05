@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Created by tglman on 08/07/16.
  */
-public class TestGraphIntentMassiveInsert {
+public class GraphIntentMassiveInsertTest {
 
   @Test
   public void testIntent() {

@@ -28,7 +28,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Created by tglman on 24/05/16.
  */
-public class TestBatchRemoteResultSet {
+public class BatchRemoteResultSetTest {
   private String serverHome;
   private String oldOrientDBHome;
 

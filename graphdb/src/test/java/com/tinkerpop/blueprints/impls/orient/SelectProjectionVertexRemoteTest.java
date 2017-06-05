@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
 
-public class TestSelectProjectionVertexRemote {
+public class SelectProjectionVertexRemoteTest {
 
   private OServer server;
 
@@ -35,7 +35,7 @@ public class TestSelectProjectionVertexRemote {
     server.activate();
     OServerAdmin admin = new OServerAdmin("remote:localhost:3064");
     admin.connect("root", "root");
-    admin.createDatabase(TestSelectProjectionVertexRemote.class.getSimpleName(), "graph", "memory");
+    admin.createDatabase(SelectProjectionVertexRemoteTest.class.getSimpleName(), "graph", "memory");
     admin.close();
   }
 
@@ -47,7 +47,7 @@ public class TestSelectProjectionVertexRemote {
 
   @Test
   public void test() {
-    OrientGraph graph = new OrientGraph("remote:localhost:3064/" + TestSelectProjectionVertexRemote.class.getSimpleName());
+    OrientGraph graph = new OrientGraph("remote:localhost:3064/" + SelectProjectionVertexRemoteTest.class.getSimpleName());
     try {
       graph.createVertexType("VertA");
       graph.createVertexType("VertB");

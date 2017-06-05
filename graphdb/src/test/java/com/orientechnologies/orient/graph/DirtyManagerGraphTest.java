@@ -1,31 +1,28 @@
 package com.orientechnologies.orient.graph;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.List;
-
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.Ignore;
+import org.junit.Test;
 
-public class DirtyManagerGraph {
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+public class DirtyManagerGraphTest {
 
   @Test
+  @Ignore
   public void testLoopOfNew() {
-    OrientGraph graph = new OrientGraph("memory:" + DirtyManagerGraph.class.getSimpleName());
+    OrientGraph graph = new OrientGraph("memory:" + DirtyManagerGraphTest.class.getSimpleName());
     try {
       graph.createEdgeType("next");
       OrientVertex vertex = graph.addVertex(null);
@@ -42,6 +39,7 @@ public class DirtyManagerGraph {
       ODirtyManager manager = ORecordInternal.getDirtyManager(rec);
 
       List<OIdentifiable> pointed = manager.getPointed(vertex.getRecord());
+      assertThat(pointed).isNotNull();
       assertEquals(2, pointed.size());
       assertTrue(pointed.contains(edge1.getRecord()));
       assertTrue(pointed.contains(edge4.getRecord()));
@@ -87,8 +85,9 @@ public class DirtyManagerGraph {
   }
 
   @Test
+  @Ignore
   public void testLoopOfNewTree() {
-    OrientGraph graph = new OrientGraph("memory:" + DirtyManagerGraph.class.getSimpleName());
+    OrientGraph graph = new OrientGraph("memory:" + DirtyManagerGraphTest.class.getSimpleName());
     Object prev = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValue();
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
     try {
@@ -107,6 +106,7 @@ public class DirtyManagerGraph {
       ODirtyManager manager = ORecordInternal.getDirtyManager(rec);
 
       List<OIdentifiable> pointed = manager.getPointed(vertex.getRecord());
+      assertThat(pointed).isNotNull();
       assertEquals(2, pointed.size());
       assertTrue(pointed.contains(edge1.getRecord()));
       assertTrue(pointed.contains(edge4.getRecord()));

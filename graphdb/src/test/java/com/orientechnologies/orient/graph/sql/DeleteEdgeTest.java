@@ -16,14 +16,14 @@ import java.util.Map;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
-public class TestDeleteEdge {
+public class DeleteEdgeTest {
 
   private OrientGraph    graph;
   private OrientEdgeType edgeType;
 
   @Before
   public void before() {
-    graph = new OrientGraph("memory:" + TestDeleteEdge.class.getSimpleName(), "admin", "admin");
+    graph = new OrientGraph("memory:" + DeleteEdgeTest.class.getSimpleName(), "admin", "admin");
     graph.createVertexType("TestVertex");
     edgeType = graph.createEdgeType("TestEdge");
   }

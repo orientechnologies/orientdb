@@ -10,11 +10,7 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
@@ -24,7 +20,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.Vertex;
 
-public class OrientCommitMT {
+public class OrientCommitMTTest {
   public static final String        DB_URL           = "plocal:./avltreetest";
   public static final String        DB_USER          = "admin";
   public static final String        DB_PASSWORD      = "admin";
@@ -83,6 +79,7 @@ public class OrientCommitMT {
   }
 
   @Test
+  @Ignore
   public void testWithTransactionEmbeddedRidBag() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
 
@@ -91,7 +88,7 @@ public class OrientCommitMT {
     } catch (FileNotFoundException e) {
     }
     // set to run until it fails with the transaction set to true
-    executeTest(this.threadCount, this.maxSleepTime, this.maxOpCount, this.initialCacheSize, 20);
+    executeTest(this.threadCount, this.maxSleepTime, this.maxOpCount, this.initialCacheSize, 2);
   }
 
   @Test
@@ -103,10 +100,11 @@ public class OrientCommitMT {
     } catch (FileNotFoundException e) {
     }
     // set to run 5 minutes with the transaction set to true
-    executeTest(1, this.maxSleepTime, this.maxOpCount, this.initialCacheSize, 20);
+    executeTest(1, this.maxSleepTime, this.maxOpCount, this.initialCacheSize, 2);
   }
 
   @Test
+  @Ignore
   public void testWithTransactionSBTreeRidBag() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
 
@@ -115,10 +113,11 @@ public class OrientCommitMT {
     } catch (FileNotFoundException e) {
     }
     // set to run until it fails with the transaction set to true
-    executeTest(this.threadCount, this.maxSleepTime, this.maxOpCount, this.initialCacheSize, 90);
+    executeTest(this.threadCount, this.maxSleepTime, this.maxOpCount, this.initialCacheSize, 2);
   }
 
   @Test
+  @Ignore
   public void testSingleThreadWithTransactionSBTreeRidBag() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
 
@@ -127,7 +126,7 @@ public class OrientCommitMT {
     } catch (FileNotFoundException e) {
     }
     // set to run 5 minutes with the transaction set to true
-    executeTest(1, this.maxSleepTime, this.maxOpCount, this.initialCacheSize, 90);
+    executeTest(1, this.maxSleepTime, this.maxOpCount, this.initialCacheSize, 2);
   }
 
   /**
@@ -151,7 +150,10 @@ public class OrientCommitMT {
     return this.failureMessage;
   }
 
-  private void executeTest(final int threadCount, final int maxSleepTime, final int maxOpCount, final int initialCacheSize,
+  private void executeTest(final int threadCount,
+      final int maxSleepTime,
+      final int maxOpCount,
+      final int initialCacheSize,
       final int runtimeInMin) {
     CountDownLatch endLatch = new CountDownLatch(threadCount);
 
@@ -384,7 +386,7 @@ public class OrientCommitMT {
       }
 
       try {
-        Integer id = OrientCommitMT.this.idGenerator.getAndIncrement();
+        Integer id = OrientCommitMTTest.this.idGenerator.getAndIncrement();
         OrientVertex vertex = graph.addVertex("class:" + TEST_CLASS, THREAD_ID, Integer.valueOf(this.threadId), ID, id);
 
         ORID randomId = getRandomIdForThread(graph);

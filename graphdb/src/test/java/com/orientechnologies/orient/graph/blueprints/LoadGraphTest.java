@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import com.orientechnologies.orient.graph.console.OInternalGraphImporter;
 
-public class TestLoadGraph {
+public class LoadGraphTest {
 
   private static final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
 

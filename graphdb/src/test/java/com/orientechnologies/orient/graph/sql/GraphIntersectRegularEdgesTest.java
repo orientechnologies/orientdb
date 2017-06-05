@@ -27,14 +27,16 @@ import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Set;
 
-public class GraphIntersectRegularEdges extends GraphNoTxAbstractTest {
+public class GraphIntersectRegularEdgesTest extends GraphNoTxAbstractTest {
   private final int TOT = 1000;
 
   @Test
+  @Ignore
   public void testIntersect() {
     graph.setUseLightweightEdges(false);
 
@@ -100,6 +102,6 @@ public class GraphIntersectRegularEdges extends GraphNoTxAbstractTest {
   @BeforeClass
   public static void init() {
     System.setProperty("orientdb.test.env", "ci");
-    init(GraphIntersectRegularEdges.class.getSimpleName());
+    init(GraphIntersectRegularEdgesTest.class.getSimpleName());
   }
 }

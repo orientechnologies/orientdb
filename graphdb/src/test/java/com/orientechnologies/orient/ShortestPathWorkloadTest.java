@@ -27,7 +27,7 @@ import org.junit.Test;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class TestShortestPathWorkload {
+public class ShortestPathWorkloadTest {
 
   @Test
   public void testParsing() throws Exception {

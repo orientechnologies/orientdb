@@ -14,11 +14,11 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
-public class TestGraphUnwindOut {
+public class GraphUnwindOutTest {
 
   @Test
   public void testUwindLightweightEdges() {
-    OrientGraph graph = new OrientGraph("memory:" + TestGraphUnwindOut.class.getSimpleName());
+    OrientGraph graph = new OrientGraph("memory:" + GraphUnwindOutTest.class.getSimpleName());
     graph.setUseLightweightEdges(true);
     try {
 

@@ -11,12 +11,12 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public class TestFailOperationOnRemovedElement {
+public class FailOperationOnRemovedElementTest {
   private OrientGraph grap;
 
   @Before
   public void before() {
-    grap = new OrientGraph("memory:" + TestFailOperationOnRemovedElement.class.getSimpleName());
+    grap = new OrientGraph("memory:" + FailOperationOnRemovedElementTest.class.getSimpleName());
   }
 
   @After

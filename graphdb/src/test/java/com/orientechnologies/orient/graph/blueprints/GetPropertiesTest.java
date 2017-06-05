@@ -11,13 +11,13 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestGetProperties {
+public class GetPropertiesTest {
 
   private OrientGraph graph;
 
   @Before
   public void before() {
-    graph = new OrientGraph("memory:" + TestGetProperties.class.getSimpleName());
+    graph = new OrientGraph("memory:" + GetPropertiesTest.class.getSimpleName());
   }
 
   @After
