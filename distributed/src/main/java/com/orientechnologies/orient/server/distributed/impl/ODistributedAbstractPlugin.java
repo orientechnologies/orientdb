@@ -968,12 +968,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             } catch (ODatabaseIsOldException e) {
               // CURRENT DATABASE IS NEWER, SET ALL OTHER DATABASES AS NOT_AVAILABLE TO FORCE THEM TO ASK FOR THE CURRENT DATABASE
               setDatabaseStatus(nodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+              distrDatabase.setOnline();
 
               final Set<String> otherServers = getAvailableNodeNames(databaseName);
               otherServers.remove(nodeName);
 
               ODistributedServerLog.info(this, nodeName, otherServers.toString(), DIRECTION.OUT,
-                  "Current copy of database '%s' is newer then the copy present in the cluster. Use the local copy and force other nodes to download this",
+                  "Current copy of database '%s' is newer than the copy present in the cluster. Use the local copy and force other nodes to download this",
                   databaseName);
 
               for (String s : otherServers) {

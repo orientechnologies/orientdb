@@ -382,7 +382,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         server.getClientConnectionManager().disconnect(clientTxId);
         connection = server.getClientConnectionManager().reConnect(this, connection.getTokenBytes(), connection.getToken());
         connection.acquire();
-        waitDistribuedIsOnline(connection);
+        waitDistributedIsOnline(connection);
         connection.init(server);
 
         if (connection.getData().serverUser) {
@@ -433,7 +433,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         }
         connection.acquire();
         connection.validateSession(bytes, server.getTokenHandler(), this);
-        waitDistribuedIsOnline(connection);
+        waitDistributedIsOnline(connection);
         connection.init(server);
         if (connection.getData().serverUser) {
           connection.setServerUser(server.getUser(connection.getData().serverUsername));
@@ -457,7 +457,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     return connection;
   }
 
-  private void waitDistribuedIsOnline(OClientConnection connection) {
+  private void waitDistributedIsOnline(OClientConnection connection) {
     if (requests == 0) {
       final ODistributedServerManager manager = server.getDistributedManager();
       if (manager != null && connection.getDatabase() != null)
