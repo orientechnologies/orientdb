@@ -2,11 +2,11 @@ package com.orientechnologies.tinkerpop;
 
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
-import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
 import org.apache.tinkerpop.gremlin.orientdb.StreamUtils;
+import org.apache.tinkerpop.gremlin.orientdb.executor.OGremlinResult;
+import org.apache.tinkerpop.gremlin.orientdb.executor.OGremlinResultSet;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -86,11 +86,12 @@ public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGr
 
     testGremlin.save();
 
-    OResultSet gremlin = noTx.executeSql("select testGremlin() as gremlin");
+    OGremlinResultSet gremlin = noTx.executeSql("select testGremlin() as gremlin");
 
-    Assert.assertEquals(true, gremlin.hasNext());
+    Iterator<OGremlinResult> iterator = gremlin.iterator();
+    Assert.assertEquals(true, iterator.hasNext());
 
-    OResult result = gremlin.next();
+    OGremlinResult result = iterator.next();
 
     Collection value = result.getProperty("gremlin");
 
@@ -115,18 +116,18 @@ public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGr
 
     testGremlin.save();
 
-    OResultSet gremlin = noTx.executeSql("select expand(testGremlin())");
+    OGremlinResultSet gremlin = noTx.executeSql("select expand(testGremlin())");
 
-    List<OResult> collect = gremlin.stream().collect(Collectors.toList());
+    List<OGremlinResult> collect = gremlin.stream().collect(Collectors.toList());
 
     Assert.assertEquals(2, collect.size());
 
     collect.stream().forEach((res) -> {
       Assert.assertEquals(true, res.isVertex());
 
-      OVertex oVertex = res.getVertex().get();
+      OrientVertex oVertex = res.getVertex().get();
 
-      Assert.assertEquals("Person", oVertex.getSchemaType().get().getName());
+      Assert.assertEquals("Person", oVertex.getRawElement().getSchemaType().get().getName());
     });
 
   }

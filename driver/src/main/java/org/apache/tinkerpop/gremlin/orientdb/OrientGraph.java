@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.tinkerpop.gremlin.orientdb.executor.OGremlinResultSet;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
@@ -238,25 +239,28 @@ public final class OrientGraph implements Graph {
         });
     }
 
-    public OResultSet executeSql(String sql, Object... params) {
+    public OGremlinResultSet executeSql(String sql, Object... params) {
         return executeWithConnectionCheck(() -> {
             makeActive();
-            return database.command(sql, params);
+            OResultSet resultSet = database.command(sql, params);
+            return new OGremlinResultSet(this, resultSet);
         });
     }
 
-    public OResultSet executeSql(String sql, Map params) {
+    public OGremlinResultSet executeSql(String sql, Map params) {
         return executeWithConnectionCheck(() -> {
             makeActive();
-            return database.command(sql, params);
+            OResultSet resultSet = database.command(sql, params);
+            return new OGremlinResultSet(this, resultSet);
         });
     }
 
-    public OResultSet execute(String language, String script, Map params) {
+    public OGremlinResultSet execute(String language, String script, Map params) {
 
         return executeWithConnectionCheck(() -> {
             makeActive();
-            return database.execute(language, script, params);
+            OResultSet resultSet = database.execute(language, script, params);
+            return new OGremlinResultSet(this, resultSet);
         });
     }
 

@@ -20,6 +20,7 @@ public final class OrientGraphStepStrategy
 
     @Override
     public void apply(final Traversal.Admin<?, ?> traversal) {
+
         final Step<?, ?> startStep = traversal.getStartStep();
         // only apply once
         if (startStep instanceof GraphStep && !(startStep instanceof OrientGraphStep)) {

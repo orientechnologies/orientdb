@@ -1,78 +1,71 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package org.apache.tinkerpop.gremlin.orientdb.executor;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
-import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
- * Created by Enrico Risa on 24/01/17.
+ * Created by Enrico Risa on 05/06/2017.
  */
-public class OGremlinResultSet implements OResultSet {
+public class OGremlinResultSet implements Iterable<OGremlinResult>, AutoCloseable {
 
-    protected Traversal traversal;
-    private OScriptTransformer transformer;
-    private boolean closeGraph;
-    private boolean closing = false;
+    private OrientGraph graph;
+    OResultSet inner;
 
-    public OGremlinResultSet(Traversal traversal, OScriptTransformer transformer) {
-        this(traversal, transformer, false);
-    }
-
-    public OGremlinResultSet(Traversal traversal, OScriptTransformer transformer, boolean closeGraph) {
-        this.traversal = traversal;
-        this.transformer = transformer;
-        this.closeGraph = closeGraph;
+    public OGremlinResultSet(OrientGraph graph, OResultSet inner) {
+        this.graph = graph;
+        this.inner = inner;
     }
 
     @Override
-    public boolean hasNext() {
-        return traversal.hasNext();
+    public void close() throws Exception {
+        inner.close();
     }
 
     @Override
-    public OResult next() {
-
-        Object next = traversal.next();
-        return transformer.toResult(next);
-    }
-
-    @Override
-    public void close() {
-        try {
-            traversal.close();
-            if (closeGraph) {
-                traversal.asAdmin().getGraph().ifPresent(graph -> {
-                    try {
-                        OrientGraph g = (OrientGraph) graph;
-                        if (!closing) {
-                            closing = true;
-                            g.close();
-                        }
-                    } catch (Exception e) {
-                        throw OException.wrapException(new OCommandExecutionException("Error closing the Graph "), e);
-                    }
-                });
+    public Iterator<OGremlinResult> iterator() {
+        return new Iterator<OGremlinResult>() {
+            @Override
+            public boolean hasNext() {
+                return inner.hasNext();
             }
-        } catch (Exception e) {
-            throw OException.wrapException(new OCommandExecutionException("Error closing the gremlin Result Set"), e);
-        }
+
+            @Override
+            public OGremlinResult next() {
+                OResult next = inner.next();
+                return new OGremlinResult(graph, next);
+            }
+
+        };
     }
 
-    @Override
-    public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-    }
-
-    @Override
-    public Map<String, Long> getQueryStats() {
-        return null;
+    public Stream<OGremlinResult> stream() {
+        return StreamSupport
+                .stream(Spliterators.spliteratorUnknownSize(iterator(), Spliterator.IMMUTABLE | Spliterator.ORDERED), false);
     }
 }

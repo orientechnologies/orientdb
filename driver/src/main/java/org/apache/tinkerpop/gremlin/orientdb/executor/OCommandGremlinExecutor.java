@@ -37,8 +37,10 @@ import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFacto
 import org.apache.tinkerpop.gremlin.jsr223.CachedGremlinScriptEngineManager;
 import org.apache.tinkerpop.gremlin.orientdb.*;
 import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OElementTransformer;
+import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OTraversalMetricTransformer;
 import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OrientPropertyTransformer;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
+import org.apache.tinkerpop.gremlin.process.traversal.util.DefaultTraversalMetrics;
 import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation;
 
 import javax.script.Bindings;
@@ -75,6 +77,7 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
 
     private void initCustomTransformer(OScriptManager scriptManager) {
 
+        scriptManager.getTransformer().registerResultTransformer(DefaultTraversalMetrics.class, new OTraversalMetricTransformer());
         scriptManager.getTransformer().registerResultTransformer(OrientEdge.class, new OElementTransformer());
         scriptManager.getTransformer().registerResultTransformer(OrientVertex.class, new OElementTransformer());
         scriptManager.getTransformer().registerResultTransformer(OrientElement.class, new OElementTransformer());
@@ -97,29 +100,24 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
 
             Object eval = engine.eval(iText);
 
-            if(eval instanceof Traversal){
-
+            if (eval instanceof Traversal) {
 
                 Traversal result = (Traversal) eval;
 
-                return new OGremlinResultSet(result, scriptManager.getTransformer(), true);
-            }else if(eval instanceof TraversalExplanation){
+                return new OGremlinScriptResultSet(result, scriptManager.getTransformer(), true);
+            } else if (eval instanceof TraversalExplanation) {
                 OInternalResultSet resultSet = new OInternalResultSet();
                 resultSet.setPlan(new OGremlinExecutionPlan((TraversalExplanation) eval));
                 OResultInternal item = new OResultInternal();
                 item.setProperty("executionPlan", ((TraversalExplanation) eval).prettyPrint());
                 resultSet.add(item);
                 return resultSet;
-            }else {
+            } else {
                 OInternalResultSet resultSet = new OInternalResultSet();
                 OResultInternal item = new OResultInternal();
                 item.setProperty("value", eval);
                 return resultSet;
             }
-
-
-
-
 
         } catch (Exception e) {
             throw OException.wrapException(new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
