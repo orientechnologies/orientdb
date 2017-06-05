@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import com.orientechnologies.common.parser.OBaseParser;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -35,15 +33,12 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Parses text in SQL format and build a tree of conditions.
@@ -202,7 +197,11 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         // SPECIAL CASE: READ NEXT OPERATOR
         oper = new OQueryOperatorNot(extractConditionOperator());
 
-      right = oper != null ? extractConditionItem(false, oper.expectedRightWords) : null;
+      if(oper instanceof OQueryOperatorAnd || oper instanceof OQueryOperatorOr){
+        right = extractCondition();
+      }else {
+        right = oper != null ? extractConditionItem(false, oper.expectedRightWords) : null;
+      }
     }
 
     // CREATE THE CONDITION OBJECT
