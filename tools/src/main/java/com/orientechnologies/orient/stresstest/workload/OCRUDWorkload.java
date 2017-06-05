@@ -38,6 +38,7 @@ import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.OStressTesterSettings;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * CRUD implementation of the workload.
@@ -76,7 +77,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
 
   @Override
   public void parseParameters(final String args) {
-    final String ops = args.toUpperCase();
+    final String ops = args.toUpperCase(Locale.ENGLISH);
     char state = ' ';
     final StringBuilder number = new StringBuilder();
 

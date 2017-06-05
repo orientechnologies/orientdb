@@ -384,7 +384,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
         String strategy = conf.getValueAsString(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY);
         if (strategy != null)
-          connectionStrategy = CONNECTION_STRATEGY.valueOf(strategy.toUpperCase());
+          connectionStrategy = CONNECTION_STRATEGY.valueOf(strategy.toUpperCase(Locale.ENGLISH));
 
         openRemoteDatabase();
 

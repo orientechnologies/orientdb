@@ -120,7 +120,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     if (request.getBackupPath() != null && !"".equals(request.getBackupPath().trim())) {
       server.restore(request.getDatabaseName(), request.getBackupPath());
     } else {
-      server.createDatabase(request.getDatabaseName(), ODatabaseType.valueOf(request.getStorageMode().toUpperCase()), null);
+      server.createDatabase(request.getDatabaseName(), ODatabaseType.valueOf(request.getStorageMode().toUpperCase(Locale.ENGLISH)), null);
     }
     OLogManager.instance().info(this, "Created database '%s' of type '%s'", request.getDatabaseName(), request.getStorageMode());
 

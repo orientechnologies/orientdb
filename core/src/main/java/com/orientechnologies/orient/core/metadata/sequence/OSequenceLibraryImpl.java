@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,7 +54,7 @@ public class OSequenceLibraryImpl {
         document.reload();
 
         final OSequence sequence = OSequenceHelper.createSequence(document);
-        sequences.put(sequence.getName().toUpperCase(), sequence);
+        sequences.put(sequence.getName().toUpperCase(Locale.ENGLISH), sequence);
       }
     }
   }
@@ -71,7 +72,7 @@ public class OSequenceLibraryImpl {
   }
 
   public OSequence getSequence(final ODatabaseDocumentInternal database, final String iName) {
-    final String name = iName.toUpperCase();
+    final String name = iName.toUpperCase(Locale.ENGLISH);
 
     OSequence seq = sequences.get(name);
     if (seq == null) {
@@ -91,7 +92,7 @@ public class OSequenceLibraryImpl {
       final OSequence.CreateParams params) {
     init(database);
 
-    final String key = iName.toUpperCase();
+    final String key = iName.toUpperCase(Locale.ENGLISH);
     validateSequenceNoExists(key);
 
     final OSequence sequence = OSequenceHelper.createSequence(sequenceType, params, null).setName(iName);
@@ -106,7 +107,7 @@ public class OSequenceLibraryImpl {
 
     if (seq != null) {
       database.delete(seq.getDocument().getIdentity());
-      sequences.remove(iName.toUpperCase());
+      sequences.remove(iName.toUpperCase(Locale.ENGLISH));
     }
   }
 
@@ -117,7 +118,7 @@ public class OSequenceLibraryImpl {
     if (name == null)
       return null;
 
-    name = name.toUpperCase();
+    name = name.toUpperCase(Locale.ENGLISH);
 
     final OSequence seq = getSequence(database, name);
 
@@ -135,7 +136,7 @@ public class OSequenceLibraryImpl {
     if (name == null)
       return null;
 
-    name = name.toUpperCase();
+    name = name.toUpperCase(Locale.ENGLISH);
 
     final OSequence sequence = sequences.get(name);
     if (sequence == null)
@@ -151,7 +152,7 @@ public class OSequenceLibraryImpl {
     if (name == null)
       return;
 
-    name = name.toUpperCase();
+    name = name.toUpperCase(Locale.ENGLISH);
 
     sequences.remove(name);
   }

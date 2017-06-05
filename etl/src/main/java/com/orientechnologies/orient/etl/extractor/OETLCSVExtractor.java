@@ -131,7 +131,7 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
         final String[] col2Type = col.split(":");
         columnNames.add(col2Type[0]);
         if (col2Type.length > 1) {
-          columnTypes.put(col2Type[0], OType.valueOf(col2Type[1].toUpperCase()));
+          columnTypes.put(col2Type[0], OType.valueOf(col2Type[1].toUpperCase(Locale.ENGLISH)));
         } else {
           columnTypes.put(col2Type[0], OType.ANY);
         }

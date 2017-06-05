@@ -293,7 +293,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
                   String next = lastCommand.substring("begin ".length()).trim();
                   if (OStringSerializerHelper.startsWithIgnoreCase(next, "isolation ")) {
                     next = next.substring("isolation ".length()).trim();
-                    db.getTransaction().setIsolationLevel(OTransaction.ISOLATION_LEVEL.valueOf(next.toUpperCase()));
+                    db.getTransaction().setIsolationLevel(OTransaction.ISOLATION_LEVEL.valueOf(next.toUpperCase(Locale.ENGLISH)));
                   }
                 }
 

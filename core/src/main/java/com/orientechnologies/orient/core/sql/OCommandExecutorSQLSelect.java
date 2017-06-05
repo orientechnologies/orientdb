@@ -1855,7 +1855,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (pair.getValue() == null) {
           item.setType(OOrderByItem.ASC);
         } else {
-          item.setType(pair.getValue().toUpperCase().equals("DESC") ? OOrderByItem.DESC : OOrderByItem.ASC);
+          item.setType(pair.getValue().toUpperCase(Locale.ENGLISH).equals("DESC") ? OOrderByItem.DESC : OOrderByItem.ASC);
         }
         order.getItems().add(item);
       }

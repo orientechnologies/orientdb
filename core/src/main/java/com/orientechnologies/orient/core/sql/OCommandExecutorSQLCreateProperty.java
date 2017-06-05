@@ -144,7 +144,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       String pattern = "(`[^`]*`|[^\\(]\\S*)?\\s*(\\(.*\\))?\\s*(UNSAFE)?";
 
       Pattern r = Pattern.compile(pattern);
-      Matcher m = r.matcher(rest.toUpperCase().trim());
+      Matcher m = r.matcher(rest.toUpperCase(Locale.ENGLISH).trim());
 
       if (m.matches()) {
         // Linked Type / Class

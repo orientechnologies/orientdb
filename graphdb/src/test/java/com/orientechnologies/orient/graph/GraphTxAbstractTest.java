@@ -25,6 +25,8 @@ import org.junit.BeforeClass;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
+import java.util.Locale;
+
 /**
  * Base class for tests against transactional Graphs.
  * 
@@ -38,7 +40,7 @@ public abstract class GraphTxAbstractTest {
   }
 
   public static ENV getEnvironment() {
-    String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase();
+    String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase(Locale.ENGLISH);
     ENV result = null;
     try {
       result = ENV.valueOf(envName);

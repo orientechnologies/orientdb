@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
 
+import java.util.Locale;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 7/16/14
@@ -12,7 +14,7 @@ public abstract class DatabaseAbstractTest {
   protected ODatabaseDocumentTx database;
 
   public static ENV getEnvironment() {
-    String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase();
+    String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase(Locale.ENGLISH);
     ENV result = null;
     try {
       result = ENV.valueOf(envName);

@@ -1856,7 +1856,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (type == null)
       throw new IllegalArgumentException("Index type is null");
 
-    type = type.toUpperCase();
+    type = type.toUpperCase(Locale.ENGLISH);
 
     if (fields.length == 0) {
       throw new OIndexException("List of fields to index cannot be empty.");

@@ -94,7 +94,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       parserRequiredKeyword("INTO");
 
       String subjectName = parserRequiredWord(false, "Invalid subject name. Expected cluster, class or index");
-      String subjectNameUpper = subjectName.toUpperCase();
+      String subjectNameUpper = subjectName.toUpperCase(Locale.ENGLISH);
       if (subjectNameUpper.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX))
         // CLUSTER
         clusterName = subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());

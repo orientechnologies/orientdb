@@ -38,6 +38,7 @@ import com.orientechnologies.orient.etl.OETLPipeline;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -359,7 +360,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
       serverPassword = (String) resolve(conf.field("serverPassword"));
 
     if (conf.containsField("dbType"))
-      dbType = DB_TYPE.valueOf(conf.field("dbType").toString().toUpperCase());
+      dbType = DB_TYPE.valueOf(conf.field("dbType").toString().toUpperCase(Locale.ENGLISH));
     if (conf.containsField("tx"))
       tx = conf.<Boolean>field("tx");
     if (conf.containsField("wal"))
@@ -528,7 +529,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
             if (fieldNameParts.length < 2)
               throw new OConfigurationException("Index field type missed in OrientDB Loader for field '" + fieldName + "'");
 
-            final String fieldType = fieldNameParts[1].toUpperCase();
+            final String fieldType = fieldNameParts[1].toUpperCase(Locale.ENGLISH);
             final OType type = OType.valueOf(fieldType);
 
             cls.createProperty(fieldNameParts[0], type);

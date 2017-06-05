@@ -100,7 +100,7 @@ public class OStressTesterCommandLineParser {
     if (options.get(OPTION_DBNAME) != null)
       settings.dbName = options.get(OPTION_DBNAME);
 
-    settings.mode = OStressTester.OMode.valueOf(options.get(OPTION_MODE).toUpperCase());
+    settings.mode = OStressTester.OMode.valueOf(options.get(OPTION_MODE).toUpperCase(Locale.ENGLISH));
     settings.rootPassword = options.get(OPTION_ROOT_PASSWORD);
     settings.resultOutputFile = options.get(OPTION_OUTPUT_FILE);
     settings.plocalPath = options.get(OPTION_PLOCAL_PATH);
@@ -116,7 +116,7 @@ public class OStressTesterCommandLineParser {
     settings.remotePort = 2424;
     settings.checkDatabase = Boolean.parseBoolean(options.get(OPTION_CHECK_DATABASE));
     if (options.get(OPTION_LOAD_BALANCING) != null)
-      settings.loadBalancing = OStorageRemote.CONNECTION_STRATEGY.valueOf(options.get(OPTION_LOAD_BALANCING).toUpperCase());
+      settings.loadBalancing = OStorageRemote.CONNECTION_STRATEGY.valueOf(options.get(OPTION_LOAD_BALANCING).toUpperCase(Locale.ENGLISH));
 
     if (settings.plocalPath != null) {
       if (settings.plocalPath.endsWith(File.separator)) {
@@ -250,7 +250,7 @@ public class OStressTesterCommandLineParser {
     options = setDefaultIfNotPresent(options, OPTION_WORKLOAD, "CRUD:C25000R25000U25000D25000");
 
     try {
-      OStressTester.OMode.valueOf(options.get(OPTION_MODE).toUpperCase());
+      OStressTester.OMode.valueOf(options.get(OPTION_MODE).toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException ex) {
       throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_INVALID_MODE, options.get(OPTION_MODE)));
     }

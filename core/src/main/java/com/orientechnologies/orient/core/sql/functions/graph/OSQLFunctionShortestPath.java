@@ -109,7 +109,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     }
 
     if (iParams.length > 2 && iParams[2] != null) {
-      ctx.directionLeft = ODirection.valueOf(iParams[2].toString().toUpperCase());
+      ctx.directionLeft = ODirection.valueOf(iParams[2].toString().toUpperCase(Locale.ENGLISH));
     }
     if (ctx.directionLeft == ODirection.OUT) {
       ctx.directionRight = ODirection.IN;

@@ -767,14 +767,14 @@ public class ODocumentHelper {
 
     Object result = null;
 
-    final String function = iFunction.toUpperCase();
+    final String function = iFunction.toUpperCase(Locale.ENGLISH);
 
     if (function.startsWith("SIZE("))
       result = currentValue instanceof ORecord ? 1 : OMultiValue.getSize(currentValue);
     else if (function.startsWith("LENGTH("))
       result = currentValue.toString().length();
     else if (function.startsWith("TOUPPERCASE("))
-      result = currentValue.toString().toUpperCase();
+      result = currentValue.toString().toUpperCase(Locale.ENGLISH);
     else if (function.startsWith("TOLOWERCASE("))
       result = currentValue.toString().toLowerCase();
     else if (function.startsWith("TRIM("))

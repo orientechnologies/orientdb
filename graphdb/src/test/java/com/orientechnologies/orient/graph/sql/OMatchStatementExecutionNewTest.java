@@ -462,7 +462,7 @@ public class OMatchStatementExecutionNewTest {
   @Test
   public void testReturnMethod() throws Exception {
     OResultSet qResult = db.query(
-        "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name.toUppercase() as name");
+        "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name.toUpperCase(Locale.ENGLISH) as name");
     Assert.assertTrue(qResult.hasNext());
     OResult item = qResult.next();
     Assert.assertEquals("N2", item.getProperty("name"));
@@ -473,7 +473,7 @@ public class OMatchStatementExecutionNewTest {
   @Test
   public void testReturnMethodArrows() throws Exception {
     OResultSet qResult = db.query(
-        "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name.toUppercase() as name");
+        "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name.toUpperCase(Locale.ENGLISH) as name");
     Assert.assertTrue(qResult.hasNext());
     OResult item = qResult.next();
     Assert.assertEquals("N2", item.getProperty("name"));

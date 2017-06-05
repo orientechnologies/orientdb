@@ -44,10 +44,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServerAbstract {
   private static final String[] NAMES = { "POST|database/*" };
@@ -72,7 +69,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
           sendJsonError(iResponse,OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
               "Database '" + databaseName + "' already exists.", null);
         } else {
-          server.createDatabase(databaseName, ODatabaseType.valueOf(storageMode.toUpperCase()), null);
+          server.createDatabase(databaseName, ODatabaseType.valueOf(storageMode.toUpperCase(Locale.ENGLISH)), null);
           try (ODatabaseDocumentInternal database = server.openDatabase(databaseName, serverUser, serverPassword, null, false)) {
             sendDatabaseInfo(iRequest, iResponse, database);
           }

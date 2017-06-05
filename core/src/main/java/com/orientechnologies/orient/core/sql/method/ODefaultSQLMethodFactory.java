@@ -24,14 +24,7 @@ import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodAsDe
 import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodConvert;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLMethodExclude;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLMethodInclude;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodAppend;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodFromJSON;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodHash;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodLength;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodReplace;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodRight;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodSubString;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodToJSON;
+import com.orientechnologies.orient.core.sql.functions.text.*;
 import com.orientechnologies.orient.core.sql.method.misc.*;
 import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodCurrent;
 import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodNext;
@@ -43,7 +36,7 @@ import java.util.Set;
 
 /**
  * Default method factory.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  */
 public class ODefaultSQLMethodFactory implements OSQLMethodFactory {

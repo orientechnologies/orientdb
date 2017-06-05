@@ -280,7 +280,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
       word = word.replaceAll("\\\\", "\\\\\\\\"); //see issue #5229
 
-      final String uWord = word.toUpperCase();
+      final String uWord = word.toUpperCase(Locale.ENGLISH);
 
       final int lastPosition = parserIsEnded() ? parserText.length() : parserGetCurrentPosition();
 

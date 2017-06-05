@@ -77,10 +77,10 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
 
   protected OClass extractClassFromTarget(String iTarget) {
     // CLASS
-    if (!iTarget.toUpperCase().startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)
+    if (!iTarget.toUpperCase(Locale.ENGLISH).startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)
         && !iTarget.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
 
-      if (iTarget.toUpperCase().startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
+      if (iTarget.toUpperCase(Locale.ENGLISH).startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
         // REMOVE CLASS PREFIX
         iTarget = iTarget.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
@@ -90,7 +90,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
       return getDatabase().getMetadata().getSchema().getClass(iTarget);
     }
     //CLUSTER
-    if (iTarget.toUpperCase().startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)) {
+    if (iTarget.toUpperCase(Locale.ENGLISH).startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)) {
       String clusterName = iTarget.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length()).trim();
       ODatabaseDocumentInternal db = getDatabase();
       if(clusterName.startsWith("[") && clusterName.endsWith("]")) {

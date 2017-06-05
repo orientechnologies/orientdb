@@ -35,6 +35,7 @@ import com.orientechnologies.orient.etl.source.OETLSource;
 import com.orientechnologies.orient.etl.transformer.OETLTransformer;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.TimerTask;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -117,7 +118,7 @@ public class OETLProcessor {
   protected void configRunBehaviour(OCommandContext context) {
     final String cfgLog = (String) context.getVariable("log");
     if (cfgLog != null)
-      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase()).toJulLevel();
+      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase(Locale.ENGLISH)).toJulLevel();
 
     final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
     if (cfgHaltOnError != null)

@@ -23,6 +23,8 @@ import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
+import java.util.Locale;
+
 /**
  * Console ANSI utility class that supports most of the ANSI amenities.
  *
@@ -99,7 +101,7 @@ public enum OAnsiCode {
 
           final String[] codes = code.split(":");
           for (int i = 0; i < codes.length; ++i)
-            buffer.append(OAnsiCode.valueOf(codes[i].toUpperCase()));
+            buffer.append(OAnsiCode.valueOf(codes[i].toUpperCase(Locale.ENGLISH)));
 
           if (pos > -1) {
             buffer.append(text);

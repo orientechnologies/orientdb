@@ -50,7 +50,7 @@ public class OTraverseContext extends OBasicCommandContext {
   }
 
   public Object getVariable(final String iName) {
-    final String name = iName.trim().toUpperCase();
+    final String name = iName.trim().toUpperCase(Locale.ENGLISH);
 
     if ("DEPTH".startsWith(name))
       return getDepth();

@@ -256,7 +256,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     final String strategyWord = parserNextWord(true);
 
     try {
-      traverse.setStrategy(OTraverse.STRATEGY.valueOf(strategyWord.toUpperCase()));
+      traverse.setStrategy(OTraverse.STRATEGY.valueOf(strategyWord.toUpperCase(Locale.ENGLISH)));
     } catch (IllegalArgumentException e) {
       throwParsingException("Invalid " + KEYWORD_STRATEGY + ". Use one between " + Arrays.toString(OTraverse.STRATEGY.values()));
     }

@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 import java.io.PrintStream;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
@@ -914,18 +915,18 @@ public enum OGlobalConfiguration {
 
   @Deprecated CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1);
 
+  static {
+    readConfiguration();
+  }
+
   private final String   key;
   private final Object   defValue;
   private final Class<?> type;
-  private volatile Object value = null;
   private final String                       description;
   private final OConfigurationChangeCallback changeCallback;
   private final Boolean                      canChangeAtRuntime;
   private final boolean                      hidden;
-
-  static {
-    readConfiguration();
-  }
+  private volatile Object value = null;
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
       final OConfigurationChangeCallback iChangeAction) {
@@ -969,7 +970,7 @@ public enum OGlobalConfiguration {
 
       if (!lastSection.equals(section)) {
         out.print("- ");
-        out.println(section.toUpperCase());
+        out.println(section.toUpperCase(Locale.ENGLISH));
         lastSection = section;
       }
       out.print("  + ");

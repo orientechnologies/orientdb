@@ -22,11 +22,7 @@ package com.orientechnologies.orient.object.jpa;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.PersistenceException;
 import javax.persistence.SharedCacheMode;
@@ -328,7 +324,7 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
 		}
 
 		try {
-			return PersistenceUnitTransactionType.valueOf(elementContent.toUpperCase());
+			return PersistenceUnitTransactionType.valueOf(elementContent.toUpperCase(Locale.ENGLISH));
 		} catch (IllegalArgumentException ex) {
 			throw new PersistenceException("Unknown TransactionType: " + elementContent, ex);
 		}
@@ -341,7 +337,7 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
 		}
 
 		try {
-			return ValidationMode.valueOf(validationMode.toUpperCase());
+			return ValidationMode.valueOf(validationMode.toUpperCase(Locale.ENGLISH));
 		} catch (IllegalArgumentException ex) {
 			throw new PersistenceException("Unknown ValidationMode: " + validationMode, ex);
 		}
@@ -353,7 +349,7 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
 		}
 
 		try {
-			return SharedCacheMode.valueOf(sharedCacheMode.toUpperCase());
+			return SharedCacheMode.valueOf(sharedCacheMode.toUpperCase(Locale.ENGLISH));
 		} catch (IllegalArgumentException ex) {
 			throw new PersistenceException("Unknown ValidationMode: " + sharedCacheMode, ex);
 		}

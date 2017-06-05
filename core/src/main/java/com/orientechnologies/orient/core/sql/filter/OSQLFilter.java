@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Locale;
+
 /**
  * Parsed query. It's built once a query is parsed.
  *
@@ -41,7 +43,7 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
 
     context = iContext;
     parserText = iText;
-    parserTextUpperCase = iText.toUpperCase();
+    parserTextUpperCase = iText.toUpperCase(Locale.ENGLISH);
 
     try {
       final int lastPos = parserGetCurrentPosition();

@@ -214,7 +214,7 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
       if (mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION) != null) {
         if (mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION) instanceof String) {
           ctx.paramDirection = Direction
-              .valueOf(stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION), "OUT").toUpperCase());
+              .valueOf(stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION), "OUT").toUpperCase(Locale.ENGLISH));
         } else {
           ctx.paramDirection = (Direction) mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION);
         }
@@ -229,7 +229,7 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
       if (mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA) != null) {
         if (mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA) instanceof String) {
           ctx.paramHeuristicFormula = HeuristicFormula
-              .valueOf(stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA), "MANHATAN").toUpperCase());
+              .valueOf(stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA), "MANHATAN").toUpperCase(Locale.ENGLISH));
         } else {
           ctx.paramHeuristicFormula = (HeuristicFormula) mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA);
         }

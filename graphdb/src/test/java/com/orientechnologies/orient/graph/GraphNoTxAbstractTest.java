@@ -23,6 +23,8 @@ package com.orientechnologies.orient.graph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.AfterClass;
 
+import java.util.Locale;
+
 /**
  * Base class for tests against Non transactonal Graphs.
  *
@@ -32,7 +34,7 @@ public abstract class GraphNoTxAbstractTest {
   protected static OrientGraphNoTx graph;
 
   public static ENV getEnvironment() {
-    String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase();
+    String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase(Locale.ENGLISH);
     ENV result = null;
     try {
       result = ENV.valueOf(envName);

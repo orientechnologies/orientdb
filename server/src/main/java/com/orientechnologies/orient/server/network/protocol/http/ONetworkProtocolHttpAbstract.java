@@ -607,7 +607,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           // CONSUME THE NEXT \n
           channel.read();
 
-          request.httpMethod = words[0].toUpperCase();
+          request.httpMethod = words[0].toUpperCase(Locale.ENGLISH);
           request.url = words[1].trim();
 
           final int parametersPos = request.url.indexOf('?');

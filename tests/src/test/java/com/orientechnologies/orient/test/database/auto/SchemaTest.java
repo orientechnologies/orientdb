@@ -43,6 +43,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 @Test(groups = "schema")
@@ -601,20 +602,20 @@ public class SchemaTest extends DocumentDBBaseTest {
     String className = "TestCaseSensitivePropNames";
     String propertyName = "propName";
     database.command("create class " + className);
-    database.command("create property " + className + "." + propertyName.toUpperCase() + " STRING");
+    database.command("create property " + className + "." + propertyName.toUpperCase(Locale.ENGLISH) + " STRING");
     database.command("create property " + className + "." + propertyName.toLowerCase() + " STRING");
 
     database.command(
         "create index " + className + "." + propertyName.toLowerCase() + " on " + className + "(" + propertyName.toLowerCase()
             + ") NOTUNIQUE");
     database.command(
-        "create index " + className + "." + propertyName.toUpperCase() + " on " + className + "(" + propertyName.toUpperCase()
+        "create index " + className + "." + propertyName.toUpperCase(Locale.ENGLISH) + " on " + className + "(" + propertyName.toUpperCase(Locale.ENGLISH)
             + ") NOTUNIQUE");
 
     database.command(
-        "insert into " + className + " set " + propertyName.toUpperCase() + " = 'FOO', " + propertyName.toLowerCase() + " = 'foo'");
+        "insert into " + className + " set " + propertyName.toUpperCase(Locale.ENGLISH) + " = 'FOO', " + propertyName.toLowerCase() + " = 'foo'");
     database.command(
-        "insert into " + className + " set " + propertyName.toUpperCase() + " = 'BAR', " + propertyName.toLowerCase() + " = 'bar'");
+        "insert into " + className + " set " + propertyName.toUpperCase(Locale.ENGLISH) + " = 'BAR', " + propertyName.toLowerCase() + " = 'bar'");
 
     try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toLowerCase() + " = 'foo'")) {
       Assert.assertTrue(rs.hasNext());
@@ -626,13 +627,13 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.assertFalse(rs.hasNext());
     }
 
-    try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toUpperCase() + " = 'FOO'")) {
+    try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toUpperCase(Locale.ENGLISH) + " = 'FOO'")) {
       Assert.assertTrue(rs.hasNext());
       rs.next();
       Assert.assertFalse(rs.hasNext());
     }
 
-    try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toUpperCase() + " = 'foo'")) {
+    try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toUpperCase(Locale.ENGLISH) + " = 'foo'")) {
       Assert.assertFalse(rs.hasNext());
     }
 
@@ -647,7 +648,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       indexes.add(id.getName());
     }
     Assert.assertTrue(indexes.contains(className + "." + propertyName.toLowerCase()));
-    Assert.assertTrue(indexes.contains(className + "." + propertyName.toUpperCase()));
+    Assert.assertTrue(indexes.contains(className + "." + propertyName.toUpperCase(Locale.ENGLISH)));
     schema.dropClass(className);
   }
 

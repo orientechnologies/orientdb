@@ -140,7 +140,7 @@ public class ODocument extends ORecordAbstract
 
     final ODatabaseDocumentInternal database = getDatabaseInternal();
     if (_recordId.getClusterId() > -1 && database.getStorageVersions().classesAreDetectedByClusterId()) {
-      final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
+      final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
       final OClass cls = schema.getClassByClusterId(_recordId.getClusterId());
       if (cls != null && !cls.getName().equals(iClassName))
         throw new IllegalArgumentException(
@@ -242,10 +242,7 @@ public class ODocument extends ORecordAbstract
     if (type == null) {
       return false;
     }
-    if (type.isVertexType()) {
-      return true;
-    }
-    return false;
+    return type.isVertexType();
   }
 
   @Override
@@ -256,10 +253,7 @@ public class ODocument extends ORecordAbstract
     if (type == null) {
       return false;
     }
-    if (type.isEdgeType()) {
-      return true;
-    }
-    return false;
+    return type.isEdgeType();
   }
 
   @Override
@@ -276,10 +270,8 @@ public class ODocument extends ORecordAbstract
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
       final String[] fieldNames = _recordFormat.getFieldNames(this, _source);
       if (fieldNames != null) {
-        Set<String> result = new HashSet<String>();
-        for (String s : fieldNames) {
-          result.add(s);
-        }
+        Set<String> result = new HashSet<>();
+        Collections.addAll(result, fieldNames);
         return result;
       }
     }
@@ -289,7 +281,7 @@ public class ODocument extends ORecordAbstract
     if (_fields == null || _fields.size() == 0)
       return Collections.EMPTY_SET;
 
-    return _fields.entrySet().stream().filter(s -> s.getValue().exist()).map(s -> s.getKey()).collect(Collectors.toSet());
+    return _fields.entrySet().stream().filter(s -> s.getValue().exist()).map(Entry::getKey).collect(Collectors.toSet());
   }
 
   /**
@@ -310,7 +302,7 @@ public class ODocument extends ORecordAbstract
     if (!iFieldName.startsWith("@") && _lazyLoad && value instanceof ORID && (((ORID) value).isPersistent() || ((ORID) value)
         .isNew()) && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
-      RET newValue = (RET) getDatabase().load((ORID) value);
+      RET newValue = getDatabase().load((ORID) value);
       if (newValue != null) {
         unTrack((ORID) value);
         track((OIdentifiable) newValue);
@@ -377,7 +369,7 @@ public class ODocument extends ORecordAbstract
       return;
     } else if (ODocumentHelper.ATTRIBUTE_VERSION.equals(iPropetyName)) {
       if (iPropertyValue != null) {
-        int v = _recordVersion;
+        int v;
 
         if (iPropertyValue instanceof Number)
           v = ((Number) iPropertyValue).intValue();
@@ -844,14 +836,14 @@ public class ODocument extends ORecordAbstract
 
     destination._trackingChanges = _trackingChanges;
     if (_owners != null)
-      destination._owners = new ArrayList<WeakReference<ORecordElement>>(_owners);
+      destination._owners = new ArrayList<>(_owners);
     else
       destination._owners = null;
 
     if (_fields != null) {
       destination._fields = _fields instanceof LinkedHashMap ?
-          new LinkedHashMap<String, ODocumentEntry>() :
-          new HashMap<String, ODocumentEntry>();
+          new LinkedHashMap<>() :
+          new HashMap<>();
       for (Entry<String, ODocumentEntry> entry : _fields.entrySet()) {
         ODocumentEntry docEntry = entry.getValue().clone();
         destination._fields.put(entry.getKey(), docEntry);
@@ -992,7 +984,7 @@ public class ODocument extends ORecordAbstract
    * @since 2.0
    */
   public Map<String, Object> toMap() {
-    final Map<String, Object> map = new HashMap<String, Object>();
+    final Map<String, Object> map = new HashMap<>();
     for (String field : fieldNames())
       map.put(field, field(field));
 
@@ -1012,7 +1004,7 @@ public class ODocument extends ORecordAbstract
    */
   @Override
   public String toString() {
-    return toString(new HashSet<ORecord>());
+    return toString(new HashSet<>());
   }
 
   /**
@@ -1057,7 +1049,7 @@ public class ODocument extends ORecordAbstract
 
     if (_fields == null || _fields.size() == 0)
       return EMPTY_STRINGS;
-    final List<String> names = new ArrayList<String>(_fields.size());
+    final List<String> names = new ArrayList<>(_fields.size());
     for (Entry<String, ODocumentEntry> entry : _fields.entrySet()) {
       if (entry.getValue().exist())
         names.add(entry.getKey());
@@ -1067,9 +1059,7 @@ public class ODocument extends ORecordAbstract
 
   private Set<String> arrayToSet(String[] fieldNames) {
     Set<String> result = new HashSet<>();
-    for (String s : fieldNames) {
-      result.add(s);
-    }
+    Collections.addAll(result, fieldNames);
     return result;
   }
 
@@ -1152,7 +1142,7 @@ public class ODocument extends ORecordAbstract
     if (!iFieldName.startsWith("@") && _lazyLoad && value instanceof ORID && (((ORID) value).isPersistent() || ((ORID) value)
         .isNew()) && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
-      RET newValue = (RET) getDatabase().load((ORID) value);
+      RET newValue = getDatabase().load((ORID) value);
       if (newValue != null) {
         unTrack((ORID) value);
         track((OIdentifiable) newValue);
@@ -1199,7 +1189,7 @@ public class ODocument extends ORecordAbstract
    * @return field value if defined, otherwise null
    */
   public <RET> RET field(final String iFieldName, final OType iFieldType) {
-    RET value = (RET) field(iFieldName);
+    RET value = field(iFieldName);
     OType original;
     if (iFieldType != null && iFieldType != (original = fieldType(iFieldName))) {
       // this is needed for the csv serializer that don't give back values
@@ -1277,9 +1267,9 @@ public class ODocument extends ORecordAbstract
    *
    * @since 2.0
    */
-  public ODocument fromMap(final Map<String, ? extends Object> iMap) {
+  public ODocument fromMap(final Map<String, ?> iMap) {
     if (iMap != null) {
-      for (Entry<String, ? extends Object> entry : iMap.entrySet())
+      for (Entry<String, ?> entry : iMap.entrySet())
         field(entry.getKey(), entry.getValue());
     }
     return this;
@@ -1316,7 +1306,7 @@ public class ODocument extends ORecordAbstract
       return this;
     } else if (ODocumentHelper.ATTRIBUTE_VERSION.equals(iFieldName)) {
       if (iPropertyValue != null) {
-        int v = _recordVersion;
+        int v;
 
         if (iPropertyValue instanceof Number)
           v = ((Number) iPropertyValue).intValue();
@@ -1590,7 +1580,7 @@ public class ODocument extends ORecordAbstract
     if (_fields == null || _fields.isEmpty())
       return EMPTY_STRINGS;
 
-    final Set<String> dirtyFields = new HashSet<String>();
+    final Set<String> dirtyFields = new HashSet<>();
     for (Entry<String, ODocumentEntry> entry : _fields.entrySet()) {
       if (entry.getValue().isChanged() || entry.getValue().timeLine != null)
         dirtyFields.add(entry.getKey());
@@ -1727,7 +1717,7 @@ public class ODocument extends ORecordAbstract
     if (_owners == null)
       return Collections.emptyList();
 
-    final List<ORecordElement> result = new ArrayList<ORecordElement>();
+    final List<ORecordElement> result = new ArrayList<>();
     for (WeakReference<ORecordElement> o : _owners) {
       if (o.get() != null)
         result.add(o.get());
@@ -2114,7 +2104,7 @@ public class ODocument extends ORecordAbstract
     checkForFields(iFieldName);
     if (iFieldType != null) {
       if (_fields == null)
-        _fields = _ordered ? new LinkedHashMap<String, ODocumentEntry>() : new HashMap<String, ODocumentEntry>();
+        _fields = _ordered ? new LinkedHashMap<>() : new HashMap<>();
       // SET THE FORCED TYPE
       ODocumentEntry entry = getOrCreate(iFieldName);
       if (entry.type != iFieldType)
@@ -2529,7 +2519,7 @@ public class ODocument extends ORecordAbstract
 
   protected OGlobalProperty getGlobalPropertyById(int id) {
     if (_schema == null) {
-      OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
+      OMetadataInternal metadata = getDatabase().getMetadata();
       _schema = metadata.getImmutableSchemaSnapshot();
     }
     OGlobalProperty prop = _schema.getGlobalPropertyById(id);
@@ -2578,7 +2568,7 @@ public class ODocument extends ORecordAbstract
 
   protected void rawField(final String iFieldName, final Object iFieldValue, final OType iFieldType) {
     if (_fields == null)
-      _fields = _ordered ? new LinkedHashMap<String, ODocumentEntry>() : new HashMap<String, ODocumentEntry>();
+      _fields = _ordered ? new LinkedHashMap<>() : new HashMap<>();
 
     ODocumentEntry entry = getOrCreate(iFieldName);
     removeCollectionChangeListener(entry, entry.value);
@@ -2626,7 +2616,7 @@ public class ODocument extends ORecordAbstract
           continue;
         try {
           if (type == OType.EMBEDDEDLIST) {
-            OTrackedList<Object> list = new OTrackedList<Object>(this);
+            OTrackedList<Object> list = new OTrackedList<>(this);
             Collection<Object> values = (Collection<Object>) value;
             for (Object object : values) {
               list.add(OType.convert(object, linkedType.getDefaultJavaType()));
@@ -2634,7 +2624,7 @@ public class ODocument extends ORecordAbstract
             entry.value = list;
             replaceListenerOnAutoconvert(entry, value);
           } else if (type == OType.EMBEDDEDMAP) {
-            Map<Object, Object> map = new OTrackedMap<Object>(this);
+            Map<Object, Object> map = new OTrackedMap<>(this);
             Map<Object, Object> values = (Map<Object, Object>) value;
             for (Entry<Object, Object> object : values.entrySet()) {
               map.put(object.getKey(), OType.convert(object.getValue(), linkedType.getDefaultJavaType()));
@@ -2642,7 +2632,7 @@ public class ODocument extends ORecordAbstract
             entry.value = map;
             replaceListenerOnAutoconvert(entry, value);
           } else if (type == OType.EMBEDDEDSET) {
-            Set<Object> set = new OTrackedSet<Object>(this);
+            Set<Object> set = new OTrackedSet<>(this);
             Collection<Object> values = (Collection<Object>) value;
             for (Object object : values) {
               set.add(OType.convert(object, linkedType.getDefaultJavaType()));
@@ -2704,7 +2694,7 @@ public class ODocument extends ORecordAbstract
       ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(entry.changeListener);
     } else {
       // no listener was there add it only to the new value
-      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<Object, Object>(this,
+      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<>(this,
           entry);
       ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(listener);
       entry.changeListener = listener;
@@ -2739,7 +2729,7 @@ public class ODocument extends ORecordAbstract
     if (iOwner == null)
       return;
     if (_owners == null) {
-      _owners = new ArrayList<WeakReference<ORecordElement>>();
+      _owners = new ArrayList<>();
       if (_dirtyManager != null && this.getIdentity().isNew())
         _dirtyManager.removeNew(this);
     }
@@ -2756,7 +2746,7 @@ public class ODocument extends ORecordAbstract
     }
 
     if (!found)
-      this._owners.add(new WeakReference<ORecordElement>(iOwner));
+      this._owners.add(new WeakReference<>(iOwner));
 
   }
 
@@ -2813,19 +2803,19 @@ public class ODocument extends ORecordAbstract
       switch (fieldType) {
       case EMBEDDEDLIST:
         if (fieldValue instanceof List<?>) {
-          newValue = new OTrackedList<Object>(this);
+          newValue = new OTrackedList<>(this);
           fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
         }
         break;
       case EMBEDDEDSET:
         if (fieldValue instanceof Set<?>) {
-          newValue = new OTrackedSet<Object>(this);
+          newValue = new OTrackedSet<>(this);
           fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
         }
         break;
       case EMBEDDEDMAP:
         if (fieldValue instanceof Map<?, ?>) {
-          newValue = new OTrackedMap<Object>(this);
+          newValue = new OTrackedMap<>(this);
           fillTrackedMap((Map<Object, Object>) newValue, (Map<Object, Object>) fieldValue);
         }
         break;
@@ -2884,11 +2874,11 @@ public class ODocument extends ORecordAbstract
       Object value = event.getValue();
       if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD && !(value instanceof OTrackedMultiValue)) {
         if (value instanceof Collection) {
-          Collection<Object> newCollection = value instanceof List ? new OTrackedList<Object>(this) : new OTrackedSet<Object>(this);
+          Collection<Object> newCollection = value instanceof List ? new OTrackedList<>(this) : new OTrackedSet<>(this);
           fillTrackedCollection(newCollection, (Collection<Object>) value);
           origin.replace(event, newCollection);
         } else if (value instanceof Map) {
-          Map<Object, Object> newMap = new OTrackedMap<Object>(this);
+          Map<Object, Object> newMap = new OTrackedMap<>(this);
           fillTrackedMap(newMap, (Map<Object, Object>) value);
           origin.replace(event, newMap);
         }
@@ -2905,15 +2895,15 @@ public class ODocument extends ORecordAbstract
       if (cur instanceof ODocument)
         ((ODocument) cur).convertAllMultiValuesToTrackedVersions();
       else if (cur instanceof List) {
-        List<Object> newList = new OTrackedList<Object>(this);
+        List<Object> newList = new OTrackedList<>(this);
         fillTrackedCollection(newList, (Collection<Object>) cur);
         cur = newList;
       } else if (cur instanceof Set) {
-        Set<Object> newSet = new OTrackedSet<Object>(this);
+        Set<Object> newSet = new OTrackedSet<>(this);
         fillTrackedCollection(newSet, (Collection<Object>) cur);
         cur = newSet;
       } else if (cur instanceof Map) {
-        Map<Object, Object> newMap = new OTrackedMap<Object>(this);
+        Map<Object, Object> newMap = new OTrackedMap<>(this);
         fillTrackedMap(newMap, (Map<Object, Object>) cur);
         cur = newMap;
       }
@@ -2927,15 +2917,15 @@ public class ODocument extends ORecordAbstract
       if (value instanceof ODocument)
         ((ODocument) value).convertAllMultiValuesToTrackedVersions();
       else if (cur.getValue() instanceof List) {
-        List<Object> newList = new OTrackedList<Object>(this);
+        List<Object> newList = new OTrackedList<>(this);
         fillTrackedCollection(newList, (Collection<Object>) value);
         value = newList;
       } else if (value instanceof Set) {
-        Set<Object> newSet = new OTrackedSet<Object>(this);
+        Set<Object> newSet = new OTrackedSet<>(this);
         fillTrackedCollection(newSet, (Collection<Object>) value);
         value = newSet;
       } else if (value instanceof Map) {
-        Map<Object, Object> newMap = new OTrackedMap<Object>(this);
+        Map<Object, Object> newMap = new OTrackedMap<>(this);
         fillTrackedMap(newMap, (Map<Object, Object>) value);
         value = newMap;
       }
@@ -2954,7 +2944,7 @@ public class ODocument extends ORecordAbstract
 
   protected boolean checkForFields(final String... iFields) {
     if (_fields == null)
-      _fields = _ordered ? new LinkedHashMap<String, ODocumentEntry>() : new HashMap<String, ODocumentEntry>();
+      _fields = _ordered ? new LinkedHashMap<>() : new HashMap<>();
 
     if (_status == ORecordElement.STATUS.LOADED && _source != null)
       // POPULATE FIELDS LAZY
@@ -3004,14 +2994,14 @@ public class ODocument extends ORecordAbstract
 
   protected Set<Entry<String, ODocumentEntry>> getRawEntries() {
     checkForFields();
-    return _fields == null ? new HashSet<Map.Entry<String, ODocumentEntry>>() : _fields.entrySet();
+    return _fields == null ? new HashSet<>() : _fields.entrySet();
   }
 
   private void fetchSchemaIfCan() {
     if (_schema == null) {
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (db != null && !db.isClosed()) {
-        OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
+        OMetadataInternal metadata = db.getMetadata();
         _schema = metadata.getImmutableSchemaSnapshot();
       }
     }
@@ -3025,7 +3015,7 @@ public class ODocument extends ORecordAbstract
         checkForLoading();
         checkForFields(ODocumentHelper.ATTRIBUTE_CLASS);
       } else {
-        final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
+        final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
         if (schema != null) {
           OClass _clazz = schema.getClassByClusterId(_recordId.getClusterId());
           if (_clazz != null)
@@ -3095,7 +3085,7 @@ public class ODocument extends ORecordAbstract
     if (!(entry.value instanceof OTrackedMultiValue))
       return false;
     if (entry.changeListener == null) {
-      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<Object, Object>(this,
+      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<>(this,
           entry);
       ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(listener);
       entry.changeListener = listener;

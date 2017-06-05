@@ -352,7 +352,7 @@ public class OMatchStatementExecutionTest {
     List<ODocument> qResult = db
         .command(
             new OCommandSQL(
-                "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name.toUppercase() as name"))
+                "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name.toUpperCase(Locale.ENGLISH) as name"))
         .execute();
     assertEquals(1, qResult.size());
     assertEquals("N2", qResult.get(0).field("name"));
@@ -363,7 +363,7 @@ public class OMatchStatementExecutionTest {
     List<ODocument> qResult = db
         .command(
             new OCommandSQL(
-                "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name.toUppercase() as name"))
+                "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name.toUpperCase(Locale.ENGLISH) as name"))
         .execute();
     assertEquals(1, qResult.size());
     assertEquals("N2", qResult.get(0).field("name"));

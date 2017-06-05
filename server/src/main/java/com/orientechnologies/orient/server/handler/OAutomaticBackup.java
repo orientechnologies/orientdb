@@ -300,7 +300,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
       else if (settingName.equalsIgnoreCase("compressionLevel"))
         compressionLevel = (Integer) settingValue;
       else if (settingName.equalsIgnoreCase("mode"))
-        mode = MODE.valueOf(settingValueAsString.toUpperCase());
+        mode = MODE.valueOf(settingValueAsString.toUpperCase(Locale.ENGLISH));
       else if (settingName.equalsIgnoreCase("exportOptions"))
         exportOptions = settingValueAsString;
     }

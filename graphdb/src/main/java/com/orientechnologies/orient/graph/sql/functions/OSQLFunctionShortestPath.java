@@ -35,13 +35,7 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Shortest path algorithm to find the shortest path from one node to another node in a directed graph.
@@ -117,7 +111,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
         }
 
         if (iParams.length > 2 && iParams[2] != null) {
-          ctx.directionLeft = Direction.valueOf(iParams[2].toString().toUpperCase());
+          ctx.directionLeft = Direction.valueOf(iParams[2].toString().toUpperCase(Locale.ENGLISH));
         }
         if (ctx.directionLeft == Direction.OUT) {
           ctx.directionRight = Direction.IN;

@@ -1114,7 +1114,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         throw new IllegalArgumentException("Timezone can't be null");
 
       // for backward compatibility, until 2.1.13 OrientDB accepted timezones in lowercase as well
-      TimeZone timeZoneValue = TimeZone.getTimeZone(stringValue.toUpperCase());
+      TimeZone timeZoneValue = TimeZone.getTimeZone(stringValue.toUpperCase(Locale.ENGLISH));
       if (timeZoneValue.equals(TimeZone.getTimeZone("GMT"))) {
         timeZoneValue = TimeZone.getTimeZone(stringValue);
       }

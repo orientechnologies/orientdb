@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Merges two records. Useful when a record needs to be updated rather than created.
@@ -57,7 +58,7 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
       lookup = iConfiguration.field("lookup");
 
     if (iConfiguration.containsField("unresolvedLinkAction"))
-      unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase());
+      unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase(Locale.ENGLISH));
   }
 
   protected Object lookup(ODatabaseDocument db, Object joinValue, final boolean iReturnRIDS) {
@@ -66,7 +67,7 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
     if (joinValue != null) {
       if (sqlQuery == null && index == null) {
         // ONLY THE FIRST TIME
-        if (lookup.toUpperCase().startsWith("SELECT"))
+        if (lookup.toUpperCase(Locale.ENGLISH).startsWith("SELECT"))
           sqlQuery = new OSQLSynchQuery<ODocument>(lookup);
         else {
           index = db.getMetadata().getIndexManager().getIndex(lookup);

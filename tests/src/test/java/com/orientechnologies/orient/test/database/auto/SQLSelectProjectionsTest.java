@@ -32,6 +32,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 @Test(groups = "sql-select")
@@ -86,14 +87,14 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
   @Test
   public void queryProjectionLinkedAndFunction() {
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select name.toUppercase(), address.city.country.name from Profile")).execute();
+        new OSQLSynchQuery<ODocument>("select name.toUpperCase(Locale.ENGLISH), address.city.country.name from Profile")).execute();
 
     Assert.assertTrue(result.size() != 0);
 
     for (ODocument d : result) {
       Assert.assertTrue(d.fieldNames().length <= 2);
       if (d.field("name") != null)
-        Assert.assertTrue(d.field("name").equals(((String) d.field("name")).toUpperCase()));
+        Assert.assertTrue(d.field("name").equals(((String) d.field("name")).toUpperCase(Locale.ENGLISH)));
 
       Assert.assertNull(d.getClassName());
       Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
@@ -103,7 +104,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
   @Test
   public void queryProjectionSameFieldTwice() {
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select name, name.toUppercase() from Profile where name is not null")).execute();
+        new OSQLSynchQuery<ODocument>("select name, name.toUpperCase(Locale.ENGLISH) from Profile where name is not null")).execute();
 
     Assert.assertTrue(result.size() != 0);
 
