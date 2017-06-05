@@ -108,32 +108,28 @@ public class OrientDataSource implements DataSource {
 
   @Override
   public Connection getConnection(String username, String password) throws SQLException {
-    Properties info = new Properties(this.info);
-    info.put("user", username);
-    info.put("password", password);
-
-//    return DriverManager.getConnection(url, info);
-
-    String orientDbUrl = dbUrl.replace("jdbc:orient:", "");
-
-    OURLConnection connUrl = OURLHelper.parseNew(orientDbUrl);
-
-    OrientDBConfig settings = OrientDBConfig.builder()
-        .addConfig(OGlobalConfiguration.DB_POOL_MIN, Integer.valueOf(info.getProperty("db.pool.min", "1")))
-        .addConfig(OGlobalConfiguration.DB_POOL_MAX, Integer.valueOf(info.getProperty("db.pool.max", "10")))
-        .build();
 
     if (orientDB == null) {
+
+      Properties info = new Properties(this.info);
+      info.put("user", username);
+      info.put("password", password);
+
+      String orientDbUrl = dbUrl.replace("jdbc:orient:", "");
+
+      OURLConnection connUrl = OURLHelper.parseNew(orientDbUrl);
+      OrientDBConfig settings = OrientDBConfig.builder()
+          .addConfig(OGlobalConfiguration.DB_POOL_MIN, Integer.valueOf(info.getProperty("db.pool.min", "1")))
+          .addConfig(OGlobalConfiguration.DB_POOL_MAX, Integer.valueOf(info.getProperty("db.pool.max", "10")))
+          .build();
+
       orientDB = new OrientDB(connUrl.getType() + ":" + connUrl.getPath(), username, password, settings);
       orientDB.createIfNotExists(connUrl.getDbName(), connUrl.getDbType().orElse(ODatabaseType.MEMORY));
 
-    }
-    if (pool == null) {
-
-      pool = new ODatabasePool(orientDB, connUrl.getDbName(), username, password, settings);
+      pool = new ODatabasePool(orientDB, connUrl.getDbName(), username, password);
     }
 
-    return new OrientJdbcConnection(pool.acquire(), info);
+    return new OrientJdbcConnection(pool.acquire(), orientDB, info);
   }
 
   public void setDbUrl(String dbUrl) {

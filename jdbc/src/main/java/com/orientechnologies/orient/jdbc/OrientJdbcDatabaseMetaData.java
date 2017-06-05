@@ -867,6 +867,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
     OClass aClass = database.getMetadata().getSchema().getClass(table);
 
+
     aClass.declaredProperties().stream().forEach(p-> p.getType());
     return getEmptyResultSet();
   }
@@ -898,6 +899,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("NULLABLE", DatabaseMetaData.typeNullable);
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.BOOLEAN.toString());
@@ -905,6 +907,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("NULLABLE", DatabaseMetaData.typeNullable);
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.BYTE.toString());
@@ -913,6 +916,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("UNSIGNED_ATTRIBUTE", true);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.DATE.toString());
@@ -920,6 +924,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("NULLABLE", DatabaseMetaData.typeNullable);
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.DATETIME.toString());
@@ -927,6 +932,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("NULLABLE", DatabaseMetaData.typeNullable);
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.DECIMAL.toString());
@@ -935,6 +941,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("UNSIGNED_ATTRIBUTE", false);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.FLOAT.toString());
@@ -943,6 +950,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("UNSIGNED_ATTRIBUTE", false);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.DOUBLE.toString());
@@ -951,6 +959,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("UNSIGNED_ATTRIBUTE", false);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.EMBEDDED.toString());
@@ -958,6 +967,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("NULLABLE", DatabaseMetaData.typeNullable);
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.EMBEDDEDLIST.toString());
@@ -965,6 +975,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("NULLABLE", DatabaseMetaData.typeNullable);
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.INTEGER.toString());
@@ -973,6 +984,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("UNSIGNED_ATTRIBUTE", false);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.LINKLIST.toString());
@@ -980,6 +992,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("NULLABLE", DatabaseMetaData.typeNullable);
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.LONG.toString());
@@ -988,6 +1001,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("UNSIGNED_ATTRIBUTE", false);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.STRING.toString());
@@ -995,6 +1009,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("NULLABLE", DatabaseMetaData.typeNullable);
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     res = new OResultInternal();
     res.setProperty("TYPE_NAME", OType.SHORT.toString());
@@ -1003,6 +1018,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("CASE_SENSITIVE", true);
     res.setProperty("UNSIGNED_ATTRIBUTE", false);
     res.setProperty("SEARCHABLE", true);
+    resultSet.add(res);
 
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection),
         resultSet,
@@ -1034,6 +1050,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       boolean notUniqueIndex = !(idx.getType().equals(INDEX_TYPE.UNIQUE.name()));
 
       final String fieldNames = idx.getDefinition().getFields().toString();
+
       OResultInternal res = new OResultInternal();
       res.setProperty("TABLE_CAT", catalog);
       res.setProperty("TABLE_SCHEM", schema);

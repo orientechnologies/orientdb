@@ -45,6 +45,8 @@ public class OrientJdbcConnection implements Connection {
   private boolean           autoCommit;
   private ODatabase.STATUS  status;
 
+  private boolean orientDBisPrivate;
+
   public OrientJdbcConnection(final String jdbcdDUrl, final Properties info) {
 
     this.dbUrl = jdbcdDUrl.replace("jdbc:orient:", "");
@@ -62,12 +64,15 @@ public class OrientJdbcConnection implements Connection {
 
     database = orientDB.open(connUrl.getDbName(), username, password);
 
+    orientDBisPrivate = true;
     status = ODatabase.STATUS.OPEN;
   }
 
-  public OrientJdbcConnection(ODatabaseDocument database, Properties info) {
+  public OrientJdbcConnection(ODatabaseDocument database, OrientDB orientDB, Properties info) {
     this.database = database;
+    this.orientDB = orientDB;
     this.info = info;
+    orientDBisPrivate = false;
     status = ODatabase.STATUS.OPEN;
   }
 
@@ -116,7 +121,8 @@ public class OrientJdbcConnection implements Connection {
       database.close();
       database = null;
     }
-    if (orientDB != null) {
+    if (orientDBisPrivate) {
+
       orientDB.close();
     }
   }

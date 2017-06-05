@@ -18,6 +18,7 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.OConstants;
+import org.assertj.db.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -71,12 +72,16 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     assertEquals("Item.stringKey", primaryKeys.getString("PK_NAME"));
     assertEquals(1, primaryKeys.getInt("KEY_SEQ"));
 
+
+
   }
 
   @Test
   public void shouldRetrieveTableTypes() throws SQLException {
 
     ResultSet tableTypes = metaData.getTableTypes();
+
+//    Assertions.
     assertTrue(tableTypes.next());
     assertEquals("TABLE", tableTypes.getString(1));
     assertTrue(tableTypes.next());

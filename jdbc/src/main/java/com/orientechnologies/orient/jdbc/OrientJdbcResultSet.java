@@ -569,6 +569,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Object getObject(String columnLabel) throws SQLException {
+
     if ("@rid".equals(columnLabel) || "rid".equals(columnLabel)) {
       return result.getIdentity().toString();
     }
@@ -578,6 +579,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
     try {
       Object value = result.getProperty(columnLabel);
+
       if (value == null) {
         return null;
       } else {

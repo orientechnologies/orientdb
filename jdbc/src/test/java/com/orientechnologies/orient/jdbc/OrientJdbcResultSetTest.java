@@ -17,6 +17,9 @@
  */
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.common.concur.lock.ReadersWriterSpinLockBenchmark;
+import org.assertj.db.api.Assertions;
+import org.assertj.db.type.Request;
 import org.junit.Test;
 
 import java.sql.*;
@@ -27,6 +30,7 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
   @Test
   public void shouldNavigateResultSet() throws Exception {
+
 
     assertThat(conn.isClosed()).isFalse();
     Statement stmt = conn.createStatement();
@@ -77,6 +81,11 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     ResultSet rs = stmt.getResultSet();
     assertThat(rs).isNotNull();
     assertThat(rs.getFetchSize()).isEqualTo(20);
+
+    while (rs.next()) {
+
+      System.out.println("rs.getObject(1) = " + rs.getObject(1));
+    }
 
   }
 

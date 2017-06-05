@@ -17,7 +17,6 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import com.orientechnologies.orient.core.db.OrientDB;
 import org.junit.Test;
 
 import java.sql.Connection;
@@ -38,11 +37,6 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
   @Test
   public void shouldConnect() throws SQLException {
 
-    OrientDataSource ds = new OrientDataSource();
-    ds.setDbUrl("jdbc:orient:memory:" + name.getMethodName());
-    ds.setUsername("admin");
-    ds.setPassword("admin");
-
     Connection conn = ds.getConnection();
 
     assertThat(conn).isNotNull();
@@ -55,8 +49,6 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
     conn.close();
     assertThat(conn.isClosed()).isTrue();
 
-    ds.close();
-
   }
 
   @Test
@@ -67,7 +59,7 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
     info.setProperty("db.pool.min", "1");
     info.setProperty("db.pool.max", "1");
 
-    final OrientDataSource ds = new OrientDataSource(conn.getOrientDB());
+    final OrientDataSource ds = new OrientDataSource();
     ds.setDbUrl("jdbc:orient:memory:" + name.getMethodName());
     ds.setUsername("admin");
     ds.setPassword("admin");
@@ -79,7 +71,6 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
     conn.close();
     assertThat(conn.isClosed()).isTrue();
 
-
     OrientJdbcConnection conn2 = (OrientJdbcConnection) ds.getConnection();
     assertThat(conn2).isNotNull();
     conn2.close();
@@ -87,24 +78,14 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
 
     assertThat(conn.getDatabase()).isSameAs(conn2.getDatabase());
 
-
-
+    ds.close();
 
   }
 
   @Test
-  public void shouldQueryWithPool() {
-    final Properties info = new Properties();
-    info.setProperty("db.usePool", "TRUE");
-    info.setProperty("db.pool.min", "1");
-    info.setProperty("db.pool.max", "10");
+  public void shouldQueryWithPool() throws SQLException {
 
-    final OrientDataSource ds = new OrientDataSource(conn.getOrientDB());
-    ds.setDbUrl("jdbc:orient:memory:" + name.getMethodName());
-    ds.setUsername("admin");
-    ds.setPassword("admin");
-    ds.setInfo(info);
-
+    ds.getConnection().close();
     //do 10 queries and asserts on other thread
     Runnable dbClient = () -> {
 

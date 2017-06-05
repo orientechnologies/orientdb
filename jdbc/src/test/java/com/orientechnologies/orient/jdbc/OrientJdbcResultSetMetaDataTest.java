@@ -18,6 +18,9 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.id.ORecordId;
+import org.assertj.db.api.Assertions;
+import org.assertj.db.type.Request;
+import org.assertj.db.type.ValueType;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -25,7 +28,6 @@ import java.sql.*;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import static java.sql.Types.BIGINT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
@@ -51,6 +53,25 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     assertThat(metaData.getColumnType(5)).isEqualTo(Types.TIMESTAMP);
 
     assertThat(metaData.getColumnType(6)).isEqualTo(Types.DECIMAL);
+  }
+
+  @Test
+  public void shouldTestWithAssertJDb() throws Exception {
+
+    Request req = new Request(ds, "SELECT stringKey, intKey, text, length, date, score FROM Item");
+
+    Assertions.assertThat(req)
+        .hasNumberOfRows(20)
+        .hasNumberOfColumns(6)
+        .column()
+        .isOfType(ValueType.TEXT, false)
+        .containsValues("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20")
+        .column(1)
+        .isOfType(ValueType.NUMBER, false)
+        .column("date")
+        .isOfType(ValueType.DATE_TIME, false)
+    ;
+
   }
 
   @Test
@@ -145,6 +166,7 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
   @Test
   public void shouldMapMissingFieldsToNull() throws Exception {
+
     Statement stmt = conn.createStatement();
 
     ResultSet rs = stmt.executeQuery(

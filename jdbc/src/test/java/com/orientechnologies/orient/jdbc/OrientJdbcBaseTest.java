@@ -18,16 +18,17 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import org.assertj.db.type.DataSourceWithLetterCase;
+import org.assertj.db.type.lettercase.LetterCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
+import javax.sql.DataSource;
 import java.io.File;
-import java.sql.DriverManager;
 import java.util.Properties;
 
 import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createSchemaDB;
@@ -41,7 +42,8 @@ public abstract class OrientJdbcBaseTest {
   protected OrientJdbcConnection conn;
   protected ODatabaseDocument    db;
   protected OrientDB             orientDB;
-  protected ODatabasePool        pool;
+  //  protected ODatabasePool        pool;
+  protected DataSource           ds;
 
   @Before
   public void prepareDatabase() throws Exception {
@@ -50,12 +52,13 @@ public abstract class OrientJdbcBaseTest {
     Properties info = new Properties();
     info.put("user", "admin");
     info.put("password", "admin");
-    conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:" + "memory:" + dbName, info);
 
+    OrientDataSource ods = new OrientDataSource("jdbc:orient:" + "memory:" + dbName, "admin", "admin", info);
+    ds = new DataSourceWithLetterCase(ods, LetterCase.TABLE_DEFAULT, LetterCase.TABLE_DEFAULT, LetterCase.TABLE_DEFAULT);
+    conn = (OrientJdbcConnection) ds.getConnection();
     orientDB = conn.getOrientDB();
 
-    pool = new ODatabasePool(orientDB, dbName, "admin", "admin");
-    db = pool.acquire();
+    db = ((OrientJdbcConnection) ds.getConnection()).getDatabase();
 
     createSchemaDB(db);
 
@@ -72,8 +75,9 @@ public abstract class OrientJdbcBaseTest {
   public void closeConnection() throws Exception {
     if (conn != null && !conn.isClosed())
       conn.close();
-    pool.close();
+//    pool.close();
     orientDB.close();
 
+//    ds.close();
   }
 }
