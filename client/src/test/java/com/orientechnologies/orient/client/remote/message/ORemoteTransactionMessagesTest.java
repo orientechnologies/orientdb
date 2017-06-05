@@ -160,6 +160,44 @@ public class ORemoteTransactionMessagesTest {
     assertEquals(entryChange.entries.get(0).operation, OPERATION.PUT);
     assertEquals(entryChange.entries.get(1).value, new ORecordId(2, 2));
     assertEquals(entryChange.entries.get(1).operation, OPERATION.REMOVE);
+  }
+
+  @Test
+  public void testTransactionClearIndexFetchResponseWriteRead() throws IOException {
+
+    List<ORecordOperation> operations = new ArrayList<>();
+    Map<String, OTransactionIndexChanges> changes = new HashMap<>();
+    OTransactionIndexChanges change = new OTransactionIndexChanges();
+    change.cleared = true;
+    change.changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);
+    OTransactionIndexChangesPerKey keyChange = new OTransactionIndexChangesPerKey("key");
+    keyChange.add(new ORecordId(1, 2), OPERATION.PUT);
+    keyChange.add(new ORecordId(2, 2), OPERATION.REMOVE);
+    change.changesPerKey.put(keyChange.key, keyChange);
+    changes.put("some", change);
+
+    MockChannel channel = new MockChannel();
+    OFetchTransactionResponse response = new OFetchTransactionResponse(10, operations, changes);
+    response.write(channel, 0, ORecordSerializerNetworkV37.INSTANCE);
+
+    channel.close();
+
+    OFetchTransactionResponse readResponse = new OFetchTransactionResponse(10, operations, changes);
+    readResponse.read(channel, null);
+
+    assertEquals(readResponse.getTxId(), 10);
+    assertEquals(readResponse.getIndexChanges().size(), 1);
+    assertEquals(readResponse.getIndexChanges().get(0).getName(), "some");
+    OTransactionIndexChanges val = readResponse.getIndexChanges().get(0).getKeyChanges();
+    assertEquals(val.cleared, true);
+    assertEquals(val.changesPerKey.size(), 1);
+    OTransactionIndexChangesPerKey entryChange = val.changesPerKey.firstEntry().getValue();
+    assertEquals(entryChange.key, "key");
+    assertEquals(entryChange.entries.size(), 2);
+    assertEquals(entryChange.entries.get(0).value, new ORecordId(1, 2));
+    assertEquals(entryChange.entries.get(0).operation, OPERATION.PUT);
+    assertEquals(entryChange.entries.get(1).value, new ORecordId(2, 2));
+    assertEquals(entryChange.entries.get(1).operation, OPERATION.REMOVE);
 
   }
 

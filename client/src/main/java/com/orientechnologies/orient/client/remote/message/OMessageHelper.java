@@ -239,37 +239,35 @@ public class OMessageHelper {
     for (IndexChange indexChange : changes) {
       network.writeString(indexChange.getName());
       network.writeBoolean(indexChange.getKeyChanges().cleared);
-      if (!indexChange.getKeyChanges().cleared) {
 
-        int size = indexChange.getKeyChanges().changesPerKey.size();
-        if (indexChange.getKeyChanges().nullKeyChanges != null) {
-          size += 1;
+      int size = indexChange.getKeyChanges().changesPerKey.size();
+      if (indexChange.getKeyChanges().nullKeyChanges != null) {
+        size += 1;
+      }
+      network.writeInt(size);
+      if (indexChange.getKeyChanges().nullKeyChanges != null) {
+        network.writeByte((byte) -1);
+        network.writeInt(indexChange.getKeyChanges().nullKeyChanges.entries.size());
+        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange : indexChange
+            .getKeyChanges().nullKeyChanges.entries) {
+          network.writeInt(perKeyChange.operation.ordinal());
+          network.writeRID(perKeyChange.value.getIdentity());
         }
-        network.writeInt(size);
-        if (indexChange.getKeyChanges().nullKeyChanges != null) {
-          network.writeByte((byte) -1);
-          network.writeInt(indexChange.getKeyChanges().nullKeyChanges.entries.size());
-          for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange : indexChange
-              .getKeyChanges().nullKeyChanges.entries) {
-            network.writeInt(perKeyChange.operation.ordinal());
+      }
+      for (OTransactionIndexChangesPerKey change : indexChange.getKeyChanges().changesPerKey.values()) {
+        OType type = OType.getTypeByValue(change.key);
+        byte[] value = serializer.serializeValue(change.key, type);
+        network.writeByte((byte) type.getId());
+        network.writeBytes(value);
+        network.writeInt(change.entries.size());
+        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange : change.entries) {
+          OTransactionIndexChanges.OPERATION op = perKeyChange.operation;
+          if (op == OTransactionIndexChanges.OPERATION.REMOVE && perKeyChange.value == null)
+            op = OTransactionIndexChanges.OPERATION.CLEAR;
+
+          network.writeInt(op.ordinal());
+          if (op != OTransactionIndexChanges.OPERATION.CLEAR)
             network.writeRID(perKeyChange.value.getIdentity());
-          }
-        }
-        for (OTransactionIndexChangesPerKey change : indexChange.getKeyChanges().changesPerKey.values()) {
-          OType type = OType.getTypeByValue(change.key);
-          byte[] value = serializer.serializeValue(change.key, type);
-          network.writeByte((byte) type.getId());
-          network.writeBytes(value);
-          network.writeInt(change.entries.size());
-          for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange : change.entries) {
-            OTransactionIndexChanges.OPERATION op = perKeyChange.operation;
-            if (op == OTransactionIndexChanges.OPERATION.REMOVE && perKeyChange.value == null)
-              op = OTransactionIndexChanges.OPERATION.CLEAR;
-
-            network.writeInt(op.ordinal());
-            if (op != OTransactionIndexChanges.OPERATION.CLEAR)
-              network.writeRID(perKeyChange.value.getIdentity());
-          }
         }
       }
     }
@@ -284,40 +282,38 @@ public class OMessageHelper {
       boolean cleared = channel.readBoolean();
       OTransactionIndexChanges entry = new OTransactionIndexChanges();
       entry.cleared = cleared;
-      if (!cleared) {
-        int changeCount = channel.readInt();
-        NavigableMap<Object, OTransactionIndexChangesPerKey> entries = new TreeMap<>();
-        while (changeCount-- > 0) {
-          byte bt = channel.readByte();
-          Object key;
-          if (bt == -1) {
-            key = null;
-          } else {
-            OType type = OType.getById(bt);
-            key = serializer.deserializeValue(channel.readBytes(), type);
-          }
-          OTransactionIndexChangesPerKey changesPerKey = new OTransactionIndexChangesPerKey(key);
-          int keyChangeCount = channel.readInt();
-          while (keyChangeCount-- > 0) {
-            int op = channel.readInt();
-            OTransactionIndexChanges.OPERATION oper = OTransactionIndexChanges.OPERATION.values()[op];
-            ORecordId id;
-            if (oper == OTransactionIndexChanges.OPERATION.CLEAR) {
-              oper = OTransactionIndexChanges.OPERATION.REMOVE;
-              id = null;
-            } else {
-              id = channel.readRID();
-            }
-            changesPerKey.add(id, oper);
-          }
-          if (key == null) {
-            entry.nullKeyChanges = changesPerKey;
-          } else {
-            entries.put(changesPerKey.key, changesPerKey);
-          }
+      int changeCount = channel.readInt();
+      NavigableMap<Object, OTransactionIndexChangesPerKey> entries = new TreeMap<>();
+      while (changeCount-- > 0) {
+        byte bt = channel.readByte();
+        Object key;
+        if (bt == -1) {
+          key = null;
+        } else {
+          OType type = OType.getById(bt);
+          key = serializer.deserializeValue(channel.readBytes(), type);
         }
-        entry.changesPerKey = entries;
+        OTransactionIndexChangesPerKey changesPerKey = new OTransactionIndexChangesPerKey(key);
+        int keyChangeCount = channel.readInt();
+        while (keyChangeCount-- > 0) {
+          int op = channel.readInt();
+          OTransactionIndexChanges.OPERATION oper = OTransactionIndexChanges.OPERATION.values()[op];
+          ORecordId id;
+          if (oper == OTransactionIndexChanges.OPERATION.CLEAR) {
+            oper = OTransactionIndexChanges.OPERATION.REMOVE;
+            id = null;
+          } else {
+            id = channel.readRID();
+          }
+          changesPerKey.add(id, oper);
+        }
+        if (key == null) {
+          entry.nullKeyChanges = changesPerKey;
+        } else {
+          entries.put(changesPerKey.key, changesPerKey);
+        }
       }
+      entry.changesPerKey = entries;
       changes.add(new IndexChange(indexName, entry));
     }
     return changes;
