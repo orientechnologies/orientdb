@@ -68,4 +68,8 @@ public class OGremlinResultSet implements Iterable<OGremlinResult>, AutoCloseabl
         return StreamSupport
                 .stream(Spliterators.spliteratorUnknownSize(iterator(), Spliterator.IMMUTABLE | Spliterator.ORDERED), false);
     }
+
+    public OResultSet getRawResultSet() {
+        return inner;
+    }
 }
