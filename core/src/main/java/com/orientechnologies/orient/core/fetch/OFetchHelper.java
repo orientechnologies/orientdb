@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.fetch.json.OJSONFetchContext;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -543,6 +544,8 @@ public class OFetchHelper {
         } else if (OMultiValue.isMultiValue(o)) {
           fetchCollection(iRootRecord, iUserObject, iFetchPlan, o, null, iCurrentLevel + 1, iLevelFromRoot, iFieldDepthLevel,
               parsedRecords, iFieldPathFromRoot, iListener, iContext);
+        } else if (o instanceof String || o instanceof Number || o instanceof Boolean) {
+          ((OJSONFetchContext) iContext).getJsonWriter().writeValue(0, false, o);
         }
       }
     } finally {
