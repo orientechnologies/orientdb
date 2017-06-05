@@ -33,7 +33,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.util.*;
@@ -42,10 +44,9 @@ import java.util.*;
  * Parses text in SQL format and build a tree of conditions.
  *
  * @author Luca Garulli
- *
  */
 public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
-  protected Set<OProperty>                properties = new HashSet<OProperty>();
+  protected Set<OProperty> properties = new HashSet<OProperty>();
   protected OSQLFilterCondition           rootCondition;
   protected List<String>                  recordTransformed;
   protected List<OSQLFilterItemParameter> parameterItems;
@@ -97,13 +98,13 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     } catch (OQueryParsingException e) {
       if (e.getText() == null)
         // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
-        throw OException.wrapException(
-            new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
+        throw OException
+            .wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
 
       throw e;
     } catch (Exception t) {
-      throw OException.wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()),
-          t);
+      throw OException
+          .wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), t);
     }
     return this;
   }
@@ -194,8 +195,11 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       if (oper instanceof OQueryOperatorNot)
         // SPECIAL CASE: READ NEXT OPERATOR
         oper = new OQueryOperatorNot(extractConditionOperator());
-
-      right = oper != null ? extractConditionItem(false, oper.expectedRightWords) : null;
+      if (oper instanceof OQueryOperatorAnd || oper instanceof OQueryOperatorOr) {
+        right = extractCondition();
+      } else {
+        right = oper != null ? extractConditionItem(false, oper.expectedRightWords) : null;
+      }
     }
 
     // CREATE THE CONDITION OBJECT
@@ -203,9 +207,9 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
   }
 
   protected boolean checkForEnd(final String iWord) {
-    if (iWord != null
-        && (iWord.equals(OCommandExecutorSQLSelect.KEYWORD_ORDER) || iWord.equals(OCommandExecutorSQLSelect.KEYWORD_LIMIT)
-            || iWord.equals(OCommandExecutorSQLSelect.KEYWORD_SKIP) || iWord.equals(OCommandExecutorSQLSelect.KEYWORD_OFFSET))) {
+    if (iWord != null && (iWord.equals(OCommandExecutorSQLSelect.KEYWORD_ORDER) || iWord
+        .equals(OCommandExecutorSQLSelect.KEYWORD_LIMIT) || iWord.equals(OCommandExecutorSQLSelect.KEYWORD_SKIP) || iWord
+        .equals(OCommandExecutorSQLSelect.KEYWORD_OFFSET))) {
       parserMoveCurrentPosition(iWord.length() * -1);
       return true;
     }
@@ -253,8 +257,8 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         // CONFIGURE COULD INSTANTIATE A NEW OBJECT: ACT AS A FACTORY
         return op.configure(params);
       } catch (Exception e) {
-        throw OException.wrapException(new OQueryParsingException("Syntax error using the operator '" + op.toString()
-            + "'. Syntax is: " + op.getSyntax()), e);
+        throw OException.wrapException(
+            new OQueryParsingException("Syntax error using the operator '" + op.toString() + "'. Syntax is: " + op.getSyntax()), e);
       }
     } else
       parserMoveCurrentPosition(+1);
@@ -277,7 +281,6 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
       if (word.length() > 0 && word.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
         braces++;
-
 
         // SUB-CONDITION
         parserSetCurrentPosition(lastPosition - word.length() + 1);
