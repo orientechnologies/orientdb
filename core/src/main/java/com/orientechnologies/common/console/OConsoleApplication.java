@@ -579,9 +579,7 @@ public class OConsoleApplication {
         final OConsoleCommandCollection cc = ite.next().getClass().newInstance();
         cc.setContext(this);
         candidates.add(cc);
-      } catch (InstantiationException ex) {
-        Logger.getLogger(OConsoleApplication.class.getName()).log(Level.WARNING, ex.getMessage());
-      } catch (IllegalAccessException ex) {
+      } catch(InstantiationException | IllegalAccessException ex) {
         Logger.getLogger(OConsoleApplication.class.getName()).log(Level.WARNING, ex.getMessage());
       }
     }
