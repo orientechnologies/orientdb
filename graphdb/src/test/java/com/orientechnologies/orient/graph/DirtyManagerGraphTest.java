@@ -20,7 +20,6 @@ import static org.junit.Assert.assertTrue;
 public class DirtyManagerGraphTest {
 
   @Test
-  @Ignore
   public void testLoopOfNew() {
     OrientGraph graph = new OrientGraph("memory:" + DirtyManagerGraphTest.class.getSimpleName());
     try {
@@ -34,50 +33,16 @@ public class DirtyManagerGraphTest {
       OrientEdge edge2 = (OrientEdge) vertex1.addEdge("next", vertex2);
       OrientEdge edge3 = (OrientEdge) vertex2.addEdge("next", vertex3);
       OrientEdge edge4 = (OrientEdge) vertex3.addEdge("next", vertex);
-
-      ODocument rec = vertex.getRecord();
-      ODirtyManager manager = ORecordInternal.getDirtyManager(rec);
-
-      List<OIdentifiable> pointed = manager.getPointed(vertex.getRecord());
-      assertThat(pointed).isNotNull();
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(edge1.getRecord()));
-      assertTrue(pointed.contains(edge4.getRecord()));
-
-      pointed = manager.getPointed(vertex1.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(edge1.getRecord()));
-      assertTrue(pointed.contains(edge2.getRecord()));
-
-      pointed = manager.getPointed(vertex2.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(edge2.getRecord()));
-      assertTrue(pointed.contains(edge3.getRecord()));
-
-      pointed = manager.getPointed(vertex3.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(edge3.getRecord()));
-      assertTrue(pointed.contains(edge4.getRecord()));
-
-      pointed = manager.getPointed(edge1.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(vertex.getRecord()));
-      assertTrue(pointed.contains(vertex1.getRecord()));
-
-      pointed = manager.getPointed(edge2.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(vertex1.getRecord()));
-      assertTrue(pointed.contains(vertex2.getRecord()));
-
-      pointed = manager.getPointed(edge3.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(vertex2.getRecord()));
-      assertTrue(pointed.contains(vertex3.getRecord()));
-
-      pointed = manager.getPointed(edge4.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(vertex3.getRecord()));
-      assertTrue(pointed.contains(vertex.getRecord()));
+      graph.commit();
+      
+      assertTrue(vertex.getIdentity().isPersistent());
+      assertTrue(vertex1.getIdentity().isPersistent());
+      assertTrue(vertex2.getIdentity().isPersistent());
+      assertTrue(vertex3.getIdentity().isPersistent());
+      assertTrue(edge1.getIdentity().isPersistent());
+      assertTrue(edge2.getIdentity().isPersistent());
+      assertTrue(edge3.getIdentity().isPersistent());
+      assertTrue(edge4.getIdentity().isPersistent());
 
     } finally {
       graph.drop();
@@ -85,7 +50,6 @@ public class DirtyManagerGraphTest {
   }
 
   @Test
-  @Ignore
   public void testLoopOfNewTree() {
     OrientGraph graph = new OrientGraph("memory:" + DirtyManagerGraphTest.class.getSimpleName());
     Object prev = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValue();
@@ -101,50 +65,16 @@ public class DirtyManagerGraphTest {
       OrientEdge edge2 = (OrientEdge) vertex1.addEdge("next", vertex2);
       OrientEdge edge3 = (OrientEdge) vertex2.addEdge("next", vertex3);
       OrientEdge edge4 = (OrientEdge) vertex3.addEdge("next", vertex);
+      graph.commit();
 
-      ODocument rec = vertex.getRecord();
-      ODirtyManager manager = ORecordInternal.getDirtyManager(rec);
-
-      List<OIdentifiable> pointed = manager.getPointed(vertex.getRecord());
-      assertThat(pointed).isNotNull();
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(edge1.getRecord()));
-      assertTrue(pointed.contains(edge4.getRecord()));
-
-      pointed = manager.getPointed(vertex1.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(edge1.getRecord()));
-      assertTrue(pointed.contains(edge2.getRecord()));
-
-      pointed = manager.getPointed(vertex2.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(edge2.getRecord()));
-      assertTrue(pointed.contains(edge3.getRecord()));
-
-      pointed = manager.getPointed(vertex3.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(edge3.getRecord()));
-      assertTrue(pointed.contains(edge4.getRecord()));
-
-      pointed = manager.getPointed(edge1.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(vertex.getRecord()));
-      assertTrue(pointed.contains(vertex1.getRecord()));
-
-      pointed = manager.getPointed(edge2.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(vertex1.getRecord()));
-      assertTrue(pointed.contains(vertex2.getRecord()));
-
-      pointed = manager.getPointed(edge3.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(vertex2.getRecord()));
-      assertTrue(pointed.contains(vertex3.getRecord()));
-
-      pointed = manager.getPointed(edge4.getRecord());
-      assertEquals(2, pointed.size());
-      assertTrue(pointed.contains(vertex3.getRecord()));
-      assertTrue(pointed.contains(vertex.getRecord()));
+      assertTrue(vertex.getIdentity().isPersistent());
+      assertTrue(vertex1.getIdentity().isPersistent());
+      assertTrue(vertex2.getIdentity().isPersistent());
+      assertTrue(vertex3.getIdentity().isPersistent());
+      assertTrue(edge1.getIdentity().isPersistent());
+      assertTrue(edge2.getIdentity().isPersistent());
+      assertTrue(edge3.getIdentity().isPersistent());
+      assertTrue(edge4.getIdentity().isPersistent());
 
     } finally {
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(prev);
