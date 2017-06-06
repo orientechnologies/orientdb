@@ -197,4 +197,9 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
   public ODistributedRequestId getRequestId() {
     return requestId;
   }
+
+  @Override
+  public boolean isIdempotent() {
+    return false;
+  }
 }

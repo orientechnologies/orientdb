@@ -36,13 +36,12 @@ import java.io.IOException;
  * Task to update the database configuration across all the servers. This task is executed inside a distributed lock.
  *
  * @author Luca Garulli (l.garulli--at---orientdb.com)
- *
  */
 public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
   public static final int FACTORYID = 24;
 
-  private String          databaseName;
-  private ODocument       configuration;
+  private String    databaseName;
+  private ODocument configuration;
 
   public OUpdateDatabaseConfigurationTask() {
   }
@@ -102,11 +101,6 @@ public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
   @Override
   public boolean isNodeOnlineRequired() {
     return false;
-  }
-
-  @Override
-  public boolean isIdempotent() {
-    return true;
   }
 
   @Override

@@ -45,7 +45,7 @@ public abstract class OAbstract2pcTask extends OAbstractReplicatedTask {
   protected static final long   serialVersionUID  = 1L;
   public static final    String NON_LOCAL_CLUSTER = "_non_local_cluster";
 
-  protected List<OAbstractRecordReplicatedTask> tasks = new ArrayList<OAbstractRecordReplicatedTask>();
+  protected final List<OAbstractRecordReplicatedTask> tasks = new ArrayList<OAbstractRecordReplicatedTask>();
 
   protected transient List<OAbstractRemoteTask> localUndoTasks = new ArrayList<OAbstractRemoteTask>();
   protected transient OTxTaskResult result;
@@ -55,6 +55,14 @@ public abstract class OAbstract2pcTask extends OAbstractReplicatedTask {
 
   public void add(final OAbstractRecordReplicatedTask iTask) {
     tasks.add(iTask);
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    for (OAbstractRecordReplicatedTask t : tasks)
+      if (t != null && !t.isIdempotent())
+        return false;
+    return true;
   }
 
   /**

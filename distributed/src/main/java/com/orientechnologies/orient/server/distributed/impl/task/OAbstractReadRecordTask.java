@@ -83,9 +83,4 @@ public abstract class OAbstractReadRecordTask extends OAbstractRecordReplicatedT
   public String toString() {
     return getName() + "(" + rid + ")";
   }
-
-  @Override
-  public boolean isIdempotent() {
-    return true;
-  }
 }

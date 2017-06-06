@@ -116,7 +116,7 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
 
   @Override
   public boolean isIdempotent() {
-    return false;
+    return true;
   }
 
   @Override

@@ -149,4 +149,9 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
     return FACTORYID;
   }
 
+  @Override
+  public boolean isIdempotent() {
+    return false;
+  }
+
 }

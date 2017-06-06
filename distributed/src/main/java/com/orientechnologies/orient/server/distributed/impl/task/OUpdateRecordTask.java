@@ -245,4 +245,9 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     }
     return previousRecord;
   }
+
+  @Override
+  public boolean isIdempotent() {
+    return false;
+  }
 }

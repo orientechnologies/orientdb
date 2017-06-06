@@ -43,7 +43,7 @@ import java.util.Date;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OGossipTask extends OAbstractRemoteTask {
-  public static final  int  FACTORYID        = 16;
+  public static final int FACTORYID = 16;
 
   private long timestamp = System.currentTimeMillis();
   private String lockManagerServer;
@@ -115,11 +115,6 @@ public class OGossipTask extends OAbstractRemoteTask {
   @Override
   public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong();
-  }
-
-  @Override
-  public boolean isIdempotent() {
-    return true;
   }
 
   @Override

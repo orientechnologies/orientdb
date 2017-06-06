@@ -305,4 +305,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   public int getFactoryId() {
     return FACTORYID;
   }
+
+  @Override
+  public boolean isIdempotent() {
+    return false;
+  }
 }

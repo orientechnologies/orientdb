@@ -605,7 +605,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             if (database != null) {
               final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(database.getName());
 
-              if (ddb != null && !(result instanceof Throwable) && task instanceof OAbstractReplicatedTask) {
+              if (ddb != null && !(result instanceof Throwable) && task instanceof OAbstractReplicatedTask && !task.isIdempotent()) {
                 // UPDATE LSN WITH LAST OPERATION
                 ddb.setLSN(sourceNodeName, ((OAbstractReplicatedTask) task).getLastLSN(), true);
               }

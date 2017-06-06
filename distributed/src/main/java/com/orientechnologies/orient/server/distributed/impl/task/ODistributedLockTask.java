@@ -46,7 +46,7 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   private String  resource;
   private long    timeout;
   private boolean acquire;
-  private String lockManagerServer;
+  private String  lockManagerServer;
 
   public ODistributedLockTask() {
   }
@@ -116,11 +116,6 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
 
   @Override
   public boolean isNodeOnlineRequired() {
-    return false;
-  }
-
-  @Override
-  public boolean isIdempotent() {
     return false;
   }
 
