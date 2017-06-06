@@ -5,6 +5,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -203,6 +204,40 @@ public class AutomaticBackupTest {
     database2.restore(new FileInputStream(BACKUPDIR + "/fullBackup.zip"), null, null, null);
 
     Assert.assertEquals(database2.countClass("TestBackup"), 1);
+  }
+
+
+  @Test
+  public void testAutomaticBackupDisable() throws IOException, ClassNotFoundException, MalformedObjectNameException,
+      InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
+
+
+
+    String jsonConfig = OIOUtils.readStreamAsString(getClass().getResourceAsStream("automatic-backup.json"));
+
+    ODocument doc = new ODocument().fromJSON(jsonConfig);
+
+    doc.field("enabled", false);
+    doc.field("targetFileName", "${DBNAME}.zip");
+
+    doc.field("dbExclude", new String[] { "testautobackup" });
+
+    doc.field("firstTime", new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000)));
+
+    OIOUtils.writeFile(new File(tempDirectory + "/config/automatic-backup.json"), doc.toJSON());
+
+    final OAutomaticBackup aBackup = new OAutomaticBackup();
+
+    final OServerParameterConfiguration[] config = new OServerParameterConfiguration[] {};
+
+
+    try {
+      aBackup.config(server, config);
+
+    } catch (OConfigurationException e){
+      Assert.fail("It should not get an configuration exception when disabled");
+    }
+
   }
 
   //// @Test
