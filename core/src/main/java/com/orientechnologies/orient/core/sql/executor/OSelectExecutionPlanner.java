@@ -675,6 +675,14 @@ public class OSelectExecutionPlanner {
       throw new OCommandExecutionException("function call as target is not supported yet");
     } else if (target.getInputParam() != null) {
       handleInputParamAsTarget(result, target.getInputParam(), ctx, profilingEnabled);
+    } else if (target.getInputParams() != null && target.getInputParams().size() > 0) {
+      List<OInternalExecutionPlan> plans = new ArrayList<>();
+      for (OInputParameter param : target.getInputParams()) {
+        OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+        handleInputParamAsTarget(subPlan, param, ctx, profilingEnabled);
+        plans.add(subPlan);
+      }
+      result.chain(new ParallelExecStep(plans, ctx, profilingEnabled));
     } else if (target.getIndex() != null) {
       handleIndexAsTarget(result, target.getIndex(), whereClause, orderBy, ctx, profilingEnabled);
     } else if (target.getMetadata() != null) {

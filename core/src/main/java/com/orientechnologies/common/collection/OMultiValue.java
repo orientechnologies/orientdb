@@ -825,6 +825,13 @@ public class OMultiValue {
         ((OResettable) o).reset();
 
       return set;
+    } else if (o instanceof Iterable && !(o instanceof OIdentifiable)) {
+      Iterator iterator = ((Iterable) o).iterator();
+      Set result = new HashSet();
+      while (iterator.hasNext()) {
+        result.add(iterator.next());
+      }
+      return result;
     }
 
     final HashSet set = new HashSet(1);

@@ -8,16 +8,17 @@ import java.util.stream.Collectors;
 
 public class OFromItem extends SimpleNode {
 
-  protected List<ORid>          rids;
-  protected OCluster            cluster;
-  protected OClusterList        clusterList;
-  protected OIndexIdentifier    index;
-  protected OMetadataIdentifier metadata;
-  protected OStatement          statement;
-  protected OInputParameter     inputParam;
-  protected OIdentifier         identifier;
-  protected OFunctionCall       functionCall;
-  protected OModifier           modifier;
+  protected List<ORid>            rids;
+  protected List<OInputParameter> inputParams;
+  protected OCluster              cluster;
+  protected OClusterList          clusterList;
+  protected OIndexIdentifier      index;
+  protected OMetadataIdentifier   metadata;
+  protected OStatement            statement;
+  protected OInputParameter       inputParam;
+  protected OIdentifier           identifier;
+  protected OFunctionCall         functionCall;
+  protected OModifier             modifier;
 
   private static final Object UNSET           = new Object();
   private              Object inputFinalValue = UNSET;
@@ -46,6 +47,23 @@ public class OFromItem extends SimpleNode {
         builder.append("[");
         boolean first = true;
         for (ORid rid : rids) {
+          if (!first) {
+            builder.append(", ");
+          }
+          rid.toString(params, builder);
+          first = false;
+        }
+        builder.append("]");
+        return;
+      }
+    } else if (inputParams != null && inputParams.size() > 0) {
+      if (inputParams.size() == 1) {
+        inputParams.get(0).toString(params, builder);
+        return;
+      } else {
+        builder.append("[");
+        boolean first = true;
+        for (OInputParameter rid : inputParams) {
           if (!first) {
             builder.append(", ");
           }
@@ -118,6 +136,10 @@ public class OFromItem extends SimpleNode {
     return inputParam;
   }
 
+  public List<OInputParameter> getInputParams() {
+    return inputParams;
+  }
+
   public OFunctionCall getFunctionCall() {
     return functionCall;
   }
@@ -130,6 +152,9 @@ public class OFromItem extends SimpleNode {
     OFromItem result = new OFromItem(-1);
     if (rids != null) {
       result.rids = rids.stream().map(r -> r.copy()).collect(Collectors.toList());
+    }
+    if (inputParams != null) {
+      result.inputParams = inputParams.stream().map(r -> r.copy()).collect(Collectors.toList());
     }
     result.cluster = cluster == null ? null : cluster.copy();
     result.clusterList = clusterList == null ? null : clusterList.copy();
@@ -144,7 +169,8 @@ public class OFromItem extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -153,6 +179,8 @@ public class OFromItem extends SimpleNode {
     OFromItem oFromItem = (OFromItem) o;
 
     if (rids != null ? !rids.equals(oFromItem.rids) : oFromItem.rids != null)
+      return false;
+    if (inputParams != null ? !inputParams.equals(oFromItem.inputParams) : oFromItem.inputParams != null)
       return false;
     if (cluster != null ? !cluster.equals(oFromItem.cluster) : oFromItem.cluster != null)
       return false;
@@ -176,8 +204,10 @@ public class OFromItem extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = rids != null ? rids.hashCode() : 0;
+    result = 31 * result + (inputParams != null ? inputParams.hashCode() : 0);
     result = 31 * result + (cluster != null ? cluster.hashCode() : 0);
     result = 31 * result + (clusterList != null ? clusterList.hashCode() : 0);
     result = 31 * result + (index != null ? index.hashCode() : 0);
@@ -228,6 +258,10 @@ public class OFromItem extends SimpleNode {
 
   public void setModifier(OModifier modifier) {
     this.modifier = modifier;
+  }
+
+  public void setInputParams(List<OInputParameter> inputParams) {
+    this.inputParams = inputParams;
   }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */

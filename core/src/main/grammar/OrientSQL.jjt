@@ -2384,18 +2384,36 @@ OLetItem LetItem():
 OFromItem FromItem():
 {
     jjtThis.rids = new java.util.ArrayList();
+    jjtThis.inputParams = new java.util.ArrayList();
     ORid lastRid;
+    OInputParameter lastParam;
 }
 {
     (
     	lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	|
+    	LOOKAHEAD(2)
     	(
     	    <LBRACKET> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    (
     	        <COMMA> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    )* <RBRACKET>
     	)
+    	|
+    	(
+            <LBRACKET>
+            (
+                lastParam = PositionalParameter() { jjtThis.inputParams.add(lastParam); }
+                |
+                lastParam = NamedParameter() { jjtThis.inputParams.add(lastParam); }
+            )
+            (
+                <COMMA>
+                lastParam = PositionalParameter() { jjtThis.inputParams.add(lastParam); }
+                |
+                lastParam = NamedParameter() { jjtThis.inputParams.add(lastParam); }
+            )* <RBRACKET>
+        )
     	|
     	jjtThis.cluster = Cluster()
     	|
