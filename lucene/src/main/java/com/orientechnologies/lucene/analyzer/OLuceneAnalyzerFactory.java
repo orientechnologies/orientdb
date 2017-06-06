@@ -12,6 +12,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
+import java.util.Locale;
 
 /**
  * Created by frank on 30/10/2015.
@@ -111,7 +112,7 @@ public class OLuceneAnalyzerFactory {
 
     @Override
     public String toString() {
-      return name().toLowerCase();
+      return name().toLowerCase(Locale.ENGLISH);
     }
   }
 

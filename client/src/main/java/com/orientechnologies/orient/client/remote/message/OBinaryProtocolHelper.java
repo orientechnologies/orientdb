@@ -23,11 +23,8 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.UUID;
 
 public class OBinaryProtocolHelper {
 
@@ -143,7 +140,7 @@ public class OBinaryProtocolHelper {
       String clusterName = network.readString();
       final int clusterId = network.readShort();
       if (clusterName != null) {
-        clusterName = clusterName.toLowerCase();
+        clusterName = clusterName.toLowerCase(Locale.ENGLISH);
         cluster.configure(null, clusterId, clusterName);
         if (clusterId >= clusters.length)
           clusters = Arrays.copyOf(clusters, clusterId + 1);

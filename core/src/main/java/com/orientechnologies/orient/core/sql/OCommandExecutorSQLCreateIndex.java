@@ -133,7 +133,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
             if (collates == null)
               collates = new String[fields.length];
 
-            collates[i] = fieldName.substring(collatePos + " COLLATE ".length()).toLowerCase().trim();
+            collates[i] = fieldName.substring(collatePos + " COLLATE ".length()).toLowerCase(Locale.ENGLISH).trim();
             fields[i] = fieldName.substring(0, collatePos);
           } else {
             if (collates != null)
@@ -313,7 +313,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       return;
 
     if (fieldNameParts.length == 3) {
-      if ("by".equals(fieldNameParts[1].toLowerCase())) {
+      if ("by".equals(fieldNameParts[1].toLowerCase(Locale.ENGLISH))) {
         try {
           OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase(Locale.ENGLISH));
         } catch (IllegalArgumentException iae) {

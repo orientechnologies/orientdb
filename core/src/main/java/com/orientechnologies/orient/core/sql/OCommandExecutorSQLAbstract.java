@@ -36,10 +36,7 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * SQL abstract Command Executor implementation.
@@ -162,7 +159,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
         for (int clId : cls.getPolymorphicClusterIds()) {
           // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
           if (clId > -1 && checkClusterAccess(db, db.getClusterNameById(clId)))
-            clusters.add(db.getClusterNameById(clId).toLowerCase());
+            clusters.add(db.getClusterNameById(clId).toLowerCase(Locale.ENGLISH));
         }
     }
 
@@ -175,7 +172,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     final Set<String> clusters = new HashSet<String>();
 
     for (String cluster : iClusterNames) {
-      final String c = cluster.toLowerCase();
+      final String c = cluster.toLowerCase(Locale.ENGLISH);
       // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
       if (checkClusterAccess(db, c))
         clusters.add(c);
@@ -200,7 +197,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
           for (int clId : cls.getClusterIds()) {
             final String clName = db.getClusterNameById(clId);
             if (clName != null)
-              clusters.add(clName.toLowerCase());
+              clusters.add(clName.toLowerCase(Locale.ENGLISH));
           }
       }
     }

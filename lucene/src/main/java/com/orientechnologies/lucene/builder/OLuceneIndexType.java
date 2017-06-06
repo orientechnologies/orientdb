@@ -30,10 +30,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.BooleanClause.Occur;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by enricorisa on 21/03/14.
@@ -118,7 +115,7 @@ public class OLuceneIndexType {
       values.put(fields.iterator().next(), key.toString());
     }
     for (String s : values.keySet()) {
-      queryBuilder.add(new TermQuery(new Term(s, values.get(s).toLowerCase())), Occur.MUST);
+      queryBuilder.add(new TermQuery(new Term(s, values.get(s).toLowerCase(Locale.ENGLISH))), Occur.MUST);
     }
     return queryBuilder.build();
   }

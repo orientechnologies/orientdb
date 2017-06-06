@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLNonBlockingQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class OCommandManager {
@@ -70,7 +71,7 @@ public class OCommandManager {
     }
     OScriptExecutor scriptExecutor = this.scriptExecutors.get(language);
     if (scriptExecutor == null) {
-      scriptExecutor = this.scriptExecutors.get(language.toLowerCase());
+      scriptExecutor = this.scriptExecutors.get(language.toLowerCase(Locale.ENGLISH));
     }
     if (scriptExecutor == null)
       throw new IllegalArgumentException("Cannot find a script executor requester for language: " + language);

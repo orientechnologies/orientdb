@@ -34,6 +34,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Distributed cluster selection strategy as wrapper for underlying strategies. It limitates the selection of clusters to the
@@ -129,7 +130,7 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
     final int[] clusterIds = cls.getClusterIds();
     final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
     for (int c : clusterIds)
-      clusterNames.add(db.getClusterNameById(c).toLowerCase());
+      clusterNames.add(db.getClusterNameById(c).toLowerCase(Locale.ENGLISH));
 
     ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 

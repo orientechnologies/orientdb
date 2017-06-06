@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
 
@@ -51,7 +52,7 @@ public class ClassTest {
     if (storage instanceof OAbstractPaginatedStorage) {
       final OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
       final OWriteCache writeCache = paginatedStorage.getWriteCache();
-      Assert.assertTrue(writeCache.exists(SHORTNAME_CLASS_NAME.toLowerCase() + OPaginatedCluster.DEF_EXTENSION));
+      Assert.assertTrue(writeCache.exists(SHORTNAME_CLASS_NAME.toLowerCase(Locale.ENGLISH) + OPaginatedCluster.DEF_EXTENSION));
     }
 
     String shortName = "shortname";

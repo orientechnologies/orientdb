@@ -4,6 +4,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,11 +21,11 @@ public abstract class OSQLFunctionFactoryTemplate implements OSQLFunctionFactory
   }
 
   protected void register(final OSQLFunction function) {
-    functions.put(function.getName().toLowerCase(), function);
+    functions.put(function.getName().toLowerCase(Locale.ENGLISH), function);
   }
 
   protected void register(String name, Object function) {
-    functions.put(name.toLowerCase(), function);
+    functions.put(name.toLowerCase(Locale.ENGLISH), function);
   }
 
   @Override

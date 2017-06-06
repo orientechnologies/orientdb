@@ -93,7 +93,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
         // CREATE A NEW CLUSTER WHERE THE LOCAL NODE IS THE MASTER
         String newClusterName;
         for (int i = 0; ; ++i) {
-          newClusterName = iClass.getName().toLowerCase() + "_" + i;
+          newClusterName = iClass.getName().toLowerCase(Locale.ENGLISH) + "_" + i;
           if (!allClusterNames.contains(newClusterName))
             break;
         }

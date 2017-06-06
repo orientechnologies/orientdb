@@ -381,7 +381,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       } else if (parsedTarget.getTargetRecords() != null) {
         // SINGLE RECORDS: BROWSE ALL (COULD BE EXPENSIVE).
         for (OIdentifiable identifiable : parsedTarget.getTargetRecords()) {
-          final String c = db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase();
+          final String c = db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase(Locale.ENGLISH);
           // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
           if (checkClusterAccess(db, c)) {
             clusters.add(c);
@@ -1917,7 +1917,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 // This should not be necessary as searchInClasses() does a security check and when the record iterator 
 // calls OClassImpl.readableClusters(), it too filters out clusters based on the class's security permissions.
 // This throws an unnecessary exception that potentially prevents using an index and prevents filtering later.
-//    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase());
+//    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase(Locale.ENGLISH));
 
     // fetch all possible variants of subqueries that can be used in indexes.
     if (compiledFilter == null) {
@@ -2071,7 +2071,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       uniqueResult.clear();
 
     final ODatabaseDocument database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase());
+    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase(Locale.ENGLISH));
 
     // fetch all possible variants of subqueries that can be used in indexes.
     if (compiledFilter == null) {
@@ -2467,7 +2467,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   private boolean isRidOnlySort() {
     if (parsedTarget.getTargetClasses() != null && this.orderedFields.size() == 1 && this.orderedFields.get(0).getKey()
-        .toLowerCase().equals("@rid")) {
+        .toLowerCase(Locale.ENGLISH).equals("@rid")) {
       if (this.target != null && target instanceof ORecordIteratorClass) {
         return true;
       }

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -118,8 +119,9 @@ public class ORule implements Serializable {
     }
 
     private static void register(ResourceGeneric resource) {
-      String legacyNameLowCase = resource.legacyName.toLowerCase();
-      if (nameToGenericMap.containsKey(resource.name) || legacyToGenericMap.containsKey(resource.legacyName.toLowerCase())
+      String legacyNameLowCase = resource.legacyName.toLowerCase(Locale.ENGLISH);
+      if (nameToGenericMap.containsKey(resource.name)
+          || legacyToGenericMap.containsKey(resource.legacyName.toLowerCase(Locale.ENGLISH))
           || genericToLegacyMap.containsKey(resource)) {
         throw new IllegalArgumentException(resource + " already registered");
       }
@@ -157,7 +159,7 @@ public class ORule implements Serializable {
   }
 
   public static ResourceGeneric mapLegacyResourceToGenericResource(final String resource) {
-    final Map.Entry<String, ResourceGeneric> found = ResourceGeneric.legacyToGenericMap.floorEntry(resource.toLowerCase());
+    final Map.Entry<String, ResourceGeneric> found = ResourceGeneric.legacyToGenericMap.floorEntry(resource.toLowerCase(Locale.ENGLISH));
     if (found == null)
       return null;
 
@@ -175,7 +177,7 @@ public class ORule implements Serializable {
   }
 
   public static String mapLegacyResourceToSpecificResource(final String resource) {
-    Map.Entry<String, ResourceGeneric> found = ResourceGeneric.legacyToGenericMap.floorEntry(resource.toLowerCase());
+    Map.Entry<String, ResourceGeneric> found = ResourceGeneric.legacyToGenericMap.floorEntry(resource.toLowerCase(Locale.ENGLISH));
 
     if (found == null)
       return resource;
@@ -208,7 +210,7 @@ public class ORule implements Serializable {
     if (resource == null)
       access = grant((byte) operation, access);
     else {
-      resource = resource.toLowerCase();
+      resource = resource.toLowerCase(Locale.ENGLISH);
       Byte ac = specificResources.get(resource);
       specificResources.put(resource, grant((byte) operation, ac));
     }
@@ -232,7 +234,7 @@ public class ORule implements Serializable {
     if (resource == null)
       access = revoke((byte) operation, access);
     else {
-      resource = resource.toLowerCase();
+      resource = resource.toLowerCase(Locale.ENGLISH);
       final Byte ac = specificResources.get(resource);
       specificResources.put(resource, revoke((byte) operation, ac));
     }
@@ -256,7 +258,7 @@ public class ORule implements Serializable {
     if (specificResources.isEmpty())
       return isAllowed(null, operation);
 
-    final Byte ac = specificResources.get(name.toLowerCase());
+    final Byte ac = specificResources.get(name.toLowerCase(Locale.ENGLISH));
     final Boolean allowed = allowed((byte) operation, ac);
     if (allowed == null)
       return isAllowed(null, operation);
@@ -277,6 +279,6 @@ public class ORule implements Serializable {
     if (specificResources.isEmpty())
       return false;
 
-    return specificResources.containsKey(resource.toLowerCase());
+    return specificResources.containsKey(resource.toLowerCase(Locale.ENGLISH));
   }
 }

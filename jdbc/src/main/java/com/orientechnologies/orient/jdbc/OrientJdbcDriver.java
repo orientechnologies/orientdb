@@ -21,6 +21,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 
 import java.sql.*;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -46,7 +47,7 @@ public class OrientJdbcDriver implements java.sql.Driver {
     if (url == null) {
       return false;
     }
-    return url.toLowerCase().startsWith("jdbc:orient:");
+    return url.toLowerCase(Locale.ENGLISH).startsWith("jdbc:orient:");
   }
 
   @Override
