@@ -914,7 +914,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       if (Character.isDigit(iClusterName.charAt(0)))
         return Integer.parseInt(iClusterName);
 
-      final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
+      final OCluster cluster = clusterMap.get(iClusterName.toLowerCase(Locale.ENGLISH));
       if (cluster == null)
         return -1;
 
@@ -1667,7 +1667,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         String clusterName = clusterConfig.getName();
         final int clusterId = clusterConfig.getId();
         if (clusterName != null) {
-          clusterName = clusterName.toLowerCase();
+          clusterName = clusterName.toLowerCase(Locale.ENGLISH);
           cluster.configure(null, clusterId, clusterName);
           if (clusterId >= clusters.length)
             clusters = Arrays.copyOf(clusters, clusterId + 1);
@@ -1759,12 +1759,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     stateLock.acquireWriteLock();
     try {
       final OClusterRemote cluster = new OClusterRemote();
-      cluster.configure(this, clusterId, iClusterName.toLowerCase());
+      cluster.configure(this, clusterId, iClusterName.toLowerCase(Locale.ENGLISH));
 
       if (clusters.length <= clusterId)
         clusters = Arrays.copyOf(clusters, clusterId + 1);
       clusters[cluster.getId()] = cluster;
-      clusterMap.put(cluster.getName().toLowerCase(), cluster);
+      clusterMap.put(cluster.getName().toLowerCase(Locale.ENGLISH), cluster);
     } finally {
       stateLock.releaseWriteLock();
     }

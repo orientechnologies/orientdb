@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -70,7 +71,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
     if (iClassName == null)
       return null;
 
-    OClass cls = delegate.getClass(iClassName.toLowerCase());
+    OClass cls = delegate.getClass(iClassName.toLowerCase(Locale.ENGLISH));
     if (cls != null)
       return cls;
 
@@ -141,7 +142,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
     if (iClassName == null)
       return false;
 
-    return delegate.existsClass(iClassName.toLowerCase());
+    return delegate.existsClass(iClassName.toLowerCase(Locale.ENGLISH));
   }
 
   public OClass getClass(final Class<?> iClass) {

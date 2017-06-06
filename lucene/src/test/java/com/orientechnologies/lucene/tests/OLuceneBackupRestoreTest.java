@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,7 +49,7 @@ public class OLuceneBackupRestoreTest extends OLuceneBaseTest {
 
   @Before
   public void setUp() throws Exception {
-    final String os = System.getProperty("os.name").toLowerCase();
+    final String os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
     Assume.assumeFalse(os.contains("win"));
 
 

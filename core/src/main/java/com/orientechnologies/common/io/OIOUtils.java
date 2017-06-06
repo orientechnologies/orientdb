@@ -263,7 +263,7 @@ public class OIOUtils {
         for (int j = 0; j < 4 - hex.length(); j++)
           // Prepend zeros because unicode requires 4 digits
           result.append('0');
-        result.append(hex.toLowerCase()); // standard unicode format.
+        result.append(hex.toLowerCase(Locale.ENGLISH)); // standard unicode format.
         // ostr.append(hex.toLowerCase(Locale.ENGLISH));
       }
     }

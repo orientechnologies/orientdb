@@ -776,7 +776,7 @@ public class ODocumentHelper {
     else if (function.startsWith("TOUPPERCASE("))
       result = currentValue.toString().toUpperCase(Locale.ENGLISH);
     else if (function.startsWith("TOLOWERCASE("))
-      result = currentValue.toString().toLowerCase();
+      result = currentValue.toString().toLowerCase(Locale.ENGLISH);
     else if (function.startsWith("TRIM("))
       result = currentValue.toString().trim();
     else if (function.startsWith("TOJSON("))

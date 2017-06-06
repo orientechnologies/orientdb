@@ -178,7 +178,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     final List<OCluster> result = new ArrayList<OCluster>();
 
     if (clusterName.endsWith("*")) {
-      final String toMatch = clusterName.substring(0, clusterName.length() - 1).toLowerCase();
+      final String toMatch = clusterName.substring(0, clusterName.length() - 1).toLowerCase(Locale.ENGLISH);
       for (String cl : database.getStorage().getClusterNames()) {
         if (cl.startsWith(toMatch))
           result.add(database.getStorage().getClusterByName(cl));

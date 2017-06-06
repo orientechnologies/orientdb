@@ -177,7 +177,7 @@ public class OConsoleApplication {
   protected boolean isPropertyEnabled(final String iPropertyName) {
     String v = properties.get(iPropertyName);
     if (v != null) {
-      v = v.toLowerCase();
+      v = v.toLowerCase(Locale.ENGLISH);
       return v.equals("true") || v.equals("on");
     }
     return false;
@@ -328,7 +328,7 @@ public class OConsoleApplication {
       if (i > 0) {
         commandLowerCase += " ";
       }
-      commandLowerCase += commandWords[i].toLowerCase();
+      commandLowerCase += commandWords[i].toLowerCase(Locale.ENGLISH);
     }
 
     for (Entry<Method, Object> entry : getConsoleMethods().entrySet()) {
@@ -439,7 +439,7 @@ public class OConsoleApplication {
     Method lastMethodInvoked = null;
     final StringBuilder lastCommandInvoked = new StringBuilder(1024);
 
-    final String commandLowerCase = iCommand.toLowerCase();
+    final String commandLowerCase = iCommand.toLowerCase(Locale.ENGLISH);
 
     final Map<Method, Object> methodMap = getConsoleMethods();
 

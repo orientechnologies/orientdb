@@ -344,7 +344,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
   @Test public void queryCollectionContainsLowerCaseSubStringIgnoreCase() {
     List<ODocument> result = executeQuery(
-        "select * from cluster:profile where races contains (name.toLowerCase().subString(0,1) = 'e')", database);
+        "select * from cluster:profile where races contains (name.toLowerCase(Locale.ENGLISH).subString(0,1) = 'e')", database);
 
     for (int i = 0; i < result.size(); ++i) {
       record = result.get(i);
@@ -355,7 +355,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
       Collection<ODocument> races = record.field("races");
       boolean found = false;
       for (ODocument race : races) {
-        if (((String) race.field("name")).toLowerCase().substring(0, 1).equals("e")) {
+        if (((String) race.field("name")).toLowerCase(Locale.ENGLISH).substring(0, 1).equals("e")) {
           found = true;
           break;
         }

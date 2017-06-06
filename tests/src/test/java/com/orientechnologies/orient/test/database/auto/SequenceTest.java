@@ -9,6 +9,8 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import java.util.Locale;
+
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 3/2/2015
@@ -41,7 +43,7 @@ public class SequenceTest extends DocumentDBBaseTest {
     } catch (OSequenceException se) {
       err = se;
     }
-    Assert.assertTrue(err == null || err.getMessage().toLowerCase().contains("already exists"),
+    Assert.assertTrue(err == null || err.getMessage().toLowerCase(Locale.ENGLISH).contains("already exists"),
             "Creating a second " + sequenceType.toString() +
                     " sequences with same name doesn't throw an exception");
 
@@ -72,7 +74,7 @@ public class SequenceTest extends DocumentDBBaseTest {
     } catch (OSequenceException se) {
       err = se;
     }
-    Assert.assertTrue(err == null || err.getMessage().toLowerCase().contains("already exists"),
+    Assert.assertTrue(err == null || err.getMessage().toLowerCase(Locale.ENGLISH).contains("already exists"),
             "Creating two ordered sequences with same name doesn't throw an exception");
 
     OSequence seqSame = sequenceManager.getSequence("seqOrdered");

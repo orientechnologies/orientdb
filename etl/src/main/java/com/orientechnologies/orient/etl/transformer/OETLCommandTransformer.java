@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
+import java.util.Locale;
 import java.util.logging.Level;
 
 /**
@@ -46,7 +47,7 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
     super.configure(conf, ctx);
 
     if (conf.containsField("language"))
-      language = conf.<String>field("language").toLowerCase();
+      language = conf.<String>field("language").toLowerCase(Locale.ENGLISH);
 
     command = conf.field("command");
   }

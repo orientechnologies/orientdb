@@ -42,10 +42,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.zip.GZIPInputStream;
 
@@ -70,7 +67,7 @@ public class OLuceneAutomaticBackupRestoreTest {
 
   @Before
   public void setUp() throws Exception {
-    final String os = System.getProperty("os.name").toLowerCase();
+    final String os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
 
     Assume.assumeFalse(os.contains("win"));
 
@@ -121,7 +118,7 @@ public class OLuceneAutomaticBackupRestoreTest {
 
   @After
   public void tearDown() throws Exception {
-    final String os = System.getProperty("os.name").toLowerCase();
+    final String os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
 
     if (!os.contains("win")) {
       dropIfExists();

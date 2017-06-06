@@ -1118,7 +1118,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public static OClass addClusters(final OClass cls, final int iClusters) {
-    final String clusterBase = cls.getName().toLowerCase() + "_";
+    final String clusterBase = cls.getName().toLowerCase(Locale.ENGLISH) + "_";
     for (int i = 1; i < iClusters; ++i) {
       cls.addCluster(clusterBase + i);
     }
@@ -2279,8 +2279,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void renameCluster(String oldName, String newName) {
-    oldName = oldName.toLowerCase();
-    newName = newName.toLowerCase();
+    oldName = oldName.toLowerCase(Locale.ENGLISH);
+    newName = newName.toLowerCase(Locale.ENGLISH);
 
     final ODatabaseDocumentInternal database = getDatabase();
     final OStorage storage = database.getStorage();
@@ -2723,7 +2723,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void tryDropCluster(final int defaultClusterId) {
-    if (name.toLowerCase().equals(getDatabase().getClusterNameById(defaultClusterId))) {
+    if (name.toLowerCase(Locale.ENGLISH).equals(getDatabase().getClusterNameById(defaultClusterId))) {
       // DROP THE DEFAULT CLUSTER CALLED WITH THE SAME NAME ONLY IF EMPTY
       if (getDatabase().getClusterRecordSizeById(defaultClusterId) == 0)
         getDatabase().getStorage().dropCluster(defaultClusterId, true);

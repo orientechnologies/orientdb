@@ -11,6 +11,8 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
+import java.util.Locale;
+
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 3/5/2015
@@ -43,7 +45,7 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
     } catch (OSequenceException se) {
       err = se;
     }
-    Assert.assertTrue(err == null || err.getMessage().toLowerCase().contains("already exists"),
+    Assert.assertTrue(err == null || err.getMessage().toLowerCase(Locale.ENGLISH).contains("already exists"),
         "Creating a second " + sequenceType.toString() + " sequences with same name doesn't throw an exception");
 
     // Doing it twice to check everything works after reset
@@ -89,7 +91,7 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
     } catch (OSequenceException se) {
       err = se;
     }
-    Assert.assertTrue(err == null || err.getMessage().toLowerCase().contains("already exists"),
+    Assert.assertTrue(err == null || err.getMessage().toLowerCase(Locale.ENGLISH).contains("already exists"),
         "Creating two ordered sequences with same name doesn't throw an exception");
 
     OSequence seqSame = sequenceManager.getSequence("seqSQLOrdered");

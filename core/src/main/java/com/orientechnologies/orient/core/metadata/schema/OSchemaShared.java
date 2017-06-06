@@ -219,7 +219,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
 
     acquireSchemaReadLock();
     try {
-      OClass cls = classes.get(iClassName.toLowerCase());
+      OClass cls = classes.get(iClassName.toLowerCase(Locale.ENGLISH));
       if (cls != null)
         return cls;
     } finally {
@@ -235,7 +235,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
       try {
         acquireSchemaWriteLock();
         try {
-          cls = classes.get(iClassName.toLowerCase());
+          cls = classes.get(iClassName.toLowerCase(Locale.ENGLISH));
           if (cls != null)
             return cls;
 
@@ -316,7 +316,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
         result = doCreateClass(className, clusterIds, retry, superClasses);
         break;
       } catch (ClusterIdsAreEmptyException e) {
-        classes.remove(className.toLowerCase());
+        classes.remove(className.toLowerCase(Locale.ENGLISH));
         clusterIds = createClusters(className);
         retry++;
       }
@@ -434,7 +434,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
 
       getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
-      final String key = className.toLowerCase();
+      final String key = className.toLowerCase(Locale.ENGLISH);
 
       OClass cls = classes.get(key);
 
@@ -494,7 +494,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
 
     acquireSchemaReadLock();
     try {
-      return classes.containsKey(iClassName.toLowerCase());
+      return classes.containsKey(iClassName.toLowerCase(Locale.ENGLISH));
     } finally {
       releaseSchemaReadLock();
     }
@@ -523,7 +523,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
 
     acquireSchemaReadLock();
     try {
-      return classes.get(iClassName.toLowerCase());
+      return classes.get(iClassName.toLowerCase(Locale.ENGLISH));
     } finally {
       releaseSchemaReadLock();
     }
@@ -596,13 +596,13 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
     try {
       checkEmbedded(getDatabase().getStorage());
 
-      if (newName != null && classes.containsKey(newName.toLowerCase()))
+      if (newName != null && classes.containsKey(newName.toLowerCase(Locale.ENGLISH)))
         throw new IllegalArgumentException("Class '" + newName + "' is already present in schema");
 
       if (oldName != null)
-        classes.remove(oldName.toLowerCase());
+        classes.remove(oldName.toLowerCase(Locale.ENGLISH));
       if (newName != null)
-        classes.put(newName.toLowerCase(), cls);
+        classes.put(newName.toLowerCase(Locale.ENGLISH), cls);
 
     } finally {
       releaseSchemaWriteLock();
@@ -656,15 +656,15 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
         cls = new OClassImpl(this, c, (String) c.field("name"));
         cls.fromStream();
 
-        if (classes.containsKey(cls.getName().toLowerCase())) {
-          cls = (OClassImpl) classes.get(cls.getName().toLowerCase());
+        if (classes.containsKey(cls.getName().toLowerCase(Locale.ENGLISH))) {
+          cls = (OClassImpl) classes.get(cls.getName().toLowerCase(Locale.ENGLISH));
           cls.fromStream(c);
         }
 
-        newClasses.put(cls.getName().toLowerCase(), cls);
+        newClasses.put(cls.getName().toLowerCase(Locale.ENGLISH), cls);
 
         if (cls.getShortName() != null)
-          newClasses.put(cls.getShortName().toLowerCase(), cls);
+          newClasses.put(cls.getShortName().toLowerCase(Locale.ENGLISH), cls);
 
         addClusterClassMap(cls);
       }
@@ -692,11 +692,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
 
         if (!superClassNames.isEmpty()) {
           // HAS A SUPER CLASS or CLASSES
-          cls = (OClassImpl) classes.get(((String) c.field("name")).toLowerCase());
+          cls = (OClassImpl) classes.get(((String) c.field("name")).toLowerCase(Locale.ENGLISH));
           superClasses = new ArrayList<OClass>(superClassNames.size());
           for (String superClassName : superClassNames) {
 
-            superClass = classes.get(superClassName.toLowerCase());
+            superClass = classes.get(superClassName.toLowerCase(Locale.ENGLISH));
 
             if (superClass == null)
               throw new OConfigurationException("Super class '" + superClassName + "' was declared in class '" + cls.getName()
@@ -914,7 +914,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
     acquireSchemaWriteLock();
     try {
 
-      final String key = className.toLowerCase();
+      final String key = className.toLowerCase(Locale.ENGLISH);
       if (classes.containsKey(key) && retry == 0)
         throw new OSchemaException("Class '" + className + "' already exists in current database");
 
@@ -980,7 +980,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
       } else
         createClassInternal(className, clusterIds, superClassesList);
 
-      result = classes.get(className.toLowerCase());
+      result = classes.get(className.toLowerCase(Locale.ENGLISH));
 
       // WAKE UP DB LIFECYCLE LISTENER
       for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
@@ -1009,7 +1009,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
     acquireSchemaWriteLock();
     try {
 
-      final String key = className.toLowerCase();
+      final String key = className.toLowerCase(Locale.ENGLISH);
       if (classes.containsKey(key) && retry == 0)
         throw new OSchemaException("Class '" + className + "' already exists in current database");
 
@@ -1063,7 +1063,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
         createClassInternal(className, clusterIds, superClassesList);
       }
 
-      result = classes.get(className.toLowerCase());
+      result = classes.get(className.toLowerCase(Locale.ENGLISH));
 
       // WAKE UP DB LIFECYCLE LISTENER
       for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
@@ -1107,7 +1107,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
 
       database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
 
-      final String key = className.toLowerCase();
+      final String key = className.toLowerCase(Locale.ENGLISH);
 
       if (classes.containsKey(key))
         throw new OSchemaException("Class '" + className + "' already exists in current database");
@@ -1145,13 +1145,13 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
   }
 
   private int[] createClusters(String className, int minimumClusters) {
-    className = className.toLowerCase();
+    className = className.toLowerCase(Locale.ENGLISH);
 
     final ODatabaseDocumentInternal database = getDatabase();
 
     int[] clusterIds;
 
-    if (internalClasses.contains(className.toLowerCase())) {
+    if (internalClasses.contains(className.toLowerCase(Locale.ENGLISH))) {
       // INTERNAL CLASS, SET TO 1
       minimumClusters = 1;
     }
@@ -1194,7 +1194,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
 
       database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
-      final String key = className.toLowerCase();
+      final String key = className.toLowerCase(Locale.ENGLISH);
 
       final OClass cls = classes.get(key);
       if (cls == null)
@@ -1221,7 +1221,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
 
       if (cls.getShortName() != null)
         // REMOVE THE ALIAS TOO
-        classes.remove(cls.getShortName().toLowerCase());
+        classes.remove(cls.getShortName().toLowerCase(Locale.ENGLISH));
 
       removeClusterClassMap(cls);
 

@@ -43,7 +43,7 @@ public class OCustomSQLFunctionFactory implements OSQLFunctionFactory {
           minParams = minParams < m.getParameterTypes().length ? minParams : m.getParameterTypes().length;
           maxParams = maxParams > m.getParameterTypes().length ? maxParams : m.getParameterTypes().length;
         }
-        FUNCTIONS.put(name.toLowerCase(), new OSQLStaticReflectiveFunction(name, minParams, maxParams, methods));
+        FUNCTIONS.put(name.toLowerCase(Locale.ENGLISH), new OSQLStaticReflectiveFunction(name, minParams, maxParams, methods));
       }
     }
 

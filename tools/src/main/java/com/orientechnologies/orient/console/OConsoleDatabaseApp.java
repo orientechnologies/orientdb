@@ -315,7 +315,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       // LOCAL CONNECTION
       if (storageType != null) {
         // CHECK STORAGE TYPE
-        if (!databaseURL.toLowerCase().startsWith(storageType.toLowerCase()))
+        if (!databaseURL.toLowerCase(Locale.ENGLISH).startsWith(storageType.toLowerCase(Locale.ENGLISH)))
           throw new IllegalArgumentException("Storage type '" + storageType + "' is different by storage type in URL");
       }
 
@@ -866,7 +866,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Traverse records and display the results", onlineHelp = "SQL-Traverse")
   public void traverse(@ConsoleParameter(name = "query-text", description = "The traverse to execute") String iQueryText) {
     final int limit;
-    if (iQueryText.toLowerCase().contains(" limit ")) {
+    if (iQueryText.toLowerCase(Locale.ENGLISH).contains(" limit ")) {
       // RESET CONSOLE FLAG
       limit = -1;
     } else {
@@ -901,7 +901,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final int queryLimit;
     final int displayLimit;
-    if (iQueryText.toLowerCase().contains(" limit ")) {
+    if (iQueryText.toLowerCase(Locale.ENGLISH).contains(" limit ")) {
       queryLimit = -1;
       displayLimit = -1;
     } else {
@@ -953,7 +953,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final int queryLimit;
     final int displayLimit;
-    if (iQueryText.toLowerCase().contains(" limit ")) {
+    if (iQueryText.toLowerCase(Locale.ENGLISH).contains(" limit ")) {
       queryLimit = -1;
       displayLimit = -1;
     } else {
@@ -2327,7 +2327,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     checkForDatabase();
     checkCurrentObject();
 
-    final ORecordSerializer serializer = ORecordSerializerFactory.instance().getFormat(iFormat.toLowerCase());
+    final ORecordSerializer serializer = ORecordSerializerFactory.instance().getFormat(iFormat.toLowerCase(Locale.ENGLISH));
 
     if (serializer == null) {
       message("\nERROR: Format '" + iFormat + "' was not found.");
