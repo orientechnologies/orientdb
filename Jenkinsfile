@@ -47,16 +47,15 @@ node("master") {
 //                }
 //            }
 
-//                stage('Publish Javadoc') {
-//                    docker.image("${mvnJdk8Image}")
-//                            .inside("${env.VOLUMES}") {
-//                        sh "${mvnHome}/bin/mvn  javadoc:aggregate"
-//                        sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
-//                    }
-//                }
+                stage('Publish Javadoc') {
+                    docker.image("${mvnJdk8Image}")
+                            .inside("${env.VOLUMES}") {
+                        sh "${mvnHome}/bin/mvn  javadoc:aggregate"
+                        sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
+                    }
+                }
 
                 stage("Downstream projects") {
-
                     build job: "orientdb-spatial-multibranch/${env.BRANCH_NAME}", wait: false
                     //excluded: too long
                     //build job: "orientdb-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
@@ -65,7 +64,6 @@ node("master") {
                     build job: "orientdb-teleporter-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "spring-data-orientdb-multibranch/${env.BRANCH_NAME}", wait: false
                 }
-
 
                 slackSend(color: '#00FF00', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
 
