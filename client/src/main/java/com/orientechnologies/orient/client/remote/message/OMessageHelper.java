@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
@@ -339,9 +338,9 @@ public class OMessageHelper {
     final byte[] content = network.readBytes();
 
     final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(rec);
-    serializer.fromStream(content, record, null);
     ORecordInternal.setIdentity(record, rid);
     ORecordInternal.setVersion(record, version);
+    serializer.fromStream(content, record, null);
     ORecordInternal.unsetDirty(record);
     return record;
   }
