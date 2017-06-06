@@ -1311,7 +1311,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @Override
   public boolean existsCluster(final String iClusterName) {
     checkIfActive();
-    return storage.getClusterNames().contains(iClusterName.toLowerCase());
+    return storage.getClusterNames().contains(iClusterName.toLowerCase(Locale.ENGLISH));
   }
 
   @Override
@@ -1326,7 +1326,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return -1;
 
     checkIfActive();
-    return storage.getClusterIdByName(iClusterName.toLowerCase());
+    return storage.getClusterIdByName(iClusterName.toLowerCase(Locale.ENGLISH));
   }
 
   @Override
@@ -1479,14 +1479,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @Override
   public Object setProperty(final String iName, final Object iValue) {
     if (iValue == null)
-      return properties.remove(iName.toLowerCase());
+      return properties.remove(iName.toLowerCase(Locale.ENGLISH));
     else
-      return properties.put(iName.toLowerCase(), iValue);
+      return properties.put(iName.toLowerCase(Locale.ENGLISH), iValue);
   }
 
   @Override
   public Object getProperty(final String iName) {
-    return properties.get(iName.toLowerCase());
+    return properties.get(iName.toLowerCase(Locale.ENGLISH));
   }
 
   @Override
@@ -1600,7 +1600,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         throw new IllegalArgumentException("Timezone can't be null");
 
       // for backward compatibility, until 2.1.13 OrientDB accepted timezones in lowercase as well
-      TimeZone timeZoneValue = TimeZone.getTimeZone(stringValue.toUpperCase());
+      TimeZone timeZoneValue = TimeZone.getTimeZone(stringValue.toUpperCase(Locale.ENGLISH));
       if (timeZoneValue.equals(TimeZone.getTimeZone("GMT"))) {
         timeZoneValue = TimeZone.getTimeZone(stringValue);
       }

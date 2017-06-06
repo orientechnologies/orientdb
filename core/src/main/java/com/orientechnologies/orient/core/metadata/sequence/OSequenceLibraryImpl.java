@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,7 +59,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
         final OSequence sequence = OSequenceHelper.createSequence(document);
         if (sequence != null) {
-          sequences.put(sequence.getName().toUpperCase(), sequence);
+          sequences.put(sequence.getName().toUpperCase(Locale.ENGLISH), sequence);
         }
       }
     }
@@ -81,7 +82,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
   @Override
   public OSequence getSequence(String iName) {
-    final String name = iName.toUpperCase();
+    final String name = iName.toUpperCase(Locale.ENGLISH);
 
     OSequence seq = sequences.get(name);
     if (seq == null) {
@@ -101,7 +102,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   public OSequence createSequence(final String iName, final SEQUENCE_TYPE sequenceType, final OSequence.CreateParams params) {
     init();
 
-    final String key = iName.toUpperCase();
+    final String key = iName.toUpperCase(Locale.ENGLISH);
     validateSequenceNoExists(key);
 
     final OSequence sequence = OSequenceHelper.createSequence(sequenceType, params, null).setName(iName);
@@ -117,7 +118,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
     if (seq != null) {
       ODatabaseRecordThreadLocal.INSTANCE.get().delete(seq.getDocument().getIdentity());
-      sequences.remove(iName.toUpperCase());
+      sequences.remove(iName.toUpperCase(Locale.ENGLISH));
     }
   }
 
@@ -129,7 +130,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     if (name == null)
       return null;
 
-    name = name.toUpperCase();
+    name = name.toUpperCase(Locale.ENGLISH);
 
     final OSequence seq = getSequence(name);
 
@@ -148,7 +149,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     if (name == null)
       return null;
 
-    name = name.toUpperCase();
+    name = name.toUpperCase(Locale.ENGLISH);
 
     final OSequence sequence = sequences.get(name);
     if (sequence == null)
@@ -165,7 +166,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     if (name == null)
       return;
 
-    name = name.toUpperCase();
+    name = name.toUpperCase(Locale.ENGLISH);
 
     sequences.remove(name);
   }

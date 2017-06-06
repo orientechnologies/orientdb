@@ -382,9 +382,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     if (iOptions == null || iOptions.size() == 0)
       return;
 
-    final Object connType = iOptions.get(PARAM_CONNECTION_STRATEGY.toLowerCase());
+    final Object connType = iOptions.get(PARAM_CONNECTION_STRATEGY.toLowerCase(Locale.ENGLISH));
     if (connType != null)
-      connectionStrategy = CONNECTION_STRATEGY.valueOf(connType.toString().toUpperCase());
+      connectionStrategy = CONNECTION_STRATEGY.valueOf(connType.toString().toUpperCase(Locale.ENGLISH));
 
     // CREATE A COPY TO AVOID POST OPEN MANIPULATION BY USER
     connectionOptions = new HashMap<String, Object>(iOptions);
@@ -1466,7 +1466,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       if (Character.isDigit(iClusterName.charAt(0)))
         return Integer.parseInt(iClusterName);
 
-      final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
+      final OCluster cluster = clusterMap.get(iClusterName.toLowerCase(Locale.ENGLISH));
       if (cluster == null)
         return -1;
 
@@ -1510,12 +1510,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             final int clusterId = network.readShort();
 
             final OClusterRemote cluster = new OClusterRemote();
-            cluster.configure(OStorageRemote.this, clusterId, iClusterName.toLowerCase());
+            cluster.configure(OStorageRemote.this, clusterId, iClusterName.toLowerCase(Locale.ENGLISH));
 
             if (clusters.length <= clusterId)
               clusters = Arrays.copyOf(clusters, clusterId + 1);
             clusters[cluster.getId()] = cluster;
-            clusterMap.put(cluster.getName().toLowerCase(), cluster);
+            clusterMap.put(cluster.getName().toLowerCase(Locale.ENGLISH), cluster);
 
             return clusterId;
           } finally {
@@ -2360,7 +2360,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         String clusterName = network.readString();
         final int clusterId = network.readShort();
         if (clusterName != null) {
-          clusterName = clusterName.toLowerCase();
+          clusterName = clusterName.toLowerCase(Locale.ENGLISH);
 
           if (network.getSrvProtocolVersion() < 24)
             network.readString();

@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -84,7 +85,7 @@ public class OCommandExecutorSQLLiveUnsubscribe extends OCommandExecutorSQLAbstr
     String remainingText = requestText.getText().trim().substring(5).trim();
     requestText.setText(remainingText);
     try {
-      if (remainingText.toLowerCase().startsWith("unsubscribe")) {
+      if (remainingText.toLowerCase(Locale.ENGLISH).startsWith("unsubscribe")) {
         remainingText = remainingText.substring("unsubscribe".length()).trim();
         if (remainingText.contains(" ")) {
           throw new OQueryParsingException("invalid unsubscribe token for live query: " + remainingText);

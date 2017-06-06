@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -87,9 +88,9 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
 
       while (pos > 0) {
         String nextWord = word.toString();
-        if (nextWord.toUpperCase().equals(KEYWORD_UNSAFE)) {
+        if (nextWord.toUpperCase(Locale.ENGLISH).equals(KEYWORD_UNSAFE)) {
           unsafe = true;
-        } else if (nextWord.toUpperCase().equals(KEYWORD_POLYMORPHIC)) {
+        } else if (nextWord.toUpperCase(Locale.ENGLISH).equals(KEYWORD_POLYMORPHIC)) {
           deep = true;
         }
         oldPos = pos;

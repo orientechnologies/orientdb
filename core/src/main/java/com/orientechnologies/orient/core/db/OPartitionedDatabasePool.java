@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -379,9 +380,9 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
    */
   public Object setProperty(final String iName, final Object iValue) {
     if (iValue != null) {
-      return properties.put(iName.toLowerCase(), iValue);
+      return properties.put(iName.toLowerCase(Locale.ENGLISH), iValue);
     } else {
-      return properties.remove(iName.toLowerCase());
+      return properties.remove(iName.toLowerCase(Locale.ENGLISH));
     }
   }
 
@@ -392,7 +393,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
    * @return The previous value if any, otherwise null
    */
   public Object getProperty(final String iName) {
-    return properties.get(iName.toLowerCase());
+    return properties.get(iName.toLowerCase(Locale.ENGLISH));
   }
 
   private static final class PoolData {

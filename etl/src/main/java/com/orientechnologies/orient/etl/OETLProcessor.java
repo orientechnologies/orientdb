@@ -37,10 +37,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -157,7 +154,7 @@ public class OETLProcessor {
   protected void init() {
     final String cfgLog = (String) context.getVariable("log");
     if (cfgLog != null)
-      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
+      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase(Locale.ENGLISH));
 
     final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
     if (cfgHaltOnError != null)

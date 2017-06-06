@@ -32,6 +32,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -52,7 +53,7 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
           // ENABLE IT
           enabled = true;
       } else if (param.name.equalsIgnoreCase("allowedLanguages")) {
-        allowedLanguages = new HashSet<String>(Arrays.asList(param.value.toLowerCase().split(",")));
+        allowedLanguages = new HashSet<String>(Arrays.asList(param.value.toLowerCase(Locale.ENGLISH).split(",")));
       }
     }
   }
@@ -73,7 +74,7 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
         .registerExecutor(OCommandScript.class, OCommandExecutorScript.class, new OCallable<Void, OCommandRequest>() {
           @Override
           public Void call(OCommandRequest iArgument) {
-            final String language = ((OCommandScript) iArgument).getLanguage().toLowerCase();
+            final String language = ((OCommandScript) iArgument).getLanguage().toLowerCase(Locale.ENGLISH);
 
             if (!allowedLanguages.contains(language))
               throw new OSecurityException("Language '" + language + "' is not allowed to be executed");

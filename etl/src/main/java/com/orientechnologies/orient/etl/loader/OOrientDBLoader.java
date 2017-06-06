@@ -40,6 +40,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
@@ -285,7 +286,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       serverPassword = (String) resolve(conf.field("serverPassword"));
 
     if (conf.containsField("dbType"))
-      dbType = DB_TYPE.valueOf(conf.field("dbType").toString().toUpperCase());
+      dbType = DB_TYPE.valueOf(conf.field("dbType").toString().toUpperCase(Locale.ENGLISH));
     if (conf.containsField("tx"))
       tx = conf.<Boolean>field("tx");
     if (conf.containsField("wal"))
@@ -508,7 +509,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
             if (fieldNameParts.length < 2)
               throw new OConfigurationException("Index field type missed in OrientDB Loader for field '" + fieldName + "'");
 
-            final String fieldType = fieldNameParts[1].toUpperCase();
+            final String fieldType = fieldNameParts[1].toUpperCase(Locale.ENGLISH);
             final OType type = OType.valueOf(fieldType);
 
             cls.createProperty(fieldNameParts[0], type);

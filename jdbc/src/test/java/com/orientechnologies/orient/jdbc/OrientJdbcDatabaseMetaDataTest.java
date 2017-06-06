@@ -76,7 +76,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
     final String keywordsStr = metaData.getSQLKeywords();
     assertNotNull(keywordsStr);
-    assertThat(Arrays.asList(keywordsStr.toUpperCase().split(",\\s*"))).contains("TRAVERSE");
+    assertThat(Arrays.asList(keywordsStr.toUpperCase(Locale.ENGLISH).split(",\\s*"))).contains("TRAVERSE");
   }
 
   @Test

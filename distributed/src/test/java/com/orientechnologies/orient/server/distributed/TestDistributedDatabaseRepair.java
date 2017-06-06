@@ -28,6 +28,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -312,7 +313,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     final Set<String> owner = cfg
         .getClustersOwnedByServer(serverInstance.get(1).getServerInstance().getDistributedManager().getLocalNodeName());
     for (String s : owner) {
-      if (s.toLowerCase().startsWith("employee")) {
+      if (s.toLowerCase(Locale.ENGLISH).startsWith("employee")) {
         localCluster = s;
         break;
       }

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.metadata;
 import static org.testng.Assert.assertEquals;
 
 import java.util.List;
+import java.util.Locale;
 
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -58,7 +59,7 @@ public class ClassTest {
     if (storage instanceof OAbstractPaginatedStorage) {
       final OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
       final OWriteCache writeCache = paginatedStorage.getWriteCache();
-      Assert.assertTrue(writeCache.exists(SHORTNAME_CLASS_NAME.toLowerCase() + OPaginatedCluster.DEF_EXTENSION));
+      Assert.assertTrue(writeCache.exists(SHORTNAME_CLASS_NAME.toLowerCase(Locale.ENGLISH) + OPaginatedCluster.DEF_EXTENSION));
     }
 
     String shortName = "shortname";

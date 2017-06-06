@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -85,7 +86,7 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
 
   @Before
   public void setUp() throws Exception {
-    Assume.assumeThat(System.getProperty("orientdb.test.env", "dev").toUpperCase(), IsEqual.equalTo("RELEASE"));
+    Assume.assumeThat(System.getProperty("orientdb.test.env", "dev").toUpperCase(Locale.ENGLISH), IsEqual.equalTo("RELEASE"));
     super.setUp();
   }
 

@@ -60,11 +60,11 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
   }
 
   public boolean hasFunction(final String name) {
-    return FUNCTIONS.containsKey(name.toLowerCase());
+    return FUNCTIONS.containsKey(name.toLowerCase(Locale.ENGLISH));
   }
 
   public OSQLFunction createFunction(final String name) {
-    final Object obj = FUNCTIONS.get(name.toLowerCase());
+    final Object obj = FUNCTIONS.get(name.toLowerCase(Locale.ENGLISH));
 
     if (obj == null)
       throw new OCommandExecutionException("Unknown function name :" + name);

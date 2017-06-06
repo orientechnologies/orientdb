@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
 
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -56,7 +57,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     }
     String signedToken = "";// signedJWT.serialize();
 
-    String grantType = content.get("grant_type").toLowerCase();
+    String grantType = content.get("grant_type").toLowerCase(Locale.ENGLISH);
     String username = content.get("username");
     String password = content.get("password");
     String authenticatedRid;

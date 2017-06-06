@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.testng.Assert;
 import org.testng.annotations.*;
@@ -71,7 +72,7 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
 
     final OIndexDefinition definition = index.getDefinition();
     Assert.assertEquals(definition.getFields().size(), 1);
-    Assert.assertEquals(definition.getFields().get(0).toLowerCase(), "prop2");
+    Assert.assertEquals(definition.getFields().get(0).toLowerCase(Locale.ENGLISH), "prop2");
     Assert.assertEquals(definition.getTypes()[0], OType.INTEGER);
   }
 
@@ -154,8 +155,8 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
 
     final OIndexDefinition definition = index.getDefinition();
     Assert.assertEquals(definition.getFields().size(), 2);
-    Assert.assertEquals(definition.getFields().get(0).toLowerCase(), "cp2");
-    Assert.assertEquals(definition.getFields().get(1).toLowerCase(), "cp3");
+    Assert.assertEquals(definition.getFields().get(0).toLowerCase(Locale.ENGLISH), "cp2");
+    Assert.assertEquals(definition.getFields().get(1).toLowerCase(Locale.ENGLISH), "cp3");
     Assert.assertEquals(definition.getTypes()[0], OType.INTEGER);
     Assert.assertEquals(definition.getTypes()[1], OType.INTEGER);
   }

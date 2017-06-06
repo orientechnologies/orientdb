@@ -33,6 +33,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 
 /**
@@ -80,7 +81,7 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
 
   @Override
   public void parseParameters(final String args) {
-    final String ops = args.toUpperCase();
+    final String ops = args.toUpperCase(Locale.ENGLISH);
     char state = ' ';
     final StringBuilder value = new StringBuilder();
 
@@ -226,7 +227,7 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
     else if (state == 'F')
       factor = Integer.parseInt(number.toString());
     else if (state == 'S')
-      strategy = STRATEGIES.valueOf(number.toString().toUpperCase());
+      strategy = STRATEGIES.valueOf(number.toString().toUpperCase(Locale.ENGLISH));
 
     number.setLength(0);
     return c;

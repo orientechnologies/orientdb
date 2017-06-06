@@ -24,6 +24,8 @@ import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 
+import java.util.Locale;
+
 /**
  * Exception thrown when MVCC is enabled and a record cannot be updated or deleted because versions don't match.
  * 
@@ -101,7 +103,7 @@ public class OConcurrentModificationException extends ONeedRetryException implem
     sb.append(" the record ");
     sb.append(rid);
     sb.append(" because the version is not the latest. Probably you are ");
-    sb.append(operation.toLowerCase().substring(0, operation.length() - 1));
+    sb.append(operation.toLowerCase(Locale.ENGLISH).substring(0, operation.length() - 1));
     sb.append("ing an old record or it has been modified by another user (db=v");
     sb.append(databaseVersion);
     sb.append(" your=v");

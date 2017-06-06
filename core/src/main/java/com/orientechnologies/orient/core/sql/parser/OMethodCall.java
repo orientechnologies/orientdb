@@ -54,7 +54,7 @@ public class OMethodCall extends SimpleNode {
   }
 
   public boolean isBidirectional() {
-    return bidirectionalMethods.contains(methodName.getStringValue().toLowerCase());
+    return bidirectionalMethods.contains(methodName.getStringValue().toLowerCase(Locale.ENGLISH));
   }
 
   public Object execute(Object targetObjects, OCommandContext ctx) {

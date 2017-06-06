@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.db.record;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 
+import java.util.Locale;
+
 /**
  * Contains the information about a database operation.
  *
@@ -102,7 +104,7 @@ public class ORecordOperation implements Comparable {
   }
 
   public static byte getId(String iName) {
-    iName = iName.toUpperCase();
+    iName = iName.toUpperCase(Locale.ENGLISH);
 
     if (iName.startsWith("CREAT"))
       return ORecordOperation.CREATED;

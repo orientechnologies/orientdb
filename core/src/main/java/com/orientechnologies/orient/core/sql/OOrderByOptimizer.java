@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -48,8 +49,8 @@ public class OOrderByOptimizer {
       if (!firstOrder.equals(pair.getValue()))
         return false;
 
-      final String orderFieldName = orderedFields.get(i).getKey().toLowerCase();
-      final String indexFieldName = fields.get(i).toLowerCase();
+      final String orderFieldName = orderedFields.get(i).getKey().toLowerCase(Locale.ENGLISH);
+      final String indexFieldName = fields.get(i).toLowerCase(Locale.ENGLISH);
 
       if (!orderFieldName.equals(indexFieldName))
         return false;
@@ -82,8 +83,8 @@ public class OOrderByOptimizer {
 
     //check that all the "equals" clauses are a prefix for the index
     for (int i = 0; i < endIndex; i++) {
-      final String equalsFieldName = equalsFilterFields.get(i).toLowerCase();
-      final String indexFieldName = indexFields.get(i).toLowerCase();
+      final String equalsFieldName = equalsFilterFields.get(i).toLowerCase(Locale.ENGLISH);
+      final String indexFieldName = indexFields.get(i).toLowerCase(Locale.ENGLISH);
       if (!equalsFieldName.equals(indexFieldName))
         return false;
     }
@@ -101,8 +102,8 @@ public class OOrderByOptimizer {
       if (!firstOrder.equals(pair.getValue()))
         return false;
 
-      final String orderFieldName = pair.getKey().toLowerCase();
-      final String indexFieldName = indexFields.get(i).toLowerCase();
+      final String orderFieldName = pair.getKey().toLowerCase(Locale.ENGLISH);
+      final String indexFieldName = indexFields.get(i).toLowerCase(Locale.ENGLISH);
 
       if (!orderFieldName.equals(indexFieldName))
         return false;

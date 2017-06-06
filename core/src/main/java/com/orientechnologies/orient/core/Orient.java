@@ -151,7 +151,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   protected Orient() {
     super(true);
-    this.os = System.getProperty("os.name").toLowerCase();
+    this.os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
     threadGroup = new ThreadGroup("OrientDB");
     threadGroup.setDaemon(false);
   }
@@ -462,7 +462,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
     engineLock.readLock().lock();
     try {
-      final OEngine engine = engines.get(engineName.toLowerCase());
+      final OEngine engine = engines.get(engineName.toLowerCase(Locale.ENGLISH));
 
       if (engine == null)
         throw new OConfigurationException(
@@ -521,7 +521,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       final String dbName = registerDatabaseByPath ? dbPath : engine.getNameFromPath(dbPath);
 
-      final String dbNameCaseInsensitive = dbName.toLowerCase();
+      final String dbNameCaseInsensitive = dbName.toLowerCase(Locale.ENGLISH);
 
       OStorage storage;
       // SEARCH IF ALREADY USED
@@ -558,7 +558,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
     engineLock.readLock().lock();
     try {
-      return storages.get(name.toLowerCase());
+      return storages.get(name.toLowerCase(Locale.ENGLISH));
     } finally {
       engineLock.readLock().unlock();
     }
@@ -648,7 +648,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       throw new IllegalArgumentException("Storage name is null");
 
     final String dbName = registerDatabaseByPath ? name : OIOUtils.getRelativePathIfAny(name, null);
-    final OStorage stg = storages.get(dbName.toLowerCase());
+    final OStorage stg = storages.get(dbName.toLowerCase(Locale.ENGLISH));
     unregisterStorage(stg);
   }
 
@@ -677,7 +677,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       }
 
       for (String dbName : storagesToRemove)
-        storages.remove(dbName.toLowerCase());
+        storages.remove(dbName.toLowerCase(Locale.ENGLISH));
 
       // UNREGISTER STORAGE FROM ENGINES IN CASE IS CACHED
       for (OEngine engine : engines.values()) {

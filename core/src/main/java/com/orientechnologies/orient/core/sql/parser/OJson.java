@@ -6,10 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OJson extends SimpleNode {
 
@@ -87,7 +84,7 @@ public class OJson extends SimpleNode {
   private String getClassNameForDocument(OCommandContext ctx) {
     for (OJsonItem item : items) {
       String left = item.getLeftValue();
-      if (left.toLowerCase().equals("@class")) {
+      if (left.toLowerCase(Locale.ENGLISH).equals("@class")) {
         return "" + item.right.execute(null, ctx);
       }
     }

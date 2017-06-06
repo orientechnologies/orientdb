@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 
 import java.io.PrintStream;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
@@ -999,7 +1000,7 @@ public enum OGlobalConfiguration {
 
       if (!lastSection.equals(section)) {
         out.print("- ");
-        out.println(section.toUpperCase());
+        out.println(section.toUpperCase(Locale.ENGLISH));
         lastSection = section;
       }
       out.print("  + ");

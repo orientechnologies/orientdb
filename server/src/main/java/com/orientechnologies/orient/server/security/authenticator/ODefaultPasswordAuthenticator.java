@@ -28,6 +28,7 @@ import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstract;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -61,7 +62,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
             String checkName = userCfg.name;
 
             if (!isCaseSensitive())
-              checkName = checkName.toLowerCase();
+              checkName = checkName.toLowerCase(Locale.ENGLISH);
 
             usersMap.put(checkName, userCfg);
           }
@@ -151,7 +152,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
         String checkName = username;
 
         if (!isCaseSensitive())
-          checkName = username.toLowerCase();
+          checkName = username.toLowerCase(Locale.ENGLISH);
 
         if (usersMap.containsKey(checkName)) {
           userCfg = usersMap.get(checkName);

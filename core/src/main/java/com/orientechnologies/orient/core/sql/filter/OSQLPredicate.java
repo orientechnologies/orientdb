@@ -275,7 +275,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       if (word.length() == 0)
         break;
 
-      final String uWord = word.toUpperCase();
+      final String uWord = word.toUpperCase(Locale.ENGLISH);
 
       final int lastPosition = parserIsEnded() ? parserText.length() : parserGetCurrentPosition();
 

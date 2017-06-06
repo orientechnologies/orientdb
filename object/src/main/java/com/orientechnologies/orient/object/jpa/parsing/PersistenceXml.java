@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.object.jpa.parsing;
 
+import java.util.Locale;
 
 public enum PersistenceXml {
 
@@ -53,7 +54,7 @@ public enum PersistenceXml {
 	 */
 	public static PersistenceXml parse(String aName) {
 		try {
-			return valueOf("TAG_" + aName.replace('-', '_').toUpperCase());
+			return valueOf("TAG_" + aName.replace('-', '_').toUpperCase(Locale.ENGLISH));
 		} catch (IllegalArgumentException e) {
 			return TAG_UNKNOWN$;
 		}

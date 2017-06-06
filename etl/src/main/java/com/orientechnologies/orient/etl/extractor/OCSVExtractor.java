@@ -115,7 +115,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
         final String[] parts = c.split(":");
         columnNames.add(parts[0]);
         if (parts.length > 1) {
-          columnTypes.put(parts[0], OType.valueOf(parts[1].toUpperCase()));
+          columnTypes.put(parts[0], OType.valueOf(parts[1].toUpperCase(Locale.ENGLISH)));
         } else {
           columnTypes.put(parts[0], OType.ANY);
         }

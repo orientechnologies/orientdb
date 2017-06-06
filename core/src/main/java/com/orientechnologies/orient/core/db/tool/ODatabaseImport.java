@@ -399,7 +399,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes()) {
         if (index.isAutomatic())
-          indexesToRebuild.add(index.getName().toLowerCase());
+          indexesToRebuild.add(index.getName().toLowerCase(Locale.ENGLISH));
       }
 
       String tag;
@@ -1492,7 +1492,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         listener.onMessage("\n- Index '" + indexName + "'...");
 
         indexManager.dropIndex(indexName);
-        indexesToRebuild.remove(indexName.toLowerCase());
+        indexesToRebuild.remove(indexName.toLowerCase(Locale.ENGLISH));
         List<Integer> clusterIds = new ArrayList<Integer>();
 
         for (final String clusterName : clustersToIndex) {

@@ -472,7 +472,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       final boolean iAscendentOrder) {
 
     final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iCls.getName().toLowerCase());
+    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iCls.getName().toLowerCase(Locale.ENGLISH));
 
     final ORID[] range = getRange();
     if (iAscendentOrder)
@@ -495,7 +495,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       if (clusterName == null || clusterName.length() == 0)
         throw new OCommandExecutionException("No cluster or schema class selected in query");
 
-      database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, clusterName.toLowerCase());
+      database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, clusterName.toLowerCase(Locale.ENGLISH));
 
       if (Character.isDigit(clusterName.charAt(0))) {
         // GET THE CLUSTER NUMBER
@@ -507,7 +507,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         }
       } else {
         // GET THE CLUSTER NUMBER BY THE CLASS NAME
-        final int clusterId = database.getClusterIdByName(clusterName.toLowerCase());
+        final int clusterId = database.getClusterIdByName(clusterName.toLowerCase(Locale.ENGLISH));
         if (clusterId == -1)
           throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
 

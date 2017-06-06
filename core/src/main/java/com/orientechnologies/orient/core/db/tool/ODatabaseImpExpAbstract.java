@@ -24,10 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Abstract class for import/export of database and data in general.
@@ -210,24 +207,24 @@ public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
     } else if (option.equalsIgnoreCase("-includeClass")) {
       includeClasses = new HashSet<String>();
       for (String item : items)
-        includeClasses.add(item.toUpperCase());
+        includeClasses.add(item.toUpperCase(Locale.ENGLISH));
       includeRecords = true;
 
     } else if (option.equalsIgnoreCase("-excludeClass")) {
       excludeClasses = new HashSet<String>(items);
       for (String item : items)
-        excludeClasses.add(item.toUpperCase());
+        excludeClasses.add(item.toUpperCase(Locale.ENGLISH));
 
     } else if (option.equalsIgnoreCase("-includeCluster")) {
       includeClusters = new HashSet<String>(items);
       for (String item : items)
-        includeClusters.add(item.toUpperCase());
+        includeClusters.add(item.toUpperCase(Locale.ENGLISH));
       includeRecords = true;
 
     } else if (option.equalsIgnoreCase("-excludeCluster")) {
       excludeClusters = new HashSet<String>(items);
       for (String item : items)
-        excludeClusters.add(item.toUpperCase());
+        excludeClusters.add(item.toUpperCase(Locale.ENGLISH));
 
     } else if (option.equalsIgnoreCase("-includeInfo")) {
       includeInfo = Boolean.parseBoolean(items.get(0));

@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 
+import java.util.Locale;
+
 /**
  * ETL abstract component.
  */
@@ -52,7 +54,7 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     ifExpression = iConfiguration.field("if");
 
     if (iConfiguration.containsField("log"))
-      logLevel = LOG_LEVELS.valueOf(iConfiguration.field("log").toString().toUpperCase());
+      logLevel = LOG_LEVELS.valueOf(iConfiguration.field("log").toString().toUpperCase(Locale.ENGLISH));
     else
       logLevel = iProcessor.getLogLevel();
 

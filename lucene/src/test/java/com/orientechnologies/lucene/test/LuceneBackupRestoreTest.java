@@ -34,6 +34,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,7 +51,7 @@ public class LuceneBackupRestoreTest {
 
   @Before
   public void setUp() throws Exception {
-    final String os = System.getProperty("os.name").toLowerCase();
+    final String os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
     Assume.assumeFalse(os.contains("win"));
 
     String url = "plocal:./target/" + getClass().getName();
@@ -80,7 +81,7 @@ public class LuceneBackupRestoreTest {
 
   @After
   public void tearDown() throws Exception {
-    final String os = System.getProperty("os.name").toLowerCase();
+    final String os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
     if (!os.contains("win"))
       dropIfExists();
 

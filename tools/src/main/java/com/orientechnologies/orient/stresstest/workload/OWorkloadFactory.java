@@ -19,10 +19,7 @@
  */
 package com.orientechnologies.orient.stresstest.workload;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
@@ -47,11 +44,11 @@ public class OWorkloadFactory {
   }
 
   public OWorkload get(final String name) {
-    return registered.get(name.toUpperCase());
+    return registered.get(name.toUpperCase(Locale.ENGLISH));
   }
 
   public void register(final OWorkload workload) {
-    registered.put(workload.getName().toUpperCase(), workload);
+    registered.put(workload.getName().toUpperCase(Locale.ENGLISH), workload);
   }
 
   public Set<String> getRegistered() {

@@ -1015,7 +1015,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     final ODatabaseDocument database = getDatabase();
     if (className != null) {
       OClass schemaClass = database.getMetadata().getSchema().getClass(className);
-      database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, schemaClass.getName().toLowerCase());
+      database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, schemaClass.getName().toLowerCase(Locale.ENGLISH));
 //      Iterable<ORecord> baseIterable = fetchFromIndex(schemaClass, oWhereClause);
     }
 

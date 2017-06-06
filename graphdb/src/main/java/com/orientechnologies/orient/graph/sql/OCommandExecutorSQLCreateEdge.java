@@ -77,7 +77,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
       String className = null;
 
       String tempLower = parseOptionalWord(false);
-      String temp = tempLower == null ? null : tempLower.toUpperCase();
+      String temp = tempLower == null ? null : tempLower.toUpperCase(Locale.ENGLISH);
 
       while (temp != null) {
         if (temp.equals("CLUSTER")) {

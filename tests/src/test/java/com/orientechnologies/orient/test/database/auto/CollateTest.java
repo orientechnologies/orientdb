@@ -17,6 +17,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 @Test
@@ -61,7 +62,7 @@ public class CollateTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 10);
 
     for (ODocument document : result)
-      Assert.assertEquals((document.<String> field("cip")).toUpperCase(), "VAL");
+      Assert.assertEquals((document.<String> field("cip")).toUpperCase(Locale.ENGLISH), "VAL");
   }
 
   public void testQueryNotNullCi() {
@@ -129,7 +130,7 @@ public class CollateTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 10);
 
     for (ODocument document : result)
-      Assert.assertEquals((document.<String> field("cip")).toUpperCase(), "VAL");
+      Assert.assertEquals((document.<String> field("cip")).toUpperCase(Locale.ENGLISH), "VAL");
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("collateIndexCIP"));
@@ -173,7 +174,7 @@ public class CollateTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 10);
 
     for (ODocument document : result)
-      Assert.assertEquals((document.<String> field("cp")).toUpperCase(), "VAL");
+      Assert.assertEquals((document.<String> field("cp")).toUpperCase(Locale.ENGLISH), "VAL");
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("collateWasChangedIndex"));
@@ -221,7 +222,7 @@ public class CollateTest extends DocumentDBBaseTest {
 
     for (ODocument document : result) {
       Assert.assertEquals(document.field("csp"), "VAL");
-      Assert.assertEquals((document.<String> field("cip")).toUpperCase(), "VAL");
+      Assert.assertEquals((document.<String> field("cip")).toUpperCase(Locale.ENGLISH), "VAL");
     }
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -238,7 +239,7 @@ public class CollateTest extends DocumentDBBaseTest {
 
       final ODocument record = document.<OIdentifiable> field("rid").getRecord();
       Assert.assertEquals(record.field("csp"), "VAL");
-      Assert.assertEquals((record.<String> field("cip")).toUpperCase(), "VAL");
+      Assert.assertEquals((record.<String> field("cip")).toUpperCase(Locale.ENGLISH), "VAL");
     }
   }
 
@@ -284,7 +285,7 @@ public class CollateTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 10);
 
     for (ODocument document : result)
-      Assert.assertEquals(document.<String> field("csp").toUpperCase(), "VAL");
+      Assert.assertEquals(document.<String> field("csp").toUpperCase(Locale.ENGLISH), "VAL");
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("collateCompositeIndexCollateWasChanged"));
@@ -323,6 +324,6 @@ public class CollateTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 10);
 
     for (ODocument document : result)
-      Assert.assertEquals((document.<String> field("cip")).toUpperCase(), "VAL");
+      Assert.assertEquals((document.<String> field("cip")).toUpperCase(Locale.ENGLISH), "VAL");
   }
 }

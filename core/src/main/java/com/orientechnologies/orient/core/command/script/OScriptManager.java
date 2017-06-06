@@ -60,7 +60,7 @@ public class OScriptManager {
     registerEngine(OSQLScriptEngine.NAME, new OSQLScriptEngineFactory());
 
     for (ScriptEngineFactory f : scriptEngineManager.getEngineFactories()) {
-      registerEngine(f.getLanguageName().toLowerCase(), f);
+      registerEngine(f.getLanguageName().toLowerCase(Locale.ENGLISH), f);
 
       if (defaultLanguage == null)
         defaultLanguage = f.getLanguageName();
@@ -84,7 +84,7 @@ public class OScriptManager {
   }
 
   public String getFunctionDefinition(final OFunction iFunction) {
-    final OScriptFormatter formatter = formatters.get(iFunction.getLanguage().toLowerCase());
+    final OScriptFormatter formatter = formatters.get(iFunction.getLanguage().toLowerCase(Locale.ENGLISH));
     if (formatter == null)
       throw new IllegalArgumentException("Cannot find script formatter for the language '" + iFunction.getLanguage() + "'");
 
@@ -92,7 +92,7 @@ public class OScriptManager {
   }
 
   public String getFunctionInvoke(final OFunction iFunction, final Object[] iArgs) {
-    final OScriptFormatter formatter = formatters.get(iFunction.getLanguage().toLowerCase());
+    final OScriptFormatter formatter = formatters.get(iFunction.getLanguage().toLowerCase(Locale.ENGLISH));
     if (formatter == null)
       throw new IllegalArgumentException("Cannot find script formatter for the language '" + iFunction.getLanguage() + "'");
 
@@ -137,7 +137,7 @@ public class OScriptManager {
     if (iLanguage == null)
       return false;
 
-    iLanguage = iLanguage.toLowerCase();
+    iLanguage = iLanguage.toLowerCase(Locale.ENGLISH);
     return engines.containsKey(iLanguage);
   }
 
@@ -145,7 +145,7 @@ public class OScriptManager {
     if (iLanguage == null)
       throw new OCommandScriptException("No language was specified");
 
-    final String lang = iLanguage.toLowerCase();
+    final String lang = iLanguage.toLowerCase(Locale.ENGLISH);
 
     final ScriptEngineFactory scriptEngineFactory = engines.get(lang);
     if (scriptEngineFactory == null)
@@ -346,7 +346,7 @@ public class OScriptManager {
   }
 
   public OScriptManager registerFormatter(final String iLanguage, final OScriptFormatter iFormatterImpl) {
-    formatters.put(iLanguage.toLowerCase(), iFormatterImpl);
+    formatters.put(iLanguage.toLowerCase(Locale.ENGLISH), iFormatterImpl);
     return this;
   }
 

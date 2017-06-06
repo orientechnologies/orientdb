@@ -21,6 +21,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
+import java.util.Locale;
+
 /**
  * Converts a value to another type in Java or OrientDB's supported types.
  * 
@@ -53,7 +55,7 @@ public class OSQLMethodConvert extends OAbstractSQLMethod {
       } catch (ClassNotFoundException e) {
       }
     } else {
-      final OType orientType = OType.valueOf(destType.toUpperCase());
+      final OType orientType = OType.valueOf(destType.toUpperCase(Locale.ENGLISH));
       if (orientType != null) {
         return OType.convert(iThis, orientType.getDefaultJavaType());
       }

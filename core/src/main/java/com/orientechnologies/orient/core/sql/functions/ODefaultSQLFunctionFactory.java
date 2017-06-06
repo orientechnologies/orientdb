@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionConcat;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -100,7 +101,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
   }
 
   public static void register(final String iName, final Object iImplementation) {
-    FUNCTIONS.put(iName.toLowerCase(), iImplementation);
+    FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iImplementation);
   }
 
   @Override

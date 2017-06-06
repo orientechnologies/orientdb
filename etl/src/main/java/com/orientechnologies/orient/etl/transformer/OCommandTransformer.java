@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 
+import java.util.Locale;
+
 /**
  * Executes a command.
  */
@@ -45,7 +47,7 @@ public class OCommandTransformer extends OAbstractTransformer {
     super.configure(iProcessor, iConfiguration, iContext);
 
     if (iConfiguration.containsField("language"))
-      language = ((String) iConfiguration.field("language")).toLowerCase();
+      language = ((String) iConfiguration.field("language")).toLowerCase(Locale.ENGLISH);
     command = (String) iConfiguration.field("command");
   }
 

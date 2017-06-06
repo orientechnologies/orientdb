@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.graph.GraphTxAbstractTest;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
+import java.util.Locale;
+
 public class RequireTransactionTest {
 
   protected static OrientGraph graph;
@@ -40,7 +42,7 @@ public class RequireTransactionTest {
   }
 
   public static ENV getEnvironment() {
-    String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase();
+    String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase(Locale.ENGLISH);
     ENV result = null;
     try {
       result = ENV.valueOf(envName);

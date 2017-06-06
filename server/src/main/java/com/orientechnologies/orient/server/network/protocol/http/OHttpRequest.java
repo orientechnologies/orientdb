@@ -29,6 +29,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -95,7 +96,7 @@ public class OHttpRequest {
 
     final int pos = h.indexOf(':');
     if (pos > -1) {
-      headers.put(h.substring(0, pos).trim().toLowerCase(), h.substring(pos + 1).trim());
+      headers.put(h.substring(0, pos).trim().toLowerCase(Locale.ENGLISH), h.substring(pos + 1).trim());
     }
   }
 
@@ -122,7 +123,7 @@ public class OHttpRequest {
   }
 
   public String getHeader(final String iName) {
-    return headers.get(iName.toLowerCase());
+    return headers.get(iName.toLowerCase(Locale.ENGLISH));
   }
 
   public Set<Entry<String, String>> getHeaders() {

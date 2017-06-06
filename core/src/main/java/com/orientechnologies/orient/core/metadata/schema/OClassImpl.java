@@ -734,7 +734,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     for (OProperty p : properties.values()) {
       String propName = p.getName();
       if (!keepCase)
-        propName = propName.toLowerCase();
+        propName = propName.toLowerCase(Locale.ENGLISH);
       if (!propertiesMap.containsKey(propName))
         propertiesMap.put(propName, p);
     }
@@ -789,7 +789,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public OProperty getProperty(String propertyName) {
     acquireSchemaReadLock();
     try {
-      propertyName = propertyName.toLowerCase();
+      propertyName = propertyName.toLowerCase(Locale.ENGLISH);
 
       OProperty p = properties.get(propertyName);
       if (p != null)
@@ -827,7 +827,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public boolean existsProperty(String propertyName) {
     acquireSchemaReadLock();
     try {
-      propertyName = propertyName.toLowerCase();
+      propertyName = propertyName.toLowerCase(Locale.ENGLISH);
       boolean result = properties.containsKey(propertyName);
       if (result)
         return true;
@@ -848,7 +848,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
-    final String lowerName = propertyName.toLowerCase();
+    final String lowerName = propertyName.toLowerCase(Locale.ENGLISH);
 
     acquireSchemaWriteLock();
     try {
@@ -955,11 +955,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         prop.fromStream();
 
         if (properties.containsKey(prop.getName())) {
-          prop = (OPropertyImpl) properties.get(prop.getName().toLowerCase());
+          prop = (OPropertyImpl) properties.get(prop.getName().toLowerCase(Locale.ENGLISH));
           prop.fromStream(p);
         }
 
-        newProperties.put(prop.getName().toLowerCase(), prop);
+        newProperties.put(prop.getName().toLowerCase(Locale.ENGLISH), prop);
       }
 
     properties.clear();
@@ -1074,9 +1074,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void renameProperty(final String iOldName, final String iNewName) {
-    final OProperty p = properties.remove(iOldName.toLowerCase());
+    final OProperty p = properties.remove(iOldName.toLowerCase(Locale.ENGLISH));
     if (p != null)
-      properties.put(iNewName.toLowerCase(), p);
+      properties.put(iNewName.toLowerCase(Locale.ENGLISH), p);
   }
 
   public OClass addClusterId(final int clusterId) {
@@ -1114,7 +1114,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public static OClass addClusters(final OClass cls, final int iClusters) {
-    final String clusterBase = cls.getName().toLowerCase() + "_";
+    final String clusterBase = cls.getName().toLowerCase(Locale.ENGLISH) + "_";
     for (int i = 1; i < iClusters; ++i) {
       cls.addCluster(clusterBase + i);
     }
@@ -1811,7 +1811,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (!unsafe)
       checkPersistentPropertyType(getDatabase(), name, type);
 
-    final String lowerName = name.toLowerCase();
+    final String lowerName = name.toLowerCase(Locale.ENGLISH);
 
     final OPropertyImpl prop;
 
@@ -1872,7 +1872,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (type == null)
       throw new IllegalArgumentException("Index type is null");
 
-    type = type.toUpperCase();
+    type = type.toUpperCase(Locale.ENGLISH);
 
     if (fields.length == 0) {
       throw new OIndexException("List of fields to index cannot be empty.");
@@ -2301,8 +2301,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void renameCluster(String oldName, String newName) {
-    oldName = oldName.toLowerCase();
-    newName = newName.toLowerCase();
+    oldName = oldName.toLowerCase(Locale.ENGLISH);
+    newName = newName.toLowerCase(Locale.ENGLISH);
 
     final ODatabaseDocumentInternal database = getDatabase();
     final OStorage storage = database.getStorage();
@@ -2359,7 +2359,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     try {
       checkEmbedded();
 
-      final OProperty prop = properties.remove(iPropertyName.toLowerCase());
+      final OProperty prop = properties.remove(iPropertyName.toLowerCase(Locale.ENGLISH));
 
       if (prop == null)
         throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
@@ -2745,7 +2745,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void tryDropCluster(final int defaultClusterId) {
-    if (name.toLowerCase().equals(getDatabase().getClusterNameById(defaultClusterId))) {
+    if (name.toLowerCase(Locale.ENGLISH).equals(getDatabase().getClusterNameById(defaultClusterId))) {
       // DROP THE DEFAULT CLUSTER CALLED WITH THE SAME NAME ONLY IF EMPTY
       if (getDatabase().getClusterRecordSizeById(defaultClusterId) == 0)
         getDatabase().getStorage().dropCluster(defaultClusterId, true);
@@ -2795,7 +2795,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     for (String fieldName : fieldNames) {
       if (!fieldName.equals("@rid"))
-        types.add(getProperty(decodeClassName(OIndexDefinitionFactory.extractFieldName(fieldName)).toLowerCase()).getType());
+        types.add(getProperty(decodeClassName(OIndexDefinitionFactory.extractFieldName(fieldName)).toLowerCase(Locale.ENGLISH)).getType());
       else
         types.add(OType.LINK);
     }

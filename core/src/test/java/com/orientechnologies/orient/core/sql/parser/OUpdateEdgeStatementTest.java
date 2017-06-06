@@ -42,7 +42,7 @@ public class OUpdateEdgeStatementTest {
     checkRightSyntax("update edge Foo set a = 'b'");
     checkRightSyntax("update edge Foo set a = 1");
     checkRightSyntax("update edge Foo set a = 1+1");
-    checkRightSyntax("update edge Foo set a = a.b.toLowerCase()");
+    checkRightSyntax("update edge Foo set a = a.b.toLowerCase(Locale.ENGLISH)");
 
     checkRightSyntax("update edge Foo set a = b, b=c");
     checkRightSyntax("update edge Foo set a = 'b', b=1");

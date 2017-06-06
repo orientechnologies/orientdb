@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodNext;
 import com.orientechnologies.orient.core.sql.method.sequence.OSQLMethodReset;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -102,12 +103,12 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
   }
 
   public void register(final String iName, final Object iImplementation) {
-    methods.put(iName.toLowerCase(), iImplementation);
+    methods.put(iName.toLowerCase(Locale.ENGLISH), iImplementation);
   }
 
   @Override
   public boolean hasMethod(final String iName) {
-    return methods.containsKey(iName.toLowerCase());
+    return methods.containsKey(iName.toLowerCase(Locale.ENGLISH));
   }
 
   @Override

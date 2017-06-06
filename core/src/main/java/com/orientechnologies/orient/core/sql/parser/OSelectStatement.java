@@ -18,6 +18,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
 public class OSelectStatement extends OStatement {
@@ -298,7 +299,7 @@ public class OSelectStatement extends OStatement {
       final boolean iAscendentOrder) {
 
     final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iCls.getName().toLowerCase());
+    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iCls.getName().toLowerCase(Locale.ENGLISH));
 
     final ORID[] range = new ORID[2];// TODO
     boolean useCache = false;// TODO

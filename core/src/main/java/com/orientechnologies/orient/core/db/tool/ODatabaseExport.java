@@ -155,14 +155,14 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       if (clusterName != null) {
         // CHECK IF THE CLUSTER IS INCLUDED
         if (includeClusters != null) {
-          if (!includeClusters.contains(clusterName.toUpperCase()))
+          if (!includeClusters.contains(clusterName.toUpperCase(Locale.ENGLISH)))
             continue;
         } else if (excludeClusters != null) {
-          if (excludeClusters.contains(clusterName.toUpperCase()))
+          if (excludeClusters.contains(clusterName.toUpperCase(Locale.ENGLISH)))
             continue;
         }
 
-        if (excludeClusters != null && excludeClusters.contains(clusterName.toUpperCase()))
+        if (excludeClusters != null && excludeClusters.contains(clusterName.toUpperCase(Locale.ENGLISH)))
           continue;
 
         clusterExportedRecordsTot = database.countClusterElements(clusterName);
@@ -181,7 +181,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
             if (rec instanceof ODocument) {
               // CHECK IF THE CLASS OF THE DOCUMENT IS INCLUDED
               ODocument doc = (ODocument) rec;
-              final String className = doc.getClassName() != null ? doc.getClassName().toUpperCase() : null;
+              final String className = doc.getClassName() != null ? doc.getClassName().toUpperCase(Locale.ENGLISH) : null;
               if (includeClasses != null) {
                 if (!includeClasses.contains(className))
                   continue;
@@ -278,10 +278,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       // CHECK IF THE CLUSTER IS INCLUDED
       if (includeClusters != null) {
-        if (!includeClusters.contains(clusterName.toUpperCase()))
+        if (!includeClusters.contains(clusterName.toUpperCase(Locale.ENGLISH)))
           continue;
       } else if (excludeClusters != null) {
-        if (excludeClusters.contains(clusterName.toUpperCase()))
+        if (excludeClusters.contains(clusterName.toUpperCase(Locale.ENGLISH)))
           continue;
       }
 
@@ -468,10 +468,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       for (OClass cls : classes) {
         // CHECK TO FILTER CLASS
         if (includeClasses != null) {
-          if (!includeClasses.contains(cls.getName().toUpperCase()))
+          if (!includeClasses.contains(cls.getName().toUpperCase(Locale.ENGLISH)))
             continue;
         } else if (excludeClasses != null) {
-          if (excludeClasses.contains(cls.getName().toUpperCase()))
+          if (excludeClasses.contains(cls.getName().toUpperCase(Locale.ENGLISH)))
             continue;
         }
 

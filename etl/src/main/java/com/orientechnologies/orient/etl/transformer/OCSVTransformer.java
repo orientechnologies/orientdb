@@ -29,6 +29,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @deprecated use OCSVExtractor
@@ -81,7 +82,7 @@ public class OCSVTransformer extends OAbstractTransformer {
 
         columnNames.add(parts[0]);
         if (parts.length > 1)
-          columnTypes.add(OType.valueOf(parts[1].toUpperCase()));
+          columnTypes.add(OType.valueOf(parts[1].toUpperCase(Locale.ENGLISH)));
         else
           columnTypes.add(OType.ANY);
       }

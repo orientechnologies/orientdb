@@ -1602,9 +1602,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         // READ PARAMETERS
         for (Parameter<?, ?> p : indexParameters) {
           if (p.getKey().equals("type"))
-            indexType = p.getValue().toString().toUpperCase();
+            indexType = p.getValue().toString().toUpperCase(Locale.ENGLISH);
           else if (p.getKey().equals("keytype"))
-            keyType = OType.valueOf(p.getValue().toString().toUpperCase());
+            keyType = OType.valueOf(p.getValue().toString().toUpperCase(Locale.ENGLISH));
           else if (p.getKey().equals("class"))
             className = p.getValue().toString();
           else if (p.getKey().equals("collate"))

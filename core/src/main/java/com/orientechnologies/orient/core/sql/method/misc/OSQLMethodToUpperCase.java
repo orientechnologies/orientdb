@@ -19,6 +19,8 @@ package com.orientechnologies.orient.core.sql.method.misc;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Locale;
+
 /**
  *
  * @author Johann Sorel (Geomatys)
@@ -34,7 +36,7 @@ public class OSQLMethodToUpperCase extends OAbstractSQLMethod {
 
     @Override
     public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-        ioResult = ioResult != null ? ioResult.toString().toUpperCase() : null;
+        ioResult = ioResult != null ? ioResult.toString().toUpperCase(Locale.ENGLISH) : null;
         return ioResult;
     }
 }

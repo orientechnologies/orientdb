@@ -50,7 +50,7 @@ public class OUpdateStatementTest {
     checkRightSyntax("update  Foo set a = 'b'");
     checkRightSyntax("update  Foo set a = 1");
     checkRightSyntax("update  Foo set a = 1+1");
-    checkRightSyntax("update  Foo set a = a.b.toLowerCase()");
+    checkRightSyntax("update  Foo set a = a.b.toLowerCase(Locale.ENGLISH)");
 
     checkRightSyntax("update  Foo set a = b, b=c");
     checkRightSyntax("update  Foo set a = 'b', b=1");

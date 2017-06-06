@@ -108,7 +108,7 @@ public class ODistributedConfiguration {
 
     final String value = configuration.field(NEW_NODE_STRATEGY);
     if (value != null)
-      return NEW_NODE_STRATEGIES.valueOf(value.toUpperCase());
+      return NEW_NODE_STRATEGIES.valueOf(value.toUpperCase(Locale.ENGLISH));
 
     return NEW_NODE_STRATEGIES.STATIC;
   }
@@ -380,7 +380,7 @@ public class ODistributedConfiguration {
         for (Iterator<String> it = masters.iterator(); it.hasNext(); ) {
           final String server = it.next();
           final String roleAsString = servers.field(server);
-          final ROLES role = roleAsString != null ? ROLES.valueOf(roleAsString.toUpperCase()) : defRole;
+          final ROLES role = roleAsString != null ? ROLES.valueOf(roleAsString.toUpperCase(Locale.ENGLISH)) : defRole;
           if (role != ROLES.MASTER)
             it.remove();
         }
@@ -527,7 +527,7 @@ public class ODistributedConfiguration {
       // DEFAULT: MASTER
       return ROLES.MASTER;
 
-    return ROLES.valueOf(role.toUpperCase());
+    return ROLES.valueOf(role.toUpperCase(Locale.ENGLISH));
   }
 
   /**
@@ -549,7 +549,7 @@ public class ODistributedConfiguration {
         return ROLES.MASTER;
     }
 
-    return ROLES.valueOf(role.toUpperCase());
+    return ROLES.valueOf(role.toUpperCase(Locale.ENGLISH));
   }
 
   /**
