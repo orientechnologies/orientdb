@@ -28,8 +28,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -422,22 +421,39 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       }
       String vertexFieldName = direction + "_" + edgeClassName;
       ODocument prevOutDoc = ((OIdentifiable) prevVertex).getRecord();
-      ORidBag prevBag = prevOutDoc.field(vertexFieldName);
+      ORecordLazyMultiValue prevBag = prevOutDoc.field(vertexFieldName);
       if (prevBag == null && edgeClassName.equalsIgnoreCase("E")) {
         prevBag = prevOutDoc.field(vertexFieldName + "E");
       }
       if (prevBag != null) {
-        prevBag.remove(edge);
+        if (prevBag instanceof ORidBag) {
+          ((ORidBag) prevBag).remove(edge);
+        } else if (prevBag instanceof List) {
+          ((List) prevBag).remove(edge);
+        } else if (prevBag instanceof Set) {
+          ((Set) prevBag).remove(edge);
+        } else {
+          throw new UnsupportedOperationException();
+        }
         prevOutDoc.save();
       }
 
       ODocument currentVertexDoc = ((OIdentifiable) currentVertex).getRecord();
-      ORidBag currentBag = currentVertexDoc.field(vertexFieldName);
+      ORecordLazyMultiValue currentBag = currentVertexDoc.field(vertexFieldName);
       if (currentBag == null) {
         currentBag = new ORidBag();
         currentVertexDoc.field(vertexFieldName, currentBag);
       }
-      currentBag.add(edge);
+      if (currentBag instanceof ORidBag) {
+        ((ORidBag) currentBag).add(edge);
+      } else if (currentBag instanceof List) {
+        ((List) currentBag).add(edge);
+      } else if (currentBag instanceof Set) {
+        ((Set) currentBag).add(edge);
+      } else {
+        throw new UnsupportedOperationException();
+      }
+
     }
   }
 
@@ -873,8 +889,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       // INSERT TRANSFORMED FIELD VALUE
       Object val = getFieldValueCountingParameters(fieldValue);
       val = reattachInTx(val);
-      putEntries.add(
-          new OTriple(fieldName, (String) getFieldValueCountingParameters(fieldKey), val));
+      putEntries.add(new OTriple(fieldName, (String) getFieldValueCountingParameters(fieldKey), val));
       parserSkipWhiteSpaces();
 
       firstLap = false;
