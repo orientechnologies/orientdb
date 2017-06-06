@@ -10,6 +10,7 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.orientechnologies.orient.core.Orient;
 import org.junit.*;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
@@ -244,21 +245,17 @@ public class OrientCommitMTTest {
         try {
           // generate random operation list
           List<Operation> operations = generateOperations(this.maxOpCount);
-          System.out.println("ThreadId: " + this.threadId + " Operations to execute are: " + operations);
-          System.out.println("ThreadId: " + this.threadId + " Beginning transaction.");
           for (Operation operation : operations) {
             if (Operation.INSERT.equals(operation)) {
               // perform insert operation
               IdPair insertedNode = insertNewNode(graph);
               ORID insertId = insertedNode.getOrid();
-              System.out.println("ThreadId: " + this.threadId + " Inserting " + insertId);
               // add inserted id to temp cache
               tempCache.add(new TempCacheObject(operation, insertId, insertedNode.getCustomId()));
             } else if (Operation.DELETE.equals(operation)) {
               // get delete id
               ORID deleteId = getRandomIdForThread(graph);
               if (deleteId != null) {
-                System.out.println("ThreadId: " + this.threadId + " Deleting " + deleteId);
                 // perform delete operation
                 Integer customId = deleteExistingNode(deleteId, graph);
                 // add deleted id to temp cache
@@ -269,9 +266,7 @@ public class OrientCommitMTTest {
             }
           }
 
-          System.out.println("ThreadId: " + this.threadId + " Committing transaction. " + tempCache);
           graph.commit();
-          System.out.println("ThreadId: " + this.threadId + " transaction committed. " + tempCache);
 
         } catch (Exception e) {
           graph.rollback();

@@ -409,7 +409,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     assignLetClauses(iRecord);
     if (compiledFilter == null)
       return true;
-    return (Boolean) compiledFilter.evaluate(iRecord, null, iContext);
+    Boolean evaluate = (Boolean) compiledFilter.evaluate(iRecord, null, iContext);
+    return evaluate == null ? false : evaluate;
   }
 
   protected void assignLetClauses(final ORecord iRecord) {
@@ -689,7 +690,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   public boolean isCacheable() {
     return true;
   }
-  
+
   public Object mergeResults(Map<String, Object> results) throws Exception {
 
     if (results.isEmpty())

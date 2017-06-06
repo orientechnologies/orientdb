@@ -52,7 +52,7 @@ public class DirtyTrackingTreeRidBagRemoteTest {
 
   @Test
   public void test() {
-
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getDefValue());
     final int max = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
     OrientGraph graph = new OrientGraph("remote:localhost:3064/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName(), "root",
         "root");

@@ -11,10 +11,10 @@ public class OrientTestsAutoStartTxTest {
   private final static String STORAGE_ENGINE = "memory";
   private final static String DATABASE_URL   = STORAGE_ENGINE + ":" + OrientTestsAutoStartTxTest.class.getSimpleName();
 
-  private final static String PROPERTY_NAME  = "pn";
+  private final static String PROPERTY_NAME = "pn";
 
-  OrientGraphFactory          graphFactory;
-  OrientGraph                 graph;
+  OrientGraphFactory graphFactory;
+  OrientGraph        graph;
 
   @Before
   public void setUpGraph() {
@@ -24,11 +24,11 @@ public class OrientTestsAutoStartTxTest {
 
   @After
   public void tearDownGraph() {
+    graph.shutdown();
     graphFactory.drop();
   }
 
   @Test
-  @Ignore
   public void vertexObjectsAreInSyncWithMultipleVertexObjects() {
     final int firstValue = 0;
     final int secondValue = 1;
@@ -43,12 +43,11 @@ public class OrientTestsAutoStartTxTest {
     secondVertexHandle.setProperty(PROPERTY_NAME, secondValue);
     graph.commit();
 
-    Assert.assertEquals("Both queries should return " + secondValue, firstVertexHandle.getProperty(PROPERTY_NAME),
+    Assert.assertEquals("Both queries should return " + secondValue, (Integer) firstVertexHandle.getProperty(PROPERTY_NAME),
         secondVertexHandle.getProperty(PROPERTY_NAME));
   }
 
   @Test
-  @Ignore
   public void noOConcurrentModificationExceptionWithMultipleVertexObjects() {
     final int firstValue = 0;
     final int secondValue = 1;
@@ -73,7 +72,6 @@ public class OrientTestsAutoStartTxTest {
   }
 
   @Test
-  @Ignore
   public void noOConcurrentModificationExceptionSettingAFixedValueWithMultipleVertexObjects() {
     final int fixedValue = 113;
 

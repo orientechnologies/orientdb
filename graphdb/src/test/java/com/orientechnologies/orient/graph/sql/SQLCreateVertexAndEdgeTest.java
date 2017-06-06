@@ -17,8 +17,11 @@ package com.orientechnologies.orient.graph.sql;
 
 import java.util.List;
 
+import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -48,6 +51,11 @@ public class SQLCreateVertexAndEdgeTest {
       database.open("admin", "admin");
     else
       database.create();
+  }
+
+  @Before
+  public void before(){
+    OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
   }
 
   @After
