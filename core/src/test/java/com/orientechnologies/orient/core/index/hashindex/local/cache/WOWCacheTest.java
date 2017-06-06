@@ -151,7 +151,7 @@ public class WOWCacheTest {
     }
   }
 
-  @Test(enabled = false)
+  @Test
   public void testDataUpdate() throws Exception {
     final NavigableMap<Long, byte[]> pageIndexDataMap = new TreeMap<Long, byte[]>();
     long fileId = wowCache.addFile(fileName);
