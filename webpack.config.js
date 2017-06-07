@@ -99,7 +99,7 @@ module.exports = function (options) {
         {
           test: /\.html$/,
           loader: 'ngtemplate-loader?relativeTo=' + (path.resolve(__dirname, './src')) + '/!html-loader',
-          exclude: [/src\/app/, /src\/components/]
+          exclude: [/src\/app/, /src\/components/,path.resolve(__dirname, 'src/index.html')]
         },
       ]
     },
