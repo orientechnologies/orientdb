@@ -406,7 +406,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
                 .getListeningBinaryAddress(manager.getNodeConfigurationByUuid(manager.getNodeUuidByName(toServer), true));
 
             throw new ODistributedRedirectException(manager.getLocalNodeName(), toServer, toIPAddress,
-                "The server is frozen (usually is because a backup is running). Redirecting the request to another server");
+                "The server is frozen (usually because a backup is running). Redirecting the request to another server");
           }
         }
       }
