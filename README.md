@@ -15,16 +15,18 @@ Develop: [![Build Status](http://helios.orientdb.com/job/orientdb-studio-multibr
     $ git clone https://github.com/orientechnologies/orientdb-studio.git
     ```
 
-2. Install local dependencies:
+2. Install [yarn](https://yarnpkg.com) 
+
+3. Install local dependencies:
 
     ```bash
     $ cd orientdb-studio
-    $ npm install
+    $ yarn install
     ```
 
-3. Start OrientDB server.
+4. Start OrientDB server.
 
-4. Start webpack server and open your browser at `http://localhost:8080`:
+5. Start webpack server and open your browser at `http://localhost:8080`:
 
     ```bash
 	$ npm run watch
