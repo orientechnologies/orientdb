@@ -5,6 +5,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNull;
@@ -24,6 +25,7 @@ public class NotTxVertexDropWithRidBagTreeTest {
   }
 
   @Test
+  @Ignore
   public void testDropVertex() {
     OrientVertex vertex = graph.addVertex("class:Test");
     Object id = null;

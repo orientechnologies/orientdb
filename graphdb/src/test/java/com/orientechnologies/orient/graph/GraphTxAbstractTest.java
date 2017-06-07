@@ -63,8 +63,9 @@ public abstract class GraphTxAbstractTest {
   public static void init(final String dbName) {
     if (graph == null) {
       final String storageType = getStorageType();
-      final String buildDirectory = System.getProperty("buildDirectory", ".");
+      final String buildDirectory = System.getProperty("project.build.directory", ".");
 
+      System.out.println("buildDirectory = " + buildDirectory);
       final String url = System.getProperty("url");
 
       if (url != null)

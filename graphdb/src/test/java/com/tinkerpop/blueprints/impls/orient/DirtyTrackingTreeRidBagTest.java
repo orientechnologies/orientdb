@@ -6,6 +6,7 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -28,6 +29,7 @@ public class DirtyTrackingTreeRidBagTest {
   }
 
   @Test
+  @Ignore
   public void testConcurrentEdges() {
     final int max = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
     final OrientBaseGraph graph = factory.getTx();

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
 import com.tinkerpop.blueprints.Vertex;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ public class GraphCommandsTest extends GraphNoTxAbstractTest {
   }
 
   @Test
+  @Ignore
   public void testParams() {
     String sql = "SELECT FROM V WHERE tags IN :tags";
     Map<String, Object> queryParams = new HashMap<String, Object>();
