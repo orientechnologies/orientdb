@@ -153,6 +153,16 @@ public class OParenthesisExpression extends OMathExpression {
     }
   }
 
+  public void extractSubQueries(OIdentifier letAlias, SubQueryCollector collector) {
+    if (expression != null) {
+      expression.extractSubQueries(collector);
+    } else if (statement != null) {
+      OIdentifier alias = collector.addStatement(letAlias, statement);
+      statement = null;
+      expression = new OExpression(alias);
+    }
+  }
+
   public boolean refersToParent() {
     if (expression != null && expression.refersToParent()) {
       return true;

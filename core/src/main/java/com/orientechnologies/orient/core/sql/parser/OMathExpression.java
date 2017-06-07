@@ -912,6 +912,12 @@ public class OMathExpression extends SimpleNode {
     return result;
   }
 
+  public void extractSubQueries(OIdentifier letAlias, SubQueryCollector collector) {
+    for (OMathExpression expr : this.childExpressions) {
+      expr.extractSubQueries(letAlias, collector);
+    }
+  }
+
   public void extractSubQueries(SubQueryCollector collector) {
     for (OMathExpression expr : this.childExpressions) {
       expr.extractSubQueries(collector);

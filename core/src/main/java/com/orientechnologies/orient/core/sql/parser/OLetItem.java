@@ -107,7 +107,7 @@ public class OLetItem extends SimpleNode {
   public void extractSubQueries(SubQueryCollector collector) {
     //this is to transform LET expressions with subqueries in simple LET, plus LET with query only, so the direct query is ignored
     if (expression != null) {
-      expression.extractSubQueries(collector);
+      expression.extractSubQueries(varName, collector);
     }
   }
 }

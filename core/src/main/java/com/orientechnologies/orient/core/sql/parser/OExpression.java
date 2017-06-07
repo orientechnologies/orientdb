@@ -502,6 +502,18 @@ public class OExpression extends SimpleNode {
     }
   }
 
+  public void extractSubQueries(OIdentifier letAlias, SubQueryCollector collector) {
+    if (mathExpression != null) {
+      mathExpression.extractSubQueries(letAlias, collector);
+    }
+    if (arrayConcatExpression != null) {
+      arrayConcatExpression.extractSubQueries(collector);
+    }
+    if (json != null) {
+      json.extractSubQueries(collector);
+    }
+  }
+
   public boolean refersToParent() {
     if (mathExpression != null && mathExpression.refersToParent()) {
       return true;

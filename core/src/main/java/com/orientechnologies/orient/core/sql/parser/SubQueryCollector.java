@@ -45,10 +45,13 @@ public class SubQueryCollector {
     this.subQueries.clear();
   }
 
-  public OIdentifier addStatement(OStatement stm) {
-    OIdentifier alias = getNextAlias();
+  public OIdentifier addStatement(OIdentifier alias, OStatement stm) {
     subQueries.put(alias, stm);
     return alias;
+  }
+  public OIdentifier addStatement(OStatement stm) {
+    OIdentifier alias = getNextAlias();
+    return addStatement(alias, stm);
   }
 
   public Map<OIdentifier, OStatement> getSubQueries() {
