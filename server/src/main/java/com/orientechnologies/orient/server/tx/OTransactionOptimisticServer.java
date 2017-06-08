@@ -5,6 +5,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.remote.ORemotePushHandler;
 import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -19,6 +20,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -60,10 +62,12 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
 
         switch (recordStatus) {
         case ORecordOperation.CREATED:
-          entry = new ORecordOperation(operation.getRecord(), ORecordOperation.CREATED);
-          ORecordInternal.setIdentity(operation.getRecord(), rid);
-          ORecordInternal.setVersion(operation.getRecord(), 0);
-          operation.getRecord().setDirty();
+          ORecord record = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType());
+          ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), record, null);
+          entry = new ORecordOperation(record, ORecordOperation.CREATED);
+          ORecordInternal.setIdentity(record, rid);
+          ORecordInternal.setVersion(record, 0);
+          record.setDirty();
 
           // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
           createdRecords.put(rid.copy(), entry.getRecord());
@@ -71,10 +75,12 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
 
         case ORecordOperation.UPDATED:
           int version = operation.getVersion();
-          entry = new ORecordOperation(operation.getRecord(), ORecordOperation.UPDATED);
-          ORecordInternal.setIdentity(operation.getRecord(), rid);
-          ORecordInternal.setVersion(operation.getRecord(), version);
-          operation.getRecord().setDirty();
+          ORecord updated = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType());
+          ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), updated, null);
+          entry = new ORecordOperation(updated, ORecordOperation.UPDATED);
+          ORecordInternal.setIdentity(updated, rid);
+          ORecordInternal.setVersion(updated, version);
+          updated.setDirty();
           ORecordInternal.setContentChanged(entry.getRecord(), operation.isContentChanged());
           break;
 

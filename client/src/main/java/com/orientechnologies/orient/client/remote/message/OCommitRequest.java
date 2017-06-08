@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -43,32 +44,6 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
   private boolean                       usingLong;
   private List<ORecordOperationRequest> operations;
   private ODocument                     indexChanges;
-
-  public OCommitRequest(int txId, boolean usingLog, Iterable<ORecordOperation> operations, ODocument indexChanges) {
-    this.txId = txId;
-    this.usingLong = usingLog;
-    this.indexChanges = indexChanges;
-    List<ORecordOperationRequest> netOperations = new ArrayList<>();
-    for (ORecordOperation txEntry : operations) {
-      if (txEntry.type == ORecordOperation.LOADED)
-        continue;
-      ORecordOperationRequest request = new ORecordOperationRequest();
-      request.setType(txEntry.type);
-      request.setVersion(txEntry.getRecord().getVersion());
-      request.setId(txEntry.getRecord().getIdentity());
-      request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
-      switch (txEntry.type) {
-      case ORecordOperation.CREATED:
-      case ORecordOperation.UPDATED:
-        request.setRecord(txEntry.getRecord());
-        request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-        break;
-      }
-      netOperations.add(request);
-    }
-    this.operations = netOperations;
-
-  }
 
   public OCommitRequest() {
   }

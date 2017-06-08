@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -105,6 +106,7 @@ public class OConnetionExecutorTransactionTest {
     List<ORecordOperation> operations = new ArrayList<>();
     ODocument rec = new ODocument();
     ORecordInternal.setIdentity(rec, new ORecordId(3, -2));
+    rec.setInternalStatus(ORecordElement.STATUS.LOADED);
     operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
     assertFalse(database.getTransaction().isActive());
 
@@ -114,6 +116,7 @@ public class OConnetionExecutorTransactionTest {
     assertTrue(response instanceof OBeginTransactionResponse);
 
     ODocument record1 = new ODocument(new ORecordId(3, -3));
+    record1.setInternalStatus(ORecordElement.STATUS.LOADED);
     operations.add(new ORecordOperation(record1, ORecordOperation.CREATED));
 
     OCommit37Request commit = new OCommit37Request(10, true, true, operations, new HashMap<>());
@@ -131,6 +134,7 @@ public class OConnetionExecutorTransactionTest {
     List<ORecordOperation> operations = new ArrayList<>();
     ODocument rec = new ODocument();
     ORecordInternal.setIdentity(rec, new ORecordId(3, -2));
+    rec.setInternalStatus(ORecordElement.STATUS.LOADED);
     operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
 
     assertFalse(database.getTransaction().isActive());
@@ -141,6 +145,7 @@ public class OConnetionExecutorTransactionTest {
     assertTrue(response instanceof OBeginTransactionResponse);
 
     ODocument record1 = new ODocument(new ORecordId(3, -3));
+    record1.setInternalStatus(ORecordElement.STATUS.LOADED);
     operations.add(new ORecordOperation(record1, ORecordOperation.CREATED));
 
     ORebeginTransactionRequest rebegin = new ORebeginTransactionRequest(10, true, operations, new HashMap<>());
@@ -158,6 +163,7 @@ public class OConnetionExecutorTransactionTest {
     List<ORecordOperation> operations = new ArrayList<>();
     ODocument rec = new ODocument();
     ORecordInternal.setIdentity(rec, new ORecordId(3, -2));
+    rec.setInternalStatus(ORecordElement.STATUS.LOADED);
     operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
 
     assertFalse(database.getTransaction().isActive());
@@ -168,6 +174,7 @@ public class OConnetionExecutorTransactionTest {
     assertTrue(response instanceof OBeginTransactionResponse);
 
     ODocument record1 = new ODocument(new ORecordId(3, -3));
+    record1.setInternalStatus(ORecordElement.STATUS.LOADED);
     operations.add(new ORecordOperation(record1, ORecordOperation.CREATED));
 
     ORebeginTransactionRequest rebegin = new ORebeginTransactionRequest(10, true, operations, new HashMap<>());
@@ -177,6 +184,7 @@ public class OConnetionExecutorTransactionTest {
     assertEquals(2, database.getTransaction().getEntryCount());
 
     ODocument record2 = new ODocument(new ORecordId(3, -4));
+    record2.setInternalStatus(ORecordElement.STATUS.LOADED);
     operations.add(new ORecordOperation(record2, ORecordOperation.CREATED));
 
     OCommit37Request commit = new OCommit37Request(10, true, true, operations, new HashMap<>());

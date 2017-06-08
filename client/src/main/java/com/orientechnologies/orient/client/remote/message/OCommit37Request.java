@@ -54,7 +54,7 @@ public class OCommit37Request implements OBinaryRequest<OCommitResponse> {
         switch (txEntry.type) {
         case ORecordOperation.CREATED:
         case ORecordOperation.UPDATED:
-          request.setRecord(txEntry.getRecord());
+          request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false));
           request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
           break;
         }

@@ -193,12 +193,12 @@ public class OMessageHelper {
 
     switch (txEntry.getType()) {
     case ORecordOperation.CREATED:
-      iNetwork.writeBytes(serializer.toStream(txEntry.getRecord(), false));
+      iNetwork.writeBytes(txEntry.getRecord());
       break;
 
     case ORecordOperation.UPDATED:
       iNetwork.writeVersion(txEntry.getVersion());
-      iNetwork.writeBytes(serializer.toStream(txEntry.getRecord(), false));
+      iNetwork.writeBytes(txEntry.getRecord());
       iNetwork.writeBoolean(txEntry.isContentChanged());
       break;
 
@@ -213,14 +213,13 @@ public class OMessageHelper {
     entry.setType(channel.readByte());
     entry.setId(channel.readRID());
     entry.setRecordType(channel.readByte());
-    ORecord record = Orient.instance().getRecordFactoryManager().newInstance(entry.getRecordType());
     switch (entry.getType()) {
     case ORecordOperation.CREATED:
-      entry.setRecord(ser.fromStream(channel.readBytes(), record, null));
+      entry.setRecord(channel.readBytes());
       break;
     case ORecordOperation.UPDATED:
       entry.setVersion(channel.readVersion());
-      entry.setRecord(ser.fromStream(channel.readBytes(), record, null));
+      entry.setRecord(channel.readBytes());
       entry.setContentChanged(channel.readBoolean());
       break;
     case ORecordOperation.DELETED:
