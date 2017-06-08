@@ -573,7 +573,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeCommit(OCommitRequest request) {
     final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(connection.getDatabase(), request.getTxId(),
-        request.isUsingLong(), request.getOperations(), request.getIndexChanges(), connection.getData().protocolVersion);
+        request.isUsingLong(), request.getOperations(), request.getIndexChanges(), connection.getData().protocolVersion,connection.getData().getSerializer());
 
     try {
       try {

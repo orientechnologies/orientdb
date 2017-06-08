@@ -68,6 +68,21 @@ public class RemoteTransactionSupportTest {
   }
 
   @Test
+  public void testResetUpdatedInTxTransaction() {
+    database.begin();
+
+    ODocument doc1 = new ODocument();
+    doc1.setProperty("name", "Jane");
+    database.save(doc1);
+    ODocument doc2 = new ODocument("SomeTx");
+    doc2.setProperty("name", "Jane");
+    database.save(doc2);
+    OResultSet result = database.command("update SomeTx set name='July' where name = 'Jane' ");
+    assertEquals((long) result.next().getProperty("count"), 1L);
+    assertEquals(doc2.getProperty("name"), "July");
+  }
+
+  @Test
   public void testQueryUpdateCreatedInTxTransaction() {
     database.begin();
     ODocument doc1 = new ODocument("SomeTx");

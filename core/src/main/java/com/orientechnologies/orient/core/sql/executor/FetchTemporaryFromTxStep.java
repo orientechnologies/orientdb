@@ -164,10 +164,11 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
     }
 
     OClass schema = ((ODocument) doc).getSchemaClass();
-    if (schema.getName().equals(className)) {
+    if (schema == null)
+      return className == null;
+    else if (schema.getName().equals(className)) {
       return true;
-    }
-    if (schema.isSubClassOf(className)) {
+    } else if (schema.isSubClassOf(className)) {
       return true;
     }
     return false;

@@ -4,6 +4,7 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -14,6 +15,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -40,10 +42,26 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
     for (ORecordOperationRequest operation : operations) {
       if (!operation.getOldId().equals(operation.getId()))
         updatedRids.put(operation.getId(), operation.getOldId());
-      ORecordInternal.setIdentity(operation.getRecord(), (ORecordId) operation.getOldId());
-      ORecordInternal.setVersion(operation.getRecord(), operation.getVersion());
-      boolean callHook = checkCallHook(oldEntries, operation.getOldId(), operation.getType());
-      addRecord(operation.getRecord(), operation.getType(), null, callHook);
+
+      ORecord record = null;
+      ORecordOperation op = oldEntries.get(operation.getOldId());
+      if (op != null) {
+        record = op.getRecord();
+      }
+      if (record == null) {
+        getDatabase().getLocalCache().findRecord(operation.getOldId());
+      }
+      if (record != null) {
+        record.unload();
+      } else {
+        record = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType());
+      }
+      record.fromStream(operation.getRecord());
+      ORecordInternal.setIdentity(record, (ORecordId) operation.getId());
+      ORecordInternal.setVersion(record, operation.getVersion());
+      getDatabase().getLocalCache().updateRecord(record);
+      boolean callHook = checkCallHook(oldEntries, operation.getId(), operation.getType());
+      addRecord(record, operation.getType(), null, callHook);
     }
 
     for (IndexChange change : indexChanges) {

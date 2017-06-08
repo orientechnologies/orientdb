@@ -46,7 +46,7 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBinaryResponse>
       switch (txEntry.type) {
       case ORecordOperation.CREATED:
       case ORecordOperation.UPDATED:
-        request.setRecord(txEntry.getRecord());
+        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false));
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       }
@@ -88,7 +88,7 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBinaryResponse>
     txId = channel.readInt();
     boolean hasContent = channel.readBoolean();
     usingLog = channel.readBoolean();
-    if(hasContent) {
+    if (hasContent) {
       operations = new ArrayList<>();
       byte hasEntry;
       do {
