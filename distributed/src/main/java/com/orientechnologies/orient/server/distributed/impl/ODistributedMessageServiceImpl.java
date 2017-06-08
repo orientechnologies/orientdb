@@ -100,6 +100,11 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     databases.clear();
 
     asynchMessageManager.cancel();
+
+    // CANCEL ALL THE PENDING REQUESTS
+    for (ODistributedResponseManager req : responsesByRequestIds.values())
+      req.cancel();
+
     responsesByRequestIds.clear();
 
     latencies.clear();

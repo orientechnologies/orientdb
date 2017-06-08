@@ -310,7 +310,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           try {
             sendError(connection, clientTxId, e);
             channel.flush();
-            if (!(e instanceof OTokenSecurityException))
+            if (!(e instanceof OTokenSecurityException || e instanceof ODistributedRedirectException))
               OLogManager.instance().error(this, "Error executing request", e);
             OServerPluginHelper.invokeHandlerCallbackOnClientError(server, connection, e);
             afterOperationRequest(connection);

@@ -1171,7 +1171,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
                 } catch (Throwable t) {
                   ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
-                      "Error on rolling back distributed transaction %s on database '%s'", ctx.getReqId(), databaseName);
+                      "Error on rolling back distributed transaction %s on database '%s' (err=%s)", ctx.getReqId(), databaseName, t);
                 } finally {
                   it.remove();
                 }
