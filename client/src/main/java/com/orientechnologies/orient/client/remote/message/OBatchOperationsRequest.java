@@ -41,6 +41,8 @@ import java.util.List;
  */
 public class OBatchOperationsRequest implements OBinaryRequest<OBatchOperationsResponse> {
 
+
+  ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
   private int txId;
   private List<ORecordOperationRequest> operations;
 
@@ -59,7 +61,7 @@ public class OBatchOperationsRequest implements OBinaryRequest<OBatchOperationsR
       switch (txEntry.type) {
       case ORecordOperation.CREATED:
       case ORecordOperation.UPDATED:
-        request.setRecord(txEntry.getRecord());
+        request.setRecord(serializer.toStream(txEntry.getRecord(), false));
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       }
@@ -74,7 +76,6 @@ public class OBatchOperationsRequest implements OBinaryRequest<OBatchOperationsR
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
 
-    ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
     network.writeInt(txId);
     for (ORecordOperationRequest txEntry : operations) {
       OMessageHelper.writeTransactionEntry(network, txEntry, serializer);

@@ -13,6 +13,7 @@ import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreat
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -592,7 +593,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       ORecordId current;
       switch (operation.getType()) {
       case ORecordOperation.CREATED:
-        record = operation.getRecord();
+        record = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType());
+        connection.getData().getSerializer().fromStream(operation.getRecord(),record,null);
         current = (ORecordId) record.getIdentity();
         OCreateRecordResponse createRecordResponse = (OCreateRecordResponse) executeCreateRecord(
             new OCreateRecordRequest(record, (ORecordId) operation.getId(), operation.getRecordType()));
@@ -602,7 +604,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         createdRecords.add(new OCreatedRecordResponse(current, createRecordResponse.getIdentity()));
         break;
       case ORecordOperation.UPDATED:
-        record = operation.getRecord();
+        record = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType());
+        connection.getData().getSerializer().fromStream(operation.getRecord(),record,null);
         current = (ORecordId) record.getIdentity();
         OUpdateRecordResponse updateRecordResponse = (OUpdateRecordResponse) executeUpdateRecord(
             new OUpdateRecordRequest((ORecordId) operation.getId(), record, operation.getVersion(), true,
