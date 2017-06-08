@@ -1935,9 +1935,64 @@ OProjectionItem ProjectionItem():
 {
 (
     jjtThis.expression = Expression()
+    [ jjtThis.nestedProjection = NestedProjection() ]
     [ <AS> jjtThis.alias = Alias() ]
 ){return jjtThis;}
 }
+
+ONestedProjection NestedProjection():
+{
+   ONestedProjectionItem lastItem;
+}
+{
+  (
+    <COLON> <LBRACE>
+    lastItem = NestedProjectionItem() {
+       if(lastItem.exclude) {
+         jjtThis.excludeItems.add(lastItem);
+       } else if(lastItem.star) {
+         jjtThis.starItem = lastItem;
+       } else {
+         jjtThis.includeItems.add(lastItem);
+       }
+    }
+    (
+      <COMMA>
+       lastItem = NestedProjectionItem() {
+            if(lastItem.exclude) {
+              jjtThis.excludeItems.add(lastItem);
+            } else if(lastItem.star) {
+              jjtThis.starItem = lastItem;
+            } else {
+              jjtThis.includeItems.add(lastItem);
+            }
+       }
+    )*
+    <RBRACE>
+    [
+      <LBRACKET> jjtThis.recursion = Integer() <RBRACKET>
+    ]
+  ) { return jjtThis;}
+}
+
+ONestedProjectionItem NestedProjectionItem():
+{}
+{
+  (
+    (
+      (
+        [<BANG> {jjtThis.exclude = true;} ]
+        jjtThis.field = Identifier()
+        [<STAR> {jjtThis.rightWildcard = true;} ]
+      )
+      |
+      <STAR> { jjtThis.star = true; }
+    )
+    [jjtThis.expansion = NestedProjection() ]
+    [<AS> jjtThis.alias = Identifier()]
+  ) {return jjtThis;}
+}
+
 
 
 OArraySelector ArraySelector():
