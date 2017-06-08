@@ -1,8 +1,10 @@
 package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
+import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.OMetadata;
@@ -48,6 +50,7 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
 
     OElement element = result.toElement();
 
+    System.out.println("element = " + element);
     String className = element.getSchemaType().get().getName();
 
     OLuceneFullTextIndex index = searchForIndex(ctx, className);
@@ -57,6 +60,8 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
 
     String query = (String) params[0];
 
+    System.out.println("params = " + params[1]);
+    ODocument metadata = getMetadata(params);
     MemoryIndex memoryIndex = getOrCreateMemoryIndex(ctx);
 
     List<Object> key = index.getDefinition().getFields()
@@ -76,6 +81,13 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
     }
     return null;
 
+  }
+
+  private ODocument getMetadata(Object[] params) {
+    if (params.length == 2)
+      return new ODocument().fromJSON(params[1].toString());
+
+    return OLuceneQueryBuilder.EMPTY_METADATA;
   }
 
   @Override
@@ -102,20 +114,22 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
 
     if (index != null) {
 
-      if (args.length == 2) {
-        ODocument metadata = new ODocument().fromJSON(args[1].toString());
+      ODocument metadata = getMetadata(args);
 
-        //TODO handle metadata
-        System.out.println("metadata.toJSON() = " + metadata.toJSON());
-        Set<OIdentifiable> luceneResultSet = index.get(query.toString());
-      }
-
-      Set<OIdentifiable> luceneResultSet = index.get(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx));
+      Set<OIdentifiable> luceneResultSet = index
+          .get(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), metadata));
 
       return luceneResultSet;
     }
     return Collections.emptySet();
 
+  }
+
+  private ODocument getMetadata(OExpression[] args) {
+    if (args.length == 2) {
+      return new ODocument().fromJSON(args[1].toString());
+    }
+    return OLuceneQueryBuilder.EMPTY_METADATA;
   }
 
   @Override
@@ -145,6 +159,5 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
 
     return indices.size() == 0 ? null : indices.get(0);
   }
-
 
 }

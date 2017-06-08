@@ -20,13 +20,8 @@ import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.util.ODateHelper;
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.BooleanClause.Occur;
 
@@ -118,51 +113,6 @@ public class OLuceneIndexType {
       queryBuilder.add(new TermQuery(new Term(s, values.get(s).toLowerCase(Locale.ENGLISH))), Occur.MUST);
     }
     return queryBuilder.build();
-  }
-
-  public static Query createFullQuery(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException {
-
-    String query = "";
-    if (key instanceof OCompositeKey) {
-      Object params = ((OCompositeKey) key).getKeys().get(0);
-      if (params instanceof Map) {
-        Object q = ((Map) params).get("q");
-        if (q != null) {
-          query = q.toString();
-        }
-      } else {
-        query = params.toString();
-
-      }
-    } else {
-      query = key.toString();
-    }
-
-    return getQueryParser(index, query, analyzer);
-
-  }
-
-  protected static Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer) throws ParseException {
-    QueryParser queryParser;
-    if ((key).startsWith("(")) {
-      queryParser = new QueryParser("", analyzer);
-
-    } else {
-      String[] fields = null;
-      if (index.isAutomatic()) {
-        fields = index.getFields().toArray(new String[index.getFields().size()]);
-      } else {
-        int length = index.getTypes().length;
-
-        fields = new String[length];
-        for (int i = 0; i < length; i++) {
-          fields[i] = "k" + i;
-        }
-      }
-      queryParser = new MultiFieldQueryParser(fields, analyzer);
-    }
-
-    return queryParser.parse(key);
   }
 
   public static Sort sort(Query query, OIndexDefinition index, boolean ascSortOrder) {

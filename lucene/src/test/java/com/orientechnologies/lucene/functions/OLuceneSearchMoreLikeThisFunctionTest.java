@@ -3,7 +3,6 @@ package com.orientechnologies.lucene.functions;
 import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -86,19 +85,15 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-  @Ignore
   public void shouldSearchMoreLikeThisWithInnerQuery() throws Exception {
 
     db.command("create index Song.multi on Song (title,author) FULLTEXT ENGINE LUCENE ");
 
-//    db.query("SELECT @RID FROM Song WHERE author = 'Hunter' ").stream().forEach(e-> System.out.println("e = " + e.toElement().toJSON()));
-
-
-    //for Luigi: execution plan doesn't bind $a correctly
     OResultSet resultSet = db
-        .query("SELECT from Song  let $a=(SELECT @rid FROM Song WHERE author = 'Hunter')  where SEARCH_More( $a ) = true");
+        .query(
+            "SELECT from Song  let $a=(SELECT @rid FROM Song WHERE author = 'Hunter')  where SEARCH_More( $a, { 'minTermFreq':1, 'minDocFreq':1} ) = true");
 
-    assertThat(resultSet).hasSize(2);
+    assertThat(resultSet).hasSize(229);
 
     resultSet.close();
   }

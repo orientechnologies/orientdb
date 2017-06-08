@@ -20,6 +20,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.builder.OLuceneDocumentBuilder;
 import com.orientechnologies.lucene.builder.OLuceneIndexType;
+import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.collections.OLuceneIndexCursor;
@@ -224,10 +225,17 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public Query buildQuery(Object query) {
-
+  public Query buildQuery(Object maybeQuery) {
     try {
-      return queryBuilder.query(indexDefinition, query, queryAnalyzer());
+      if (maybeQuery instanceof String)
+
+      {
+        return queryBuilder.query(indexDefinition, maybeQuery, new ODocument(), queryAnalyzer());
+      } else {
+        System.out.println("maybeQuery = " + maybeQuery);
+        return queryBuilder.query(indexDefinition, maybeQuery, new ODocument(), queryAnalyzer());
+
+      }
     } catch (ParseException e) {
 
       throw OException.wrapException(new OIndexEngineException("Error parsing query"), e);
@@ -236,13 +244,25 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Set<OIdentifiable> getInTx(Object key, OLuceneTxChanges changes) {
+
     try {
-      Query query = queryBuilder.query(indexDefinition, key, queryAnalyzer());
-      OCommandContext commandContext = null;
-      if (key instanceof OLuceneCompositeKey) {
-        commandContext = ((OLuceneCompositeKey) key).getContext();
+      Query query;
+      if (key instanceof OLuceneKeyAndMetadata) {
+        OLuceneKeyAndMetadata q = (OLuceneKeyAndMetadata) key;
+        query = queryBuilder.query(indexDefinition, q.key, q.metadata, queryAnalyzer());
+
+        OCommandContext commandContext = q.key.getContext();
+        return getResults(query, commandContext, key, changes);
+
+      } else {
+        query = queryBuilder.query(indexDefinition, key, new ODocument(), queryAnalyzer());
+
+        OCommandContext commandContext = null;
+        if (key instanceof OLuceneCompositeKey) {
+          commandContext = ((OLuceneCompositeKey) key).getContext();
+        }
+        return getResults(query, commandContext, key, changes);
       }
-      return getResults(query, commandContext, key, changes);
     } catch (ParseException e) {
       throw OException.wrapException(new OIndexEngineException("Error parsing lucene query"), e);
     }

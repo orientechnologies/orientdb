@@ -18,7 +18,6 @@
 
 package com.orientechnologies.lucene.builder;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.parser.OLuceneMultiFieldQueryParser;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -31,61 +30,46 @@ import org.apache.lucene.search.Query;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by Enrico Risa on 02/09/15.
  */
 public class OLuceneQueryBuilder {
 
+  public static final ODocument EMPTY_METADATA = new ODocument();
+
   private final boolean allowLeadingWildcard;
   private final boolean lowercaseExpandedTerms;
 
   public OLuceneQueryBuilder(ODocument metadata) {
-
-    Boolean allowLeadingWildcard = false;
-    if (metadata.containsField("allowLeadingWildcard")) {
-      allowLeadingWildcard = metadata.<Boolean>field("allowLeadingWildcard");
-    }
-
-    Boolean lowercaseExpandedTerms = true;
-    if (metadata.containsField("lowercaseExpandedTerms")) {
-      lowercaseExpandedTerms = metadata.<Boolean>field("lowercaseExpandedTerms");
-    }
-    this.allowLeadingWildcard = allowLeadingWildcard;
-    this.lowercaseExpandedTerms = lowercaseExpandedTerms;
-
+    this(Optional.ofNullable(metadata.<Boolean>field("allowLeadingWildcard")).orElse(false),
+        Optional.ofNullable(metadata.<Boolean>field("lowercaseExpandedTerms")).orElse(true));
   }
 
   public OLuceneQueryBuilder(boolean allowLeadingWildcard, boolean lowercaseExpandedTerms) {
     this.allowLeadingWildcard = allowLeadingWildcard;
     this.lowercaseExpandedTerms = lowercaseExpandedTerms;
-
-    OLogManager.instance().info(this, "allowLeadingWildcard::  " + allowLeadingWildcard);
   }
 
-  public Query query(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException {
-    String query = "";
+  public Query query(OIndexDefinition index, Object key, ODocument metadata, Analyzer analyzer) throws ParseException {
+
+    String query;
     if (key instanceof OCompositeKey) {
       Object params = ((OCompositeKey) key).getKeys().get(0);
-      if (params instanceof Map) {
-        Object q = ((Map) params).get("q");
-        if (q != null) {
-          query = q.toString();
-        }
-      } else {
-        query = params.toString();
+      query = params.toString();
 
-      }
     } else {
+
       query = key.toString();
     }
 
     if (query.isEmpty())
       return new MatchNoDocsQuery();
-    return getQueryParser(index, query, analyzer);
+    return buildQuery(index, query, metadata, analyzer);
   }
 
-  protected Query getQueryParser(OIndexDefinition index, String query, Analyzer analyzer)
+  protected Query buildQuery(OIndexDefinition index, String query, ODocument metadata, Analyzer analyzer)
       throws ParseException {
 
     String[] fields;
@@ -108,9 +92,11 @@ public class OLuceneQueryBuilder {
 
     final OLuceneMultiFieldQueryParser queryParser = new OLuceneMultiFieldQueryParser(types, fields, analyzer, new HashMap<>());
 
-    queryParser.setAllowLeadingWildcard(allowLeadingWildcard);
+    queryParser.setAllowLeadingWildcard(
+        Optional.ofNullable(metadata.<Boolean>getProperty("allowLeadingWildcard")).orElse(allowLeadingWildcard));
 
-    queryParser.setLowercaseExpandedTerms(lowercaseExpandedTerms);
+    queryParser.setLowercaseExpandedTerms(
+        Optional.ofNullable(metadata.<Boolean>getProperty("lowercaseExpandedTerms")).orElse(lowercaseExpandedTerms));
 
     try {
       return queryParser.parse(query);

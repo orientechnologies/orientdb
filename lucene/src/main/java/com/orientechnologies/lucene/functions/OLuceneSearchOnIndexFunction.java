@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -28,7 +29,6 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
 
   public static final String NAME = "search_index";
 
-  public static final ODocument EMPTY_METADATA = new ODocument();
 
   public OLuceneSearchOnIndexFunction() {
     super(NAME, 2, 3);
@@ -103,19 +103,23 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
     String query = (String) expression.execute((OIdentifiable) null, ctx);
     if (index != null && query != null) {
 
-      if (args.length == 3) {
-        ODocument metadata = new ODocument().fromJSON(args[1].toString());
+      ODocument meta = getMetadata(index, query, args);
 
-        //TODO handle metadata
-        System.out.println("metadata.toJSON() = " + metadata.toJSON());
-        Set<OIdentifiable> luceneResultSet = index.get(query);
-      }
-
-      Set<OIdentifiable> luceneResultSet = index.get(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx));
+      Set<OIdentifiable> luceneResultSet = index
+          .get(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), meta));
 
       return luceneResultSet;
     }
     return Collections.emptySet();
+  }
+
+  private ODocument getMetadata(OLuceneFullTextIndex index, String query, OExpression[] args) {
+    if (args.length == 3) {
+      ODocument metadata = new ODocument().fromJSON(args[2].toString());
+
+      return metadata;
+    }
+    return new ODocument();
   }
 
   @Override
@@ -154,6 +158,5 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
   public Object getResult() {
     return super.getResult();
   }
-
 
 }
