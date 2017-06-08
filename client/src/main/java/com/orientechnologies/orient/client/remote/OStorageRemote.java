@@ -28,9 +28,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.*;
-import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
-import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
-import com.orientechnologies.orient.client.remote.message.live.OLiveQueryResult;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -39,7 +36,10 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.db.document.OLiveQueryMonitorRemote;
@@ -873,11 +873,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       request = new OCommit37Request(iTx.getId(), false, iTx.isUsingLog(), null, null);
     }
 
-    OCommitResponse response = networkOperation(request, "Error on commit");
-    for (OCreatedRecordResponse created : response.getCreated()) {
+    OCommit37Response response = networkOperation(request, "Error on commit");
+    for (OCommit37Response.OCreatedRecordResponse created : response.getCreated()) {
       iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
+      ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
+      if (rop != null) {
+        if (created.getVersion() > rop.getRecord().getVersion() + 1)
+          // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+          rop.getRecord().unload();
+        ORecordInternal.setVersion(rop.getRecord(), created.getVersion());
+      }
     }
-    for (OUpdatedRecordResponse updated : response.getUpdated()) {
+    for (OCommit37Response.OUpdatedRecordResponse updated : response.getUpdated()) {
       ORecordOperation rop = iTx.getRecordEntry(updated.getRid());
       if (rop != null) {
         if (updated.getVersion() > rop.getRecord().getVersion() + 1)

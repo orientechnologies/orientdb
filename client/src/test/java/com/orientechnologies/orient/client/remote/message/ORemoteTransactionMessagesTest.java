@@ -2,7 +2,9 @@ package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
@@ -98,6 +100,50 @@ public class ORemoteTransactionMessagesTest {
   }
 
   @Test
+  public void testCommitResponseTransactionWriteRead() throws IOException {
+
+    MockChannel channel = new MockChannel();
+    List<OCommit37Response.OCreatedRecordResponse> creates = new ArrayList<>();
+    creates.add(new OCommit37Response.OCreatedRecordResponse(new ORecordId(1, 2), new ORecordId(-1, -2), 10));
+    creates.add(new OCommit37Response.OCreatedRecordResponse(new ORecordId(1, 3), new ORecordId(-1, -3), 20));
+
+    List<OCommit37Response.OUpdatedRecordResponse> updates = new ArrayList<>();
+    updates.add(new OCommit37Response.OUpdatedRecordResponse(new ORecordId(10, 20), 3));
+    updates.add(new OCommit37Response.OUpdatedRecordResponse(new ORecordId(10, 21), 4));
+
+    Map<UUID, OBonsaiCollectionPointer> changes = new HashMap<>();
+    UUID val = UUID.randomUUID();
+    changes.put(val, new OBonsaiCollectionPointer(10, new OBonsaiBucketPointer(30, 40)));
+    OCommit37Response response = new OCommit37Response(creates, updates, changes);
+    response.write(channel, 0, null);
+    channel.close();
+
+    OCommit37Response readResponse = new OCommit37Response();
+    readResponse.read(channel, null);
+    assertEquals(readResponse.getCreated().size(), 2);
+    assertEquals(readResponse.getCreated().get(0).getCurrentRid(), new ORecordId(1, 2));
+    assertEquals(readResponse.getCreated().get(0).getCreatedRid(), new ORecordId(-1, -2));
+    assertEquals(readResponse.getCreated().get(0).getVersion(), 10);
+
+    assertEquals(readResponse.getCreated().get(1).getCurrentRid(), new ORecordId(1, 3));
+    assertEquals(readResponse.getCreated().get(1).getCreatedRid(), new ORecordId(-1, -3));
+    assertEquals(readResponse.getCreated().get(1).getVersion(), 20);
+
+    assertEquals(readResponse.getUpdated().size(), 2);
+    assertEquals(readResponse.getUpdated().get(0).getRid(), new ORecordId(10, 20));
+    assertEquals(readResponse.getUpdated().get(0).getVersion(), 3);
+
+    assertEquals(readResponse.getUpdated().get(1).getRid(), new ORecordId(10, 21));
+    assertEquals(readResponse.getUpdated().get(1).getVersion(), 4);
+
+    assertEquals(readResponse.getCollectionChanges().size(), 1);
+    assertNotNull(readResponse.getCollectionChanges().get(val));
+    assertEquals(readResponse.getCollectionChanges().get(val).getFileId(), 10);
+    assertEquals(readResponse.getCollectionChanges().get(val).getRootPointer().getPageIndex(), 30);
+    assertEquals(readResponse.getCollectionChanges().get(val).getRootPointer().getPageOffset(), 40);
+  }
+
+  @Test
   public void testEmptyCommitTransactionWriteRead() throws IOException {
 
     MockChannel channel = new MockChannel();
@@ -177,12 +223,12 @@ public class ORemoteTransactionMessagesTest {
     changes.put("some", change);
 
     MockChannel channel = new MockChannel();
-    OFetchTransactionResponse response = new OFetchTransactionResponse(10, operations, changes,new HashMap<>());
+    OFetchTransactionResponse response = new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
     response.write(channel, 0, ORecordSerializerNetworkV37.INSTANCE);
 
     channel.close();
 
-    OFetchTransactionResponse readResponse = new OFetchTransactionResponse(10, operations, changes,new HashMap<>());
+    OFetchTransactionResponse readResponse = new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
     readResponse.read(channel, null);
 
     assertEquals(readResponse.getTxId(), 10);
@@ -200,8 +246,5 @@ public class ORemoteTransactionMessagesTest {
     assertEquals(entryChange.entries.get(1).operation, OPERATION.REMOVE);
 
   }
-
-
-
 
 }

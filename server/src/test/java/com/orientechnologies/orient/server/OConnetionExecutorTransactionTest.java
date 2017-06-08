@@ -94,8 +94,8 @@ public class OConnetionExecutorTransactionTest {
     OCommit37Request commit = new OCommit37Request(10, false, true, null, null);
     OBinaryResponse commitResponse = commit.execute(executor);
     assertFalse(database.getTransaction().isActive());
-    assertTrue(commitResponse instanceof OCommitResponse);
-    assertEquals(((OCommitResponse) commitResponse).getCreated().size(), 1);
+    assertTrue(commitResponse instanceof OCommit37Response);
+    assertEquals(((OCommit37Response) commitResponse).getCreated().size(), 1);
   }
 
   @Test
@@ -122,8 +122,8 @@ public class OConnetionExecutorTransactionTest {
     OCommit37Request commit = new OCommit37Request(10, true, true, operations, new HashMap<>());
     OBinaryResponse commitResponse = commit.execute(executor);
     assertFalse(database.getTransaction().isActive());
-    assertTrue(commitResponse instanceof OCommitResponse);
-    assertEquals(((OCommitResponse) commitResponse).getCreated().size(), 2);
+    assertTrue(commitResponse instanceof OCommit37Response);
+    assertEquals(((OCommit37Response) commitResponse).getCreated().size(), 2);
   }
 
   @Test
@@ -190,8 +190,8 @@ public class OConnetionExecutorTransactionTest {
     OCommit37Request commit = new OCommit37Request(10, true, true, operations, new HashMap<>());
     OBinaryResponse commitResponse = commit.execute(executor);
     assertFalse(database.getTransaction().isActive());
-    assertTrue(commitResponse instanceof OCommitResponse);
-    assertEquals(((OCommitResponse) commitResponse).getCreated().size(), 3);
+    assertTrue(commitResponse instanceof OCommit37Response);
+    assertEquals(((OCommit37Response) commitResponse).getCreated().size(), 3);
   }
 
   @Test

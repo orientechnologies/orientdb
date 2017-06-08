@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * Created by tglman on 30/12/16.
  */
-public class OCommit37Request implements OBinaryRequest<OCommitResponse> {
+public class OCommit37Request implements OBinaryRequest<OCommit37Response> {
 
   private int                           txId;
   private boolean                       hasContent;
@@ -115,8 +115,8 @@ public class OCommit37Request implements OBinaryRequest<OCommitResponse> {
   }
 
   @Override
-  public OCommitResponse createResponse() {
-    return new OCommitResponse();
+  public OCommit37Response createResponse() {
+    return new OCommit37Response();
   }
 
   @Override
