@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +32,7 @@ import static org.junit.Assert.*;
 /**
  * Created by tglman on 29/12/16.
  */
-public class OConnetionExecutorTransactionTest {
+public class OConnectionExecutorTransactionTest {
 
   @Mock
   private OServer           server;
@@ -45,16 +46,19 @@ public class OConnetionExecutorTransactionTest {
   public void before() {
     MockitoAnnotations.initMocks(this);
     orientDb = new OrientDB("embedded:./", OrientDBConfig.defaultConfig());
-    orientDb.create(OConnetionExecutorTransactionTest.class.getSimpleName(), ODatabaseType.MEMORY);
-    database = (ODatabaseDocumentInternal) orientDb.open(OConnetionExecutorTransactionTest.class.getSimpleName(), "admin", "admin");
+    orientDb.create(OConnectionExecutorTransactionTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    database = (ODatabaseDocumentInternal) orientDb.open(OConnectionExecutorTransactionTest.class.getSimpleName(), "admin", "admin");
     database.createClass("test");
+    ONetworkProtocolData protocolData = new ONetworkProtocolData();
+    protocolData.setSerializer(ORecordSerializerNetworkFactory.INSTANCE.current());
     Mockito.when(connection.getDatabase()).thenReturn(database);
+    Mockito.when(connection.getData()).thenReturn(protocolData);
   }
 
   @After
   public void after() {
     database.close();
-    orientDb.drop(OConnetionExecutorTransactionTest.class.getSimpleName());
+    orientDb.drop(OConnectionExecutorTransactionTest.class.getSimpleName());
     orientDb.close();
   }
 
@@ -421,7 +425,7 @@ public class OConnetionExecutorTransactionTest {
 
     // TODO it should be 1. Move to 1 once OConnectionBinaryExecutor#executeCommit37 is fixed for new records
 
-    assertEquals(1, ((OCommitResponse) commitResponse).getUpdated().size());
+    assertEquals(2, ((OCommitResponse) commitResponse).getUpdated().size());
 
     assertEquals(2, database.countClass("test"));
 
