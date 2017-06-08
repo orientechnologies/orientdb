@@ -313,7 +313,8 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * @return true if database is exists
    */
   public boolean exists() {
-    final ODatabaseDocumentTx db = getDatabase(false, false);
+    //Do not use get database because if with the pool it actually create the database
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
     try {
       return db.exists();
     } finally {
