@@ -3094,34 +3094,6 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test
-  public void stressTestNew() {
-    String className = "stressTestNew";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 1000000; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.setProperty("surname", "surname" + i);
-      doc.save();
-    }
-
-    for (int run = 0; run < 5; run++) {
-      long begin = System.nanoTime();
-      OResultSet result = db.query("select name from " + className + " where name <> 'name1' ");
-      for (int i = 0; i < 999999; i++) {
-        //        Assert.assertTrue(result.hasNext());
-        OResult item = result.next();
-        //        Assert.assertNotNull(item);
-        Object name = item.getProperty("name");
-        Assert.assertFalse("name1".equals(name));
-      }
-      Assert.assertFalse(result.hasNext());
-      result.close();
-      long end = System.nanoTime();
-      System.out.println("new: " + ((end - begin) / 1000000));
-    }
-  }
-
-  @Test
   public void testNestedProjections1() {
     String className = "testNestedProjections1";
     db.command("create class " + className).close();
@@ -3151,38 +3123,10 @@ public class OSelectStatementExecutionTest {
     Assert.assertNotNull(item);
     //TODO refine this!
     Assert.assertTrue(item.getProperty("elem1") instanceof OResult);
-    Assert.assertEquals("a",((OResult)item.getProperty("elem1")).getProperty("name"));
+    Assert.assertEquals("a", ((OResult) item.getProperty("elem1")).getProperty("name"));
     printExecutionPlan(result);
 
     result.close();
-  }
-
-  public void stressTestOld() {
-    String className = "stressTestOld";
-    db.getMetadata().getSchema().createClass(className);
-    for (int i = 0; i < 1000000; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.setProperty("surname", "surname" + i);
-      doc.save();
-    }
-    for (int run = 0; run < 5; run++) {
-      long begin = System.nanoTime();
-      List<ODocument> r = db.query(new OSQLSynchQuery<ODocument>("select name from " + className + " where name <> 'name1' "));
-      //      Iterator<ODocument> result = r.iterator();
-      for (int i = 0; i < 999999; i++) {
-        //        Assert.assertTrue(result.hasNext());
-        //        ODocument item = result.next();
-        ODocument item = r.get(i);
-
-        //        Assert.assertNotNull(item);
-        Object name = item.getProperty("name");
-        Assert.assertFalse("name1".equals(name));
-      }
-      //      Assert.assertFalse(result.hasNext());
-      long end = System.nanoTime();
-      System.out.println("old: " + ((end - begin) / 1000000));
-    }
   }
 
 }

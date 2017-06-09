@@ -10,7 +10,6 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.orientechnologies.orient.core.Orient;
 import org.junit.*;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
@@ -21,7 +20,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.Vertex;
 
-public class OrientCommitMTTest {
+public class OrientCommitMTTestIT {
   public static final String        DB_URL           = "plocal:./avltreetest";
   public static final String        DB_USER          = "admin";
   public static final String        DB_PASSWORD      = "admin";
@@ -118,7 +117,6 @@ public class OrientCommitMTTest {
   }
 
   @Test
-  @Ignore
   public void testSingleThreadWithTransactionSBTreeRidBag() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
 
@@ -381,7 +379,7 @@ public class OrientCommitMTTest {
       }
 
       try {
-        Integer id = OrientCommitMTTest.this.idGenerator.getAndIncrement();
+        Integer id = OrientCommitMTTestIT.this.idGenerator.getAndIncrement();
         OrientVertex vertex = graph.addVertex("class:" + TEST_CLASS, THREAD_ID, Integer.valueOf(this.threadId), ID, id);
 
         ORID randomId = getRandomIdForThread(graph);

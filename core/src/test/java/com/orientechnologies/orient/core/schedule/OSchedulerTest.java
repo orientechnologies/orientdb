@@ -28,11 +28,11 @@ public class OSchedulerTest {
     try {
       createLogEvent(db);
 
-      Thread.sleep(5000);
+      Thread.sleep(2000);
 
       Long count = getLogCounter(db);
 
-      Assert.assertTrue(count >= 4 && count <= 5);
+      Assert.assertTrue(count >= 2 && count <= 3);
     } finally {
       db.drop();
     }
@@ -45,12 +45,12 @@ public class OSchedulerTest {
     createLogEvent(db);
     db.close();
 
-    Thread.sleep(5000);
+    Thread.sleep(2000);
 
     db = openDatabase();
     Long count = getLogCounter(db);
 
-    Assert.assertTrue(count >= 4);
+    Assert.assertTrue(count >= 2);
     openDatabase().drop();
   }
 
@@ -96,9 +96,9 @@ public class OSchedulerTest {
     db2.open("admin", "admin");
     try {
 
-      Thread.sleep(4000);
+      Thread.sleep(2000);
       Long count = getLogCounter(db2);
-      Assert.assertTrue(count >= 4);
+      Assert.assertTrue(count >= 2);
 
     } finally {
       db2.drop();
@@ -115,11 +115,11 @@ public class OSchedulerTest {
       db.command(new OCommandSQL("insert into oschedule set name = 'test', function = ?, rule = \"0/1 * * * * ?\""))
           .execute(func.getId());
 
-      Thread.sleep(4500);
+      Thread.sleep(2500);
 
       long count = getLogCounter(db);
 
-      Assert.assertTrue(count >= 4);
+      Assert.assertTrue(count >= 2);
 
       // UPDATE
       db.command(new OCommandSQL("update oschedule set rule = \"0/2 * * * * ?\" where name = 'test'")).execute(func.getId());

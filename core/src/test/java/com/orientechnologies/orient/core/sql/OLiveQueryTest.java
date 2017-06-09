@@ -31,7 +31,8 @@ import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
-import org.junit.Assert; import org.junit.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,9 +45,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class OLiveQueryTest {
 
-  private CountDownLatch latch = new CountDownLatch(2);
-
   class MyLiveQueryListener implements OLiveResultListener {
+
+    public CountDownLatch latch;
+
+    public MyLiveQueryListener(CountDownLatch latch) {
+      this.latch = latch;
+    }
 
     public List<ORecordOperation> ops = new ArrayList<ORecordOperation>();
 
@@ -76,7 +81,7 @@ public class OLiveQueryTest {
     try {
       db.getMetadata().getSchema().createClass("test");
       db.getMetadata().getSchema().createClass("test2");
-      MyLiveQueryListener listener = new MyLiveQueryListener();
+      MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(2));
 
       OLegacyResultSet<ODocument> tokens = db.query(new OLiveQuery<ODocument>("live select from test", listener));
       Assert.assertEquals(tokens.size(), 1);
@@ -89,7 +94,7 @@ public class OLiveQueryTest {
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'baz'")).execute();
       db.command(new OCommandSQL("insert into test2 set name = 'foo'")).execute();
 
-      latch.await(1, TimeUnit.MINUTES);
+      Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
 
       db.command(new OCommandSQL("live unsubscribe " + token)).execute();
 
@@ -119,14 +124,14 @@ public class OLiveQueryTest {
       int defaultCluster = clazz.getDefaultClusterId();
       OCluster cluster = db.getStorage().getClusterById(defaultCluster);
 
-      MyLiveQueryListener listener = new MyLiveQueryListener();
+      MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(1));
 
       db.query(new OLiveQuery<ODocument>("live select from cluster:" + cluster.getName(), listener));
 
       db.command(new OCommandSQL("insert into cluster:" + cluster.getName() + " set name = 'foo', surname = 'bar'")).execute();
 
       try {
-        Thread.sleep(3000);
+        Assert.assertTrue(listener.latch.await(1,TimeUnit.MINUTES));
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
@@ -159,6 +164,7 @@ public class OLiveQueryTest {
       ExecutorService executorService = Executors.newSingleThreadExecutor();
 
       final CountDownLatch latch = new CountDownLatch(1);
+      final CountDownLatch dataArrived = new CountDownLatch(1);
       Future<Integer> future = executorService.submit(new Callable<Integer>() {
         @Override
         public Integer call() throws Exception {
@@ -170,6 +176,7 @@ public class OLiveQueryTest {
             @Override
             public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
               integer.incrementAndGet();
+              dataArrived.countDown();
             }
 
             @Override
@@ -184,7 +191,7 @@ public class OLiveQueryTest {
           }));
 
           latch.countDown();
-          Thread.sleep(3000);
+          Assert.assertTrue(dataArrived.await(1,TimeUnit.MINUTES));
           return integer.get();
         }
       });
