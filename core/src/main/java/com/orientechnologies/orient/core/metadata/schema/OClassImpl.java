@@ -1517,10 +1517,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public long count(final boolean isPolymorphic) {
     acquireSchemaReadLock();
     try {
-      if (isPolymorphic)
-        return getDatabase().countClusterElements(readableClusters(getDatabase(), polymorphicClusterIds));
-
-      return getDatabase().countClusterElements(readableClusters(getDatabase(), clusterIds));
+      return getDatabase().countClass(getName(),isPolymorphic);
     } finally {
       releaseSchemaReadLock();
     }

@@ -2540,12 +2540,14 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           final ORecord rec = op.getRecord();
           if (rec != null && rec instanceof ODocument) {
             OClass schemaClass = ((ODocument) rec).getSchemaClass();
-            if (iPolymorphic) {
-              if (schemaClass.isSubClassOf(iClassName))
-                addedInTx++;
-            } else {
-              if (iClassName.equals(schemaClass.getName()) || iClassName.equals(schemaClass.getShortName()))
-                addedInTx++;
+            if (schemaClass != null) {
+              if (iPolymorphic) {
+                if (schemaClass.isSubClassOf(iClassName))
+                  addedInTx++;
+              } else {
+                if (iClassName.equals(schemaClass.getName()) || iClassName.equals(schemaClass.getShortName()))
+                  addedInTx++;
+              }
             }
           }
         }
@@ -3059,8 +3061,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       // SAVE ENCRYPTION METHOD IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
 
-    final String encryptionKey =
-        iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase(Locale.ENGLISH)) : null;
+    final String encryptionKey = iProperties != null ?
+        (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase(Locale.ENGLISH)) :
+        null;
     if (encryptionKey != null)
       // SAVE ENCRYPTION KEY IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
