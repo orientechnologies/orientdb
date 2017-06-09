@@ -271,14 +271,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           } finally {
             afterOperationRequest(connection);
           }
-        } else if (response != null) {
+        } else{
           try {
-            beginResponse();
-            try {
-              sendOk(connection, clientTxId);
-              response.write(channel, connection.getData().protocolVersion, connection.getData().getSerializer());
-            } finally {
-              endResponse();
+            if (response != null) {
+              beginResponse();
+              try {
+                sendOk(connection, clientTxId);
+                response.write(channel, connection.getData().protocolVersion, connection.getData().getSerializer());
+              } finally {
+                endResponse();
+              }
             }
           } catch (IOException e) {
             OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
