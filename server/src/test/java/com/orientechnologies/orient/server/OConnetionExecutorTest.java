@@ -9,8 +9,10 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +38,9 @@ public class OConnetionExecutorTest {
   @Mock
   private OClientConnection connection;
 
+  @Mock
+  private ONetworkProtocolData data;
+
   private OrientDB                  orientDb;
   private ODatabaseDocumentInternal database;
 
@@ -47,6 +52,8 @@ public class OConnetionExecutorTest {
     database = (ODatabaseDocumentInternal) orientDb.open(OConnetionExecutorTest.class.getSimpleName(), "admin", "admin");
     database.createClass("test");
     Mockito.when(connection.getDatabase()).thenReturn(database);
+    Mockito.when(connection.getData()).thenReturn(data);
+    Mockito.when(data.getSerializer()).thenReturn(ORecordSerializerNetworkV37.INSTANCE);
   }
 
   @After
