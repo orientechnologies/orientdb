@@ -304,9 +304,9 @@ public class OConnectionExecutorTransactionTest {
     OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
     OBinaryResponse commitResponse = commit.execute(executor);
     assertFalse(database.getTransaction().isActive());
-    assertTrue(commitResponse instanceof OCommitResponse);
+    assertTrue(commitResponse instanceof OCommit37Response);
 
-    assertEquals(((OCommitResponse) commitResponse).getUpdated().size(), 1);
+    assertEquals(((OCommit37Response) commitResponse).getUpdated().size(), 1);
 
     assertEquals(1, database.countClass("test"));
 
@@ -345,9 +345,9 @@ public class OConnectionExecutorTransactionTest {
     OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
     OBinaryResponse commitResponse = commit.execute(executor);
     assertFalse(database.getTransaction().isActive());
-    assertTrue(commitResponse instanceof OCommitResponse);
+    assertTrue(commitResponse instanceof OCommit37Response);
 
-    assertEquals(2, ((OCommitResponse) commitResponse).getCreated().size());
+    assertEquals(2, ((OCommit37Response) commitResponse).getCreated().size());
 
     assertEquals(2, database.countClass("test"));
 
@@ -380,7 +380,7 @@ public class OConnectionExecutorTransactionTest {
     OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
     OBinaryResponse commitResponse = commit.execute(executor);
     assertFalse(database.getTransaction().isActive());
-    assertTrue(commitResponse instanceof OCommitResponse);
+    assertTrue(commitResponse instanceof OCommit37Response);
 
     assertEquals(0, database.countClass("test"));
 
@@ -419,13 +419,12 @@ public class OConnectionExecutorTransactionTest {
     OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
     OBinaryResponse commitResponse = commit.execute(executor);
     assertFalse(database.getTransaction().isActive());
-    assertTrue(commitResponse instanceof OCommitResponse);
+    assertTrue(commitResponse instanceof OCommit37Response);
 
-    assertEquals(1, ((OCommitResponse) commitResponse).getCreated().size());
+    assertEquals(1, ((OCommit37Response) commitResponse).getCreated().size());
+    
 
-    // TODO it should be 1. Move to 1 once OConnectionBinaryExecutor#executeCommit37 is fixed for new records
-
-    assertEquals(2, ((OCommitResponse) commitResponse).getUpdated().size());
+    assertEquals(1, ((OCommit37Response) commitResponse).getUpdated().size());
 
     assertEquals(2, database.countClass("test"));
 
