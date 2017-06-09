@@ -1,10 +1,6 @@
 ## OrientDB
 
-**Develop branch:** [![Build Status](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/develop/badge/icon)](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/develop/) 
-
-**2.2.x branch:** [![Build Status](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/2.2.x/badge/icon)](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/2.2.x/) 
-
-[![Gitter chat](https://badges.gitter.im/orientechnologies/orientdb.png)](https://gitter.im/orientechnologies/orientdb)
+**Develop branch:** [![Build Status](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/develop/badge/icon)](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/develop/)  **2.2.x branch:** [![Build Status](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/2.2.x/badge/icon)](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/2.2.x/) **Chat with the community:** [![Gitter chat](https://badges.gitter.im/orientechnologies/orientdb.png)](https://gitter.im/orientechnologies/orientdb)
 
 ------
 
@@ -43,7 +39,7 @@ OrientDB Community Edition is free for any use (Apache 2 license). If you are in
 ## Main References
 - [Documentation](http://orientdb.com/docs/last/)
 - For any questions visit the [OrientDB Community Group](http://orientdb.com/active-user-community/)
-- [Professional Support](http://orientdb.com/support/).
+- [Professional Support](orientdb.com/support/).
 
 [Get started with OrientDB](http://orientdb.com/getting-started/).
 
