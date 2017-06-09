@@ -11,7 +11,9 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
+import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -22,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -53,6 +56,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -569,6 +573,56 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       response = new OCommandResponse(result, listener, isRecordResultSet, asynch, connection.getDatabase(), command, params);
     }
     return response;
+  }
+
+  @Override
+  public OBinaryResponse executeBatchOperations(OBatchOperationsRequest request) {
+
+    ODatabaseDocumentInternal database = connection.getDatabase();
+
+    OTransaction transaction = database.getTransaction();
+
+    List<ORecordOperationRequest> operations = request.getOperations();
+
+    List<OCreatedRecordResponse> createdRecords = new ArrayList<>();
+    List<OUpdatedRecordResponse> updatedRecords = new ArrayList<>();
+
+    for (ORecordOperationRequest operation : operations) {
+
+      final ORecord record;
+      ORecordId current;
+      switch (operation.getType()) {
+      case ORecordOperation.CREATED:
+        record = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType());
+        connection.getData().getSerializer().fromStream(operation.getRecord(),record,null);
+        current = (ORecordId) record.getIdentity();
+        OCreateRecordResponse createRecordResponse = (OCreateRecordResponse) executeCreateRecord(
+            new OCreateRecordRequest(record, (ORecordId) operation.getId(), operation.getRecordType()));
+        if (transaction.isActive()) {
+          ((OTransactionOptimisticServer) transaction).getCreatedRecords().put((ORecordId) record.getIdentity(), record);
+        }
+        createdRecords.add(new OCreatedRecordResponse(current, createRecordResponse.getIdentity()));
+        break;
+      case ORecordOperation.UPDATED:
+        record = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType());
+        connection.getData().getSerializer().fromStream(operation.getRecord(),record,null);
+        current = (ORecordId) record.getIdentity();
+        OUpdateRecordResponse updateRecordResponse = (OUpdateRecordResponse) executeUpdateRecord(
+            new OUpdateRecordRequest((ORecordId) operation.getId(), record, operation.getVersion(), true,
+                operation.getRecordType()));
+        if (transaction.isActive()) {
+          ((OTransactionOptimisticServer) transaction).getUpdatedRecords().put((ORecordId) record.getIdentity(), record);
+        }
+        updatedRecords.add(new OUpdatedRecordResponse(current, updateRecordResponse.getVersion()));
+        break;
+
+      case ORecordOperation.DELETED:
+        executeDeleteRecord(new ODeleteRecordRequest((ORecordId) operation.getId(), operation.getVersion()));
+        break;
+      }
+
+    }
+    return new OBatchOperationsResponse(database.getTransaction().getId(), createdRecords, updatedRecords);
   }
 
   @Override

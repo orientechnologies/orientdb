@@ -60,6 +60,7 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_RECORD_UPDATE    = 32;
   public static final byte REQUEST_RECORD_DELETE    = 33;
   public static final byte REQUEST_RECORD_COPY      = 34;                 // NOT USED ANYMORE
+  public static final byte REQUEST_BATCH_OPERATIONS  = 35;                // since 3.0
   public static final byte REQUEST_POSITIONS_HIGHER = 36;                 // since 1.3.0
   public static final byte REQUEST_POSITIONS_LOWER  = 37;                 // since 1.3.0
   public static final byte REQUEST_RECORD_CLEAN_OUT = 38;                 // since 1.3.0
@@ -74,6 +75,8 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_QUERY                             = 45;                 // since 3.0
   public static final byte REQUEST_CLOSE_QUERY                       = 46;                 // since 3.0
   public static final byte REQUEST_QUERY_NEXT_PAGE                   = 47;                 // since 3.0
+
+
 
   public static final byte REQUEST_TX_COMMIT  = 60;
   public static final byte REQUEST_TX_BEGIN   = 61;

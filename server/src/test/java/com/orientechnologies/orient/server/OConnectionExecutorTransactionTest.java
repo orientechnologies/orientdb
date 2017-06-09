@@ -12,6 +12,9 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,13 +25,14 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
 /**
  * Created by tglman on 29/12/16.
  */
-public class OConnetionExecutorTransactionTest {
+public class OConnectionExecutorTransactionTest {
 
   @Mock
   private OServer           server;
@@ -42,16 +46,19 @@ public class OConnetionExecutorTransactionTest {
   public void before() {
     MockitoAnnotations.initMocks(this);
     orientDb = new OrientDB("embedded:./", OrientDBConfig.defaultConfig());
-    orientDb.create(OConnetionExecutorTransactionTest.class.getSimpleName(), ODatabaseType.MEMORY);
-    database = (ODatabaseDocumentInternal) orientDb.open(OConnetionExecutorTransactionTest.class.getSimpleName(), "admin", "admin");
+    orientDb.create(OConnectionExecutorTransactionTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    database = (ODatabaseDocumentInternal) orientDb.open(OConnectionExecutorTransactionTest.class.getSimpleName(), "admin", "admin");
     database.createClass("test");
+    ONetworkProtocolData protocolData = new ONetworkProtocolData();
+    protocolData.setSerializer(ORecordSerializerNetworkFactory.INSTANCE.current());
     Mockito.when(connection.getDatabase()).thenReturn(database);
+    Mockito.when(connection.getData()).thenReturn(protocolData);
   }
 
   @After
   public void after() {
     database.close();
-    orientDb.drop(OConnetionExecutorTransactionTest.class.getSimpleName());
+    orientDb.drop(OConnectionExecutorTransactionTest.class.getSimpleName());
     orientDb.close();
   }
 
@@ -256,6 +263,7 @@ public class OConnetionExecutorTransactionTest {
     operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
     assertFalse(database.getTransaction().isActive());
 
+
     OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
     OBinaryResponse response = request.execute(executor);
     assertTrue(database.getTransaction().isActive());
@@ -267,4 +275,165 @@ public class OConnetionExecutorTransactionTest {
 
   }
 
+  @Test
+  public void testBeginBatchUpdateCommitTransaction() {
+
+    ODocument rec = database.save(new ODocument("test").field("name", "foo"));
+
+    OConnectionBinaryExecutor executor = new OConnectionBinaryExecutor(connection, server);
+
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, new ArrayList<>(), new HashMap<>());
+    OBinaryResponse response = request.execute(executor);
+
+    assertTrue(database.getTransaction().isActive());
+    assertTrue(response instanceof OBeginTransactionResponse);
+
+    List<ORecordOperation> operations = new ArrayList<>();
+
+    rec.field("name", "bar");
+
+    operations.add(new ORecordOperation(rec, ORecordOperation.UPDATED));
+
+    OBatchOperationsRequest batchRequest = new OBatchOperationsRequest(10, operations);
+    OBinaryResponse batchResponse = batchRequest.execute(executor);
+    assertTrue(batchResponse instanceof OBatchOperationsResponse);
+
+    assertEquals(1,((OBatchOperationsResponse) batchResponse).getUpdated().size());
+    assertTrue(database.getTransaction().isActive());
+
+    OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
+    OBinaryResponse commitResponse = commit.execute(executor);
+    assertFalse(database.getTransaction().isActive());
+    assertTrue(commitResponse instanceof OCommit37Response);
+
+    assertEquals(((OCommit37Response) commitResponse).getUpdated().size(), 1);
+
+    assertEquals(1, database.countClass("test"));
+
+    ODocument document = database.browseClass("test").iterator().next();
+
+    assertEquals("bar", document.field("name"));
+
+  }
+
+  @Test
+  public void testBeginBatchCreateCommitTransaction() {
+    OConnectionBinaryExecutor executor = new OConnectionBinaryExecutor(connection, server);
+
+    List<ORecordOperation> operations = new ArrayList<>();
+    ODocument rec = new ODocument("test");
+    operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
+    assertFalse(database.getTransaction().isActive());
+
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBinaryResponse response = request.execute(executor);
+
+    assertTrue(database.getTransaction().isActive());
+    assertTrue(response instanceof OBeginTransactionResponse);
+
+    operations = new ArrayList<>();
+    rec = new ODocument("test");
+    operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
+
+    OBatchOperationsRequest batchRequest = new OBatchOperationsRequest(10, operations);
+    OBinaryResponse batchResponse = batchRequest.execute(executor);
+    assertTrue(batchResponse instanceof OBatchOperationsResponse);
+    assertTrue(database.getTransaction().isActive());
+
+    assertEquals(1,((OBatchOperationsResponse) batchResponse).getCreated().size());
+
+    OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
+    OBinaryResponse commitResponse = commit.execute(executor);
+    assertFalse(database.getTransaction().isActive());
+    assertTrue(commitResponse instanceof OCommit37Response);
+
+    assertEquals(2, ((OCommit37Response) commitResponse).getCreated().size());
+
+    assertEquals(2, database.countClass("test"));
+
+  }
+
+  @Test
+  public void testBeginBatchDeleteCommitTransaction() {
+
+    ODocument rec = database.save(new ODocument("test").field("name", "foo"));
+
+    OConnectionBinaryExecutor executor = new OConnectionBinaryExecutor(connection, server);
+
+    List<ORecordOperation> operations = new ArrayList<>();
+
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBinaryResponse response = request.execute(executor);
+
+    assertTrue(database.getTransaction().isActive());
+    assertTrue(response instanceof OBeginTransactionResponse);
+
+    operations = new ArrayList<>();
+
+    operations.add(new ORecordOperation(rec, ORecordOperation.DELETED));
+
+    OBatchOperationsRequest batchRequest = new OBatchOperationsRequest(10, operations);
+    OBinaryResponse batchResponse = batchRequest.execute(executor);
+    assertTrue(batchResponse instanceof OBatchOperationsResponse);
+    assertTrue(database.getTransaction().isActive());
+
+    OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
+    OBinaryResponse commitResponse = commit.execute(executor);
+    assertFalse(database.getTransaction().isActive());
+    assertTrue(commitResponse instanceof OCommit37Response);
+
+    assertEquals(0, database.countClass("test"));
+
+  }
+
+  @Test
+  public void testBeginBatchComplexCommitTransaction() {
+    ODocument toUpdate = database.save(new ODocument("test").field("name", "foo"));
+    ODocument toDelete = database.save(new ODocument("test").field("name", "delete"));
+
+    OConnectionBinaryExecutor executor = new OConnectionBinaryExecutor(connection, server);
+
+    List<ORecordOperation> operations = new ArrayList<>();
+
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBinaryResponse response = request.execute(executor);
+
+    assertTrue(database.getTransaction().isActive());
+    assertTrue(response instanceof OBeginTransactionResponse);
+
+    operations = new ArrayList<>();
+    ODocument toInsert = new ODocument("test").field("name", "insert");
+    toUpdate.field("name", "update");
+    operations.add(new ORecordOperation(toInsert, ORecordOperation.CREATED));
+    operations.add(new ORecordOperation(toDelete, ORecordOperation.DELETED));
+    operations.add(new ORecordOperation(toUpdate, ORecordOperation.UPDATED));
+
+    OBatchOperationsRequest batchRequest = new OBatchOperationsRequest(10, operations);
+    OBinaryResponse batchResponse = batchRequest.execute(executor);
+    assertTrue(batchResponse instanceof OBatchOperationsResponse);
+    assertTrue(database.getTransaction().isActive());
+
+    assertEquals(1,((OBatchOperationsResponse) batchResponse).getCreated().size());
+    assertEquals(1,((OBatchOperationsResponse) batchResponse).getUpdated().size());
+
+    OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
+    OBinaryResponse commitResponse = commit.execute(executor);
+    assertFalse(database.getTransaction().isActive());
+    assertTrue(commitResponse instanceof OCommit37Response);
+
+    assertEquals(1, ((OCommit37Response) commitResponse).getCreated().size());
+    
+
+    assertEquals(1, ((OCommit37Response) commitResponse).getUpdated().size());
+
+    assertEquals(2, database.countClass("test"));
+
+    OResultSet query = database.query("select from test where name = 'update'");
+
+    List<OResult> results = query.stream().collect(Collectors.toList());
+
+    assertEquals(1, results.size());
+
+    assertEquals("update", results.get(0).getProperty("name"));
+  }
 }
