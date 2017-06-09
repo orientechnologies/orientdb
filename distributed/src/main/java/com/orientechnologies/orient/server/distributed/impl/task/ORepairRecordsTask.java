@@ -26,6 +26,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.util.List;
+
 /**
  * Repairs records through the distributed server.
  *
@@ -66,7 +68,7 @@ public class ORepairRecordsTask extends OTxTask {
   }
 
   @Override
-  public ORemoteTask getUndoTask(ODistributedRequestId reqId) {
+  public ORemoteTask getUndoTask(ODistributedServerManager dManager, ODistributedRequestId reqId, List<String> servers) {
     return null;
   }
 

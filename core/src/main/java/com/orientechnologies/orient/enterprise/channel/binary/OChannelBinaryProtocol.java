@@ -117,6 +117,7 @@ public class OChannelBinaryProtocol {
   // TASK
   public static final byte DISTRIBUTED_REQUEST  = 120;
   public static final byte DISTRIBUTED_RESPONSE = 121;
+  public static final byte DISTRIBUTED_CONNECT  = 122;
 
   // INCOMING
   public static final byte RESPONSE_STATUS_OK    = 0;
@@ -149,8 +150,9 @@ public class OChannelBinaryProtocol {
 
   public static final int PROTOCOL_VERSION_35 = 35;
   public static final int PROTOCOL_VERSION_36 = 36;                 //ABILITY TO CREATE DATABASE FROM INCREMENTAL BACKUP
+  public static final int PROTOCOL_VERSION_37 = 37;                 //DISTRIBUTED CONNECT WITH DISTRIB PROTOCOL VERSIONING
 
-  public static final int CURRENT_PROTOCOL_VERSION = PROTOCOL_VERSION_36;
+  public static final int CURRENT_PROTOCOL_VERSION = PROTOCOL_VERSION_37;
 
   public static OIdentifiable readIdentifiable(final OChannelBinary network) throws IOException {
     final int classId = network.readShort();
@@ -172,7 +174,7 @@ public class OChannelBinaryProtocol {
   }
 
   public static void checkRequestTypeRange(final OChannelBinary channel, final int reqType) {
-    if (reqType < REQUEST_SHUTDOWN || reqType > DISTRIBUTED_RESPONSE) {
+    if (reqType < REQUEST_SHUTDOWN || reqType > DISTRIBUTED_CONNECT) {
       // DIRTY DATA: FORCE CLOSING THE CHANNEL
       channel.close();
 

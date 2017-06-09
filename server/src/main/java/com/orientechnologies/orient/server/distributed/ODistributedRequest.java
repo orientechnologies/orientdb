@@ -27,29 +27,28 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class ODistributedRequest {
   public enum EXECUTION_MODE {
     RESPONSE, NO_RESPONSE
   }
 
-  private final ORemoteTaskFactory taskFactory;
-  private ODistributedRequestId    id;
-  private String                   databaseName;
-  private long                     senderThreadId;
-  private ORemoteTask              task;
-  private ORecordId                userRID;       // KEEP ALSO THE RID TO AVOID SECURITY PROBLEM ON DELETE & RECREATE USERS
+  private final ODistributedServerManager manager;
 
-  public ODistributedRequest(final ORemoteTaskFactory taskFactory) {
-    this.taskFactory = taskFactory;
+  private ODistributedRequestId id;
+  private String                databaseName;
+  private long                  senderThreadId;
+  private ORemoteTask           task;
+  private ORecordId             userRID;       // KEEP ALSO THE RID TO AVOID SECURITY PROBLEM ON DELETE & RECREATE USERS
+
+  public ODistributedRequest(final ODistributedServerManager manager) {
+    this.manager = manager;
   }
 
-  public ODistributedRequest(final ORemoteTaskFactory taskFactory, final int senderNodeId, final long msgSequence,
+  public ODistributedRequest(final ODistributedServerManager manager, final int senderNodeId, final long msgSequence,
       final String databaseName, final ORemoteTask payload) {
-    this.taskFactory = taskFactory;
+    this.manager = manager;
     this.id = new ODistributedRequestId(senderNodeId, msgSequence);
     this.databaseName = databaseName;
     this.senderThreadId = Thread.currentThread().getId();
@@ -113,7 +112,8 @@ public class ODistributedRequest {
     if (databaseName.isEmpty())
       databaseName = null;
 
-    task = (ORemoteTask) taskFactory.createTask(in.readByte());
+    final ORemoteTaskFactory taskFactory = manager.getTaskFactoryManager().getFactoryByServerId(id.getNodeId());
+    task = taskFactory.createTask(in.readByte());
     task.fromStream(in, taskFactory);
 
     if (in.readBoolean()) {

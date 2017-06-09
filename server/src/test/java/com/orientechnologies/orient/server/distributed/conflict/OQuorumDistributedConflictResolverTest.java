@@ -31,8 +31,8 @@ public class OQuorumDistributedConflictResolverTest {
     final ODocument expectedWinnerRecord = new ODocument().fields("a", 3, "b", "yes");
 
     // FILL CANDIDATES
-    candidates
-        .put(new ORawBuffer(expectedWinnerRecord.toStream(), 1, ODocument.RECORD_TYPE), Arrays.asList("server0", "server1", "server2"));
+    candidates.put(new ORawBuffer(expectedWinnerRecord.toStream(), 1, ODocument.RECORD_TYPE),
+        Arrays.asList("server0", "server1", "server2"));
     candidates.put(new ORawBuffer(new ODocument().fields("a", 4, "b", "yes").toStream(), 3, ODocument.RECORD_TYPE),
         OMultiValue.getSingletonList("server2"));
     candidates.put(new ORawBuffer(new ODocument().fields("a", 3, "b", "no").toStream(), 4, ODocument.RECORD_TYPE),
@@ -334,7 +334,7 @@ public class OQuorumDistributedConflictResolverTest {
     }
 
     @Override
-    public ORemoteTaskFactory getTaskFactory() {
+    public ORemoteTaskFactoryManager getTaskFactoryManager() {
       return null;
     }
 

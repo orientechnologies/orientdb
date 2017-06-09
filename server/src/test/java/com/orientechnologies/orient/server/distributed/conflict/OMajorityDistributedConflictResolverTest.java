@@ -31,8 +31,8 @@ public class OMajorityDistributedConflictResolverTest {
     final ODocument expectedWinnerRecord = new ODocument().fields("a", 3, "b", "yes");
 
     // FILL CANDIDATES
-    candidates
-        .put(new ORawBuffer(expectedWinnerRecord.toStream(), 1, ODocument.RECORD_TYPE), Arrays.asList("server0", "server1", "server2"));
+    candidates.put(new ORawBuffer(expectedWinnerRecord.toStream(), 1, ODocument.RECORD_TYPE),
+        Arrays.asList("server0", "server1", "server2"));
     candidates.put(new ORawBuffer(new ODocument().fields("a", 4, "b", "yes").toStream(), 3, ODocument.RECORD_TYPE),
         OMultiValue.getSingletonList("server2"));
     candidates.put(new ORawBuffer(new ODocument().fields("a", 3, "b", "no").toStream(), 4, ODocument.RECORD_TYPE),
@@ -67,7 +67,6 @@ public class OMajorityDistributedConflictResolverTest {
     Assert.assertEquals(OContentDistributedConflictResolver.NOT_FOUND, result.winner);
   }
 
-
   @Test
   public void winnerNotFoundMultipleGroupe() throws Exception {
     final OMajorityDistributedConflictResolver resolver = new OMajorityDistributedConflictResolver();
@@ -84,6 +83,7 @@ public class OMajorityDistributedConflictResolverTest {
 
     Assert.assertEquals(OContentDistributedConflictResolver.NOT_FOUND, result.winner);
   }
+
   private ODistributedServerManager mockDistributedManager = new ODistributedServerManager() {
     @Override
     public boolean isNodeStatusEqualsTo(String iNodeName, String iDatabaseName, DB_STATUS... statuses) {
@@ -351,7 +351,7 @@ public class OMajorityDistributedConflictResolverTest {
     }
 
     @Override
-    public ORemoteTaskFactory getTaskFactory() {
+    public ORemoteTaskFactoryManager getTaskFactoryManager() {
       return null;
     }
 

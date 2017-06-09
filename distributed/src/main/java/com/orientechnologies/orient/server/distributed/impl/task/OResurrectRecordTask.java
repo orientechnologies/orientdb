@@ -34,6 +34,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Distributed task to fix delete record in conflict on synchronization.
@@ -41,14 +42,14 @@ import java.util.Arrays;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OResurrectRecordTask extends OUpdateRecordTask {
-  private static final long serialVersionUID = 1L;
   public static final  int  FACTORYID        = 11;
 
   public OResurrectRecordTask() {
   }
 
-  public OResurrectRecordTask(final ORecord record) {
-    super(record);
+  public OResurrectRecordTask init(final ORecord record) {
+    super.init(record);
+    return this;
   }
 
   @Override
@@ -85,7 +86,7 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
   }
 
   @Override
-  public ORemoteTask getUndoTask(ODistributedRequestId reqId) {
+  public ORemoteTask getUndoTask(ODistributedServerManager dManager, ODistributedRequestId reqId, List<String> servers) {
     return null;
   }
 

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -122,7 +123,7 @@ public class OTxTask extends OAbstract2pcTask {
 
           taskResult = task.execute(requestId, iServer, iManager, database);
 
-          reqContext.addUndoTask(task.getUndoTask(requestId));
+          reqContext.addUndoTask(task.getUndoTask(iManager, requestId, OMultiValue.getSingletonList(iManager.getLocalNodeName())));
         }
 
         result.results.add(taskResult);

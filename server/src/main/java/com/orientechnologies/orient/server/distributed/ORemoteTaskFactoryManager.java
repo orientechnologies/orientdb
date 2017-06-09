@@ -19,15 +19,19 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import java.util.Collection;
 
 /**
- * Factory for remote tasks.
+ * Factory manager to handle multiple version of distributed protocols.
  *
  * @author Luca Garulli
  */
-public interface ORemoteTaskFactory {
-  ORemoteTask createTask(final int code);
+public interface ORemoteTaskFactoryManager {
+  ORemoteTaskFactory getFactoryByServerId(int serverId);
 
-  int getProtocolVersion();
+  ORemoteTaskFactory getFactoryByServerName(String serverName);
+
+  ORemoteTaskFactory getFactoryByServerNames(Collection<String> serverNames);
+
+  ORemoteTaskFactory getFactoryByVersion(int version);
 }

@@ -248,7 +248,10 @@ public interface ODistributedServerManager {
 
   boolean installDatabase(boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst);
 
-  ORemoteTaskFactory getTaskFactory();
+  /**
+   * Returns the task factory manager. During first connect the minor version of the protocol is used.
+   */
+  ORemoteTaskFactoryManager getTaskFactoryManager();
 
   Set<String> getActiveServers();
 

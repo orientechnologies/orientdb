@@ -45,6 +45,7 @@ public class ORemoteServerChannel {
   private final String                    userPassword;
   private final String                    server;
   private       OChannelBinarySynchClient channel;
+  private       int                       protocolVersion;
 
   private static final int     MAX_RETRY     = 3;
   private static final String  CLIENT_TYPE   = "OrientDB Server";
@@ -58,7 +59,7 @@ public class ORemoteServerChannel {
   private final static int MAX_CONSECUTIVE_ERRORS = 10;
 
   public ORemoteServerChannel(final ODistributedServerManager manager, final String iServer, final String iURL, final String user,
-      final String passwd) throws IOException {
+      final String passwd, final int currentProtocolVersion) throws IOException {
     this.manager = manager;
     this.server = iServer;
     this.url = iURL;
@@ -69,7 +70,13 @@ public class ORemoteServerChannel {
     remoteHost = iURL.substring(0, sepPos);
     remotePort = Integer.parseInt(iURL.substring(sepPos + 1));
 
+    protocolVersion = currentProtocolVersion;
+
     connect();
+  }
+
+  public int getDistributedProtocolVersion() {
+    return protocolVersion;
   }
 
   public interface OStorageRemoteOperation<T> {
@@ -104,7 +111,7 @@ public class ORemoteServerChannel {
     channel = new OChannelBinarySynchClient(remoteHost, remotePort, null, contextConfig,
         OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
 
-    networkOperation(OChannelBinaryProtocol.REQUEST_CONNECT, new OStorageRemoteOperation<Void>() {
+    networkOperation(OChannelBinaryProtocol.DISTRIBUTED_CONNECT, new OStorageRemoteOperation<Void>() {
       @Override
       public Void execute() throws IOException {
         channel.writeString(CLIENT_TYPE).writeString(OConstants.ORIENT_VERSION)
@@ -117,6 +124,9 @@ public class ORemoteServerChannel {
         channel.writeString(userName);
         channel.writeString(userPassword);
 
+        if (channel.getSrvProtocolVersion() >= OChannelBinaryProtocol.PROTOCOL_VERSION_37)
+          channel.writeShort((short) protocolVersion);
+
         channel.flush();
 
         channel.beginResponse(false);
@@ -124,6 +134,13 @@ public class ORemoteServerChannel {
         sessionToken = channel.readBytes();
         if (sessionToken.length == 0) {
           sessionToken = null;
+        }
+
+        // SET THE PROTOCOL TO THE MINIMUM NUMBER TO SUPPORT BACKWARD COMPATIBILITY
+        int remoteProtocolVersion = 0;
+        if (channel.getSrvProtocolVersion() >= OChannelBinaryProtocol.PROTOCOL_VERSION_37) {
+          remoteProtocolVersion = channel.readShort();
+          protocolVersion = Math.min(protocolVersion, remoteProtocolVersion);
         }
 
         return null;

@@ -33,16 +33,16 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OReadRecordTask extends OAbstractReadRecordTask {
-  private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 1;
+  public static final int FACTORYID = 1;
 
   public OReadRecordTask() {
     this.lockRecords = false;
   }
 
-  public OReadRecordTask(final ORecordId iRid) {
-    super(iRid);
+  public OReadRecordTask init(final ORecordId rid) {
+    super.init(rid);
     this.lockRecords = false;
+    return this;
   }
 
   @Override

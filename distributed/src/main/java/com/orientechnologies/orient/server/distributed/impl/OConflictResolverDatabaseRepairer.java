@@ -349,10 +349,13 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
       final Object result = entry.getValue();
 
+      final List<String> servers = new ArrayList<String>(1);
+      servers.add(server);
+
       if (result instanceof Long) {
         final long remoteEnd = (Long) result;
 
-        ORepairClusterTask task = new ORepairClusterTask(clusterId);
+        ORepairClusterTask task = new ORepairClusterTask().init(clusterId);
 
         for (long pos = remoteEnd + 1; pos <= localEnd; ++pos) {
           final ORecordId rid = new ORecordId(clusterId, pos);
@@ -360,28 +363,23 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
           if (rawRecord == null)
             continue;
 
-          task.add(new OCreateRecordTask(rid, rawRecord.buffer, rawRecord.version, rawRecord.recordType));
+          task.add(((OCreateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(servers)
+              .createTask(OCreateRecordTask.FACTORYID)).init(rid, rawRecord.buffer, rawRecord.version, rawRecord.recordType));
 
           recordRepaired++;
 
           if (task.getTasks().size() > batchMax) {
             // SEND BATCH OF CHANGES
-            final List<String> servers = new ArrayList<String>(1);
-            servers.add(server);
-
             final ODistributedResponse response = dManager
                 .sendRequest(databaseName, clusterNames, servers, task, dManager.getNextMessageIdCounter(),
                     ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
-            task = new ORepairClusterTask(clusterId);
+            task = new ORepairClusterTask().init(clusterId);
           }
         }
 
         if (!task.getTasks().isEmpty()) {
           // SEND FINAL BATCH OF CHANGES
-          final List<String> servers = new ArrayList<String>(1);
-          servers.add(server);
-
           final ODistributedResponse response = dManager
               .sendRequest(databaseName, clusterNames, servers, task, dManager.getNextMessageIdCounter(),
                   ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
@@ -457,9 +455,11 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
               "Auto repairing records %s on servers %s (reqId=%s)...", rids, involvedServers, requestId);
 
       // CREATE TX TASK
-      final ORepairRecordsTask tx = new ORepairRecordsTask();
+      final ORepairRecordsTask tx = ((ORepairRecordsTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nonLocalServers)
+          .createTask(ORepairRecordsTask.FACTORYID));
+
       for (ORecordId rid : rids)
-        tx.add(new OReadRecordTask(rid));
+        tx.add(new OReadRecordTask().init(rid));
 
       ODistributedResponse response = dManager
           .sendRequest(databaseName, clusterNames, nonLocalServers, tx, requestId.getMessageId(),
@@ -468,7 +468,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
       // MAP OF OCompletedTxTask SERVER/RECORDS. RECORD == NULL MEANS DELETE
       final Map<String, OCompleted2pcTask> repairMap = new HashMap<String, OCompleted2pcTask>(rids.size());
       for (String server : involvedServers) {
-        final OCompleted2pcTask completedTask = new OCompleted2pcTask(requestId, false, tx.getPartitionKey());
+        final OCompleted2pcTask completedTask = ((OCompleted2pcTask) dManager.getTaskFactoryManager()
+            .getFactoryByServerNames(involvedServers).createTask(OCompleted2pcTask.FACTORYID));
+        completedTask.init(requestId, false, tx.getPartitionKey());
         repairMap.put(server, completedTask);
       }
 
@@ -603,12 +605,17 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
                       // UPDATE THE RECORD
                       final ORawBuffer winnerRecord = (ORawBuffer) winner;
 
-                      completedTask.addFixTask(new OFixUpdateRecordTask(rid, winnerRecord.buffer,
-                          ORecordVersionHelper.setRollbackMode(winnerRecord.version), winnerRecord.recordType));
+                      completedTask.addFixTask(
+                          ((OFixUpdateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(involvedServers)
+                              .createTask(OFixUpdateRecordTask.FACTORYID))
+                              .init(rid, winnerRecord.buffer, ORecordVersionHelper.setRollbackMode(winnerRecord.version),
+                                  winnerRecord.recordType));
 
                     } else if ((winner == null || winner instanceof ORecordNotFoundException) && value instanceof ORawBuffer) {
                       // DELETE THE RECORD
-                      completedTask.addFixTask(new OFixCreateRecordTask(rid, -1));
+                      completedTask.addFixTask(
+                          ((OFixCreateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(involvedServers)
+                              .createTask(OFixCreateRecordTask.FACTORYID)).init(rid, -1));
 
                     } else if (value instanceof Throwable) {
                       // MANAGE EXCEPTION

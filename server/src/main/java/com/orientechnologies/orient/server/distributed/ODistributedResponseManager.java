@@ -882,7 +882,8 @@ public class ODistributedResponseManager {
         continue;
 
       if (task instanceof OAbstractReplicatedTask) {
-        final ORemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request.getId());
+        final List<String> servers = OMultiValue.getSingletonList(targetNode);
+        final ORemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(dManager, request.getId(), servers);
 
         if (undoTask != null) {
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
@@ -890,8 +891,8 @@ public class ODistributedResponseManager {
               targetNode);
 
           final ODistributedResponse result = dManager
-              .sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(targetNode), undoTask,
-                  dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+              .sendRequest(request.getDatabaseName(), null, servers, undoTask, dManager.getNextMessageIdCounter(),
+                  ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
               "Received response from undo message (%s) for request (%s) to server %s: %s", undoTask, request, targetNode, result);

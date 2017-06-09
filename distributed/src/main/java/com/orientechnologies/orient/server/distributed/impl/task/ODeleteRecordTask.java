@@ -21,11 +21,11 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -35,7 +35,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+
+import java.util.List;
 
 /**
  * Distributed delete record task used for synchronization.
@@ -43,18 +44,18 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
-  private static final long serialVersionUID = 1L;
-  public static final  int  FACTORYID        = 4;
+  public static final int FACTORYID = 4;
 
   public ODeleteRecordTask() {
   }
 
   public ODeleteRecordTask(final ORecord record) {
-    super(record);
+    init(record);
   }
 
-  public ODeleteRecordTask(final ORecordId rid, final int version) {
-    super(rid, version);
+  public ODeleteRecordTask init(final ORecordId rid, final int version) {
+    super.init(rid, version);
+    return this;
   }
 
   @Override
@@ -80,21 +81,23 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
       if (loadedRecord instanceof ODocument) {
         if (((ODocument) loadedRecord).getSchemaClass().isEdgeType()) {
           // DELETE EDGE
-          final OrientBaseGraph graph = OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentTx) database);
-          try {
-            graph.getEdge(loadedRecord).remove();
-          } finally {
-            graph.shutdown(false);
-          }
+          OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+            @Override
+            public Object call(OrientBaseGraph graph) {
+              graph.getEdge(loadedRecord).remove();
+              return null;
+            }
+          });
           return true;
         } else if (((ODocument) loadedRecord).getSchemaClass().isVertexType()) {
           // DELETE VERTEX
-          final OrientBaseGraph graph = OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentTx) database);
-          try {
-            graph.getVertex(loadedRecord).remove();
-          } finally {
-            graph.shutdown(false);
-          }
+          OGraphCommandExecutorSQLFactory.runInConfiguredTxMode(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+            @Override
+            public Object call(OrientBaseGraph graph) {
+              graph.getVertex(loadedRecord).remove();
+              return null;
+            }
+          });
           return true;
         }
       }
@@ -116,15 +119,17 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ORemoteTask getFixTask(final ODistributedRequest iRequest, final ORemoteTask iOriginalTask, final Object iBadResponse,
       final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
-    return new OFixCreateRecordTask(rid, version);
+    return ((OFixCreateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerName(executorNodeName)
+        .createTask(OFixCreateRecordTask.FACTORYID)).init(rid, version);
   }
 
   @Override
-  public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
+  public ORemoteTask getUndoTask(ODistributedServerManager dManager, final ODistributedRequestId reqId, List<String> servers) {
     if (previousRecord == null)
       return null;
 
-    final OResurrectRecordTask task = new OResurrectRecordTask(previousRecord);
+    final OResurrectRecordTask task = ((OResurrectRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(servers)
+        .createTask(OResurrectRecordTask.FACTORYID)).init(previousRecord);
     task.setLockRecords(false);
     return task;
   }

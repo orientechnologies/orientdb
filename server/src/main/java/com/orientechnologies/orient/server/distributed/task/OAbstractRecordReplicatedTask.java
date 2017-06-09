@@ -46,21 +46,19 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedTask {
-  protected ORecordId         rid;
-  protected int               version;
-  protected int               partitionKey = -1;
-  protected boolean           lockRecords  = true;
+  protected ORecordId rid;
+  protected int       version;
+  protected int     partitionKey = -1;
+  protected boolean lockRecords  = true;
 
   protected transient ORecord previousRecord;
 
-  public OAbstractRecordReplicatedTask() {
+  public OAbstractRecordReplicatedTask init(final ORecord record) {
+    init((ORecordId) record.getIdentity(), record.getVersion());
+    return this;
   }
 
-  protected OAbstractRecordReplicatedTask(final ORecord record) {
-    this((ORecordId) record.getIdentity(), record.getVersion());
-  }
-
-  protected OAbstractRecordReplicatedTask(final ORecordId iRid, final int iVersion) {
+  public OAbstractRecordReplicatedTask init(final ORecordId iRid, final int iVersion) {
     this.rid = iRid;
     this.version = iVersion;
 
@@ -77,6 +75,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
         }
       }
     }
+    return this;
   }
 
   public abstract Object executeRecordTask(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,

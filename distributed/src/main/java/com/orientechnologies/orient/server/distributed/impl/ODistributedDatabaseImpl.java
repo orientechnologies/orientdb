@@ -258,8 +258,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
         // WAIT ALL THE INVOLVED QUEUES ARE FREE AND SYNCHRONIZED
         final CountDownLatch syncLatch = new CountDownLatch(involvedWorkerQueues.size());
-        final ODistributedRequest syncRequest = new ODistributedRequest(manager.getTaskFactory(), request.getId().getNodeId(), -1,
-            databaseName, new OSynchronizedTaskWrapper(syncLatch));
+        final ODistributedRequest syncRequest = new ODistributedRequest(null, request.getId().getNodeId(), -1, databaseName,
+            new OSynchronizedTaskWrapper(syncLatch));
         for (int queue : involvedWorkerQueues)
           workerThreads.get(queue).processRequest(syncRequest);
 
@@ -318,8 +318,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             request.setTask(new OSynchronizedTaskWrapper(queueLatch, senderNodeName, task));
             req = request;
           } else
-            req = new ODistributedRequest(manager.getTaskFactory(), request.getId().getNodeId(), -1, databaseName,
-                new OWaitForTask(queueLatch));
+            req = new ODistributedRequest(manager, request.getId().getNodeId(), -1, databaseName, new OWaitForTask(queueLatch));
 
           workerThreads.get(queue).processRequest(req);
         }
@@ -862,7 +861,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         "Distributed transaction: rolling back all the pending transactions coordinated by the unreachable server '%s'", nodeName);
 
     final OUnreachableServerLocalTask task = new OUnreachableServerLocalTask(nodeName);
-    final ODistributedRequest rollbackRequest = new ODistributedRequest(manager.getTaskFactory(), manager.getLocalNodeId(),
+    final ODistributedRequest rollbackRequest = new ODistributedRequest(null, manager.getLocalNodeId(),
         manager.getNextMessageIdCounter(), null, task);
     processRequest(rollbackRequest, false);
   }
@@ -1171,7 +1170,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
                 } catch (Throwable t) {
                   ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
-                      "Error on rolling back distributed transaction %s on database '%s' (err=%s)", ctx.getReqId(), databaseName, t);
+                      "Error on rolling back distributed transaction %s on database '%s' (err=%s)", ctx.getReqId(), databaseName,
+                      t);
                 } finally {
                   it.remove();
                 }

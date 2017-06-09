@@ -31,6 +31,7 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Repairs a cluster through the distributed server. This task creates the missing records to realign all the servers to the same
@@ -45,8 +46,9 @@ public class ORepairClusterTask extends OTxTask {
   public ORepairClusterTask() {
   }
 
-  public ORepairClusterTask(final int clusterId) {
+  public ORepairClusterTask init(final int clusterId) {
     this.clusterId = clusterId;
+    return this;
   }
 
   @Override
@@ -84,7 +86,8 @@ public class ORepairClusterTask extends OTxTask {
 
           task.execute(requestId, iServer, iManager, database);
 
-          reqContext.addUndoTask(task.getUndoTask(requestId));
+          // TODO: FIX SERVERS LIST
+          reqContext.addUndoTask(task.getUndoTask(iManager, requestId, null));
         }
       }
       return null;
@@ -139,7 +142,7 @@ public class ORepairClusterTask extends OTxTask {
   }
 
   @Override
-  public ORemoteTask getUndoTask(ODistributedRequestId reqId) {
+  public ORemoteTask getUndoTask(ODistributedServerManager dManager, ODistributedRequestId reqId, List<String> servers) {
     return null;
   }
 

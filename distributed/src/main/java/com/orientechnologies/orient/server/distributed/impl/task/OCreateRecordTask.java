@@ -51,8 +51,7 @@ import java.util.List;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
-  private static final long serialVersionUID = 1L;
-  public static final  int  FACTORYID        = 0;
+  public static final int FACTORYID = 0;
   protected byte[] content;
   protected byte   recordType;
   protected int clusterId = -1;
@@ -61,14 +60,15 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   public OCreateRecordTask() {
   }
 
-  public OCreateRecordTask(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
-    super(iRid, iVersion);
+  public OCreateRecordTask init(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
+    super.init(iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
+    return this;
   }
 
-  public OCreateRecordTask(final ORecord record) {
-    this((ORecordId) record.getIdentity(), record.toStream(), record.getVersion() - 1, ORecordInternal.getRecordType(record));
+  public OCreateRecordTask init(final ORecord record) {
+    init((ORecordId) record.getIdentity(), record.toStream(), record.getVersion() - 1, ORecordInternal.getRecordType(record));
 
     if (rid.getClusterId() == ORID.CLUSTER_ID_INVALID) {
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
@@ -76,6 +76,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       // RESETTING FOR AVOID DESERIALIZATION ISSUE.
       ((ORecordId) record.getIdentity()).setClusterId(ORID.CLUSTER_ID_INVALID);
     }
+    return this;
   }
 
   @Override
@@ -200,8 +201,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     final OPlaceholder goodResult = (OPlaceholder) iGoodResponse;
 
     if (iBadResponse instanceof ONeedRetryException)
-      return new OCreateRecordTask((ORecordId) goodResult.getIdentity(), content, ORecordVersionHelper.setRollbackMode(version),
-          recordType);
+      return ((OCreateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerName(executorNode)
+          .createTask(OCreateRecordTask.FACTORYID))
+          .init((ORecordId) goodResult.getIdentity(), content, ORecordVersionHelper.setRollbackMode(version), recordType);
 
     final OPlaceholder badResult = (OPlaceholder) iBadResponse;
 
@@ -222,9 +224,13 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             final List<String> nodes = dCfg
                 .getServers(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(clusterId), dManager.getLocalNodeName());
 
+            final OReadRecordTask task = (OReadRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
+                .createTask(OReadRecordTask.FACTORYID);
+            task.init(toUpdateRid);
+
             final ODistributedResponse response = dManager
-                .sendRequest(iRequest.getDatabaseName(), null, nodes, new OReadRecordTask(toUpdateRid),
-                    dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+                .sendRequest(iRequest.getDatabaseName(), null, nodes, task, dManager.getNextMessageIdCounter(),
+                    ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
             final ORawBuffer remoteReadRecord = (ORawBuffer) response.getPayload();
 
@@ -239,7 +245,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
           if (toUpdateRecord != null)
             try {
-              new OFixUpdateRecordTask(toUpdateRid, toUpdateRecord.toStream(), toUpdateRecord.getVersion(),
+              new OFixUpdateRecordTask().init(toUpdateRid, toUpdateRecord.toStream(), toUpdateRecord.getVersion(),
                   ORecordInternal.getRecordType(toUpdateRecord))
                   .execute(iRequest.getId(), dManager.getServerInstance(), dManager, ODatabaseRecordThreadLocal.INSTANCE.get());
             } catch (Exception e) {
@@ -249,22 +255,32 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
         }
 
         // CREATE LAST RECORD
-        result = new OCreateRecordTask((ORecordId) goodResult.getIdentity(), content, version, recordType);
+        final OCreateRecordTask task = (OCreateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerName(executorNode)
+            .createTask(OCreateRecordTask.FACTORYID);
+        task.init((ORecordId) goodResult.getIdentity(), content, version, recordType);
+        result = task;
 
       } else if (badResult.getIdentity().getClusterId() == goodResult.getIdentity().getClusterId()
           && badResult.getIdentity().getClusterPosition() > goodResult.getIdentity().getClusterPosition()) {
 
-      } else
+      } else {
         // ANY OTHER CASE JUST DELETE IT
-        result = new OFixCreateRecordTask(new ORecordId(badResult.getIdentity()), badResult.getVersion());
+        final OFixCreateRecordTask task = (OFixCreateRecordTask) dManager.getTaskFactoryManager()
+            .getFactoryByServerName(executorNode).createTask(OFixCreateRecordTask.FACTORYID);
+        task.init(new ORecordId(badResult.getIdentity()), badResult.getVersion());
+        result = task;
+      }
     }
 
     return result;
   }
 
   @Override
-  public ODeleteRecordTask getUndoTask(ODistributedRequestId reqId) {
-    final ODeleteRecordTask task = new OFixCreateRecordTask(rid, -1);
+  public ODeleteRecordTask getUndoTask(final ODistributedServerManager dManager, final ODistributedRequestId reqId,
+      final List<String> servers) {
+    final ODeleteRecordTask task = (ODeleteRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(servers)
+        .createTask(ODeleteRecordTask.FACTORYID);
+    task.init(rid, -1);
     task.setLockRecords(false);
     return task;
   }

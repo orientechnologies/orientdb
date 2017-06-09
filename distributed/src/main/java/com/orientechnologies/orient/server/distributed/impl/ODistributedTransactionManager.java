@@ -127,18 +127,18 @@ public class ODistributedTransactionManager {
                   "Error on updating local LSN configuration for database '%s'", storage.getName());
         }
 
-        final OTxTask txTask = createTxTask(uResult);
+        final Set<String> involvedClusters = getInvolvedClusters(uResult);
+        Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
+
+        final OTxTask txTask = !nodes.isEmpty() ? createTxTask(uResult, nodes) : null;
 
         // AFTER THE CREATION OF TASKS, REMOVE THE TX OBJECT FROM DATABASE TO AVOID UNDO OPERATIONS ARE "LOST IN TRANSACTION"
         database.setDefaultTransactionMode();
 
         // After commit force the clean of dirty managers due to possible copy and miss clean.
-        for (ORecordOperation ent : iTx.getAllRecordEntries()) {
+        for (ORecordOperation ent : iTx.getAllRecordEntries())
           ORecordInternal.getDirtyManager(ent.getRecord()).clear();
-        }
 
-        final Set<String> involvedClusters = getInvolvedClusters(uResult);
-        Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
         if (nodes.isEmpty()) {
           // NO FURTHER NODES TO INVOLVE
           releaseContext.set(true);
@@ -216,8 +216,11 @@ public class ODistributedTransactionManager {
 
           try {
             // ROLLBACK TX
-            sendTxCompleted(localNodeName, involvedClusters, nodes,
-                new OCompleted2pcTask(requestId, false, txTask.getPartitionKey()));
+            final OCompleted2pcTask task = (OCompleted2pcTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
+                .createTask(OCompleted2pcTask.FACTORYID);
+            task.init(requestId, false, txTask.getPartitionKey());
+
+            sendTxCompleted(localNodeName, involvedClusters, nodes, task);
           } finally {
             storage.executeUndoOnLocalServer(requestId, txTask);
           }
@@ -329,8 +332,11 @@ public class ODistributedTransactionManager {
 
                 if (value instanceof OTxTaskResult) {
                   // SEND 2-PHASE DISTRIBUTED COMMIT TX
-                  sendTxCompleted(localNodeName, involvedClusters, nodes,
-                      new OCompleted2pcTask(reqId, true, txTask.getPartitionKey()));
+                  final OCompleted2pcTask task = (OCompleted2pcTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
+                      .createTask(OCompleted2pcTask.FACTORYID);
+                  task.init(reqId, true, txTask.getPartitionKey());
+
+                  sendTxCompleted(localNodeName, involvedClusters, nodes, task);
 
                   if (onAsyncReplicationOk != null)
                     onAsyncReplicationOk.onAsyncReplicationOk();
@@ -345,8 +351,11 @@ public class ODistributedTransactionManager {
                           "Async distributed transaction failed: %s", value);
 
                     // SEND 2-PHASE DISTRIBUTED ROLLBACK TX
-                    sendTxCompleted(localNodeName, involvedClusters, nodes,
-                        new OCompleted2pcTask(reqId, false, txTask.getPartitionKey()));
+                    final OCompleted2pcTask task = (OCompleted2pcTask) dManager.getTaskFactoryManager()
+                        .getFactoryByServerNames(nodes).createTask(OCompleted2pcTask.FACTORYID);
+                    task.init(reqId, false, txTask.getPartitionKey());
+
+                    sendTxCompleted(localNodeName, involvedClusters, nodes, task);
 
                     if (value instanceof RuntimeException)
                       throw (RuntimeException) value;
@@ -390,7 +399,7 @@ public class ODistributedTransactionManager {
       switch (op.type) {
       case ORecordOperation.CREATED:
         // ADD UNDO TASK ONCE YHE RID OS KNOWN
-        undoTasks.add(new OFixCreateRecordTask(record));
+        undoTasks.add(new OFixCreateRecordTask().init(record));
         break;
       }
     }
@@ -405,8 +414,8 @@ public class ODistributedTransactionManager {
     return involvedClusters;
   }
 
-  protected OTxTask createTxTask(final List<ORecordOperation> uResult) {
-    final OTxTask txTask = new OTxTask();
+  protected OTxTask createTxTask(final List<ORecordOperation> uResult, final Set<String> nodes) {
+    final OTxTask txTask = (OTxTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes).createTask(OTxTask.FACTORYID);
 
     for (ORecordOperation op : uResult) {
       final ORecord record = op.getRecord();
@@ -415,15 +424,21 @@ public class ODistributedTransactionManager {
 
       switch (op.type) {
       case ORecordOperation.CREATED:
-        task = new OCreateRecordTask(record);
+        task = (OCreateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
+            .createTask(OCreateRecordTask.FACTORYID);
+        task.init(record);
         break;
 
       case ORecordOperation.UPDATED:
-        task = new OUpdateRecordTask(record);
+        task = (OUpdateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
+            .createTask(OUpdateRecordTask.FACTORYID);
+        task.init(record);
         break;
 
       case ORecordOperation.DELETED:
-        task = new ODeleteRecordTask(record);
+        task = (ODeleteRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
+            .createTask(ODeleteRecordTask.FACTORYID);
+        task.init(record);
         break;
 
       default:
@@ -641,10 +656,10 @@ public class ODistributedTransactionManager {
           throw new ORecordNotFoundException(rid);
 
         if (op.type == ORecordOperation.UPDATED)
-          undoTask = new OFixUpdateRecordTask(previousRecord.get(),
-              ORecordVersionHelper.clearRollbackMode(previousRecord.get().getVersion()));
+          undoTask = new OFixUpdateRecordTask()
+              .init(previousRecord.get(), ORecordVersionHelper.clearRollbackMode(previousRecord.get().getVersion()));
         else
-          undoTask = new OResurrectRecordTask(previousRecord.get());
+          undoTask = new OResurrectRecordTask().init(previousRecord.get());
         break;
 
       default:
@@ -716,14 +731,19 @@ public class ODistributedTransactionManager {
       // EXCLUDE LOCAL SERVER
       okNodes.remove(localNodeName);
 
-      for (String node : okNodes)
-        dResponse.getDistributedResponseManager().addFollowupToServer(node);
+      if (!okNodes.isEmpty()) {
+        for (String node : okNodes)
+          dResponse.getDistributedResponseManager().addFollowupToServer(node);
 
-      ODistributedServerLog.debug(this, localNodeName, okNodes.toString(), ODistributedServerLog.DIRECTION.OUT,
-          "Distributed transaction %s sending 2pc: pending/conflicting servers are %s", reqId, conflictServers.toString());
+        ODistributedServerLog.debug(this, localNodeName, okNodes.toString(), ODistributedServerLog.DIRECTION.OUT,
+            "Distributed transaction %s sending 2pc: pending/conflicting servers are %s", reqId, conflictServers.toString());
 
-      // DO NOT REMOVE THE CONTEXT WAITING FOR ANY PENDING RESPONSE
-      sendTxCompleted(localNodeName, involvedClusters, okNodes, new OCompleted2pcTask(reqId, true, txTask.getPartitionKey()));
+        // DO NOT REMOVE THE CONTEXT WAITING FOR ANY PENDING RESPONSE
+        final OCompleted2pcTask twopcTask = (OCompleted2pcTask) dManager.getTaskFactoryManager().getFactoryByServerNames(okNodes)
+            .createTask(OCompleted2pcTask.FACTORYID);
+        twopcTask.init(reqId, true, txTask.getPartitionKey());
+        sendTxCompleted(localNodeName, involvedClusters, okNodes, twopcTask);
+      }
 
     } else if (result instanceof ODistributedRecordLockedException) {
       if (ODistributedServerLog.isDebugEnabled())
@@ -790,9 +810,13 @@ public class ODistributedTransactionManager {
           if (quorumResponse == null) {
             // NO QUORUM REACHED: SEND ROLLBACK TO ALL THE MISSING NODES
             try {
-              sendTxCompleted(localNodeName, involvedClusters, serversToFollowup,
-                  new OCompleted2pcTask(resp.getMessageId(), false, txTask.getPartitionKey()));
+              final OCompleted2pcTask twopcTask = (OCompleted2pcTask) dManager.getTaskFactoryManager()
+                  .getFactoryByServerNames(serversToFollowup).createTask(OCompleted2pcTask.FACTORYID);
+              twopcTask.init(resp.getMessageId(), false, txTask.getPartitionKey());
+
+              sendTxCompleted(localNodeName, involvedClusters, serversToFollowup, twopcTask);
               return true;
+
             } finally {
               // REPAIR RECORD: THIS IS NEEDED BECAUSE IN CASE OF LOCK A CONTINUE RETRY IS NEEDED
 
@@ -818,8 +842,12 @@ public class ODistributedTransactionManager {
               ODistributedServerLog.debug(this, localNodeName, s, ODistributedServerLog.DIRECTION.OUT,
                   "Sending 2pc message for distributed transaction (reqId=%s)", s, resp.getMessageId());
 
-              sendTxCompleted(localNodeName, involvedClusters, OMultiValue.getSingletonList(s),
-                  new OCompleted2pcTask(resp.getMessageId(), true, txTask.getPartitionKey()));
+              final OCompleted2pcTask twopcTask = (OCompleted2pcTask) dManager.getTaskFactoryManager()
+                  .getFactoryByServerNames(serversToFollowup).createTask(OCompleted2pcTask.FACTORYID);
+              twopcTask.init(resp.getMessageId(), true, txTask.getPartitionKey());
+
+              sendTxCompleted(localNodeName, involvedClusters, OMultiValue.getSingletonList(s), twopcTask);
+
             } else {
               // TRY TO FIX REMOTE NODE
               final Object serverResponsePayload = serverResponse instanceof ODistributedResponse ?
@@ -840,8 +868,11 @@ public class ODistributedTransactionManager {
               }
 
               // NO FIX AVAILABLE, JUST ROLLBACK THE TX AND EXECUTE A REPAIR IMMEDIATELY
-              sendTxCompleted(localNodeName, involvedClusters, OMultiValue.getSingletonList(s),
-                  new OCompleted2pcTask(resp.getMessageId(), false, txTask.getPartitionKey()));
+              final OCompleted2pcTask twopcTask = (OCompleted2pcTask) dManager.getTaskFactoryManager()
+                  .getFactoryByServerNames(serversToFollowup).createTask(OCompleted2pcTask.FACTORYID);
+              twopcTask.init(resp.getMessageId(), false, txTask.getPartitionKey());
+
+              sendTxCompleted(localNodeName, involvedClusters, OMultiValue.getSingletonList(s), twopcTask);
 
               // SCHEDULE A REPAIR IN CASE THE FIX IS NOT EXECUTED
               final List<ORecordId> involvedRecords = txTask.getInvolvedRecords();

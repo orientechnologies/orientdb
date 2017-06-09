@@ -27,7 +27,8 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
+public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
+  @Override
   public ORemoteTask createTask(final int code) {
     switch (code) {
     case OCreateRecordTask.FACTORYID: // 0
@@ -119,5 +120,10 @@ public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");
+  }
+
+  @Override
+  public int getProtocolVersion() {
+    return 0;
   }
 }

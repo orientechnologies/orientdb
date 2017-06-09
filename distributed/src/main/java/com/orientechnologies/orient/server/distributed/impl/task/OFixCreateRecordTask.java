@@ -34,12 +34,14 @@ public class OFixCreateRecordTask extends ODeleteRecordTask {
   public OFixCreateRecordTask() {
   }
 
-  public OFixCreateRecordTask(final ORecord record) {
-    super(record);
+  public OFixCreateRecordTask init(final ORecord record) {
+    super.init(record);
+    return this;
   }
 
-  public OFixCreateRecordTask(final ORecordId rid, final int version) {
-    super(rid, version);
+  public OFixCreateRecordTask init(final ORecordId rid, final int version) {
+    super.init(rid, version);
+    return this;
   }
 
   @Override

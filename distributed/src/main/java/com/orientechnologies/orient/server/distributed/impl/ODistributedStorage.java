@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
@@ -655,10 +656,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
               final OPlaceholder localPlaceholder = new OPlaceholder(iRecordId, localResult.getResult().recordVersion);
 
-              final OCreateRecordTask task = new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType);
-              task.setLastLSN(wrapped.getLSN());
-
               if (!servers.isEmpty()) {
+                final OCreateRecordTask task = (OCreateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(servers)
+                    .createTask(OCreateRecordTask.FACTORYID);
+                task.init(iRecordId, iContent, iRecordVersion, iRecordType);
+                task.setLastLSN(wrapped.getLSN());
+
                 if (syncMode) {
 
                   // SYNCHRONOUS CALL: REPLICATE IT
@@ -764,10 +767,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         });
       }
 
+      final OReadRecordTask task = ((OReadRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
+          .createTask(OReadRecordTask.FACTORYID)).init(iRecordId);
+
       // DISTRIBUTE IT
       final ODistributedResponse response = dManager
-          .sendRequest(getName(), Collections.singleton(clusterName), nodes, new OReadRecordTask(iRecordId),
-              dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null, null);
+          .sendRequest(getName(), Collections.singleton(clusterName), nodes, task, dManager.getNextMessageIdCounter(),
+              EXECUTION_MODE.RESPONSE, null, null, null);
       final Object dResult = response != null ? response.getPayload() : null;
 
       if (dResult instanceof ONeedRetryException)
@@ -822,10 +828,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         });
       }
 
+      final OReadRecordIfNotLatestTask task = (OReadRecordIfNotLatestTask) dManager.getTaskFactoryManager()
+          .getFactoryByServerNames(nodes).createTask(OReadRecordIfNotLatestTask.FACTORYID);
+      task.init(rid, recordVersion);
+
       // DISTRIBUTE IT
       final Object result = dManager
-          .sendRequest(getName(), Collections.singleton(clusterName), nodes, new OReadRecordIfNotLatestTask(rid, recordVersion),
-              dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null, null).getPayload();
+          .sendRequest(getName(), Collections.singleton(clusterName), nodes, task, dManager.getNextMessageIdCounter(),
+              EXECUTION_MODE.RESPONSE, null, null, null).getPayload();
 
       if (result instanceof ONeedRetryException)
         throw (ONeedRetryException) result;
@@ -848,11 +858,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // UNREACHABLE
       return null;
     }
-  }
-
-  @Override
-  public OSBTreeCollectionManager getSBtreeCollectionManager() {
-    return wrapped.getSBtreeCollectionManager();
   }
 
   @Override
@@ -896,7 +901,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
             @Override
             public Object call(OCallable<Void, ODistributedRequestId> unlockCallback) {
-              final OUpdateRecordTask task = new OUpdateRecordTask(iRecordId, iContent, iVersion, iRecordType);
+
+              final OUpdateRecordTask task = (OUpdateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
+                  .createTask(OUpdateRecordTask.FACTORYID);
+              task.init(iRecordId, iContent, iVersion, iRecordType);
 
               final OStorageOperationResult<Integer> localResult;
 
@@ -1001,20 +1009,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   }
 
-  protected void checkWriteQuorum(final ODistributedConfiguration dbCfg, final String clusterName, final String localNodeName) {
-    final List<String> clusterServers = dbCfg.getServers(clusterName, null);
-    final int writeQuorum = dbCfg.getWriteQuorum(clusterName, clusterServers.size(), localNodeName);
-    final int availableNodes = dManager.getAvailableNodes(getName());
-    if (writeQuorum > availableNodes)
-      throw new ODistributedException("Quorum (" + writeQuorum + ") cannot be reached on server '" + localNodeName
-          + "' because it is major than available nodes (" + availableNodes + ")");
-  }
-
-  @Override
-  public void recyclePosition(final ORecordId iRecordId) {
-    wrapped.recyclePosition(iRecordId);
-  }
-
   @Override
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final int iVersion, final int iMode,
       final ORecordCallback<Boolean> iCallback) {
@@ -1055,7 +1049,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             @Override
             public Object call(OCallable<Void, ODistributedRequestId> unlockCallback) {
 
-              final ODeleteRecordTask task = new ODeleteRecordTask(iRecordId, iVersion);
+              final ODeleteRecordTask task = (ODeleteRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
+                  .createTask(ODeleteRecordTask.FACTORYID);
+              task.init(iRecordId, iVersion);
 
               final OStorageOperationResult<Boolean> localResult;
 
@@ -1160,6 +1156,25 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       return null;
     }
 
+  }
+
+  @Override
+  public OSBTreeCollectionManager getSBtreeCollectionManager() {
+    return wrapped.getSBtreeCollectionManager();
+  }
+
+  protected void checkWriteQuorum(final ODistributedConfiguration dbCfg, final String clusterName, final String localNodeName) {
+    final List<String> clusterServers = dbCfg.getServers(clusterName, null);
+    final int writeQuorum = dbCfg.getWriteQuorum(clusterName, clusterServers.size(), localNodeName);
+    final int availableNodes = dManager.getAvailableNodes(getName());
+    if (writeQuorum > availableNodes)
+      throw new ODistributedException("Quorum (" + writeQuorum + ") cannot be reached on server '" + localNodeName
+          + "' because it is major than available nodes (" + availableNodes + ")");
+  }
+
+  @Override
+  public void recyclePosition(final ORecordId iRecordId) {
+    wrapped.recyclePosition(iRecordId);
   }
 
   private Object executeRecordOperationInLock(final boolean iUnlockAtTheEnd, final ORecordId rid,
@@ -1991,9 +2006,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   void executeUndoOnLocalServer(final ODistributedRequestId reqId, final OAbstractReplicatedTask task) {
-    final ORemoteTask undoTask = task.getUndoTask(reqId);
+    final ORemoteTask undoTask = task.getUndoTask(dManager, reqId, OMultiValue.getSingletonList(dManager.getLocalNodeName()));
     if (undoTask != null) {
-
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Undo operation on local server (reqId=%s task=%s)", reqId, undoTask);
 
