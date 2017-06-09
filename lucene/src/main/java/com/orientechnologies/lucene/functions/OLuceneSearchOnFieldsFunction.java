@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -86,7 +87,6 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
     return "SEARCH_INDEX( indexName, [ metdatada {} ] )";
   }
 
-
   @Override
   public Iterable<OIdentifiable> searchFromTarget(OFromClause target,
       OBinaryCompareOperator operator,
@@ -100,20 +100,21 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
     String query = (String) expression.execute((OIdentifiable) null, ctx);
     if (index != null) {
 
-      if (args.length == 3) {
-        ODocument metadata = new ODocument().fromJSON(args[2].toString());
-
-        //TODO handle metadata
-        System.out.println("metadata.toJSON() = " + metadata.toJSON());
-        Set<OIdentifiable> luceneResultSet = index.get(query.toString());
-      }
-
-      Set<OIdentifiable> luceneResultSet = index.get(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx));
+      ODocument meta = getMetadata(args);
+      Set<OIdentifiable> luceneResultSet = index
+          .get(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), meta));
 
       return luceneResultSet;
     }
     throw new RuntimeException();
 
+  }
+
+  private ODocument getMetadata(OExpression[] args) {
+    if (args.length == 3) {
+      return new ODocument().fromJSON(args[2].toString());
+    }
+    return new ODocument();
   }
 
   @Override
@@ -144,7 +145,6 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
 
     return indices.size() == 0 ? null : indices.get(0);
   }
-
 
   public <T> List<T> intersection(List<T> list1, List<T> list2) {
     List<T> list = new ArrayList<T>();

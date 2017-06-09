@@ -120,7 +120,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     if (request.getBackupPath() != null && !"".equals(request.getBackupPath().trim())) {
       server.restore(request.getDatabaseName(), request.getBackupPath());
     } else {
-      server.createDatabase(request.getDatabaseName(), ODatabaseType.valueOf(request.getStorageMode().toUpperCase(Locale.ENGLISH)), null);
+      server.createDatabase(request.getDatabaseName(), ODatabaseType.valueOf(request.getStorageMode().toUpperCase(Locale.ENGLISH)),
+          null);
     }
     OLogManager.instance().info(this, "Created database '%s' of type '%s'", request.getDatabaseName(), request.getStorageMode());
 
@@ -573,7 +574,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeCommit(OCommitRequest request) {
     final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(connection.getDatabase(), request.getTxId(),
-        request.isUsingLong(), request.getOperations(), request.getIndexChanges(), connection.getData().protocolVersion,connection.getData().getSerializer());
+        request.isUsingLong(), request.getOperations(), request.getIndexChanges(), connection.getData().protocolVersion,
+        connection.getData().getSerializer());
 
     try {
       try {
@@ -1181,24 +1183,23 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
 
     database.commit();
-    List<OCreatedRecordResponse> createdRecords = new ArrayList<>(tx.getCreatedRecords().size());
+    List<OCommit37Response.OCreatedRecordResponse> createdRecords = new ArrayList<>(tx.getCreatedRecords().size());
     for (Entry<ORecordId, ORecord> entry : tx.getCreatedRecords().entrySet()) {
-      createdRecords.add(new OCreatedRecordResponse(entry.getKey(), (ORecordId) entry.getValue().getIdentity()));
-      // IF THE NEW OBJECT HAS VERSION > 0 MEANS THAT HAS BEEN UPDATED IN THE SAME TX. THIS HAPPENS FOR GRAPHS
-      if (entry.getValue().getVersion() > 0)
-        tx.getUpdatedRecords().put((ORecordId) entry.getValue().getIdentity(), entry.getValue());
+      ORecord record = entry.getValue();
+      createdRecords
+          .add(new OCommit37Response.OCreatedRecordResponse(entry.getKey(), (ORecordId) record.getIdentity(), record.getVersion()));
     }
 
-    List<OUpdatedRecordResponse> updatedRecords = new ArrayList<>(tx.getUpdatedRecords().size());
+    List<OCommit37Response.OUpdatedRecordResponse> updatedRecords = new ArrayList<>(tx.getUpdatedRecords().size());
     for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
-      updatedRecords.add(new OUpdatedRecordResponse(entry.getKey(), entry.getValue().getVersion()));
+      updatedRecords.add(new OCommit37Response.OUpdatedRecordResponse(entry.getKey(), entry.getValue().getVersion()));
     }
     OSBTreeCollectionManager collectionManager = database.getSbTreeCollectionManager();
     Map<UUID, OBonsaiCollectionPointer> changedIds = null;
     if (collectionManager != null) {
       changedIds = collectionManager.changedIds();
     }
-    return new OCommitResponse(createdRecords, updatedRecords, changedIds);
+    return new OCommit37Response(createdRecords, updatedRecords, changedIds);
   }
 
   @Override

@@ -17,6 +17,7 @@
 package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -76,7 +77,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
       boolean ascSortOrder) {
 
-    Set<OIdentifiable> indexResult = (Set<OIdentifiable>) index.get(new OLuceneCompositeKey(keyParams).setContext(iContext));
+    Set<OIdentifiable> indexResult = (Set<OIdentifiable>) index
+        .get(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(keyParams).setContext(iContext), new ODocument()));
 
     if (indexResult == null)
       return new OIndexCursorSingleValue((OIdentifiable) indexResult, new OLuceneCompositeKey(keyParams));
