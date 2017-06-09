@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -3118,6 +3119,42 @@ public class OSelectStatementExecutionTest {
       long end = System.nanoTime();
       System.out.println("new: " + ((end - begin) / 1000000));
     }
+  }
+
+  @Test
+  public void testNestedProjections1() {
+    String className = "testNestedProjections1";
+    db.command("create class " + className).close();
+    OElement elem1 = db.newElement(className);
+    elem1.setProperty("name", "a");
+    elem1.save();
+
+    OElement elem2 = db.newElement(className);
+    elem2.setProperty("name", "b");
+    elem2.setProperty("surname", "lkj");
+    elem2.save();
+
+    OElement elem3 = db.newElement(className);
+    elem3.setProperty("name", "c");
+    elem3.save();
+
+    OElement elem4 = db.newElement(className);
+    elem4.setProperty("name", "d");
+    elem4.setProperty("elem1", elem1);
+    elem4.setProperty("elem2", elem2);
+    elem4.setProperty("elem3", elem3);
+    elem4.save();
+
+    OResultSet result = db.query("select name, elem1:{*}, elem2:{!surname} from " + className + " where name = 'd'");
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    //TODO refine this!
+    Assert.assertTrue(item.getProperty("elem1") instanceof OResult);
+    Assert.assertEquals("a",((OResult)item.getProperty("elem1")).getProperty("name"));
+    printExecutionPlan(result);
+
+    result.close();
   }
 
   public void stressTestOld() {

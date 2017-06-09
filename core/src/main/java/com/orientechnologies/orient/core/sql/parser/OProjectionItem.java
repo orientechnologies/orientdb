@@ -93,9 +93,9 @@ public class OProjectionItem extends SimpleNode {
     } else {
       result = expression.execute(iCurrentRecord, ctx);
     }
-//    if (nestedProjection != null) {
-//      result = nestedProjection.apply(expression, result, ctx);
-//    }//TODO
+    if (nestedProjection != null) {
+      result = nestedProjection.apply(expression, result, ctx);
+    }
     return result;
   }
 
@@ -107,7 +107,7 @@ public class OProjectionItem extends SimpleNode {
       result = expression.execute(iCurrentRecord, ctx);
     }
     if (nestedProjection != null) {
-      nestedProjection.apply(expression, result, ctx);
+      result = nestedProjection.apply(expression, result, ctx);
     }
     return result;
   }
@@ -126,7 +126,11 @@ public class OProjectionItem extends SimpleNode {
       return alias;
     }
     OIdentifier result = new OIdentifier(-1);
-    result.setStringValue(this.toString());
+    if (all) {
+      result.setStringValue("*");
+    } else {
+      result.setStringValue(expression.toString());
+    }
     return result;
   }
 

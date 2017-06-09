@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -83,7 +84,7 @@ public class OProjection extends SimpleNode {
       throw new IllegalStateException("This is an expand projection, it cannot be calculated as a single result" + toString());
     }
 
-    if (items.size() == 0 || (items.size() == 1 && items.get(0).isAll())) {
+    if (items.size() == 0 || (items.size() == 1 && items.get(0).isAll()) && items.get(0).nestedProjection == null) {
       return iRecord;
     }
 
@@ -93,16 +94,18 @@ public class OProjection extends SimpleNode {
         for (String alias : iRecord.getPropertyNames()) {
           result.setProperty(alias, iRecord.getProperty(alias));
         }
-        iRecord.getElement().ifPresent(x -> {
+        if (iRecord.getElement().isPresent()) {
+          OElement x = iRecord.getElement().get();
           result.setProperty("@rid", x.getIdentity());
           result.setProperty("@version", x.getVersion());
 //          result.setProperty("@class", x.getSchemaType().orElse(null));
-        });
+        }
       } else {
         result.setProperty(item.getProjectionAliasAsString(), item.execute(iRecord, iContext));
+      } if (item.nestedProjection != null) {
+        result = (OResultInternal) item.nestedProjection.apply(item.expression, result, iContext);
       }
-    }
-    return result;
+    } return result;
   }
 
   public OLegacyResultSet calculateExpand(OCommandContext iContext, OResult iRecord) {

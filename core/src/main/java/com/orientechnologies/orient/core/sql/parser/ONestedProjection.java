@@ -3,10 +3,13 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ONestedProjection extends SimpleNode {
@@ -29,9 +32,129 @@ public class ONestedProjection extends SimpleNode {
    * @param ctx
    */
   public Object apply(OExpression expression, Object input, OCommandContext ctx) {
-    throw new UnsupportedOperationException();//TODO
+    if (input instanceof OResult) {
+      return apply(expression, (OResult) input, ctx, recursion == null ? 0 : recursion.getValue().intValue());
+    }
+    if (input instanceof OIdentifiable) {
+      return apply(expression, (OIdentifiable) input, ctx, recursion == null ? 0 : recursion.getValue().intValue());
+    }
+    if (input instanceof Map) {
+      return apply(expression, (Map) input, ctx, recursion == null ? 0 : recursion.getValue().intValue());
+    }
+    if (input instanceof Collection) {
+      return ((Collection) input).stream().map(x -> apply(expression, input, ctx)).collect(Collectors.toList());
+    }
+    Iterator iter = null;
+    if (input instanceof Iterable) {
+      iter = ((Iterable) input).iterator();
+    }
+    if (input instanceof Iterator) {
+      iter = (Iterator) input;
+    }
+    if (iter != null) {
+      List result = new ArrayList();
+      while (iter.hasNext()) {
+        result.add(apply(expression, iter.next(), ctx));
+      }
+      return result;
+    }
+    return input;
   }
 
+  private Object apply(OExpression expression, OResult input, OCommandContext ctx, int recursion) {
+    OResultInternal result = new OResultInternal();
+    if (starItem != null || includeItems.size() == 0) {
+      for (String property : input.getPropertyNames()) {
+        if (isExclude(property)) {
+          continue;
+        }
+        result.setProperty(property, tryExpand(expression, property, input.getProperty(property), ctx, recursion));
+      }
+    }
+    if (includeItems.size() > 0) {
+      for (ONestedProjectionItem item : includeItems) {
+        String name = item.field.getStringValue();
+        Object value = input.getProperty(name);
+        result.setProperty(name, tryExpand(expression, name, value, ctx, recursion));
+      }
+    }
+    return result;
+  }
+
+  private boolean isExclude(String propertyName) {
+    for (ONestedProjectionItem item : excludeItems) {
+      if (item.matches(propertyName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private Object tryExpand(OExpression rootExpr, String propName, Object propValue, OCommandContext ctx, int recursion) {
+    for (ONestedProjectionItem item : includeItems) {
+      if (item.matches(propName) && item.expansion != null) {
+        return item.expand(rootExpr, propName, propValue, ctx, recursion);
+      }
+    }
+    return propValue;
+  }
+
+  private Object apply(OExpression expression, OIdentifiable input, OCommandContext ctx, int recursion) {
+    OElement elem;
+    if (input instanceof OElement) {
+      elem = (OElement) input;
+    } else {
+      ORecord e = input.getRecord();
+      if (e instanceof OElement) {
+        elem = (OElement) e;
+      } else {
+        return input;
+      }
+    }
+    OResultInternal result = new OResultInternal();
+    if (starItem != null || includeItems.size() == 0) {
+      for (String property : elem.getPropertyNames()) {
+        if (isExclude(property)) {
+          continue;
+        }
+        result.setProperty(property, tryExpand(expression, property, elem.getProperty(property), ctx, recursion));
+      }
+    }
+    if (includeItems.size() > 0) {
+      //TODO manage wildcards!
+      //TODO aliases
+      for (ONestedProjectionItem item : includeItems) {
+        String name = item.field.getStringValue();
+        Object value = elem.getProperty(name);
+        if (item.expansion != null) {
+          value = item.expand(expression, name, value, ctx, recursion - 1);
+        }
+        result.setProperty(name, value);
+      }
+    }
+    return result;
+  }
+
+  private Object apply(OExpression expression, Map<String, Object> input, OCommandContext ctx, int recursion) {
+    OResultInternal result = new OResultInternal();
+    if (starItem != null || includeItems.size() == 0) {
+      for (String property : input.keySet()) {
+        if (isExclude(property)) {
+          continue;
+        }
+        result.setProperty(property, tryExpand(expression, property, input.get(property), ctx, recursion));
+      }
+    }
+    if (includeItems.size() > 0) {
+      for (ONestedProjectionItem item : includeItems) {
+        String name = item.field.getStringValue();
+        Object value = input.get(name);
+        result.setProperty(name, tryExpand(expression, name, value, ctx, recursion));
+      }
+    }
+
+    return result;
+  }
 
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {

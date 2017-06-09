@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+
 import java.util.Map;
 
 public class ONestedProjectionItem extends SimpleNode {
@@ -26,7 +28,42 @@ public class ONestedProjectionItem extends SimpleNode {
 
   @Override
   public ONestedProjectionItem copy() {
-    throw new UnsupportedOperationException();
+    ONestedProjectionItem result = new ONestedProjectionItem(-1);
+    result.exclude = exclude;
+    result.star = star;
+    result.field = field == null ? null : field.copy();
+    result.rightWildcard = rightWildcard;
+    result.expansion = expansion == null ? null : expansion.copy();
+    result.alias = alias == null ? null : alias.copy();
+    return result;
+  }
+
+  /**
+   * given a property name, calculates if this property name matches this nested projection item, eg.
+   * <ul>
+   * <li>this is a *, so it matches any property name</li>
+   * <li>the field name for this projection item is the same as the input property name</li>
+   * <li>this item has a wildcard and the partial field is a prefix of the input property name</li>
+   * </ul>
+   *
+   * @param propertyName
+   *
+   * @return
+   */
+  public boolean matches(String propertyName) {
+    if (star) {
+      return true;
+    }
+    if (field != null) {
+      String fieldString = field.getStringValue();
+      if (fieldString.equals(propertyName)) {
+        return true;
+      }
+      if (rightWildcard && propertyName.startsWith(fieldString)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -83,6 +120,10 @@ public class ONestedProjectionItem extends SimpleNode {
     result = 31 * result + (expansion != null ? expansion.hashCode() : 0);
     result = 31 * result + (alias != null ? alias.hashCode() : 0);
     return result;
+  }
+
+  public Object expand(OExpression expression, String name, Object value, OCommandContext ctx, int recursion) {
+    return expansion.apply(expression, value, ctx);
   }
 }
 /* JavaCC - OriginalChecksum=606b3fe37ff952934e3e2e3daa9915f2 (do not edit this line) */
