@@ -169,7 +169,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
         }
         indexEntries.put(change.getName(), change.getKeyChanges());
       }
-
+      newObjectCounter = (createdRecords.size() + 2) * -1;
       // UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
       for (ORecord record : createdRecords.values()) {
         unmarshallRecord(record);
@@ -283,9 +283,9 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
         if (!rid.isPersistent() && !rid.isTemporary()) {
           ORecordId oldRid = rid.copy();
           ORecordInternal.onBeforeIdentityChanged(iRecord);
+          if (rid.getClusterId() == ORecordId.CLUSTER_POS_INVALID)
+            rid.setClusterPosition(newObjectCounter--);
           database.assignAndCheckCluster(iRecord, iClusterName);
-
-          rid.setClusterPosition(newObjectCounter--);
           updatedRids.put(oldRid, rid);
           ORecordInternal.onAfterIdentityChanged(iRecord);
         }

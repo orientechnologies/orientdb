@@ -38,7 +38,7 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
 
     Map<ORID, ORecordOperation> oldEntries = this.allEntries;
     this.allEntries = new LinkedHashMap<ORID, ORecordOperation>();
-
+    int createCount = -2;//Start from -2 because temporary rids start from -2
     for (ORecordOperationRequest operation : operations) {
       if (!operation.getOldId().equals(operation.getId()))
         updatedRids.put(operation.getId(), operation.getOldId());
@@ -62,7 +62,11 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
       getDatabase().getLocalCache().updateRecord(record);
       boolean callHook = checkCallHook(oldEntries, operation.getId(), operation.getType());
       addRecord(record, operation.getType(), null, callHook);
+      if (operation.getType() == ORecordOperation.CREATED)
+        createCount--;
     }
+    newObjectCounter = createCount;
+
 
     for (IndexChange change : indexChanges) {
       NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);
