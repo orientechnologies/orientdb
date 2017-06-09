@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -51,10 +52,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
  * be affected due to adding or removing cluster from storage.
  */
-@Test(groups = "sql-select") @SuppressWarnings("unchecked") public class SQLSelectTestNew extends AbstractSelectTest {
+@Test(groups = "sql-select")
+@SuppressWarnings("unchecked")
+public class SQLSelectTestNew extends AbstractSelectTest {
   private ODocument record = new ODocument();
 
-  @Parameters(value = "url") public SQLSelectTestNew(@Optional String url) throws Exception {
+  @Parameters(value = "url")
+  public SQLSelectTestNew(@Optional String url) throws Exception {
     super(url);
   }
 
@@ -64,7 +68,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     graph.addEdge(null, graph.getVertex(root), vertex, "E");
   }
 
-  @BeforeClass public void init() {
+  @BeforeClass
+  public void init() {
     if (!database.getMetadata().getSchema().existsClass("Profile")) {
       database.getMetadata().getSchema().createClass("Profile", 1, null);
 
@@ -82,7 +87,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     database.getMetadata().getSchema().getOrCreateClass("Account");
   }
 
-  @Test public void queryNoDirtyResultset() {
+  @Test
+  public void queryNoDirtyResultset() {
     List<ODocument> result = executeQuery(" select from Profile ", database);
 
     Assert.assertTrue(result.size() != 0);
@@ -92,7 +98,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryNoWhere() {
+  @Test
+  public void queryNoWhere() {
     List<ODocument> result = executeQuery(" select from Profile ", database);
 
     Assert.assertTrue(result.size() != 0);
@@ -102,7 +109,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryParentesisAsRight() {
+  @Test
+  public void queryParentesisAsRight() {
     List<ODocument> result = executeQuery(
         "  select from Profile where ( name = 'Giuseppe' and ( name <> 'Napoleone' and nick is not null ))  ", database);
 
@@ -113,7 +121,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void querySingleAndDoubleQuotes() {
+  @Test
+  public void querySingleAndDoubleQuotes() {
     List<ODocument> result = executeQuery("select from Profile where name = 'Giuseppe'", database);
 
     final int count = result.size();
@@ -124,7 +133,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(result.size(), count);
   }
 
-  @Test public void queryTwoParentesisConditions() {
+  @Test
+  public void queryTwoParentesisConditions() {
     List<ODocument> result = executeQuery(
         "select from Profile  where ( name = 'Giuseppe' and nick is not null ) or ( name = 'Napoleone' and nick is not null ) ",
         database);
@@ -136,14 +146,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void testQueryCount() {
+  @Test
+  public void testQueryCount() {
     database.getMetadata().reload();
     final long vertexesCount = database.countClass("V");
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from V"));
     Assert.assertEquals(result.get(0).<Object>field("count"), vertexesCount);
   }
 
-  @Test public void querySchemaAndLike() {
+  @Test
+  public void querySchemaAndLike() {
     List<ODocument> result1 = executeQuery("select * from cluster:profile where name like 'Gi%'", database);
 
     for (int i = 0; i < result1.size(); ++i) {
@@ -180,7 +192,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryContainsInEmbeddedSet() {
+  @Test
+  public void queryContainsInEmbeddedSet() {
     Set<String> tags = new HashSet<String>();
     tags.add("smart");
     tags.add("nice");
@@ -203,7 +216,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     doc.delete();
   }
 
-  @Test public void queryContainsInEmbeddedList() {
+  @Test
+  public void queryContainsInEmbeddedList() {
     List<String> tags = new ArrayList<String>();
     tags.add("smart");
     tags.add("nice");
@@ -226,7 +240,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     doc.delete();
   }
 
-  @Test public void queryContainsInDocumentSet() {
+  @Test
+  public void queryContainsInDocumentSet() {
     HashSet<ODocument> coll = new HashSet<ODocument>();
     coll.add(new ODocument("name", "Luca", "surname", "Garulli"));
     coll.add(new ODocument("name", "Jay", "surname", "Miner"));
@@ -241,12 +256,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertTrue(resultset.get(0).field("value") instanceof Collection);
 
     Collection xcoll = resultset.get(0).field("value");
-    Assert.assertEquals(((OElement)xcoll.iterator().next()).getProperty("name"), "Jay");
+    Assert.assertEquals(((OElement) xcoll.iterator().next()).getProperty("name"), "Jay");
 
     doc.delete();
   }
 
-  @Test public void queryContainsInDocumentList() {
+  @Test
+  public void queryContainsInDocumentList() {
     List<ODocument> coll = new ArrayList<ODocument>();
     coll.add(new ODocument("name", "Luca", "surname", "Garulli"));
     coll.add(new ODocument("name", "Jay", "surname", "Miner"));
@@ -261,13 +277,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 //    Assert.assertEquals(resultset.get(0).field("value").getClass(), ODocument.class);
     Object result = resultset.get(0).field("value");
     Assert.assertTrue(result instanceof Collection);
-    Assert.assertEquals(((Collection)result).size(), 1);
-    Assert.assertEquals(((OElement)((Collection)result).iterator().next()).getProperty("name"), "Jay");
+    Assert.assertEquals(((Collection) result).size(), 1);
+    Assert.assertEquals(((OElement) ((Collection) result).iterator().next()).getProperty("name"), "Jay");
 
     doc.delete();
   }
 
-  @Test public void queryContainsInEmbeddedMapClassic() {
+  @Test
+  public void queryContainsInEmbeddedMapClassic() {
     Map<String, ODocument> customReferences = new HashMap<String, ODocument>();
     customReferences.put("first", new ODocument("name", "Luca", "surname", "Garulli"));
     customReferences.put("second", new ODocument("name", "Jay", "surname", "Miner"));
@@ -291,7 +308,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-    resultset = executeQuery("select customReferences['second', 'first'] as customReferences from Profile where customReferences.size() = 2", database);
+    resultset = executeQuery(
+        "select customReferences['second', 'first'] as customReferences from Profile where customReferences.size() = 2", database);
     Assert.assertEquals(resultset.size(), 1);
 
     if (resultset.get(0).field("customReferences").getClass().isArray()) {
@@ -319,7 +337,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     doc.delete();
   }
 
-  @Test public void queryContainsInEmbeddedMapNew() {
+  @Test
+  public void queryContainsInEmbeddedMapNew() {
     Map<String, ODocument> customReferences = new HashMap<String, ODocument>();
     customReferences.put("first", new ODocument("name", "Luca", "surname", "Garulli"));
     customReferences.put("second", new ODocument("name", "Jay", "surname", "Miner"));
@@ -342,7 +361,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     doc.delete();
   }
 
-  @Test public void queryCollectionContainsLowerCaseSubStringIgnoreCase() {
+  @Test
+  public void queryCollectionContainsLowerCaseSubStringIgnoreCase() {
     List<ODocument> result = executeQuery(
         "select * from cluster:profile where races contains (name.toLowerCase(Locale.ENGLISH).subString(0,1) = 'e')", database);
 
@@ -364,7 +384,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryCollectionContainsInRecords() {
+  @Test
+  public void queryCollectionContainsInRecords() {
     record.reset();
     record.setClassName("Animal");
     record.field("name", "Cat");
@@ -433,7 +454,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     record.delete();
   }
 
-  @Test public void queryCollectionInNumbers() {
+  @Test
+  public void queryCollectionInNumbers() {
     record.reset();
     record.setClassName("Animal");
     record.field("name", "Cat");
@@ -454,7 +476,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     record.delete();
   }
 
-  @Test public void queryWhereRidDirectMatching() {
+  @Test
+  public void queryWhereRidDirectMatching() {
     int clusterId = database.getMetadata().getSchema().getClass("ORole").getDefaultClusterId();
     List<Long> positions = getValidPositions(clusterId);
 
@@ -464,20 +487,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(result.size(), 1);
   }
 
-  @Test public void queryWhereInpreparred() {
+  @Test
+  public void queryWhereInpreparred() {
     List<ODocument> result = executeQuery("select * from OUser where name in [ :name ]", database, "admin");
 
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(((ODocument) result.get(0).getRecord()).field("name"), "admin");
   }
 
-  @Test public void queryAllOperator() {
+  @Test
+  public void queryAllOperator() {
     List<ODocument> result = executeQuery("select from Account where all() is null", database);
 
     Assert.assertTrue(result.size() == 0);
   }
 
-  @Test public void queryOrderBy() {
+  @Test
+  public void queryOrderBy() {
     List<ODocument> result = executeQuery("select from Profile order by name", database);
 
     Assert.assertTrue(result.size() != 0);
@@ -497,7 +523,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryOrderByWrongSyntax() {
+  @Test
+  public void queryOrderByWrongSyntax() {
     try {
       executeQuery("select from Profile order by name aaaa", database);
       Assert.fail();
@@ -505,13 +532,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryLimitOnly() {
+  @Test
+  public void queryLimitOnly() {
     List<ODocument> result = executeQuery("select from Profile limit 1", database);
 
     Assert.assertEquals(result.size(), 1);
   }
 
-  @Test public void querySkipOnly() {
+  @Test
+  public void querySkipOnly() {
     List<ODocument> result = executeQuery("select from Profile", database);
     int total = result.size();
 
@@ -519,7 +548,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(result.size(), total - 1);
   }
 
-  @Test public void queryPaginationWithSkipAndLimit() {
+  @Test
+  public void queryPaginationWithSkipAndLimit() {
     List<ODocument> result = executeQuery("select from Profile", database);
 
     List<ODocument> page = executeQuery("select from Profile skip 10 limit 10", database);
@@ -530,7 +560,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryOffsetOnly() {
+  @Test
+  public void queryOffsetOnly() {
     List<ODocument> result = executeQuery("select from Profile", database);
     int total = result.size();
 
@@ -538,7 +569,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(result.size(), total - 1);
   }
 
-  @Test public void queryPaginationWithOffsetAndLimit() {
+  @Test
+  public void queryPaginationWithOffsetAndLimit() {
     List<ODocument> result = executeQuery("select from Profile", database);
 
     List<ODocument> page = executeQuery("select from Profile offset 10 limit 10", database);
@@ -549,7 +581,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryPaginationWithOrderBySkipAndLimit() {
+  @Test
+  public void queryPaginationWithOrderBySkipAndLimit() {
     List<ODocument> result = executeQuery("select from Profile order by name", database);
 
     List<ODocument> page = executeQuery("select from Profile order by name limit 10 skip 10", database);
@@ -560,7 +593,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryPaginationWithOrderByDescSkipAndLimit() {
+  @Test
+  public void queryPaginationWithOrderByDescSkipAndLimit() {
     List<ODocument> result = executeQuery("select from Profile order by name desc", database);
 
     List<ODocument> page = executeQuery("select from Profile order by name desc limit 10 skip 10", database);
@@ -571,7 +605,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryOrderByAndLimit() {
+  @Test
+  public void queryOrderByAndLimit() {
     List<ODocument> result = executeQuery("select from Profile order by name limit 2", database);
 
     Assert.assertTrue(result.size() <= 2);
@@ -584,7 +619,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryConditionAndOrderBy() {
+  @Test
+  public void queryConditionAndOrderBy() {
     List<ODocument> result = executeQuery("select from Profile where name is not null order by name", database);
 
     Assert.assertTrue(result.size() != 0);
@@ -597,7 +633,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryConditionsAndOrderBy() {
+  @Test
+  public void queryConditionsAndOrderBy() {
     List<ODocument> result = executeQuery("select from Profile where name is not null order by name desc, id asc", database);
 
     Assert.assertTrue(result.size() != 0);
@@ -610,7 +647,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryRecordTargetRid() {
+  @Test
+  public void queryRecordTargetRid() {
     int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
     List<Long> positions = getValidPositions(profileClusterId);
 
@@ -623,7 +661,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryRecordTargetRids() {
+  @Test
+  public void queryRecordTargetRids() {
     int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
     List<Long> positions = getValidPositions(profileClusterId);
 
@@ -637,7 +676,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(result.get(1).getIdentity().toString(), "#" + profileClusterId + ":" + positions.get(1));
   }
 
-  @Test public void queryRecordAttribRid() {
+  @Test
+  public void queryRecordAttribRid() {
 
     int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
     List<Long> postions = getValidPositions(profileClusterId);
@@ -652,7 +692,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryRecordAttribClass() {
+  @Test
+  public void queryRecordAttribClass() {
     List<ODocument> result = executeQuery("select from Profile where @class = 'Profile'", database);
 
     Assert.assertTrue(result.size() != 0);
@@ -662,7 +703,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryRecordAttribVersion() {
+  @Test
+  public void queryRecordAttribVersion() {
     List<ODocument> result = executeQuery("select from Profile where @version > 0", database);
 
     Assert.assertTrue(result.size() != 0);
@@ -672,7 +714,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryRecordAttribSize() {
+  @Test
+  public void queryRecordAttribSize() {
     List<ODocument> result = executeQuery("select from Profile where @size >= 50", database);
 
     Assert.assertTrue(result.size() != 0);
@@ -682,7 +725,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryRecordAttribType() {
+  @Test
+  public void queryRecordAttribType() {
     List<ODocument> result = executeQuery("select from Profile where @type = 'document'", database);
 
     Assert.assertTrue(result.size() != 0);
@@ -692,7 +736,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryWrongOperator() {
+  @Test
+  public void queryWrongOperator() {
     try {
       executeQuery("select from Profile where name like.toLowerCase() '%Jay%'", database);
       Assert.fail();
@@ -701,15 +746,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryEscaping() {
+  @Test
+  public void queryEscaping() {
     executeQuery("select from Profile where name like '%\\'Jay%'", database);
   }
 
-  @Test public void queryWithLimit() {
+  @Test
+  public void queryWithLimit() {
     Assert.assertEquals(executeQuery("select from Profile limit 3", database).size(), 3);
   }
 
-  @SuppressWarnings("unused") @Test public void testRecordNumbers() {
+  @SuppressWarnings("unused")
+  @Test
+  public void testRecordNumbers() {
     long tot = database.countClass("V");
 
     int count = 0;
@@ -722,7 +771,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertTrue(executeQuery("select from V", database).size() >= tot);
   }
 
-  @Test public void queryWithManualPagination() {
+  @Test
+  public void queryWithManualPagination() {
     ORID last = new ORecordId();
     List<ODocument> resultset = executeQuery("select from Profile where @rid > ? LIMIT 3", database, last);
 
@@ -746,7 +796,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertTrue(iterationCount > 1);
   }
 
-  @Test public void queryWithAutomaticPagination() {
+  @Test
+  public void queryWithAutomaticPagination() {
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
     ORID last = new ORecordId();
 
@@ -770,7 +821,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertTrue(iterationCount > 1);
   }
 
-  @Test public void queryWithAutomaticPaginationAndRidInWhere() {
+  @Test
+  public void queryWithAutomaticPaginationAndRidInWhere() {
     int clusterId = database.getClusterIdByName("profile");
 
     long[] range = database.getStorage().getClusterDataRange(clusterId);
@@ -804,7 +856,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertTrue(iterationCount > 1);
   }
 
-  @Test public void queryWithAutomaticPaginationWithWhere() {
+  @Test
+  public void queryWithAutomaticPaginationWithWhere() {
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
         "select from Profile where followers.length() > 0 LIMIT 3");
     ORID last = new ORecordId();
@@ -832,7 +885,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertTrue(iterationCount > 1);
   }
 
-  @Test public void queryWithAutomaticPaginationWithWhereAndBindingVar() {
+  @Test
+  public void queryWithAutomaticPaginationWithWhereAndBindingVar() {
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
         "select from Profile where followers.length() > ? LIMIT 3");
     ORID last = new ORecordId();
@@ -858,7 +912,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertTrue(iterationCount > 1);
   }
 
-  @Test public void queryWithAutomaticPaginationWithWhereAndBindingVarAtTheFirstQueryCall() {
+  @Test
+  public void queryWithAutomaticPaginationWithWhereAndBindingVarAtTheFirstQueryCall() {
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
         "select from Profile where followers.length() > ? LIMIT 3");
     ORID last = new ORecordId();
@@ -884,7 +939,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertTrue(iterationCount > 1);
   }
 
-  @Test public void queryWithAbsenceOfAutomaticPaginationBecauseOfBindingVarReset() {
+  @Test
+  public void queryWithAbsenceOfAutomaticPaginationBecauseOfBindingVarReset() {
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
         "select from Profile where followers.length() > ? LIMIT 3");
 
@@ -899,7 +955,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(firstRidFirstQuery, firstRidSecondQueryQuery);
   }
 
-  @Test public void includeFields() {
+  @Test
+  public void includeFields() {
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select expand( roles.include('name') ) from OUser");
 
     List<ODocument> resultset = database.query(query);
@@ -911,7 +968,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void excludeFields() {
+  @Test
+  public void excludeFields() {
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select expand( roles.exclude('rules') ) from OUser");
 
     List<ODocument> resultset = database.query(query);
@@ -921,7 +979,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void excludeAttributes() {
+  @Test
+  public void excludeAttributes() {
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
         "select expand( roles.exclude('@rid', '@class') ) from OUser");
 
@@ -933,7 +992,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryResetPagination() {
+  @Test
+  public void queryResetPagination() {
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
 
     List<ODocument> resultset = database.query(query);
@@ -946,7 +1006,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(firstRidFirstQuery, firstRidSecondQueryQuery);
   }
 
-  @Test public void queryBetween() {
+  @Test
+  public void queryBetween() {
     List<ODocument> result = executeQuery("select * from account where nr between 10 and 20", database);
 
     for (int i = 0; i < result.size(); ++i) {
@@ -956,7 +1017,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void queryParenthesisInStrings() {
+  @Test
+  public void queryParenthesisInStrings() {
     Assert.assertNotNull(database.command(new OCommandSQL("INSERT INTO account (name) VALUES ('test (demo)')")).execute());
 
     List<ODocument> result = executeQuery("select * from account where name = 'test (demo)'", database);
@@ -970,7 +1032,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
   }
 
-  @Test public void queryMathOperators() {
+  @Test
+  public void queryMathOperators() {
     List<ODocument> result = executeQuery("select * from account where id < 3 + 4", database);
     Assert.assertFalse(result.isEmpty());
     for (int i = 0; i < result.size(); ++i)
@@ -1004,7 +1067,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
   }
 
-  @Test public void testBetweenWithParameters() {
+  @Test
+  public void testBetweenWithParameters() {
 
     final List<ODocument> result = executeQuery("select * from company where id between ? and ? and salary is not null", database,
         4, 7);
@@ -1021,7 +1085,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void testInWithParameters() {
+  @Test
+  public void testInWithParameters() {
 
     final List<ODocument> result = executeQuery("select * from company where id in [?, ?, ?, ?] and salary is not null", database,
         4, 5, 6, 7);
@@ -1035,7 +1100,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
   }
 
-  @Test public void testEqualsNamedParameter() {
+  @Test
+  public void testEqualsNamedParameter() {
 
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("id", 4);
@@ -1044,7 +1110,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(result.size(), 1);
   }
 
-  @Test public void testQueryAsClass() {
+  @Test
+  public void testQueryAsClass() {
 
     List<ODocument> result = executeQuery("select from Account where addresses.@class in [ 'Address' ]", database);
     Assert.assertFalse(result.isEmpty());
@@ -1056,7 +1123,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void testQueryNotOperator() {
+  @Test
+  public void testQueryNotOperator() {
 
     List<ODocument> result = executeQuery("select from Account where not ( addresses.@class in [ 'Address' ] )", database);
     Assert.assertFalse(result.isEmpty());
@@ -1067,7 +1135,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void testSquareBracketsOnCondition() {
+  @Test
+  public void testSquareBracketsOnCondition() {
     List<ODocument> result = executeQuery("select from Account where addresses[@class='Address'][city.country.name] = 'Washington'",
         database);
     Assert.assertFalse(result.isEmpty());
@@ -1096,7 +1165,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     database.query(new OSQLSynchQuery<ODocument>("select from test where f1 = :p1 and f2 = :p1"), parameters);
   }
 
-  @Test public void queryInstanceOfOperator() {
+  @Test
+  public void queryInstanceOfOperator() {
     List<ODocument> result = executeQuery("select from Account", database);
 
     Assert.assertTrue(result.size() != 0);
@@ -1111,14 +1181,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
   }
 
-  @Test public void subQuery() {
+  @Test
+  public void subQuery() {
     List<ODocument> result = executeQuery(
         "select from Account where name in ( select name from Account where name is not null limit 1 )", database);
 
     Assert.assertTrue(result.size() != 0);
   }
 
-  @Test public void subQueryNoFrom() {
+  @Test
+  public void subQueryNoFrom() {
     List<ODocument> result2 = executeQuery(
         "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )", database);
 
@@ -1127,14 +1199,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertFalse(((Collection<?>) result2.get(0).field("$names")).isEmpty());
   }
 
-  @Test public void subQueryLetAndIndexedWhere() {
+  @Test
+  public void subQueryLetAndIndexedWhere() {
     List<ODocument> result = executeQuery("select $now from OUser let $now = eval('42') where name = 'admin'", database);
 
     Assert.assertEquals(result.size(), 1);
     Assert.assertNotNull(result.get(0).field("$now"), result.get(0).toString());
   }
 
-  @Test public void queryOrderByWithLimit() {
+  @Test
+  public void queryOrderByWithLimit() {
 
     OSchema schema = database.getMetadata().getSchema();
     OClass facClass = schema.getClass("FicheAppelCDI");
@@ -1174,7 +1248,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(bigger.get(Calendar.YEAR), currentYear.get(Calendar.YEAR));
   }
 
-  @Test public void queryWithTwoRidInWhere() {
+  @Test
+  public void queryWithTwoRidInWhere() {
     int clusterId = database.getClusterIdByName("profile");
 
     List<Long> positions = getValidPositions(clusterId);
@@ -1198,7 +1273,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(resultset.get(0).field("oid"), new ORecordId(clusterId, maxPos).toString());
   }
 
-  @Test public void testSelectFromListParameter() {
+  @Test
+  public void testSelectFromListParameter() {
     OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1, null);
     placeClass.createProperty("id", OType.STRING);
     placeClass.createProperty("descr", OType.STRING);
@@ -1226,7 +1302,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     database.getMetadata().getSchema().dropClass("Place");
   }
 
-  @Test public void testSelectRidFromListParameter() {
+  @Test
+  public void testSelectRidFromListParameter() {
     OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1, null);
     placeClass.createProperty("id", OType.STRING);
     placeClass.createProperty("descr", OType.STRING);
@@ -1255,7 +1332,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     database.getMetadata().getSchema().dropClass("Place");
   }
 
-  @Test public void testSelectRidInList() {
+  @Test
+  public void testSelectRidInList() {
     OClass placeClass = database.getMetadata().getSchema().createClass("Place", 1, null);
     database.getMetadata().getSchema().createClass("FamousPlace", 1, placeClass);
 
@@ -1280,7 +1358,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     database.getMetadata().getSchema().dropClass("Place");
   }
 
-  @Test public void testMapKeys() {
+  @Test
+  public void testMapKeys() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("id", 4);
     final List<ODocument> result = executeQuery("select * from company where id = :id and salary is not null", database, params);
@@ -1288,7 +1367,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(result.size(), 1);
   }
 
-  @Test public void queryAsynch() {
+  @Test
+  public void queryAsynch() {
     final String sqlOne = "select * from company where id between 4 and 7";
     final String sqlTwo = "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )";
 
@@ -1304,31 +1384,37 @@ import java.util.concurrent.atomic.AtomicBoolean;
     final AtomicBoolean endTwoCalled = new AtomicBoolean();
 
     database.command(new OSQLAsynchQuery<ODocument>(sqlOne, new OCommandResultListener() {
-      @Override public boolean result(Object iRecord) {
+      @Override
+      public boolean result(Object iRecord) {
         asynchResultOne.add((ODocument) iRecord);
         return true;
       }
 
-      @Override public void end() {
+      @Override
+      public void end() {
         endOneCalled.set(true);
 
         database.command(new OSQLAsynchQuery<ODocument>(sqlTwo, new OCommandResultListener() {
-          @Override public boolean result(Object iRecord) {
+          @Override
+          public boolean result(Object iRecord) {
             asynchResultTwo.add((ODocument) iRecord);
             return true;
           }
 
-          @Override public void end() {
+          @Override
+          public void end() {
             endTwoCalled.set(true);
           }
 
-          @Override public Object getResult() {
+          @Override
+          public Object getResult() {
             return null;
           }
         })).execute();
       }
 
-      @Override public Object getResult() {
+      @Override
+      public Object getResult() {
         return null;
       }
     })).execute();
@@ -1342,7 +1428,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
         "synchResultOne=" + synchResultOne.size() + " asynchResultOne=" + asynchResultOne.size());
   }
 
-  @Test public void queryAsynchHalfForheFirstQuery() {
+  @Test
+  public void queryAsynchHalfForheFirstQuery() {
     final String sqlOne = "select * from company where id between 4 and 7";
     final String sqlTwo = "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )";
 
@@ -1358,31 +1445,37 @@ import java.util.concurrent.atomic.AtomicBoolean;
     final AtomicBoolean endTwoCalled = new AtomicBoolean();
 
     database.command(new OSQLAsynchQuery<ODocument>(sqlOne, new OCommandResultListener() {
-      @Override public boolean result(Object iRecord) {
+      @Override
+      public boolean result(Object iRecord) {
         asynchResultOne.add((ODocument) iRecord);
         return asynchResultOne.size() < synchResultOne.size() / 2;
       }
 
-      @Override public void end() {
+      @Override
+      public void end() {
         endOneCalled.set(true);
 
         database.command(new OSQLAsynchQuery<ODocument>(sqlTwo, new OCommandResultListener() {
-          @Override public boolean result(Object iRecord) {
+          @Override
+          public boolean result(Object iRecord) {
             asynchResultTwo.add((ODocument) iRecord);
             return true;
           }
 
-          @Override public void end() {
+          @Override
+          public void end() {
             endTwoCalled.set(true);
           }
 
-          @Override public Object getResult() {
+          @Override
+          public Object getResult() {
             return null;
           }
         })).execute();
       }
 
-      @Override public Object getResult() {
+      @Override
+      public Object getResult() {
         return null;
       }
     })).execute();
@@ -1395,7 +1488,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertTrue(ODocumentHelper.compareCollections(database, synchResultTwo, database, asynchResultTwo, null));
   }
 
-  @Test public void queryOrderByRidDesc() {
+  @Test
+  public void queryOrderByRidDesc() {
     List<ODocument> result = executeQuery("select from OUser order by @rid desc", database);
 
     Assert.assertFalse(result.isEmpty());
@@ -1414,7 +1508,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
   }
 
-  @Test public void testSelectFromIndexValues() {
+  @Test
+  public void testSelectFromIndexValues() {
     database.command(new OCommandSQL("create index selectFromIndexValues on Profile (name) notunique")).execute();
 
     final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(
@@ -1511,7 +1606,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void testMultipleClustersWithPagination() throws Exception {
+  @Test
+  public void testMultipleClustersWithPagination() throws Exception {
     final OClass cls = database.getMetadata().getSchema().createClass("PersonMultipleClusters");
     cls.addCluster("PersonMultipleClusters_1");
     cls.addCluster("PersonMultipleClusters_2");
@@ -1545,7 +1641,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
   }
 
-  @Test public void testOutFilterInclude() {
+  @Test
+  public void testOutFilterInclude() {
     OSchema schema = database.getMetadata().getSchema();
     schema.createClass("TestOutFilterInclude", schema.getClass("V"));
     database.command(new OCommandSQL("create class linkedToOutFilterInclude extends E")).execute();
@@ -1580,7 +1677,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     return positions;
   }
 
-  @Test public void testBinaryClusterSelect() {
+  @Test
+  public void testBinaryClusterSelect() {
     database.command(new OCommandSQL("create blob cluster binarycluster")).execute();
     database.reload();
     OBlob bytes = new ORecordBytes(new byte[] { 1, 2, 3 });
@@ -1597,7 +1695,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(result.size(), 0);
   }
 
-  @Test public void testExpandSkip() {
+  @Test
+  public void testExpandSkip() {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("TestExpandSkip", v);
@@ -1638,7 +1737,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
   }
 
-  @Test public void testPolymorphicEdges() {
+  @Test
+  public void testPolymorphicEdges() {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     OClass e = schema.getClass("E");
@@ -1667,7 +1767,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
   }
 
-  @Test public void testSizeOfLink() {
+  @Test
+  public void testSizeOfLink() {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("TestSizeOfLink", v);
@@ -1683,7 +1784,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(result.size(), 1);
   }
 
-  @Test public void testEmbeddedMapAndDotNotation() {
+  @Test
+  public void testEmbeddedMapAndDotNotation() {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("EmbeddedMapAndDotNotation", v);
@@ -1708,7 +1810,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
   }
 
-  @Test public void testLetWithQuotedValue() {
+  @Test
+  public void testLetWithQuotedValue() {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("LetWithQuotedValue", v);
@@ -1720,7 +1823,43 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
   }
 
-  @Override protected List<ODocument> executeQuery(String sql, ODatabaseDocumentInternal db, Object... args) {
+  @Test
+  public void testNestedProjection1() {
+    String className = this.getClass().getSimpleName() + "_testNestedProjection1";
+    database.command("create class " + className).close();
+    OElement elem1 = database.newElement(className);
+    elem1.setProperty("name", "a");
+    elem1.save();
+
+    OElement elem2 = database.newElement(className);
+    elem2.setProperty("name", "b");
+    elem2.setProperty("surname", "lkj");
+    elem2.save();
+
+    OElement elem3 = database.newElement(className);
+    elem3.setProperty("name", "c");
+    elem3.save();
+
+    OElement elem4 = database.newElement(className);
+    elem4.setProperty("name", "d");
+    elem4.setProperty("elem1", elem1);
+    elem4.setProperty("elem2", elem2);
+    elem4.setProperty("elem3", elem3);
+    elem4.save();
+
+    OResultSet result = database.query("select name, elem1:{*}, elem2:{!surname} from " + className + " where name = 'd'");
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertTrue(item.getProperty("elem1") instanceof OResult);
+    Assert.assertEquals("a", ((OResult) item.getProperty("elem1")).getProperty("name"));
+    Assert.assertEquals("b", ((OResult) item.getProperty("elem2")).getProperty("name"));
+    Assert.assertNull(((OResult) item.getProperty("elem2")).getProperty("surname"));
+    result.close();
+  }
+
+  @Override
+  protected List<ODocument> executeQuery(String sql, ODatabaseDocumentInternal db, Object... args) {
     OResultSet rs = db.query(sql, args);
     List<ODocument> result = new ArrayList<>();
     while (rs.hasNext()) {
