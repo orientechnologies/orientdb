@@ -150,9 +150,8 @@ public class OChannelBinaryProtocol {
 
   public static final int PROTOCOL_VERSION_35 = 35;
   public static final int PROTOCOL_VERSION_36 = 36;                 //ABILITY TO CREATE DATABASE FROM INCREMENTAL BACKUP
-  public static final int PROTOCOL_VERSION_37 = 37;                 //DISTRIBUTED CONNECT WITH DISTRIB PROTOCOL VERSIONING
 
-  public static final int CURRENT_PROTOCOL_VERSION = PROTOCOL_VERSION_37;
+  public static final int CURRENT_PROTOCOL_VERSION = PROTOCOL_VERSION_36;
 
   public static OIdentifiable readIdentifiable(final OChannelBinary network) throws IOException {
     final int classId = network.readShort();

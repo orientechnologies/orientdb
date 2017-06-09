@@ -276,10 +276,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     final String user = channel.readString();
     final String passwd = channel.readString();
-    int remoteDistributedProtocolVersion = 0;
-
-    if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_37)
-      remoteDistributedProtocolVersion = channel.readShort();
+    int remoteDistributedProtocolVersion = channel.readShort();
 
     distributedProtocolVersion = Math.min(remoteDistributedProtocolVersion, distributedProtocolVersion);
 
@@ -301,9 +298,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         } else
           token = OCommonConst.EMPTY_BYTE_ARRAY;
         channel.writeBytes(token);
-
-        if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_37)
-          channel.writeShort((short) ORemoteServerController.CURRENT_PROTOCOL_VERSION);
+        channel.writeShort((short) ORemoteServerController.CURRENT_PROTOCOL_VERSION);
       }
 
     } finally {

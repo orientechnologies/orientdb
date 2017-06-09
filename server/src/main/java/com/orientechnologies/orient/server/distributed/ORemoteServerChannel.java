@@ -124,8 +124,7 @@ public class ORemoteServerChannel {
         channel.writeString(userName);
         channel.writeString(userPassword);
 
-        if (channel.getSrvProtocolVersion() >= OChannelBinaryProtocol.PROTOCOL_VERSION_37)
-          channel.writeShort((short) protocolVersion);
+        channel.writeShort((short) protocolVersion);
 
         channel.flush();
 
@@ -137,11 +136,8 @@ public class ORemoteServerChannel {
         }
 
         // SET THE PROTOCOL TO THE MINIMUM NUMBER TO SUPPORT BACKWARD COMPATIBILITY
-        int remoteProtocolVersion = 0;
-        if (channel.getSrvProtocolVersion() >= OChannelBinaryProtocol.PROTOCOL_VERSION_37) {
-          remoteProtocolVersion = channel.readShort();
-          protocolVersion = Math.min(protocolVersion, remoteProtocolVersion);
-        }
+        int remoteProtocolVersion = channel.readShort();
+        protocolVersion = Math.min(protocolVersion, remoteProtocolVersion);
 
         return null;
       }
