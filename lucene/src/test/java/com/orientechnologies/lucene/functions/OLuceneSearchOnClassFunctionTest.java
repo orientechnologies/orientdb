@@ -63,7 +63,7 @@ public class OLuceneSearchOnClassFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-  @Ignore
+//  @Ignore
   public void shouldSearchInAnd() throws Exception {
 
 

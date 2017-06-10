@@ -20,11 +20,11 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.builder.OLuceneDocumentBuilder;
 import com.orientechnologies.lucene.builder.OLuceneIndexType;
-import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.collections.OLuceneIndexCursor;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
+import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -51,6 +51,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+
+import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_METADATA;
 
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
@@ -227,13 +229,12 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public Query buildQuery(Object maybeQuery) {
     try {
-      if (maybeQuery instanceof String)
-
-      {
-        return queryBuilder.query(indexDefinition, maybeQuery, new ODocument(), queryAnalyzer());
+      if (maybeQuery instanceof String) {
+        return queryBuilder.query(indexDefinition, maybeQuery, EMPTY_METADATA, queryAnalyzer());
       } else {
-        System.out.println("maybeQuery = " + maybeQuery);
-        return queryBuilder.query(indexDefinition, maybeQuery, new ODocument(), queryAnalyzer());
+        OLuceneKeyAndMetadata q = (OLuceneKeyAndMetadata) maybeQuery;
+        Query query = queryBuilder.query(indexDefinition, q.key, q.metadata, queryAnalyzer());
+        return query;
 
       }
     } catch (ParseException e) {
@@ -246,16 +247,15 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   public Set<OIdentifiable> getInTx(Object key, OLuceneTxChanges changes) {
 
     try {
-      Query query;
       if (key instanceof OLuceneKeyAndMetadata) {
         OLuceneKeyAndMetadata q = (OLuceneKeyAndMetadata) key;
-        query = queryBuilder.query(indexDefinition, q.key, q.metadata, queryAnalyzer());
+        Query query = queryBuilder.query(indexDefinition, q.key, q.metadata, queryAnalyzer());
 
         OCommandContext commandContext = q.key.getContext();
         return getResults(query, commandContext, key, changes);
 
       } else {
-        query = queryBuilder.query(indexDefinition, key, new ODocument(), queryAnalyzer());
+        Query query = queryBuilder.query(indexDefinition, key, EMPTY_METADATA, queryAnalyzer());
 
         OCommandContext commandContext = null;
         if (key instanceof OLuceneCompositeKey) {

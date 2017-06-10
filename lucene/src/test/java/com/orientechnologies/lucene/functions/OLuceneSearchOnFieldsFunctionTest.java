@@ -41,15 +41,13 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-  @Ignore
   public void shouldSearchOnSingleFieldWithLeadingWildcard() throws Exception {
 
     //TODO: metadata still not used
     OResultSet resultSet = db
         .query("SELECT from Song where SEARCH_INDEX('Song.title', '*EVE*', {'allowLeadingWildcard': true}) = true");
 
-//    resultSet.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 2)));
-    assertThat(resultSet).hasSize(2);
+    assertThat(resultSet).hasSize(14);
 
     resultSet.close();
   }
@@ -71,6 +69,18 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
     OResultSet resultSet = db
         .query(
             "SELECT from Song where SEARCH_FIELDS(['title'], 'tambourine') = true AND SEARCH_FIELDS(['author'], 'Bob') = true ");
+
+    assertThat(resultSet).hasSize(1);
+    resultSet.close();
+
+  }
+
+  @Test
+  public void shouldSearhOnTwoFieldsWithLeadingWildcardInAND() throws Exception {
+
+    OResultSet resultSet = db
+        .query(
+            "SELECT from Song where SEARCH_FIELDS(['title'], 'tambourine') = true AND SEARCH_FIELDS(['author'], 'Bob', {'allowLeadingWildcard': true}) = true ");
 
     assertThat(resultSet).hasSize(1);
     resultSet.close();

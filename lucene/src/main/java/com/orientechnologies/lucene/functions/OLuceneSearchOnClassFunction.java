@@ -15,10 +15,7 @@ import com.orientechnologies.orient.core.sql.parser.*;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.orientechnologies.lucene.functions.OLuceneFunctionsUtils.getOrCreateMemoryIndex;
@@ -50,7 +47,6 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
 
     OElement element = result.toElement();
 
-    System.out.println("element = " + element);
     String className = element.getSchemaType().get().getName();
 
     OLuceneFullTextIndex index = searchForIndex(ctx, className);
@@ -60,8 +56,6 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
 
     String query = (String) params[0];
 
-    System.out.println("params = " + params[1]);
-    ODocument metadata = getMetadata(params);
     MemoryIndex memoryIndex = getOrCreateMemoryIndex(ctx);
 
     List<Object> key = index.getDefinition().getFields()
@@ -74,7 +68,11 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
         memoryIndex.addField(field, index.indexAnalyzer());
       }
 
-      return memoryIndex.search(index.buildQuery(query)) > 0.0f;
+      ODocument metadata = getMetadata(params);
+      OLuceneKeyAndMetadata keyAndMetadata = new OLuceneKeyAndMetadata(
+          new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), metadata);
+
+      return memoryIndex.search(index.buildQuery(keyAndMetadata)) > 0.0f;
     } catch (ParseException e) {
       OLogManager.instance().error(this, "error occurred while building query", e);
 
@@ -84,10 +82,13 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
   }
 
   private ODocument getMetadata(Object[] params) {
-    if (params.length == 2)
-      return new ODocument().fromJSON(params[1].toString());
+
+    if (params.length == 2) {
+      return new ODocument().fromMap((Map<String, ?>) params[1]);
+    }
 
     return OLuceneQueryBuilder.EMPTY_METADATA;
+
   }
 
   @Override

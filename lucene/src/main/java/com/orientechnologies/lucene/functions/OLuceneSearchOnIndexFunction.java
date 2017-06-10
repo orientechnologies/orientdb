@@ -1,9 +1,10 @@
 package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
+import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
+import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -14,10 +15,7 @@ import com.orientechnologies.orient.core.sql.parser.*;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -28,7 +26,6 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
   public static final String MEMORY_INDEX = "_memoryIndex";
 
   public static final String NAME = "search_index";
-
 
   public OLuceneSearchOnIndexFunction() {
     super(NAME, 2, 3);
@@ -63,12 +60,26 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
         memoryIndex.addField(field, index.indexAnalyzer());
       }
 
-      return memoryIndex.search(index.buildQuery(query)) > 0.0f;
+      ODocument metadata = getMetadata(params);
+      OLuceneKeyAndMetadata keyAndMetadata = new OLuceneKeyAndMetadata(
+          new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), metadata);
+
+      return memoryIndex.search(index.buildQuery(keyAndMetadata)) > 0.0f;
     } catch (ParseException e) {
       OLogManager.instance().error(this, "error occurred while building query", e);
 
     }
     return null;
+
+  }
+
+  private ODocument getMetadata(Object[] params) {
+
+    if (params.length == 3) {
+      return new ODocument().fromMap((Map<String, ?>) params[2]);
+    }
+
+    return OLuceneQueryBuilder.EMPTY_METADATA;
 
   }
 

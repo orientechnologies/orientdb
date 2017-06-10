@@ -106,6 +106,18 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
 
   }
 
+  @Test
+  public void shouldSearhOnTwoIndexesWithLeadingWildcardInAND() throws Exception {
+
+    OResultSet resultSet = db
+        .query(
+            "SELECT from Song where SEARCH_INDEX('Song.title', 'tambourine') = true AND SEARCH_INDEX('Song.author', 'Bob', {'allowLeadingWildcard': true}) = true ");
+
+    assertThat(resultSet).hasSize(1);
+    resultSet.close();
+
+  }
+
   @Test(expected = OCommandExecutionException.class)
   public void shouldFailWithWrongIndexName() throws Exception {
 
