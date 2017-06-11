@@ -19,14 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 
-import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -70,18 +67,19 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
 
   @Override
   public ORemoteTaskFactory getFactoryByServerName(final String serverName) {
-    try {
-      final ORemoteServerController remoteServer = dManager.getRemoteServer(serverName);
-
-      final ORemoteTaskFactory factory = getFactoryByVersion(remoteServer.getProtocolVersion());
-      if (factory == null)
-        throw new IllegalArgumentException("Cannot find a factory for remote task for server " + serverName);
-
-      return factory;
-
-    } catch (IOException e) {
-      throw OException.wrapException(new OIOException("Cannot determine protocol version for server " + serverName), e);
-    }
+    return factories[0];
+//    try {
+//      final ORemoteServerController remoteServer = dManager.getRemoteServer(serverName);
+//
+//      final ORemoteTaskFactory factory = getFactoryByVersion(remoteServer.getProtocolVersion());
+//      if (factory == null)
+//        throw new IllegalArgumentException("Cannot find a factory for remote task for server " + serverName);
+//
+//      return factory;
+//
+//    } catch (IOException e) {
+//      throw OException.wrapException(new OIOException("Cannot determine protocol version for server " + serverName), e);
+//    }
   }
 
   @Override

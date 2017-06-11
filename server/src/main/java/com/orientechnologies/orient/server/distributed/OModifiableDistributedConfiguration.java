@@ -134,12 +134,18 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
         return;
 
       // REMOVE THE NODE IF ANY
+      boolean removed = false;
       for (Iterator<String> it = serverList.iterator(); it.hasNext();) {
         if (it.next().equals(iServerName)) {
           it.remove();
+          removed = true;
           break;
         }
       }
+
+      if( !removed )
+        throw new ODistributedException("Cannot set ownership of cluster '" + iClusterName + "' to the server '"
+            + iServerName + "', because the server has no that cluster (sharding)");
 
       // ADD THE NODE AS FIRST OF THE LIST = MASTER
       serverList.add(0, iServerName);
