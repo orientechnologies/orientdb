@@ -1,6 +1,9 @@
 package com.orientechnologies.lucene.functions;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
+import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -14,11 +17,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
-import com.orientechnologies.orient.core.sql.parser.OExpression;
-import com.orientechnologies.orient.core.sql.parser.OFromClause;
-import com.orientechnologies.orient.core.sql.parser.OFromItem;
+import com.orientechnologies.orient.core.sql.parser.*;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.queries.mlt.MoreLikeThis;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -51,39 +53,7 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] params, OCommandContext ctx) {
 
-    OResult result = (OResult) iThis;
-
-    OElement element = result.toElement();
-
-    String className = element.getSchemaType().get().getName();
-
-    OLuceneFullTextIndex index = searchForIndex(ctx, className);
-
-    System.out.println("element = " + element.toJSON());
-    if (index == null)
-      return false;
-
-    List<ORID> query = (List<ORID>) params[0];
-
-//    MemoryIndex memoryIndex = getOrCreateMemoryIndex(ctx);
-//
-//    List<Object> key = index.getDefinition().getFields()
-//        .stream()
-//        .map(s -> element.getProperty(s))
-//        .collect(Collectors.toList());
-//
-//    try {
-//      for (IndexableField field : index.buildDocument(key).getFields()) {
-//        memoryIndex.addField(field, index.indexAnalyzer());
-//      }
-//
-//      return memoryIndex.search(index.buildQuery(query)) > 0.0f;
-//    } catch (ParseException e) {
-//      OLogManager.instance().error(this, "error occurred while building query", e);
-//
-//    }
-    return true;
-
+    throw new OLuceneIndexException("SEARCH_MORE can't be executed by document");
   }
 
   @Override
@@ -189,34 +159,39 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
 
     mlt.setAnalyzer(index.queryAnalyzer());
 
-    mlt.setFieldNames(
-        Optional.ofNullable(metadata.<List<String>>getProperty("fieldNames")).orElse(index.getDefinition().getFields())
-            .toArray(new String[] {}));
+    mlt.setFieldNames(Optional.ofNullable(metadata.<List<String>>getProperty("fieldNames"))
+        .orElse(index.getDefinition().getFields())
+        .toArray(new String[] {}));
 
-    mlt.setMaxQueryTerms(
-        Optional.ofNullable(metadata.<Integer>getProperty("maxQueryTerms")).orElse(MoreLikeThis.DEFAULT_MAX_QUERY_TERMS));
+    mlt.setMaxQueryTerms(Optional.ofNullable(metadata.<Integer>getProperty("maxQueryTerms"))
+        .orElse(MoreLikeThis.DEFAULT_MAX_QUERY_TERMS));
 
-    mlt.setMinTermFreq(
-        Optional.ofNullable(metadata.<Integer>getProperty("minTermFreq")).orElse(MoreLikeThis.DEFAULT_MIN_TERM_FREQ));
+    mlt.setMinTermFreq(Optional.ofNullable(metadata.<Integer>getProperty("minTermFreq"))
+        .orElse(MoreLikeThis.DEFAULT_MIN_TERM_FREQ));
 
-    mlt.setMaxDocFreq(Optional.ofNullable(metadata.<Integer>getProperty("maxDocFreq")).orElse(MoreLikeThis.DEFAULT_MAX_DOC_FREQ));
+    mlt.setMaxDocFreq(Optional.ofNullable(metadata.<Integer>getProperty("maxDocFreq"))
+        .orElse(MoreLikeThis.DEFAULT_MAX_DOC_FREQ));
 
-    mlt.setMinDocFreq(Optional.ofNullable(metadata.<Integer>getProperty("minDocFreq")).orElse(MoreLikeThis.DEFAULT_MAX_DOC_FREQ));
+    mlt.setMinDocFreq(Optional.ofNullable(metadata.<Integer>getProperty("minDocFreq"))
+        .orElse(MoreLikeThis.DEFAULT_MAX_DOC_FREQ));
 
-    mlt.setBoost(Optional.ofNullable(metadata.<Boolean>getProperty("boost")).orElse(MoreLikeThis.DEFAULT_BOOST));
+    mlt.setBoost(Optional.ofNullable(metadata.<Boolean>getProperty("boost"))
+        .orElse(MoreLikeThis.DEFAULT_BOOST));
 
-    mlt.setBoostFactor(Optional.ofNullable(metadata.<Float>getProperty("boostFactor")).orElse(1f));
+    mlt.setBoostFactor(Optional.ofNullable(metadata.<Float>getProperty("boostFactor"))
+        .orElse(1f));
 
-    mlt.setMaxWordLen(
-        Optional.ofNullable(metadata.<Integer>getProperty("maxWordLen")).orElse(MoreLikeThis.DEFAULT_MAX_WORD_LENGTH));
+    mlt.setMaxWordLen(Optional.ofNullable(metadata.<Integer>getProperty("maxWordLen"))
+        .orElse(MoreLikeThis.DEFAULT_MAX_WORD_LENGTH));
 
-    mlt.setMinWordLen(
-        Optional.ofNullable(metadata.<Integer>getProperty("minWordLen")).orElse(MoreLikeThis.DEFAULT_MIN_WORD_LENGTH));
+    mlt.setMinWordLen(Optional.ofNullable(metadata.<Integer>getProperty("minWordLen"))
+        .orElse(MoreLikeThis.DEFAULT_MIN_WORD_LENGTH));
 
     mlt.setMaxNumTokensParsed(Optional.ofNullable(metadata.<Integer>getProperty("maxNumTokensParsed"))
         .orElse(MoreLikeThis.DEFAULT_MAX_NUM_TOKENS_PARSED));
 
-    mlt.setStopWords((Set<?>) Optional.ofNullable(metadata.getProperty("stopWords")).orElse(MoreLikeThis.DEFAULT_STOP_WORDS));
+    mlt.setStopWords((Set<?>) Optional.ofNullable(metadata.getProperty("stopWords"))
+        .orElse(MoreLikeThis.DEFAULT_STOP_WORDS));
 
     return mlt;
   }
