@@ -89,13 +89,13 @@ public class OOrderByItem {
       if (bVal == null) {
         result = 0;
       } else {
-        result = 1;
+        result = -1;
       }
     }
     if (bVal == null) {
-      result = -1;
+      result = 1;
     }
-    if (aVal instanceof Comparable) {
+    if (aVal instanceof Comparable && bVal instanceof Comparable) {
       try {
         result = ((Comparable) aVal).compareTo(bVal);
       } catch (Exception e) {

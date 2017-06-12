@@ -20,7 +20,14 @@ public class OLeOperator extends SimpleNode implements OBinaryCompareOperator {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean execute(Object iLeft, Object iRight) {
+  @Override
+  public boolean execute(Object iLeft, Object iRight) {
+    if (iLeft == iRight) {
+      return true;
+    }
+    if (iLeft == null || iRight == null) {
+      return false;
+    }
     if (iLeft.getClass() != iRight.getClass() && iLeft instanceof Number && iRight instanceof Number) {
       Number[] couple = OType.castComparableNumber((Number) iLeft, (Number) iRight);
       iLeft = couple[0];
@@ -33,27 +40,33 @@ public class OLeOperator extends SimpleNode implements OBinaryCompareOperator {
     return ((Comparable<Object>) iLeft).compareTo(iRight) <= 0;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "<=";
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override public OLeOperator copy() {
+  @Override
+  public OLeOperator copy() {
     return new OLeOperator(-1);
   }
 
-  @Override public boolean isRangeOperator() {
+  @Override
+  public boolean isRangeOperator() {
     return true;
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     return obj != null && obj.getClass().equals(this.getClass());
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return getClass().hashCode();
   }
 }

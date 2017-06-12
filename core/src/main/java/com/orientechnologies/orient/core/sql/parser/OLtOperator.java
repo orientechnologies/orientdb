@@ -13,17 +13,19 @@ public class OLtOperator extends SimpleNode implements OBinaryCompareOperator {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
   @Override
   public boolean execute(Object iLeft, Object iRight) {
-    if (iLeft == null) {
+    if (iLeft == null || iRight == null) {
       return false;
     }
-    if (iLeft.getClass() != iRight.getClass() && iLeft instanceof Number && iRight instanceof Number) {
+    if (iLeft instanceof Number && iRight instanceof Number && iLeft.getClass() != iRight.getClass()) {
       Number[] couple = OType.castComparableNumber((Number) iLeft, (Number) iRight);
       iLeft = couple[0];
       iRight = couple[1];
@@ -45,19 +47,23 @@ public class OLtOperator extends SimpleNode implements OBinaryCompareOperator {
     return true;
   }
 
-  @Override public OLtOperator copy() {
+  @Override
+  public OLtOperator copy() {
     return new OLtOperator(-1);
   }
 
-  @Override public boolean isRangeOperator() {
+  @Override
+  public boolean isRangeOperator() {
     return true;
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     return obj != null && obj.getClass().equals(this.getClass());
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return getClass().hashCode();
   }
 }
