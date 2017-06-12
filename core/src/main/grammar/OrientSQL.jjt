@@ -1969,9 +1969,9 @@ ONestedProjection NestedProjection():
        }
     )*
     <RBRACE>
-    [
-      <LBRACKET> jjtThis.recursion = Integer() <RBRACKET>
-    ]
+//    [
+//      <LBRACKET> jjtThis.recursion = Integer() <RBRACKET>
+//    ]
   ) { return jjtThis;}
 }
 

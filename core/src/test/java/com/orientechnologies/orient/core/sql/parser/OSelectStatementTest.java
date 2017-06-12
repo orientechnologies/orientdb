@@ -749,10 +749,7 @@ public class OSelectStatementTest {
   @Test
   public void testNestedProjections() {
     checkRightSyntax("select foo:{*} from V");
-    checkRightSyntax("select foo:{*}[0] from V");
-    checkRightSyntax("select foo:{*}[3] from V");
-    checkRightSyntax("select foo:{name, surname}[3] from V");
-    checkRightSyntax("select foo:{name, surname, address:{*}}[3] from V");
+    checkRightSyntax("select foo:{name, surname, address:{*}} from V");
     checkRightSyntax("select foo:{!name} from V");
     checkRightSyntax("select foo:{!out_*} from V");
     checkRightSyntax("select foo:{!out_*, !in_*} from V");

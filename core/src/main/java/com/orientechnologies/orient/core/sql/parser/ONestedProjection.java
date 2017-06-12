@@ -16,7 +16,7 @@ public class ONestedProjection extends SimpleNode {
   protected List<ONestedProjectionItem> includeItems = new ArrayList<>();
   protected List<ONestedProjectionItem> excludeItems = new ArrayList<>();
   protected ONestedProjectionItem starItem;
-  protected OInteger              recursion;
+  private   OInteger              recursion; //not used for now
 
   public ONestedProjection(int id) {
     super(id);
