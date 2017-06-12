@@ -19,21 +19,12 @@
  */
 package com.orientechnologies.orient.server.tx;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -51,6 +42,9 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final Map<ORID, ORecordOperation> tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
@@ -71,6 +65,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
     this.operations = operations;
     this.indexChanges = indexChanges;
     this.protocolVersion = protocolVersion;
+    this.serializer = serializer;
   }
 
   @Override
