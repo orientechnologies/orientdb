@@ -16,7 +16,7 @@
  *
  */
 
-package com.orientechnologies.orient.etl.extractor;
+package com.orientechnologies.orient.etl.integration;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabasePool;
@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OETLJsonRandomExtractorTest extends OETLBaseTest {
+public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
   private final static int TOTAL = 1000000;
 
@@ -39,7 +39,7 @@ public class OETLJsonRandomExtractorTest extends OETLBaseTest {
   public void shouldLoadSingleThread() {
 
     configure("{extractor : { random: {items: " + TOTAL + ", fields: 10} }, "
-            + "loader: { orientdb: {batchCommit: 10000 , dbURL: 'memory:" + name.getMethodName()
+            + "loader: { orientdb: {batchCommit: 10000 , dbURL: 'plocal:./target/" + name.getMethodName()
             + "', dbType:'graph', class: 'Person', useLightweightEdges:false, " + "classes: [{name: 'Person', extends: 'V'}] } } }",
         new OBasicCommandContext().setVariable("parallel", Boolean.FALSE).setVariable("dumpEveryMs", 1000));
 
@@ -58,8 +58,9 @@ public class OETLJsonRandomExtractorTest extends OETLBaseTest {
   public void shouldLoadMultipleThreadsInParallel() {
 
     configure(
-        "{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, " + "loader: { orientdb: { dbURL: 'memory:" + name
-            .getMethodName() + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
+        "{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
+            + "loader: { orientdb: { dbURL: 'plocal:./target/" + name.getMethodName()
+            + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
             + "classes: [{name: 'Person', extends: 'V', clusters: 8  }] } } }",
         new OBasicCommandContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
 
@@ -77,7 +78,7 @@ public class OETLJsonRandomExtractorTest extends OETLBaseTest {
   public void shouldLoadMultipleThreadsInParallelWithBatchCommit() {
 
     configure("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
-            + "loader: { orientdb: {batchCommit: 10000 ,dbURL: 'memory:" + name.getMethodName()
+            + "loader: { orientdb: {batchCommit: 10000 ,dbURL: 'plocal:./target/" + name.getMethodName()
             + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
             + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",
         new OBasicCommandContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
