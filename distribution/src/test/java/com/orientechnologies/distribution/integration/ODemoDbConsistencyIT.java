@@ -126,14 +126,35 @@ public class ODemoDbConsistencyIT extends OIntegrationTestTemplate {
     OResultSet resultSet = db
         .query("MATCH {class: Customers, as: customer}-IsFromCountry->{class: Countries, as: country} RETURN  customer");
     assertThat(resultSet).hasSize(customerNumber);
+    resultSet.close();
 
     // all customers have a profile
     resultSet = db.query("MATCH {class: Customers, as: customer}-HasProfile->{class: Profiles, as: profile} RETURN customer");
     assertThat(resultSet).hasSize(customerNumber);
+    resultSet.close();
 
     // all customers have at least 1 order
     resultSet = db.query("MATCH {class: Orders, as: order}-HasCustomer->{class: Customers, as:customer} RETURN order");
     assertThat(resultSet.stream().count()).isGreaterThan(customerNumber);
+    resultSet.close();
 
+  }
+
+  @Test
+  public void testMatchWithConditionInBackTraversal() throws Exception {
+    OResultSet resultSet = db.query("MATCH \n"
+        + "{class:Profiles, as:profileA} <-HasProfile- {as:customerA} -MadeReview-> {as:reviewA} <-HasReview- {as:restaurant},\n"
+        + "{as:profileB, where:($matched.profileA != $currentMatch)} <-HasProfile- {as:customerB} -MadeReview-> {as:reviewB} <-HasReview- {as:restaurant}\n"
+        + "return  profileA.Id as idA, profileA.Name, profileA.Surname, profileB.Id as idA, profileB.Name, profileB.Surname\n"
+        + "limit 10\n");
+
+    int size = 0;
+    while (resultSet.hasNext()) {
+      OResult item = resultSet.next();
+      assertThat((Object) item.getProperty("idA")).isNotEqualTo(item.getProperty("idB"));
+      size++;
+    }
+    assertThat(size).isEqualTo(10);
+    resultSet.close();
   }
 }

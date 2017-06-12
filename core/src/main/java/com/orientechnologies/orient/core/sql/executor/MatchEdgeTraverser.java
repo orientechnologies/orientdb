@@ -111,10 +111,6 @@ public class MatchEdgeTraverser {
       // evaluated
       Iterable<OIdentifiable> queryResult = traversePatternEdge(startingPoint, iCommandContext);
 
-      if ((item.getFilter() == null || item.getFilter().getFilter() == null) && className == null) {
-        return queryResult;
-      }
-
       for (OIdentifiable origin : queryResult) {
         Object previousMatch = iCommandContext.getVariable("$currentMatch");
         iCommandContext.setVariable("$currentMatch", origin);
