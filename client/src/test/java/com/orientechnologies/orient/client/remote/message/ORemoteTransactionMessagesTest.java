@@ -21,6 +21,16 @@ import static org.junit.Assert.*;
 public class ORemoteTransactionMessagesTest {
 
   @Test
+  public void testBeginTransactionEmptyWriteRead() throws IOException {
+    MockChannel channel = new MockChannel();
+    OBeginTransactionRequest request = new OBeginTransactionRequest(0, false, true, null, null);
+    request.write(channel, null);
+    channel.close();
+    OBeginTransactionRequest readRequest = new OBeginTransactionRequest();
+    assertFalse(readRequest.isHasContent());
+  }
+
+  @Test
   public void testBeginTransactionWriteRead() throws IOException {
 
     List<ORecordOperation> operations = new ArrayList<>();
@@ -36,7 +46,7 @@ public class ORemoteTransactionMessagesTest {
     changes.put("some", change);
 
     MockChannel channel = new MockChannel();
-    OBeginTransactionRequest request = new OBeginTransactionRequest(0, true, operations, changes);
+    OBeginTransactionRequest request = new OBeginTransactionRequest(0, true, true, operations, changes);
     request.write(channel, null);
 
     channel.close();

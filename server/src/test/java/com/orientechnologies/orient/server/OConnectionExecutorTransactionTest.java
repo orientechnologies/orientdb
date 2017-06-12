@@ -47,7 +47,8 @@ public class OConnectionExecutorTransactionTest {
     MockitoAnnotations.initMocks(this);
     orientDb = new OrientDB("embedded:./", OrientDBConfig.defaultConfig());
     orientDb.create(OConnectionExecutorTransactionTest.class.getSimpleName(), ODatabaseType.MEMORY);
-    database = (ODatabaseDocumentInternal) orientDb.open(OConnectionExecutorTransactionTest.class.getSimpleName(), "admin", "admin");
+    database = (ODatabaseDocumentInternal) orientDb
+        .open(OConnectionExecutorTransactionTest.class.getSimpleName(), "admin", "admin");
     database.createClass("test");
     ONetworkProtocolData protocolData = new ONetworkProtocolData();
     protocolData.setSerializer(ORecordSerializerNetworkFactory.INSTANCE.current());
@@ -73,7 +74,7 @@ public class OConnectionExecutorTransactionTest {
     operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
     assertFalse(database.getTransaction().isActive());
 
-    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, true, operations, new HashMap<>());
     OBinaryResponse response = request.execute(executor);
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
@@ -93,7 +94,7 @@ public class OConnectionExecutorTransactionTest {
 
     assertFalse(database.getTransaction().isActive());
 
-    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, true, operations, new HashMap<>());
     OBinaryResponse response = request.execute(executor);
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
@@ -117,7 +118,7 @@ public class OConnectionExecutorTransactionTest {
     operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
     assertFalse(database.getTransaction().isActive());
 
-    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, true, operations, new HashMap<>());
     OBinaryResponse response = request.execute(executor);
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
@@ -146,7 +147,7 @@ public class OConnectionExecutorTransactionTest {
 
     assertFalse(database.getTransaction().isActive());
 
-    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, true, operations, new HashMap<>());
     OBinaryResponse response = request.execute(executor);
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
@@ -175,7 +176,7 @@ public class OConnectionExecutorTransactionTest {
 
     assertFalse(database.getTransaction().isActive());
 
-    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, true, operations, new HashMap<>());
     OBinaryResponse response = request.execute(executor);
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
@@ -211,7 +212,7 @@ public class OConnectionExecutorTransactionTest {
     operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
     assertFalse(database.getTransaction().isActive());
 
-    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, true, operations, new HashMap<>());
     OBinaryResponse response = request.execute(executor);
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
@@ -235,7 +236,7 @@ public class OConnectionExecutorTransactionTest {
     operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
     assertFalse(database.getTransaction().isActive());
 
-    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, true, operations, new HashMap<>());
     OBinaryResponse response = request.execute(executor);
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
@@ -263,8 +264,7 @@ public class OConnectionExecutorTransactionTest {
     operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
     assertFalse(database.getTransaction().isActive());
 
-
-    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, true, operations, new HashMap<>());
     OBinaryResponse response = request.execute(executor);
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
@@ -282,7 +282,7 @@ public class OConnectionExecutorTransactionTest {
 
     OConnectionBinaryExecutor executor = new OConnectionBinaryExecutor(connection, server);
 
-    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, new ArrayList<>(), new HashMap<>());
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, true, new ArrayList<>(), new HashMap<>());
     OBinaryResponse response = request.execute(executor);
 
     assertTrue(database.getTransaction().isActive());
@@ -298,7 +298,7 @@ public class OConnectionExecutorTransactionTest {
     OBinaryResponse batchResponse = batchRequest.execute(executor);
     assertTrue(batchResponse instanceof OBatchOperationsResponse);
 
-    assertEquals(1,((OBatchOperationsResponse) batchResponse).getUpdated().size());
+    assertEquals(1, ((OBatchOperationsResponse) batchResponse).getUpdated().size());
     assertTrue(database.getTransaction().isActive());
 
     OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
@@ -325,7 +325,7 @@ public class OConnectionExecutorTransactionTest {
     operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
     assertFalse(database.getTransaction().isActive());
 
-    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, true, operations, new HashMap<>());
     OBinaryResponse response = request.execute(executor);
 
     assertTrue(database.getTransaction().isActive());
@@ -340,7 +340,7 @@ public class OConnectionExecutorTransactionTest {
     assertTrue(batchResponse instanceof OBatchOperationsResponse);
     assertTrue(database.getTransaction().isActive());
 
-    assertEquals(1,((OBatchOperationsResponse) batchResponse).getCreated().size());
+    assertEquals(1, ((OBatchOperationsResponse) batchResponse).getCreated().size());
 
     OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
     OBinaryResponse commitResponse = commit.execute(executor);
@@ -354,6 +354,38 @@ public class OConnectionExecutorTransactionTest {
   }
 
   @Test
+  public void testEmptyBeginCommitTransaction() {
+
+    ODocument rec = database.save(new ODocument("test").field("name", "foo"));
+    OConnectionBinaryExecutor executor = new OConnectionBinaryExecutor(connection, server);
+
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, false, true, null, null);
+    OBinaryResponse response = request.execute(executor);
+    assertTrue(database.getTransaction().isActive());
+    assertTrue(response instanceof OBeginTransactionResponse);
+
+    OCreateRecordRequest createRecordRequest = new OCreateRecordRequest(new ODocument("test"), new ORecordId(-1, -1),
+        ODocument.RECORD_TYPE);
+    OBinaryResponse createResponse = createRecordRequest.execute(executor);
+    assertTrue(createResponse instanceof OCreateRecordResponse);
+
+    rec.setProperty("name", "bar");
+    OUpdateRecordRequest updateRecordRequest = new OUpdateRecordRequest((ORecordId) rec.getIdentity(), rec, rec.getVersion(), true,
+        ODocument.RECORD_TYPE);
+    OBinaryResponse updateResponse = updateRecordRequest.execute(executor);
+    assertTrue(updateResponse instanceof OUpdateRecordResponse);
+
+    OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
+    OBinaryResponse commitResponse = commit.execute(executor);
+    assertFalse(database.getTransaction().isActive());
+    assertTrue(commitResponse instanceof OCommit37Response);
+    assertEquals(1, ((OCommit37Response) commitResponse).getUpdated().size());
+    assertEquals(1, ((OCommit37Response) commitResponse).getCreated().size());
+    assertEquals(2, database.countClass("test"));
+
+  }
+
+  @Test
   public void testBeginBatchDeleteCommitTransaction() {
 
     ODocument rec = database.save(new ODocument("test").field("name", "foo"));
@@ -362,7 +394,7 @@ public class OConnectionExecutorTransactionTest {
 
     List<ORecordOperation> operations = new ArrayList<>();
 
-    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, false, true, operations, new HashMap<>());
     OBinaryResponse response = request.execute(executor);
 
     assertTrue(database.getTransaction().isActive());
@@ -395,7 +427,7 @@ public class OConnectionExecutorTransactionTest {
 
     List<ORecordOperation> operations = new ArrayList<>();
 
-    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, true, operations, new HashMap<>());
     OBinaryResponse response = request.execute(executor);
 
     assertTrue(database.getTransaction().isActive());
@@ -413,8 +445,8 @@ public class OConnectionExecutorTransactionTest {
     assertTrue(batchResponse instanceof OBatchOperationsResponse);
     assertTrue(database.getTransaction().isActive());
 
-    assertEquals(1,((OBatchOperationsResponse) batchResponse).getCreated().size());
-    assertEquals(1,((OBatchOperationsResponse) batchResponse).getUpdated().size());
+    assertEquals(1, ((OBatchOperationsResponse) batchResponse).getCreated().size());
+    assertEquals(1, ((OBatchOperationsResponse) batchResponse).getUpdated().size());
 
     OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
     OBinaryResponse commitResponse = commit.execute(executor);
@@ -422,7 +454,6 @@ public class OConnectionExecutorTransactionTest {
     assertTrue(commitResponse instanceof OCommit37Response);
 
     assertEquals(1, ((OCommit37Response) commitResponse).getCreated().size());
-    
 
     assertEquals(1, ((OCommit37Response) commitResponse).getUpdated().size());
 

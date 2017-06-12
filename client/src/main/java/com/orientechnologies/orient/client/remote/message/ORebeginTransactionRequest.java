@@ -13,7 +13,7 @@ public class ORebeginTransactionRequest extends OBeginTransactionRequest {
 
   public ORebeginTransactionRequest(int txId, boolean usingLong, Iterable<ORecordOperation> operations,
       Map<String, OTransactionIndexChanges> changes) {
-    super(txId, usingLong, operations, changes);
+    super(txId, true, usingLong, operations, changes);
   }
 
   public ORebeginTransactionRequest() {

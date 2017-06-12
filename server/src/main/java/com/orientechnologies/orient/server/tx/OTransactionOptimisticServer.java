@@ -239,6 +239,17 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     return false;
   }
 
+  @Override
+  public void addRecord(ORecord iRecord, byte iStatus, String iClusterName) {
+    super.addRecord(iRecord, iStatus, iClusterName);
+
+    if (iStatus == ORecordOperation.UPDATED) {
+      updatedRecords.put((ORecordId) iRecord.getIdentity(), iRecord);
+    } else if (iStatus == ORecordOperation.CREATED) {
+      createdRecords.put((ORecordId) iRecord.getIdentity(), iRecord);
+    }
+  }
+
   public void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName, OTransaction oldTx) {
     changed = true;
     checkTransaction();

@@ -1778,7 +1778,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void beginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
-    OBeginTransactionRequest request = new OBeginTransactionRequest(transaction.getId(), transaction.isUsingLog(),
+    OBeginTransactionRequest request = new OBeginTransactionRequest(transaction.getId(), true, transaction.isUsingLog(),
         transaction.getAllRecordEntries(), transaction.getIndexEntries());
     OBinaryResponse response = networkOperation(request, "Error on remote treansaction begin");
 
