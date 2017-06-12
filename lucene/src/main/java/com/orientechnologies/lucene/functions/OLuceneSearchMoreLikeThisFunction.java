@@ -1,13 +1,15 @@
 package com.orientechnologies.lucene.functions;
 
-import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
+import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
@@ -19,7 +21,6 @@ import com.orientechnologies.orient.core.sql.parser.OFromItem;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.mlt.MoreLikeThis;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.IndexSearcher;
@@ -107,9 +108,15 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
 
     List<String> ridsAsString = parseRids(ctx, expression);
 
-    Set<OIdentifiable> others = index.get(new OLuceneKeyAndMetadata(
-        new OLuceneCompositeKey(Arrays.asList("RID:( " + QueryParserBase.escape(String.join(" ", ridsAsString)) + ")")),
-        new ODocument()));
+    List<ORecord> others = ridsAsString.stream()
+        .map(rid -> {
+              ORecordId recordId = new ORecordId();
+
+              recordId.fromString(rid);
+              return recordId;
+            }
+        ).map(id -> id.<ORecord>getRecord())
+        .collect(Collectors.toList());
 
     MoreLikeThis mlt = buildMoreLikeThis(index, searcher, metadata);
 
@@ -117,7 +124,7 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
 
     excludeOtherFromResults(ridsAsString, queryBuilder);
 
-    addLikeQueries(index, others, mlt, queryBuilder);
+    addLikeQueries(others, mlt, queryBuilder);
 
     Query mltQuery = queryBuilder.build();
 
@@ -214,11 +221,11 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
     return mlt;
   }
 
-  private void addLikeQueries(OLuceneFullTextIndex index, Set<OIdentifiable> others, MoreLikeThis mlt, Builder queryBuilder) {
+  private void addLikeQueries(List<ORecord> others, MoreLikeThis mlt, Builder queryBuilder) {
     others.stream()
-        .forEach(oi -> Arrays.stream(mlt.getFieldNames())
+        .map(or -> or.<OElement>load())
+        .forEach(element -> Arrays.stream(mlt.getFieldNames())
             .forEach(fieldName -> {
-              OElement element = oi.getRecord().load();
               String property = element.getProperty(fieldName);
 
               try {
@@ -226,6 +233,7 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
                 if (!fieldQuery.toString().isEmpty())
                   queryBuilder.add(fieldQuery, Occur.SHOULD);
               } catch (IOException e) {
+                //FIXME handle me!
                 e.printStackTrace();
               }
 
@@ -235,9 +243,9 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
   }
 
   private void excludeOtherFromResults(List<String> ridsAsString, Builder queryBuilder) {
-    ridsAsString.stream().forEach(rid -> queryBuilder.add(new TermQuery(new Term("RID", QueryParser.escape(rid))), Occur.MUST_NOT)
-
-    );
+    ridsAsString.stream()
+        .forEach(rid -> queryBuilder.add(new TermQuery(new Term("RID", QueryParser.escape(rid))), Occur.MUST_NOT)
+        );
   }
 
   private OLuceneFullTextIndex searchForIndex(OFromClause target, OCommandContext ctx) {
