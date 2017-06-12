@@ -62,12 +62,6 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
 
     resultSet.close();
 
-    resultSet = db
-        .query("SELECT from Song where SEARCH_More([#25:2], {'minTermFreq':1, 'minDocFreq':1} ) = true OR author ='Hunter' ");
-    System.out.println(resultSet.getExecutionPlan().get().prettyPrint(1, 1));
-    assertThat(resultSet).hasSize(84);
-
-    resultSet.close();
   }
 
   @Test
@@ -77,7 +71,8 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
     db.command("create index Song.multi on Song (title) FULLTEXT ENGINE LUCENE ");
 
     OResultSet resultSet = db
-        .query("SELECT from Song where SEARCH_More([#25:2, #25:3], {'minTermFreq':1, 'minDocFreq':1} ) = true OR author ='Hunter' ");
+        .query(
+            "SELECT from Song where SEARCH_More([#25:2, #25:3], {'minTermFreq':1, 'minDocFreq':1} ) = true OR author ='Hunter' ");
     System.out.println(resultSet.getExecutionPlan().get().prettyPrint(1, 1));
     assertThat(resultSet).hasSize(84);
 
