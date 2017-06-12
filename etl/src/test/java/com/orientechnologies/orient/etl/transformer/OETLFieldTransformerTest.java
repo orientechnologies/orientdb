@@ -62,6 +62,18 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
     assertEquals("Miner", doc.field("surname"));
     assertEquals("Miner", doc.field("test"));
   }
+  @Test
+  public void testToLowerCase() {
+    configure(
+        "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [ {field: {fieldName:'name', expression: '$input.name.toLowerCase()'}}], loader: { test: {} } }");
+    proc.execute();
+    assertEquals(1, getResult().size());
+
+    ODocument doc = getResult().get(0);
+    assertEquals(2, doc.fields());
+    assertEquals("jay", doc.field("name"));
+    assertEquals("Miner", doc.field("surname"));
+  }
 
   @Test
   public void testRemove() {
