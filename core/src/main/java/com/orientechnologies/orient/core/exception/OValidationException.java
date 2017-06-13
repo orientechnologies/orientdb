@@ -19,16 +19,17 @@
  */
 package com.orientechnologies.orient.core.exception;
 
+import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OHighLevelException;
 
 @SuppressWarnings("serial")
 public class OValidationException extends OCoreException implements OHighLevelException {
 
   public OValidationException(OValidationException exception) {
-    super(exception);
+    super(exception, OErrorCode.VALIDATION_ERROR);
   }
 
   public OValidationException(String string) {
-    super(string);
+    super(string, null, OErrorCode.VALIDATION_ERROR);
   }
 }

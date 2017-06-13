@@ -27,6 +27,7 @@ public class ORemoteTransactionMessagesTest {
     request.write(channel, null);
     channel.close();
     OBeginTransactionRequest readRequest = new OBeginTransactionRequest();
+    readRequest.read(channel, 0, null);
     assertFalse(readRequest.isHasContent());
   }
 

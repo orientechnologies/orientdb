@@ -16,9 +16,14 @@ public abstract class OCoreException extends OException {
   private final String componentName;
 
   public OCoreException(final OCoreException exception) {
+    this(exception, null);
+  }
+
+  public OCoreException(final OCoreException exception, OErrorCode errorCode) {
     super(exception);
     this.dbName = exception.dbName;
     this.componentName = exception.componentName;
+    this.errorCode = errorCode;
   }
 
   public OCoreException(final String message) {

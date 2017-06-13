@@ -26,9 +26,9 @@ import com.orientechnologies.orient.core.id.ORID;
 /**
  * Exception thrown when a create operation get a non expected RID. This could happen with distributed inserts. The client should
  * retry to re-execute the operation.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
+ *
  */
 public class OConcurrentCreateException extends ONeedRetryException implements OHighLevelException {
 
@@ -38,7 +38,7 @@ public class OConcurrentCreateException extends ONeedRetryException implements O
   private ORID              actualRid;
 
   public OConcurrentCreateException(OConcurrentCreateException exception) {
-    super(exception);
+    super(exception,null);
 
     this.expectedRid = exception.expectedRid;
     this.actualRid = exception.actualRid;

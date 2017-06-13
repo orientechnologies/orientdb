@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -29,6 +30,7 @@ import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
+import com.orientechnologies.orient.client.remote.message.OError37Response;
 import com.orientechnologies.orient.client.remote.message.OErrorResponse;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -38,6 +40,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -273,7 +276,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           } finally {
             afterOperationRequest(connection);
           }
-        } else{
+        } else {
           try {
             if (response != null) {
               beginResponse();
@@ -578,8 +581,20 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       } else {
         result = new byte[] {};
       }
-
-      OBinaryResponse error = new OErrorResponse(messages, result);
+      OBinaryResponse error;
+      if (handshakeInfo != null) {
+        OErrorCode code;
+        if (current instanceof OCoreException) {
+          code = ((OCoreException) current).getErrorCode();
+          if (code == null)
+            code = OErrorCode.GENERIC_ERROR;
+        } else {
+          code = OErrorCode.GENERIC_ERROR;
+        }
+        error = new OError37Response(code, 0, messages, result);
+      } else {
+        error = new OErrorResponse(messages, result);
+      }
       int protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
       ORecordSerializer serializationImpl = ORecordSerializerNetworkFactory.INSTANCE.current();
       if (connection != null) {

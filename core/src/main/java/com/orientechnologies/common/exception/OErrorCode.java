@@ -3,6 +3,7 @@ package com.orientechnologies.common.exception;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.exception.OBackupInProgressException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -10,25 +11,37 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * Enumeration with the error managed by OrientDB. This class has been introduced in v.2.2 and little by little will contain all the
  * OrientDB managed errors.
- * 
+ *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 @OApi(maturity = OApi.MATURITY.NEW)
 public enum OErrorCode {
 
   // eg.
-  QUERY_PARSE_ERROR(OErrorCategory.SQL_PARSING, 1, "query parse error", OQueryParsingException.class), BACKUP_IN_PROGRESS(
-      OErrorCategory.STORAGE, 2, "You are trying to start a backup, but it is already in progress",
-      OBackupInProgressException.class);
+  QUERY_PARSE_ERROR(OErrorCategory.SQL_PARSING, 1, "query parse error", OQueryParsingException.class),
+
+  BACKUP_IN_PROGRESS(OErrorCategory.STORAGE, 2, "You are trying to start a backup, but it is already in progress",
+      OBackupInProgressException.class),
+
+  MVCC_ERROR(OErrorCategory.CONCURRENCY_RETRY, 3, "The version of the update is outdated compared to the persistent value, retry",
+      OConcurrentModificationException.class),
+
+  VALIDATION_ERROR(OErrorCategory.VALIDATION, 4, "Record validation failure", OException.class),
+
+  GENERIC_ERROR(OErrorCategory.SQL_GENERIC, 5, "Generic Error", OException.class);
+
+  private static OErrorCode codes[] = new OErrorCode[6];
+
+  static {
+    for (OErrorCode code : OErrorCode.values()) {
+      codes[code.getCode()] = code;
+    }
+  }
 
   protected final OErrorCategory              category;
   protected final int                         code;
   protected final String                      description;
   protected final Class<? extends OException> exceptionClass;
-
-  OErrorCode(OErrorCategory category, int code, String description) {
-    this(category, code, description, OException.class);
-  }
 
   OErrorCode(OErrorCategory category, int code, String description, Class<? extends OException> exceptionClass) {
     this.category = category;
@@ -59,23 +72,26 @@ public enum OErrorCode {
       OException exc = OException.wrapException(exceptionClass.getConstructor(String.class).newInstance(message), parent);
       throw exc;
     } catch (InstantiationException e) {
-      OLogManager.instance().warn(this, "Cannot instantiate exception "+exceptionClass);
+      OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass);
       e.printStackTrace();
       parent.printStackTrace();
     } catch (IllegalAccessException e) {
-      OLogManager.instance().warn(this, "Cannot instantiate exception "+exceptionClass);
+      OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass);
       e.printStackTrace();
       parent.printStackTrace();
     } catch (NoSuchMethodException e) {
-      OLogManager.instance().warn(this, "Cannot instantiate exception "+exceptionClass);
+      OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass);
       e.printStackTrace();
       parent.printStackTrace();
     } catch (InvocationTargetException e) {
-      OLogManager.instance().warn(this, "Cannot instantiate exception "+exceptionClass);
+      OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass);
       e.printStackTrace();
       parent.printStackTrace();
     }
+  }
 
+  public static  OErrorCode getErrorCode(int code) {
+    return codes[code];
   }
 
 }

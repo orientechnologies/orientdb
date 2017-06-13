@@ -19,20 +19,28 @@
  */
 package com.orientechnologies.common.concur;
 
+import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.orient.core.exception.OCoreException;
 
 /**
  * Abstract base exception to extend for all the exception that report to the user it has been thrown but re-executing it could
  * succeed.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public abstract class ONeedRetryException extends OCoreException {
   private static final long serialVersionUID = 1L;
 
   protected ONeedRetryException(final ONeedRetryException exception) {
-    super(exception);
+    super(exception, null);
+  }
+
+  protected ONeedRetryException(final ONeedRetryException exception, OErrorCode errorCode) {
+    super(exception, errorCode);
+  }
+
+  protected ONeedRetryException(final String message, OErrorCode errorCode) {
+    super(message, null, errorCode);
   }
 
   protected ONeedRetryException(final String message) {

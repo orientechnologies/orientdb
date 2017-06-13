@@ -39,6 +39,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemoteNodeSession;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.client.remote.message.OError37Response;
 import com.orientechnologies.orient.client.remote.message.OErrorResponse;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -271,9 +272,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       return iClientTxId;
     } else if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
 
-      OErrorResponse response = new OErrorResponse();
+      OError37Response response = new OError37Response();
       response.read(this, null);
-      byte[] serializedException = response.getResult();
+      byte[] serializedException = response.getVerbose();
       Exception previous = null;
       if (serializedException != null && serializedException.length > 0)
         throwSerializedException(serializedException);

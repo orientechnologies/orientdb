@@ -8,6 +8,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -16,22 +17,63 @@ import java.util.Map;
 public class OError37Response implements OBinaryResponse {
 
   private OErrorCode          code;
+  private int                 errorIdentifier;
   private Map<String, String> messages;
   private byte[]              verbose;
 
-  public OError37Response(OErrorCode code, Map<String, String> messages, byte[] verbose) {
+  public OError37Response(OErrorCode code, int errorIdentifier, Map<String, String> messages, byte[] verbose) {
     this.code = code;
+    this.errorIdentifier = errorIdentifier;
     this.messages = messages;
     this.verbose = verbose;
   }
 
-  @Override
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-
+  public OError37Response() {
   }
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
+    int code = network.readInt();
+    this.code = OErrorCode.getErrorCode(code);
+    this.errorIdentifier = network.readInt();
+    messages = new HashMap<>();
+    while (network.readByte() == 1) {
+      String key = network.readString();
+      String value = network.readString();
+      messages.put(key, value);
+    }
+    verbose = network.readBytes();
+  }
 
+  @Override
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+    channel.writeInt(code.getCode());
+    channel.writeInt(errorIdentifier);
+    for (Map.Entry<String, String> entry : messages.entrySet()) {
+      // MORE DETAILS ARE COMING AS EXCEPTION
+      channel.writeByte((byte) 1);
+
+      channel.writeString(entry.getKey());
+      channel.writeString(entry.getValue());
+    }
+    channel.writeByte((byte) 0);
+
+    channel.writeBytes(verbose);
+  }
+
+  public int getErrorIdentifier() {
+    return errorIdentifier;
+  }
+
+  public OErrorCode getCode() {
+    return code;
+  }
+
+  public Map<String, String> getMessages() {
+    return messages;
+  }
+
+  public byte[] getVerbose() {
+    return verbose;
   }
 }

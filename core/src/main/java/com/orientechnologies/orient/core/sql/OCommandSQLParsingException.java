@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 
@@ -32,7 +33,8 @@ public class OCommandSQLParsingException extends OCoreException {
   private static final long serialVersionUID = -7430575036316163711L;
 
   public OCommandSQLParsingException(ParseException e, String statement) {
-    super(generateMessage(e, statement, e.currentToken.next.beginLine, e.currentToken.next.endColumn));
+    super(generateMessage(e, statement, e.currentToken.next.beginLine, e.currentToken.next.endColumn), null,
+        OErrorCode.QUERY_PARSE_ERROR);
     this.statement = statement;
     this.line = e.currentToken.next.beginLine;
     this.column = e.currentToken.next.endColumn;
