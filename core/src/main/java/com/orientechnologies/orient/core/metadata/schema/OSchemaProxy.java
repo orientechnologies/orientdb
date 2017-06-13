@@ -108,13 +108,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
 
     return delegate.createClass(className, clusterIds, superClasses);
   }
-
-  @Override
-  public OClass createAbstractClass(final Class<?> iClass) {
-
-    return delegate.createAbstractClass(iClass);
-  }
-
+  
   @Override
   public OClass createAbstractClass(final String iClassName) {
 

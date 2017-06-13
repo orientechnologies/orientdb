@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.ClassIndexManagerRemote;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OToken;
@@ -49,6 +50,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 /**
  * Created by tglman on 30/06/16.
@@ -133,7 +135,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   public void internalOpen(String user, String password, OrientDBConfig config) {
     this.config = config;
-    boolean failure = true;
     applyAttributes(config);
     applyListeners(config);
     try {
@@ -149,7 +150,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       // WAKE UP LISTENERS
       callOnOpenListeners();
 
-      failure = false;
     } catch (OException e) {
       close();
       throw e;
@@ -180,6 +180,20 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
     initialized = true;
   }
+
+  protected void loadMetadata() {
+    metadata = new OMetadataDefault(this);
+    sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+      @Override
+      public OSharedContext call() throws Exception {
+        OSharedContext shared = new OSharedContextRemote(getStorage());
+        return shared;
+      }
+    });
+    metadata.init(sharedContext);
+    sharedContext.load(this);
+  }
+
 
   protected void installHooksRemote() {
     hooks.clear();

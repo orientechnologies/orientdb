@@ -8,4 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
  */
 public interface OSchemaObject extends OSchema {
   OClass createClass(Class<?> iClass);
+
+  OClass createAbstractClass(Class<?> iClass);
+
 }

@@ -22,40 +22,19 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 /**
  * Created by tglman on 15/06/16.
  */
-public class OSharedContext implements OCloseable {
+public abstract class  OSharedContext implements OCloseable {
   protected static final OProfiler PROFILER = Orient.instance().getProfiler();
-  private OSchemaShared                schema;
-  private OSecurity                    security;
-  private OIndexManagerAbstract        indexManager;
-  private OFunctionLibraryImpl         functionLibrary;
-  private OSchedulerImpl               scheduler;
-  private OSequenceLibraryImpl         sequenceLibrary;
-  private OLiveQueryHook.OLiveQueryOps liveQueryOps;
-  private OCommandCache                commandCache;
-  private OStatementCache              statementCache;
-  private OQueryStats                  queryStats;
-
-  private volatile boolean loaded = false;
-
-  public OSharedContext(OStorage storage) {
-    schema = new OSchemaShared(storage.getComponentsFactory().classesAreDetectedByClusterId());
-
-    security = OSecurityManager.instance().newSecurity();
-
-    if (storage instanceof OStorageProxy)
-      indexManager = new OIndexManagerRemote();
-    else
-      indexManager = new OIndexManagerShared();
-
-    functionLibrary = new OFunctionLibraryImpl();
-    scheduler = new OSchedulerImpl();
-    sequenceLibrary = new OSequenceLibraryImpl();
-    liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
-    commandCache = new OCommandCacheSoftRefs(storage);
-    statementCache = new OStatementCache(
-        storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
-    queryStats = new OQueryStats();
-  }
+  protected OSchemaShared                schema;
+  protected OSecurity                    security;
+  protected OIndexManagerAbstract        indexManager;
+  protected OFunctionLibraryImpl         functionLibrary;
+  protected OSchedulerImpl               scheduler;
+  protected OSequenceLibraryImpl         sequenceLibrary;
+  protected OLiveQueryHook.OLiveQueryOps liveQueryOps;
+  protected OCommandCache                commandCache;
+  protected OStatementCache              statementCache;
+  protected OQueryStats                  queryStats;
+  protected volatile boolean loaded = false;
 
   public synchronized void load(ODatabaseDocumentInternal database) {
     final long timer = PROFILER.startChrono();

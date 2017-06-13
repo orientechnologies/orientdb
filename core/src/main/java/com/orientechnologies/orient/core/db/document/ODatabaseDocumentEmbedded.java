@@ -186,7 +186,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
       @Override
       public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContext(getStorage());
+        OSharedContext shared = new OSharedContextEmbedded(getStorage());
         return shared;
       }
     });
@@ -207,6 +207,20 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       } catch (Throwable ignore) {
       }
 
+  }
+
+  @Override
+  protected void loadMetadata() {
+    metadata = new OMetadataDefault(this);
+    sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+      @Override
+      public OSharedContext call() throws Exception {
+        OSharedContext shared = new OSharedContextEmbedded(getStorage());
+        return shared;
+      }
+    });
+    metadata.init(sharedContext);
+    sharedContext.load(this);
   }
 
   private void applyAttributes(OrientDBConfig config) {

@@ -161,18 +161,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return (DB) this;
   }
 
-  protected void loadMetadata() {
-    metadata = new OMetadataDefault(this);
-    sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContext(getStorage());
-        return shared;
-      }
-    });
-    metadata.init(sharedContext);
-    sharedContext.load(this);
-  }
+  protected abstract void loadMetadata() ;
 
   public void callOnCloseListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
