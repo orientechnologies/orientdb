@@ -467,4 +467,50 @@ public class OConnectionExecutorTransactionTest {
 
     assertEquals("update", results.get(0).getProperty("name"));
   }
+
+
+  @Test
+  public void testBeginSQLInsertCommitTransaction() {
+
+
+    OConnectionBinaryExecutor executor = new OConnectionBinaryExecutor(connection, server);
+
+    List<ORecordOperation> operations = new ArrayList<>();
+
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, false, true, operations, new HashMap<>());
+    OBinaryResponse response = request.execute(executor);
+
+    assertTrue(database.getTransaction().isActive());
+    assertTrue(response instanceof OBeginTransactionResponse);
+
+
+    List<OResult> results = database.command("insert into test set name = 'update'").stream().collect(Collectors.toList());
+
+    assertEquals(1, results.size());
+
+    assertEquals("update", results.get(0).getProperty("name"));
+
+    assertTrue(results.get(0).getElement().get().getIdentity().isTemporary());
+
+    OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
+    OBinaryResponse commitResponse = commit.execute(executor);
+    assertFalse(database.getTransaction().isActive());
+    assertTrue(commitResponse instanceof OCommit37Response);
+
+    assertEquals(1, ((OCommit37Response) commitResponse).getCreated().size());
+
+    assertTrue(((OCommit37Response) commitResponse).getCreated().get(0).getCurrentRid().isTemporary());
+
+    assertEquals(1, database.countClass("test"));
+
+    OResultSet query = database.query("select from test where name = 'update'");
+
+    results = query.stream().collect(Collectors.toList());
+
+    assertEquals(1, results.size());
+
+    assertEquals("update", results.get(0).getProperty("name"));
+
+
+  }
 }

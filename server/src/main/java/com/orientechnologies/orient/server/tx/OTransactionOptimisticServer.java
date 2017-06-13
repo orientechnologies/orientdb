@@ -2,14 +2,16 @@ package com.orientechnologies.orient.server.tx;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.client.remote.ORemotePushHandler;
 import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -246,7 +248,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     if (iStatus == ORecordOperation.UPDATED) {
       updatedRecords.put((ORecordId) iRecord.getIdentity(), iRecord);
     } else if (iStatus == ORecordOperation.CREATED) {
-      createdRecords.put((ORecordId) iRecord.getIdentity(), iRecord);
+      createdRecords.put((ORecordId) iRecord.getIdentity().copy(), iRecord);
     }
   }
 
