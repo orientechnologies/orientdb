@@ -698,7 +698,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     if (storedProperties != null)
       for (OIdentifiable id : storedProperties) {
         ODocument p = id.getRecord();
-        prop = new OPropertyImpl(this, p);
+        prop = createPropertyInstance(p);
         prop.fromStream();
 
         if (properties.containsKey(prop.getName())) {
@@ -714,6 +714,8 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     customFields = document.field("customFields", OType.EMBEDDEDMAP);
     clusterSelection = owner.getClusterSelectionFactory().getStrategy((String) document.field("clusterSelection"));
   }
+
+  protected abstract OPropertyImpl createPropertyInstance(ODocument p);
 
   @Override
   public ODocument toStream() {

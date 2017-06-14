@@ -256,4 +256,8 @@ public class OClassRemote extends OClassImpl {
     return this;
   }
 
+  protected OPropertyImpl createPropertyInstance(ODocument p) {
+    return new OPropertyRemote(this, p);
+  }
+
 }

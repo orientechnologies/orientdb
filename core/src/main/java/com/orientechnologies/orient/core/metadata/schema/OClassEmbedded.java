@@ -367,6 +367,11 @@ public class OClassEmbedded extends OClassImpl {
     return this;
   }
 
+  protected OPropertyImpl createPropertyInstance(ODocument p) {
+    return new OPropertyEmbedded(this, p);
+  }
+
+
   public OPropertyImpl addPropertyInternal(final String name, final OType type, final OType linkedType, final OClass linkedClass,
       final boolean unsafe) {
     if (name == null || name.length() == 0)
@@ -393,7 +398,7 @@ public class OClassEmbedded extends OClassImpl {
 
       OGlobalProperty global = owner.findOrCreateGlobalProperty(name, type);
 
-      prop = new OPropertyImpl(this, global);
+      prop = new OPropertyEmbedded(this, global);
 
       properties.put(name, prop);
 
