@@ -160,7 +160,7 @@ public class ORuntimeResult {
             }
 
             iValue.field(prjName, iteratorValues, link ? OType.LINKLIST : OType.EMBEDDEDLIST);
-          } else if (projectionValue instanceof ODocument && !((ODocument) projectionValue).getIdentity().isPersistent()) {
+          } else if (projectionValue instanceof ODocument && ((ODocument) projectionValue).getIdentity().getClusterId() < 0) {
             iValue.field(prjName, projectionValue, OType.EMBEDDED);
           } else if (projectionValue instanceof Set<?>) {
             OType type = OType.getTypeByValue(projectionValue);
