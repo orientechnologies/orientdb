@@ -37,11 +37,11 @@ public class OBatchOperationsResponse implements OBinaryResponse {
 
   private int txId;
 
-  private List<OCommitResponse.OCreatedRecordResponse> created;
-  private List<OCommitResponse.OUpdatedRecordResponse> updated;
+  private List<OCommit37Response.OCreatedRecordResponse> created;
+  private List<OCommit37Response.OUpdatedRecordResponse> updated;
 
-  public OBatchOperationsResponse(int txId, List<OCommitResponse.OCreatedRecordResponse> created,
-      List<OCommitResponse.OUpdatedRecordResponse> updated) {
+  public OBatchOperationsResponse(int txId, List<OCommit37Response.OCreatedRecordResponse> created,
+      List<OCommit37Response.OUpdatedRecordResponse> updated) {
     this.txId = txId;
     this.created = created;
     this.updated = updated;
@@ -55,13 +55,14 @@ public class OBatchOperationsResponse implements OBinaryResponse {
     channel.writeInt(txId);
 
     channel.writeInt(created.size());
-    for (OCommitResponse.OCreatedRecordResponse createdRecord : created) {
+    for (OCommit37Response.OCreatedRecordResponse createdRecord : created) {
       channel.writeRID(createdRecord.getCurrentRid());
       channel.writeRID(createdRecord.getCreatedRid());
+      channel.writeVersion(createdRecord.getVersion());
     }
 
     channel.writeInt(updated.size());
-    for (OCommitResponse.OUpdatedRecordResponse updatedRecord : updated) {
+    for (OCommit37Response.OUpdatedRecordResponse updatedRecord : updated) {
       channel.writeRID(updatedRecord.getRid());
       channel.writeVersion(updatedRecord.getVersion());
     }
@@ -78,8 +79,8 @@ public class OBatchOperationsResponse implements OBinaryResponse {
     for (int i = 0; i < createdRecords; i++) {
       currentRid = network.readRID();
       createdRid = network.readRID();
-
-      created.add(new OCommitResponse.OCreatedRecordResponse(currentRid, createdRid));
+      int version = network.readVersion();
+      created.add(new OCommit37Response.OCreatedRecordResponse(currentRid, createdRid,version));
     }
     final int updatedRecords = network.readInt();
     updated = new ArrayList<>(updatedRecords);
@@ -87,7 +88,7 @@ public class OBatchOperationsResponse implements OBinaryResponse {
     for (int i = 0; i < updatedRecords; ++i) {
       rid = network.readRID();
       int version = network.readVersion();
-      updated.add(new OCommitResponse.OUpdatedRecordResponse(rid, version));
+      updated.add(new OCommit37Response.OUpdatedRecordResponse(rid, version));
     }
   }
 
@@ -95,11 +96,11 @@ public class OBatchOperationsResponse implements OBinaryResponse {
     return txId;
   }
 
-  public List<OCommitResponse.OCreatedRecordResponse> getCreated() {
+  public List<OCommit37Response.OCreatedRecordResponse> getCreated() {
     return created;
   }
 
-  public List<OCommitResponse.OUpdatedRecordResponse> getUpdated() {
+  public List<OCommit37Response.OUpdatedRecordResponse> getUpdated() {
     return updated;
   }
 }

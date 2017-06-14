@@ -584,8 +584,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     List<ORecordOperationRequest> operations = request.getOperations();
 
-    List<OCreatedRecordResponse> createdRecords = new ArrayList<>();
-    List<OUpdatedRecordResponse> updatedRecords = new ArrayList<>();
+    List<OCommit37Response.OCreatedRecordResponse> createdRecords = new ArrayList<>();
+    List<OCommit37Response.OUpdatedRecordResponse> updatedRecords = new ArrayList<>();
 
     for (ORecordOperationRequest operation : operations) {
 
@@ -601,7 +601,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         if (transaction.isActive()) {
           ((OTransactionOptimisticServer) transaction).getCreatedRecords().put((ORecordId) record.getIdentity(), record);
         }
-        createdRecords.add(new OCreatedRecordResponse(current, createRecordResponse.getIdentity()));
+        createdRecords.add(new OCommit37Response.OCreatedRecordResponse(current, createRecordResponse.getIdentity(),createRecordResponse.getVersion()));
         break;
       case ORecordOperation.UPDATED:
         record = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType());
@@ -613,7 +613,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         if (transaction.isActive()) {
           ((OTransactionOptimisticServer) transaction).getUpdatedRecords().put((ORecordId) record.getIdentity(), record);
         }
-        updatedRecords.add(new OUpdatedRecordResponse(current, updateRecordResponse.getVersion()));
+        updatedRecords.add(new OCommit37Response.OUpdatedRecordResponse(current, updateRecordResponse.getVersion()));
         break;
 
       case ORecordOperation.DELETED:
