@@ -32,7 +32,7 @@ import java.sql.SQLException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-public class OrientJdbcBlobTest extends OrientJdbcBaseTest {
+public class OrientJdbcBlobTest extends OrientJdbcDbPerClassTemplateTest {
   private static final String TEST_WORKING_DIR = "./target/working/";
 
   @Test

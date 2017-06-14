@@ -26,7 +26,7 @@ import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class OrientJdbcDriverTest extends OrientJdbcBaseTest {
+public class OrientJdbcDriverTest {
 
   @Test
   public void shouldAcceptsWellFormattedURLOnly() throws ClassNotFoundException, SQLException {

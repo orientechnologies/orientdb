@@ -32,7 +32,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
-public class OrientDataSourceTest extends OrientJdbcBaseTest {
+public class OrientDataSourceTest extends OrientJdbcDbPerClassTemplateTest {
 
   @Test
   public void shouldConnect() throws SQLException {

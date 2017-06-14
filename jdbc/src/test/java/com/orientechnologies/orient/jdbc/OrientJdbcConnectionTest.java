@@ -27,7 +27,7 @@ import java.util.Properties;
 import static java.sql.ResultSet.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class OrientJdbcConnectionTest extends OrientJdbcBaseTest {
+public class OrientJdbcConnectionTest extends OrientJdbcDbPerClassTemplateTest {
 
   @Test
   public void shouldCreateStatement() throws Exception {

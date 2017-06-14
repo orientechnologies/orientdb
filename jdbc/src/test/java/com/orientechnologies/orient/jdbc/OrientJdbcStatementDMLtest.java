@@ -30,7 +30,7 @@ import java.sql.Statement;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
+public class OrientJdbcStatementDMLtest extends OrientJdbcDbPerMethodTemplateTest {
 
   @Test
   public void shouldInsertANewItem() throws Exception {
