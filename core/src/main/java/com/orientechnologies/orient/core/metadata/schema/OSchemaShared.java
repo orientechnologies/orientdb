@@ -499,7 +499,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       Collection<ODocument> storedClasses = document.field("classes");
       for (ODocument c : storedClasses) {
 
-        cls = new OClassImpl(this, c, (String) c.field("name"));
+        cls = createClassInstance(c);
         cls.fromStream();
 
         if (classes.containsKey(cls.getName().toLowerCase(Locale.ENGLISH))) {
@@ -567,6 +567,8 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       rwSpinLock.releaseWriteLock();
     }
   }
+
+  protected abstract OClassImpl createClassInstance(ODocument c);
 
   /**
    * Binds POJO to ODocument.

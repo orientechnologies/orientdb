@@ -75,13 +75,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
   private volatile int        hashCode;
 
-  @Deprecated
-  OPropertyImpl(final OClassImpl owner, final String name, final OType type) {
-    this(owner);
-    // this.name = name;
-    // this.type = type;
-  }
-
   OPropertyImpl(final OClassImpl owner) {
     document = new ODocument().setTrackingChanges(false);
     this.owner = owner;

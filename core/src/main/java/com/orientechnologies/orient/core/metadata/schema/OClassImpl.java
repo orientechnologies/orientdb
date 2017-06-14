@@ -67,15 +67,15 @@ import java.util.concurrent.Callable;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
+public abstract class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private static final long serialVersionUID        = 1L;
   private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
   final OSchemaShared owner;
-  private final Map<String, OProperty> properties       = new HashMap<String, OProperty>();
-  private       int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
-  private String name;
-  private String description;
-  private int[]  clusterIds;
+  protected final Map<String, OProperty> properties       = new HashMap<String, OProperty>();
+  private         int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
+  protected String name;
+  private   String description;
+  private   int[]  clusterIds;
   private List<OClassImpl> superClasses = new ArrayList<OClassImpl>();
   private int[]        polymorphicClusterIds;
   private List<OClass> subclasses;
@@ -143,8 +143,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         // This will exclude (filter out) any specific classes without explicit read permission.
         // getMetadata().getImmutableSchemaSnapshot()?
         final OClass clazz = db.getMetadata().getSchema().getClassByClusterId(clusterId);
-        
-        if(clazz != null)
+
+        if (clazz != null)
           db.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, clazz.getName());
         //////////
 
@@ -186,34 +186,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   @Override
-  public OClass setClusterSelection(final String value) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` clusterselection '%s'", name, value);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        final String cmd = String.format("alter class `%s` clusterselection '%s'", name, value);
-        OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-        database.command(commandSQL).execute();
-
-        setClusterSelectionInternal(value);
-      } else
-        setClusterSelectionInternal(value);
-
-      return this;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  @Override
   public <RET extends ODocumentWrapper> RET reload() {
     return (RET) owner.reload();
   }
@@ -230,34 +202,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  public OClassImpl setCustom(final String name, final String value) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` custom %s=%s", getName(), name, value);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        final String cmd = String.format("alter class `%s` custom %s=%s", getName(), name, value);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setCustomInternal(name, value);
-      } else
-        setCustomInternal(name, value);
-
-      return this;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
   public Map<String, String> getCustomInternal() {
     acquireSchemaReadLock();
     try {
@@ -271,32 +215,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public void removeCustom(final String name) {
     setCustom(name, null);
-  }
-
-  public void clearCustom() {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` custom clear", getName());
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        final String cmd = String.format("alter class `%s` custom clear", getName());
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-        database.command(commandSQL).execute();
-
-        clearCustomInternal();
-      } else
-        clearCustomInternal();
-
-    } finally {
-      releaseSchemaWriteLock();
-    }
   }
 
   public Set<String> getCustomKeys() {
@@ -393,47 +311,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return setSuperClasses(classes);
   }
 
-  @Override
-  public OClass setSuperClasses(final List<? extends OClass> classes) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-    if (classes != null) {
-      List<OClass> toCheck = new ArrayList<OClass>(classes);
-      toCheck.add(this);
-      checkParametersConflict(toCheck);
-    }
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      final StringBuilder sb = new StringBuilder();
-      if (classes != null && classes.size() > 0) {
-        for (OClass superClass : classes) {
-          sb.append('`').append(superClass.getName()).append("`,");
-        }
-        sb.deleteCharAt(sb.length() - 1);
-      } else
-        sb.append("null");
-
-      final String cmd = String.format("alter class `%s` superclasses %s", name, sb);
-      if (storage instanceof OStorageProxy) {
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setSuperClassesInternal(classes);
-      } else
-        setSuperClassesInternal(classes);
-
-    } finally {
-      releaseSchemaWriteLock();
-    }
-    return this;
-  }
-
   void setSuperClassesInternal(final List<? extends OClass> classes) {
     acquireSchemaWriteLock();
     try {
@@ -470,37 +347,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  @Override
-  public OClass addSuperClass(final OClass superClass) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-    checkParametersConflict(superClass);
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String
-            .format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        final String cmd = String
-            .format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        addSuperClassInternal(superClass);
-      } else
-        addSuperClassInternal(superClass);
-
-    } finally {
-      releaseSchemaWriteLock();
-    }
-    return this;
-  }
-
   void addSuperClassInternal(final OClass superClass) {
     acquireSchemaWriteLock();
     try {
@@ -531,36 +377,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  @Override
-  public OClass removeSuperClass(OClass superClass) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String
-            .format("alter class `%s` superclass -`%s`", name, superClass != null ? superClass.getName() : null);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        final String cmd = String
-            .format("alter class `%s` superclass -`%s`", name, superClass != null ? superClass.getName() : null);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        removeSuperClassInternal(superClass);
-      } else
-        removeSuperClassInternal(superClass);
-
-    } finally {
-      releaseSchemaWriteLock();
-    }
-    return this;
-  }
-
   void removeSuperClassInternal(final OClass superClass) {
     acquireSchemaWriteLock();
     try {
@@ -580,46 +396,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     } finally {
       releaseSchemaWriteLock();
     }
-  }
-
-  public OClass setName(final String name) {
-    if (getName().equals(name))
-      return this;
-
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-    final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
-    OClass oClass = getDatabase().getMetadata().getSchema().getClass(name);
-    if (oClass != null) {
-      String error = String.format("Cannot rename class %s to %s. A Class with name %s exists", this.name, name, name);
-      throw new OSchemaException(error);
-    }
-    if (wrongCharacter != null)
-      throw new OSchemaException(
-          "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '" + name + "'");
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` name `%s`", this.name, name);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        final String cmd = String.format("alter class `%s` name `%s`", this.name, name);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setNameInternal(name);
-      } else
-        setNameInternal(name);
-
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-    return this;
   }
 
   public long getSize() {
@@ -642,40 +418,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     } finally {
       releaseSchemaReadLock();
     }
-  }
-
-  public OClass setShortName(String shortName) {
-    if (shortName != null) {
-      shortName = shortName.trim();
-      if (shortName.isEmpty())
-        shortName = null;
-    }
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` shortname `%s`", name, shortName);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-
-        final String cmd = String.format("alter class `%s` shortname `%s`", name, shortName);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setShortNameInternal(shortName);
-      } else
-        setShortNameInternal(shortName);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-    return this;
   }
 
   public String getDescription() {
@@ -702,7 +444,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         final String cmd = String.format("alter class `%s` description ?", name);
-        database.command(cmd,iDescription);
+        database.command(cmd, iDescription);
       } else if (isDistributedCommand()) {
 
         final String cmd = String.format("alter class `%s` description ?", name);
@@ -882,7 +624,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
             return null;
           }
         });
-        
+
         final OCommandSQL commandSQL = new OCommandSQL("drop property " + name + '.' + propertyName);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
@@ -1517,7 +1259,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public long count(final boolean isPolymorphic) {
     acquireSchemaReadLock();
     try {
-      return getDatabase().countClass(getName(),isPolymorphic);
+      return getDatabase().countClass(getName(), isPolymorphic);
     } finally {
       releaseSchemaReadLock();
     }
@@ -1565,7 +1307,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Check if the current instance extends specified schema class.
    *
    * @param iClassName of class that should be checked
+   *
    * @return Returns true if the current instance extends the passed schema class (iClass)
+   *
    * @see #isSuperClassOf(OClass)
    */
   public boolean isSubClassOf(final String iClassName) {
@@ -1590,7 +1334,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Check if the current instance extends specified schema class.
    *
    * @param clazz to check
+   *
    * @return true if the current instance extends the passed schema class (iClass)
+   *
    * @see #isSuperClassOf(OClass)
    */
   public boolean isSubClassOf(final OClass clazz) {
@@ -1614,7 +1360,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Returns true if the passed schema class (iClass) extends the current instance.
    *
    * @param clazz to check
+   *
    * @return Returns true if the passed schema class extends the current instance
+   *
    * @see #isSubClassOf(OClass)
    */
   public boolean isSuperClassOf(final OClass clazz) {
@@ -1748,32 +1496,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return false;
   }
 
-  public OClassImpl setEncryption(final String iValue) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` encryption %s", name, iValue);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-
-        final String cmd = String.format("alter class `%s` encryption %s", name, iValue);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-        setEncryptionInternal(iValue);
-      } else
-        setEncryptionInternal(iValue);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-    return this;
-  }
+  public abstract OClassImpl setEncryption(final String iValue);
 
   protected void setEncryptionInternal(final String iValue) {
     for (int cl : getClusterIds()) {
@@ -1784,50 +1507,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         } catch (IOException e) {
         }
     }
-  }
-
-  public OPropertyImpl addPropertyInternal(final String name, final OType type, final OType linkedType, final OClass linkedClass,
-      final boolean unsafe) {
-    if (name == null || name.length() == 0)
-      throw new OSchemaException("Found property name null");
-
-    if (!unsafe)
-      checkPersistentPropertyType(getDatabase(), name, type);
-
-    final OPropertyImpl prop;
-
-    // This check are doubled because used by sql commands
-    if (linkedType != null)
-      OPropertyImpl.checkLinkTypeSupport(type);
-
-    if (linkedClass != null)
-      OPropertyImpl.checkSupportLinkedClass(type);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      if (properties.containsKey(name))
-        throw new OSchemaException("Class '" + this.name + "' already has property '" + name + "'");
-
-      OGlobalProperty global = owner.findOrCreateGlobalProperty(name, type);
-
-      prop = new OPropertyImpl(this, global);
-
-      properties.put(name, prop);
-
-      if (linkedType != null)
-        prop.setLinkedTypeInternal(linkedType);
-      else if (linkedClass != null)
-        prop.setLinkedClassInternal(linkedClass);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-    if (prop != null && !unsafe)
-      fireDatabaseMigration(getDatabase(), name, type);
-
-    return prop;
   }
 
   public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
@@ -2193,7 +1872,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private void setCustomInternal(final String name, final String value) {
+  protected void setCustomInternal(final String name, final String value) {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -2209,7 +1888,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private void clearCustomInternal() {
+  protected void clearCustomInternal() {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -2220,7 +1899,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private void setNameInternal(final String name) {
+  protected void setNameInternal(final String name) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     acquireSchemaWriteLock();
     try {
@@ -2295,7 +1974,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     database.command("alter cluster `" + oldName + "` NAME \"" + newName + "\"");
   }
 
-  private void setShortNameInternal(final String iShortName) {
+  protected void setShortNameInternal(final String iShortName) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
@@ -2492,102 +2171,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private OProperty addProperty(final String propertyName, final OType type, final OType linkedType, final OClass linkedClass,
-      final boolean unsafe) {
-    if (type == null)
-      throw new OSchemaException("Property type not defined.");
+  protected abstract OProperty addProperty(final String propertyName, final OType type, final OType linkedType,
+      final OClass linkedClass, final boolean unsafe);
 
-    if (propertyName == null || propertyName.length() == 0)
-      throw new OSchemaException("Property name is null or empty");
-
-    if (getDatabase().getStorage().getConfiguration().isStrictSql()) {
-      validatePropertyName(propertyName);
-    }
-    if (getDatabase().getTransaction().isActive())
-      throw new OSchemaException("Cannot create property '" + propertyName + "' inside a transaction");
-
-    final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    if (linkedType != null)
-      OPropertyImpl.checkLinkTypeSupport(type);
-
-    if (linkedClass != null)
-      OPropertyImpl.checkSupportLinkedClass(type);
-
-    acquireSchemaWriteLock();
-    try {
-      final StringBuilder cmd = new StringBuilder("create property ");
-      // CLASS.PROPERTY NAME
-      if (getDatabase().getStorage().getConfiguration().isStrictSql())
-        cmd.append('`');
-      cmd.append(name);
-      if (getDatabase().getStorage().getConfiguration().isStrictSql())
-        cmd.append('`');
-      cmd.append('.');
-      if (getDatabase().getStorage().getConfiguration().isStrictSql())
-        cmd.append('`');
-      cmd.append(propertyName);
-      if (getDatabase().getStorage().getConfiguration().isStrictSql())
-        cmd.append('`');
-
-      // TYPE
-      cmd.append(' ');
-      cmd.append(type.name);
-
-      if (linkedType != null) {
-        // TYPE
-        cmd.append(' ');
-        cmd.append(linkedType.name);
-
-      } else if (linkedClass != null) {
-        // TYPE
-        cmd.append(' ');
-        if (getDatabase().getStorage().getConfiguration().isStrictSql())
-          cmd.append('`');
-        cmd.append(linkedClass.getName());
-        if (getDatabase().getStorage().getConfiguration().isStrictSql())
-          cmd.append('`');
-      }
-
-      if (unsafe)
-        cmd.append(" unsafe ");
-
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        database.command(cmd.toString());
-        reload();
-
-        return getProperty(propertyName);
-      } else if (isDistributedCommand()) {
-        final OProperty prop = (OProperty) OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
-          @Override
-          public OProperty call() throws Exception {
-            return addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe);
-          }
-        });
-
-        final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-        
-        return prop;
-      } else
-        return (OProperty) OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
-          @Override
-          public OProperty call() throws Exception {
-            return addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe);
-          }
-        });
-
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  private void validatePropertyName(final String propertyName) {
+  protected void validatePropertyName(final String propertyName) {
   }
 
   private int getClusterId(final String stringValue) {
@@ -2637,7 +2224,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  private void checkParametersConflict(final OClass baseClass) {
+  protected void checkParametersConflict(final OClass baseClass) {
     final Collection<OProperty> baseClassProperties = baseClass.properties();
     for (OProperty property : baseClassProperties) {
       OProperty thisProperty = getProperty(property.getName());
@@ -2727,7 +2314,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private ODatabaseDocumentInternal getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 

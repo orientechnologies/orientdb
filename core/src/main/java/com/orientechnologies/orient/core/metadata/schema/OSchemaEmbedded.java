@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -171,7 +172,7 @@ public class OSchemaEmbedded extends OSchemaShared {
       if (classes.containsKey(key))
         throw new OSchemaException("Class '" + className + "' already exists in current database");
 
-      OClassImpl cls = new OClassImpl(this, className, clusterIds);
+      OClassImpl cls = new OClassEmbedded(this, className, clusterIds);
 
       classes.put(key, cls);
 
@@ -493,6 +494,10 @@ public class OSchemaEmbedded extends OSchemaShared {
     } finally {
       releaseSchemaWriteLock();
     }
+  }
+
+  protected OClassImpl createClassInstance(ODocument c) {
+    return new OClassEmbedded(this, c, (String) c.field("name"));
   }
 
   private void dropClassIndexes(final OClass cls) {
