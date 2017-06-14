@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
@@ -84,12 +85,7 @@ public class O2QCache implements OReadCache {
   /**
    * Counts how much time we warned user that limit of amount of pinned pages is reached.
    */
-  private final ODistributedCounter pinnedPagesWarningCounter = new ODistributedCounter();
-
-  /**
-   * Cache of value which is contained inside of {@link #pinnedPagesWarningCounter}. It is used to speed up calculation of warnings.
-   */
-  private volatile int pinnedPagesWarningsCache = 0;
+  private final AtomicInteger pinnedPagesWarningCounter = new AtomicInteger();
 
   private final AtomicReference<MemoryData> memoryDataContainer = new AtomicReference<MemoryData>();
 
@@ -202,13 +198,10 @@ public class O2QCache implements OReadCache {
     MemoryData memoryData = memoryDataContainer.get();
 
     if ((100 * (memoryData.pinnedPages + 1)) / memoryData.maxSize > percentOfPinnedPages) {
-      if (pinnedPagesWarningsCache < MAX_PERCENT_OF_PINED_PAGES) {
-        pinnedPagesWarningCounter.increment();
+      if (pinnedPagesWarningCounter.get() < MAX_AMOUNT_OF_WARNINGS_PINNED_PAGES) {
 
-        final long warnings = pinnedPagesWarningCounter.get();
-        if (warnings < MAX_PERCENT_OF_PINED_PAGES) {
-          pinnedPagesWarningsCache = (int) warnings;
-
+        final long warnings = pinnedPagesWarningCounter.incrementAndGet();
+        if (warnings < MAX_AMOUNT_OF_WARNINGS_PINNED_PAGES) {
           OLogManager.instance().warn(this, "Maximum amount of pinned pages is reached, given page " + cacheEntry
               + " will not be marked as pinned which may lead to performance degradation. You may consider to increase the percent of pinned pages "
               + "by changing the property '" + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey() + "'");
@@ -228,10 +221,10 @@ public class O2QCache implements OReadCache {
           remove(cacheEntry.getFileId(), cacheEntry.getPageIndex());
           pinnedPages.put(new PinnedPage(cacheEntry.getFileId(), cacheEntry.getPageIndex()), cacheEntry);
         } finally {
-          pageLockManager.releaseExclusiveLock(k);
+          pageLock.unlock();
         }
       } finally {
-        fileLockManager.releaseSharedLock(cacheEntry.getFileId());
+        fileLock.unlock();
       }
     } finally {
       cacheLock.releaseReadLock();
