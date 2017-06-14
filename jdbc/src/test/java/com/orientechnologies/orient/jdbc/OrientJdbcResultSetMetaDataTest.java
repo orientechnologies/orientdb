@@ -30,7 +30,7 @@ import java.util.TimeZone;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
+public class OrientJdbcResultSetMetaDataTest extends OrientJdbcDbPerClassTemplateTest {
 
   @Test
   public void shouldMapOrientTypesToJavaSQLTypes() throws Exception {
@@ -65,7 +65,8 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
         .hasNumberOfColumns(6)
         .column()
         .isOfType(ValueType.TEXT, false)
-        .containsValues("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20")
+        .containsValues("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
+            "20")
         .column(1)
         .isOfType(ValueType.NUMBER, false)
         .column("date")

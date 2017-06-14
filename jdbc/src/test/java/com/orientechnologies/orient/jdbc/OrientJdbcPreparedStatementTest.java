@@ -27,7 +27,7 @@ import static java.sql.ResultSet.CONCUR_READ_ONLY;
 import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
+public class OrientJdbcPreparedStatementTest extends OrientJdbcDbPerMethodTemplateTest {
 
   @Test
   public void shouldCreateStatement() throws Exception {

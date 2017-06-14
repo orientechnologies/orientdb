@@ -18,8 +18,8 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.OConstants;
-import org.assertj.db.api.Assertions;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.sql.DatabaseMetaData;
@@ -31,9 +31,10 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
-public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
+public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplateTest {
 
   private DatabaseMetaData metaData;
+
 
   @Before
   public void setup() throws SQLException {
@@ -44,7 +45,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   @Test
   public void verifyDriverAndDatabaseVersions() throws SQLException {
 
-    assertEquals("memory:" + name.getMethodName(), metaData.getURL());
+//    assertEquals("memory:" + name.getMethodName(), metaData.getURL());
     assertEquals("admin", metaData.getUserName());
     assertEquals("OrientDB", metaData.getDatabaseProductName());
     assertEquals(OConstants.ORIENT_VERSION, metaData.getDatabaseProductVersion());
@@ -71,8 +72,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     assertEquals("stringKey", primaryKeys.getString("COLUMN_NAME"));
     assertEquals("Item.stringKey", primaryKeys.getString("PK_NAME"));
     assertEquals(1, primaryKeys.getInt("KEY_SEQ"));
-
-
 
   }
 
@@ -168,8 +167,8 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     ResultSet rs = metaData.getTables(null, null, null, null);
 
     while (rs.next()) {
-      assertThat(rs.getString("TABLE_SCHEM")).isEqualTo(name.getMethodName());
-      assertThat(rs.getString("TABLE_CAT")).isEqualTo(name.getMethodName());
+      assertThat(rs.getString("TABLE_SCHEM")).isEqualTo("perClassTestDatabase");
+      assertThat(rs.getString("TABLE_CAT")).isEqualTo("perClassTestDatabase");
     }
 
   }
@@ -199,8 +198,8 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     ResultSet rs = metaData.getTables(null, null, "ouser", null);
     rs.next();
     assertThat(rs.getString("TABLE_NAME")).isEqualTo("OUser");
-    assertThat(rs.getString("TABLE_CAT")).isEqualTo(name.getMethodName());
-    assertThat(rs.getString("TABLE_SCHEM")).isEqualTo(name.getMethodName());
+    assertThat(rs.getString("TABLE_CAT")).isEqualTo("perClassTestDatabase");
+    assertThat(rs.getString("TABLE_SCHEM")).isEqualTo("perClassTestDatabase");
     assertThat(rs.getString("REMARKS")).isNull();
     assertThat(rs.getString("REF_GENERATION")).isNull();
     assertThat(rs.getString("TYPE_NAME")).isNull();

@@ -17,16 +17,13 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import com.orientechnologies.common.concur.lock.ReadersWriterSpinLockBenchmark;
-import org.assertj.db.api.Assertions;
-import org.assertj.db.type.Request;
 import org.junit.Test;
 
 import java.sql.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
+public class OrientJdbcResultSetTest extends OrientJdbcDbPerMethodTemplateTest {
 
   @Test
   public void shouldNavigateResultSet() throws Exception {
