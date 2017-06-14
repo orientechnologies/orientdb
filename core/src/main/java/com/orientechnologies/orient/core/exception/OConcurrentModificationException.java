@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.exception;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
@@ -42,7 +43,7 @@ public class OConcurrentModificationException extends ONeedRetryException implem
   private int                 recordOperation;
 
   public OConcurrentModificationException(OConcurrentModificationException exception) {
-    super(exception);
+    super(exception, OErrorCode.MVCC_ERROR);
 
     this.rid = exception.rid;
     this.recordVersion = exception.recordVersion;

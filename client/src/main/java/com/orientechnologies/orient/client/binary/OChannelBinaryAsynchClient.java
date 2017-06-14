@@ -31,11 +31,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
 
-import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
@@ -43,6 +39,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemoteNodeSession;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.client.remote.message.OError37Response;
 import com.orientechnologies.orient.client.remote.message.OErrorResponse;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -96,6 +93,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         writeShort((short) iProtocolVersion);
         writeString("Java Client");
         writeString(OConstants.getVersion());
+        writeByte(OChannelBinaryProtocol.ENCODING_DEFAULT);
+        writeByte(OChannelBinaryProtocol.ERROR_MESSAGE_JAVA);
         flush();
       } catch (IOException e) {
         throw new ONetworkProtocolException(
@@ -273,9 +272,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       return iClientTxId;
     } else if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
 
-      OErrorResponse response = new OErrorResponse();
+      OError37Response response = new OError37Response();
       response.read(this, null);
-      byte[] serializedException = response.getResult();
+      byte[] serializedException = response.getVerbose();
       Exception previous = null;
       if (serializedException != null && serializedException.length > 0)
         throwSerializedException(serializedException);

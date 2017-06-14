@@ -76,13 +76,11 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_CLOSE_QUERY                       = 46;                 // since 3.0
   public static final byte REQUEST_QUERY_NEXT_PAGE                   = 47;                 // since 3.0
 
-
-
-  public static final byte REQUEST_TX_COMMIT  = 60;
-  public static final byte REQUEST_TX_BEGIN   = 61;
-  public static final byte REQUEST_TX_REBEGIN = 62;
-  public static final byte REQUEST_TX_FETCH   = 63;
-  public static final byte REQUEST_TX_ROLLBACK  = 64;
+  public static final byte REQUEST_TX_COMMIT   = 60;
+  public static final byte REQUEST_TX_BEGIN    = 61;
+  public static final byte REQUEST_TX_REBEGIN  = 62;
+  public static final byte REQUEST_TX_FETCH    = 63;
+  public static final byte REQUEST_TX_ROLLBACK = 64;
 
   public static final byte REQUEST_CONFIG_GET  = 70;
   public static final byte REQUEST_CONFIG_SET  = 71;
@@ -110,7 +108,6 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_SBTREE_BONSAI_FIRST_KEY         = 112;
   public static final byte REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR = 113;
   public static final byte REQUEST_RIDBAG_GET_SIZE                 = 114;
-
 
   // TASK
   public static final byte DISTRIBUTED_REQUEST  = 120;
@@ -151,14 +148,17 @@ public class OChannelBinaryProtocol {
 
   public static final int CURRENT_PROTOCOL_VERSION = PROTOCOL_VERSION_37;
 
-
   //This are specific messages inside the subscribe message
   public static final byte SUBSCRIBE_PUSH_DISTRIB_CONFIG = 1;
-  public static final byte SUBSCRIBE_PUSH_LIVE_QUERY = 2;
+  public static final byte SUBSCRIBE_PUSH_LIVE_QUERY     = 2;
 
   //Used by the client to identify what data was pushed
   public static final byte REQUEST_PUSH_DISTRIB_CONFIG = 80;
   public static final byte REQUEST_PUSH_LIVE_QUERY     = 81;                 // SINCE 2.1
   public static final byte REQUEST_PUSH_STORAGE_CONFIG = 82;
 
+  public static final byte ENCODING_DEFAULT     = 0;
+  public static final byte ERROR_MESSAGE_JAVA   = 0;
+  public static final byte ERROR_MESSAGE_STRING = 1;
+  public static final byte ERROR_MESSAGE_NONE   = 1;
 }

@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -29,6 +30,7 @@ import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
+import com.orientechnologies.orient.client.remote.message.OError37Response;
 import com.orientechnologies.orient.client.remote.message.OErrorResponse;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -38,6 +40,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -61,11 +64,11 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -185,7 +188,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     short protocolVersion = channel.readShort();
     String driverName = channel.readString();
     String driverVersion = channel.readString();
-    this.handshakeInfo = new HandshakeInfo(protocolVersion, driverName, driverVersion);
+    byte encoding = channel.readByte();
+    byte errorEncoding = channel.readByte();
+    this.handshakeInfo = new HandshakeInfo(protocolVersion, driverName, driverVersion, encoding, errorEncoding);
     this.factory = ONetworkBinaryProtocolFactory.matchProtocol(protocolVersion);
   }
 
@@ -271,7 +276,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           } finally {
             afterOperationRequest(connection);
           }
-        } else{
+        } else {
           try {
             if (response != null) {
               beginResponse();
@@ -561,15 +566,35 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         messages.put(current.getClass().getName(), current.getMessage());
         it = it.getCause();
       }
-      final OMemoryStream memoryStream = new OMemoryStream();
-      final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
-
-      objectOutputStream.writeObject(current);
-      objectOutputStream.flush();
-      final byte[] result = memoryStream.toByteArray();
-      objectOutputStream.close();
-
-      OBinaryResponse error = new OErrorResponse(messages, result);
+      final byte[] result;
+      if (handshakeInfo == null || handshakeInfo.getErrorEncoding() == OChannelBinaryProtocol.ERROR_MESSAGE_JAVA) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        objectOutputStream.writeObject(current);
+        objectOutputStream.flush();
+        objectOutputStream.close();
+        result = outputStream.toByteArray();
+      } else if (handshakeInfo.getErrorEncoding() == OChannelBinaryProtocol.ERROR_MESSAGE_STRING) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        current.printStackTrace(new PrintStream(outputStream));
+        result = outputStream.toByteArray();
+      } else {
+        result = new byte[] {};
+      }
+      OBinaryResponse error;
+      if (handshakeInfo != null) {
+        OErrorCode code;
+        if (current instanceof OCoreException) {
+          code = ((OCoreException) current).getErrorCode();
+          if (code == null)
+            code = OErrorCode.GENERIC_ERROR;
+        } else {
+          code = OErrorCode.GENERIC_ERROR;
+        }
+        error = new OError37Response(code, 0, messages, result);
+      } else {
+        error = new OErrorResponse(messages, result);
+      }
       int protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
       ORecordSerializer serializationImpl = ORecordSerializerNetworkFactory.INSTANCE.current();
       if (connection != null) {
