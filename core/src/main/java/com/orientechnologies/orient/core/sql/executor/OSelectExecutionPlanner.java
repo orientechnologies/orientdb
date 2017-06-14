@@ -936,6 +936,7 @@ public class OSelectExecutionPlanner {
       plan.chain(new FilterByClassStep(identifier, ctx, profilingEnabled));
       return;
     }
+
     if (handleClassAsTargetWithIndex(plan, identifier, ctx, profilingEnabled)) {
       plan.chain(new FilterByClassStep(identifier, ctx, profilingEnabled));
       return;
@@ -976,6 +977,8 @@ public class OSelectExecutionPlanner {
 
     List<OInternalExecutionPlan> resultSubPlans = new ArrayList<>();
 
+    boolean indexedFunctionsFound = false;
+
     for (OAndBlock block : flattenedWhereClause) {
       List<OBinaryCondition> indexedFunctionConditions = block
           .getIndexedFunctionConditions(clazz, (ODatabaseDocumentInternal) ctx.getDatabase());
@@ -983,7 +986,28 @@ public class OSelectExecutionPlanner {
       indexedFunctionConditions = filterIndexedFunctionsWithoutIndex(indexedFunctionConditions, fromClause, ctx);
 
       if (indexedFunctionConditions == null || indexedFunctionConditions.size() == 0) {
-        return false;//no indexed functions for this block
+        IndexSearchDescriptor bestIndex = findBestIndexFor(ctx, clazz.getIndexes(), block, clazz);
+        if (bestIndex != null) {
+
+          FetchFromIndexStep step = new FetchFromIndexStep(bestIndex.idx, bestIndex.keyCondition,
+              bestIndex.additionalRangeCondition, true, ctx, profilingEnabled);
+
+          OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+          subPlan.chain(step);
+          subPlan.chain(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
+          if (!block.getSubBlocks().isEmpty()) {
+            subPlan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
+          }
+          resultSubPlans.add(subPlan);
+        } else {
+          FetchFromClassExecutionStep step = new FetchFromClassExecutionStep(clazz.getName(), ctx, true, profilingEnabled);
+          OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+          subPlan.chain(step);
+          if (!block.getSubBlocks().isEmpty()) {
+            subPlan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
+          }
+          resultSubPlans.add(subPlan);
+        }
       } else {
         OBinaryCondition blockCandidateFunction = null;
         for (OBinaryCondition cond : indexedFunctionConditions) {
@@ -1035,15 +1059,22 @@ public class OSelectExecutionPlanner {
           }
           resultSubPlans.add(subPlan);
         }
+        indexedFunctionsFound = true;
       }
     }
-    if (resultSubPlans.size() > 0) {
-      plan.chain(new ParallelExecStep(resultSubPlans, ctx, profilingEnabled));
+
+    if (indexedFunctionsFound) {
+      if (resultSubPlans.size() > 1) { //if resultSubPlans.size() == 1 the step was already chained (see above)
+        plan.chain(new ParallelExecStep(resultSubPlans, ctx, profilingEnabled));
+        plan.chain(new DistinctExecutionStep(ctx, profilingEnabled));
+      }
+      //WHERE condition already applied
+      this.whereClause = null;
+      this.flattenedWhereClause = null;
+      return true;
+    } else {
+      return false;
     }
-    //WHERE condition already applied
-    this.whereClause = null;
-    this.flattenedWhereClause = null;
-    return true;
   }
 
   private List<OBinaryCondition> filterIndexedFunctionsWithoutIndex(List<OBinaryCondition> indexedFunctionConditions,

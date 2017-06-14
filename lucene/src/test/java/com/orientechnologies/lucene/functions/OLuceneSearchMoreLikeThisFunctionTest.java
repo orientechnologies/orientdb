@@ -3,7 +3,6 @@ package com.orientechnologies.lucene.functions;
 import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -65,7 +64,6 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-  @Ignore
   public void shouldSearchOnFieldOrMoreLikeThisWithRidOnMultiFieldsIndex() throws Exception {
 
     db.command("create index Song.multi on Song (title) FULLTEXT ENGINE LUCENE ");
@@ -74,7 +72,7 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
         .query(
             "SELECT from Song where SEARCH_More([#25:2, #25:3], {'minTermFreq':1, 'minDocFreq':1} ) = true OR author ='Hunter' ");
     System.out.println(resultSet.getExecutionPlan().get().prettyPrint(1, 1));
-    assertThat(resultSet).hasSize(84);
+    assertThat(resultSet).hasSize(138);
 
     resultSet.close();
   }
