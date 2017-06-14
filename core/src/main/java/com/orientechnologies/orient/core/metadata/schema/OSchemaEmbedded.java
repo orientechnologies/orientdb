@@ -15,7 +15,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.*;
 
@@ -23,8 +22,8 @@ import java.util.*;
  * Created by tglman on 13/06/17.
  */
 public class OSchemaEmbedded extends OSchemaShared {
-  public OSchemaEmbedded(boolean clustersCanNotBeSharedAmongClasses) {
-    super(clustersCanNotBeSharedAmongClasses);
+  public OSchemaEmbedded() {
+    super();
   }
 
   public OClass createClass(final String className, int[] clusterIds, OClass... superClasses) {
@@ -381,7 +380,7 @@ public class OSchemaEmbedded extends OSchemaShared {
   }
 
   private void checkClustersAreAbsent(final int[] iClusterIds) {
-    if (!clustersCanNotBeSharedAmongClasses || iClusterIds == null)
+    if (iClusterIds == null)
       return;
 
     for (int clusterId : iClusterIds) {
@@ -514,9 +513,6 @@ public class OSchemaEmbedded extends OSchemaShared {
   }
 
   private void removeClusterClassMap(final OClass cls) {
-    if (!clustersCanNotBeSharedAmongClasses)
-      return;
-
     for (int clusterId : cls.getClusterIds()) {
       if (clusterId < 0)
         continue;

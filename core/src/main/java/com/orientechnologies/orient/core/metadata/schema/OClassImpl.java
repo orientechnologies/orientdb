@@ -44,10 +44,7 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -57,7 +54,6 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -1906,51 +1902,10 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
-
       final String oldName = this.name;
-
       owner.changeClassName(this.name, name, this);
       this.name = name;
-
-      ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (!database.getStorageVersions().classesAreDetectedByClusterId()) {
-        for (int clusterId : clusterIds) {
-          long[] range = storage.getClusterDataRange(clusterId);
-
-          OPhysicalPosition[] positions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(range[0]));
-          do {
-            for (OPhysicalPosition position : positions) {
-              final ORecordId identity = new ORecordId(clusterId, position.clusterPosition);
-              final ORawBuffer record = storage.readRecord(identity, null, true, false, null).getResult();
-
-              if (record.recordType == ODocument.RECORD_TYPE) {
-                final ORecordSerializerSchemaAware2CSV serializer = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
-                    .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
-                String persName = new String(record.buffer, "UTF-8");
-                if (serializer.getClassName(persName).equalsIgnoreCase(name)) {
-                  final ODocument document = new ODocument();
-                  document.setLazyLoad(false);
-                  document.fromStream(record.buffer);
-                  ORecordInternal.setVersion(document, record.version);
-                  ORecordInternal.setIdentity(document, identity);
-                  document.setClassName(name);
-                  document.setDirty();
-                  document.save();
-                }
-              }
-
-              if (positions.length > 0)
-                positions = storage.higherPhysicalPositions(clusterId, positions[positions.length - 1]);
-            }
-          } while (positions.length > 0);
-        }
-      }
-
       renameCluster(oldName, this.name);
-    } catch (UnsupportedEncodingException e) {
-      throw OException.wrapException(new OSchemaException("Error reading schema"), e);
     } finally {
       releaseSchemaWriteLock();
     }

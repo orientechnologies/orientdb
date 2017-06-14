@@ -8,10 +8,6 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.*;
 
@@ -19,8 +15,8 @@ import java.util.*;
  * Created by tglman on 13/06/17.
  */
 public class OSchemaRemote extends OSchemaShared {
-  public OSchemaRemote(boolean classesAreDetectedByClusterId) {
-    super(classesAreDetectedByClusterId);
+  public OSchemaRemote() {
+    super();
   }
 
   @Override
@@ -208,7 +204,7 @@ public class OSchemaRemote extends OSchemaShared {
   }
 
   private void checkClustersAreAbsent(final int[] iClusterIds) {
-    if (!clustersCanNotBeSharedAmongClasses || iClusterIds == null)
+    if (iClusterIds == null)
       return;
 
     for (int clusterId : iClusterIds) {

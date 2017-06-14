@@ -96,8 +96,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
     pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
     if (pos > -1 && (pos < posFirstValue || posFirstValue == -1)) {
-      if ((record.getIdentity().getClusterId() < 0 || database == null
-          || !database.getStorageVersions().classesAreDetectedByClusterId()))
+      if ((record.getIdentity().getClusterId() < 0 || database == null))
         ODocumentInternal.fillClassNameIfNeeded(((ODocument) iRecord), iContent.substring(0, pos));
       iContent = iContent.substring(pos + 1);
     } else

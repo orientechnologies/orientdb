@@ -161,7 +161,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return (DB) this;
   }
 
-  protected abstract void loadMetadata() ;
+  protected abstract void loadMetadata();
 
   public void callOnCloseListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
@@ -2882,14 +2882,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   private void checkRecordClass(final OClass recordClass, final String iClusterName, final ORecordId rid) {
-    if (getStorageVersions().classesAreDetectedByClusterId()) {
-      final OClass clusterIdClass = metadata.getImmutableSchemaSnapshot().getClassByClusterId(rid.getClusterId());
-      if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null || (recordClass != null
-          && !recordClass.equals(clusterIdClass)))
-        throw new IllegalArgumentException(
-            "Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
-                + "' but has been created with class '" + recordClass + "'");
-    }
+    final OClass clusterIdClass = metadata.getImmutableSchemaSnapshot().getClassByClusterId(rid.getClusterId());
+    if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null || (recordClass != null
+        && !recordClass.equals(clusterIdClass)))
+      throw new IllegalArgumentException(
+          "Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
+              + "' but has been created with class '" + recordClass + "'");
   }
 
   private byte[] updateStream(final ORecord record) {

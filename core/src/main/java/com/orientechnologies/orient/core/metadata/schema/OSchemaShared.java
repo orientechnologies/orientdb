@@ -64,8 +64,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   public static final  int  VERSION_NUMBER_V5       = 5;
   private static final long serialVersionUID        = 1L;
 
-  protected final boolean clustersCanNotBeSharedAmongClasses;
-
   private final OReadersWriterSpinLock rwSpinLock = new OReadersWriterSpinLock();
 
   protected final Map<String, OClass>  classes           = new HashMap<String, OClass>();
@@ -97,9 +95,8 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   static final class ClusterIdsAreEmptyException extends Exception {
   }
 
-  public OSchemaShared(boolean clustersCanNotBeSharedAmongClasses) {
+  public OSchemaShared() {
     super(new ODocument().setTrackingChanges(false));
-    this.clustersCanNotBeSharedAmongClasses = clustersCanNotBeSharedAmongClasses;
 
   }
 
@@ -158,10 +155,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       }
     }
     return snapshot;
-  }
-
-  public boolean isClustersCanNotBeSharedAmongClasses() {
-    return clustersCanNotBeSharedAmongClasses;
   }
 
   public OClusterSelectionFactory getClusterSelectionFactory() {
@@ -239,9 +232,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   void addClusterForClass(final int clusterId, final OClass cls) {
     acquireSchemaWriteLock();
     try {
-      if (!clustersCanNotBeSharedAmongClasses)
-        return;
-
       if (clusterId < 0)
         return;
 
@@ -262,9 +252,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   void removeClusterForClass(int clusterId, OClass cls) {
     acquireSchemaWriteLock();
     try {
-      if (!clustersCanNotBeSharedAmongClasses)
-        return;
-
       if (clusterId < 0)
         return;
 
@@ -280,9 +267,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   void checkClusterCanBeAdded(int clusterId, OClass cls) {
     acquireSchemaReadLock();
     try {
-      if (!clustersCanNotBeSharedAmongClasses)
-        return;
-
       if (clusterId < 0)
         return;
 
@@ -303,9 +287,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   public OClass getClassByClusterId(int clusterId) {
     acquireSchemaReadLock();
     try {
-      if (!clustersCanNotBeSharedAmongClasses)
-        throw new OSchemaException("This feature is not supported in current version of binary format.");
-
       return clustersToClasses.get(clusterId);
     } finally {
       releaseSchemaReadLock();
@@ -779,9 +760,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   }
 
   protected void addClusterClassMap(final OClass cls) {
-    if (!clustersCanNotBeSharedAmongClasses)
-      return;
-
     for (int clusterId : cls.getClusterIds()) {
       if (clusterId < 0)
         continue;

@@ -51,14 +51,12 @@ public class OImmutableSchema implements OSchema {
 
   public final int                       version;
   private final ORID                     identity;
-  private final boolean                  clustersCanNotBeSharedAmongClasses;
   private final List<OGlobalProperty>    properties;
   private final OClusterSelectionFactory clusterSelectionFactory;
 
   public OImmutableSchema(OSchemaShared schemaShared) {
     version = schemaShared.getVersion();
     identity = schemaShared.getIdentity();
-    clustersCanNotBeSharedAmongClasses = schemaShared.isClustersCanNotBeSharedAmongClasses();
     clusterSelectionFactory = schemaShared.getClusterSelectionFactory();
 
     clustersToClasses = new HashMap<Integer, OClass>(schemaShared.getClasses().size() * 3);
@@ -232,9 +230,6 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public OClass getClassByClusterId(int clusterId) {
-    if (!clustersCanNotBeSharedAmongClasses)
-      throw new OSchemaException("This feature is not supported in current version of binary format.");
-
     return clustersToClasses.get(clusterId);
 
   }

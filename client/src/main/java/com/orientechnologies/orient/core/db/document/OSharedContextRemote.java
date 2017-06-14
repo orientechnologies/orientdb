@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  */
 public class OSharedContextRemote extends OSharedContext {
   public OSharedContextRemote(OStorage storage) {
-    schema = new OSchemaRemote(storage.getComponentsFactory().classesAreDetectedByClusterId());
+    schema = new OSchemaRemote();
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerRemote();
     functionLibrary = new OFunctionLibraryImpl();
