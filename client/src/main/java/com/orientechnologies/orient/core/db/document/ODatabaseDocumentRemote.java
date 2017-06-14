@@ -186,7 +186,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
       @Override
       public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote(getStorage());
+        OSharedContext shared = new OSharedContextRemote();
         return shared;
       }
     });

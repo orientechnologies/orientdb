@@ -12,11 +12,13 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 /**
  * Created by tglman on 13/06/17.
  */
 public class OSharedContextEmbedded extends OSharedContext {
+
   public OSharedContextEmbedded(OStorage storage) {
     schema = new OSchemaEmbedded();
     security = OSecurityManager.instance().newSecurity();
@@ -30,5 +32,64 @@ public class OSharedContextEmbedded extends OSharedContext {
         storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
     queryStats = new OQueryStats();
 
+  }
+
+  public synchronized void load(ODatabaseDocumentInternal database) {
+    final long timer = PROFILER.startChrono();
+
+    try {
+      if (!loaded) {
+        schema.load(database);
+        security.load();
+        indexManager.load(database);
+        functionLibrary.load(database);
+        scheduler.load(database);
+        sequenceLibrary.load(database);
+        schema.onPostIndexManagement();
+        loaded = true;
+      }
+    } finally {
+      PROFILER
+          .stopChrono(PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"), "Loading of database metadata",
+              timer, "db.*.metadata.load");
+    }
+  }
+
+  @Override
+  public synchronized void close() {
+    schema.close();
+    security.close(false);
+    indexManager.close();
+    functionLibrary.close();
+    scheduler.close();
+    sequenceLibrary.close();
+    commandCache.clear();
+    commandCache.shutdown();
+    liveQueryOps.close();
+  }
+
+  public synchronized void reload(ODatabaseDocumentInternal database) {
+    schema.reload();
+    indexManager.reload();
+    security.load();
+    functionLibrary.load(database);
+    sequenceLibrary.load(database);
+    commandCache.clear();
+    scheduler.load(database);
+  }
+
+  public synchronized void create(ODatabaseDocumentInternal database) {
+    schema.create(database);
+    indexManager.create(database);
+    security.create();
+    functionLibrary.create(database);
+    sequenceLibrary.create(database);
+    security.createClassTrigger();
+    scheduler.create(database);
+
+    // CREATE BASE VERTEX AND EDGE CLASSES
+    schema.createClass("V");
+    schema.createClass("E");
+    loaded = true;
   }
 }

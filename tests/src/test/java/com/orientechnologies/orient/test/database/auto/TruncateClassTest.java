@@ -31,13 +31,17 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
-@Test public class TruncateClassTest extends DocumentDBBaseTest {
+@Test
+public class TruncateClassTest extends DocumentDBBaseTest {
 
-  @Parameters(value = "url") public TruncateClassTest(@Optional String url) {
+  @Parameters(value = "url")
+  public TruncateClassTest(@Optional String url) {
     super(url);
   }
 
-  @SuppressWarnings("unchecked") @Test public void testTruncateClass() {
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testTruncateClass() {
 
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
@@ -75,7 +79,8 @@ import java.util.*;
     schema.dropClass("test_class");
   }
 
-  @Test public void testTruncateVertexClass() {
+  @Test
+  public void testTruncateVertexClass() {
     database.command(new OCommandSQL("create class TestTruncateVertexClass extends V")).execute();
     database.command(new OCommandSQL("create vertex TestTruncateVertexClass set name = 'foo'")).execute();
 
@@ -93,7 +98,8 @@ import java.util.*;
 
   }
 
-  @Test public void testTruncateVertexClassSubclasses() {
+  @Test
+  public void testTruncateVertexClassSubclasses() {
 
     database.command(new OCommandSQL("create class TestTruncateVertexClassSuperclass")).execute();
     database.command(new OCommandSQL("create class TestTruncateVertexClassSubclass extends TestTruncateVertexClassSuperclass"))
@@ -115,7 +121,8 @@ import java.util.*;
 
   }
 
-  @Test public void testTruncateVertexClassSubclassesWithIndex() {
+  @Test
+  public void testTruncateVertexClassSubclassesWithIndex() {
 
     database.command(new OCommandSQL("create class TestTruncateVertexClassSuperclassWithIndex")).execute();
     database.command(new OCommandSQL("create property TestTruncateVertexClassSuperclassWithIndex.name STRING")).execute();
@@ -163,13 +170,17 @@ import java.util.*;
     return testClass;
   }
 
-  @SuppressWarnings("unchecked") @Test public void testTruncateClassWithCommandCache() {
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testTruncateClassWithCommandCache() {
 
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
-
-    boolean ccWasEnabled = database.getMetadata().getCommandCache().isEnabled();
-    database.getMetadata().getCommandCache().enable();
+    boolean ccWasEnabled = false;
+    if (database.getMetadata().getCommandCache() != null) {
+      ccWasEnabled = database.getMetadata().getCommandCache().isEnabled();
+      database.getMetadata().getCommandCache().enable();
+    }
 
     database.command(new OCommandSQL("truncate class test_class")).execute();
 
@@ -185,7 +196,7 @@ import java.util.*;
     Assert.assertEquals(result.size(), 0);
 
     schema.dropClass("test_class");
-    if (!ccWasEnabled) {
+    if (!ccWasEnabled && database.getMetadata().getCommandCache() != null) {
       database.getMetadata().getCommandCache().disable();
     }
   }

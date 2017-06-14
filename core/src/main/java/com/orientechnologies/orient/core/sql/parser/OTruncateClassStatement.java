@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
@@ -99,7 +100,7 @@ public class OTruncateClassStatement extends ODDLStatement {
     if (clazz == null) {
       return;
     }
-    OCommandCache commandCache = db.getMetadata().getCommandCache();
+    OCommandCache commandCache = ((OMetadataInternal)db.getMetadata()).getCommandCache();
     if (commandCache != null && commandCache.isEnabled()) {
       int[] clusterIds = clazz.getClusterIds();
       if (clusterIds != null) {

@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 /**
  * Created by tglman on 15/06/16.
  */
-public abstract class  OSharedContext implements OCloseable {
+public abstract class OSharedContext implements OCloseable {
   protected static final OProfiler PROFILER = Orient.instance().getProfiler();
   protected OSchemaShared                schema;
   protected OSecurity                    security;
@@ -35,70 +35,6 @@ public abstract class  OSharedContext implements OCloseable {
   protected OStatementCache              statementCache;
   protected OQueryStats                  queryStats;
   protected volatile boolean loaded = false;
-
-  public synchronized void load(ODatabaseDocumentInternal database) {
-    final long timer = PROFILER.startChrono();
-
-    try {
-      if (!loaded) {
-        schema.load(database);
-        security.load();
-        indexManager.load(database);
-        if (!(database.getStorage() instanceof OStorageProxy)) {
-          functionLibrary.load(database);
-          scheduler.load(database);
-        }
-        sequenceLibrary.load(database);
-        schema.onPostIndexManagement();
-        loaded = true;
-      }
-    } finally {
-      PROFILER
-          .stopChrono(PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"), "Loading of database metadata",
-              timer, "db.*.metadata.load");
-    }
-  }
-
-  @Override
-  public synchronized void close() {
-    schema.close();
-    security.close(false);
-    indexManager.close();
-    functionLibrary.close();
-    scheduler.close();
-    sequenceLibrary.close();
-    if (commandCache != null) {
-      commandCache.clear();
-      commandCache.shutdown();
-    }
-    if (liveQueryOps != null)
-      liveQueryOps.close();
-  }
-
-  public synchronized void reload(ODatabaseDocumentInternal database) {
-    schema.reload();
-    indexManager.reload();
-    security.load();
-    functionLibrary.load(database);
-    sequenceLibrary.load(database);
-    commandCache.clear();
-    scheduler.load(database);
-  }
-
-  public synchronized void create(ODatabaseDocumentInternal database) {
-    schema.create(database);
-    indexManager.create(database);
-    security.create();
-    functionLibrary.create(database);
-    sequenceLibrary.create(database);
-    security.createClassTrigger();
-    scheduler.create(database);
-
-    // CREATE BASE VERTEX AND EDGE CLASSES
-    schema.createClass("V");
-    schema.createClass("E");
-    loaded = true;
-  }
 
   public OSchemaShared getSchema() {
     return schema;
@@ -140,4 +76,7 @@ public abstract class  OSharedContext implements OCloseable {
     return queryStats;
   }
 
+  public abstract void load(ODatabaseDocumentInternal oDatabaseDocumentInternal);
+
+  public abstract void reload(ODatabaseDocumentInternal database);
 }

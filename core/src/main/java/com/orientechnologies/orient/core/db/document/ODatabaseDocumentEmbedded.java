@@ -191,7 +191,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       }
     });
     metadata.init(shared);
-    shared.create(this);
+    ((OSharedContextEmbedded) shared).create(this);
 
     registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
     registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
