@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -3127,6 +3126,50 @@ public class OSelectStatementExecutionTest {
     printExecutionPlan(result);
 
     result.close();
+  }
+
+  @Test
+  public void testSimpleCollectionFiltering() {
+    String className = "testSimpleCollectionFiltering";
+    db.command("create class " + className).close();
+    OElement elem1 = db.newElement(className);
+    List<String> coll = new ArrayList<>();
+    coll.add("foo");
+    coll.add("bar");
+    coll.add("baz");
+    elem1.setProperty("coll", coll);
+    elem1.save();
+
+    OResultSet result = db.query("select coll[='foo'] as filtered from " + className);
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    List res = item.getProperty("filtered");
+    Assert.assertEquals(1, res.size());
+    Assert.assertEquals("foo", res.get(0));
+    result.close();
+
+    result = db.query("select coll[<'ccc'] as filtered from " + className);
+    Assert.assertTrue(result.hasNext());
+    item = result.next();
+    res = item.getProperty("filtered");
+    Assert.assertEquals(2, res.size());
+    result.close();
+
+    result = db.query("select coll[LIKE 'ba%'] as filtered from " + className);
+    Assert.assertTrue(result.hasNext());
+    item = result.next();
+    res = item.getProperty("filtered");
+    Assert.assertEquals(2, res.size());
+    result.close();
+
+    result = db.query("select coll[in ['bar']] as filtered from " + className);
+    Assert.assertTrue(result.hasNext());
+    item = result.next();
+    res = item.getProperty("filtered");
+    Assert.assertEquals(1, res.size());
+    Assert.assertEquals("bar", res.get(0));
+    result.close();
+
   }
 
 }

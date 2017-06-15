@@ -2188,6 +2188,9 @@ OModifier Modifier():
             (
                 <LBRACKET> { jjtThis.squareBrackets = true; }
                 (
+                    LOOKAHEAD( RightBinaryCondition() )
+                    jjtThis.rightBinaryCondition = RightBinaryCondition()
+                    |
                     LOOKAHEAD( ArrayRangeSelector() )
                     jjtThis.arrayRange = ArrayRangeSelector()
                     |
@@ -2196,6 +2199,7 @@ OModifier Modifier():
                     |
                     LOOKAHEAD( ArraySingleValuesSelector() )
                     jjtThis.arraySingleValues = ArraySingleValuesSelector()
+
                 )
                 <RBRACKET>
             )
@@ -2850,6 +2854,25 @@ OEqualsCompareOperator EqualsCompareOperator():
 	|
 	<EQEQ> { jjtThis.doubleEquals = true; }
 ){return jjtThis;}
+}
+
+
+ORightBinaryCondition RightBinaryCondition():
+{}
+{
+  (
+       (
+          jjtThis.operator = CompareOperator()
+          jjtThis.right = Expression()
+       )
+       |
+       (
+         [ <NOT> { jjtThis.not = true; } ]
+         jjtThis.inOperator = InOperator()
+         jjtThis.right = Expression()
+       )
+  )
+  { return jjtThis; }
 }
 
 OBooleanExpression BinaryCondition():

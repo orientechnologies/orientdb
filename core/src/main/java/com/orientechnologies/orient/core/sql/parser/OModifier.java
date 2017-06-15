@@ -18,6 +18,7 @@ public class OModifier extends SimpleNode {
   OArrayRangeSelector        arrayRange;
   OOrBlock                   condition;
   OArraySingleValuesSelector arraySingleValues;
+  ORightBinaryCondition      rightBinaryCondition;
   OMethodCall                methodCall;
   OSuffixIdentifier          suffix;
 
@@ -49,6 +50,8 @@ public class OModifier extends SimpleNode {
         condition.toString(params, builder);
       } else if (arraySingleValues != null) {
         arraySingleValues.toString(params, builder);
+      } else if (rightBinaryCondition != null) {
+        rightBinaryCondition.toString(params, builder);
       }
 
       builder.append("]");
@@ -74,6 +77,8 @@ public class OModifier extends SimpleNode {
       result = filterByCondition(result, ctx);
     } else if (arraySingleValues != null) {
       result = arraySingleValues.execute(iCurrentRecord, result, ctx);
+    } else if (rightBinaryCondition != null) {
+      result = rightBinaryCondition.execute(iCurrentRecord, result, ctx);
     }
     if (next != null) {
       result = next.execute(iCurrentRecord, result, ctx);
@@ -92,6 +97,8 @@ public class OModifier extends SimpleNode {
       result = filterByCondition(result, ctx);
     } else if (arraySingleValues != null) {
       result = arraySingleValues.execute(iCurrentRecord, result, ctx);
+    } else if (rightBinaryCondition != null) {
+      result = rightBinaryCondition.execute(iCurrentRecord, result, ctx);
     }
     if (next != null) {
       result = next.execute(iCurrentRecord, result, ctx);
@@ -143,6 +150,10 @@ public class OModifier extends SimpleNode {
       return true;
     }
 
+    if (rightBinaryCondition != null && rightBinaryCondition.needsAliases(aliases)) {
+      return true;
+    }
+
     if (methodCall != null && methodCall.needsAliases(aliases)) {
       return true;
     }
@@ -160,6 +171,7 @@ public class OModifier extends SimpleNode {
     result.arrayRange = arrayRange == null ? null : arrayRange.copy();
     result.condition = condition == null ? null : condition.copy();
     result.arraySingleValues = arraySingleValues == null ? null : arraySingleValues.copy();
+    result.rightBinaryCondition = rightBinaryCondition == null ? null : rightBinaryCondition.copy();
     result.methodCall = methodCall == null ? null : methodCall.copy();
     result.suffix = suffix == null ? null : suffix.copy();
     result.next = next == null ? null : next.copy();
@@ -184,6 +196,10 @@ public class OModifier extends SimpleNode {
       return false;
     if (arraySingleValues != null ? !arraySingleValues.equals(oModifier.arraySingleValues) : oModifier.arraySingleValues != null)
       return false;
+    if (rightBinaryCondition != null ?
+        !rightBinaryCondition.equals(oModifier.rightBinaryCondition) :
+        oModifier.rightBinaryCondition != null)
+      return false;
     if (methodCall != null ? !methodCall.equals(oModifier.methodCall) : oModifier.methodCall != null)
       return false;
     if (suffix != null ? !suffix.equals(oModifier.suffix) : oModifier.suffix != null)
@@ -200,6 +216,7 @@ public class OModifier extends SimpleNode {
     result = 31 * result + (arrayRange != null ? arrayRange.hashCode() : 0);
     result = 31 * result + (condition != null ? condition.hashCode() : 0);
     result = 31 * result + (arraySingleValues != null ? arraySingleValues.hashCode() : 0);
+    result = 31 * result + (rightBinaryCondition != null ? rightBinaryCondition.hashCode() : 0);
     result = 31 * result + (methodCall != null ? methodCall.hashCode() : 0);
     result = 31 * result + (suffix != null ? suffix.hashCode() : 0);
     result = 31 * result + (next != null ? next.hashCode() : 0);
@@ -215,6 +232,9 @@ public class OModifier extends SimpleNode {
     }
     if (arraySingleValues != null) {
       arraySingleValues.extractSubQueries(collector);
+    }
+    if (rightBinaryCondition != null) {
+      rightBinaryCondition.extractSubQueries(collector);
     }
     if (methodCall != null) {
       methodCall.extractSubQueries(collector);
@@ -237,6 +257,9 @@ public class OModifier extends SimpleNode {
     }
 
     if (arraySingleValues != null && arraySingleValues.refersToParent()) {
+      return true;
+    }
+    if (rightBinaryCondition != null && rightBinaryCondition.refersToParent()) {
       return true;
     }
     if (methodCall != null && methodCall.refersToParent()) {
@@ -267,9 +290,12 @@ public class OModifier extends SimpleNode {
     } else if (arrayRange != null) {
       arrayRange.setValue(target, value, ctx);
     } else if (condition != null) {
-      //do nothing
+      //TODO
+      throw new UnsupportedOperationException("SET value on conditional filtering will be supported soon");
     } else if (arraySingleValues != null) {
       arraySingleValues.setValue(currentRecord, target, value, ctx);
+    } else if (rightBinaryCondition != null) {
+      throw new UnsupportedOperationException("SET value on conditional filtering will be supported soon");
     }
   }
 
@@ -300,6 +326,8 @@ public class OModifier extends SimpleNode {
       }
     } else if (arraySingleValues != null) {
       return arraySingleValues.execute(currentRecord, target, ctx);
+    } else if (rightBinaryCondition != null) {
+      return rightBinaryCondition.execute(currentRecord, target, ctx);
     }
     return null;
 
@@ -314,8 +342,11 @@ public class OModifier extends SimpleNode {
         arrayRange.applyRemove(currentValue, originalRecord, ctx);
       } else if (condition != null) {
 //TODO
+        throw new UnsupportedOperationException("Remove on conditional filtering will be supported soon");
       } else if (arraySingleValues != null) {
         arraySingleValues.applyRemove(currentValue, originalRecord, ctx);
+      } else if (rightBinaryCondition != null) {
+        throw new UnsupportedOperationException("Remove on conditional filtering will be supported soon");
       } else if (suffix != null) {
         suffix.applyRemove(currentValue, ctx);
       } else {

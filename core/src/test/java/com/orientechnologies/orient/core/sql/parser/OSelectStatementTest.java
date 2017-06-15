@@ -756,6 +756,22 @@ public class OSelectStatementTest {
     checkRightSyntax("select foo:{*, !out_*, !in_*} from V");
   }
 
+  @Test
+  public void testCollectionFilteringByValue() {
+    checkRightSyntax("select foo[= 'foo'] from V");
+    checkRightSyntax("select foo[like '%foo'] from V");
+    checkRightSyntax("select foo[> 2] from V");
+    checkRightSyntax("select foo[> 2][< 5] from V");
+
+    checkRightSyntax("select foo[ IN ['a', 'b']] from V");
+    checkRightSyntax("select bar[IN (select from foo) ] from V");
+    checkRightSyntax("select bar[IN $a ] from V LET $a = (SELECT FROM V)");
+
+    checkRightSyntax("select foo[not IN ['a', 'b']] from V");
+    checkRightSyntax("select bar[not IN (select from foo) ] from V");
+    checkRightSyntax("select bar[not IN $a ] from V LET $a = (SELECT FROM V)");
+  }
+
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());
     OrientSql osql = new OrientSql(is);
