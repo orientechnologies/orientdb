@@ -481,6 +481,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           listener.onCreate(this);
         } catch (Throwable ignore) {
         }
+    } catch (OStorageExistsException e) {
+      status = STATUS.CLOSED;
+      owner.set(null);
+
+      throw OException.wrapException(new ODatabaseException("Cannot create database '" + getName() + "'"), e);
     } catch (Exception e) {
       // REMOVE THE (PARTIAL) DATABASE
       try {
