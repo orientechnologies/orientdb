@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -258,6 +259,165 @@ public class OClassRemote extends OClassImpl {
 
   protected OPropertyImpl createPropertyInstance(ODocument p) {
     return new OPropertyRemote(this, p);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OClass truncateCluster(String clusterName) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, name);
+    acquireSchemaReadLock();
+    try {
+
+      final String cmd = String.format("truncate cluster %s", clusterName);
+      database.command(cmd);
+    } finally {
+      releaseSchemaReadLock();
+    }
+
+    return this;
+  }
+
+  public OClass setStrictMode(final boolean isStrict) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    acquireSchemaWriteLock();
+    try {
+      final String cmd = String.format("alter class `%s` strictmode %s", name, isStrict);
+      database.command(cmd);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  public OClass setDescription(String iDescription) {
+    if (iDescription != null) {
+      iDescription = iDescription.trim();
+      if (iDescription.isEmpty())
+        iDescription = null;
+    }
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      final String cmd = String.format("alter class `%s` description ?", name);
+      database.command(cmd, iDescription);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  public OClass addClusterId(final int clusterId) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    if (isAbstract()) {
+      throw new OSchemaException("Impossible to associate a cluster to an abstract class class");
+    }
+    acquireSchemaWriteLock();
+    try {
+      final String cmd = String.format("alter class `%s` addcluster %d", name, clusterId);
+      database.command(cmd);
+
+    } finally {
+      releaseSchemaWriteLock();
+    }
+    return this;
+  }
+
+  public OClass removeClusterId(final int clusterId) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    if (clusterIds.length == 1 && clusterId == clusterIds[0])
+      throw new ODatabaseException(" Impossible to remove the last cluster of class '" + getName() + "' drop the class instead");
+
+    acquireSchemaWriteLock();
+    try {
+      final String cmd = String.format("alter class `%s` removecluster %d", name, clusterId);
+      database.command(cmd);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  public void dropProperty(final String propertyName) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    if (database.getTransaction().isActive())
+      throw new IllegalStateException("Cannot drop a property inside a transaction");
+
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
+
+    acquireSchemaWriteLock();
+    try {
+      if (!properties.containsKey(propertyName))
+        throw new OSchemaException("Property '" + propertyName + "' not found in class " + name + "'");
+
+      database.command("drop property " + name + '.' + propertyName);
+
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  @Override
+  public OClass addCluster(final String clusterNameOrId) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    if (isAbstract()) {
+      throw new OSchemaException("Impossible to associate a cluster to an abstract class class");
+    }
+
+    acquireSchemaWriteLock();
+    try {
+      final String cmd = String.format("alter class `%s` addcluster `%s`", name, clusterNameOrId);
+      database.command(cmd);
+
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  public OClass setOverSize(final float overSize) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    acquireSchemaWriteLock();
+    try {
+      // FORMAT FLOAT LOCALE AGNOSTIC
+      final String cmd = String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
+      database.command(cmd);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  public OClass setAbstract(boolean isAbstract) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      final String cmd = String.format("alter class `%s` abstract %s", name, isAbstract);
+      database.command(cmd);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
   }
 
 }

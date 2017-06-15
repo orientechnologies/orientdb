@@ -70,7 +70,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
   private         int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
   protected String name;
   private   String description;
-  private   int[]  clusterIds;
+  protected int[]  clusterIds;
   private List<OClassImpl> superClasses = new ArrayList<OClassImpl>();
   private int[]        polymorphicClusterIds;
   private List<OClass> subclasses;
@@ -424,39 +424,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  public OClass setDescription(String iDescription) {
-    if (iDescription != null) {
-      iDescription = iDescription.trim();
-      if (iDescription.isEmpty())
-        iDescription = null;
-    }
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` description ?", name);
-        database.command(cmd, iDescription);
-      } else if (isDistributedCommand()) {
-
-        final String cmd = String.format("alter class `%s` description ?", name);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute(iDescription);
-        setDescriptionInternal(iDescription);
-      } else
-        setDescriptionInternal(iDescription);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-    return this;
-  }
-
   public String getStreamableName() {
     acquireSchemaReadLock();
     try {
@@ -596,47 +563,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  public void dropProperty(final String propertyName) {
-    if (getDatabase().getTransaction().isActive())
-      throw new IllegalStateException("Cannot drop a property inside a transaction");
-
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
-
-    acquireSchemaWriteLock();
-    try {
-      if (!properties.containsKey(propertyName))
-        throw new OSchemaException("Property '" + propertyName + "' not found in class " + name + "'");
-
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-      if (storage instanceof OStorageProxy) {
-        database.command("drop property " + name + '.' + propertyName);
-      } else if (isDistributedCommand()) {
-        OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
-          @Override
-          public OProperty call() throws Exception {
-            dropPropertyInternal(database, propertyName);
-            return null;
-          }
-        });
-
-        final OCommandSQL commandSQL = new OCommandSQL("drop property " + name + '.' + propertyName);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-      } else
-        OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
-          @Override
-          public OProperty call() throws Exception {
-            dropPropertyInternal(database, propertyName);
-            return null;
-          }
-        });
-
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
 
   @Override
   public void fromStream() {
@@ -822,39 +748,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
       properties.put(iNewName, p);
   }
 
-  public OClass addClusterId(final int clusterId) {
-    final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    if (isAbstract()) {
-      throw new OSchemaException("Impossible to associate a cluster to an abstract class class");
-    }
-
-    acquireSchemaWriteLock();
-    try {
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` addcluster %d", name, clusterId);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-
-        final String cmd = String.format("alter class `%s` addcluster %d", name, clusterId);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        addClusterIdInternal(database, clusterId);
-      } else
-        addClusterIdInternal(database, clusterId);
-
-    } finally {
-      releaseSchemaWriteLock();
-    }
-    return this;
-  }
-
   public static OClass addClusters(final OClass cls, final int iClusters) {
     final String clusterBase = cls.getName().toLowerCase(Locale.ENGLISH) + "_";
     for (int i = 1; i < iClusters; ++i) {
@@ -863,76 +756,8 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     return cls;
   }
 
-  @Override
-  public OClass addCluster(final String clusterNameOrId) {
-    final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
-    if (isAbstract()) {
-      throw new OSchemaException("Impossible to associate a cluster to an abstract class class");
-    }
-
-    acquireSchemaWriteLock();
-    try {
-
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` addcluster `%s`", name, clusterNameOrId);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        final int clusterId = owner.createClusterIfNeeded(database, clusterNameOrId);
-        addClusterIdInternal(database, clusterId);
-
-        final String cmd = String.format("alter class `%s` addcluster `%s`", name, clusterNameOrId);
-
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-      } else {
-        final int clusterId = owner.createClusterIfNeeded(database, clusterNameOrId);
-        addClusterIdInternal(database, clusterId);
-      }
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-    return this;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public OClass truncateCluster(String clusterName) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, name);
-
-    acquireSchemaReadLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("truncate cluster %s", clusterName);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        final String cmd = String.format("truncate cluster %s", clusterName);
-
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-        truncateClusterInternal(clusterName, database);
-      } else
-        truncateClusterInternal(clusterName, database);
-    } finally {
-      releaseSchemaReadLock();
-    }
-
-    return this;
-  }
-
-  private void truncateClusterInternal(final String clusterName, final ODatabaseDocumentInternal database) {
+  protected void truncateClusterInternal(final String clusterName, final ODatabaseDocumentInternal database) {
     final OCluster cluster = database.getStorage().getClusterByName(clusterName);
 
     if (cluster == null) {
@@ -949,39 +774,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     for (OIndex index : getIndexes()) {
       index.rebuild();
     }
-  }
-
-  public OClass removeClusterId(final int clusterId) {
-    final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    if (clusterIds.length == 1 && clusterId == clusterIds[0])
-      throw new ODatabaseException(" Impossible to remove the last cluster of class '" + getName() + "' drop the class instead");
-
-    acquireSchemaWriteLock();
-    try {
-
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` removecluster %d", name, clusterId);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        final String cmd = String.format("alter class `%s` removecluster %d", name, clusterId);
-
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        removeClusterIdInternal(database,clusterId);
-      } else
-        removeClusterIdInternal(database, clusterId);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-    return this;
   }
 
   public Collection<OClass> getSubclasses() {
@@ -1074,35 +866,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  public OClass setOverSize(final float overSize) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        // FORMAT FLOAT LOCALE AGNOSTIC
-        final String cmd = String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        // FORMAT FLOAT LOCALE AGNOSTIC
-        final String cmd = String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setOverSizeInternal(database, overSize);
-      } else
-        setOverSizeInternal(database, overSize);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-    return this;
-  }
-
   @Override
   public float getClassOverSize() {
     acquireSchemaReadLock();
@@ -1122,35 +885,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  public OClass setAbstract(boolean isAbstract) {
-    final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` abstract %s", name, isAbstract);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        final String cmd = String.format("alter class `%s` abstract %s", name, isAbstract);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setAbstractInternal(database, isAbstract);
-      } else
-        setAbstractInternal(database, isAbstract);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-    return this;
-  }
-
   public boolean isStrictMode() {
     acquireSchemaReadLock();
     try {
@@ -1158,36 +892,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     } finally {
       releaseSchemaReadLock();
     }
-  }
-
-  public OClass setStrictMode(final boolean isStrict) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` strictmode %s", name, isStrict);
-        database.command(cmd);
-      } else if (isDistributedCommand()) {
-        final String cmd = String.format("alter class `%s` strictmode %s", name, isStrict);
-
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setStrictModeInternal(isStrict);
-      } else
-        setStrictModeInternal(isStrict);
-
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-    return this;
   }
 
   @Override
@@ -1859,7 +1563,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     hashCode = result;
   }
 
-  private void setOverSizeInternal(ODatabaseDocumentInternal database, final float overSize) {
+  protected void setOverSizeInternal(ODatabaseDocumentInternal database, final float overSize) {
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     acquireSchemaWriteLock();
     try {
@@ -1952,7 +1656,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  private void setDescriptionInternal(final String iDescription) {
+  protected void setDescriptionInternal(final String iDescription) {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -1962,7 +1666,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  private void dropPropertyInternal(ODatabaseDocumentInternal database, final String iPropertyName) {
+  protected void dropPropertyInternal(ODatabaseDocumentInternal database, final String iPropertyName) {
     if (database.getTransaction().isActive())
       throw new IllegalStateException("Cannot drop a property inside a transaction");
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
@@ -1980,7 +1684,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  private OClass addClusterIdInternal(ODatabaseDocumentInternal database, final int clusterId) {
+  protected OClass addClusterIdInternal(ODatabaseDocumentInternal database, final int clusterId) {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -2023,7 +1727,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  private OClass removeClusterIdInternal(ODatabaseDocumentInternal database, final int clusterToRemove) {
+  protected OClass removeClusterIdInternal(ODatabaseDocumentInternal database, final int clusterToRemove) {
 
     acquireSchemaWriteLock();
     try {
@@ -2067,7 +1771,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     return this;
   }
 
-  private void setAbstractInternal(ODatabaseDocumentInternal database, final boolean isAbstract) {
+  protected void setAbstractInternal(ODatabaseDocumentInternal database, final boolean isAbstract) {
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
@@ -2116,7 +1820,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  private void setStrictModeInternal(final boolean iStrict) {
+  protected void setStrictModeInternal(final boolean iStrict) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
@@ -2327,10 +2031,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     Arrays.sort(clusterIds);
 
     return this;
-  }
-
-  private boolean isDistributedCommand() {
-    return getDatabase().getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 
   public static String decodeClassName(String s) {

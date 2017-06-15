@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -9,6 +10,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -370,7 +372,6 @@ public class OClassEmbedded extends OClassImpl {
     return new OPropertyEmbedded(this, p);
   }
 
-
   public OPropertyImpl addPropertyInternal(final String name, final OType type, final OType linkedType, final OClass linkedClass,
       final boolean unsafe) {
     if (name == null || name.length() == 0)
@@ -413,6 +414,274 @@ public class OClassEmbedded extends OClassImpl {
       fireDatabaseMigration(getDatabase(), name, type);
 
     return prop;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OClass truncateCluster(String clusterName) {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, name);
+
+    acquireSchemaReadLock();
+    try {
+      final ODatabaseDocumentInternal database = getDatabase();
+      final OStorage storage = database.getStorage();
+      if (isDistributedCommand(database)) {
+        final String cmd = String.format("truncate cluster %s", clusterName);
+
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+        truncateClusterInternal(clusterName, database);
+      } else
+        truncateClusterInternal(clusterName, database);
+    } finally {
+      releaseSchemaReadLock();
+    }
+
+    return this;
+  }
+
+  public OClass setStrictMode(final boolean isStrict) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      final OStorage storage = database.getStorage();
+
+      if (isDistributedCommand(database)) {
+        final String cmd = String.format("alter class `%s` strictmode %s", name, isStrict);
+
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+
+        setStrictModeInternal(isStrict);
+      } else
+        setStrictModeInternal(isStrict);
+
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  public OClass setDescription(String iDescription) {
+    if (iDescription != null) {
+      iDescription = iDescription.trim();
+      if (iDescription.isEmpty())
+        iDescription = null;
+    }
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      if (isDistributedCommand(database)) {
+
+        final String cmd = String.format("alter class `%s` description ?", name);
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        final OStorage storage = database.getStorage();
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute(iDescription);
+        setDescriptionInternal(iDescription);
+      } else
+        setDescriptionInternal(iDescription);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  public OClass addClusterId(final int clusterId) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    if (isAbstract()) {
+      throw new OSchemaException("Impossible to associate a cluster to an abstract class class");
+    }
+
+    acquireSchemaWriteLock();
+    try {
+      final OStorage storage = database.getStorage();
+
+      if (isDistributedCommand(database)) {
+
+        final String cmd = String.format("alter class `%s` addcluster %d", name, clusterId);
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+
+        addClusterIdInternal(database, clusterId);
+      } else
+        addClusterIdInternal(database, clusterId);
+
+    } finally {
+      releaseSchemaWriteLock();
+    }
+    return this;
+  }
+
+  public OClass removeClusterId(final int clusterId) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    if (clusterIds.length == 1 && clusterId == clusterIds[0])
+      throw new ODatabaseException(" Impossible to remove the last cluster of class '" + getName() + "' drop the class instead");
+
+    acquireSchemaWriteLock();
+    try {
+
+      final OStorage storage = database.getStorage();
+      if (isDistributedCommand(database)) {
+        final String cmd = String.format("alter class `%s` removecluster %d", name, clusterId);
+
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+
+        removeClusterIdInternal(database, clusterId);
+      } else
+        removeClusterIdInternal(database, clusterId);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  public void dropProperty(final String propertyName) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    if (database.getTransaction().isActive())
+      throw new IllegalStateException("Cannot drop a property inside a transaction");
+
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
+
+    acquireSchemaWriteLock();
+    try {
+      if (!properties.containsKey(propertyName))
+        throw new OSchemaException("Property '" + propertyName + "' not found in class " + name + "'");
+
+      final OStorage storage = database.getStorage();
+      if (isDistributedCommand(database)) {
+        OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
+          @Override
+          public OProperty call() throws Exception {
+            dropPropertyInternal(database, propertyName);
+            return null;
+          }
+        });
+
+        final OCommandSQL commandSQL = new OCommandSQL("drop property " + name + '.' + propertyName);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+      } else
+        OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
+          @Override
+          public OProperty call() throws Exception {
+            dropPropertyInternal(database, propertyName);
+            return null;
+          }
+        });
+
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  @Override
+  public OClass addCluster(final String clusterNameOrId) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    if (isAbstract()) {
+      throw new OSchemaException("Impossible to associate a cluster to an abstract class class");
+    }
+
+    acquireSchemaWriteLock();
+    try {
+
+      final OStorage storage = database.getStorage();
+      if (isDistributedCommand(database)) {
+        final int clusterId = owner.createClusterIfNeeded(database, clusterNameOrId);
+        addClusterIdInternal(database, clusterId);
+
+        final String cmd = String.format("alter class `%s` addcluster `%s`", name, clusterNameOrId);
+
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+      } else {
+        final int clusterId = owner.createClusterIfNeeded(database, clusterNameOrId);
+        addClusterIdInternal(database, clusterId);
+      }
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  public OClass setOverSize(final float overSize) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    acquireSchemaWriteLock();
+    try {
+
+      final OStorage storage = database.getStorage();
+
+      if (isDistributedCommand(database)) {
+        // FORMAT FLOAT LOCALE AGNOSTIC
+        final String cmd = String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+
+        setOverSizeInternal(database, overSize);
+      } else
+        setOverSizeInternal(database, overSize);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  public OClass setAbstract(boolean isAbstract) {
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+
+      final OStorage storage = database.getStorage();
+      if (isDistributedCommand(database)) {
+        final String cmd = String.format("alter class `%s` abstract %s", name, isAbstract);
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+
+        setAbstractInternal(database, isAbstract);
+      } else
+        setAbstractInternal(database, isAbstract);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
   }
 
 }
