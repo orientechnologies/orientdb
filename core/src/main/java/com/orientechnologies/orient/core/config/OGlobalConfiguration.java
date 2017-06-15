@@ -587,6 +587,9 @@ public enum OGlobalConfiguration {
 
   QUERY_LIVE_SUPPORT("query.live.support", "Enable/Disable the support of live query. (Use false to disable)", Boolean.class, true),
 
+  LUCENE_QUERY_PAGE_SIZE("lucene.query.pageSize",
+      "Size of the page when fetching data from a lucene index", Long.class, 10000,true),
+
   STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache", Integer.class, 100),
 
   // GRAPH

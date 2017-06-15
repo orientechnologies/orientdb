@@ -100,16 +100,16 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
         switch (queryContext.cfg) {
 
         case NO_FILTER_NO_SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, pageSize);
           break;
         case FILTER_SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query,queryContext.filter, pageSize, queryContext.sort);
           break;
         case FILTER:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query,queryContext.filter, pageSize);
           break;
         case SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, pageSize, queryContext.sort);
           break;
         }
         array = topDocs.scoreDocs;

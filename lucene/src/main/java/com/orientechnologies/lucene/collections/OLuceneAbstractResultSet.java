@@ -23,6 +23,7 @@ import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
@@ -36,7 +37,7 @@ import java.util.Set;
  */
 public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
 
-  protected static Integer PAGE_SIZE = 10000;
+  protected  Integer pageSize = 10000;
   protected final String              indexName;
   protected final Query               query;
   protected final OLuceneIndexEngine  engine;
@@ -47,7 +48,7 @@ public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
     this.engine = engine;
     this.queryContext = queryContext;
     this.query = enhanceQuery(queryContext.query);
-
+    pageSize= OGlobalConfiguration.LUCENE_QUERY_PAGE_SIZE.getValue();
     indexName = engine.indexName();
     fetchFirstBatch();
   }
@@ -62,22 +63,24 @@ public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
       switch (queryContext.cfg) {
 
       case NO_FILTER_NO_SORT:
-        topDocs = queryContext.getSearcher().search(query, PAGE_SIZE);
+        topDocs = queryContext.getSearcher().search(query, pageSize);
         break;
       case FILTER_SORT:
-        topDocs = queryContext.getSearcher().search(query, queryContext.filter, PAGE_SIZE, queryContext.sort);
+        topDocs = queryContext.getSearcher().search(query, queryContext.filter, pageSize, queryContext.sort);
         break;
       case FILTER:
-        topDocs = queryContext.getSearcher().search(query, queryContext.filter, PAGE_SIZE);
+        topDocs = queryContext.getSearcher().search(query, queryContext.filter, pageSize);
         break;
       case SORT:
-        topDocs = queryContext.getSearcher().search(query, PAGE_SIZE, queryContext.sort);
+        topDocs = queryContext.getSearcher().search(query, pageSize, queryContext.sort);
         break;
       }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
     }
   }
+
+
 
   @Override
   public boolean isEmpty() {
