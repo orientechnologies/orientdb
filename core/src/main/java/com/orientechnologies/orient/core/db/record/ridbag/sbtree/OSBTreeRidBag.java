@@ -515,6 +515,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
+  public OSBTreeRidBag(OBonsaiCollectionPointer pointer) {
+    collectionPointer = pointer;
+  }
+
   public OSBTreeRidBag() {
     collectionPointer = null;
   }
@@ -1120,6 +1124,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (tree instanceof OSBTreeBonsaiLocal) {
       ((OSBTreeBonsaiLocal) tree).debugPrintBucket(writer);
     }
+  }
+
+  public NavigableMap<OIdentifiable, Change> getChanges() {
+    return changes;
   }
 
   @Override

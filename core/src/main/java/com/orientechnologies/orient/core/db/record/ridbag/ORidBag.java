@@ -96,6 +96,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     init();
   }
 
+  public ORidBag(OBonsaiCollectionPointer pointer) {
+    delegate = new OSBTreeRidBag(pointer);
+  }
+
   private ORidBag(final byte[] stream) {
     fromStream(stream);
   }
@@ -453,6 +457,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   public void fireCollectionChangedEvent(OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
     delegate.fireCollectionChangedEvent(event);
   }
+
 
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {

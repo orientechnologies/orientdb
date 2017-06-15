@@ -28,10 +28,12 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -322,6 +324,52 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     return value;
   }
 
+  private void writeRidBag(BytesContainer bytes, ORidBag bag) {
+    if (bag.isEmbedded()) {
+      bytes.bytes[bytes.alloc(1)] = 1;
+      OVarIntSerializer.write(bytes, bag.size());
+      Iterator<OIdentifiable> iterator = bag.rawIterator();
+      while (iterator.hasNext()) {
+        OIdentifiable itemValue = iterator.next();
+        if (itemValue == null)
+          writeNullLink(bytes);
+        else
+          writeOptimizedLink(bytes, itemValue);
+      }
+    } else {
+      bytes.bytes[bytes.alloc(1)] = 2;
+      OBonsaiCollectionPointer pointer = bag.getPointer();
+      OVarIntSerializer.write(bytes, pointer.getFileId());
+      OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageIndex());
+      OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageOffset());
+      bag.getChanges();
+    }
+  }
+
+  private ORidBag readRidBag(BytesContainer bytes) {
+    byte b = bytes.bytes[bytes.offset];
+    bytes.skip(1);
+    if (b == 1) {
+      ORidBag bag = new ORidBag();
+      int size = OVarIntSerializer.readAsInteger(bytes);
+      for (int i = 0; i < size; i++) {
+        OIdentifiable id = readOptimizedLink(bytes);
+        if (id.equals(NULL_RECORD_ID))
+          bag.add(null);
+        else
+          bag.add(id);
+      }
+      return bag;
+    } else {
+      long fileId = OVarIntSerializer.readAsLong(bytes);
+      long pageIndex = OVarIntSerializer.readAsLong(bytes);
+      int pageOffset = OVarIntSerializer.readAsInteger(bytes);
+      //TODO  MANAGE Changes
+      OBonsaiCollectionPointer pointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
+      return new ORidBag(pointer);
+    }
+  }
+
   private byte[] readBinary(BytesContainer bytes) {
     int n = OVarIntSerializer.readAsInteger(bytes);
     byte[] newValue = new byte[n];
@@ -548,8 +596,6 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
   @SuppressWarnings("unchecked")
   private int writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
-    final int[] pos = new int[map.size()];
-    Entry<Object, Object> values[] = new Entry[map.size()];
     final int fullPos = OVarIntSerializer.write(bytes, map.size());
     for (Entry<Object, Object> entry : map.entrySet()) {
       writeString(bytes, entry.getKey().toString());
