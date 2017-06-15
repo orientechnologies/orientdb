@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 /**
  * Created by tglman on 13/06/17.
@@ -88,8 +87,8 @@ public class OSharedContextEmbedded extends OSharedContext {
     scheduler.create(database);
 
     // CREATE BASE VERTEX AND EDGE CLASSES
-    schema.createClass("V");
-    schema.createClass("E");
+    schema.createClass(database, "V");
+    schema.createClass(database, "E");
     loaded = true;
   }
 }

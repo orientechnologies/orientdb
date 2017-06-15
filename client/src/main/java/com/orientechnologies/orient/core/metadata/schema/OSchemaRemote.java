@@ -20,7 +20,7 @@ public class OSchemaRemote extends OSchemaShared {
   }
 
   @Override
-  public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
+  public OClass getOrCreateClass(ODatabaseDocumentInternal database, String iClassName, OClass... superClasses) {
     if (iClassName == null)
       return null;
 
@@ -37,17 +37,17 @@ public class OSchemaRemote extends OSchemaShared {
 
     int[] clusterIds = null;
 
-    acquireSchemaWriteLock();
+    acquireSchemaWriteLock(database);
     try {
       cls = classes.get(iClassName.toLowerCase(Locale.ENGLISH));
       if (cls != null)
         return cls;
 
-      cls = createClass(iClassName, clusterIds, superClasses);
+      cls = createClass(database, iClassName, clusterIds, superClasses);
 
       addClusterClassMap(cls);
     } finally {
-      releaseSchemaWriteLock();
+      releaseSchemaWriteLock(database);
     }
 
     return cls;
@@ -57,21 +57,18 @@ public class OSchemaRemote extends OSchemaShared {
     return new OClassRemote(this, c, (String) c.field("name"));
   }
 
-
-  public OClass createClass(final String className, int[] clusterIds, OClass... superClasses) {
+  public OClass createClass(ODatabaseDocumentInternal database, final String className, int[] clusterIds, OClass... superClasses) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
     if (wrongCharacter != null)
       throw new OSchemaException(
           "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '" + className + "'");
     OClass result;
 
-    final ODatabaseDocumentInternal db = getDatabase();
-
-    db.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
     if (superClasses != null)
       OClassImpl.checkParametersConflict(Arrays.asList(superClasses));
 
-    acquireSchemaWriteLock();
+    acquireSchemaWriteLock(database);
     try {
 
       final String key = className.toLowerCase(Locale.ENGLISH);
@@ -118,26 +115,26 @@ public class OSchemaRemote extends OSchemaShared {
         }
       }
 
-      db.command(cmd.toString());
+      database.command(cmd.toString());
       reload();
 
       result = classes.get(className.toLowerCase(Locale.ENGLISH));
 
       // WAKE UP DB LIFECYCLE LISTENER
       for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
-        it.next().onCreateClass(getDatabase(), result);
+        it.next().onCreateClass(database, result);
 
-      for (Iterator<ODatabaseListener> it = db.getListeners().iterator(); it.hasNext(); )
-        it.next().onCreateClass(getDatabase(), result);
+      for (Iterator<ODatabaseListener> it = database.getListeners().iterator(); it.hasNext(); )
+        it.next().onCreateClass(database, result);
 
     } finally {
-      releaseSchemaWriteLock();
+      releaseSchemaWriteLock(database);
     }
 
     return result;
   }
 
-  public OClass createClass(final String className, int clusters, OClass... superClasses) {
+  public OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters, OClass... superClasses) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
     if (wrongCharacter != null)
       throw new OSchemaException(
@@ -145,11 +142,10 @@ public class OSchemaRemote extends OSchemaShared {
 
     OClass result;
 
-    final ODatabaseDocumentInternal db = getDatabase();
-    db.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
     if (superClasses != null)
       OClassImpl.checkParametersConflict(Arrays.asList(superClasses));
-    acquireSchemaWriteLock();
+    acquireSchemaWriteLock(database);
     try {
 
       final String key = className.toLowerCase(Locale.ENGLISH);
@@ -185,19 +181,19 @@ public class OSchemaRemote extends OSchemaShared {
         cmd.append(clusters);
       }
 
-      db.command(cmd.toString());
+      database.command(cmd.toString());
       reload();
       result = classes.get(className.toLowerCase(Locale.ENGLISH));
 
       // WAKE UP DB LIFECYCLE LISTENER
       for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
-        it.next().onCreateClass(getDatabase(), result);
+        it.next().onCreateClass(database, result);
 
-      for (Iterator<ODatabaseListener> it = db.getListeners().iterator(); it.hasNext(); )
-        it.next().onCreateClass(getDatabase(), result);
+      for (Iterator<ODatabaseListener> it = database.getListeners().iterator(); it.hasNext(); )
+        it.next().onCreateClass(database, result);
 
     } finally {
-      releaseSchemaWriteLock();
+      releaseSchemaWriteLock(database);
     }
 
     return result;
@@ -217,18 +213,17 @@ public class OSchemaRemote extends OSchemaShared {
     }
   }
 
-  public void dropClass(final String className) {
-    final ODatabaseDocumentInternal db = getDatabase();
+  public void dropClass(ODatabaseDocumentInternal database, final String className) {
 
-    acquireSchemaWriteLock();
+    acquireSchemaWriteLock(database);
     try {
-      if (getDatabase().getTransaction().isActive())
+      if (database.getTransaction().isActive())
         throw new IllegalStateException("Cannot drop a class inside a transaction");
 
       if (className == null)
         throw new IllegalArgumentException("Class name is null");
 
-      getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
+      database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
       final String key = className.toLowerCase(Locale.ENGLISH);
 
@@ -244,15 +239,19 @@ public class OSchemaRemote extends OSchemaShared {
       final StringBuilder cmd = new StringBuilder("drop class ");
       cmd.append(className);
       cmd.append(" unsafe");
-      db.command(cmd.toString());
+      database.command(cmd.toString());
       reload();
 
       // FREE THE RECORD CACHE
-      getDatabase().getLocalCache().freeCluster(cls.getDefaultClusterId());
+      database.getLocalCache().freeCluster(cls.getDefaultClusterId());
 
     } finally {
-      releaseSchemaWriteLock();
+      releaseSchemaWriteLock(database);
     }
   }
 
+  @Override
+  public void checkEmbedded() {
+    throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
+  }
 }

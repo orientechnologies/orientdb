@@ -180,11 +180,12 @@ public class OClassRemote extends OClassImpl {
 
   @Override
   public OClass addSuperClass(final OClass superClass) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     checkParametersConflict(superClass);
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
+
       final String cmd = String.format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
       database.command(cmd);
 
@@ -196,10 +197,10 @@ public class OClassRemote extends OClassImpl {
 
   @Override
   public OClass removeSuperClass(OClass superClass) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
       final String cmd = String.format("alter class `%s` superclass -`%s`", name, superClass != null ? superClass.getName() : null);
       database.command(cmd);
     } finally {
@@ -211,10 +212,10 @@ public class OClassRemote extends OClassImpl {
   public OClass setName(final String name) {
     if (getName().equals(name))
       return this;
-
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
-    OClass oClass = getDatabase().getMetadata().getSchema().getClass(name);
+    OClass oClass = database.getMetadata().getSchema().getClass(name);
     if (oClass != null) {
       String error = String.format("Cannot rename class %s to %s. A Class with name %s exists", this.name, name, name);
       throw new OSchemaException(error);
@@ -224,7 +225,6 @@ public class OClassRemote extends OClassImpl {
           "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '" + name + "'");
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
 
       final String cmd = String.format("alter class `%s` name `%s`", this.name, name);
       database.command(cmd);
@@ -242,11 +242,11 @@ public class OClassRemote extends OClassImpl {
       if (shortName.isEmpty())
         shortName = null;
     }
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    final ODatabaseDocumentInternal database = getDatabase();
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
       final String cmd = String.format("alter class `%s` shortname `%s`", name, shortName);
       database.command(cmd);
     } finally {

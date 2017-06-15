@@ -27,7 +27,6 @@ import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -161,8 +160,8 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     return clusterSelectionFactory;
   }
 
-  public int countClasses() {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
+  public int countClasses(ODatabaseDocumentInternal database) {
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
 
     acquireSchemaReadLock();
     try {
@@ -182,61 +181,57 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     }
   }
 
-  public OClass createClass(final String className) {
-    return createClass(className, (OClass) null, (int[]) null);
+  public OClass createClass(ODatabaseDocumentInternal database, final String className) {
+    return createClass(database, className, (OClass) null, (int[]) null);
   }
 
-  public OClass createClass(final String iClassName, final OClass iSuperClass) {
-    return createClass(iClassName, iSuperClass, (int[]) null);
+  public OClass createClass(ODatabaseDocumentInternal database, final String iClassName, final OClass iSuperClass) {
+    return createClass(database, iClassName, iSuperClass, (int[]) null);
   }
 
-  public OClass createClass(String iClassName, OClass... superClasses) {
-    return createClass(iClassName, (int[]) null, superClasses);
+  public OClass createClass(ODatabaseDocumentInternal database, String iClassName, OClass... superClasses) {
+    return createClass(database, iClassName, (int[]) null, superClasses);
   }
 
-  public OClass getOrCreateClass(final String iClassName) {
-    return getOrCreateClass(iClassName, (OClass) null);
+  public OClass getOrCreateClass(ODatabaseDocumentInternal database, final String iClassName) {
+    return getOrCreateClass(database, iClassName, (OClass) null);
   }
 
-  public OClass getOrCreateClass(final String iClassName, final OClass superClass) {
-    return getOrCreateClass(iClassName, superClass == null ? new OClass[0] : new OClass[] { superClass });
+  public OClass getOrCreateClass(ODatabaseDocumentInternal database, final String iClassName, final OClass superClass) {
+    return getOrCreateClass(database, iClassName, superClass == null ? new OClass[0] : new OClass[] { superClass });
   }
 
-  public abstract OClass getOrCreateClass(final String iClassName, final OClass... superClasses);
+  public abstract OClass getOrCreateClass(ODatabaseDocumentInternal database, final String iClassName, final OClass... superClasses);
 
-  public OClass createAbstractClass(final String className) {
-    return createClass(className, null, new int[] { -1 });
+  public OClass createAbstractClass(ODatabaseDocumentInternal database, final String className) {
+    return createClass(database, className, null, new int[] { -1 });
   }
 
-  public OClass createAbstractClass(final String className, final OClass superClass) {
-    return createClass(className, superClass, new int[] { -1 });
+  public OClass createAbstractClass(ODatabaseDocumentInternal database, final String className, final OClass superClass) {
+    return createClass(database, className, superClass, new int[] { -1 });
   }
 
-  public OClass createAbstractClass(String iClassName, OClass... superClasses) {
-    return createClass(iClassName, new int[] { -1 }, superClasses);
+  public OClass createAbstractClass(ODatabaseDocumentInternal database, String iClassName, OClass... superClasses) {
+    return createClass(database, iClassName, new int[] { -1 }, superClasses);
   }
 
-  public OClass createClass(final String className, final OClass superClass, int[] clusterIds) {
-    return createClass(className, clusterIds, superClass);
+  public OClass createClass(ODatabaseDocumentInternal database, final String className, final OClass superClass, int[] clusterIds) {
+    return createClass(database, className, clusterIds, superClass);
   }
 
-  public abstract OClass createClass(final String className, int[] clusterIds, OClass... superClasses);
+  public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int[] clusterIds, OClass... superClasses);
 
-  public abstract OClass createClass(final String className, int clusters, OClass... superClasses);
+  public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters, OClass... superClasses);
 
-  public void checkEmbedded(final OStorage storage) {
-    if (!(storage.getUnderlying() instanceof OAbstractPaginatedStorage))
-      throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
-  }
+  public abstract void checkEmbedded();
 
-  void addClusterForClass(final int clusterId, final OClass cls) {
-    acquireSchemaWriteLock();
+  void addClusterForClass(ODatabaseDocumentInternal database, final int clusterId, final OClass cls) {
+    acquireSchemaWriteLock(database);
     try {
       if (clusterId < 0)
         return;
 
-      final OStorage storage = getDatabase().getStorage();
-      checkEmbedded(storage);
+      checkEmbedded();
 
       final OClass existingCls = clustersToClasses.get(clusterId);
       if (existingCls != null && !cls.equals(existingCls))
@@ -245,22 +240,21 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
       clustersToClasses.put(clusterId, cls);
     } finally {
-      releaseSchemaWriteLock();
+      releaseSchemaWriteLock(database);
     }
   }
 
-  void removeClusterForClass(int clusterId, OClass cls) {
-    acquireSchemaWriteLock();
+  void removeClusterForClass(ODatabaseDocumentInternal database, int clusterId, OClass cls) {
+    acquireSchemaWriteLock(database);
     try {
       if (clusterId < 0)
         return;
 
-      final OStorage storage = getDatabase().getStorage();
-      checkEmbedded(storage);
+      checkEmbedded();
 
       clustersToClasses.remove(clusterId);
     } finally {
-      releaseSchemaWriteLock();
+      releaseSchemaWriteLock(database);
     }
   }
 
@@ -298,7 +292,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
    * 
    * @see com.orientechnologies.orient.core.metadata.schema.OSchema#dropClass(java.lang.String)
    */
-  public abstract void dropClass(final String className);
+  public abstract void dropClass(ODatabaseDocumentInternal database, final String className);
 
   /**
    * Reloads the schema inside a storage's shared lock.
@@ -364,24 +358,24 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     rwSpinLock.releaseReadLock();
   }
 
-  private boolean isDistributed() {
-    return getDatabase().getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
+  private boolean isDistributed(ODatabaseDocumentInternal database) {
+    return database.getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 
-  public void acquireSchemaWriteLock() {
-    if (isDistributed()) {
-      ((OAutoshardedStorage) getDatabase().getStorage()).acquireDistributedExclusiveLock(0);
+  public void acquireSchemaWriteLock(ODatabaseDocumentInternal database) {
+    if (isDistributed(database)) {
+      ((OAutoshardedStorage) database.getStorage()).acquireDistributedExclusiveLock(0);
       acquiredDistributed = true;
     }
     rwSpinLock.acquireWriteLock();
     modificationCounter.increment();
   }
 
-  public void releaseSchemaWriteLock() {
-    releaseSchemaWriteLock(true);
+  public void releaseSchemaWriteLock(ODatabaseDocumentInternal database) {
+    releaseSchemaWriteLock(database, true);
   }
 
-  public void releaseSchemaWriteLock(final boolean iSave) {
+  public void releaseSchemaWriteLock(ODatabaseDocumentInternal database, final boolean iSave) {
     int count;
     boolean releaseDistributed = acquiredDistributed;
     try {
@@ -390,8 +384,8 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
         // by sql commands and we need to reload local replica
 
         if (iSave)
-          if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
-            saveInternal();
+          if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+            saveInternal(database);
           else
             reload();
         else
@@ -403,25 +397,25 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       modificationCounter.decrement();
       count = modificationCounter.intValue();
       rwSpinLock.releaseWriteLock();
-      if (isDistributed() && releaseDistributed) {
-        ((OAutoshardedStorage) getDatabase().getStorage()).releaseDistributedExclusiveLock();
+      if (isDistributed(database) && releaseDistributed) {
+        ((OAutoshardedStorage) database.getStorage()).releaseDistributedExclusiveLock();
       }
     }
     assert count >= 0;
 
-    if (count == 0 && getDatabase().getStorage().getUnderlying() instanceof OStorageProxy) {
-      getDatabase().getStorage().reload();
+    if (count == 0 && database.getStorage().getUnderlying() instanceof OStorageProxy) {
+      database.getStorage().reload();
     }
   }
 
-  void changeClassName(final String oldName, final String newName, final OClass cls) {
+  void changeClassName(ODatabaseDocumentInternal database, final String oldName, final String newName, final OClass cls) {
 
     if (oldName != null && oldName.equalsIgnoreCase(newName))
       throw new IllegalArgumentException("Class '" + oldName + "' cannot be renamed with the same name");
 
-    acquireSchemaWriteLock();
+    acquireSchemaWriteLock(database);
     try {
-      checkEmbedded(getDatabase().getStorage());
+      checkEmbedded();
 
       if (newName != null && classes.containsKey(newName.toLowerCase(Locale.ENGLISH)))
         throw new IllegalArgumentException("Class '" + newName + "' is already present in schema");
@@ -432,7 +426,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
         classes.put(newName.toLowerCase(Locale.ENGLISH), cls);
 
     } finally {
-      releaseSchemaWriteLock();
+      releaseSchemaWriteLock(database);
     }
   }
 
@@ -538,8 +532,9 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
         blobClusters = document.field("blobClusters");
 
       if (!hasGlobalProperties) {
-        if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
-          saveInternal();
+        ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+        if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+          saveInternal(database);
       }
 
     } finally {
@@ -586,8 +581,8 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     }
   }
 
-  public Collection<OClass> getClasses() {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
+  public Collection<OClass> getClasses(ODatabaseDocumentInternal database) {
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
     acquireSchemaReadLock();
     try {
       return new HashSet<OClass>(classes.values());
@@ -596,12 +591,12 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     }
   }
 
-  public Set<OClass> getClassesRelyOnCluster(final String clusterName) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
+  public Set<OClass> getClassesRelyOnCluster(ODatabaseDocumentInternal database, final String clusterName) {
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
 
     acquireSchemaReadLock();
     try {
-      final int clusterId = getDatabase().getClusterIdByName(clusterName);
+      final int clusterId = database.getClusterIdByName(clusterName);
       final Set<OClass> result = new HashSet<OClass>();
       for (OClass c : classes.values()) {
         if (OArrays.contains(c.getPolymorphicClusterIds(), clusterId))
@@ -728,14 +723,13 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     return global;
   }
 
-  protected boolean executeThroughDistributedStorage() {
-    return getDatabase().getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
+  protected boolean executeThroughDistributedStorage(ODatabaseDocumentInternal database) {
+    return database.getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 
-  private void saveInternal() {
-    final ODatabaseDocument db = getDatabase();
+  private void saveInternal(ODatabaseDocumentInternal database) {
 
-    if (db.getTransaction().isActive()) {
+    if (database.getTransaction().isActive()) {
       reload(null, true);
       throw new OSchemaException("Cannot change the schema while a transaction is active. Schema changes are not transactional");
     }
@@ -769,10 +763,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   }
 
-  protected ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
-
   private void ensurePropertiesSize(int size) {
     while (properties.size() <= size)
       properties.add(null);
@@ -785,47 +775,47 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     }
   }
 
-  public int addBlobCluster(int clusterId) {
-    acquireSchemaWriteLock();
+  public int addBlobCluster(ODatabaseDocumentInternal database, int clusterId) {
+    acquireSchemaWriteLock(database);
     try {
       checkClusterCanBeAdded(clusterId, null);
       blobClusters.add(clusterId);
     } finally {
-      releaseSchemaWriteLock();
+      releaseSchemaWriteLock(database);
     }
     return clusterId;
   }
 
-  public void removeBlobCluster(String clusterName) {
-    acquireSchemaWriteLock();
+  public void removeBlobCluster(ODatabaseDocumentInternal database, String clusterName) {
+    acquireSchemaWriteLock(database);
     try {
-      int clusterId = getClusterId(clusterName);
+      int clusterId = getClusterId(database, clusterName);
       blobClusters.remove(clusterId);
     } finally {
-      releaseSchemaWriteLock();
+      releaseSchemaWriteLock(database);
     }
   }
 
-  protected int getClusterId(final String stringValue) {
+  protected int getClusterId(ODatabaseDocumentInternal database, final String stringValue) {
     int clId;
     try {
       clId = Integer.parseInt(stringValue);
     } catch (NumberFormatException e) {
-      clId = getDatabase().getClusterIdByName(stringValue);
+      clId = database.getClusterIdByName(stringValue);
     }
     return clId;
   }
 
-  protected int createClusterIfNeeded(String nameOrId) {
+  protected int createClusterIfNeeded(ODatabaseDocumentInternal database, String nameOrId) {
     final String[] parts = nameOrId.split(" ");
-    int clId = getClusterId(parts[0]);
+    int clId = getClusterId(database, parts[0]);
 
     if (clId == NOT_EXISTENT_CLUSTER_ID) {
       try {
         clId = Integer.parseInt(parts[0]);
         throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
       } catch (NumberFormatException e) {
-        clId = getDatabase().addCluster(parts[0]);
+        clId = database.addCluster(parts[0]);
       }
     }
 
