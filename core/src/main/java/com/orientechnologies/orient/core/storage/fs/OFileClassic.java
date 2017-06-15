@@ -842,7 +842,7 @@ public class OFileClassic implements OFile, OClosableItem {
   }
 
   private void reopenFile(int attempt, IOException e) throws IOException {
-    if (attempt > 1 && e != null)
+    if (attempt > 1 && e != null || e instanceof EOFException /* EOF is considered unrecoverable */)
       throw e;
 
     acquireWriteLock();

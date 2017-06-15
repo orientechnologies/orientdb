@@ -701,8 +701,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           pagePointers = loadFileContent(intId, startPageIndex, pageCount, verifyChecksums);
 
           if (pagePointers != null) {
-            if (pagePointers.length == 0)
-              return pagePointers;
+            assert pagePointers.length > 0;
 
             for (int n = 0; n < pagePointers.length; n++) {
               pagePointers[n].incrementReadersReferrer();
