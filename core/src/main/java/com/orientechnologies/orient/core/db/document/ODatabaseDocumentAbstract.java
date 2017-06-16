@@ -1485,6 +1485,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     try {
       checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(rid.getClusterId()));
 
+      // either regular or micro tx must be active or both inactive
+      assert !(getTransaction().isActive() && (microTransaction != null && microTransaction.isActive()));
+
       // SEARCH IN LOCAL TX
       ORecord record = getTransaction().getRecord(rid);
       if (record == OBasicTransaction.DELETED_RECORD)
