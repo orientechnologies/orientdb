@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
@@ -96,8 +97,14 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     init();
   }
 
-  public ORidBag(OBonsaiCollectionPointer pointer) {
-    delegate = new OSBTreeRidBag(pointer);
+  public ORidBag(UUID uuid) {
+    init();
+    this.uuid = uuid;
+  }
+
+  public ORidBag(OBonsaiCollectionPointer pointer, Map<OIdentifiable, Change> changes, UUID uuid) {
+    delegate = new OSBTreeRidBag(pointer, changes);
+    this.uuid = uuid;
   }
 
   private ORidBag(final byte[] stream) {
@@ -197,6 +204,42 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   public int toStream(BytesContainer bytesContainer) throws OSerializationException {
 
+    checkAndConvert();
+
+    final UUID oldUuid = uuid;
+    final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+    if (sbTreeCollectionManager != null)
+      uuid = sbTreeCollectionManager.listenForChanges(this);
+    else
+      uuid = null;
+
+    boolean hasUuid = uuid != null;
+
+    final int serializedSize =
+        OByteSerializer.BYTE_SIZE + delegate.getSerializedSize() + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
+    int pointer = bytesContainer.alloc(serializedSize);
+    int offset = pointer;
+    final byte[] stream = bytesContainer.bytes;
+
+    byte configByte = 0;
+    if (isEmbedded())
+      configByte |= 1;
+
+    if (hasUuid)
+      configByte |= 2;
+
+    stream[offset++] = configByte;
+
+    if (hasUuid) {
+      OUUIDSerializer.INSTANCE.serialize(uuid, stream, offset);
+      offset += OUUIDSerializer.UUID_SIZE;
+    }
+
+    delegate.serialize(stream, offset, oldUuid);
+    return pointer;
+  }
+
+  private void checkAndConvert() {
     final ORecordSerializationContext context = ORecordSerializationContext.getContext();
     if (context != null) {
       if (isEmbedded() && ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager() != null
@@ -240,38 +283,6 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         oldDelegate.requestDelete();
       }
     }
-
-    final UUID oldUuid = uuid;
-    final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
-    if (sbTreeCollectionManager != null)
-      uuid = sbTreeCollectionManager.listenForChanges(this);
-    else
-      uuid = null;
-
-    boolean hasUuid = uuid != null;
-
-    final int serializedSize =
-        OByteSerializer.BYTE_SIZE + delegate.getSerializedSize() + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
-    int pointer = bytesContainer.alloc(serializedSize);
-    int offset = pointer;
-    final byte[] stream = bytesContainer.bytes;
-
-    byte configByte = 0;
-    if (isEmbedded())
-      configByte |= 1;
-
-    if (hasUuid)
-      configByte |= 2;
-
-    stream[offset++] = configByte;
-
-    if (hasUuid) {
-      OUUIDSerializer.INSTANCE.serialize(uuid, stream, offset);
-      offset += OUUIDSerializer.UUID_SIZE;
-    }
-
-    delegate.serialize(stream, offset, oldUuid);
-    return pointer;
   }
 
   @Override
@@ -458,6 +469,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     delegate.fireCollectionChangedEvent(event);
   }
 
+
+  public NavigableMap<OIdentifiable, Change> getChanges() {
+    return delegate.getChanges();
+  }
 
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {

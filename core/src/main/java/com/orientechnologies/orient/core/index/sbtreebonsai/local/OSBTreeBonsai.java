@@ -24,8 +24,8 @@ import java.util.Collection;
 import java.util.Map;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
@@ -116,7 +116,7 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
    *          Bag changes
    * @return real bag size
    */
-  int getRealBagSize(Map<K, OSBTreeRidBag.Change> changes);
+  int getRealBagSize(Map<K, Change> changes);
 
   OBinarySerializer<K> getKeySerializer();
 
