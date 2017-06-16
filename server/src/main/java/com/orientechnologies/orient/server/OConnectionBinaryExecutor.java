@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -1141,29 +1142,23 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         rs = database.execute(request.getLanguage(), request.getStatement(), request.getPositionalParameters());
       }
     }
-    OQueryResponse result = new OQueryResponse();
 
     //copy the result-set to make sure that the execution is successful
-    OInternalResultSet rsCopy = new OInternalResultSet();
-    rsCopy.setPlan(rs.getExecutionPlan().orElse(null));
+    List<OResult> rsCopy = new ArrayList<>(request.getRecordsPerPage());
     int i = 0;
     while (rs.hasNext() && i < request.getRecordsPerPage()) {
       rsCopy.add(rs.next());
       i++;
     }
 
-    OLocalResultSetLifecycleDecorator item = new OLocalResultSetLifecycleDecorator(rsCopy,
-        ((OLocalResultSetLifecycleDecorator) rs).getQueryId());
-
-    item.setHasNextPage(rs.hasNext());
+    boolean hasNext = rs.hasNext();
     boolean txChanges = false;
     if (database.getTransaction().isActive()) {
       txChanges = ((OTransactionOptimistic) database.getTransaction()).isChanged();
     }
 
-    result.setResult(item);
-    result.setTxChanges(txChanges);
-    return result;
+    return new OQueryResponse(((OLocalResultSetLifecycleDecorator) rs).getQueryId(), txChanges, rsCopy, rs.getExecutionPlan(),
+        hasNext, rs.getQueryStats());
   }
 
   @Override
@@ -1186,23 +1181,16 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     OResultSet rs = connection.getDatabase().getActiveQuery(request.getQueryId());
 
-    OQueryResponse result = new OQueryResponse();
-
     //copy the result-set to make sure that the execution is successful
-    OInternalResultSet rsCopy = new OInternalResultSet();
-    rsCopy.setPlan(rs.getExecutionPlan().orElse(null));
+    List<OResult> rsCopy = new ArrayList<>(request.getRecordsPerPage());
     int i = 0;
     while (rs.hasNext() && i < request.getRecordsPerPage()) {
       rsCopy.add(rs.next());
       i++;
     }
-
-    OLocalResultSetLifecycleDecorator item = new OLocalResultSetLifecycleDecorator(rsCopy,
-        ((OLocalResultSetLifecycleDecorator) rs).getQueryId());
-
-    item.setHasNextPage(rs.hasNext());
-    result.setResult(item);
-    return result;
+    boolean hasNext = rs.hasNext();
+    return new OQueryResponse(((OLocalResultSetLifecycleDecorator) rs).getQueryId(), false, rsCopy, rs.getExecutionPlan(), hasNext,
+        rs.getQueryStats());
   }
 
   @Override

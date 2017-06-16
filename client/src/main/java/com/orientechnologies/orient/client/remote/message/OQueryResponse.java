@@ -2,20 +2,13 @@ package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.sql.executor.*;
-import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 01/12/16.
@@ -28,51 +21,52 @@ public class OQueryResponse implements OBinaryResponse {
   public static final byte RECORD_TYPE_ELEMENT    = 3;
   public static final byte RECORD_TYPE_PROJECTION = 4;
 
-  private OResultSet result;
-  private boolean    txChanges;
+  private String                   queryId;
+  private boolean                  txChanges;
+  private List<OResult>            result;
+  private Optional<OExecutionPlan> executionPlan;
+  private boolean                  hasNextPage;
+  private Map<String, Long>        queryStats;
+
+  public OQueryResponse(String queryId, boolean txChanges, List<OResult> result, Optional<OExecutionPlan> executionPlan,
+      boolean hasNextPage, Map<String, Long> queryStats) {
+    this.queryId = queryId;
+    this.txChanges = txChanges;
+    this.result = result;
+    this.executionPlan = executionPlan;
+    this.hasNextPage = hasNextPage;
+    this.queryStats = queryStats;
+  }
 
   public OQueryResponse() {
   }
 
   @Override
   public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-    if (!(result instanceof OLocalResultSetLifecycleDecorator)) {
-      throw new IllegalStateException();
-    }
-    channel.writeString(((OLocalResultSetLifecycleDecorator) result).getQueryId());
+    channel.writeString(queryId);
     channel.writeBoolean(txChanges);
-
-    writeExecutionPlan(result.getExecutionPlan(), channel, serializer);
-    while (result.hasNext()) {
-      OResult row = result.next();
-      channel.writeBoolean(true);
-      OMessageHelper.writeResult(row, channel, serializer);
+    writeExecutionPlan(executionPlan, channel, serializer);
+    channel.writeInt(result.size());
+    for (OResult res : result) {
+      OMessageHelper.writeResult(res, channel, serializer);
     }
-    channel.writeBoolean(false);
-    channel.writeBoolean(((OLocalResultSetLifecycleDecorator) result).hasNextPage());
-    writeQueryStats(result.getQueryStats(), channel);
+    channel.writeBoolean(hasNextPage);
+    writeQueryStats(queryStats, channel);
   }
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    ORemoteResultSet rs = new ORemoteResultSet(
-        (ODatabaseDocumentRemote) ODatabaseDocumentTxInternal.getInternal(ODatabaseRecordThreadLocal.INSTANCE.get()));
-    doRead(network, rs);
-    this.result = rs;
-  }
-
-  protected void doRead(OChannelDataInput network, ORemoteResultSet rs) throws IOException {
-    rs.setQueryId(network.readString());
+    queryId = network.readString();
     txChanges = network.readBoolean();
-    rs.setExecutionPlan(readExecutionPlan(network));
-    boolean hasNext = network.readBoolean();
-    while (hasNext) {
-      OResult item = OMessageHelper.readResult(network);
-      rs.add(item);
-      hasNext = network.readBoolean();
+    executionPlan = readExecutionPlan(network);
+    int size = network.readInt();
+    this.result = new ArrayList<>(size);
+    while (size-- > 0) {
+      result.add(OMessageHelper.readResult(network));
     }
-    rs.setHasNextPage(network.readBoolean());
-    rs.setQueryStats(readQueryStats(network));
+    this.hasNextPage = network.readBoolean();
+    this.queryStats = readQueryStats(network);
+
   }
 
   private void writeQueryStats(Map<String, Long> queryStats, OChannelDataOutput channel) throws IOException {
@@ -108,10 +102,10 @@ public class OQueryResponse implements OBinaryResponse {
     }
   }
 
-  private OExecutionPlan readExecutionPlan(OChannelDataInput network) throws IOException {
+  private Optional<OExecutionPlan> readExecutionPlan(OChannelDataInput network) throws IOException {
     boolean present = network.readBoolean();
     if (!present) {
-      return null;
+      return Optional.empty();
     }
     OInfoExecutionPlan result = new OInfoExecutionPlan();
     OResult read = OMessageHelper.readResult(network);
@@ -124,7 +118,27 @@ public class OQueryResponse implements OBinaryResponse {
     if (subSteps != null) {
       subSteps.forEach(x -> result.getSteps().add(toInfoStep(x)));
     }
+    return Optional.of(result);
+  }
+
+  public String getQueryId() {
+    return queryId;
+  }
+
+  public List<OResult> getResult() {
     return result;
+  }
+
+  public Optional<OExecutionPlan> getExecutionPlan() {
+    return executionPlan;
+  }
+
+  public boolean isHasNextPage() {
+    return hasNextPage;
+  }
+
+  public Map<String, Long> getQueryStats() {
+    return queryStats;
   }
 
   private OExecutionStep toInfoStep(OResult x) {
@@ -140,21 +154,11 @@ public class OQueryResponse implements OBinaryResponse {
     }
     result.setDescription(x.getProperty("description"));
     return result;
-  }
 
-  public void setResult(OLocalResultSetLifecycleDecorator result) {
-    this.result = result;
-  }
-
-  public OResultSet getResult() {
-    return result;
   }
 
   public boolean isTxChanges() {
     return txChanges;
   }
 
-  public void setTxChanges(boolean txChanges) {
-    this.txChanges = txChanges;
-  }
 }
