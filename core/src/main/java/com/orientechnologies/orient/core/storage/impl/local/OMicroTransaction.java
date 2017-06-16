@@ -68,8 +68,20 @@ public final class OMicroTransaction implements OBasicTransaction {
 
   private final int id;
 
-  private final Map<ORID, ORecordOperation>                       recordOperations      = new LinkedHashMap<>();
-  private final Map<String, OTransactionIndexChanges>             indexOperations       = new LinkedHashMap<>();
+  /**
+   * All the record/cluster operations known to this micro-transactions, mapped by {@link ORID}.
+   */
+  private final Map<ORID, ORecordOperation> recordOperations = new LinkedHashMap<>();
+
+  /**
+   * All the index operations known to this micro-transaction, mapped by index name.
+   */
+  private final Map<String, OTransactionIndexChanges> indexOperations = new LinkedHashMap<>();
+
+  /**
+   * All the index operations known to this micro-transaction affecting index values containing records with certain {@link ORID}s,
+   * mapped by the record {@link ORID}.
+   */
   private final Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<>();
 
   private final Map<ORID, ORID> updatedRids      = new HashMap<>();
