@@ -6,12 +6,15 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.index.OIndexManagerRemote;
+import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.sql.executor.OQueryStats;
@@ -31,6 +34,7 @@ public class OSharedContext implements OCloseable {
   private OSchedulerImpl               scheduler;
   private OSequenceLibraryImpl         sequenceLibrary;
   private OLiveQueryHook.OLiveQueryOps liveQueryOps;
+  private OLiveQueryHookV2.OLiveQueryOps liveQueryOpsV2;
   private OCommandCache                commandCache;
   private OStatementCache              statementCache;
   private OQueryStats                  queryStats;
@@ -51,6 +55,7 @@ public class OSharedContext implements OCloseable {
     scheduler = new OSchedulerImpl();
     sequenceLibrary = new OSequenceLibraryImpl();
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
+    liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();
     commandCache = new OCommandCacheSoftRefs(storage);
     statementCache = new OStatementCache(
         storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
@@ -94,6 +99,8 @@ public class OSharedContext implements OCloseable {
     }
     if (liveQueryOps != null)
       liveQueryOps.close();
+    if (liveQueryOpsV2 != null)
+      liveQueryOpsV2.close();
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
@@ -147,6 +154,10 @@ public class OSharedContext implements OCloseable {
 
   public OLiveQueryHook.OLiveQueryOps getLiveQueryOps() {
     return liveQueryOps;
+  }
+
+  public OLiveQueryHookV2.OLiveQueryOps getLiveQueryOpsV2() {
+    return liveQueryOpsV2;
   }
 
   public OCommandCache getCommandCache() {

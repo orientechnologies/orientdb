@@ -39,10 +39,14 @@ import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceTrigger;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
+import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
+import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.executor.LiveQueryListenerImpl;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -345,6 +349,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new OLiveQueryHookV2(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
   @Override
@@ -441,11 +446,19 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Object... args) {
-    return null;
+    OLiveQueryListenerV2 queryListener = new LiveQueryListenerImpl(listener, query, this, args);
+    ODatabaseDocumentInternal dbCopy = this.copy();
+    this.activateOnCurrentThread();
+    OLiveQueryMonitor monitor = new OLiveQueryMonitorEmbedded(queryListener.getToken(), dbCopy);
+    return monitor;
   }
 
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
-    return null;
+    OLiveQueryListenerV2 queryListener = new LiveQueryListenerImpl(listener, query, this, (Map) args);
+    ODatabaseDocumentInternal dbCopy = this.copy();
+    this.activateOnCurrentThread();
+    OLiveQueryMonitor monitor = new OLiveQueryMonitorEmbedded(queryListener.getToken(), dbCopy);
+    return monitor;
   }
 }
