@@ -2227,8 +2227,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     OLogManager.instance()
         .debug(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e, clientTx.getId());
     rollback(clientTx);
-    if (e instanceof OException)
-      throw ((OException) e);
+    if (e instanceof RuntimeException)
+      throw ((RuntimeException) e);
     else
       throw OException.wrapException(new OStorageException("Error during transaction commit"), e);
 
@@ -2239,8 +2239,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     OLogManager.instance().debug(this, "Error during micro-transaction commit, micro-transaction will be rolled back (tx-id=%d)", e,
         microTransaction.getId());
     rollback(microTransaction);
-    if (e instanceof OException)
-      throw ((OException) e);
+    if (e instanceof RuntimeException)
+      throw ((RuntimeException) e);
     else
       throw OException.wrapException(new OStorageException("Error during micro-transaction commit"), e);
 
