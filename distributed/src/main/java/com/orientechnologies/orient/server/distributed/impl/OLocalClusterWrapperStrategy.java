@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassEmbedded;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -51,7 +52,7 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
   private OClusterSelectionStrategy wrapped;
   private OLocalScopedClass         localScopedClass;
 
-  private class OLocalScopedClass extends OClassImpl {
+  private class OLocalScopedClass extends OClassEmbedded {
     public          OClassImpl wrapped;
     public volatile int[]      bestClusterIds;
 

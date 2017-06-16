@@ -25,10 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -277,7 +274,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseDocument database = getDatabase();
-    final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
+    final OClassEmbedded sourceClass = (OClassEmbedded) database.getMetadata().getSchema().getClass(className);
     if (sourceClass == null)
       throw new OCommandExecutionException("Source class '" + className + "' not found");
 

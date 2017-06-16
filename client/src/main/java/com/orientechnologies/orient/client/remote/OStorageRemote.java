@@ -893,7 +893,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         ORecordInternal.setVersion(rop.getRecord(), updated.getVersion());
       }
     }
-    updateCollectionsFromChanges(ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager(),
+    updateCollectionsFromChanges(((OTransactionOptimistic)iTx).getDatabase().getSbTreeCollectionManager(),
         response.getCollectionChanges());
     // SET ALL THE RECORDS AS UNDIRTY
     for (ORecordOperation txEntry : iTx.getAllRecordEntries())

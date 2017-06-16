@@ -3,8 +3,13 @@ package com.orientechnologies.orient.graph;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +20,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,13 +41,29 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 public class GraphNonBlockingQueryRemoteTest {
 
   private OServer server;
+  private String  serverHome;
+  private String  oldOrientDBHome;
 
   @Before
-  public void before() throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-      NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException, NoSuchMethodException,
-      InstantiationException, IOException, IllegalAccessException {
+  public void before()
+      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
+      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
+      IllegalAccessException {
+
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    serverHome = buildDirectory + "/" + GraphNonBlockingQueryRemoteTest.class.getSimpleName();
+
+    deleteDirectory(new File(serverHome));
+
+    final File file = new File(serverHome);
+    Assert.assertTrue(file.mkdir());
+
+    oldOrientDBHome = System.getProperty("ORIENTDB_HOME");
+    System.setProperty("ORIENTDB_HOME", serverHome);
+
     server = new OServer(false);
     server.startup(OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));
+
     server.activate();
     OServerAdmin admin = new OServerAdmin("remote:localhost:3064");
     admin.connect("root", "root");
@@ -53,6 +75,11 @@ public class GraphNonBlockingQueryRemoteTest {
   public void after() {
     server.shutdown();
     Orient.instance().startup();
+
+    if (oldOrientDBHome != null)
+      System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
+    else
+      System.clearProperty("ORIENTDB_HOME");
   }
 
   @Test
@@ -102,4 +129,16 @@ public class GraphNonBlockingQueryRemoteTest {
     }
   }
 
+  private static void deleteDirectory(File f) throws IOException {
+    if (f.isDirectory()) {
+      final File[] files = f.listFiles();
+      if (files != null) {
+        for (File c : files)
+          deleteDirectory(c);
+      }
+    }
+
+    if (f.exists() && !f.delete())
+      throw new FileNotFoundException("Failed to delete file: " + f);
+  }
 }

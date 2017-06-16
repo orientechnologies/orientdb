@@ -139,7 +139,7 @@ public class ODocument extends ORecordAbstract
     _recordId = (ORecordId) iRID;
 
     final ODatabaseDocumentInternal database = getDatabaseInternal();
-    if (_recordId.getClusterId() > -1 && database.getStorageVersions().classesAreDetectedByClusterId()) {
+    if (_recordId.getClusterId() > -1) {
       final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
       final OClass cls = schema.getClassByClusterId(_recordId.getClusterId());
       if (cls != null && !cls.getName().equals(iClassName))
@@ -3009,8 +3009,7 @@ public class ODocument extends ORecordAbstract
 
   private void fetchClassName() {
     final ODatabaseDocumentInternal database = getDatabaseIfDefinedInternal();
-    if (database != null && database.getStorageVersions() != null && database.getStorageVersions()
-        .classesAreDetectedByClusterId()) {
+    if (database != null && database.getStorageVersions() != null) {
       if (_recordId.getClusterId() < 0) {
         checkForLoading();
         checkForFields(ODocumentHelper.ATTRIBUTE_CLASS);

@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -186,7 +187,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
       }
     } else
-      throw new ODatabaseException("Cannot create new storage '" + name + "' because it already exists");
+      throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
   }
 
   public synchronized void restore(String name, String path, OrientDBConfig config) {

@@ -43,6 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -52,6 +53,11 @@ import java.util.concurrent.locks.Lock;
  * @since 7/24/13
  */
 public class O2QCache implements OReadCache {
+  /**
+   * Maximum amount of times when we will show message that limit of pinned pages was exhausted.
+   */
+  private static final int MAX_AMOUNT_OF_WARNINGS_PINNED_PAGES = 10;
+
   /**
    * Maximum percent of pinned pages which may be contained in this cache.
    */
@@ -83,12 +89,7 @@ public class O2QCache implements OReadCache {
   /**
    * Counts how much time we warned user that limit of amount of pinned pages is reached.
    */
-  private final LongAdder pinnedPagesWarningCounter = new LongAdder();
-
-  /**
-   * Cache of value which is contained inside of {@link #pinnedPagesWarningCounter}. It is used to speed up calculation of warnings.
-   */
-  private volatile int pinnedPagesWarningsCache = 0;
+  private final AtomicInteger pinnedPagesWarningCounter = new AtomicInteger();
 
   private final AtomicReference<MemoryData> memoryDataContainer = new AtomicReference<>();
 
@@ -317,13 +318,10 @@ public class O2QCache implements OReadCache {
     MemoryData memoryData = memoryDataContainer.get();
 
     if ((100 * (memoryData.pinnedPages + 1)) / memoryData.maxSize > percentOfPinnedPages) {
-      if (pinnedPagesWarningsCache < MAX_PERCENT_OF_PINED_PAGES) {
-        pinnedPagesWarningCounter.increment();
+      if (pinnedPagesWarningCounter.get() < MAX_AMOUNT_OF_WARNINGS_PINNED_PAGES) {
 
-        final long warnings = pinnedPagesWarningCounter.sum();
-        if (warnings < MAX_PERCENT_OF_PINED_PAGES) {
-          pinnedPagesWarningsCache = (int) warnings;
-
+        final long warnings = pinnedPagesWarningCounter.getAndIncrement();
+        if (warnings < MAX_AMOUNT_OF_WARNINGS_PINNED_PAGES) {
           OLogManager.instance().warn(this, "Maximum amount of pinned pages is reached, given page " + cacheEntry
               + " will not be marked as pinned which may lead to performance degradation. You may consider to increase the percent of pinned pages "
               + "by changing the property '" + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey() + "'");

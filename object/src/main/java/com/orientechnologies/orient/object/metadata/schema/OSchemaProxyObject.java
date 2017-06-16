@@ -88,7 +88,14 @@ public class OSchemaProxyObject implements OSchemaObject {
 
   @Override
   public OClass createAbstractClass(Class<?> iClass) {
-    return underlying.createAbstractClass(iClass);
+    OClass cls = null;
+    int[] clusterIds = new int[] { -1 };
+    // TODO: revisit this logic: interfaces should be also taken into consideration
+    final Class<?> superClass = iClass.getSuperclass();
+    if (superClass != null && superClass != Object.class && existsClass(superClass.getSimpleName()))
+      cls = getClass(superClass.getSimpleName());
+    cls = createClass(iClass.getSimpleName(), clusterIds, cls);
+    return cls;
   }
 
   @Override

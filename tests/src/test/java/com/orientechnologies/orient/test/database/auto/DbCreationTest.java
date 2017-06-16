@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
@@ -31,6 +32,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -270,6 +272,33 @@ public class DbCreationTest extends ObjectDBBaseTest {
     OrientGraphNoTx db = factory.getNoTx();
     db.drop();
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
+  }
+
+  public void testDbIsNotRemovedOnSecondTry() {
+    final String buildDirectory = new File(System.getProperty("buildDirectory", ".")).getAbsolutePath();
+    final String dbPath = buildDirectory + File.separator + this.getClass().getSimpleName() + "Remove";
+    final String dburl = "plocal:" + dbPath;
+
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dburl);
+    db.create();
+    db.close();
+
+    Assert.assertTrue(new File(dbPath).exists());
+
+    final ODatabaseDocumentTx dbTwo = new ODatabaseDocumentTx(dburl);
+    try {
+      dbTwo.create();
+      Assert.fail();
+    } catch (OStorageExistsException e) {
+      //ignore all is correct
+    }
+
+    Assert.assertTrue(new File(dbPath).exists());
+
+    db = new ODatabaseDocumentTx(dburl);
+
+    db.open("admin", "admin");
+    db.drop();
   }
 
   public void testDbOutOfPath() throws IOException {

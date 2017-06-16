@@ -152,7 +152,7 @@ public class OImmutableClass implements OClass {
       this.ouser = isSubClassOf(OUser.CLASS_NAME);
       this.orole = isSubClassOf(ORole.CLASS_NAME);
 
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseDocumentInternal db = getDatabase();
       this.autoShardingIndex = db != null && db.getMetadata() != null && db.getMetadata().getIndexManager() != null
           ? db.getMetadata().getIndexManager().getClassAutoShardingIndex(name) : null;
     }
