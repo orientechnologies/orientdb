@@ -358,12 +358,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public Set<ORecord> executeReadRecords(Set<ORecordId> iRids, boolean ignoreCache) {
-    checkOpenness();
-    return internal.executeReadRecords(iRids, ignoreCache);
-  }
-
-  @Override
   public void checkIfActive() {
     internal.checkIfActive();
   }

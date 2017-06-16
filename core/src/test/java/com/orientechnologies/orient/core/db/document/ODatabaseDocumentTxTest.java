@@ -43,38 +43,6 @@ public class ODatabaseDocumentTxTest {
   }
 
   @Test
-  public void testMultipleReads() {
-
-    db.getMetadata().getSchema().createClass("TestMultipleRead1");
-    db.getMetadata().getSchema().createClass("TestMultipleRead2");
-
-    final HashSet<ORecordId> rids = new HashSet<ORecordId>();
-
-    for (int i = 0; i < 100; ++i) {
-      final ODocument rec = new ODocument("TestMultipleRead1").field("id", i).save();
-      rids.add((ORecordId) rec.getIdentity());
-
-      final ODocument rec2 = new ODocument("TestMultipleRead2").field("id", i).save();
-      rids.add((ORecordId) rec2.getIdentity());
-    }
-
-    Set<ORecord> result = db.executeReadRecords(rids, false);
-    Assert.assertEquals(result.size(), 200);
-
-    for (ORecord rec : result) {
-      assertTrue(rec instanceof ODocument);
-    }
-
-    Set<ORecord> result2 = db.executeReadRecords(rids, true);
-    Assert.assertEquals(result2.size(), 200);
-
-    for (ORecord rec : result2) {
-      assertTrue(rec instanceof ODocument);
-    }
-
-  }
-
-  @Test
   public void testCountClass() throws Exception {
 
     OClass testSuperclass = db.getMetadata().getSchema().createClass("TestSuperclass");

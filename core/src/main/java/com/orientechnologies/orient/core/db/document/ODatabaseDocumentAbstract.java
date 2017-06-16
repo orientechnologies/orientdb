@@ -1400,65 +1400,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader(prefetchRecords));
   }
 
-  /**
-   * This method is internal, it can be subject to signature change or be removed, do not use.
-   *
-   * @Internal
-   */
-  public Set<ORecord> executeReadRecords(final Set<ORecordId> iRids, final boolean ignoreCache) {
-    checkOpenness();
-    checkIfActive();
-
-    getMetadata().makeThreadLocalSchemaSnapshot();
-    ORecordSerializationContext.pushContext();
-    try {
-
-      final Set<ORecord> records = new HashSet<ORecord>(iRids.size() > 0 ? iRids.size() : 1);
-
-      if (iRids.isEmpty())
-        return records;
-
-      final Collection<ORecordId> rids = new ArrayList<ORecordId>(iRids);
-
-      for (Iterator<ORecordId> it = rids.iterator(); it.hasNext(); ) {
-        final ORecordId rid = it.next();
-
-        // SEARCH IN LOCAL TX
-        ORecord record = getTransaction().getRecord(rid);
-        if (record == OBasicTransaction.DELETED_RECORD) {
-          // DELETED IN TX
-          it.remove();
-          continue;
-        }
-
-        if (record == null && !ignoreCache)
-          // SEARCH INTO THE CACHE
-          record = getLocalCache().findRecord(rid);
-
-        if (record != null) {
-          // FOUND FROM CACHE
-          records.add(record);
-          it.remove();
-        }
-      }
-
-      final Collection<OPair<ORecordId, ORawBuffer>> rawRecords = ((OAbstractPaginatedStorage) getStorage().getUnderlying())
-          .readRecords(rids);
-      for (OPair<ORecordId, ORawBuffer> entry : rawRecords) {
-        // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
-        final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(entry.value.recordType);
-        ORecordInternal.fill(record, entry.key, entry.value.version, entry.value.buffer, false);
-        records.add(record);
-      }
-
-      return records;
-
-    } finally {
-      ORecordSerializationContext.pullContext();
-      getMetadata().clearThreadLocalSchemaSnapshot();
-    }
-  }
-
   @Override
   public void setPrefetchRecords(boolean prefetchRecords) {
     this.prefetchRecords = prefetchRecords;
