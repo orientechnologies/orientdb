@@ -71,6 +71,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return false;
   }
 
+  @Override
   public void addChangedDocument(ODocument document) {
     if (getRecord(document.getIdentity()) == null) {
       changedDocuments.add(document);

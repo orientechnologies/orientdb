@@ -356,6 +356,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
     }
   }
 
+  @Override
+  public void addChangedDocument(ODocument document) {
+    // do nothing
+  }
+
   public void clearIndexEntries() {
   }
 

@@ -236,7 +236,7 @@ public abstract class ORecordAbstract implements ORecord {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-  public ODatabaseDocument getDatabaseIfDefined() {
+  public ODatabaseDocumentInternal getDatabaseIfDefined() {
     return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
   }
 

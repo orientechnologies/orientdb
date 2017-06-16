@@ -596,6 +596,12 @@ public final class OMicroTransaction implements OBasicTransaction {
     }
   }
 
+  @Override
+  public void addChangedDocument(ODocument document) {
+    if (getRecord(document.getIdentity()) == null)
+      changedDocuments.add(document);
+  }
+
   private void resave(ORecord record) {
     final ODirtyManager manager = ORecordInternal.getDirtyManager(record);
     final Set<ORecord> newRecords = manager.getNewRecords();
