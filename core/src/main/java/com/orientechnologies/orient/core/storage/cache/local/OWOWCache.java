@@ -321,8 +321,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       listeners.remove(ref);
   }
 
-  private void freeSpaceCheckAfterNewPageAdd() {
-    final long newPagesAdded = amountOfNewPagesAdded.incrementAndGet();
+  private void freeSpaceCheckAfterNewPageAdd(int pagesAdded) {
+    final long newPagesAdded = amountOfNewPagesAdded.addAndGet(pagesAdded);
     final long lastSpaceCheck = lastDiskSpaceCheck.get();
 
     if (newPagesAdded - lastSpaceCheck > diskSizeCheckInterval || lastSpaceCheck == 0) {
@@ -618,16 +618,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       Lock groupLock = lockManager.acquireExclusiveLock(pageKey);
       try {
         PageGroup pageGroup = writeCachePages.get(pageKey);
-        if (pageGroup == null) {
-          pageGroup = new PageGroup(System.currentTimeMillis(), dataPointer);
-
-          writeCachePages.put(pageKey, pageGroup);
-
-          writeCacheSize.increment();
-
-          dataPointer.setWritersListener(this);
-          dataPointer.incrementWritersReferrer();
-        }
+        if (pageGroup == null)
+          pageGroup = doPutInCache(dataPointer, pageKey);
 
         assert pageGroup.page.equals(dataPointer);
 
@@ -667,60 +659,165 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
       boolean verifyChecksums) throws IOException {
+
     final int intId = extractFileId(fileId);
     if (pageCount < 1)
       throw new IllegalArgumentException("Amount of pages to load should be not less than 1 but provided value is " + pageCount);
 
     filesLock.acquireReadLock();
     try {
-      final PageKey[] pageKeys = new PageKey[pageCount];
-      for (int i = 0; i < pageCount; i++) {
-        pageKeys[i] = new PageKey(intId, startPageIndex + i);
-      }
+      //first check that requested page is already cached so we do not need to load it from file
+      final PageKey startPageKey = new PageKey(intId, startPageIndex);
+      final Lock startPageLock = lockManager.acquireSharedLock(startPageKey);
 
-      Lock[] pageLocks = lockManager.acquireSharedLocksInBatch(pageKeys);
-      try {
-        PageGroup pageGroup = writeCachePages.get(pageKeys[0]);
+      //check if page already presented in write cache
+      final PageGroup startPageGroup = writeCachePages.get(startPageKey);
 
-        if (pageGroup == null) {
-          final OCachePointer pagePointers[] = cacheFileContent(intId, startPageIndex, pageCount, addNewPages, cacheHit,
-              verifyChecksums);
+      //page is not cached load it from file
+      if (startPageGroup == null) {
+        //load it from file and preload requested pages
+        //there is small optimization
+        //if we need single page no need to release already locked page
+        Lock[] pageLocks;
+        PageKey[] pageKeys;
 
-          if (pagePointers.length == 0)
-            return pagePointers;
+        if (pageCount > 1) {
+          startPageLock.unlock();
 
-          for (int n = 0; n < pagePointers.length; n++) {
-            pagePointers[n].incrementReadersReferrer();
-
-            if (n > 0) {
-              pageGroup = writeCachePages.get(pageKeys[n]);
-
-              assert pageKeys[n].pageIndex == pagePointers[n].getPageIndex();
-
-              if (pageGroup != null) {
-                pagePointers[n].decrementReadersReferrer();
-                pagePointers[n] = pageGroup.page;
-                pagePointers[n].incrementReadersReferrer();
-              }
-            }
+          pageKeys = new PageKey[pageCount];
+          for (int i = 0; i < pageCount; i++) {
+            pageKeys[i] = new PageKey(intId, startPageIndex + i);
           }
 
-          return pagePointers;
+          pageLocks = lockManager.acquireSharedLocksInBatch(pageKeys);
+        } else {
+          pageLocks = new Lock[] { startPageLock };
+          pageKeys = new PageKey[] { startPageKey };
         }
 
-        final OCachePointer pagePointer = pageGroup.page;
-        pagePointer.incrementReadersReferrer();
+        OCachePointer pagePointers[];
+        try {
+          //load requested page and preload requested amount of pages
+          pagePointers = loadFileContent(intId, startPageIndex, pageCount, verifyChecksums);
+
+          if (pagePointers != null) {
+            assert pagePointers.length > 0;
+
+            for (int n = 0; n < pagePointers.length; n++) {
+              pagePointers[n].incrementReadersReferrer();
+
+              if (n > 0) {
+                PageGroup pageGroup = writeCachePages.get(pageKeys[n]);
+
+                assert pageKeys[n].pageIndex == pagePointers[n].getPageIndex();
+
+                //if page already exists in cache we should drop already loaded page and load cache page instead
+                if (pageGroup != null) {
+                  pagePointers[n].decrementReadersReferrer();
+                  pagePointers[n] = pageGroup.page;
+                  pagePointers[n].incrementReadersReferrer();
+                }
+              }
+            }
+
+            return pagePointers;
+          }
+
+        } finally {
+          for (Lock pageLock : pageLocks) {
+            pageLock.unlock();
+          }
+        }
+
+        //requested page is out of file range
+        //we need to allocate pages on the disk first
+        if (!addNewPages)
+          return new OCachePointer[0];
+
+        final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
+        try {
+          final OFileClassic fileClassic = entry.get();
+
+          long startAllocationIndex = fileClassic.getFileSize() / pageSize;
+          long stopAllocationIndex = startPageIndex;
+
+          final PageKey[] allocationPageKeys = new PageKey[(int) (stopAllocationIndex - startAllocationIndex + 1)];
+
+          for (long pageIndex = startAllocationIndex; pageIndex <= stopAllocationIndex; pageIndex++) {
+            int index = (int) (pageIndex - startAllocationIndex);
+            allocationPageKeys[index] = new PageKey(intId, pageIndex);
+          }
+
+          //use exclusive locks to prevent to have duplication of pointers
+          //when page is loaded from file because space is already allocated
+          //but it the same moment another page for the same index is added to the write cache
+          Lock[] locks = lockManager.acquireExclusiveLocksInBatch(allocationPageKeys);
+          try {
+            final long fileSize = fileClassic.getFileSize();
+            final long spaceToAllocate = ((stopAllocationIndex + 1) * pageSize - fileSize);
+
+            OCachePointer resultPointer = null;
+
+            if (spaceToAllocate > 0) {
+              final OLogSequenceNumber lastLsn =
+                  writeAheadLog == null ? new OLogSequenceNumber(-1, -1) : writeAheadLog.getFlushedLsn();
+
+              fileClassic.allocateSpace(spaceToAllocate);
+              startAllocationIndex = fileSize / pageSize;
+
+              for (long index = startAllocationIndex; index <= stopAllocationIndex; index++) {
+                final ByteBuffer buffer = bufferPool.acquireDirect(true);
+                buffer.putLong(MAGIC_NUMBER_OFFSET, MAGIC_NUMBER_WITHOUT_CHECKSUM);
+
+                final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, lastLsn, fileId, index);
+
+                //item only in write cache till we will not return
+                //it to read cache so we increment exclusive size by one
+                //otherwise call of write listener inside pointer may set exclusive size to negative value
+                exclusiveWriteCacheSize.increment();
+
+                doPutInCache(cachePointer, new PageKey(intId, index));
+
+                if (index == startPageIndex) {
+                  resultPointer = cachePointer;
+                }
+              }
+
+              //we check is it enough space on disk to continue to write data on it
+              //otherwise we switch storage in read-only mode
+              freeSpaceCheckAfterNewPageAdd((int) (stopAllocationIndex - startAllocationIndex + 1));
+            }
+
+            if (resultPointer != null) {
+              resultPointer.incrementReadersReferrer();
+
+              cacheHit.setValue(true);
+
+              return new OCachePointer[] { resultPointer };
+            }
+          } finally {
+            for (Lock lock : locks) {
+              lock.unlock();
+            }
+          }
+        } finally {
+          files.release(entry);
+        }
+
+        //this is case when we allocated space but requested page was outside of allocated space
+        //in such case we read it again
+        return load(fileId, startPageIndex, pageCount, true, cacheHit, verifyChecksums);
+
+      } else {
+        startPageGroup.page.incrementReadersReferrer();
+        startPageLock.unlock();
 
         cacheHit.setValue(true);
 
-        return new OCachePointer[] { pagePointer };
-      } catch (InterruptedException e) {
-        throw OException.wrapException(new OStorageException("Thread was interrupted"), e);
-      } finally {
-        for (Lock lock : pageLocks) {
-          lock.unlock();
-        }
+        return new OCachePointer[] { startPageGroup.page };
       }
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Load was interrupted"), e);
     } finally {
       filesLock.releaseReadLock();
     }
@@ -1280,97 +1377,96 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  private OCachePointer[] cacheFileContent(final int intId, final long startPageIndex, final int pageCount,
-      final boolean addNewPages, OModifiableBoolean cacheHit, boolean verifyChecksums) throws IOException, InterruptedException {
-
+  private OCachePointer[] loadFileContent(final int intId, final long startPageIndex, final int pageCount, boolean verifyChecksums)
+      throws IOException {
     final long fileId = composeFileId(id, intId);
-    final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
+
     try {
-      final OFileClassic fileClassic = entry.get();
-      if (fileClassic == null)
-        throw new IllegalArgumentException("File with id " + intId + " not found in WOW Cache");
+      final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
+      try {
+        final OFileClassic fileClassic = entry.get();
+        if (fileClassic == null)
+          throw new IllegalArgumentException("File with id " + intId + " not found in WOW Cache");
 
-      final OLogSequenceNumber lastLsn;
-      if (writeAheadLog != null)
-        lastLsn = writeAheadLog.getFlushedLsn();
-      else
-        lastLsn = new OLogSequenceNumber(-1, -1);
+        final long firstPageStartPosition = startPageIndex * pageSize;
+        final long firstPageEndPosition = firstPageStartPosition + pageSize;
 
-      final long firstPageStartPosition = startPageIndex * pageSize;
-      final long firstPageEndPosition = firstPageStartPosition + pageSize;
+        if (fileClassic.getFileSize() >= firstPageEndPosition) {
+          final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
+              .getSessionPerformanceStatistic();
+          if (sessionStoragePerformanceStatistic != null) {
+            sessionStoragePerformanceStatistic.startPageReadFromFileTimer();
+          }
 
-      if (fileClassic.getFileSize() >= firstPageEndPosition) {
-        final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
-            .getSessionPerformanceStatistic();
-        if (sessionStoragePerformanceStatistic != null) {
-          sessionStoragePerformanceStatistic.startPageReadFromFileTimer();
-        }
+          int pagesRead = 0;
 
-        int pagesRead = 0;
+          final OLogSequenceNumber lastLsn = writeAheadLog == null ? new OLogSequenceNumber(-1, -1) : writeAheadLog.getFlushedLsn();
 
-        try {
-          if (pageCount == 1) {
-            final ByteBuffer buffer = bufferPool.acquireDirect(false);
-            assert buffer.position() == 0;
-            fileClassic.read(firstPageStartPosition, buffer);
+          try {
+            if (pageCount == 1) {
+              final ByteBuffer buffer = bufferPool.acquireDirect(false);
+              assert buffer.position() == 0;
+
+              fileClassic.read(firstPageStartPosition, buffer, false);
+
+              if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow))
+                verifyChecksum(buffer, fileId, startPageIndex, null);
+
+              buffer.position(0);
+
+              final OCachePointer dataPointer = new OCachePointer(buffer, bufferPool, lastLsn, fileId, startPageIndex);
+              pagesRead = 1;
+              return new OCachePointer[] { dataPointer };
+            }
+
+            final long maxPageCount = (fileClassic.getFileSize() - firstPageStartPosition) / pageSize;
+            final int realPageCount = Math.min((int) maxPageCount, pageCount);
+
+            final ByteBuffer[] buffers = new ByteBuffer[realPageCount];
+            for (int i = 0; i < buffers.length; i++) {
+              buffers[i] = bufferPool.acquireDirect(false);
+              assert buffers[i].position() == 0;
+            }
+
+            fileClassic.read(firstPageStartPosition, buffers, false);
 
             if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow))
-              verifyChecksum(buffer, fileId, startPageIndex, null);
+              for (int i = 0; i < buffers.length; ++i)
+                verifyChecksum(buffers[i], fileId, startPageIndex + i, buffers);
 
-            buffer.position(0);
+            final OCachePointer[] dataPointers = new OCachePointer[buffers.length];
+            for (int n = 0; n < buffers.length; n++) {
+              buffers[n].position(0);
+              dataPointers[n] = new OCachePointer(buffers[n], bufferPool, lastLsn, fileId, startPageIndex + n);
+            }
 
-            final OCachePointer dataPointer = new OCachePointer(buffer, bufferPool, lastLsn, fileId, startPageIndex);
-            pagesRead = 1;
-            return new OCachePointer[] { dataPointer };
+            pagesRead = dataPointers.length;
+            return dataPointers;
+          } finally {
+            if (sessionStoragePerformanceStatistic != null) {
+              sessionStoragePerformanceStatistic.stopPageReadFromFileTimer(pagesRead);
+            }
           }
-
-          final long maxPageCount = (fileClassic.getFileSize() - firstPageStartPosition) / pageSize;
-          final int realPageCount = Math.min((int) maxPageCount, pageCount);
-
-          final ByteBuffer[] buffers = new ByteBuffer[realPageCount];
-          for (int i = 0; i < buffers.length; i++) {
-            buffers[i] = bufferPool.acquireDirect(false);
-            assert buffers[i].position() == 0;
-          }
-
-          fileClassic.read(firstPageStartPosition, buffers);
-
-          if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow))
-            for (int i = 0; i < buffers.length; ++i)
-              verifyChecksum(buffers[i], fileId, startPageIndex + i, buffers);
-
-          final OCachePointer[] dataPointers = new OCachePointer[buffers.length];
-          for (int n = 0; n < buffers.length; n++) {
-            buffers[n].position(0);
-            dataPointers[n] = new OCachePointer(buffers[n], bufferPool, lastLsn, fileId, startPageIndex + n);
-          }
-
-          pagesRead = dataPointers.length;
-          return dataPointers;
-        } finally {
-          if (sessionStoragePerformanceStatistic != null) {
-            sessionStoragePerformanceStatistic.stopPageReadFromFileTimer(pagesRead);
-          }
-
-        }
-      } else if (addNewPages) {
-        final int space = (int) (firstPageEndPosition - fileClassic.getFileSize());
-
-        if (space > 0)
-          fileClassic.allocateSpace(space);
-
-        freeSpaceCheckAfterNewPageAdd();
-
-        final ByteBuffer buffer = bufferPool.acquireDirect(true);
-        final OCachePointer dataPointer = new OCachePointer(buffer, bufferPool, lastLsn, fileId, startPageIndex);
-
-        cacheHit.setValue(true);
-        return new OCachePointer[] { dataPointer };
-      } else
-        return new OCachePointer[0];
-    } finally {
-      files.release(entry);
+        } else
+          return null;
+      } finally {
+        files.release(entry);
+      }
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Data load was interrupted"), e);
     }
+  }
+
+  private PageGroup doPutInCache(OCachePointer dataPointer, PageKey pageKey) {
+    final PageGroup pageGroup = new PageGroup(System.currentTimeMillis(), dataPointer);
+    writeCachePages.put(pageKey, pageGroup);
+
+    writeCacheSize.increment();
+
+    dataPointer.setWritersListener(this);
+    dataPointer.incrementWritersReferrer();
+
+    return pageGroup;
   }
 
   private void verifyChecksum(ByteBuffer buffer, long fileId, long pageIndex, ByteBuffer[] buffersToRelease) {
