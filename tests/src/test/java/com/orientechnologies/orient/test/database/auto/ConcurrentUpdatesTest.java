@@ -166,7 +166,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test(enabled = false)
+  @Test
   public void concurrentOptimisticUpdates() throws Exception {
     counter.set(0);
 
