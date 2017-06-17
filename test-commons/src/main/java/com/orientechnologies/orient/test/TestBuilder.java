@@ -26,7 +26,7 @@ import java.util.concurrent.Callable;
  * @param <T> see {@link TestFactory}
  */
 public class TestBuilder<T> {
-  private final List<Callable<T>> workers = new ArrayList<Callable<T>>();
+  private final List<Callable<T>> workers = new ArrayList<>();
 
   public TestBuilder<T> add(int threadCount, TestFactory<T> factory) {
     workers.addAll(ConcurrentTestHelper.prepareWorkers(threadCount, factory));

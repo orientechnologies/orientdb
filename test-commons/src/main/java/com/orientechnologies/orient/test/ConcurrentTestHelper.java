@@ -38,8 +38,8 @@ public class ConcurrentTestHelper<T> {
     return helper.assertSuccess();
   }
 
-  protected static <T> List<Callable<T>> prepareWorkers(int threadCount, TestFactory<T> factory) {
-    final List<Callable<T>> callables = new ArrayList<Callable<T>>(threadCount);
+  static <T> List<Callable<T>> prepareWorkers(int threadCount, TestFactory<T> factory) {
+    final List<Callable<T>> callables = new ArrayList<>(threadCount);
     for (int i = 0; i < threadCount; i++) {
       callables.add(factory.createWorker());
     }
