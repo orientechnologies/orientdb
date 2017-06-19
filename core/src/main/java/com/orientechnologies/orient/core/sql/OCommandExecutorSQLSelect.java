@@ -441,6 +441,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   public Iterator<OIdentifiable> iterator(final Map<Object, Object> iArgs) {
+    if (compiledFilter != null) {
+      mergeRangeConditionsToBetweenOperators(compiledFilter);
+    }
+
     final Iterator<OIdentifiable> subIterator;
     if (target == null) {
       // GET THE RESULT
