@@ -3822,7 +3822,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     if (lastCheckPoint == null) {
       OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
-      return restoreFromBegging();
+      return restoreFromBeginning();
     }
 
     OWALRecord checkPointRecord;
@@ -3834,7 +3834,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     if (checkPointRecord == null) {
       OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
-      return restoreFromBegging();
+      return restoreFromBeginning();
     }
 
     if (checkPointRecord instanceof OFuzzyCheckpointStartRecord) {
@@ -3855,7 +3855,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
         } else {
           OLogManager.instance().warn(this, "Restore will start from the beginning.");
-          return restoreFromBegging();
+          return restoreFromBeginning();
         }
       } else
         return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
@@ -3877,7 +3877,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
         } else {
           OLogManager.instance().warn(this, "Restore will start from the beginning.");
-          return restoreFromBegging();
+          return restoreFromBeginning();
         }
       } else
         return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
@@ -3963,7 +3963,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return restoreFrom(flushedLsn, writeAheadLog);
   }
 
-  private OLogSequenceNumber restoreFromBegging() throws IOException {
+  private OLogSequenceNumber restoreFromBeginning() throws IOException {
     OLogManager.instance().info(this, "Data restore procedure is started.");
     OLogSequenceNumber lsn = writeAheadLog.begin();
 
