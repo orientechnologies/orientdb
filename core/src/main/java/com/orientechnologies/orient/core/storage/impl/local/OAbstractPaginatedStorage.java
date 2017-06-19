@@ -1235,8 +1235,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           startStorageTx(clientTx);
 
           lockClusters(clustersToLock);
-          lockRidBags(clustersToLock, indexesToCommit, indexManager);
-          lockIndexes(indexesToCommit);
 
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation txEntry : newRecords) {
@@ -1272,10 +1270,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
           }
 
+          lockRidBags(clustersToLock, indexesToCommit, indexManager);
+
           for (ORecordOperation txEntry : entries) {
             commitEntry(txEntry, positions.get(txEntry), databaseRecord.getSerializer());
             result.add(txEntry);
           }
+
+          lockIndexes(indexesToCommit);
 
           commitIndexes(indexesToCommit);
 
@@ -1377,8 +1379,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           startStorageTx(microTransaction);
 
           lockClusters(clustersToLock);
-          lockRidBags(clustersToLock, indexOperations, indexManager);
-          lockIndexes(indexOperations);
 
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation recordOperation : newRecords) {
@@ -1414,8 +1414,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
           }
 
+          lockRidBags(clustersToLock, indexOperations, indexManager);
+
           for (ORecordOperation recordOperation : recordOperations)
             commitEntry(recordOperation, positions.get(recordOperation), database.getSerializer());
+
+          lockIndexes(indexOperations);
 
           commitIndexes(indexOperations);
 
