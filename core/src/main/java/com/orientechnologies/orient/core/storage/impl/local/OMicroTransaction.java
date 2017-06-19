@@ -349,8 +349,8 @@ public final class OMicroTransaction implements OBasicTransaction {
   }
 
   @Override
-  public OTransactionIndexChanges getIndexChangesInternal(String iName) {
-    return getIndexChanges(iName);
+  public OTransactionIndexChanges getIndexChangesInternal(String indexName) {
+    return getIndexChanges(indexName);
   }
 
   @Override

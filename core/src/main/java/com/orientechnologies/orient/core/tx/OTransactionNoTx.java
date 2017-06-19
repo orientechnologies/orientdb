@@ -389,7 +389,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
-  public OTransactionIndexChanges getIndexChangesInternal(String iName) {
+  public OTransactionIndexChanges getIndexChangesInternal(String indexName) {
     return null;
   }
 

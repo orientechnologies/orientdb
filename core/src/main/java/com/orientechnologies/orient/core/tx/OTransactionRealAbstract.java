@@ -269,10 +269,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return indexEntries.get(iIndexName);
   }
 
-  public OTransactionIndexChanges getIndexChangesInternal(final String iIndexName) {
+  public OTransactionIndexChanges getIndexChangesInternal(final String indexName) {
     if (getDatabase().getStorage().isRemote())
       return null;
-    return getIndexChanges(iIndexName);
+    return getIndexChanges(indexName);
   }
 
   public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,

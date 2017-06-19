@@ -94,6 +94,11 @@ public interface OBasicTransaction {
   void addIndexEntry(OIndex<?> index, String indexName, OTransactionIndexChanges.OPERATION operation, Object key,
       OIdentifiable value);
 
+  /**
+   * Adds the given document to a set of changed documents known to this transaction.
+   *
+   * @param document the document to add.
+   */
   void addChangedDocument(ODocument document);
 
   /**
@@ -101,11 +106,18 @@ public interface OBasicTransaction {
    *
    * @param indexName the index name.
    *
-   * @return the index changes in question.
+   * @return the index changes in question or {@code null} if index is not found.
    */
   OTransactionIndexChanges getIndexChanges(String indexName);
 
-  OTransactionIndexChanges getIndexChangesInternal(String iName);
+  /**
+   * Does the same thing as {@link #getIndexChanges(String)}, but handles remote storages in a special way.
+   *
+   * @param indexName the index name.
+   *
+   * @return the index changes in question or {@code null} if index is not found or storage is remote.
+   */
+  OTransactionIndexChanges getIndexChangesInternal(String indexName);
 
   /**
    * Obtains the custom value by its name stored in the context of this transaction.
