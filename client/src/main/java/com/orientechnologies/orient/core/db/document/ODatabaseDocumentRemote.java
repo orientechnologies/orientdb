@@ -256,7 +256,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public OStorage getStorage() {
+  public OStorageRemote getStorage() {
     return storage;
   }
 

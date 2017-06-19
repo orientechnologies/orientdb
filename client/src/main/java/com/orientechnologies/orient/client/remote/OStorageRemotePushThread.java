@@ -95,7 +95,7 @@ public class OStorageRemotePushThread extends Thread {
 
   public synchronized <T extends OBinaryResponse> T subscribe(OBinaryRequest<T> request, OStorageRemoteSession session) {
     try {
-      this.currentRequest = new OSubscribeRequest(request.getCommand(), request);
+      this.currentRequest = new OSubscribeRequest(request);
       ((OChannelBinaryAsynchClient) network).beginRequest(OChannelBinaryProtocol.SUBSCRIBE_PUSH, session);
       this.currentRequest.write(network, null);
       network.flush();

@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OBlob;
@@ -1283,11 +1284,23 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   @Override
+  public OBinaryResponse executeUnsubscribe(OUnsubscribeRequest request) {
+    return new OUnsubscribeResponse(request.getUnsubscribeRequest().execute(this));
+  }
+
+  @Override
   public OBinaryResponse executeSubscribePushRequest(OSubscribeDistributedConfigurationRequest request) {
     OClientConnectionManager manager = server.getClientConnectionManager();
 
     manager.subscribeDistributeConfig((ONetworkProtocolBinary) connection.getProtocol());
     return new OSubscribeDistributedConfigurationResponse();
+  }
+
+  @Override
+  public OBinaryResponse executeUnsubscribeLiveQuery(OUnsubscribeLiveQueryRequest request) {
+    ODatabaseDocumentInternal database = connection.getDatabase();
+    OLiveQueryHookV2.unsubscribe((int) request.getMonitorId(), database);
+    return new OUnsubscribLiveQueryResponse();
   }
 
   @Override

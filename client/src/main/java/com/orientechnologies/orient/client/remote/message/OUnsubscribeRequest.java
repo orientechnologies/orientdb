@@ -13,41 +13,39 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput
 import java.io.IOException;
 
 /**
- * Created by tglman on 16/05/17.
+ * Created by tglman on 19/06/17.
  */
-public class OSubscribeRequest implements OBinaryRequest<OSubscribeResponse> {
+public class OUnsubscribeRequest implements OBinaryRequest<OUnsubscribeResponse> {
 
-  private byte                                      pushMessage;
-  private OBinaryRequest<? extends OBinaryResponse> pushRequest;
+  private byte                                      unsubscribeMessage;
+  private OBinaryRequest<? extends OBinaryResponse> unsubscribeRequest;
 
-  public OSubscribeRequest() {
-
+  public OUnsubscribeRequest(OBinaryRequest<? extends OBinaryResponse> unsubscribeRequest) {
+    this.unsubscribeMessage = unsubscribeRequest.getCommand();
+    this.unsubscribeRequest = unsubscribeRequest;
   }
 
-  public OSubscribeRequest(OBinaryRequest<? extends OBinaryResponse> request) {
-    this.pushMessage = request.getCommand();
-    this.pushRequest = request;
+  public OUnsubscribeRequest() {
+
   }
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
-    network.writeByte(pushMessage);
-    pushRequest.write(network, session);
+    network.writeByte(unsubscribeMessage);
+    unsubscribeRequest.write(network, session);
   }
 
   @Override
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-    pushMessage = channel.readByte();
-    pushRequest = createBinaryRequest(pushMessage);
-    pushRequest.read(channel, protocolVersion, serializer);
+    unsubscribeMessage = channel.readByte();
+    unsubscribeRequest = createBinaryRequest(unsubscribeMessage);
+    unsubscribeRequest.read(channel, protocolVersion, serializer);
   }
 
   private OBinaryRequest<? extends OBinaryResponse> createBinaryRequest(byte message) {
     switch (message) {
-    case OChannelBinaryProtocol.SUBSCRIBE_PUSH_DISTRIB_CONFIG:
-      return new OSubscribeDistributedConfigurationRequest();
-    case OChannelBinaryProtocol.SUBSCRIBE_PUSH_LIVE_QUERY:
-      return new OSubscribeLiveQueryRequest();
+    case OChannelBinaryProtocol.UNSUBSCRIBE_PUSH_LIVE_QUERY:
+      return new OUnsubscribeLiveQueryRequest();
     }
 
     throw new ODatabaseException("Unknown message response for code:" + message);
@@ -55,29 +53,25 @@ public class OSubscribeRequest implements OBinaryRequest<OSubscribeResponse> {
 
   @Override
   public byte getCommand() {
-    return OChannelBinaryProtocol.SUBSCRIBE_PUSH;
+    return OChannelBinaryProtocol.UNSUBSCRIBE_PUSH;
   }
 
   @Override
-  public OSubscribeResponse createResponse() {
-    return new OSubscribeResponse(pushRequest.createResponse());
+  public OUnsubscribeResponse createResponse() {
+    return new OUnsubscribeResponse(unsubscribeRequest.createResponse());
   }
 
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
-    return executor.executeSubscribe(this);
-  }
-
-  public byte getPushMessage() {
-    return pushMessage;
-  }
-
-  public OBinaryRequest<? extends OBinaryResponse> getPushRequest() {
-    return pushRequest;
+    return executor.executeUnsubscribe(this);
   }
 
   @Override
   public String getDescription() {
-    return "Subscribe to push message";
+    return "Unsubscribe from a push request";
+  }
+
+  public OBinaryRequest<? extends OBinaryResponse> getUnsubscribeRequest() {
+    return unsubscribeRequest;
   }
 }

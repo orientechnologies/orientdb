@@ -1828,7 +1828,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OSubscribeLiveQueryRequest request = new OSubscribeLiveQueryRequest(query, params);
     OSubscribeLiveQueryResponse response = pushThread.subscribe(request, getCurrentSession());
     registerLiveListener(response.getMonitorId(), listener);
-    return new OLiveQueryMonitorRemote(database,response.getMonitorId());
+    return new OLiveQueryMonitorRemote(database, response.getMonitorId());
   }
 
   public OLiveQueryMonitor liveQuery(ODatabaseDocumentRemote database, String query, OLiveQueryClientListener listener,
@@ -1836,7 +1836,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OSubscribeLiveQueryRequest request = new OSubscribeLiveQueryRequest(query, (Map<String, Object>) params);
     OSubscribeLiveQueryResponse response = pushThread.subscribe(request, getCurrentSession());
     registerLiveListener(response.getMonitorId(), listener);
-    return new OLiveQueryMonitorRemote(database,response.getMonitorId());
+    return new OLiveQueryMonitorRemote(database, response.getMonitorId());
+  }
+
+  public void unsubscribeLive(ODatabaseDocumentRemote database, long monitorId) {
+    OUnsubscribeRequest request = new OUnsubscribeRequest(new OUnsubscribeLiveQueryRequest(monitorId));
+    OUnsubscribeResponse response = networkOperation(request, "Error on unsubscribe of live query");
   }
 
   public void registerLiveListener(long monitorId, OLiveQueryClientListener listener) {

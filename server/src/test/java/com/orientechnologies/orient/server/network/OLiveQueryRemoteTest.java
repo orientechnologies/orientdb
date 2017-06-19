@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,6 +60,7 @@ public class OLiveQueryRemoteTest {
   class MyLiveQueryListener implements OLiveQueryResultListener {
 
     public CountDownLatch latch;
+    public CountDownLatch ended = new CountDownLatch(1);
 
     public MyLiveQueryListener(CountDownLatch latch) {
       this.latch = latch;
@@ -94,7 +96,7 @@ public class OLiveQueryRemoteTest {
 
     @Override
     public void onEnd(ODatabaseDocument database) {
-
+      ended.countDown();
     }
   }
 
@@ -115,10 +117,11 @@ public class OLiveQueryRemoteTest {
     Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
 
     monitor.unSubscribe();
-// TODO: Fix the unsubscribe in remote
-//    database.command("insert into test set name = 'foo', surname = 'bax'");
-//    database.command("insert into test2 set name = 'foo'");
-//    database.command("insert into test set name = 'foo', surname = 'baz'");
+    Assert.assertTrue(listener.ended.await(1, TimeUnit.MINUTES));
+
+    database.command("insert into test set name = 'foo', surname = 'bax'");
+    database.command("insert into test2 set name = 'foo'");
+    database.command("insert into test set name = 'foo', surname = 'baz'");
 
     Assert.assertEquals(listener.ops.size(), 2);
     for (OResult doc : listener.ops) {
