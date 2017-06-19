@@ -27,7 +27,6 @@ import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -3110,8 +3109,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass((ODocument) record);
 
-    // XXX: Function library is force reloading functions from disk on every change, see OFunctionLibraryImpl.load. This conflicts
-    // with the data stored in a micro-transaction. Likely, functions have no indexes, so we may handle them w/o micro-transactions.
+    // XXX: Function library is force reloading functions from disk on every change, see
+    // OFunctionLibraryImpl.load(ODatabaseDocumentInternal). This conflicts with the data stored in a micro-transaction. For now
+    // we just bypass them, but this makes changes to functions non-atomic.
     //noinspection RedundantIfStatement
     if (class_ != null && class_.isFunction())
       return false;
