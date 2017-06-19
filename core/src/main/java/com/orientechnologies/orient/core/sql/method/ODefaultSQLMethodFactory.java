@@ -18,10 +18,7 @@ package com.orientechnologies.orient.core.sql.method;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLMethodMultiValue;
-import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodAsDate;
-import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodAsDateTime;
-import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodAsDecimal;
-import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodConvert;
+import com.orientechnologies.orient.core.sql.functions.conversion.*;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLMethodExclude;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLMethodInclude;
 import com.orientechnologies.orient.core.sql.functions.text.*;
@@ -88,6 +85,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     register(OSQLMethodSubString.NAME, new OSQLMethodSubString());
     register(OSQLMethodToJSON.NAME, new OSQLMethodToJSON());
     register(OSQLMethodValues.NAME, new OSQLMethodValues());
+    register(OSQLMethodBeforeUpdate.NAME, new OSQLMethodBeforeUpdate());
 
     // SEQUENCE
     register(OSQLMethodCurrent.NAME, new OSQLMethodCurrent());

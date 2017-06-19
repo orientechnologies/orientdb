@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -24,7 +25,8 @@ public class ODropClusterStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     ODatabaseInternal database = (ODatabaseInternal) ctx.getDatabase();
     // CHECK IF ANY CLASS IS USING IT
     final int clusterId;
@@ -51,7 +53,7 @@ public class ODropClusterStatement extends ODDLStatement {
     if (clusterName == null) {
       throw new OCommandExecutionException("Cluster not found: " + clusterId);
     }
-    database.getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
+    ((OMetadataInternal) database.getMetadata()).getCommandCache().invalidateResultsOfCluster(clusterName);
 
     database.dropCluster(clusterId, true);
 
@@ -63,7 +65,8 @@ public class ODropClusterStatement extends ODDLStatement {
     return rs;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DROP CLUSTER ");
     if (name != null) {
       name.toString(params, builder);
@@ -72,14 +75,16 @@ public class ODropClusterStatement extends ODDLStatement {
     }
   }
 
-  @Override public ODropClusterStatement copy() {
+  @Override
+  public ODropClusterStatement copy() {
     ODropClusterStatement result = new ODropClusterStatement(-1);
     result.name = name == null ? null : name.copy();
     result.id = id == null ? null : id.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -95,7 +100,8 @@ public class ODropClusterStatement extends ODDLStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (id != null ? id.hashCode() : 0);
     return result;

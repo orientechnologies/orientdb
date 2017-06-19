@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.io.Serializable;
@@ -861,7 +860,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         // IGNORE IT WILL FAIL THE ASSERT IN CASE
       }
     }
-    if (link.getIdentity().getClusterId() < 0 && ORecordSerializationContext.getContext() != null)
+    if (link.getIdentity().getClusterId() < 0)
       throw new ODatabaseException("Impossible to serialize invalid link " + link.getIdentity());
 
     final int pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());

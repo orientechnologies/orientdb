@@ -99,7 +99,6 @@ public class GraphIntersectRegularEdgesTest extends GraphNoTxAbstractTest {
 
   @BeforeClass
   public static void init() {
-    System.setProperty("orientdb.test.env", "ci");
     init(GraphIntersectRegularEdgesTest.class.getSimpleName());
   }
 }

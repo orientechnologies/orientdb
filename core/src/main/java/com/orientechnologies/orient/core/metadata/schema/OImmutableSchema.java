@@ -32,7 +32,6 @@ import java.util.Set;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
@@ -51,20 +50,19 @@ public class OImmutableSchema implements OSchema {
 
   public final int                       version;
   private final ORID                     identity;
-  private final boolean                  clustersCanNotBeSharedAmongClasses;
   private final List<OGlobalProperty>    properties;
   private final OClusterSelectionFactory clusterSelectionFactory;
 
   public OImmutableSchema(OSchemaShared schemaShared) {
     version = schemaShared.getVersion();
     identity = schemaShared.getIdentity();
-    clustersCanNotBeSharedAmongClasses = schemaShared.isClustersCanNotBeSharedAmongClasses();
     clusterSelectionFactory = schemaShared.getClusterSelectionFactory();
 
-    clustersToClasses = new HashMap<Integer, OClass>(schemaShared.getClasses().size() * 3);
-    classes = new HashMap<String, OClass>(schemaShared.getClasses().size());
+    ODatabaseDocumentInternal database = getDatabase();
+    clustersToClasses = new HashMap<Integer, OClass>(schemaShared.getClasses(database).size() * 3);
+    classes = new HashMap<String, OClass>(schemaShared.getClasses(database).size());
 
-    for (OClass oClass : schemaShared.getClasses()) {
+    for (OClass oClass : schemaShared.getClasses(database)) {
       final OImmutableClass immutableClass = new OImmutableClass(oClass, this);
 
       classes.put(immutableClass.getName().toLowerCase(Locale.ENGLISH), immutableClass);
@@ -122,11 +120,6 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public OClass createClass(String className, int[] clusterIds, OClass... superClasses) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public OClass createAbstractClass(Class<?> iClass) {
     throw new UnsupportedOperationException();
   }
 
@@ -237,9 +230,6 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public OClass getClassByClusterId(int clusterId) {
-    if (!clustersCanNotBeSharedAmongClasses)
-      throw new OSchemaException("This feature is not supported in current version of binary format.");
-
     return clustersToClasses.get(clusterId);
 
   }

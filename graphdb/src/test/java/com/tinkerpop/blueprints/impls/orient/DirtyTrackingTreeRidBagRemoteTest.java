@@ -5,10 +5,12 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.graph.GraphNonBlockingQueryRemoteTest;
 import com.orientechnologies.orient.server.OServer;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -16,6 +18,8 @@ import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -30,11 +34,24 @@ import static org.junit.Assert.assertNotNull;
 public class DirtyTrackingTreeRidBagRemoteTest {
 
   private OServer server;
+  private String  serverHome;
+  private String  oldOrientDBHome;
 
   @Before
   public void before() throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
       NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException, NoSuchMethodException,
       InstantiationException, IOException, IllegalAccessException {
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    serverHome = buildDirectory + "/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName();
+
+    deleteDirectory(new File(serverHome));
+
+    final File file = new File(serverHome);
+    Assert.assertTrue(file.mkdir());
+
+    oldOrientDBHome = System.getProperty("ORIENTDB_HOME");
+    System.setProperty("ORIENTDB_HOME", serverHome);
+
     server = new OServer(false);
     server.startup(OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));
     server.activate();
@@ -95,6 +112,19 @@ public class DirtyTrackingTreeRidBagRemoteTest {
     } finally {
       graph.shutdown();
     }
+  }
+
+  private static void deleteDirectory(File f) throws IOException {
+    if (f.isDirectory()) {
+      final File[] files = f.listFiles();
+      if (files != null) {
+        for (File c : files)
+          deleteDirectory(c);
+      }
+    }
+
+    if (f.exists() && !f.delete())
+      throw new FileNotFoundException("Failed to delete file: " + f);
   }
 
 }

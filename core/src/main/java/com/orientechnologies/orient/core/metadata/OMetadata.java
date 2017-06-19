@@ -47,8 +47,6 @@ public interface OMetadata {
 
   OSchema getSchema();
 
-  OCommandCache getCommandCache();
-
   OSecurity getSecurity();
 
   OIndexManager getIndexManager();

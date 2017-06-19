@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -47,7 +46,7 @@ import java.util.*;
 public class OVertexDelegate implements OVertex {
   private static final String CONNECTION_OUT_PREFIX = "out_";
   private static final String CONNECTION_IN_PREFIX  = "in_";
-  private final ODocument element;
+  protected final ODocument element;
 
   public OVertexDelegate(ODocument entry) {
     this.element = entry;

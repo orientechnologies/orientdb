@@ -23,6 +23,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -58,7 +59,7 @@ public class OCommandCacheTest {
       query.setCacheableResult(true);
       List<ODocument> results = db.query(query);
 
-      OCommandCache commandCache = db.getMetadata().getCommandCache();
+      OCommandCache commandCache = ((OMetadataInternal)db.getMetadata()).getCommandCache();
       Collection cachedResults = (Collection) commandCache.get(new OUser("admin"), "select from OCommandCache", -1);
 
       Assert.assertNotNull(cachedResults);

@@ -7,7 +7,6 @@ import org.junit.Test;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class TestDistributeConfigSerialization extends AbstractServerClusterTest {

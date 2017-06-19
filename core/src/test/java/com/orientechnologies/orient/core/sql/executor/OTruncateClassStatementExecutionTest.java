@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -23,16 +24,20 @@ import java.util.*;
 public class OTruncateClassStatementExecutionTest {
   static ODatabaseDocument database;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     database = new ODatabaseDocumentTx("memory:OTruncateClassStatementExecutionTest");
     database.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     database.close();
   }
 
-  @SuppressWarnings("unchecked") @Test public void testTruncateClass() {
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testTruncateClass() {
 
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
@@ -72,7 +77,8 @@ public class OTruncateClassStatementExecutionTest {
     schema.dropClass("test_class");
   }
 
-  @Test public void testTruncateVertexClass() {
+  @Test
+  public void testTruncateVertexClass() {
     database.command("create class TestTruncateVertexClass extends V");
     database.command("create vertex TestTruncateVertexClass set name = 'foo'");
 
@@ -92,7 +98,8 @@ public class OTruncateClassStatementExecutionTest {
 
   }
 
-  @Test public void testTruncateVertexClassSubclasses() {
+  @Test
+  public void testTruncateVertexClassSubclasses() {
 
     database.command("create class TestTruncateVertexClassSuperclass");
     database.command("create class TestTruncateVertexClassSubclass extends TestTruncateVertexClassSuperclass");
@@ -122,7 +129,8 @@ public class OTruncateClassStatementExecutionTest {
 
   }
 
-  @Test public void testTruncateVertexClassSubclassesWithIndex() {
+  @Test
+  public void testTruncateVertexClassSubclassesWithIndex() {
 
     database.command("create class TestTruncateVertexClassSuperclassWithIndex");
     database.command("create property TestTruncateVertexClassSuperclassWithIndex.name STRING");
@@ -178,13 +186,15 @@ public class OTruncateClassStatementExecutionTest {
     return testClass;
   }
 
-  @SuppressWarnings("unchecked") @Test public void testTruncateClassWithCommandCache() {
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testTruncateClassWithCommandCache() {
 
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
 
-    boolean ccWasEnabled = database.getMetadata().getCommandCache().isEnabled();
-    database.getMetadata().getCommandCache().enable();
+    boolean ccWasEnabled = ((OMetadataInternal) database.getMetadata()).getCommandCache().isEnabled();
+    ((OMetadataInternal) database.getMetadata()).getCommandCache().enable();
 
     database.command("truncate class test_class");
 
@@ -201,7 +211,7 @@ public class OTruncateClassStatementExecutionTest {
 
     schema.dropClass("test_class");
     if (!ccWasEnabled) {
-      database.getMetadata().getCommandCache().disable();
+      ((OMetadataInternal) database.getMetadata()).getCommandCache().disable();
     }
   }
 

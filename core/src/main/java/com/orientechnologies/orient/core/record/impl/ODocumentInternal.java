@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 
 import java.util.Map.Entry;
 import java.util.Set;
@@ -88,6 +89,17 @@ public class ODocumentInternal {
       return null;
     }
     return doc.getRawProperty(propertyName);
+  }
+
+  public static ODocument toRawDocument(OElement element) {
+    if (element instanceof ODocument) {
+      return (ODocument) element;
+    } else if (element instanceof OVertexDelegate) {
+      return ((OVertexDelegate) element).element;
+    } else if (element instanceof OEdgeDelegate) {
+      return ((OEdgeDelegate) element).element;
+    }
+    return null;
   }
 
 }

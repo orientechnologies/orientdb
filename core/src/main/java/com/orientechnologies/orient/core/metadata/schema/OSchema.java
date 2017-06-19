@@ -43,8 +43,6 @@ public interface OSchema {
 
   OClass createClass(String className, int[] clusterIds, OClass... superClasses);
 
-  OClass createAbstractClass(Class<?> iClass);
-
   OClass createAbstractClass(String iClassName);
 
   OClass createAbstractClass(String iClassName, OClass iSuperClass);
