@@ -47,7 +47,10 @@ public class OSubscribeRequest implements OBinaryRequest<OSubscribeResponse> {
     switch (message) {
     case OChannelBinaryProtocol.SUBSCRIBE_PUSH_DISTRIB_CONFIG:
       return new OSubscribeDistributedConfigurationRequest();
+    case OChannelBinaryProtocol.SUBSCRIBE_PUSH_LIVE_QUERY:
+      return new OSubscribeLiveQueryRequest();
     }
+
     throw new ODatabaseException("Unknown message response for code:" + message);
   }
 

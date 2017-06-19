@@ -98,7 +98,7 @@ public class OStorageRemotePushThread extends Thread {
       this.currentRequest = new OSubscribeRequest(request.getCommand(), request);
       ((OChannelBinaryAsynchClient) network).beginRequest(OChannelBinaryProtocol.SUBSCRIBE_PUSH, session);
       this.currentRequest.write(network, null);
-      ((OChannelBinaryAsynchClient) network).endRequest();
+      network.flush();
       return (T) blockingQueue.take().getResponse();
     } catch (IOException e) {
       e.printStackTrace();

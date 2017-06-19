@@ -439,43 +439,48 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     if (status == STATUS.CLOSED)
       return;
 
+    final OStorageRemoteSession session = getCurrentSession();
+    if (session != null) {
+      final Collection<OStorageRemoteNodeSession> nodes = session.getAllServerSessions();
+      if (!nodes.isEmpty()) {
+        for (OStorageRemoteNodeSession nodeSession : nodes) {
+          OChannelBinaryAsynchClient network = null;
+          try {
+            network = getNetwork(nodeSession.getServerURL());
+            OCloseRequest request = new OCloseRequest();
+            network.beginRequest(request.getCommand(), session);
+            request.write(network, session);
+            endRequest(network);
+            connectionManager.release(network);
+          } catch (OIOException ex) {
+            // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
+            OLogManager.instance().debug(this, "Impossible to comunicate to the server for close: %s", ex);
+            connectionManager.remove(network);
+          } catch (IOException ex) {
+            // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
+            OLogManager.instance().debug(this, "Impossible to comunicate to the server for close: %s", ex);
+            connectionManager.remove(network);
+          }
+        }
+        session.close();
+        sessions.remove(session);
+        if (!checkForClose(iForce))
+          return;
+      } else {
+        if (!iForce)
+          return;
+      }
+    }
+    // FROM HERE FORWARD COMPLETELY CLOSE THE STORAGE
+    for (Entry<Long, OLiveQueryClientListener> listener : liveQueryListener.entrySet()) {
+      listener.getValue().onEnd();
+    }
+    liveQueryListener.clear();
+
     stateLock.acquireWriteLock();
     try {
       if (status == STATUS.CLOSED)
         return;
-
-      final OStorageRemoteSession session = getCurrentSession();
-      if (session != null) {
-        final Collection<OStorageRemoteNodeSession> nodes = session.getAllServerSessions();
-        if (!nodes.isEmpty()) {
-          for (OStorageRemoteNodeSession nodeSession : nodes) {
-            OChannelBinaryAsynchClient network = null;
-            try {
-              network = getNetwork(nodeSession.getServerURL());
-              OCloseRequest request = new OCloseRequest();
-              network.beginRequest(request.getCommand(), session);
-              request.write(network, session);
-              endRequest(network);
-              connectionManager.release(network);
-            } catch (OIOException ex) {
-              // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
-              OLogManager.instance().debug(this, "Impossible to comunicate to the server for close: %s", ex);
-              connectionManager.remove(network);
-            } catch (IOException ex) {
-              // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
-              OLogManager.instance().debug(this, "Impossible to comunicate to the server for close: %s", ex);
-              connectionManager.remove(network);
-            }
-          }
-          session.close();
-          sessions.remove(session);
-          if (!checkForClose(iForce))
-            return;
-        } else {
-          if (!iForce)
-            return;
-        }
-      }
 
       status = STATUS.CLOSING;
       // CLOSE ALL THE CONNECTIONS
@@ -893,7 +898,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         ORecordInternal.setVersion(rop.getRecord(), updated.getVersion());
       }
     }
-    updateCollectionsFromChanges(((OTransactionOptimistic)iTx).getDatabase().getSbTreeCollectionManager(),
+    updateCollectionsFromChanges(((OTransactionOptimistic) iTx).getDatabase().getSbTreeCollectionManager(),
         response.getCollectionChanges());
     // SET ALL THE RECORDS AS UNDIRTY
     for (ORecordOperation txEntry : iTx.getAllRecordEntries())
@@ -1802,7 +1807,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     switch (type) {
     case OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG:
       return new OPushDistributedConfigurationRequest();
-//    case OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY:
+    case OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY:
+      return new OLiveQueryPushRequest();
 //    case OChannelBinaryProtocol.REQUEST_PUSH_STORAGE_CONFIG:
 //
 //      return  new
@@ -1822,7 +1828,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OSubscribeLiveQueryRequest request = new OSubscribeLiveQueryRequest(query, params);
     OSubscribeLiveQueryResponse response = pushThread.subscribe(request, getCurrentSession());
     registerLiveListener(response.getMonitorId(), listener);
-    return new OLiveQueryMonitorRemote(response.getMonitorId());
+    return new OLiveQueryMonitorRemote(database,response.getMonitorId());
   }
 
   public OLiveQueryMonitor liveQuery(ODatabaseDocumentRemote database, String query, OLiveQueryClientListener listener,
@@ -1830,7 +1836,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OSubscribeLiveQueryRequest request = new OSubscribeLiveQueryRequest(query, (Map<String, Object>) params);
     OSubscribeLiveQueryResponse response = pushThread.subscribe(request, getCurrentSession());
     registerLiveListener(response.getMonitorId(), listener);
-    return new OLiveQueryMonitorRemote(response.getMonitorId());
+    return new OLiveQueryMonitorRemote(database,response.getMonitorId());
   }
 
   public void registerLiveListener(long monitorId, OLiveQueryClientListener listener) {

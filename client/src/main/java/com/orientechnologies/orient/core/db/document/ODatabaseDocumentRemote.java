@@ -194,7 +194,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     sharedContext.load(this);
   }
 
-
   protected void installHooksRemote() {
     hooks.clear();
     registerHook(new ClassIndexManagerRemote(this), ORecordHook.HOOK_POSITION.LAST);
