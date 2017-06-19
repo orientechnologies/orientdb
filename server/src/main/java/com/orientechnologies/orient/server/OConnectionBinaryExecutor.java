@@ -11,7 +11,6 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
-import com.orientechnologies.orient.client.remote.message.live.OLiveQueryResult;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -22,16 +21,12 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
@@ -51,7 +46,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
-import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -63,7 +57,6 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.*;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
@@ -1306,65 +1299,10 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeSubscribeLiveQuery(OSubscribeLiveQueryRequest request) {
     ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connection.getProtocol();
-    ServerLiveQueryResultListener listener = new ServerLiveQueryResultListener(protocol);
+    OServerLiveQueryResultListener listener = new OServerLiveQueryResultListener(protocol);
     OLiveQueryMonitor monitor = connection.getDatabase().live(request.getQuery(), listener, request.getParams());
     listener.setMonitorId(monitor.getMonitorId());
     return new OSubscribeLiveQueryResponse(monitor.getMonitorId());
   }
 
-  private static class ServerLiveQueryResultListener implements OLiveQueryResultListener {
-    private final ONetworkProtocolBinary protocol;
-    private       long                   monitorId;
-
-    public ServerLiveQueryResultListener(ONetworkProtocolBinary protocol) {
-      this.protocol = protocol;
-    }
-
-    public void setMonitorId(long monitorId) {
-      this.monitorId = monitorId;
-    }
-
-    private void sendEvent(OLiveQueryResult event) {
-      try {
-        protocol.push(new OLiveQueryPushRequest(monitorId, OLiveQueryPushRequest.HAS_MORE, Collections.singletonList(event)));
-      } catch (IOException e) {
-        //TODO: rethrow the exception for terminate the live query in case.
-        e.printStackTrace();
-      }
-    }
-
-    @Override
-    public void onCreate(ODatabaseDocument database, OResult data) {
-      sendEvent(new OLiveQueryResult(OLiveQueryResult.CREATE_EVENT, data, null));
-    }
-
-    @Override
-    public void onUpdate(ODatabaseDocument database, OResult before, OResult after) {
-      sendEvent(new OLiveQueryResult(OLiveQueryResult.UPDATE_EVENT, after, before));
-    }
-
-    @Override
-    public void onDelete(ODatabaseDocument database, OResult data) {
-      sendEvent(new OLiveQueryResult(OLiveQueryResult.DELETE_EVENT, data, null));
-    }
-
-    @Override
-    public void onError(ODatabaseDocument database) {
-      try {
-        protocol.push(new OLiveQueryPushRequest(monitorId, OLiveQueryPushRequest.END, Collections.emptyList()));
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-
-    @Override
-    public void onEnd(ODatabaseDocument database) {
-      try {
-        protocol.push(new OLiveQueryPushRequest(monitorId, OLiveQueryPushRequest.END, Collections.emptyList()));
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-
-    }
-  }
 }
