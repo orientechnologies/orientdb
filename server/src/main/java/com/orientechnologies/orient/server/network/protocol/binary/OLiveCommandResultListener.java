@@ -75,7 +75,16 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     final ONetworkProtocolBinary protocol = ((ONetworkProtocolBinary) connection.getProtocol());
     if (empty.compareAndSet(true, false))
       try {
-        protocol.sendOk(connection, sessionId);
+        protocol.channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
+        protocol.channel.writeInt(protocol.clientTxId);
+        protocol.okSent = true;
+        if (connection != null && Boolean.TRUE.equals(connection.getTokenBased()) && connection.getToken() != null
+            && protocol.requestType != OChannelBinaryProtocol.REQUEST_CONNECT
+            && protocol.requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
+          // TODO: Check if the token is expiring and if it is send a new token
+          byte[] renewedToken = protocol.getServer().getTokenHandler().renewIfNeeded(connection.getToken());
+          protocol.channel.writeBytes(renewedToken);
+        }
       } catch (IOException ignored) {
       }
     try {

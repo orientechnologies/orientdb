@@ -57,6 +57,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   private         String serverURL;
   private         byte   currentStatus;
   private         int    currentSessionId;
+  private         byte   currentMessage;
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int iProtocolVersion) throws IOException {
@@ -178,8 +179,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           OLogManager.instance()
               .debug(this, "%s - Read response: %d-%d", socket.getLocalAddress(), (int) currentStatus, currentSessionId);
 
-      } catch (IOException e) {
-        throw e;
       } finally {
         setReadResponseTimeout();
       }
@@ -194,6 +193,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       else
         tokenBytes = null;
       handleStatus(currentStatus, currentSessionId);
+      currentMessage = readByte();
       return tokenBytes;
     } catch (OLockException e) {
       Thread.currentThread().interrupt();
