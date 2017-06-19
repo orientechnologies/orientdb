@@ -130,7 +130,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     try {
 
       if (indexes.containsKey(iName))
-        throw new OIndexException("Index with name " + iName+ " already exists.");
+        throw new OIndexException("Index with name " + iName + " already exists.");
 
       // manual indexes are always durable
       if (clusterIdsToIndex == null || clusterIdsToIndex.length == 0) {
@@ -562,33 +562,37 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       final OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
 
       if (indexDefinition != null && indexDefinition.isAutomatic()) {
-        try {
-          index.loadFromConfiguration(idx);
-          index.delete();
-        } catch (Exception e) {
-          OLogManager.instance()
-              .error(this, "Error on removing index '%s' on rebuilding. Trying removing index files (Cause: %s)", index.getName(),
-                  e);
+        // XXX: At this moment Lucene-based indexes are not durable, so we still need to rebuild them.
+        if ("LUCENE".equalsIgnoreCase(indexMetadata.getAlgorithm())) {
+          try {
+            index.loadFromConfiguration(idx);
+            index.delete();
+          } catch (Exception e) {
+            OLogManager.instance()
+                .error(this, "Error on removing index '%s' on rebuilding. Trying removing index files (Cause: %s)", index.getName(),
+                    e);
 
-          // TRY DELETING ALL THE FILES RELATIVE TO THE INDEX
-          for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext(); ) {
-            try {
-              final OIndexFactory indexFactory = it.next();
-              final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, storage, 0, null);
+            // TRY DELETING ALL THE FILES RELATIVE TO THE INDEX
+            for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext(); ) {
+              try {
+                final OIndexFactory indexFactory = it.next();
+                final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, storage, 0, null);
 
-              engine.deleteWithoutLoad(index.getName());
-            } catch (Exception e2) {
+                engine.deleteWithoutLoad(index.getName());
+              } catch (Exception e2) {
+              }
             }
           }
-        }
 
-        createAutomaticIndex(idx, index, indexMetadata, indexDefinition);
+          createNonDurableAutomaticIndex(index, indexMetadata, indexDefinition);
+        } else
+          addDurableAutomaticIndex(idx, index, indexMetadata);
       } else {
-        addIndexAsIs(idx, index, indexMetadata);
+        addNonAutomaticIndex(idx, index, indexMetadata);
       }
     }
 
-    private void createAutomaticIndex(ODocument idx, OIndexInternal<?> index, OIndexMetadata indexMetadata,
+    private void createNonDurableAutomaticIndex(OIndexInternal<?> index, OIndexMetadata indexMetadata,
         OIndexDefinition indexDefinition) {
       final String indexName = indexMetadata.getName();
       final Set<String> clusters = indexMetadata.getClustersToIndex();
@@ -618,7 +622,23 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       }
     }
 
-    private void addIndexAsIs(ODocument idx, OIndexInternal<?> index, OIndexMetadata indexMetadata) {
+    private void addDurableAutomaticIndex(ODocument idx, OIndexInternal<?> index, OIndexMetadata indexMetadata) {
+      OLogManager.instance().info(this, "Index '%s' is a durable automatic index and will be added as is without rebuilding",
+          indexMetadata.getName());
+
+      if (index.loadFromConfiguration(idx)) {
+        addIndexInternal(index);
+        setDirty();
+
+        ok++;
+        OLogManager.instance().info(this, "Index '%s' was added in DB index list", index.getName());
+      } else {
+        index.delete();
+        errors++;
+      }
+    }
+
+    private void addNonAutomaticIndex(ODocument idx, OIndexInternal<?> index, OIndexMetadata indexMetadata) {
       OLogManager.instance().info(this, "Index '%s' is not automatic index and will be added as is", indexMetadata.getName());
 
       if (index.loadFromConfiguration(idx)) {
