@@ -33,8 +33,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.hook.ORecordHook;
-import com.orientechnologies.orient.core.index.ClassIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -176,7 +174,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     user = null;
 
     loadMetadata();
-    installHooksRemote();
 
     initialized = true;
   }
@@ -192,11 +189,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     });
     metadata.init(sharedContext);
     sharedContext.load(this);
-  }
-
-  protected void installHooksRemote() {
-    hooks.clear();
-    registerHook(new ClassIndexManagerRemote(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
   private void applyListeners(OrientDBConfig config) {

@@ -117,23 +117,6 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
     return this;
   }
 
-  public OIndexTxAware<T> putOnlyClientTrack(Object iKey, final OIdentifiable iValue) {
-    final ORID rid = iValue.getIdentity();
-
-    if (!rid.isValid())
-      if (iValue instanceof ORecord)
-        // EARLY SAVE IT
-        ((ORecord) iValue).save();
-      else
-        throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + iKey + "'");
-
-    iKey = getCollatingValue(iKey);
-
-    ((OTransactionRealAbstract) database.getTransaction())
-        .addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue, true);
-    return this;
-  }
-
   @Override
   public boolean remove(Object key) {
     key = getCollatingValue(key);
@@ -145,13 +128,6 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   public boolean remove(Object iKey, final OIdentifiable iRID) {
     iKey = getCollatingValue(iKey);
     database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
-    return true;
-  }
-
-  public boolean removeOnlyClientTrack(Object iKey, final OIdentifiable iRID) {
-    iKey = getCollatingValue(iKey);
-    ((OTransactionRealAbstract) database.getTransaction())
-        .addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID, true);
     return true;
   }
 
