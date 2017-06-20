@@ -27,7 +27,6 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -449,8 +448,7 @@ public class OResultSerializerNetwork {
       writeEmbeddedMap(bytes, (Map<Object, Object>) value);
       break;
     case LINKBAG:
-      ((ORidBag) value).toStream(bytes);
-      break;
+      throw new UnsupportedOperationException("LINKBAG should never appear in a projection");
     case CUSTOM:
       if (!(value instanceof OSerializableStream))
         value = new OSerializableWrapper((Serializable) value);
