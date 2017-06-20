@@ -89,6 +89,22 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
+  public boolean isSharded() {
+    Map<String, Set<String>> clusterMap = getActiveClusterMap();
+    Iterator<Set<String>> iter = clusterMap.values().iterator();
+    Set<String> firstClusterSet = null;
+    if (iter.hasNext()) {
+      firstClusterSet = iter.next();
+    }
+    while (iter.hasNext()) {
+      if (!firstClusterSet.equals(iter.next())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentDistributed database = new ODatabaseDocumentDistributed(getStorage(), hazelcastPlugin);
     database.internalOpen(getUser().getName(), null, getConfig(), false);

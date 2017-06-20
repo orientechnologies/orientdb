@@ -61,7 +61,10 @@ public class OSelectExecutionPlanner {
 
     handleGlobalLet(result, info, ctx, enableProfiling);
 
+    calculateShardingStrategy(info, ctx);
+
     handleFetchFromTarger(result, info, ctx, enableProfiling);
+
     handleLet(result, info, ctx, enableProfiling);
 
     handleWhere(result, info, ctx, enableProfiling);
@@ -101,6 +104,197 @@ public class OSelectExecutionPlanner {
       }
     }
     return result;
+  }
+
+  /**
+   * based on the cluster/server map and the query target, this method tries to find an optimal
+   * strategy to execute the query on the cluster.
+   *
+   * @param info
+   * @param ctx
+   */
+  private void calculateShardingStrategy(QueryPlanningInfo info, OCommandContext ctx) {
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
+
+    Map<String, Set<String>> clusterMap = db.getActiveClusterMap();
+    Set<String> queryClusters = calculateTargetClusters(info, ctx);
+    if (queryClusters == null) {
+      return;
+    }
+//    Set<String> serversWithAllTheClusers = getServersThatHasAllClusters(clusterMap, queryClusters);
+//    if (serversWithAllTheClusers.isEmpty()) {
+      // sharded query
+      Map<String, Set<String>> minimalSetOfNodes = getMinimalSetOfNodesForShardedQuery(db.getLocalNodeName(), clusterMap,
+          queryClusters);
+      if (minimalSetOfNodes == null) {
+        throw new OCommandExecutionException("Cannot execute sharded query");
+      }
+      info.serverToClusters = minimalSetOfNodes;
+//    } else {
+//      // all on a node
+//      String targetNode = serversWithAllTheClusers.contains(db.getLocalNodeName()) ?
+//          db.getLocalNodeName() :
+//          serversWithAllTheClusers.iterator().next();
+//      info.serverToClusters = new HashMap<>();
+//      info.serverToClusters.put(targetNode, queryClusters);
+//    }
+  }
+
+  /**
+   * given a cluster map and a set of clusters involved in a query, tries to calculate the minimum number of nodes that
+   * will have to be involved in the query execution, with clusters involved for each node.
+   *
+   * @param clusterMap
+   * @param queryClusters
+   *
+   * @return a map that has node names as a key and clusters (data files) for each node as a value
+   */
+  private Map<String, Set<String>> getMinimalSetOfNodesForShardedQuery(String localNode, Map<String, Set<String>> clusterMap,
+      Set<String> queryClusters) {
+    //approximate algorithm, the problem is NP-complete
+    Map<String, Set<String>> result = new HashMap<>();
+    Set<String> uncovered = new HashSet<>();
+    uncovered.addAll(queryClusters);
+
+    //try local node first
+    Set<String> nextNodeClusters = new HashSet<>();
+    nextNodeClusters.addAll(clusterMap.get(localNode));
+    nextNodeClusters.retainAll(uncovered);
+    if (nextNodeClusters.size() > 0) {
+      result.put(localNode, nextNodeClusters);
+      uncovered.removeAll(nextNodeClusters);
+    }
+
+    while (uncovered.size() > 0) {
+      String nextNode = findItemThatCoversMore(uncovered, clusterMap);
+      nextNodeClusters = new HashSet<>();
+      nextNodeClusters.addAll(clusterMap.get(nextNode));
+      nextNodeClusters.retainAll(uncovered);
+      result.put(nextNode, nextNodeClusters);
+      uncovered.removeAll(nextNodeClusters);
+    }
+    return result;
+  }
+
+  private String findItemThatCoversMore(Set<String> uncovered, Map<String, Set<String>> clusterMap) {
+    String lastFound = null;
+    int lastSize = -1;
+    for (Map.Entry<String, Set<String>> nodeConfig : clusterMap.entrySet()) {
+      Set<String> current = new HashSet<>();
+      current.addAll(nodeConfig.getValue());
+      current.retainAll(uncovered);
+      int thisSize = current.size();
+      if (lastFound == null || thisSize > lastSize) {
+        lastFound = nodeConfig.getKey();
+        lastSize = thisSize;
+      }
+    }
+    return lastFound;
+
+  }
+
+  /**
+   * @param clusterMap    the cluster map for current sharding configuration
+   * @param queryClusters the clusters that are target of the query
+   *
+   * @return
+   */
+  private Set<String> getServersThatHasAllClusters(Map<String, Set<String>> clusterMap, Set<String> queryClusters) {
+    Set<String> remainingServers = clusterMap.keySet();
+    for (String cluster : queryClusters) {
+      for (Map.Entry<String, Set<String>> serverConfig : clusterMap.entrySet()) {
+        if (!serverConfig.getValue().contains(cluster)) {
+          remainingServers.remove(serverConfig.getKey());
+        }
+      }
+    }
+    return remainingServers;
+  }
+
+  /**
+   * tries to calculate which clusters will be impacted by this query
+   *
+   * @param info
+   * @param ctx
+   *
+   * @return a set of cluster names this query will fetch from
+   */
+  private Set<String> calculateTargetClusters(QueryPlanningInfo info, OCommandContext ctx) {
+    if (info.target == null) {
+      return Collections.EMPTY_SET;
+    }
+
+    Set<String> result = new HashSet<>();
+    ODatabase db = ctx.getDatabase();
+    OFromItem item = info.target.getItem();
+    if (item.getRids() != null && item.getRids().size() > 0) {
+      if (item.getRids().size() == 1) {
+        OInteger cluster = item.getRids().get(0).getCluster();
+        result.add(db.getClusterNameById(cluster.getValue().intValue()));
+      } else {
+        for (ORid rid : item.getRids()) {
+          OInteger cluster = rid.getCluster();
+          result.add(db.getClusterNameById(cluster.getValue().intValue()));
+        }
+      }
+      return result;
+    } else if (item.getInputParams() != null && item.getInputParams().size() > 0) {
+      if (((ODatabaseInternal) ctx.getDatabase()).isSharded()) {
+        throw new UnsupportedOperationException("Sharded query with input parameter as a target is not supported yet");
+      }
+      return null;
+    } else if (item.getCluster() != null) {
+      String name = item.getCluster().getClusterName();
+      if (name == null) {
+        name = db.getClusterNameById(item.getCluster().getClusterNumber());
+      }
+      if (name != null) {
+        result.add(name);
+        return result;
+      } else {
+        return null;
+      }
+    } else if (item.getClusterList() != null) {
+      for (OCluster cluster : item.getClusterList().toListOfClusters()) {
+        String name = cluster.getClusterName();
+        if (name == null) {
+          name = db.getClusterNameById(cluster.getClusterNumber());
+        }
+        if (name != null) {
+          result.add(name);
+        }
+      }
+      return result;
+    } else if (item.getIndex() != null) {
+      String indexName = item.getIndex().getIndexName();
+      OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(indexName);
+      result.addAll(idx.getClusters());
+      if (result.isEmpty()) {
+        return null;
+      }
+      return result;
+    } else if (item.getInputParam() != null) {
+      if (((ODatabaseInternal) ctx.getDatabase()).isSharded()) {
+        throw new UnsupportedOperationException("Sharded query with input parameter as a target is not supported yet");
+      }
+      return null;
+    } else if (item.getIdentifier() != null) {
+      String className = item.getIdentifier().getStringValue();
+      OClass clazz = db.getMetadata().getSchema().getClass(className);
+      if (clazz == null) {
+        return null;
+      }
+      int[] clusterIds = clazz.getPolymorphicClusterIds();
+      for (int clusterId : clusterIds) {
+        String clusterName = db.getClusterNameById(clusterId);
+        if (clusterName != null) {
+          result.add(clusterName);
+        }
+      }
+      return result;
+    }
+
+    return null;
   }
 
   private OWhereClause translateLucene(OWhereClause whereClause) {
@@ -868,9 +1062,7 @@ public class OSelectExecutionPlanner {
     }
   }
 
-  private boolean handleGlobalLet(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
-    boolean res = false;
+  private void handleGlobalLet(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
     if (info.globalLetClause != null) {
       List<OLetItem> items = info.globalLetClause.getItems();
       for (OLetItem item : items) {
@@ -879,10 +1071,9 @@ public class OSelectExecutionPlanner {
         } else {
           result.chain(new GlobalLetQueryStep(item.getVarName(), item.getQuery(), ctx, profilingEnabled));
         }
-        res = true;
+        info.globalLetPresent = true;
       }
     }
-    return res;
   }
 
   private void handleLet(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
@@ -962,8 +1153,8 @@ public class OSelectExecutionPlanner {
     plan.chain(fetcher);
   }
 
-  private boolean handleClassAsTargetWithIndexedFunction(OSelectExecutionPlan plan, OIdentifier queryTarget, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+  private boolean handleClassAsTargetWithIndexedFunction(OSelectExecutionPlan plan, OIdentifier queryTarget, QueryPlanningInfo info,
+      OCommandContext ctx, boolean profilingEnabled) {
     if (queryTarget == null) {
       return false;
     }
@@ -1103,8 +1294,8 @@ public class OSelectExecutionPlanner {
    * @return true if it succeeded to use an index to sort, false otherwise.
    */
 
-  private boolean handleClassWithIndexForSortOnly(OSelectExecutionPlan plan, OIdentifier queryTarget, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+  private boolean handleClassWithIndexForSortOnly(OSelectExecutionPlan plan, OIdentifier queryTarget, QueryPlanningInfo info,
+      OCommandContext ctx, boolean profilingEnabled) {
 
     OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(queryTarget.getStringValue());
     if (clazz == null) {
@@ -1145,8 +1336,8 @@ public class OSelectExecutionPlanner {
     return false;
   }
 
-  private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier targetClass, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+  private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier targetClass, QueryPlanningInfo info,
+      OCommandContext ctx, boolean profilingEnabled) {
 
     List<OExecutionStepInternal> result = handleClassAsTargetWithIndex(targetClass.getStringValue(), info, ctx, profilingEnabled);
     if (result != null) {

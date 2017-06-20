@@ -24,10 +24,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 public interface ODatabaseInternal<T> extends ODatabase<T> {
@@ -127,4 +124,15 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
     result.put("local", val);
     return result;
   }
+
+  /**
+   * checks the cluster map and tells whether this is a sharded database (ie. a distributed DB where at least two nodes contain
+   * distinct subsets of data) or not
+   *
+   * @return true if the database is sharded, false otherwise
+   */
+  default boolean isSharded() {
+    return false;
+  }
+
 }
