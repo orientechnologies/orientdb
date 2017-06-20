@@ -9,18 +9,19 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerHookConfiguration;
 import com.orientechnologies.orient.server.network.ORemoteImportTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -257,6 +258,25 @@ public class RemoteTransactionSupportTest {
     result1.close();
     assertFalse(database.getTransaction().isActive());
 
+  }
+
+  @Test
+  public void testGraphInTx() {
+    database.createVertexClass("MyV");
+    database.createEdgeClass("MyE");
+    database.begin();
+
+    OVertex v1 = database.newVertex("MyV");
+    OVertex v2 = database.newVertex("MyV");
+    OEdge edge = v1.addEdge(v2, "MyE");
+    edge.setProperty("some", "value");
+    database.save(v1);
+    OResultSet result1 = database.query("select out_MyE from MyV ");
+    assertTrue(result1.hasNext());
+    ArrayList<Object> val = new ArrayList<>();
+    val.add(edge.getIdentity());
+//    assertEquals(result1.next().getProperty("out_MyE"), val);//TODO!
+    result1.close();
   }
 
   @After

@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -68,14 +69,14 @@ public class ONestedProjection extends SimpleNode {
         if (isExclude(property)) {
           continue;
         }
-        result.setProperty(property, tryExpand(expression, property, input.getProperty(property), ctx, recursion));
+        result.setProperty(property, convert(tryExpand(expression, property, input.getProperty(property), ctx, recursion)));
       }
     }
     if (includeItems.size() > 0) {
       for (ONestedProjectionItem item : includeItems) {
         String name = item.field.getStringValue();
         Object value = input.getProperty(name);
-        result.setProperty(name, tryExpand(expression, name, value, ctx, recursion));
+        result.setProperty(name, convert(tryExpand(expression, name, value, ctx, recursion)));
       }
     }
     return result;
@@ -117,7 +118,7 @@ public class ONestedProjection extends SimpleNode {
         if (isExclude(property)) {
           continue;
         }
-        result.setProperty(property, tryExpand(expression, property, elem.getProperty(property), ctx, recursion));
+        result.setProperty(property, convert(tryExpand(expression, property, elem.getProperty(property), ctx, recursion)));
       }
     }
     if (includeItems.size() > 0) {
@@ -129,7 +130,7 @@ public class ONestedProjection extends SimpleNode {
         if (item.expansion != null) {
           value = item.expand(expression, name, value, ctx, recursion - 1);
         }
-        result.setProperty(name, value);
+        result.setProperty(name, convert(value));
       }
     }
     return result;
@@ -142,14 +143,14 @@ public class ONestedProjection extends SimpleNode {
         if (isExclude(property)) {
           continue;
         }
-        result.setProperty(property, tryExpand(expression, property, input.get(property), ctx, recursion));
+        result.setProperty(property, convert(tryExpand(expression, property, input.get(property), ctx, recursion)));
       }
     }
     if (includeItems.size() > 0) {
       for (ONestedProjectionItem item : includeItems) {
         String name = item.field.getStringValue();
         Object value = input.get(name);
-        result.setProperty(name, tryExpand(expression, name, value, ctx, recursion));
+        result.setProperty(name, convert(tryExpand(expression, name, value, ctx, recursion)));
       }
     }
 
@@ -221,6 +222,15 @@ public class ONestedProjection extends SimpleNode {
     result = 31 * result + (starItem != null ? starItem.hashCode() : 0);
     result = 31 * result + (recursion != null ? recursion.hashCode() : 0);
     return result;
+  }
+
+  private Object convert(Object value) {
+    if (value instanceof ORidBag) {
+      List result = new ArrayList();
+      ((ORidBag) value).forEach(x -> result.add(x));
+      return result;
+    }
+    return value;
   }
 }
 /* JavaCC - OriginalChecksum=a7faf9beb3c058e28999b17cb43b26f6 (do not edit this line) */

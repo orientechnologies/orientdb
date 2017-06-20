@@ -4,10 +4,13 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class OProjectionItem extends SimpleNode {
@@ -96,7 +99,16 @@ public class OProjectionItem extends SimpleNode {
     if (nestedProjection != null) {
       result = nestedProjection.apply(expression, result, ctx);
     }
-    return result;
+    return convert(result);
+  }
+
+  private Object convert(Object value) {
+    if (value instanceof ORidBag) {
+      List result = new ArrayList();
+      ((ORidBag) value).forEach(x -> result.add(x));
+      return result;
+    }
+    return value;
   }
 
   public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
@@ -109,7 +121,7 @@ public class OProjectionItem extends SimpleNode {
     if (nestedProjection != null) {
       result = nestedProjection.apply(expression, result, ctx);
     }
-    return result;
+    return convert(result);
   }
 
   /**
