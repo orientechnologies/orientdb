@@ -140,6 +140,7 @@ public class OrientDBEmbeddedTests {
     List<String> databases = orientDb.list();
     assertEquals(databases.size(), 1);
     assertTrue(databases.contains("test"));
+    orientDb.close();
   }
 
   @Test
