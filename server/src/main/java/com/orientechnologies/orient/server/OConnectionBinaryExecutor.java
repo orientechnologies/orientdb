@@ -1210,7 +1210,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     } catch (final ORecordNotFoundException e) {
       throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
     }
-    return new OBeginTransactionResponse(tx.getId());
+
+    return new OBeginTransactionResponse(tx.getId(), tx.getUpdatedRids());
   }
 
   @Override

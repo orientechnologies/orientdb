@@ -271,11 +271,11 @@ public class RemoteTransactionSupportTest {
     OEdge edge = v1.addEdge(v2, "MyE");
     edge.setProperty("some", "value");
     database.save(v1);
-    OResultSet result1 = database.query("select out_MyE from MyV ");
+    OResultSet result1 = database.query("select out_MyE from MyV  where out_MyE is not null");
     assertTrue(result1.hasNext());
     ArrayList<Object> val = new ArrayList<>();
     val.add(edge.getIdentity());
-//    assertEquals(result1.next().getProperty("out_MyE"), val);//TODO!
+    assertEquals(result1.next().getProperty("out_MyE"), val);
     result1.close();
   }
 

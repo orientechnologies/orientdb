@@ -256,7 +256,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       updatedRecords.put((ORecordId) iRecord.getIdentity(), iRecord);
     } else if (iStatus == ORecordOperation.CREATED) {
       createdRecords.put((ORecordId) iRecord.getIdentity().copy(), iRecord);
-    } else if(iStatus == ORecordOperation.DELETED) {
+    } else if (iStatus == ORecordOperation.DELETED) {
       deletedRecord.add(iRecord.getIdentity());
     }
   }

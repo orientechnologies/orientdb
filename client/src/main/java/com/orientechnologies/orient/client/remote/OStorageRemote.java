@@ -875,7 +875,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryNextPageRequest request = new OQueryNextPageRequest(rs.getQueryId(), 100);
     OQueryResponse response = networkOperation(request, "Error on fetching next page for statment: " + rs.getQueryId());
 
-    rs.fetched(response.getResult(),response.isHasNextPage(),response.getExecutionPlan(),response.getQueryStats());
+    rs.fetched(response.getResult(), response.isHasNextPage(), response.getExecutionPlan(), response.getQueryStats());
   }
 
   public List<ORecordOperation> commit(final OTransaction iTx, final Runnable callback) {
@@ -1794,15 +1794,19 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void beginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
     OBeginTransactionRequest request = new OBeginTransactionRequest(transaction.getId(), true, transaction.isUsingLog(),
         transaction.getAllRecordEntries(), transaction.getIndexEntries());
-    OBinaryResponse response = networkOperation(request, "Error on remote treansaction begin");
-
+    OBeginTransactionResponse response = networkOperation(request, "Error on remote treansaction begin");
+    for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
+      transaction.updateIdentityAfterCommit(entry.getKey(), entry.getValue());
+    }
   }
 
   public void reBeginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
     ORebeginTransactionRequest request = new ORebeginTransactionRequest(transaction.getId(), transaction.isUsingLog(),
         transaction.getAllRecordEntries(), transaction.getIndexEntries());
-    OBinaryResponse response = networkOperation(request, "Error on remote treansaction begin");
-
+    OBeginTransactionResponse response = networkOperation(request, "Error on remote treansaction begin");
+    for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
+      transaction.updateIdentityAfterCommit(entry.getKey(), entry.getValue());
+    }
   }
 
   public void fetchTransaction(ODatabaseDocumentRemote remote) {
