@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -289,7 +290,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
     try {
       dbTwo.create();
       Assert.fail();
-    } catch (OStorageExistsException e) {
+    } catch (ODatabaseException e) {
       //ignore all is correct
     }
 
