@@ -187,7 +187,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
       }
     } else
-      throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
+      throw new ODatabaseException("Cannot create new database '" + name + "' because it already exists");
   }
 
   public synchronized void restore(String name, String path, OrientDBConfig config) {

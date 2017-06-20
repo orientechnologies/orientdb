@@ -52,7 +52,7 @@ public class StorageNamingTests {
     new NamingTestStorage("/,,,/,/,/name");
   }
 
-  @Test(expected = IllegalCharsetNameException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void commaInNameShouldThrow() {
 
     new NamingTestStorage("/path/with/,/name/with,");
@@ -65,7 +65,7 @@ public class StorageNamingTests {
     //    });
   }
 
-  @Test(expected = IllegalCharsetNameException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void name() throws Exception {
     new NamingTestStorage("/name/with,");
 
