@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedTxContextImpl;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
@@ -45,30 +46,29 @@ import java.util.List;
  *
  */
 public class OCompleted2pcTask extends OAbstractReplicatedTask {
-  private static final long     serialVersionUID = 1L;
-  public static final int       FACTORYID        = 8;
+  private static final long serialVersionUID = 1L;
+  public static final  int  FACTORYID        = 8;
 
   private ODistributedRequestId requestId;
   private boolean               success;
-  private List<ORemoteTask>     fixTasks         = new ArrayList<ORemoteTask>();
-  private int[]                 partitionKey;
+  private List<ORemoteTask> fixTasks = new ArrayList<ORemoteTask>();
 
   public OCompleted2pcTask() {
-    partitionKey = ALL;
   }
 
-  public OCompleted2pcTask(final ODistributedRequestId iRequestId, final boolean iSuccess, final int[] partitionKey) {
+  public OCompleted2pcTask init(final ODistributedRequestId iRequestId, final boolean iSuccess, final int[] partitionKey) {
     this.requestId = iRequestId;
     this.success = iSuccess;
-    this.partitionKey = partitionKey != null ? partitionKey : ALL;
+    return this;
   }
 
   /**
-   * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
+   * In case of commit and rollback uses the FAST_NOLOCK, because there are no locking operation. In case of fix, the locks could be
+   * necessary, so uses ALL.
    */
   @Override
   public int[] getPartitionKey() {
-    return partitionKey;
+    return success || fixTasks.isEmpty() ? FAST_NOLOCK : ALL;
   }
 
   public void addFixTask(final ORemoteTask fixTask) {
@@ -78,9 +78,9 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
   @Override
   public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "%s transaction db=%s originalReqId=%s...", (success ? "Committing" : fixTasks.isEmpty() ? "Rolling back" : "Fixing"),
-        database.getName(), requestId, requestId);
+    ODistributedServerLog
+        .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "%s transaction db=%s originalReqId=%s...",
+            (success ? "Committing" : fixTasks.isEmpty() ? "Rolling back" : "Fixing"), database.getName(), requestId, requestId);
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
 
@@ -90,45 +90,43 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
       throw new ODatabaseException(
           "Database '" + database.getName() + " is not available on server '" + iManager.getLocalNodeName() + "'");
 
-    final ODistributedTxContext pRequest = ddb.popTxContext(requestId);
+    final ODistributedTxContext ctx = ddb.popTxContext(requestId);
     try {
       if (success) {
         // COMMIT
-        if (pRequest != null)
-          pRequest.commit();
+        if (ctx != null)
+          ctx.commit();
         else {
           // UNABLE TO FIND TX CONTEXT
           ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "Error on committing distributed transaction %s db=%s", requestId, database.getName());
+              "Error on committing distributed transaction %s db=%s because the context was not found", requestId,
+              database.getName());
           return Boolean.FALSE;
         }
 
       } else if (fixTasks.isEmpty()) {
         // ROLLBACK
-        if (pRequest != null)
-          pRequest.rollback(database);
+        if (ctx != null)
+          ctx.rollback(database);
         else {
           // UNABLE TO FIND TX CONTEXT
           ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "Error on rolling back distributed transaction %s db=%s", requestId, database.getName());
+              "Error on rolling back distributed transaction %s db=%s because the context was not found", requestId,
+              database.getName());
           return Boolean.FALSE;
         }
       } else {
 
         // FIX TRANSACTION CONTENT
-        if (pRequest != null)
-          pRequest.fix(database, fixTasks);
-        else {
-          // UNABLE TO FIX TX CONTEXT
-          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "Error on fixing distributed transaction %s db=%s", requestId, database.getName());
-          return Boolean.FALSE;
-        }
-
+        if (ctx != null)
+          ctx.fix(database, fixTasks);
+        else
+          // DON'T NEED OF THE CONTEXT TO EXECUTE A FIX
+          ODistributedTxContextImpl.executeFix(this, null, database, fixTasks, requestId, ddb);
       }
     } finally {
-      if (pRequest != null)
-        pRequest.destroy();
+      if (ctx != null)
+        ctx.destroy();
     }
 
     return Boolean.TRUE;
@@ -148,9 +146,6 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
       out.writeByte(task.getFactoryId());
       task.toStream(out);
     }
-    out.writeInt(partitionKey.length);
-    for (int pk : partitionKey)
-      out.writeInt(pk);
   }
 
   @Override
@@ -164,10 +159,6 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
       task.fromStream(in, taskFactory);
       fixTasks.add(task);
     }
-    final int pkSize = in.readInt();
-    partitionKey = new int[pkSize];
-    for (int i = 0; i < pkSize; ++i)
-      partitionKey[i] = in.readInt();
   }
 
   /**
@@ -192,11 +183,25 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
 
   @Override
   public String toString() {
-    return getName() + " origReqId: " + requestId + " type: "
-        + (success ? "commit" : (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) [" + fixTasks + "]"));
+    return getName() + " origReqId: " + requestId + " type: " + (success ?
+        "commit" :
+        (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) " + fixTasks));
   }
 
   public List<ORemoteTask> getFixTasks() {
     return fixTasks;
+  }
+
+  public boolean getSuccess() {
+    return success;
+  }
+
+  public ODistributedRequestId getRequestId() {
+    return requestId;
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    return false;
   }
 }

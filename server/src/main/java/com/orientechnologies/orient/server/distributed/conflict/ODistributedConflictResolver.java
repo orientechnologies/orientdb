@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,31 +36,34 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface ODistributedConflictResolver {
+  Object NOT_FOUND = new Object();
+
   class OConflictResult {
-    public Object                    winner     = null;
-    public Map<Object, List<String>> candidates = new HashMap<Object, List<String>>();
+    public Object winner = NOT_FOUND;
+    public Map<Object, List<String>> candidates;
+
+    public OConflictResult(final Map<Object, List<String>> candidates) {
+      this.candidates = candidates;
+    }
   }
+
+  void configure(ODocument config);
 
   /**
    * Called on distributed conflict. It is responsible to resolve the conflicts by providing the winning result. If it's not able to
    * do that, NULL is returned.
-   * 
    *
    * @param databaseName
    * @param clusterName
-   * @param rid
-   *          RecordID of the record in conflict
-   * @param dManager
-   *          Current distributed manager instance
-   * @param groupedServerValues
-   *          All the values from the servers grouped by value. The key could also be an exception in case the record was not
-   *          found. @return The winning object
-   * @param config
-   *          The ODocument representing the configuration of the conflict resolver. it's optional, null means no configuration
+   * @param rid                 RecordID of the record in conflict
+   * @param dManager            Current distributed manager instance
+   * @param groupedServerValues All the values from the servers grouped by value. The key could also be an exception in case the
+   *                            record was not found. @return The winning object
+   *
    * @return The winning result object
    */
   OConflictResult onConflict(String databaseName, String clusterName, ORecordId rid, ODistributedServerManager dManager,
-      Map<Object, List<String>> groupedServerValues, ODocument config);
+      Map<Object, List<String>> groupedServerValues);
 
   /**
    * Name to register in the factory.

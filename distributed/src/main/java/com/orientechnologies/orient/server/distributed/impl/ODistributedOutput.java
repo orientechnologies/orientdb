@@ -58,10 +58,18 @@ public class ODistributedOutput {
 
         final String serverName = m.field("name");
 
-        serverRow.field("Name", serverName + (manager.getLocalNodeName().equals(serverName) ? "*" : ""));
-        serverRow.field("Status", (Object)m.field("status"));
+        String serverLabel = serverName;
+        if (manager.getLocalNodeName().equals(serverName))
+          serverLabel += "(*)";
+
+        final String lockManagerServer = manager.getLockManagerServer();
+        if (lockManagerServer != null && lockManagerServer.equals(serverName))
+          serverLabel += "(@)";
+
+        serverRow.field("Name", serverLabel);
+        serverRow.field("Status", (Object) m.field("status"));
         serverRow.field("Databases", (String) null);
-        serverRow.field("Conns", (Object)m.field("connections"));
+        serverRow.field("Conns", (Object) m.field("connections"));
 
         final Date date = m.field("startedOn");
 
@@ -169,7 +177,7 @@ public class ODistributedOutput {
         // SEARCH FOR THE MEMBER
         ODocument fromMember = null;
         for (ODocument m : members) {
-          if (fromServer.equals(m.field("name"))) {
+          if (m != null && fromServer.equals(m.field("name"))) {
             fromMember = m;
             break;
           }
@@ -293,9 +301,9 @@ public class ODistributedOutput {
       rowTotals.field("Servers", "TOTAL");
       for (String fromServer : orderedServers) {
         fromServer = formatServerName(manager, fromServer);
-        rowTotals.field(fromServer, String.format("%,d", (Long)rowTotals.field(fromServer)));
+        rowTotals.field(fromServer, String.format("%,d", (Number) rowTotals.field(fromServer)));
       }
-      rowTotals.field("TOTAL", String.format("%,d", (Long)rowTotals.field("TOTAL")));
+      rowTotals.field("TOTAL", String.format("%,d", (Number) rowTotals.field("TOTAL")));
 
       table.setColumnAlignment("TOTAL", OTableFormatter.ALIGNMENT.RIGHT);
     }
@@ -311,7 +319,7 @@ public class ODistributedOutput {
     final List<ODocument> members = distribCfg.field("members");
 
     final StringBuilder buffer = new StringBuilder();
-    buffer.append("\nREPLICATION MESSAGE COORDINATOR STATS");
+    buffer.append("\nREPLICATION MESSAGE CURRENT NODE STATS");
     final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
       @Override
       public void onMessage(final String text, final Object... args) {
@@ -393,9 +401,9 @@ public class ODistributedOutput {
 
       rowTotals.field("Servers", "TOTAL");
       for (String opName : operations) {
-        rowTotals.field(opName, String.format("%,d", (Long) rowTotals.field(opName)));
+        rowTotals.field(opName, String.format("%,d", (Number) rowTotals.field(opName)));
       }
-      rowTotals.field("TOTAL", String.format("%,d", (Long) rowTotals.field("TOTAL")));
+      rowTotals.field("TOTAL", String.format("%,d", (Number) rowTotals.field("TOTAL")));
     }
 
     table.setColumnAlignment("TOTAL", OTableFormatter.ALIGNMENT.RIGHT);
@@ -440,7 +448,7 @@ public class ODistributedOutput {
 
         final String serverName = m.field("name");
         buffer.append(serverName);
-        buffer.append((String)m.field("status"));
+        buffer.append((Object)m.field("status"));
 
         final Collection<String> databases = m.field("databases");
         if (databases != null) {
@@ -472,7 +480,7 @@ public class ODistributedOutput {
   }
 
   public static String formatClusterTable(final ODistributedServerManager manager, final String databaseName,
-      final ODistributedConfiguration cfg, final int availableNodes) {
+      final ODistributedConfiguration cfg, final int totalConfiguredServers) {
     final StringBuilder buffer = new StringBuilder();
 
     if (cfg.hasDataCenterConfiguration()) {
@@ -504,7 +512,8 @@ public class ODistributedOutput {
       table.writeRecords(rows, -1);
     }
 
-    buffer.append("\n\nCLUSTER CONFIGURATION (LEGEND: X = Owner, o = Copy)");
+    buffer.append(
+        "\n\nCLUSTER CONFIGURATION [wQuorum: " + manager.isWriteQuorumPresent(databaseName) + "] (LEGEND: X = Owner, o = Copy)");
 
     final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
 
@@ -530,8 +539,8 @@ public class ODistributedOutput {
     // READ DEFAULT CFG (CLUSTER=*)
     final String defaultWQ = cfg.isLocalDataCenterWriteQuorum() ?
         ODistributedConfiguration.QUORUM_LOCAL_DC :
-        "" + cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes, localNodeName);
-    final int defaultRQ = cfg.getReadQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes, localNodeName);
+        "" + cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
+    final int defaultRQ = cfg.getReadQuorum(ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
     final String defaultOwner = "" + cfg.getClusterOwner(ODistributedConfiguration.ALL_WILDCARD);
     final List<String> defaultServers = cfg.getConfiguredServers(ODistributedConfiguration.ALL_WILDCARD);
 
@@ -541,8 +550,8 @@ public class ODistributedOutput {
     for (String cluster : cfg.getClusterNames()) {
       final String wQ = cfg.isLocalDataCenterWriteQuorum() ?
           ODistributedConfiguration.QUORUM_LOCAL_DC :
-          "" + cfg.getWriteQuorum(cluster, availableNodes, localNodeName);
-      final int rQ = cfg.getReadQuorum(cluster, availableNodes, localNodeName);
+          "" + cfg.getWriteQuorum(cluster, totalConfiguredServers, localNodeName);
+      final int rQ = cfg.getReadQuorum(cluster, totalConfiguredServers, localNodeName);
       final String owner = cfg.getClusterOwner(cluster);
       final List<String> servers = cfg.getConfiguredServers(cluster);
 
@@ -637,12 +646,12 @@ public class ODistributedOutput {
     return fromServer + (manager.getLocalNodeName().equals(fromServer) ? "*" : "");
   }
 
-  public static Object formatLocks(final ODistributedAbstractPlugin manager, final String db) {
+  public static Object formatRecordLocks(final ODistributedAbstractPlugin manager, final String db) {
     final ConcurrentHashMap<ORID, ODistributedDatabaseImpl.ODistributedLock> lockManager = manager.getMessageService()
         .getDatabase(db).lockManager;
 
     final StringBuilder buffer = new StringBuilder();
-    buffer.append("\nHA LOCKS FOR DATABASE '" + db + "'");
+    buffer.append("HA RECORD LOCKS FOR DATABASE '" + db + "'");
     final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
       @Override
       public void onMessage(final String text, final Object... args) {
@@ -663,17 +672,18 @@ public class ODistributedOutput {
       SimpleDateFormat dateFormat = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
 
       for (ORID rid : orderedRIDs) {
-        final ODocument row = new ODocument();
-        rows.add(row);
-
         final ODistributedDatabaseImpl.ODistributedLock lock = lockManager.get(rid);
         if (lock == null)
           continue;
+
+        final ODocument row = new ODocument();
+        rows.add(row);
 
         row.field("rid", rid);
         row.field("server", manager.getNodeNameById(lock.reqId.getNodeId()));
         row.field("acquiredOn", dateFormat.format(new Date(lock.acquiredOn)));
         row.field("reqId", lock.reqId);
+        row.field("threadCount", lock.lock.getCount());
       }
     }
 

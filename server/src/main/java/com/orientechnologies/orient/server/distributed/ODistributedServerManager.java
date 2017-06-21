@@ -64,6 +64,11 @@ public interface ODistributedServerManager {
     ONLINE,
 
     /**
+     * The server starts to merge to another cluster.
+     */
+    MERGING,
+
+    /**
      * The server is shutting down.
      */
     SHUTTINGDOWN
@@ -119,7 +124,10 @@ public interface ODistributedServerManager {
 
   Set<String> getAvailableNodeNames(String databaseName);
 
+  @Deprecated
   String getCoordinatorServer();
+
+  String getLockManagerServer();
 
   void waitUntilNodeOnline() throws InterruptedException;
 
@@ -172,7 +180,8 @@ public interface ODistributedServerManager {
 
   void updateLastClusterChange();
 
-  void reassignClustersOwnership(String iNode, String databaseName, OModifiableDistributedConfiguration cfg);
+  void reassignClustersOwnership(String iNode, String databaseName, OModifiableDistributedConfiguration cfg,
+      boolean canCreateNewClusters);
 
   /**
    * Available means not OFFLINE, so ONLINE or SYNCHRONIZING.
@@ -183,6 +192,8 @@ public interface ODistributedServerManager {
    * Returns true if the node status is ONLINE.
    */
   boolean isNodeOnline(String iNodeName, String databaseName);
+
+  int getTotalNodes(String iDatabaseName);
 
   int getAvailableNodes(String iDatabaseName);
 
@@ -221,12 +232,13 @@ public interface ODistributedServerManager {
    * @param iExecutionMode
    * @param localResult        It's the result of the request executed locally
    * @param iAfterSentCallback
+   * @param endCallback
    *
    * @return
    */
   ODistributedResponse sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
       ORemoteTask iTask, long messageId, EXECUTION_MODE iExecutionMode, Object localResult,
-      OCallable<Void, ODistributedRequestId> iAfterSentCallback);
+      OCallable<Void, ODistributedRequestId> iAfterSentCallback, OCallable<Void, ODistributedResponseManager> endCallback);
 
   ODocument getStats();
 
@@ -234,9 +246,12 @@ public interface ODistributedServerManager {
 
   List<String> getOnlineNodes(String iDatabaseName);
 
-  boolean installDatabase(boolean iStartup, String databaseName, ODocument config, boolean forceDeployment, boolean tryWithDeltaFirst);
+  boolean installDatabase(boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst);
 
-  ORemoteTaskFactory getTaskFactory();
+  /**
+   * Returns the task factory manager. During first connect the minor version of the protocol is used.
+   */
+  ORemoteTaskFactoryManager getTaskFactoryManager();
 
   Set<String> getActiveServers();
 
@@ -266,4 +281,12 @@ public interface ODistributedServerManager {
    */
   <T> T executeInDistributedDatabaseLock(String databaseName, long timeoutLocking, OModifiableDistributedConfiguration lastCfg,
       OCallable<T, OModifiableDistributedConfiguration> iCallback);
+
+  /**
+   * Returns true if the quorum is present in terms of number of available nodes for full replication only. With sharding, instead,
+   * the quorum may depend on the involved clusters.
+   *
+   * @return
+   */
+  boolean isWriteQuorumPresent(String databaseName);
 }

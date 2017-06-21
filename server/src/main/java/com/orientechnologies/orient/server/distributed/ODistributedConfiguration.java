@@ -41,6 +41,7 @@ public class ODistributedConfiguration {
   protected static final String CLUSTERS = "clusters";
   protected static final String VERSION  = "version";
 
+  protected static final String  AUTO_DEPLOY          = "autoDeploy";
   protected static final String  READ_QUORUM          = "readQuorum";
   protected static final String  WRITE_QUORUM         = "writeQuorum";
   public static final    String  QUORUM_MAJORITY      = "majority";
@@ -67,7 +68,7 @@ public class ODistributedConfiguration {
 
   public ODistributedConfiguration(final ODocument iConfiguration) {
     configuration = iConfiguration;
-//    nodeCfg.setTrackingChanges(false);
+    configuration.setTrackingChanges(false);
   }
 
   public OModifiableDistributedConfiguration modify() {
@@ -92,6 +93,10 @@ public class ODistributedConfiguration {
    */
   public boolean hasDataCenterConfiguration() {
     return configuration.field(DCS) != null;
+  }
+
+  public boolean isAutoDeploy() {
+    return configuration.field(AUTO_DEPLOY) != null ? (Boolean) configuration.field(AUTO_DEPLOY) : true;
   }
 
   /**
@@ -359,8 +364,6 @@ public class ODistributedConfiguration {
    * the cluster leader.
    */
   public List<String> getMasterServers() {
-    final List<String> result = new ArrayList<String>();
-
     final List<String> serverList = getClusterConfiguration(null).field(SERVERS);
     if (serverList != null) {
       // COPY AND REMOVE ANY NEW_NODE_TAG
@@ -699,20 +702,20 @@ public class ODistributedConfiguration {
    * Returns the read quorum.
    *
    * @param clusterName    Cluster name, or null for *
-   * @param availableNodes Total node available
+   * @param totalConfiguredServers Total node available
    */
-  public int getReadQuorum(final String clusterName, final int availableNodes, final String server) {
-    return getQuorum("readQuorum", clusterName, availableNodes, DEFAULT_READ_QUORUM, server);
+  public int getReadQuorum(final String clusterName, final int totalConfiguredServers, final String server) {
+    return getQuorum("readQuorum", clusterName, totalConfiguredServers, DEFAULT_READ_QUORUM, server);
   }
 
   /**
    * Returns the write quorum.
    *
-   * @param clusterName    Cluster name, or null for *
-   * @param availableNodes Total node available
+   * @param clusterName                  Cluster name, or null for *
+   * @param totalConfiguredMasterServers Total node available
    */
-  public int getWriteQuorum(final String clusterName, final int availableNodes, final String server) {
-    return getQuorum("writeQuorum", clusterName, availableNodes, DEFAULT_WRITE_QUORUM, server);
+  public int getWriteQuorum(final String clusterName, final int totalConfiguredMasterServers, final String server) {
+    return getQuorum("writeQuorum", clusterName, totalConfiguredMasterServers, DEFAULT_WRITE_QUORUM, server);
   }
 
   private ODocument getConfiguredClusters() {
@@ -776,10 +779,10 @@ public class ODistributedConfiguration {
   /**
    * Returns the read quorum.
    *
-   * @param iClusterName    Cluster name, or null for *
-   * @param iAvailableNodes Total nodes available
+   * @param iClusterName Cluster name, or null for *
+   * @param totalServers Total nodes available
    */
-  private int getQuorum(final String quorumSetting, final String iClusterName, final int iAvailableNodes, final Object defaultValue,
+  private int getQuorum(final String quorumSetting, final String iClusterName, final int totalServers, final Object defaultValue,
       final String server) {
     Object value = getClusterConfiguration(iClusterName).field(quorumSetting);
     if (value == null) {
@@ -793,9 +796,9 @@ public class ODistributedConfiguration {
 
     if (value instanceof String) {
       if (value.toString().equalsIgnoreCase(QUORUM_MAJORITY))
-        value = iAvailableNodes / 2 + 1;
+        value = totalServers / 2 + 1;
       else if (value.toString().equalsIgnoreCase(QUORUM_ALL))
-        value = iAvailableNodes;
+        value = totalServers;
       else if (value.toString().equalsIgnoreCase(QUORUM_LOCAL_DC)) {
         final String dc = getDataCenterOfServer(server);
         if (dc == null)

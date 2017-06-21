@@ -14,26 +14,25 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://orientdb.com
+ *  * For more information: http://www.orientechnologies.com
  *
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
-
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.TimerTask;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.TimerTask;
 
 /**
  * Start the replication with a server. The command is executed to the target server that will require a SYNC DATABASE command.
@@ -43,8 +42,8 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 public class OStartReplicationTask extends OAbstractReplicatedTask {
   public static final int FACTORYID = 22;
 
-  private String          databaseName;
-  private boolean         tryWithDeltaFirst;
+  private String  databaseName;
+  private boolean tryWithDeltaFirst;
 
   public OStartReplicationTask() {
   }
@@ -63,14 +62,14 @@ public class OStartReplicationTask extends OAbstractReplicatedTask {
       return false;
 
     dManager.setDatabaseStatus(dManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
-    
-    final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);
+//    dManager.getMessageService().getDatabase(databaseName)
+//        .checkNodeInConfiguration(dManager.getDatabaseConfiguration(databaseName), getNodeSource());
 
     // EXECUTE THE INSTALL DATABASE ASYNCHRONOUSLY
     Orient.instance().scheduleTask(new TimerTask() {
       @Override
       public void run() {
-        dManager.installDatabase(true, databaseName, dCfg.getDocument(), true, tryWithDeltaFirst);
+        dManager.installDatabase(true, databaseName, true, tryWithDeltaFirst);
       }
     }, 1000, 0);
 

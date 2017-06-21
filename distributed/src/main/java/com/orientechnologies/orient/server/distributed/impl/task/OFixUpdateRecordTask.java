@@ -35,12 +35,14 @@ public class OFixUpdateRecordTask extends OUpdateRecordTask {
   public OFixUpdateRecordTask() {
   }
 
-  public OFixUpdateRecordTask(final ORecord iRecord, final int version) {
-    super(iRecord, version);
+  public OFixUpdateRecordTask init(final ORecord iRecord, final int version) {
+    super.init(iRecord, version);
+    return this;
   }
 
-  public OFixUpdateRecordTask(final ORecordId iRecordId, final byte[] iContent, final int iVersion, final byte iRecordType) {
-    super(iRecordId, iContent, iVersion, iRecordType);
+  public OFixUpdateRecordTask init(final ORecordId iRecordId, final byte[] iContent, final int iVersion, final byte iRecordType) {
+    super.init(iRecordId, iContent, iVersion, iRecordType);
+    return this;
   }
 
   @Override

@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -28,6 +30,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
@@ -50,8 +53,7 @@ import java.util.List;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
-  private static final long serialVersionUID = 1L;
-  public static final  int  FACTORYID        = 0;
+  public static final int FACTORYID = 0;
   protected byte[] content;
   protected byte   recordType;
   protected int clusterId = -1;
@@ -60,14 +62,15 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   public OCreateRecordTask() {
   }
 
-  public OCreateRecordTask(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
-    super(iRid, iVersion);
+  public OCreateRecordTask init(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
+    super.init(iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
+    return this;
   }
 
-  public OCreateRecordTask(final ORecord record) {
-    this((ORecordId) record.getIdentity(), record.toStream(), record.getVersion() - 1, ORecordInternal.getRecordType(record));
+  public OCreateRecordTask init(final ORecord record) {
+    init((ORecordId) record.getIdentity(), record.toStream(), record.getVersion() - 1, ORecordInternal.getRecordType(record));
 
     if (rid.getClusterId() == ORID.CLUSTER_ID_INVALID) {
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
@@ -75,6 +78,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       // RESETTING FOR AVOID DESERIALIZATION ISSUE.
       ((ORecordId) record.getIdentity()).setClusterId(ORID.CLUSTER_ID_INVALID);
     }
+    return this;
   }
 
   @Override
@@ -112,31 +116,34 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
         .getClusterById(rid.getClusterId());
     final OPaginatedCluster.RECORD_STATUS recordStatus = cluster.getRecordStatus(rid.getClusterPosition());
 
-    switch (recordStatus) {
-    case REMOVED:
-      // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
-      ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().recyclePosition(rid, new byte[] {}, version, recordType);
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Found record %s/%s status=%s reqId=%s...",
+              database.getName(), rid.toString(), recordStatus, requestId);
 
-      // CREATE A RECORD TO CALL ALL THE HOOKS (LIKE INDEXES FOR UNIQUE CONSTRAINTS)
-      final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-      ORecordInternal.fill(loadedRecordInstance, rid, version, content, true);
-      loadedRecordInstance.save();
-      return new OPlaceholder(rid, loadedRecordInstance.getVersion());
+    switch (recordStatus) {
+    case REMOVED: {
+      // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
+      getRecord();
+      ODatabaseRecordThreadLocal.INSTANCE.get().recycle(record);
+    }
 
     case ALLOCATED:
-    case PRESENT:
-      final OStorageOperationResult<ORawBuffer> loadedRecord = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-          .readRecord(rid, null, true, false, null);
+      getRecord();
+      // FORCE CREATION
+      if (record.getVersion() < 0)
+        // INCREMENT THE VERSION IN CASE OF ROLLBACK
+        ORecordInternal.setVersion(record, record.getVersion() + 1);
+      record.save();
+      break;
 
-      if (loadedRecord.getResult() != null) {
-        // ALREADY PRESENT
-        record = forceUpdate(iManager, database, requestId, loadedRecord.getResult());
-        return new OPlaceholder(record);
-      }
+    case PRESENT: {
+      getRecord();
+      record.save();
+      break;
+    }
 
-      // GOES DOWN
-
-    case NOT_EXISTENT:
+    case NOT_EXISTENT: {
       // try {
       ORecordId newRid;
       do {
@@ -171,48 +178,13 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       }
 
       ODistributedServerLog
-          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d reqId=%s",
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigning new rid %s/%s v.%d reqId=%s",
               database.getName(), rid.toString(), record.getVersion(), requestId);
-
-      // } catch (ORecordDuplicatedException e) {
-      // // DUPLICATED INDEX ON THE TARGET: CREATE AN EMPTY RECORD JUST TO MAINTAIN THE RID AND LET TO THE FIX OPERATION TO SORT OUT
-      // // WHAT HAPPENED
-      // ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-      // "+-> duplicated record %s (existent=%s), assigned new rid %s/%s v.%d reqId=%s", record, e.getRid(), database.getName(),
-      // rid.toString(), record.getVersion(), requestId);
-      //
-      // record.clear();
-      // if (clusterId > -1)
-      // record.save(database.getClusterNameById(clusterId), true);
-      // else if (rid.getClusterId() != -1)
-      // record.save(database.getClusterNameById(rid.getClusterId()), true);
-      // else
-      // record.save();
-      //
-      // throw e;
-      // }
+    }
     }
 
     // IMPROVED TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
     return new OPlaceholder(record);
-  }
-
-  protected ORecord forceUpdate(final ODistributedServerManager manager, final ODatabaseDocumentInternal database,
-      final ODistributedRequestId requestId, final ORawBuffer loadedRecord) {
-    // LOAD IT AS RECORD
-    final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager().newInstance(loadedRecord.recordType);
-    ORecordInternal.fill(loadedRecordInstance, rid, loadedRecord.version, loadedRecord.getBuffer(), false);
-
-    // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
-    if (Arrays.equals(loadedRecord.getBuffer(), content))
-      // SAME CONTENT
-      return loadedRecordInstance;
-
-    ODistributedServerLog.debug(this, manager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "Error on creating record in an existent position. toStore=%s stored=%s reqId=%s", getRecord(), loadedRecordInstance,
-        requestId);
-
-    throw new ODistributedOperationException("Cannot create the record " + rid + " in an already existent position");
   }
 
   @Override
@@ -223,13 +195,19 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ORemoteTask getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse,
       final Object iGoodResponse, final String executorNode, final ODistributedServerManager dManager) {
-    if (iBadResponse == null || iBadResponse instanceof Throwable)
+    if (iBadResponse == null || (iBadResponse instanceof Throwable && !(iBadResponse instanceof ONeedRetryException)))
       return null;
 
-    final OPlaceholder badResult = (OPlaceholder) iBadResponse;
+    ORemoteTask result = null;
+
     final OPlaceholder goodResult = (OPlaceholder) iGoodResponse;
 
-    ORemoteTask result = null;
+    if (iBadResponse instanceof ONeedRetryException)
+      return ((OCreateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerName(executorNode)
+          .createTask(OCreateRecordTask.FACTORYID))
+          .init((ORecordId) goodResult.getIdentity(), content, ORecordVersionHelper.setRollbackMode(version), recordType);
+
+    final OPlaceholder badResult = (OPlaceholder) iBadResponse;
 
     if (!badResult.equals(goodResult)) {
       // CREATE RECORD FAILED TO HAVE THE SAME RIDS. FORCE REALIGNING OF DATA CLUSTERS
@@ -248,9 +226,13 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             final List<String> nodes = dCfg
                 .getServers(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(clusterId), dManager.getLocalNodeName());
 
+            final OReadRecordTask task = (OReadRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
+                .createTask(OReadRecordTask.FACTORYID);
+            task.init(toUpdateRid);
+
             final ODistributedResponse response = dManager
-                .sendRequest(iRequest.getDatabaseName(), null, nodes, new OReadRecordTask(toUpdateRid),
-                    dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+                .sendRequest(iRequest.getDatabaseName(), null, nodes, task, dManager.getNextMessageIdCounter(),
+                    ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
             final ORawBuffer remoteReadRecord = (ORawBuffer) response.getPayload();
 
@@ -264,27 +246,43 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             toUpdateRecord = toUpdateRid.getRecord();
 
           if (toUpdateRecord != null)
-            result = new OFixUpdateRecordTask(toUpdateRid, toUpdateRecord.toStream(), toUpdateRecord.getVersion(),
-                ORecordInternal.getRecordType(toUpdateRecord));
+            try {
+              new OFixUpdateRecordTask().init(toUpdateRid, toUpdateRecord.toStream(), toUpdateRecord.getVersion(),
+                  ORecordInternal.getRecordType(toUpdateRecord))
+                  .execute(iRequest.getId(), dManager.getServerInstance(), dManager, ODatabaseRecordThreadLocal.INSTANCE.get());
+            } catch (Exception e) {
+              throw OException.wrapException(
+                  new ODistributedOperationException("Cannot create record " + rid + " because assigned RID is different"), e);
+            }
         }
 
         // CREATE LAST RECORD
-        result = new OCreateRecordTask((ORecordId) goodResult.getIdentity(), content, version, recordType);
+        final OCreateRecordTask task = (OCreateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerName(executorNode)
+            .createTask(OCreateRecordTask.FACTORYID);
+        task.init((ORecordId) goodResult.getIdentity(), content, version, recordType);
+        result = task;
 
       } else if (badResult.getIdentity().getClusterId() == goodResult.getIdentity().getClusterId()
           && badResult.getIdentity().getClusterPosition() > goodResult.getIdentity().getClusterPosition()) {
 
-      } else
+      } else {
         // ANY OTHER CASE JUST DELETE IT
-        result = new OFixCreateRecordTask(new ORecordId(badResult.getIdentity()), badResult.getVersion());
+        final OFixCreateRecordTask task = (OFixCreateRecordTask) dManager.getTaskFactoryManager()
+            .getFactoryByServerName(executorNode).createTask(OFixCreateRecordTask.FACTORYID);
+        task.init(new ORecordId(badResult.getIdentity()), badResult.getVersion());
+        result = task;
+      }
     }
 
     return result;
   }
 
   @Override
-  public ODeleteRecordTask getUndoTask(ODistributedRequestId reqId) {
-    final ODeleteRecordTask task = new OFixCreateRecordTask(rid, -1);
+  public ODeleteRecordTask getUndoTask(final ODistributedServerManager dManager, final ODistributedRequestId reqId,
+      final List<String> servers) {
+    final ODeleteRecordTask task = (ODeleteRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(servers)
+        .createTask(ODeleteRecordTask.FACTORYID);
+    task.init(rid, -1);
     task.setLockRecords(false);
     return task;
   }
@@ -324,5 +322,10 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public int getFactoryId() {
     return FACTORYID;
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    return false;
   }
 }

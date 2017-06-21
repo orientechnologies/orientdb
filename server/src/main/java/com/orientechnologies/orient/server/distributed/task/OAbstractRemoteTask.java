@@ -38,11 +38,12 @@ import java.io.IOException;
  *
  */
 public abstract class OAbstractRemoteTask implements ORemoteTask {
-  private static final   long  serialVersionUID = 1L;
-  public static final    int[] ALL              = new int[] { -1 };
-  protected static final int[] ANY              = new int[] { -2 };
+  public static final    int[] ALL         = new int[] { -1 };
+  protected static final int[] ANY         = new int[] { -2 };
+  protected static final int[] LOCK        = new int[] { -3 };
+  protected static final int[] FAST_NOLOCK = new int[] { -4 };
 
-  protected transient String   nodeSource;
+  protected transient String nodeSource;
 
   /**
    * Constructor used from unmarshalling.
@@ -78,11 +79,20 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   }
 
   @Override
+  public void checkIsValid(final ODistributedServerManager dManager) {
+  }
+
+  @Override
   public long getTotalTimeout(final int iTotalNodes) {
     if (iTotalNodes <= 0)
       return getDistributedTimeout();
 
     return getDistributedTimeout() * iTotalNodes;
+  }
+
+  @Override
+  public boolean hasResponse() {
+    return true;
   }
 
   @Override
@@ -107,7 +117,7 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
 
   @Override
   public boolean isIdempotent() {
-    return false;
+    return true;
   }
 
   @Override

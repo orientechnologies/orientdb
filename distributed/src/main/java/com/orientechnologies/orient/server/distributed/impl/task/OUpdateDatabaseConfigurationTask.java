@@ -41,8 +41,8 @@ import java.io.IOException;
 public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
   public static final int FACTORYID = 24;
 
-  private String          databaseName;
-  private ODocument       configuration;
+  private String    databaseName;
+  private ODocument configuration;
 
   public OUpdateDatabaseConfigurationTask() {
   }
@@ -102,11 +102,6 @@ public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
   @Override
   public boolean isNodeOnlineRequired() {
     return false;
-  }
-
-  @Override
-  public boolean isIdempotent() {
-    return true;
   }
 
   @Override

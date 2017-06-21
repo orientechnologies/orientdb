@@ -32,4 +32,6 @@ public interface ODistributedLockManager {
   void releaseExclusiveLock(final String resource, final String nodeSource);
 
   void handleUnreachableServer(final String nodeLeftName);
+
+  void shutdown();
 }

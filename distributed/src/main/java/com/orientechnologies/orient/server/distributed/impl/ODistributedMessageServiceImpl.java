@@ -45,12 +45,12 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   private final OHazelcastPlugin                                     manager;
   private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final TimerTask                                            asynchMessageManager;
-  final ConcurrentHashMap<String, ODistributedDatabaseImpl>          databases           = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
-  private Thread                                                     responseThread;
-  private long[]                                                     responseTimeMetrics = new long[10];
-  private volatile boolean                                           running             = true;
-  private Map<String, OProfilerEntry>                                latencies           = new HashMap<String, OProfilerEntry>();
-  private Map<String, AtomicLong>                                    messagesStats       = new HashMap<String, AtomicLong>();
+  final ConcurrentHashMap<String, ODistributedDatabaseImpl> databases = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+  private Thread responseThread;
+  private          long[]                      responseTimeMetrics = new long[10];
+  private volatile boolean                     running             = true;
+  private final    Map<String, OProfilerEntry> latencies           = new HashMap<String, OProfilerEntry>();
+  private final    Map<String, AtomicLong>     messagesStats       = new HashMap<String, AtomicLong>();
 
   public ODistributedMessageServiceImpl(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -87,6 +87,9 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
     // SET ALL DATABASES TO NOT_AVAILABLE
     for (Entry<String, ODistributedDatabaseImpl> m : databases.entrySet()) {
+      if (OSystemDatabase.SYSTEM_DB_NAME.equals(m.getKey()))
+        continue;
+
       try {
         manager.setDatabaseStatus(manager.getLocalNodeName(), m.getKey(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
       } catch (Throwable t) {
@@ -97,10 +100,20 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     databases.clear();
 
     asynchMessageManager.cancel();
+
+    // CANCEL ALL THE PENDING REQUESTS
+    for (ODistributedResponseManager req : responsesByRequestIds.values())
+      req.cancel();
+
     responsesByRequestIds.clear();
 
     latencies.clear();
     messagesStats.clear();
+  }
+
+  @Override
+  public ODistributedResponseManager getResponseManager(final ODistributedRequestId reqId) {
+    return responsesByRequestIds.get(reqId);
   }
 
   public void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr) {
@@ -151,7 +164,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   @Override
-  public Set<String> getDatabases() {    
+  public Set<String> getDatabases() {
     // We assign the ConcurrentHashMap (databases) to the Map interface for this reason:
     // ConcurrentHashMap.keySet() in Java 8 returns a ConcurrentHashMap.KeySetView.
     // ConcurrentHashMap.keySet() in Java 7 returns a Set.
@@ -160,7 +173,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     // By assigning the ConcurrentHashMap variable to a Map, the call to keySet() will return a Set
     // and not the Java 8 type, KeySetView.
     Map<String, ODistributedDatabaseImpl> map = databases;
-    
+
     final Set<String> result = new HashSet<String>(map.keySet());
     result.remove(OSystemDatabase.SYSTEM_DB_NAME);
     return result;
@@ -181,18 +194,26 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
               "received response for message %d after the timeout (%dms)", msgId,
               OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
       } else if (asynchMgr.collectResponse(response)) {
-
         // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD REMOVE THEM FOR TIMEOUT
-        final ODistributedResponseManager resp = responsesByRequestIds.remove(msgId);
-
+        responsesByRequestIds.remove(msgId);
       }
     } finally {
-      Orient.instance().getProfiler().updateCounter("distributed.node.msgReceived",
-          "Number of replication messages received in current node", +1, "distributed.node.msgReceived");
+      Orient.instance().getProfiler()
+          .updateCounter("distributed.node.msgReceived", "Number of replication messages received in current node", +1,
+              "distributed.node.msgReceived");
 
       Orient.instance().getProfiler().updateCounter("distributed.node." + response.getExecutorNodeName() + ".msgReceived",
           "Number of replication messages received in current node from a node", +1, "distributed.node.*.msgReceived");
     }
+  }
+
+  /**
+   * Removes a response manager because in timeout.
+   */
+  public void timeoutRequest(final long msgId) {
+    final ODistributedResponseManager asynchMgr = responsesByRequestIds.remove(msgId);
+    if (asynchMgr != null)
+      asynchMgr.timeout();
   }
 
   @Override
@@ -205,6 +226,17 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     }
 
     return doc;
+  }
+
+  @Override
+  public long getCurrentLatency(final String server) {
+    synchronized (latencies) {
+      final OProfilerEntry l = latencies.get(server);
+      if (l != null)
+        return (long) (l.average / 1000000);
+    }
+    // NOT FOUND
+    return 0;
   }
 
   @Override
@@ -245,10 +277,9 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   protected void purgePendingMessages() {
     final long now = System.nanoTime();
 
-    final long timeout = manager.getServerInstance().getContextConfiguration()
-        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT);
+    final long timeout = OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong();
 
-    for (Iterator<Entry<Long, ODistributedResponseManager>> it = responsesByRequestIds.entrySet().iterator(); it.hasNext();) {
+    for (Iterator<Entry<Long, ODistributedResponseManager>> it = responsesByRequestIds.entrySet().iterator(); it.hasNext(); ) {
       final Entry<Long, ODistributedResponseManager> item = it.next();
 
       final ODistributedResponseManager resp = item.getValue();
@@ -263,11 +294,12 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
             "%d missed response(s) for message %d by nodes %s after %dms when timeout is %dms", missingNodes.size(),
             resp.getMessageId(), missingNodes, timeElapsed, timeout);
 
-        Orient.instance().getProfiler().updateCounter("distributed.db." + resp.getDatabaseName() + ".timeouts",
-            "Number of messages in timeouts", +1, "distributed.db.*.timeouts");
+        Orient.instance().getProfiler()
+            .updateCounter("distributed.db." + resp.getDatabaseName() + ".timeouts", "Number of messages in timeouts", +1,
+                "distributed.db.*.timeouts");
 
-        Orient.instance().getProfiler().updateCounter("distributed.node.timeouts", "Number of messages in timeouts", +1,
-            "distributed.node.timeouts");
+        Orient.instance().getProfiler()
+            .updateCounter("distributed.node.timeouts", "Number of messages in timeouts", +1, "distributed.node.timeouts");
 
         resp.timeout();
         it.remove();

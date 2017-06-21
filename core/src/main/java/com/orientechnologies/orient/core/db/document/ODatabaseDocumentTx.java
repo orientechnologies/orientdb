@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -28,6 +29,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
@@ -104,14 +106,18 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   public static void closeAll() {
-    for (OrientDBInternal factory : embedded.values()) {
-      factory.close();
+    synchronized (embedded) {
+      for (OrientDBInternal factory : embedded.values()) {
+        factory.close();
+      }
+      embedded.clear();
     }
-    embedded.clear();
-    for (OrientDBInternal factory : remote.values()) {
-      factory.close();
+    synchronized (remote) {
+      for (OrientDBInternal factory : remote.values()) {
+        factory.close();
+      }
+      remote.clear();
     }
-    remote.clear();
   }
 
   protected OrientDBInternal getOrCreateRemoteFactory(String baseUrl) {
@@ -1615,5 +1621,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
     checkOpenness();
     return internal.live(query, listener, args);
+  }
+
+  @Override
+  public void recycle(ORecord record) {
+    checkOpenness();
+    internal.recycle(record);
   }
 }

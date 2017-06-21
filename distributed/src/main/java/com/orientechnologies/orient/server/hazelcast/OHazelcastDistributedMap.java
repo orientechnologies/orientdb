@@ -34,13 +34,14 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> implements EntryAddedListener<String, Object>,
-    EntryRemovedListener<String, Object>, MapClearedListener, EntryUpdatedListener<String, Object> {
+public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
+    implements EntryAddedListener<String, Object>, EntryRemovedListener<String, Object>, MapClearedListener,
+    EntryUpdatedListener<String, Object> {
   private final OHazelcastPlugin     dManager;
   private final IMap<String, Object> hzMap;
   private final String               membershipListenerRegistration;
 
-  public static final String         ORIENTDB_MAP = "orientdb";
+  public static final String ORIENTDB_MAP = "orientdb";
 
   public OHazelcastDistributedMap(final OHazelcastPlugin manager, final HazelcastInstance hz) {
     dManager = manager;
@@ -134,7 +135,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
   public void entryAdded(final EntryEvent<String, Object> event) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map entry added key=" + event.getKey() + ": " + event.getValue());
+          "Map entry added " + event.getKey() + "=" + event.getValue() + " from server " + dManager.getNodeName(event.getMember()));
     super.put(event.getKey(), event.getValue());
   }
 
@@ -142,7 +143,8 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
   public void entryUpdated(final EntryEvent<String, Object> event) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map entry updated key=" + event.getKey() + ": " + event.getValue());
+          "Map entry updated " + event.getKey() + "=" + event.getValue() + " from server " + dManager
+              .getNodeName(event.getMember()));
 
     super.put(event.getKey(), event.getValue());
   }
@@ -151,12 +153,15 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
   public void entryRemoved(final EntryEvent<String, Object> event) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map entry removed key=" + event.getKey() + ": " + event.getValue());
+          "Map entry removed " + event.getKey() + "=" + event.getValue() + " from " + dManager.getNodeName(event.getMember()));
     super.remove(event.getKey());
   }
 
   @Override
   public void mapCleared(MapEvent event) {
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Map cleared from server " + dManager.getNodeName(event.getMember()));
     super.clear();
   }
 

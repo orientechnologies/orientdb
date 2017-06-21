@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,29 +14,25 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://orientdb.com
+ *  * For more information: http://www.orientechnologies.com
  *
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OHighLevelException;
 
 /**
- * Exception thrown when a distributed operation doesn't reach the quorum.
- * 
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
+ * Exception thrown when a distributed resource is locked.
+ *
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODistributedOperationException extends ONeedRetryException implements OHighLevelException {
+public class ODistributedLockException extends ODistributedOperationException implements OHighLevelException {
 
-  private static final long serialVersionUID = 1L;
-
-  public ODistributedOperationException(final ODistributedOperationException exception) {
+  public ODistributedLockException(final ODistributedLockException exception) {
     super(exception);
   }
 
-  public ODistributedOperationException(final String message) {
+  public ODistributedLockException(final String message) {
     super(message);
   }
 
@@ -45,12 +41,7 @@ public class ODistributedOperationException extends ONeedRetryException implemen
     if (obj == null || !obj.getClass().equals(getClass()))
       return false;
 
-    final String message = ((ODistributedOperationException) obj).getMessage();
+    final String message = ((ODistributedLockException) obj).getMessage();
     return getMessage() != null && getMessage().equals(message);
-  }
-
-  @Override
-  public int hashCode() {
-    return getMessage() != null ? getMessage().hashCode() : 0;
   }
 }

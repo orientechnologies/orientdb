@@ -40,13 +40,12 @@ import java.io.IOException;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OAbstractReadRecordTask extends OAbstractRecordReplicatedTask {
-  private static final long serialVersionUID = 1L;
-
   public OAbstractReadRecordTask() {
   }
 
-  public OAbstractReadRecordTask(final ORecordId iRid) {
+  public OAbstractReadRecordTask init(final ORecordId iRid) {
     rid = iRid;
+    return this;
   }
 
   @Override
@@ -82,10 +81,5 @@ public abstract class OAbstractReadRecordTask extends OAbstractRecordReplicatedT
   @Override
   public String toString() {
     return getName() + "(" + rid + ")";
-  }
-
-  @Override
-  public boolean isIdempotent() {
-    return true;
   }
 }

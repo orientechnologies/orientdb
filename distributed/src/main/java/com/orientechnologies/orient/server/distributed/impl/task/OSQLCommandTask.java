@@ -42,6 +42,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -178,7 +179,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   }
 
   @Override
-  public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
+  public ORemoteTask getUndoTask(ODistributedServerManager dManager, final ODistributedRequestId reqId, List<String> servers) {
     final OCommandRequest cmd = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OCommandSQL(text));
     OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) cmd);
     executor.parse(cmd);
@@ -195,7 +196,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
       }
     }
 
-    return super.getUndoTask(reqId);
+    return super.getUndoTask(dManager, reqId, servers);
   }
 
   @Override

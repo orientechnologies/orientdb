@@ -100,6 +100,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
 
   ODatabaseDocumentInternal copy();
 
+  void recycle(ORecord record);
+
   Set<ORecord> executeReadRecords(final Set<ORecordId> iRids, final boolean ignoreCache);
 
   void checkIfActive();

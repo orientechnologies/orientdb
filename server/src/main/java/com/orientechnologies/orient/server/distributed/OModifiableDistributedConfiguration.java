@@ -134,12 +134,18 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
         return;
 
       // REMOVE THE NODE IF ANY
+      boolean removed = false;
       for (Iterator<String> it = serverList.iterator(); it.hasNext();) {
         if (it.next().equals(iServerName)) {
           it.remove();
+          removed = true;
           break;
         }
       }
+
+      if( !removed )
+        throw new ODistributedException("Cannot set ownership of cluster '" + iClusterName + "' to the server '"
+            + iServerName + "', because the server has no that cluster (sharding)");
 
       // ADD THE NODE AS FIRST OF THE LIST = MASTER
       serverList.add(0, iServerName);
@@ -188,11 +194,11 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
    *
    * @param iNode
    *          Server name
-   * @param newServerCoordinator
-   *          New coordinator server name
+   * @param newLockManagerServer
+   *          New Lock Manager server name
    * @return
    */
-  public List<String> setServerOffline(final String iNode, final String newServerCoordinator) {
+  public List<String> setServerOffline(final String iNode, final String newLockManagerServer) {
     final List<String> changedPartitions = new ArrayList<String>();
 
     final String[] clusters = getClusterNames();
@@ -213,10 +219,10 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
                 // REINSERT NEW NODE TAG AT THE END
                 nodes.add(NEW_NODE_TAG);
 
-              if (newServerCoordinator != null) {
-                // ASSURE THE NEW COORDINATOR IS THE FIRST IN THE LIST
-                if (nodes.remove(newServerCoordinator))
-                  nodes.add(0, newServerCoordinator);
+              if (newLockManagerServer != null) {
+                // ASSURE THE NEW LOCK MANAGER IS THE FIRST IN THE LIST
+                if (nodes.remove(newLockManagerServer))
+                  nodes.add(0, newLockManagerServer);
               }
 
               changedPartitions.add(clusterName);

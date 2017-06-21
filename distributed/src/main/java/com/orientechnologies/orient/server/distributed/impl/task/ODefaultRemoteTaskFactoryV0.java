@@ -27,7 +27,8 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
+public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
+  @Override
   public ORemoteTask createTask(final int code) {
     switch (code) {
     case OCreateRecordTask.FACTORYID: // 0
@@ -78,8 +79,8 @@ public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
     case OCopyDatabaseChunkTask.FACTORYID: // 15
       return new OCopyDatabaseChunkTask();
 
-    case OHeartbeatTask.FACTORYID: // 16
-      return new OHeartbeatTask();
+    case OGossipTask.FACTORYID: // 16
+      return new OGossipTask();
 
     case ORepairRecordsTask.FACTORYID: // 17
       return new ORepairRecordsTask();
@@ -115,9 +116,14 @@ public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
       return new ORequestDatabaseConfigurationTask();
 
     case OUnreachableServerLocalTask.FACTORYID: // 28
-      new IllegalArgumentException("Task with code " + code + " is not supported in remote configuration");
+      throw new IllegalArgumentException("Task with code " + code + " is not supported in remote configuration");
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");
+  }
+
+  @Override
+  public int getProtocolVersion() {
+    return 0;
   }
 }

@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.distributed.conflict;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
@@ -35,13 +34,14 @@ import java.util.Map;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OVersionDistributedConflictResolver extends OMajorityDistributedConflictResolver {
+public class OVersionDistributedConflictResolver extends OAbstractDistributedConflictResolver {
   public static final String NAME = "version";
 
+  @Override
   public OConflictResult onConflict(final String databaseName, final String clusterName, final ORecordId rid,
-      final ODistributedServerManager dManager, final Map<Object, List<String>> candidates, final ODocument config) {
+      final ODistributedServerManager dManager, final Map<Object, List<String>> candidates) {
 
-    final OConflictResult result = new OConflictResult();
+    final OConflictResult result = new OConflictResult(candidates);
 
     if (!candidates.isEmpty()) {
 
@@ -72,20 +72,16 @@ public class OVersionDistributedConflictResolver extends OMajorityDistributedCon
             "Version Conflict Resolver decided the value '%s' is the winner for record %s, because its version (%d) is the highest. Servers ok=%s",
             result.winner, rid, maxVersion, candidates.get(result.winner));
       } else {
-        // FILL NEXT CANDIDATES
-        for (Object winner : winners) {
-          result.candidates.put(winner, candidates.get(winner));
-        }
-
         OLogManager.instance().debug(this,
-            "Version Conflict Resolver cannot decide the winner for record %s, because %d records have the highest version %d",
-            rid, winners.size(), maxVersion);
+            "Version Conflict Resolver cannot decide the winner for record %s, because %d records have the highest version %d", rid,
+            winners.size(), maxVersion);
       }
     }
 
     return result;
   }
 
+  @Override
   public String getName() {
     return NAME;
   }

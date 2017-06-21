@@ -142,7 +142,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   private boolean isHandshaking(int requestType) {
     return requestType == OChannelBinaryProtocol.REQUEST_CONNECT || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
-        || requestType == OChannelBinaryProtocol.REQUEST_SHUTDOWN || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN;
+        || requestType == OChannelBinaryProtocol.REQUEST_SHUTDOWN || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_CONNECT;
   }
 
   private boolean isDistributed(int requestType) {
@@ -315,7 +316,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     try {
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
         if (clientTxId >= 0 && connection == null && (requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
-            || requestType == OChannelBinaryProtocol.REQUEST_CONNECT)) {
+            || requestType == OChannelBinaryProtocol.REQUEST_CONNECT
+            || requestType == OChannelBinaryProtocol.DISTRIBUTED_CONNECT)) {
           // THIS EXCEPTION SHULD HAPPEN IN ANY CASE OF OPEN/CONNECT WITH SESSIONID >= 0, BUT FOR COMPATIBILITY IT'S ONLY IF THERE
           // IS NO CONNECTION
           shutdown();
@@ -485,7 +487,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     checkServerAccess("server.replication", connection);
 
     final ODistributedServerManager manager = server.getDistributedManager();
-    final ODistributedRequest req = new ODistributedRequest(manager.getTaskFactory());
+    final ODistributedRequest req = new ODistributedRequest(manager);
 
     req.fromStream(channel.getDataInput());
 
@@ -540,9 +542,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
       if (tokenConnection && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && (
-          requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN || (
-              connection != null && connection.getData() != null
-                  && connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32))
+          requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.DISTRIBUTED_CONNECT
+              && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN || (connection != null && connection.getData() != null
+              && connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32))
           || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
         // TODO: Check if the token is expiring and if it is send a new token
 
@@ -643,7 +645,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     channel.writeInt(iClientTxId);
     okSent = true;
     if (connection != null && Boolean.TRUE.equals(connection.getTokenBased()) && connection.getToken() != null
-        && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
+        && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.DISTRIBUTED_CONNECT
+        && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
       // TODO: Check if the token is expiring and if it is send a new token
       byte[] renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
       channel.writeBytes(renewedToken);

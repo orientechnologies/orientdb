@@ -44,7 +44,7 @@ public class ODistributedException extends OSystemException {
       return false;
 
     final String message = ((ODistributedException) obj).getMessage();
-    return (getMessage() == message) || (getMessage() != null && getMessage().equals(message));
+    return getMessage() != null && getMessage().equals(message);
   }
 
   @Override

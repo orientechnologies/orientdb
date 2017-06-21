@@ -39,9 +39,9 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
  */
 public class OClusterRepairInfoTask extends OAbstractReplicatedTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 19;
+  public static final  int  FACTORYID        = 19;
 
-  private int               clusterId;
+  private int clusterId;
 
   public OClusterRepairInfoTask() {
   }
@@ -106,5 +106,10 @@ public class OClusterRepairInfoTask extends OAbstractReplicatedTask {
   @Override
   public int getFactoryId() {
     return FACTORYID;
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    return false;
   }
 }

@@ -21,11 +21,10 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.task.OHeartbeatTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OGossipTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORequestDatabaseConfigurationTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -87,7 +86,7 @@ public class OClusterHealthChecker extends TimerTask {
           try {
             final ODistributedResponse response = manager
                 .sendRequest(databaseName, null, nodes, new ORequestDatabaseConfigurationTask(databaseName),
-                    manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+                    manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null,null);
 
             final Object payload = response != null ? response.getPayload() : null;
             if (payload instanceof Map) {
@@ -168,7 +167,7 @@ public class OClusterHealthChecker extends TimerTask {
         // ONLY NOT_AVAILABLE NODE/DB CAN BE RECOVERED
         continue;
 
-      final List<String> servers = manager.getOnlineNodes(dbName);
+      final Set<String> servers = manager.getAvailableNodeNames(dbName);
       servers.remove(manager.getLocalNodeName());
 
       if (servers.isEmpty()) {
@@ -182,18 +181,21 @@ public class OClusterHealthChecker extends TimerTask {
         ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
             "Trying to recover current server for database '%s'...", dbName);
 
+        if (manager.getNodeStatus() != ODistributedServerManager.NODE_STATUS.ONLINE)
+          // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
+          return;
+
         final ODistributedConfiguration dCfg = ((ODistributedStorage) manager.getStorage(dbName)).getDistributedConfiguration();
         if (dCfg != null) {
-              
-          final boolean result = manager.installDatabase(true, dbName,
-            ((ODistributedStorage) manager.getStorage(dbName)).getDistributedConfiguration().getDocument(), false, true);
+          final boolean result = manager.installDatabase(true, dbName, false,
+              OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
 
           if (result)
             ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                "Recover complete for database '%s'...", dbName);
+                "Recover complete for database '%s'", dbName);
           else
             ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                "Recover cannot be completed for database '%s'...", dbName);
+                "Recover cannot be completed for database '%s'", dbName);
         }
       }
     }
@@ -210,7 +212,7 @@ public class OClusterHealthChecker extends TimerTask {
         // ONLY ONLINE NODE/DB CAN CHECK FOR OTHERS
         continue;
 
-      final List<String> servers = manager.getOnlineNodes(dbName);
+      final Set<String> servers = manager.getAvailableNodeNames(dbName);
       servers.remove(manager.getLocalNodeName());
 
       if (servers.isEmpty())
@@ -218,16 +220,27 @@ public class OClusterHealthChecker extends TimerTask {
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, manager.getLocalNodeName(), servers.toString(), ODistributedServerLog.DIRECTION.OUT,
-            "Sending heartbeat message to servers (db=%s)", dbName);
+            "Sending gossip message to servers (db=%s)", dbName);
 
       try {
         final ODistributedResponse response = manager
-            .sendRequest(dbName, null, servers, new OHeartbeatTask(), manager.getNextMessageIdCounter(),
-                ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+            .sendRequest(dbName, null, servers, new OGossipTask(manager.getLockManagerServer()), manager.getNextMessageIdCounter(),
+                ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
         final Object payload = response != null ? response.getPayload() : null;
         if (payload instanceof Map) {
           final Map<String, Object> responses = (Map<String, Object>) payload;
+
+          final String lockManagerServer = manager.getLockManagerServer();
+          if (lockManagerServer != null)
+            for (Map.Entry<String, Object> r : responses.entrySet()) {
+              if (!lockManagerServer.equals(r.getValue().toString())) {
+                ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                    "Server '%s' is using server '%s' as lock manager, while current server is using '%s'", r.getKey(),
+                    r.getValue(), lockManagerServer);
+              }
+            }
+
           servers.removeAll(responses.keySet());
         }
 
@@ -245,18 +258,18 @@ public class OClusterHealthChecker extends TimerTask {
     if (manager.getDatabaseStatus(server, dbName) != ODistributedServerManager.DB_STATUS.ONLINE)
       return;
 
-    OContextConfiguration conf = manager.getServerInstance().getContextConfiguration();
-
-    if (conf.getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER)) {
+    if (OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER.getValueAsBoolean()) {
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-          "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms). Setting the database as NOT_AVAILABLE",
-          server, dbName, conf.getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT));
+          "Server '%s' did not respond to the gossip message (db=%s, timeout=%dms). Setting the database as NOT_AVAILABLE", server,
+          dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
 
       manager.setDatabaseStatus(server, dbName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+
     } else {
+
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-          "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms), but cannot be set OFFLINE by configuration",
-          server, dbName, conf.getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT));
+          "Server '%s' did not respond to the gossip message (db=%s, timeout=%dms), but cannot be set OFFLINE by configuration",
+          server, dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
     }
   }
 }

@@ -27,11 +27,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Task to acquire and release a distributed exclusive lock across the entire cluster. In case the server is declared unreachable,
@@ -45,11 +47,13 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   private String  resource;
   private long    timeout;
   private boolean acquire;
+  private String  lockManagerServer;
 
   public ODistributedLockTask() {
   }
 
-  public ODistributedLockTask(final String resource, final long timeout, final boolean acquire) {
+  public ODistributedLockTask(final String lockManagerServer, final String resource, final long timeout, final boolean acquire) {
+    this.lockManagerServer = lockManagerServer;
     this.resource = resource;
     this.timeout = timeout;
     this.acquire = acquire;
@@ -68,17 +72,18 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
+  public ORemoteTask getUndoTask(ODistributedServerManager dManager, final ODistributedRequestId reqId, List<String> servers) {
     if (acquire)
       // RELEASE
-      return new ODistributedLockTask(resource, timeout, false);
+      return new ODistributedLockTask(lockManagerServer, resource, timeout, false);
 
     return null;
   }
 
   @Override
   public int[] getPartitionKey() {
-    return ANY;
+    // RELEASE MUST TO ALWAYS TO THE SERVICE QUEUE
+    return acquire ? LOCK : FAST_NOLOCK;
   }
 
   @Override
@@ -100,12 +105,14 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   public void toStream(final DataOutput out) throws IOException {
     out.writeUTF(resource);
     out.writeBoolean(acquire);
+    out.writeLong(timeout);
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     resource = in.readUTF();
     acquire = in.readBoolean();
+    timeout = in.readLong();
   }
 
   @Override
@@ -114,8 +121,10 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public boolean isIdempotent() {
-    return false;
+  public void checkIsValid(final ODistributedServerManager dManager) {
+    // CHECKS THE LOCK MANAGER SERVER IS STILL AVAILABLE
+    if (!dManager.isNodeAvailable(dManager.getLockManagerServer()))
+      throw new ODistributedOperationException("Lock Manager server changed during lock " + (acquire ? "acquire" : "release"));
   }
 
   @Override

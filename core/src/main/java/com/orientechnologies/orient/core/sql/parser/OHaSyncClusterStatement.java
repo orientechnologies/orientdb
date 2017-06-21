@@ -2,19 +2,13 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
-import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
-public class OHaSyncClusterStatement extends OSimpleExecStatement {
+public
+class OHaSyncClusterStatement extends OStatement {
+
   public OIdentifier clusterName;
-  public boolean modeFull  = false;
+  public boolean modeFull = true;
   public boolean modeMerge = false;
 
   public OHaSyncClusterStatement(int id) {
@@ -25,32 +19,15 @@ public class OHaSyncClusterStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
-    if (modeMerge) {
-      throw new OCommandExecutionException("Cannot execute HA SYNC CLUSTER: mode MERGE not supported");
-    }
-    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
 
-    try {
-      Map<String, Object> res = db.syncCluster(clusterName.getStringValue());
-      OInternalResultSet rs = new OInternalResultSet();
-      if (res != null) {
-        OResultInternal row = new OResultInternal();
-        res.entrySet().forEach(x -> row.setProperty(x.getKey(), x.getValue()));
-        rs.add(row);
-      }
-      return rs;
-    } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Cannot execute HA SYNC CLUSTER"), e);
-    }
-  }
-
-  /**
-   * Accept the visitor.
-   **/
+  /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("HA SYNC CLUSTER ");
+    clusterName.toString(params, builder);
   }
 }
 /* JavaCC - OriginalChecksum=fbf0df8004d889ebc80f39be85008720 (do not edit this line) */

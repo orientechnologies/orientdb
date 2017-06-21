@@ -2,15 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
-import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.Map;
 
-public class OHaRemoveServerStatement extends OSimpleExecStatement {
+public
+class OHaRemoveServerStatement extends OStatement {
+
   public OIdentifier serverName;
 
   public OHaRemoveServerStatement(int id) {
@@ -21,26 +17,15 @@ public class OHaRemoveServerStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override
-  public OResultSet executeSimple(OCommandContext ctx) {
-    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
-    try {
-      boolean res = db.removeHaServer(serverName.getStringValue());
-      OResultInternal r = new OResultInternal();
-      r.setProperty("result", res);
-      OInternalResultSet rs = new OInternalResultSet();
-      rs.add(r);
-      return null;
-    } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Cannot execute HA REMOVE SERVER"), e);
-    }
-  }
 
-  /**
-   * Accept the visitor.
-   **/
+  /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("HA REMOVE SERVER ");
+    serverName.toString(params, builder);
   }
 }
 /* JavaCC - OriginalChecksum=9c136e8917527d69a67c88582d20ac8f (do not edit this line) */

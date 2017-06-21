@@ -20,20 +20,34 @@
 
 package com.orientechnologies.orient.core;
 
-import java.util.Hashtable;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
+
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map.Entry;
 
 @SuppressWarnings("restriction")
 public class OSignalHandler implements SignalHandler {
   private Hashtable<Signal, SignalHandler> redefinedHandlers = new Hashtable(4);
+  private List<OSignalListener>            listeners         = new ArrayList<OSignalListener>();
+
+  public interface OSignalListener {
+    void onSignal(Signal signal);
+  }
 
   public OSignalHandler() {
+  }
+
+  public void registerListener(final OSignalListener listener) {
+    listeners.add(listener);
+  }
+
+  public void unregisterListener(final OSignalListener listener) {
+    listeners.remove(listener);
   }
 
   public void listenTo(final String name, final SignalHandler iListener) {
@@ -44,13 +58,13 @@ public class OSignalHandler implements SignalHandler {
     }
   }
 
-  public void handle(Signal signal) {
+  public void handle(final Signal signal) {
     OLogManager.instance().warn(this, "Received signal: %s", signal);
 
     final String s = signal.toString().trim();
 
-    if (Orient.instance().isSelfManagedShutdown()
-        && (s.equals("SIGKILL") || s.equals("SIGHUP") || s.equals("SIGINT") || s.equals("SIGTERM"))) {
+    if (Orient.instance().isSelfManagedShutdown() && (s.equals("SIGKILL") || s.equals("SIGHUP") || s.equals("SIGINT") || s
+        .equals("SIGTERM"))) {
       Orient.instance().shutdown();
       System.exit(1);
     } else if (s.equals("SIGTRAP")) {
@@ -66,6 +80,9 @@ public class OSignalHandler implements SignalHandler {
         redefinedHandler.handle(signal);
       }
     }
+
+    for (OSignalListener l : listeners)
+      l.onSignal(signal);
   }
 
   public void installDefaultSignals() {

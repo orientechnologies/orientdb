@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -95,7 +96,8 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
         readConfiguration();
 
         ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "New cluster list for class '%s': %s (dCfgVersion=%d)", cls.getName(), localScopedClass.bestClusterIds, lastVersion);
+            "New cluster list for class '%s': %s (dCfgVersion=%d)", cls.getName(), Arrays.toString(localScopedClass.bestClusterIds),
+            lastVersion);
       }
     }
 
@@ -111,8 +113,8 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
 
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "%d Selected cluster %d for class '%s' from %s (dCfgVersion=%d)", Thread.currentThread().getId(), cluster, cls.getName(),
-          Arrays.toString(localScopedClass.bestClusterIds), lastVersion);
+          "Selected cluster %d for class '%s' from %s (threadId=%d dCfgVersion=%d)", cluster, cls.getName(),
+          Arrays.toString(localScopedClass.bestClusterIds), Thread.currentThread().getId(), lastVersion);
 
     return cluster;
   }
@@ -128,7 +130,7 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
 
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-    final int[] clusterIds = cls.getClusterIds();
+    int[] clusterIds = cls.getClusterIds();
     final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
     for (int c : clusterIds)
       clusterNames.add(db.getClusterNameById(c).toLowerCase(Locale.ENGLISH));
@@ -138,9 +140,17 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
     List<String> bestClusters = cfg.getOwnedClustersByServer(clusterNames, nodeName);
     if (bestClusters.isEmpty()) {
       // REBALANCE THE CLUSTERS
-      manager.reassignClustersOwnership(nodeName, databaseName, cfg.modify());
+      final OModifiableDistributedConfiguration modifiableCfg = cfg.modify();
+      manager.reassignClustersOwnership(nodeName, databaseName, modifiableCfg, true);
 
-      cfg = manager.getDatabaseConfiguration(databaseName);
+      cfg = modifiableCfg;
+
+      // RELOAD THE CLUSTER LIST TO GET THE NEW CLUSTER CREATED (IF ANY)
+      db.activateOnCurrentThread();
+      clusterNames.clear();
+      clusterIds = cls.getClusterIds();
+      for (int c : clusterIds)
+        clusterNames.add(db.getClusterNameById(c).toLowerCase(Locale.ENGLISH));
 
       bestClusters = cfg.getOwnedClustersByServer(clusterNames, nodeName);
 
@@ -162,8 +172,8 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
             clusterNames, buffer.toString(), cfg.getVersion());
 
         throw new ODatabaseException(
-            "Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName + "'. ClusterStrategy=" + getName()
-                + " dCfgVersion=" + cfg.getVersion());
+            "Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName + "' (clusterStrategy=" + getName()
+                + " dCfgVersion=" + cfg.getVersion() + ")");
       }
     }
 

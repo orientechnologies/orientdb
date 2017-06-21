@@ -90,7 +90,7 @@ import java.util.Map;
       if (parsedStatement.servers)
         output.append(ODistributedOutput.formatServerStatus(dManager, dManager.getClusterConfiguration()));
       if (parsedStatement.db)
-        output.append(ODistributedOutput.formatClusterTable(dManager, databaseName, cfg, dManager.getAvailableNodes(databaseName)));
+        output.append(ODistributedOutput.formatClusterTable(dManager, databaseName, cfg, dManager.getTotalNodes(databaseName)));
       if (parsedStatement.latency)
         output.append(ODistributedOutput.formatLatency(dManager, dManager.getClusterConfiguration()));
       if (parsedStatement.messages)

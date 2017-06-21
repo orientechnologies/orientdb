@@ -48,7 +48,7 @@ public class ODefaultDistributedStrategy implements ODistributedStrategy {
 
   @Override
   public Set<String> getNodesConcurInQuorum(final ODistributedServerManager manager, final ODistributedConfiguration cfg,
-      final ODistributedRequest request, final Collection<String> iNodes, final Object localResult) {
+      final ODistributedRequest request, final Collection<String> iNodes, final String databaseName, final Object localResult) {
 
     final Set<String> nodesConcurToTheQuorum = new HashSet<String>();
     if (request.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE) {
