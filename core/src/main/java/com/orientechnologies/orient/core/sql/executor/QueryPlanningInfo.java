@@ -29,7 +29,12 @@ public class QueryPlanningInfo {
    */
   Map<String, Set<String>> serverToClusters;
 
-  Map<String, OSelectExecutionPlan> distributedFetchExecutionPlas;
+  Map<String, OSelectExecutionPlan> distributedFetchExecutionPlans;
+
+  /**
+   * set to true when the distributedFetchExecutionPlans are aggregated in the main execution plan
+   */
+  public boolean distributedPlanCreated = false;
 
   OFromClause     target;
   OWhereClause    whereClause;
@@ -42,5 +47,6 @@ public class QueryPlanningInfo {
 
   boolean orderApplied          = false;
   boolean projectionsCalculated = false;
+
 
 }

@@ -115,7 +115,7 @@ public class ODeleteEdgeExecutionPlanner {
   private void handleTargetClass(ODeleteExecutionPlan result, OCommandContext ctx, OIdentifier className,
       boolean profilingEnabled) {
     if (className != null) {
-      result.chain(new FetchFromClassExecutionStep(className.getStringValue(), ctx, null, profilingEnabled));
+      result.chain(new FetchFromClassExecutionStep(className.getStringValue(), null, ctx, null, profilingEnabled));
     }
   }
 

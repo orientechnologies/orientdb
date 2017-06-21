@@ -230,7 +230,7 @@ public class OTraverseExecutionPlanner {
     OIdentifier identifier = queryTarget.getItem().getIdentifier();
 
     Boolean orderByRidAsc = null;//null: no order. true: asc, false:desc
-    FetchFromClassExecutionStep fetcher = new FetchFromClassExecutionStep(identifier.getStringValue(), ctx, orderByRidAsc, profilingEnabled);
+    FetchFromClassExecutionStep fetcher = new FetchFromClassExecutionStep(identifier.getStringValue(), null, ctx, orderByRidAsc, profilingEnabled);
     plan.chain(fetcher);
   }
 

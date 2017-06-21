@@ -28,12 +28,12 @@ public class DistributedExecutionStep extends AbstractExecutionStep {
     return new OResultSet() {
       @Override
       public boolean hasNext() {
-        return false;//TODO
+        throw new UnsupportedOperationException("Implement distributed execution step!");
       }
 
       @Override
       public OResult next() {
-        return null;//TODO
+        throw new UnsupportedOperationException("Implement distributed execution step!");
       }
 
       @Override
