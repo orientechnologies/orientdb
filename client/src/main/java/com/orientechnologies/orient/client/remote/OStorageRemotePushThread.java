@@ -38,6 +38,7 @@ public class OStorageRemotePushThread extends Thread {
         if (res == OChannelBinaryProtocol.RESPONSE_STATUS_OK) {
           int currentSessionId = network.readInt();
           byte[] token = network.readBytes();
+          byte messageId = network.readByte();
           OBinaryResponse response = currentRequest.createResponse();
           response.read(network, null);
           blockingQueue.put((OSubscribeResponse) response);
@@ -95,10 +96,10 @@ public class OStorageRemotePushThread extends Thread {
 
   public synchronized <T extends OBinaryResponse> T subscribe(OBinaryRequest<T> request, OStorageRemoteSession session) {
     try {
-      this.currentRequest = new OSubscribeRequest(request.getCommand(), request);
+      this.currentRequest = new OSubscribeRequest(request);
       ((OChannelBinaryAsynchClient) network).beginRequest(OChannelBinaryProtocol.SUBSCRIBE_PUSH, session);
       this.currentRequest.write(network, null);
-      ((OChannelBinaryAsynchClient) network).endRequest();
+      network.flush();
       return (T) blockingQueue.take().getResponse();
     } catch (IOException e) {
       e.printStackTrace();

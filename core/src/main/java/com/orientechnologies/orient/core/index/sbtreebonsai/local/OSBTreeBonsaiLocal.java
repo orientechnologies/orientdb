@@ -28,8 +28,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSBTreeBonsaiLocalException;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -1382,15 +1382,15 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   @Override
-  public int getRealBagSize(Map<K, OSBTreeRidBag.Change> changes) {
+  public int getRealBagSize(Map<K, Change> changes) {
     startOperation();
     try {
-      final Map<K, OSBTreeRidBag.Change> notAppliedChanges = new HashMap<K, OSBTreeRidBag.Change>(changes);
+      final Map<K, Change> notAppliedChanges = new HashMap<K, Change>(changes);
       final OModifiableInteger size = new OModifiableInteger(0);
       loadEntriesMajor(firstKey(), true, true, new RangeResultListener<K, V>() {
         @Override
         public boolean addResult(Map.Entry<K, V> entry) {
-          final OSBTreeRidBag.Change change = notAppliedChanges.remove(entry.getKey());
+          final Change change = notAppliedChanges.remove(entry.getKey());
           final int result;
 
           final Integer treeValue = (Integer) entry.getValue();
@@ -1404,7 +1404,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         }
       });
 
-      for (OSBTreeRidBag.Change change : notAppliedChanges.values()) {
+      for (Change change : notAppliedChanges.values()) {
         size.increment(change.applyTo(0));
       }
 

@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
@@ -32,7 +30,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
@@ -72,188 +69,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   private           List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
   private transient ORecord                                                       owner;
   private boolean updateOwner = true;
-
-  public static interface Change {
-    public static final int SIZE = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
-
-    void increment();
-
-    void decrement();
-
-    int applyTo(Integer value);
-
-    /**
-     * Checks if put increment operation can be safely performed.
-     *
-     * @return true if increment operation can be safely performed.
-     */
-    boolean isUndefined();
-
-    void applyDiff(int delta);
-
-    int serialize(byte[] stream, int offset);
-  }
-
-  private static class DiffChange implements Change {
-    private static final byte TYPE = 0;
-    private int delta;
-
-    private DiffChange(int delta) {
-      this.delta = delta;
-    }
-
-    @Override
-    public void increment() {
-      delta++;
-    }
-
-    @Override
-    public void decrement() {
-      delta--;
-    }
-
-    @Override
-    public int applyTo(Integer value) {
-      int result;
-      if (value == null)
-        result = delta;
-      else
-        result = value + delta;
-
-      if (result < 0)
-        result = 0;
-
-      return result;
-    }
-
-    @Override
-    public boolean isUndefined() {
-      return delta < 0;
-    }
-
-    @Override
-    public void applyDiff(int delta) {
-      this.delta += delta;
-    }
-
-    @Override
-    public int serialize(byte[] stream, int offset) {
-      OByteSerializer.INSTANCE.serializeLiteral(TYPE, stream, offset);
-      OIntegerSerializer.INSTANCE.serializeLiteral(delta, stream, offset + OByteSerializer.BYTE_SIZE);
-      return OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
-    }
-  }
-
-  private static class AbsoluteChange implements Change {
-    private static final byte TYPE = 1;
-    private int value;
-
-    private AbsoluteChange(int value) {
-      this.value = value;
-
-      checkPositive();
-    }
-
-    @Override
-    public void increment() {
-      value++;
-    }
-
-    @Override
-    public void decrement() {
-      value--;
-
-      checkPositive();
-    }
-
-    @Override
-    public int applyTo(Integer value) {
-      return this.value;
-    }
-
-    @Override
-    public boolean isUndefined() {
-      return true;
-    }
-
-    @Override
-    public void applyDiff(int delta) {
-      value += delta;
-
-      checkPositive();
-    }
-
-    @Override
-    public int serialize(byte[] stream, int offset) {
-      OByteSerializer.INSTANCE.serializeLiteral(TYPE, stream, offset);
-      OIntegerSerializer.INSTANCE.serializeLiteral(value, stream, offset + OByteSerializer.BYTE_SIZE);
-      return OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
-    }
-
-    private void checkPositive() {
-      if (value < 0)
-        value = 0;
-    }
-  }
-
-  public static class ChangeSerializationHelper {
-    public static final ChangeSerializationHelper INSTANCE = new ChangeSerializationHelper();
-
-    public Change deserializeChange(final byte[] stream, final int offset) {
-      int value = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset + OByteSerializer.BYTE_SIZE);
-      switch (OByteSerializer.INSTANCE.deserializeLiteral(stream, offset)) {
-      case AbsoluteChange.TYPE:
-        return new AbsoluteChange(value);
-      case DiffChange.TYPE:
-        return new DiffChange(value);
-      default:
-        throw new IllegalArgumentException("Change type is incorrect");
-      }
-    }
-
-    public Map<OIdentifiable, Change> deserializeChanges(final byte[] stream, int offset) {
-      final int count = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset);
-      offset += OIntegerSerializer.INT_SIZE;
-
-      final HashMap<OIdentifiable, Change> res = new HashMap<OIdentifiable, Change>();
-      for (int i = 0; i < count; i++) {
-        ORecordId rid = OLinkSerializer.INSTANCE.deserialize(stream, offset);
-        offset += OLinkSerializer.RID_SIZE;
-        Change change = ChangeSerializationHelper.INSTANCE.deserializeChange(stream, offset);
-        offset += Change.SIZE;
-
-        final OIdentifiable identifiable;
-        if (rid.isTemporary() && rid.getRecord() != null)
-          identifiable = rid.getRecord();
-        else
-          identifiable = rid;
-
-        res.put(identifiable, change);
-      }
-
-      return res;
-    }
-
-    public <K> void serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, byte[] stream, int offset) {
-      OIntegerSerializer.INSTANCE.serializeLiteral(changes.size(), stream, offset);
-      offset += OIntegerSerializer.INT_SIZE;
-
-      for (Map.Entry<K, Change> entry : changes.entrySet()) {
-        K key = entry.getKey();
-        if (((OIdentifiable) key).getIdentity().isTemporary())
-          key = ((OIdentifiable) key).getRecord();
-
-        keySerializer.serialize(key, stream, offset);
-        offset += keySerializer.getObjectSize(key);
-
-        offset += entry.getValue().serialize(stream, offset);
-      }
-    }
-
-    public int getChangesSerializedSize(int changesCount) {
-      return changesCount * (OLinkSerializer.RID_SIZE + Change.SIZE);
-    }
-  }
 
   private final class RIDBagIterator implements Iterator<OIdentifiable>, OResettable, OSizeable, OAutoConvertToRecord {
     private final NavigableMap<OIdentifiable, Change>                    changedValues;
@@ -515,6 +330,12 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
+  public OSBTreeRidBag(OBonsaiCollectionPointer pointer, Map<OIdentifiable,Change> changes) {
+    this.collectionPointer = pointer;
+    this.changes.putAll(changes);
+    this.size = -1;
+  }
+
   public OSBTreeRidBag() {
     collectionPointer = null;
   }
@@ -619,9 +440,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       final Change change = entry.getValue();
       final int diff;
       if (change instanceof DiffChange)
-        diff = ((DiffChange) change).delta;
+        diff = ((DiffChange) change).getValue();
       else if (change instanceof AbsoluteChange)
-        diff = ((AbsoluteChange) change).value - getAbsoluteValue(rec).value;
+        diff = ((AbsoluteChange) change).getValue() - getAbsoluteValue(rec).getValue();
       else
         throw new IllegalArgumentException("change type is not supported");
 
@@ -819,18 +640,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public int serialize(byte[] stream, int offset, UUID ownerUuid) {
-    for (Map.Entry<OIdentifiable, OModifiableInteger> entry : newEntries.entrySet()) {
-      OIdentifiable identifiable = entry.getKey();
-      assert identifiable instanceof ORecord;
-      Change c = changes.get(identifiable);
-
-      final int delta = entry.getValue().intValue();
-      if (c == null)
-        changes.put(identifiable, new DiffChange(delta));
-      else
-        c.applyDiff(delta);
-    }
-    newEntries.clear();
+    applyNewEntries();
 
     final ORecordSerializationContext context;
     boolean remoteMode = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy;
@@ -896,6 +706,21 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
 
     return offset;
+  }
+
+  private void applyNewEntries() {
+    for (Entry<OIdentifiable, OModifiableInteger> entry : newEntries.entrySet()) {
+      OIdentifiable identifiable = entry.getKey();
+      assert identifiable instanceof ORecord;
+      Change c = changes.get(identifiable);
+
+      final int delta = entry.getValue().intValue();
+      if (c == null)
+        changes.put(identifiable, new DiffChange(delta));
+      else
+        c.applyDiff(delta);
+    }
+    newEntries.clear();
   }
 
   public void clearChanges() {
@@ -1120,6 +945,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (tree instanceof OSBTreeBonsaiLocal) {
       ((OSBTreeBonsaiLocal) tree).debugPrintBucket(writer);
     }
+  }
+
+  public NavigableMap<OIdentifiable, Change> getChanges() {
+    applyNewEntries();
+    return changes;
   }
 
   @Override

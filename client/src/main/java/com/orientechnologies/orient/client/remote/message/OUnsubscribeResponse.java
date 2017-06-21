@@ -9,17 +9,13 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput
 import java.io.IOException;
 
 /**
- * Created by tglman on 16/05/17.
+ * Created by tglman on 19/06/17.
  */
-public class OSubscribeResponse implements OBinaryResponse {
+public class OUnsubscribeResponse implements OBinaryResponse {
 
   private OBinaryResponse response;
 
-  public OSubscribeResponse() {
-
-  }
-
-  public OSubscribeResponse(OBinaryResponse response) {
+  public OUnsubscribeResponse(OBinaryResponse response) {
     this.response = response;
   }
 
@@ -33,7 +29,5 @@ public class OSubscribeResponse implements OBinaryResponse {
     response.read(network, session);
   }
 
-  public OBinaryResponse getResponse() {
-    return response;
-  }
+
 }

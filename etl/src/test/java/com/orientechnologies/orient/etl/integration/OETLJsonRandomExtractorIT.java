@@ -18,11 +18,15 @@
 
 package com.orientechnologies.orient.etl.integration;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,6 +38,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class OETLJsonRandomExtractorIT extends OETLBaseTest {
 
   private final static int TOTAL = 1000000;
+
+  @Before
+  public void cleanFolder() throws Exception {
+
+    OFileUtils.deleteRecursively(new File("./target/" + name.getMethodName()));
+  }
 
   @Test
   public void shouldLoadSingleThread() {

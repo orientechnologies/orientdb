@@ -7,15 +7,17 @@ import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
  */
 public class OLiveQueryMonitorRemote implements OLiveQueryMonitor {
 
-  private long monitorId;
+  private ODatabaseDocumentRemote database;
+  private long                    monitorId;
 
-  public OLiveQueryMonitorRemote(long monitorId) {
+  public OLiveQueryMonitorRemote(ODatabaseDocumentRemote database, long monitorId) {
+    this.database = database;
     this.monitorId = monitorId;
   }
 
   @Override
   public void unSubscribe() {
-// TODO:
+    database.getStorage().unsubscribeLive(database,this.monitorId);
   }
 
   @Override

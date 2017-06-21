@@ -2,6 +2,7 @@ package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import org.junit.Test;
 
@@ -28,7 +29,7 @@ public class OrientDBObjectTests {
 
   }
 
-  @Test(expected = OStorageExistsException.class)
+  @Test(expected = ODatabaseException.class)
   public void testEmbeddedDoubleCreate() {
     OrientDBObject factory = new OrientDBObject("embedded:.", null);
     try {
@@ -74,6 +75,7 @@ public class OrientDBObjectTests {
     List<String> databases = factory.list();
     assertEquals(databases.size(), 1);
     assertTrue(databases.contains("test"));
+    factory.close();
   }
 
 }

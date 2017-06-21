@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -84,9 +85,9 @@ public class ORid extends SimpleNode {
 
   public ORid copy() {
     ORid result = new ORid(-1);
-    result.cluster = cluster==null?null:cluster.copy();
-    result.position = position==null?null:position.copy();
-    result.expression = expression==null?null:expression.copy();
+    result.cluster = cluster == null ? null : cluster.copy();
+    result.position = position == null ? null : position.copy();
+    result.expression = expression == null ? null : expression.copy();
     result.legacy = legacy;
     return result;
   }
@@ -109,7 +110,6 @@ public class ORid extends SimpleNode {
     if (legacy != oRid.legacy)
       return false;
 
-
     return true;
   }
 
@@ -128,9 +128,33 @@ public class ORid extends SimpleNode {
   public void setPosition(OInteger position) {
     this.position = position;
   }
-  public void setLegacy(boolean b){
+
+  public void setLegacy(boolean b) {
     this.legacy = b;
   }
 
+  public OInteger getCluster() {
+    if (expression != null) {
+      ORecordId rid = toRecordId((OResult) null, new OBasicCommandContext());
+      if (rid == null) {
+        OInteger result = new OInteger(-1);
+        result.setValue(rid.getClusterId());
+        return result;
+      }
+    }
+    return cluster;
+  }
+
+  public OInteger getPosition() {
+    if (expression != null) {
+      ORecordId rid = toRecordId((OResult) null, new OBasicCommandContext());
+      if (rid == null) {
+        OInteger result = new OInteger(-1);
+        result.setValue(rid.getClusterPosition());
+        return result;
+      }
+    }
+    return position;
+  }
 }
 /* JavaCC - OriginalChecksum=c2c6d67d7722e29212e438574698d7cd (do not edit this line) */

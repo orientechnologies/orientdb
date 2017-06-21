@@ -22,6 +22,7 @@ package com.orientechnologies.orient.client.remote.message;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
@@ -76,15 +77,30 @@ public final class OCommit37Response implements OBinaryResponse {
     }
   }
 
+  public static class ODeletedRecordResponse {
+    private final ORID rid;
+
+    public ODeletedRecordResponse(ORID rid) {
+      this.rid = rid;
+    }
+
+    public ORID getRid() {
+      return rid;
+    }
+
+  }
+
   private List<OCreatedRecordResponse>        created;
   private List<OUpdatedRecordResponse>        updated;
+  private List<ODeletedRecordResponse>        deleted;
   private Map<UUID, OBonsaiCollectionPointer> collectionChanges;
 
   public OCommit37Response(List<OCreatedRecordResponse> created, List<OUpdatedRecordResponse> updated,
-      Map<UUID, OBonsaiCollectionPointer> collectionChanges) {
+      List<ODeletedRecordResponse> deleted, Map<UUID, OBonsaiCollectionPointer> collectionChanges) {
     super();
     this.created = created;
     this.updated = updated;
+    this.deleted = deleted;
     this.collectionChanges = collectionChanges;
   }
 
@@ -106,11 +122,19 @@ public final class OCommit37Response implements OBinaryResponse {
     }
     final int updatedRecords = network.readInt();
     updated = new ArrayList<>(updatedRecords);
-    ORecordId rid;
+
     for (int i = 0; i < updatedRecords; ++i) {
-      rid = network.readRID();
+      ORecordId rid = network.readRID();
       int version = network.readVersion();
       updated.add(new OUpdatedRecordResponse(rid, version));
+    }
+
+    final int deletedRecords = network.readInt();
+    deleted = new ArrayList<>(deletedRecords);
+
+    for (int i = 0; i < deletedRecords; ++i) {
+      ORecordId rid = network.readRID();
+      deleted.add(new ODeletedRecordResponse(rid));
     }
 
     collectionChanges = OMessageHelper.readCollectionChanges(network);
@@ -132,6 +156,12 @@ public final class OCommit37Response implements OBinaryResponse {
       channel.writeRID(updatedRecord.rid);
       channel.writeVersion(updatedRecord.version);
     }
+
+    channel.writeInt(deleted.size());
+    for (ODeletedRecordResponse deleteRecord : deleted) {
+      channel.writeRID(deleteRecord.rid);
+    }
+
     OMessageHelper.writeCollectionChanges(channel, collectionChanges);
   }
 
@@ -147,4 +177,7 @@ public final class OCommit37Response implements OBinaryResponse {
     return collectionChanges;
   }
 
+  public List<ODeletedRecordResponse> getDeleted() {
+    return deleted;
+  }
 }

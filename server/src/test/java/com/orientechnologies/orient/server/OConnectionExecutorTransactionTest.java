@@ -407,6 +407,8 @@ public class OConnectionExecutorTransactionTest {
     OBatchOperationsRequest batchRequest = new OBatchOperationsRequest(10, operations);
     OBinaryResponse batchResponse = batchRequest.execute(executor);
     assertTrue(batchResponse instanceof OBatchOperationsResponse);
+    assertEquals(((OBatchOperationsResponse) batchResponse).getDeleted().size(), 1);
+    assertEquals(((OBatchOperationsResponse) batchResponse).getDeleted().get(0).getRid(), rec.getIdentity());
     assertTrue(database.getTransaction().isActive());
 
     OCommit37Request commit = new OCommit37Request(10, false, true, null, new HashMap<>());
@@ -457,6 +459,8 @@ public class OConnectionExecutorTransactionTest {
 
     assertEquals(1, ((OCommit37Response) commitResponse).getUpdated().size());
 
+    assertEquals(1, ((OCommit37Response) commitResponse).getDeleted().size());
+
     assertEquals(2, database.countClass("test"));
 
     OResultSet query = database.query("select from test where name = 'update'");
@@ -468,10 +472,8 @@ public class OConnectionExecutorTransactionTest {
     assertEquals("update", results.get(0).getProperty("name"));
   }
 
-
   @Test
   public void testBeginSQLInsertCommitTransaction() {
-
 
     OConnectionBinaryExecutor executor = new OConnectionBinaryExecutor(connection, server);
 
@@ -482,7 +484,6 @@ public class OConnectionExecutorTransactionTest {
 
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
-
 
     List<OResult> results = database.command("insert into test set name = 'update'").stream().collect(Collectors.toList());
 
@@ -510,7 +511,6 @@ public class OConnectionExecutorTransactionTest {
     assertEquals(1, results.size());
 
     assertEquals("update", results.get(0).getProperty("name"));
-
 
   }
 }

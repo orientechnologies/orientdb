@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 import java.util.Map;
-import java.util.Set;
 
 public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseInternal<ORecord> {
 
@@ -173,11 +172,11 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
     return null;
   }
 
-  default Map<String, Object> getHaStatus(boolean servers, boolean db, boolean latency, boolean messages){
+  default Map<String, Object> getHaStatus(boolean servers, boolean db, boolean latency, boolean messages) {
     return null;
   }
 
-  default boolean removeHaServer(String serverName){
+  default boolean removeHaServer(String serverName) {
     return false;
   }
 }

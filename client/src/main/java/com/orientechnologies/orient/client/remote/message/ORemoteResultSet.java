@@ -15,23 +15,25 @@ import java.util.Optional;
  */
 public class ORemoteResultSet implements OResultSet {
 
-  private       String                  queryId;
-  private final ODatabaseDocumentRemote db;
+  private final ODatabaseDocumentRemote  db;
+  private final String                   queryId;
+  private       List<OResult>            currentPage;
+  private       Optional<OExecutionPlan> executionPlan;
+  private       Map<String, Long>        queryStats;
+  private       boolean                  hasNextPage;
 
-  private List<OResult> currentPage = new ArrayList<>();
-  private OExecutionPlan    executionPlan;
-  private Map<String, Long> queryStats;
-  private boolean hasNextPage = false;
-
-  public ORemoteResultSet(ODatabaseDocumentRemote db) {
+  public ORemoteResultSet(ODatabaseDocumentRemote db, String queryId, List<OResult> currentPage,
+      Optional<OExecutionPlan> executionPlan, Map<String, Long> queryStats, boolean hasNextPage) {
     this.db = db;
-  }
-
-  protected void setQueryId(String queryId) {
     this.queryId = queryId;
+    this.currentPage = currentPage;
+    this.executionPlan = executionPlan;
+    this.queryStats = queryStats;
+    this.hasNextPage = hasNextPage;
   }
 
-  @Override public boolean hasNext() {
+  @Override
+  public boolean hasNext() {
     if (!currentPage.isEmpty()) {
       return true;
     }
@@ -46,7 +48,8 @@ public class ORemoteResultSet implements OResultSet {
     db.fetchNextPage(this);
   }
 
-  @Override public OResult next() {
+  @Override
+  public OResult next() {
     if (currentPage.isEmpty()) {
       if (!hasNextPage()) {
         throw new IllegalStateException();
@@ -59,47 +62,46 @@ public class ORemoteResultSet implements OResultSet {
     return currentPage.remove(0);
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
     db.closeQuery(queryId);
   }
 
-  @Override public Optional<OExecutionPlan> getExecutionPlan() {
-    return Optional.ofNullable(executionPlan);
+  @Override
+  public Optional<OExecutionPlan> getExecutionPlan() {
+    return executionPlan;
   }
 
-  @Override public Map<String, Long> getQueryStats() {
+  @Override
+  public Map<String, Long> getQueryStats() {
     return queryStats;
-  }
-
-  public void setQueryStats(Map<String, Long> queryStats) {
-    this.queryStats = queryStats;
   }
 
   public void add(OResult item) {
     currentPage.add(item);
   }
 
-  public void setExecutionPlan(OExecutionPlan executionPlan) {
-    this.executionPlan = executionPlan;
-  }
-
   public boolean hasNextPage() {
     return hasNextPage;
-  }
-
-  public void setHasNextPage(boolean b) {
-    this.hasNextPage = b;
   }
 
   public String getQueryId() {
     return queryId;
   }
 
-  public void setCurrentPage(List<OResult> currentPage) {
-    this.currentPage = currentPage;
-  }
-
   public List<OResult> getCurrentPage() {
     return currentPage;
+  }
+
+  public void fetched(List<OResult> result, boolean hasNextPage, Optional<OExecutionPlan> executionPlan,
+      Map<String, Long> queryStats) {
+    this.currentPage = result;
+    this.hasNextPage = hasNextPage;
+
+    if (queryStats != null) {
+      this.queryStats = queryStats;
+    }
+    executionPlan.ifPresent(x -> this.executionPlan = executionPlan);
+
   }
 }

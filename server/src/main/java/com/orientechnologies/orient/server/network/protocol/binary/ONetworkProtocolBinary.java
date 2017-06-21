@@ -648,6 +648,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       byte[] renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
       channel.writeBytes(renewedToken);
     }
+    if (handshakeInfo != null) {
+      channel.writeByte((byte) requestType);
+    }
   }
 
   protected void handleConnectionError(OClientConnection connection, final Throwable e) {

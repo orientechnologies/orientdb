@@ -118,4 +118,8 @@ public interface OBinaryRequestExecutor {
   OBinaryResponse executeSubscribePushRequest(OSubscribeDistributedConfigurationRequest request);
 
   OBinaryResponse executeSubscribeLiveQuery(OSubscribeLiveQueryRequest request);
+
+  OBinaryResponse executeUnsubscribe(OUnsubscribeRequest request);
+
+  OBinaryResponse executeUnsubscribeLiveQuery(OUnsubscribeLiveQueryRequest request);
 }

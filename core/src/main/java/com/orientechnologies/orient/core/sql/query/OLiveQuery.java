@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+
 /**
  * SQL live query.
  * <br/><br/>
@@ -49,6 +55,49 @@ public class OLiveQuery<T> extends OSQLSynchQuery<T> {
 
   @Override
   public <RET> RET execute(Object... iArgs) {
+    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    if (database.getStorage().isRemote()) {
+      BackwardOLiveQueryResultListener listener = new BackwardOLiveQueryResultListener();
+      OLiveQueryMonitor monitor = database.live(getText(), listener, iArgs);
+      listener.token = (int) monitor.getMonitorId();
+      ODocument doc = new ODocument();
+      doc.setProperty("token", listener.token);
+      OLegacyResultSet<ODocument> result = new OBasicLegacyResultSet<>();
+      result.add(doc);
+      return (RET) result;
+    }
     return super.execute(iArgs);
+  }
+
+  private class BackwardOLiveQueryResultListener implements OLiveQueryResultListener {
+    protected int token;
+
+    @Override
+    public void onCreate(ODatabaseDocument database, OResult data) {
+      ((OLocalLiveResultListener) getResultListener())
+          .onLiveResult(token, new ORecordOperation(data.toElement(), ORecordOperation.CREATED));
+    }
+
+    @Override
+    public void onUpdate(ODatabaseDocument database, OResult before, OResult after) {
+      ((OLocalLiveResultListener) getResultListener())
+          .onLiveResult(token, new ORecordOperation(after.toElement(), ORecordOperation.UPDATED));
+    }
+
+    @Override
+    public void onDelete(ODatabaseDocument database, OResult data) {
+      ((OLocalLiveResultListener) getResultListener())
+          .onLiveResult(token, new ORecordOperation(data.toElement(), ORecordOperation.DELETED));
+    }
+
+    @Override
+    public void onError(ODatabaseDocument database) {
+      ((OLocalLiveResultListener) getResultListener()).onError(token);
+    }
+
+    @Override
+    public void onEnd(ODatabaseDocument database) {
+      ((OLocalLiveResultListener) getResultListener()).onUnsubscribe(token);
+    }
   }
 }

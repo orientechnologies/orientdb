@@ -215,6 +215,9 @@ public class ONetworkBinaryProtocolFactory {
     case OChannelBinaryProtocol.SUBSCRIBE_PUSH:
       return new OSubscribeRequest();
 
+    case OChannelBinaryProtocol.UNSUBSCRIBE_PUSH:
+      return new OUnsubscribeRequest();
+
     case OChannelBinaryProtocol.REQUEST_TX_FETCH:
       return new OFetchTransactionRequest();
 

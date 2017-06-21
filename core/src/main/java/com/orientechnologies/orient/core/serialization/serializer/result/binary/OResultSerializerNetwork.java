@@ -27,7 +27,6 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -38,6 +37,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OSerializableWrapper;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
@@ -67,21 +67,14 @@ public class OResultSerializerNetwork {
     final OResultInternal document = new OResultInternal();
     String fieldName;
     OType type;
-
+    int size = OVarIntSerializer.readAsInteger(bytes);
     //fields
-    while (true) {
+    while (size-- > 0) {
       final int len = OVarIntSerializer.readAsInteger(bytes);
-      if (len == 0) {
-        // SCAN COMPLETED
-        break;
-      } else if (len > 0) {
-        // PARSE FIELD NAME
-        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
-        bytes.skip(len);
-        type = readOType(bytes);
-      } else {
-        throw new OStorageException("property id not supported in network serialization");
-      }
+      // PARSE FIELD NAME
+      fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
+      bytes.skip(len);
+      type = readOType(bytes);
 
       if (type == null) {
         document.setProperty(fieldName, null);
@@ -91,20 +84,14 @@ public class OResultSerializerNetwork {
       }
     }
 
+    int metadataSize = OVarIntSerializer.readAsInteger(bytes);
     //metadata
-    while (true) {
+    while (metadataSize-- > 0) {
       final int len = OVarIntSerializer.readAsInteger(bytes);
-      if (len == 0) {
-        // SCAN COMPLETED
-        break;
-      } else if (len > 0) {
-        // PARSE FIELD NAME
-        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
-        bytes.skip(len);
-        type = readOType(bytes);
-      } else {
-        throw new OStorageException("property id not supported in network serialization");
-      }
+      // PARSE FIELD NAME
+      fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
+      bytes.skip(len);
+      type = readOType(bytes);
 
       if (type == null) {
         document.setMetadata(fieldName, null);
@@ -122,6 +109,7 @@ public class OResultSerializerNetwork {
   public void serialize(final OResult document, final BytesContainer bytes) {
     Set<String> fieldNames = document.getPropertyNames();
 
+    OVarIntSerializer.write(bytes, fieldNames.size());
     for (String field : fieldNames) {
       writeString(bytes, field);
       final Object value = document.getProperty(field);
@@ -149,9 +137,10 @@ public class OResultSerializerNetwork {
         writeOType(bytes, bytes.alloc(1), null);
       }
     }
-    writeString(bytes, "");
 
     Set<String> metadataKeys = document.getMetadataKeys();
+    OVarIntSerializer.write(bytes, metadataKeys.size());
+
     for (String field : metadataKeys) {
       writeString(bytes, field);
       final Object value = document.getMetadata(field);
@@ -172,7 +161,6 @@ public class OResultSerializerNetwork {
         writeOType(bytes, bytes.alloc(1), null);
       }
     }
-    writeString(bytes, "");
   }
 
   protected OType readOType(final BytesContainer bytes) {
@@ -302,22 +290,16 @@ public class OResultSerializerNetwork {
   }
 
   private Map readEmbeddedMap(final BytesContainer bytes) {
+    int size = OVarIntSerializer.readAsInteger(bytes);
     final Map document = new LinkedHashMap();
     String fieldName;
     OType type;
-    while (true) {
+    while ((size--) > 0) {
       final int len = OVarIntSerializer.readAsInteger(bytes);
-      if (len == 0) {
-        // SCAN COMPLETED
-        break;
-      } else if (len > 0) {
-        // PARSE FIELD NAME
-        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
-        bytes.skip(len);
-        type = readOType(bytes);
-      } else {
-        throw new OStorageException("property id not supported in network serialization");
-      }
+      // PARSE FIELD NAME
+      fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
+      bytes.skip(len);
+      type = readOType(bytes);
 
       if (type == null) {
         document.put(fieldName, null);
@@ -325,9 +307,7 @@ public class OResultSerializerNetwork {
         final Object value = deserializeValue(bytes, type);
         document.put(fieldName, value);
       }
-
     }
-
     return document;
   }
 
@@ -349,9 +329,6 @@ public class OResultSerializerNetwork {
 
   private Collection<?> readEmbeddedCollection(final BytesContainer bytes, final Collection<Object> found) {
     final int items = OVarIntSerializer.readAsInteger(bytes);
-    //    OType type = readOType(bytes);
-
-    //    if (type == OType.ANY) {
     for (int i = 0; i < items; i++) {
       OType itemType = readOType(bytes);
       if (itemType == OType.ANY)
@@ -360,9 +337,6 @@ public class OResultSerializerNetwork {
         found.add(deserializeValue(bytes, itemType));
     }
     return found;
-    //    }
-    // TODO: manage case where type is known
-    //    return null;
   }
 
   @SuppressWarnings("unchecked")
@@ -449,8 +423,7 @@ public class OResultSerializerNetwork {
       writeEmbeddedMap(bytes, (Map<Object, Object>) value);
       break;
     case LINKBAG:
-      ((ORidBag) value).toStream(bytes);
-      break;
+      throw new UnsupportedOperationException("LINKBAG should never appear in a projection");
     case CUSTOM:
       if (!(value instanceof OSerializableStream))
         value = new OSerializableWrapper((Serializable) value);
@@ -504,11 +477,11 @@ public class OResultSerializerNetwork {
   private void writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
     Set fieldNames = map.keySet();
 
+    OVarIntSerializer.write(bytes, map.size());
     for (Object f : fieldNames) {
       if (!(f instanceof String)) {
         throw new OSerializationException("Invalid key type for map: " + f + " (only Strings supported)");
       }
-
       String field = (String) f;
       writeString(bytes, field);
       final Object value = map.get(field);
@@ -529,7 +502,6 @@ public class OResultSerializerNetwork {
         writeOType(bytes, bytes.alloc(1), null);
       }
     }
-    writeString(bytes, "");
 
   }
 

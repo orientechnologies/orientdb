@@ -132,7 +132,7 @@ public class OLiveQueryV2Test {
       OClass oRestricted = schema.getClass("ORestricted");
       schema.createClass("test", oRestricted);
 
-      int liveMatch = 1;
+      int liveMatch = 2;
       List<ODocument> query = db.query(new OSQLSynchQuery("select from OUSer where name = 'reader'"));
 
       final OIdentifiable reader = query.iterator().next().getIdentity();
@@ -141,7 +141,7 @@ public class OLiveQueryV2Test {
       ExecutorService executorService = Executors.newSingleThreadExecutor();
 
       final CountDownLatch latch = new CountDownLatch(1);
-      final CountDownLatch dataArrived = new CountDownLatch(1);
+      final CountDownLatch dataArrived = new CountDownLatch(liveMatch);
       Future<Integer> future = executorService.submit(new Callable<Integer>() {
         @Override
         public Integer call() throws Exception {

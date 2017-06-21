@@ -10,22 +10,24 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 14/12/16.
  */
 public class OQueryResponseTest {
 
-  @Test public void test() throws IOException {
-    OQueryResponse response = new OQueryResponse();
-    OInternalResultSet rs = new OInternalResultSet();
+  @Test
+  public void test() throws IOException {
+
+    List<OResult> resuls = new ArrayList<OResult>();
     for (int i = 0; i < 10; i++) {
       OResultInternal item = new OResultInternal();
       item.setProperty("name", "foo");
       item.setProperty("counter", i);
-      rs.add(item);
+      resuls.add(item);
     }
-    response.setResult(new OLocalResultSetLifecycleDecorator(rs));
+    OQueryResponse response = new OQueryResponse("query", false, resuls, Optional.empty(), false, new HashMap<>());
 
     MockChannel channel = new MockChannel();
     response.write(channel, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, ORecordSerializerNetworkFactory.INSTANCE.current());
@@ -34,14 +36,14 @@ public class OQueryResponseTest {
 
     OQueryResponse newResponse = new OQueryResponse();
 
-    ORemoteResultSet responseRs = new ORemoteResultSet(null);
-    newResponse.doRead(channel, responseRs);
+    newResponse.read(channel, null);
+    Iterator<OResult> responseRs = newResponse.getResult().iterator();
 
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(responseRs.hasNext());
       OResult item = responseRs.next();
       Assert.assertEquals("foo", item.getProperty("name"));
-      Assert.assertEquals((Integer)i, item.getProperty("counter"));
+      Assert.assertEquals((Integer) i, item.getProperty("counter"));
     }
     Assert.assertFalse(responseRs.hasNext());
   }

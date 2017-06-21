@@ -19,7 +19,7 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class ORemoteTransactionMessagesTest {
-
+  
   @Test
   public void testBeginTransactionEmptyWriteRead() throws IOException {
     MockChannel channel = new MockChannel();
@@ -122,10 +122,14 @@ public class ORemoteTransactionMessagesTest {
     updates.add(new OCommit37Response.OUpdatedRecordResponse(new ORecordId(10, 20), 3));
     updates.add(new OCommit37Response.OUpdatedRecordResponse(new ORecordId(10, 21), 4));
 
+    List<OCommit37Response.ODeletedRecordResponse> deletes = new ArrayList<>();
+    deletes.add(new OCommit37Response.ODeletedRecordResponse(new ORecordId(10, 50)));
+    deletes.add(new OCommit37Response.ODeletedRecordResponse(new ORecordId(10, 51)));
+
     Map<UUID, OBonsaiCollectionPointer> changes = new HashMap<>();
     UUID val = UUID.randomUUID();
     changes.put(val, new OBonsaiCollectionPointer(10, new OBonsaiBucketPointer(30, 40)));
-    OCommit37Response response = new OCommit37Response(creates, updates, changes);
+    OCommit37Response response = new OCommit37Response(creates, updates, deletes, changes);
     response.write(channel, 0, null);
     channel.close();
 
@@ -146,6 +150,11 @@ public class ORemoteTransactionMessagesTest {
 
     assertEquals(readResponse.getUpdated().get(1).getRid(), new ORecordId(10, 21));
     assertEquals(readResponse.getUpdated().get(1).getVersion(), 4);
+
+    assertEquals(readResponse.getDeleted().size(), 2);
+    assertEquals(readResponse.getDeleted().get(0).getRid(), new ORecordId(10, 50));
+    assertEquals(readResponse.getDeleted().get(1).getRid(), new ORecordId(10, 51));
+
 
     assertEquals(readResponse.getCollectionChanges().size(), 1);
     assertNotNull(readResponse.getCollectionChanges().get(val));

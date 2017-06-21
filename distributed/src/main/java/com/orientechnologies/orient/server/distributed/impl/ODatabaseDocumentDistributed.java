@@ -24,9 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by tglman on 30/03/17.
@@ -38,6 +36,72 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public ODatabaseDocumentDistributed(OStorage storage, OHazelcastPlugin hazelcastPlugin) {
     super(storage);
     this.hazelcastPlugin = hazelcastPlugin;
+  }
+
+  @Override
+  public ODistributedStorage getStorage() {
+    return (ODistributedStorage) super.getStorage();
+  }
+
+  /**
+   * return the name of local node in the cluster
+   *
+   * @return the name of local node in the cluster
+   */
+  public String getLocalNodeName() {
+    return getStorage().getNodeId();
+  }
+
+  /**
+   * returns the cluster map for current deploy. The keys of the map are node names, the values contain names of clusters (data
+   * files) available on the single node.
+   *
+   * @return the cluster map for current deploy
+   */
+  public Map<String, Set<String>> getActiveClusterMap() {
+    Map<String, Set<String>> result = new HashMap<>();
+    ODistributedConfiguration cfg = getStorage().getDistributedConfiguration();
+    for (String server : cfg.getRegisteredServers()) {
+      result.put(server, cfg.getClustersOnServer(server));
+    }
+    return result;
+  }
+
+  /**
+   * returns the data center map for current deploy. The keys are data center names, the values are node names per data center
+   *
+   * @return data center map for current deploy
+   */
+  public Map<String, Set<String>> getActiveDataCenterMap() {
+    Map<String, Set<String>> result = new HashMap<>();
+    ODistributedConfiguration cfg = getStorage().getDistributedConfiguration();
+    Set<String> servers = cfg.getRegisteredServers();
+    for (String server : servers) {
+      String dc = cfg.getDataCenterOfServer(server);
+      Set<String> dcConfig = result.get(dc);
+      if (dcConfig == null) {
+        dcConfig = new HashSet<>();
+        result.put(dc, dcConfig);
+      }
+      dcConfig.add(server);
+    }
+    return result;
+  }
+
+  @Override
+  public boolean isSharded() {
+    Map<String, Set<String>> clusterMap = getActiveClusterMap();
+    Iterator<Set<String>> iter = clusterMap.values().iterator();
+    Set<String> firstClusterSet = null;
+    if (iter.hasNext()) {
+      firstClusterSet = iter.next();
+    }
+    while (iter.hasNext()) {
+      if (!firstClusterSet.equals(iter.next())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -63,7 +127,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     final String databaseName = getName();
 
-    return dManager.installDatabase(true, databaseName, dStg.getDistributedConfiguration().getDocument(), forceDeployment, tryWithDelta);
+    return dManager
+        .installDatabase(true, databaseName, dStg.getDistributedConfiguration().getDocument(), forceDeployment, tryWithDelta);
   }
 
   @Override
