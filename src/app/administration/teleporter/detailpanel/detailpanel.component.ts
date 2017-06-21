@@ -39,8 +39,8 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
 
   @Input() modellingConfig = this.modellingConfig !== 'undefined' ? this.modellingConfig : 'no config from parent.';
   @Output() onElementRenamed = new EventEmitter();
-
   @Input() selectedElement = this.selectedElement !== 'undefined' ? this.selectedElement : {name: undefined, properties: undefined};     // needed the second initialization because of renameModal
+  @Output() onSelectedElementRemoved = new EventEmitter();
 
   private propertiesName;
   private edgeName;
@@ -59,8 +59,11 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
   @ViewChild('renameModal') renameModal: ModalComponent;
   @ViewChild('addPropModal') addPropertyModal: ModalComponent;
   @ViewChild('editPropertyModal') editPropertyModal: ModalComponent;
-  @ViewChild('dropModal') dropModal: ModalComponent;
-  private tmpClassName;
+  @ViewChild('dropPropertyModal') dropPropertyModal: ModalComponent;
+  @ViewChild('dropClassModal') dropClassModal: ModalComponent;
+  @ViewChild('dropEdgeInstanceModal') dropEdgeInstanceModal: ModalComponent;
+
+  private tmpClassName;   // used during class renaming
   private tmpPropertyDefinition= {
     originalName: undefined,
     name: undefined,
@@ -321,33 +324,33 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
    */
 
   /**
-   * It prepares and opens a drop modal.
+   * It prepares and opens a drop property modal.
    */
-  prepareAndOpenDropModal(propertyName) {
+  prepareAndOpenDropPropertyModal(propertyName) {
 
     // setting the propertyName in the temporary property definition
     this.tmpPropertyDefinition.name = propertyName;
 
     // opening the modal
-    this.dropModal.open();
+    this.dropPropertyModal.open();
   }
 
   /**
-   * It's called when a drop modal closing or dismissing occurs.
-   * It cleans the temporary property definition and close/dismiss the modal according to the action passed as param.
+   * It's called when a drop property modal closing or dismissing occurs.
+   * It cleans the temporary property definition and closes/dismisses the modal according to the action passed as param.
    */
-  dismissOrCloseDropModal(action) {
+  dismissOrCloseDropPropModal(action) {
 
     if(action === 'close') {
 
       this.dropPropertyFromSelectedClass();
 
       // closing the modal
-      this.dropModal.close();
+      this.dropPropertyModal.close();
     }
     else if(action === 'dismiss') {
       // dismissing the modal
-      this.dropModal.dismiss();
+      this.dropPropertyModal.dismiss();
     }
 
     // setting default values back for the temporary property definition
@@ -364,9 +367,9 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
     this.cleanTmpPropertyDefinition();
   }
 
+
   /**
    * It drops a property from the selected element according to the property name of the temporary property definition.
-   * Then it opens the modal.
    * If we are dropping a property in an edge class, it will deleted automatically from all the instances of the current selected edge class.
    */
   dropPropertyFromSelectedClass() {
@@ -413,6 +416,52 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
     }
 
     this.updateSelectedElementInfo();   // maybe not needed
+  }
+
+  /**
+   * It drops the class corresponding to the selected element.
+   */
+  dropClass() {
+
+    var className;
+    var classType;
+
+    // setting the selected element and the current edge name (if we are dropping an edge class) to undefined
+
+    if(this.selectedElement.name) {
+      // removing a vertex class
+      className = this.selectedElement.name;
+      classType = "vertexClass";
+    }
+    else {
+      // removing an edge class
+      className = this.getEdgeClassName(this.selectedElement);
+      classType = "edgeClass";
+      this.edgeName = undefined;
+    }
+
+    // cleaning the current selected element
+    this.selectedElement = undefined;
+
+    // emitting event for the graph update
+    this.onSelectedElementRemoved.emit({className: className, classType: classType});
+  }
+
+  /**
+   * It drops the current selected edge class instance.
+   */
+  dropEdgeClassInstance() {
+
+    var className = this.getEdgeClassName(this.selectedElement);
+    var sourceName = this.selectedElement.source.name;
+    var targetName = this.selectedElement.target.name;
+    this.edgeName = undefined;
+
+    // cleaning the current selected element
+    this.selectedElement = undefined;
+
+    // emitting event for the graph update
+    this.onSelectedElementRemoved.emit({dropEdgeInstance: true, edgeClassName: className, sourceName: sourceName, targetName: targetName});
   }
 
   /**
@@ -469,6 +518,59 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
     this.renameModal.close();
   }
 
+
+  /**
+   * It prepares and opens a drop class modal.
+   */
+  prepareAndOpenDropClassModal() {
+
+    // opening the modal
+    this.dropClassModal.open();
+  }
+
+  prepareAndOpenDropEdgeModal() {
+    // opening the modal
+    this.dropEdgeInstanceModal.open();
+  }
+
+  /**
+   * It's called when a drop class modal closing or dismissing occurs.
+   * It drops the selected class and closes/dismisses the modal.
+   */
+  dismissOrCloseDropClassModal(action) {
+
+    if(action === 'close') {
+
+      this.dropClass();
+
+      // closing the modal
+      this.dropClassModal.close();
+    }
+    else if(action === 'dismiss') {
+      // dismissing the modal
+      this.dropClassModal.dismiss();
+    }
+  }
+
+  /**
+   * It's called when a drop class modal closing or dismissing occurs.
+   * It drops the selected edge class instance and closes/dismisses the modal.
+   */
+  dismissOrCloseDropEdgeInstanceModal(action) {
+
+    if(action === 'close') {
+
+      this.dropEdgeClassInstance();
+
+      // closing the modal
+      this.dropEdgeInstanceModal.close();
+    }
+    else if(action === 'dismiss') {
+
+      // dismissing the modal
+      this.dropEdgeInstanceModal.dismiss();
+    }
+  }
 
   /**
    * It opens the 'add property' Modal
@@ -641,10 +743,10 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
         if(this.getEdgeClassName(edge) === this.edgeName) {
 
           // deleting old property (delete is needed in case of property renaming)
-          delete this.selectedElement[this.edgeName].properties[oldPropertyName];
+          delete edge[this.edgeName].properties[oldPropertyName];
 
           // copying temporary property definition into the current property being edited
-          this.selectedElement[this.edgeName].properties[newPropertyName] = JSON.parse(JSON.stringify(this.tmpPropertyDefinition));
+          edge[this.edgeName].properties[newPropertyName] = JSON.parse(JSON.stringify(this.tmpPropertyDefinition));
         }
       }
     }

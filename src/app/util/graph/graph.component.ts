@@ -370,6 +370,14 @@ class GraphComponent implements AfterViewInit {
     this.orientGraph.updateElementsAccordingToRenamedClassed(oldClassName, newClassName, classType);
   }
 
+  removeClassInGraph(className, classType) {
+    this.orientGraph.removeClass(className, classType);
+  }
+
+  removeEdgeInstanceInGraph(edgeClassName, sourceName, targetName) {
+    this.orientGraph.removeEdgeInstance(edgeClassName, sourceName, targetName);
+  }
+
   startEdgeCreation() {
     this.orientGraph.startEdgeCreation();
   }

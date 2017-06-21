@@ -365,8 +365,7 @@ export class OGraph {
 
     // exiting nodes
     this.nodeContainers
-      .exit().select(function() { return this.parentNode; })
-      .remove();
+      .exit().remove();
 
 
     /*
@@ -421,8 +420,7 @@ export class OGraph {
 
     // exiting links
     this.linkContainers
-      .exit().select(function() { return this.parentNode; })
-      .remove();
+      .exit().remove();
   }
 
 
@@ -526,24 +524,24 @@ export class OGraph {
       .selectAll("path")
       .attr("d", function(d) {
 
-      // Total difference in x and y from source to target
-      var diffX = d.target.x - d.source.x;
-      var diffY = d.target.y - d.source.y;
+        // Total difference in x and y from source to target
+        var diffX = d.target.x - d.source.x;
+        var diffY = d.target.y - d.source.y;
 
-      // Length of path from the edge of source node to edge of target node
-      var pathLength = Math.sqrt((diffX * diffX) + (diffY * diffY));
+        // Length of path from the edge of source node to edge of target node
+        var pathLength = Math.sqrt((diffX * diffX) + (diffY * diffY));
 
-      // x and y distances from center to outside edge of source node
-      var sourceOffsetX = (diffX * r) / pathLength;
-      var sourceOffsetY = (diffY * r) / pathLength;
+        // x and y distances from center to outside edge of source node
+        var sourceOffsetX = (diffX * r) / pathLength;
+        var sourceOffsetY = (diffY * r) / pathLength;
 
-      // x and y distances from center to outside edge of target node
-      var targetOffsetX = (diffX * arrivalRadius) / pathLength;
-      var targetOffsetY = (diffY * arrivalRadius) / pathLength;
+        // x and y distances from center to outside edge of target node
+        var targetOffsetX = (diffX * arrivalRadius) / pathLength;
+        var targetOffsetY = (diffY * arrivalRadius) / pathLength;
 
-      return "M" + (d.source.x + sourceOffsetX) + "," + (d.source.y + sourceOffsetY) +
-        "L" + (d.target.x - targetOffsetX) + "," + (d.target.y - targetOffsetY);
-    });
+        return "M" + (d.source.x + sourceOffsetX) + "," + (d.source.y + sourceOffsetY) +
+          "L" + (d.target.x - targetOffsetX) + "," + (d.target.y - targetOffsetY);
+      });
 
     // nodes' function
     this.nodeContainers.attr("transform", this.transform);
@@ -807,6 +805,51 @@ export class OGraph {
       .attr("xlink:href", function(d) { return "#" + edgeClassName + "__" + d.source.name + "--" + d.target.name;});
   }
 
+  removeClass(className, classType) {
+
+    if(classType === 'vertexClass') {
+
+      // removing the vertex class from this.edges
+      for(var i=0; i<this.vertices.length; i++) {
+        if(this.vertices[i].name === className) {
+          this.vertices.splice(i, 1);
+          break;
+        }
+      }
+    }
+    else  if(classType === 'edgeClass') {
+
+      // removing the edge class from this.edges
+      for(var i=0; i<this.edges.length; i++) {
+        var edge = this.edges[i];
+        if(this.getEdgeClassName(edge) === className) {
+          this.edges.splice(i, 1);
+          i--;
+          // no break so we can remove all the other instances, if present, of the specific class.
+        }
+      }
+    }
+
+    // redraw
+    this.redraw();
+  }
+
+  removeEdgeInstance(edgeClassName, sourceName, targetName) {
+
+    // deselect all the instances of the edge
+    this.deselectLastElement();
+
+    for(var i=0; i<this.edges.length; i++) {
+      var edge = this.edges[i];
+      if(this.getEdgeClassName(edge) === edgeClassName && edge.source.name === sourceName && edge.target.name === targetName) {
+        this.edges.splice(i, 1);
+        break;    // other matching items are impossible by design
+      }
+    }
+
+    // redraw
+    this.redraw();
+  }
 
   startEdgeCreation() {
 
@@ -901,11 +944,14 @@ export class OGraph {
 
   endEdgeCreation(newEdge) {
 
-    // add the new edge
-    this.addEdge(newEdge);
-
     this.clearArrow();
-    this.redraw();
+
+    if (newEdge) {
+
+      // add the new edge and redraw the graph
+      this.addEdge(newEdge);
+      this.redraw();
+    }
   }
 
   /**

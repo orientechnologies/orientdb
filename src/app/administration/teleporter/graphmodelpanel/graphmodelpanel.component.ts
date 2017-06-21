@@ -143,6 +143,18 @@ class GraphModelPanelComponent implements OnInit, OnChanges {
 
   }
 
+  removeElementInGraph(event) {
+
+    if(event.dropEdgeInstance) {
+      // removing an edge class instance
+      this.graphComponent.removeEdgeInstanceInGraph(event.edgeClassName, event.sourceName, event.targetName);
+    }
+    else {
+      // removing a class
+      this.graphComponent.removeClassInGraph(event.className, event.classType);
+    }
+  }
+
   searchNodeOnEvent(e: any) {
     if(this.searchAllowed) {
       this.searchValue = e.value;

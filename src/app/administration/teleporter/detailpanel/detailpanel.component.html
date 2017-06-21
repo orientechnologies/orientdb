@@ -101,7 +101,7 @@
   </modal>
 
   <!-- Drop Property Modal -->
-  <modal #dropModal (onDismiss)="dismissOrCloseDropModal('dismiss')">
+  <modal #dropPropertyModal (onDismiss)="dismissOrCloseDropPropModal('dismiss')">
     <modal-header [show-close]="true">
       <h4 class="modal-title">Warning!</h4>
     </modal-header>
@@ -109,8 +109,8 @@
       You are dropping <b>{{tmpPropertyDefinition.name}}</b> property. Are you sure?
     </modal-body>
     <modal-footer [show-default-buttons]="false">
-      <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissOrCloseDropModal('dismiss')">Cancel</button>
-      <button type="button" class="btn btn-primary" (click)="dismissOrCloseDropModal('close')">Ok</button>
+      <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissOrCloseDropPropModal('dismiss')">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="dismissOrCloseDropPropModal('close')">Ok</button>
     </modal-footer>
   </modal>
 
@@ -168,6 +168,34 @@
     </modal-footer>
   </modal>
 
+  <!-- Drop Class Modal -->
+  <modal #dropClassModal (onDismiss)="dismissOrCloseDropClassModal('dismiss')">
+    <modal-header [show-close]="true">
+      <h4 class="modal-title">Warning!</h4>
+    </modal-header>
+    <modal-body>
+      You are dropping <b>{{edgeName}}</b> class. Are you sure?
+    </modal-body>
+    <modal-footer [show-default-buttons]="false">
+      <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissOrCloseDropClassModal('dismiss')">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="dismissOrCloseDropClassModal('close')">Ok</button>
+    </modal-footer>
+  </modal>
+
+  <!-- Drop Edge Class instance Modal -->
+  <modal #dropEdgeInstanceModal (onDismiss)="dismissOrCloseDropEdgeInstanceModal('dismiss')">
+    <modal-header [show-close]="true">
+      <h4 class="modal-title">Warning!</h4>
+    </modal-header>
+    <modal-body>
+      You are dropping the current selected instance of the <b>{{edgeName}}</b> class. Are you sure?
+    </modal-body>
+    <modal-footer [show-default-buttons]="false">
+      <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissOrCloseDropEdgeInstanceModal('dismiss')">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="dismissOrCloseDropEdgeInstanceModal('close')">Ok</button>
+    </modal-footer>
+  </modal>
+
   <!--   ****************   Modals' definitions - END -   ****************   -->
 
 
@@ -201,6 +229,7 @@
               Edit Class <span class="caret"></span></button>
             <ul class="dropdown-menu" role="menu">
               <li class="dropdown-item actions-dropdown-item" (click)="prepareAndOpenRenameClassModal(selectedElement.name)"><a>Rename Class</a></li>
+              <li class="divider"></li>
               <li class="dropdown-item actions-dropdown-item" (click)="prepareAndOpenAddPropertyModal()"><a><i class="fa fa-plus"></i> &nbsp; Add Property</a></li>
             </ul>
           </div>
@@ -228,7 +257,7 @@
                       </button>
                     </div>
                     <div class="btn-group">
-                      <button class="btn btn-danger btn-xs" (click)=prepareAndOpenDropModal(propName) [disabled]="!canBeExcluded(propName)">
+                      <button class="btn btn-danger btn-xs" (click)="prepareAndOpenDropPropertyModal(propName)" [disabled]="!canBeExcluded(propName)">
                         <i class="fa fa-trash-o"></i>
                         Drop
                       </button>
@@ -266,6 +295,15 @@
               Edit Class <span class="caret"></span></button>
             <ul class="dropdown-menu" role="menu">
               <li class="dropdown-item actions-dropdown-item" (click)="prepareAndOpenRenameClassModal(edgeName)"><a>Rename Class</a></li>
+              <li class="dropdown-item actions-dropdown-item" (click)="prepareAndOpenDropClassModal(edgeName)">
+                <a data-toggle="popover" data-html="true" data-content="Drop the Edge Class and all its occurrences in the graph."
+                   data-trigger="hover" data-placement="left" data-container="#stepAdvanced" data-animation="am-fade-and-scale">Drop Edge Class</a>
+              </li>
+              <li class="dropdown-item actions-dropdown-item" (click)="prepareAndOpenDropEdgeModal(edgeName)">
+                <a data-toggle="popover" data-html="true" data-content="Drop just the selected Edge occurrence. If the selected edge instance is the last one present in the graph, the Edge Class will be dropped."
+                   data-trigger="hover" data-placement="left" data-container="#stepAdvanced" data-animation="am-fade-and-scale">Drop Edge Instance</a>
+              </li>
+              <li class="divider"></li>
               <li class="dropdown-item actions-dropdown-item" (click)="prepareAndOpenAddPropertyModal()"><a><i class="fa fa-plus"></i> &nbsp; Add Property</a></li>
             </ul>
           </div>
@@ -293,7 +331,7 @@
                       </button>
                     </div>
                     <div class="btn-group">
-                      <button class="btn btn-danger btn-xs" (click)=prepareAndOpenDropModal(propName)>
+                      <button class="btn btn-danger btn-xs" (click)="prepareAndOpenDropPropertyModal(propName)">
                         <i class="fa fa-trash-o"></i>
                         Drop
                       </button>

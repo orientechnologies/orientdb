@@ -130,6 +130,8 @@ class AddEdgeModal {
     // Do nothing!
 
     this.addEdgeModal.dismiss();
+    this.graphComponent.endEdgeCreation(undefined);
+
   }
 
   addNewEdge() {
