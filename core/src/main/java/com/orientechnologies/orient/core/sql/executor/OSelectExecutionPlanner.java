@@ -65,19 +65,19 @@ public class OSelectExecutionPlanner {
 
     handleFetchFromTarger(result, info, ctx, enableProfiling);
 
-//    if (info.globalLetPresent) {
-    //do the raw fetch remotely, then do the rest on the coordinator
-    buildDistributedExecutionPlan(result, info, ctx, enableProfiling);
-//    }
+    if (info.globalLetPresent) {
+      // do the raw fetch remotely, then do the rest on the coordinator
+      buildDistributedExecutionPlan(result, info, ctx, enableProfiling);
+    }
 
     handleLet(result, info, ctx, enableProfiling);
 
     handleWhere(result, info, ctx, enableProfiling);
 
-    handleProjectionsBeforeOrderBy(result, info, ctx, enableProfiling);
+    // TODO optimization: in most cases the projections can be calculated on remote nodes
+    buildDistributedExecutionPlan(result, info, ctx, enableProfiling);
 
-//    TODO optimization: in most cases the filtering and the projection can be done on remote nodes
-//    buildDistributedExecutionPlan(result, info, ctx, enableProfiling);
+    handleProjectionsBeforeOrderBy(result, info, ctx, enableProfiling);
 
     if (info.expand || info.unwind != null) {
 
@@ -151,6 +151,7 @@ public class OSelectExecutionPlanner {
         }
       }
     }
+    info.distributedPlanCreated = true;
   }
 
   /**
@@ -1187,14 +1188,27 @@ public class OSelectExecutionPlanner {
     }
   }
 
-  private void handleLet(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleLet(OSelectExecutionPlan plan, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
     if (info.perRecordLetClause != null) {
       List<OLetItem> items = info.perRecordLetClause.getItems();
-      for (OLetItem item : items) {
-        if (item.getExpression() != null) {
-          result.chain(new LetExpressionStep(item.getVarName(), item.getExpression(), ctx, profilingEnabled));
-        } else {
-          result.chain(new LetQueryStep(item.getVarName(), item.getQuery(), ctx, profilingEnabled));
+      if (info.distributedPlanCreated) {
+        for (OLetItem item : items) {
+          if (item.getExpression() != null) {
+            plan.chain(new LetExpressionStep(item.getVarName(), item.getExpression(), ctx, profilingEnabled));
+          } else {
+            plan.chain(new LetQueryStep(item.getVarName(), item.getQuery(), ctx, profilingEnabled));
+          }
+        }
+      } else {
+        for (OSelectExecutionPlan shardedPlan : info.distributedFetchExecutionPlans.values()) {
+          for (OLetItem item : items) {
+            if (item.getExpression() != null) {
+              shardedPlan
+                  .chain(new LetExpressionStep(item.getVarName().copy(), item.getExpression().copy(), ctx, profilingEnabled));
+            } else {
+              shardedPlan.chain(new LetQueryStep(item.getVarName().copy(), item.getQuery().copy(), ctx, profilingEnabled));
+            }
+          }
         }
       }
     }
@@ -1202,7 +1216,13 @@ public class OSelectExecutionPlanner {
 
   private void handleWhere(OSelectExecutionPlan plan, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
     if (info.whereClause != null) {
-      plan.chain(new FilterStep(info.whereClause, ctx, profilingEnabled));
+      if (info.distributedPlanCreated) {
+        plan.chain(new FilterStep(info.whereClause, ctx, profilingEnabled));
+      } else {
+        for (OSelectExecutionPlan shardedPlan : info.distributedFetchExecutionPlans.values()) {
+          shardedPlan.chain(new FilterStep(info.whereClause.copy(), ctx, profilingEnabled));
+        }
+      }
     }
   }
 
@@ -1265,7 +1285,7 @@ public class OSelectExecutionPlanner {
     }
     FetchFromClassExecutionStep fetcher = new FetchFromClassExecutionStep(identifier.getStringValue(), filterClusters, ctx,
         orderByRidAsc, profilingEnabled);
-    if (orderByRidAsc != null) {
+    if (orderByRidAsc != null && info.serverToClusters.size() == 1) {
       info.orderApplied = true;
     }
     plan.chain(fetcher);
@@ -1451,7 +1471,9 @@ public class OSelectExecutionPlanner {
       if (indexFound && orderType != null) {
         plan.chain(new FetchFromIndexValuesStep(idx, orderType.equals(OOrderByItem.ASC), ctx, profilingEnabled));
         plan.chain(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
-        info.orderApplied = true;
+        if (info.serverToClusters.size() == 1) {
+          info.orderApplied = true;
+        }
         return true;
       }
     }
@@ -1585,7 +1607,8 @@ public class OSelectExecutionPlanner {
           new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, !Boolean.FALSE.equals(orderAsc), ctx,
               profilingEnabled));
       result.add(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
-      if (orderAsc != null && info.orderBy != null && fullySorted(info.orderBy, desc.keyCondition, desc.idx)) {
+      if (orderAsc != null && info.orderBy != null && fullySorted(info.orderBy, desc.keyCondition, desc.idx)
+          && info.serverToClusters.size() == 1) {
         info.orderApplied = true;
       }
       if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
@@ -1883,7 +1906,7 @@ public class OSelectExecutionPlanner {
     } else if (isOrderByRidDesc(info)) {
       orderByRidAsc = false;
     }
-    if (orderByRidAsc != null) {
+    if (orderByRidAsc != null && info.serverToClusters.size() == 1) {
       info.orderApplied = true;
     }
     if (clusters.size() == 1) {

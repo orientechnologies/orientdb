@@ -54,7 +54,7 @@ public class LetQueryStep extends AbstractExecutionStep {
         subCtx.setDatabase(ctx.getDatabase());
         subCtx.setParentWithoutOverridingChild(ctx);
         OInternalExecutionPlan subExecutionPlan = query.createExecutionPlan(subCtx, profilingEnabled);
-        result.setProperty(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan)));
+        result.setMetadata(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan)));
       }
 
       private List<OResult> toList(OLocalResultSet oLocalResultSet) {
