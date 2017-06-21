@@ -12,11 +12,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput
 import java.io.IOException;
 
 public class OOpen37Request implements OBinaryRequest<OOpen37Response> {
-
-  private String  clientId     = null;
-  private boolean useToken     = true;
-  private boolean supportsPush = true;
-  private boolean collectStats = true;
   private String databaseName;
   private String userName;
   private String userPassword;
@@ -33,10 +28,6 @@ public class OOpen37Request implements OBinaryRequest<OOpen37Response> {
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
-    network.writeString(clientId);
-    network.writeBoolean(useToken);
-    network.writeBoolean(supportsPush);
-    network.writeBoolean(collectStats);
     network.writeString(databaseName);
     network.writeString(userName);
     network.writeString(userPassword);
@@ -44,13 +35,6 @@ public class OOpen37Request implements OBinaryRequest<OOpen37Response> {
 
   @Override
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-
-    clientId = channel.readString();
-
-    useToken = channel.readBoolean();
-    supportsPush = channel.readBoolean();
-    collectStats = channel.readBoolean();
-
     databaseName = channel.readString();
     userName = channel.readString();
     userPassword = channel.readString();
@@ -76,22 +60,6 @@ public class OOpen37Request implements OBinaryRequest<OOpen37Response> {
 
   public String getUserPassword() {
     return userPassword;
-  }
-
-  public String getClientId() {
-    return clientId;
-  }
-
-  public boolean isCollectStats() {
-    return collectStats;
-  }
-
-  public boolean isSupportsPush() {
-    return supportsPush;
-  }
-
-  public boolean isUseToken() {
-    return useToken;
   }
 
   @Override
