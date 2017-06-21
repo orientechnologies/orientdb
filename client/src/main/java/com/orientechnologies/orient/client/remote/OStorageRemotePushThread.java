@@ -38,6 +38,7 @@ public class OStorageRemotePushThread extends Thread {
         if (res == OChannelBinaryProtocol.RESPONSE_STATUS_OK) {
           int currentSessionId = network.readInt();
           byte[] token = network.readBytes();
+          byte messageId = network.readByte();
           OBinaryResponse response = currentRequest.createResponse();
           response.read(network, null);
           blockingQueue.put((OSubscribeResponse) response);

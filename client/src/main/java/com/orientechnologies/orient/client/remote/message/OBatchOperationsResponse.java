@@ -39,12 +39,14 @@ public class OBatchOperationsResponse implements OBinaryResponse {
 
   private List<OCommit37Response.OCreatedRecordResponse> created;
   private List<OCommit37Response.OUpdatedRecordResponse> updated;
+  private List<OCommit37Response.ODeletedRecordResponse> deleted;
 
   public OBatchOperationsResponse(int txId, List<OCommit37Response.OCreatedRecordResponse> created,
-      List<OCommit37Response.OUpdatedRecordResponse> updated) {
+      List<OCommit37Response.OUpdatedRecordResponse> updated, List<OCommit37Response.ODeletedRecordResponse> deleted) {
     this.txId = txId;
     this.created = created;
     this.updated = updated;
+    this.deleted = deleted;
   }
 
   public OBatchOperationsResponse() {
@@ -66,6 +68,12 @@ public class OBatchOperationsResponse implements OBinaryResponse {
       channel.writeRID(updatedRecord.getRid());
       channel.writeVersion(updatedRecord.getVersion());
     }
+
+    channel.writeInt(deleted.size());
+    for (OCommit37Response.ODeletedRecordResponse deleteRecord : deleted) {
+      channel.writeRID(deleteRecord.getRid());
+    }
+
   }
 
   @Override
@@ -80,16 +88,25 @@ public class OBatchOperationsResponse implements OBinaryResponse {
       currentRid = network.readRID();
       createdRid = network.readRID();
       int version = network.readVersion();
-      created.add(new OCommit37Response.OCreatedRecordResponse(currentRid, createdRid,version));
+      created.add(new OCommit37Response.OCreatedRecordResponse(currentRid, createdRid, version));
     }
     final int updatedRecords = network.readInt();
+
     updated = new ArrayList<>(updatedRecords);
-    ORecordId rid;
     for (int i = 0; i < updatedRecords; ++i) {
-      rid = network.readRID();
+      ORecordId rid = network.readRID();
       int version = network.readVersion();
       updated.add(new OCommit37Response.OUpdatedRecordResponse(rid, version));
     }
+
+    final int deletedRecords = network.readInt();
+    deleted = new ArrayList<>(deletedRecords);
+
+    for (int i = 0; i < deletedRecords; ++i) {
+      ORecordId rid = network.readRID();
+      deleted.add(new OCommit37Response.ODeletedRecordResponse(rid));
+    }
+
   }
 
   public int getTxId() {
@@ -102,5 +119,9 @@ public class OBatchOperationsResponse implements OBinaryResponse {
 
   public List<OCommit37Response.OUpdatedRecordResponse> getUpdated() {
     return updated;
+  }
+
+  public List<OCommit37Response.ODeletedRecordResponse> getDeleted() {
+    return deleted;
   }
 }

@@ -26,12 +26,19 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.OUUIDSerializer;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.Change;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ChangeSerializationHelper;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -294,8 +301,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       bytes.skip(ODecimalSerializer.INSTANCE.getObjectSize(bytes.bytes, bytes.offset));
       break;
     case LINKBAG:
-      ORidBag bag = new ORidBag();
-      bag.fromStream(bytes);
+      ORidBag bag = readRidBag(bytes);
       bag.setOwner(document);
       value = bag;
       break;
@@ -320,6 +326,91 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
     }
     return value;
+  }
+
+  private void writeRidBag(BytesContainer bytes, ORidBag bag) {
+    final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+    UUID uuid = null;
+    if (sbTreeCollectionManager != null)
+      uuid = sbTreeCollectionManager.listenForChanges(bag);
+    if (uuid == null)
+      uuid = new UUID(-1, -1);
+    int uuidPos = bytes.alloc(OUUIDSerializer.UUID_SIZE);
+    OUUIDSerializer.INSTANCE.serialize(uuid, bytes.bytes, uuidPos);
+    if (bag.isEmbedded()) {
+      int pos = bytes.alloc(1);
+      bytes.bytes[pos] = 1;
+      OVarIntSerializer.write(bytes, bag.size());
+      Iterator<OIdentifiable> iterator = bag.rawIterator();
+      while (iterator.hasNext()) {
+        OIdentifiable itemValue = iterator.next();
+        if (itemValue == null)
+          writeNullLink(bytes);
+        else
+          writeOptimizedLink(bytes, itemValue);
+      }
+    } else {
+      int pos = bytes.alloc(1);
+      bytes.bytes[pos] = 2;
+      OBonsaiCollectionPointer pointer = bag.getPointer();
+      if (pointer == null)
+        pointer = OBonsaiCollectionPointer.INVALID;
+      OVarIntSerializer.write(bytes, pointer.getFileId());
+      OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageIndex());
+      OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageOffset());
+      NavigableMap<OIdentifiable, Change> changes = bag.getChanges();
+      if (changes != null) {
+        OVarIntSerializer.write(bytes, changes.size());
+        for (Map.Entry<OIdentifiable, Change> change : changes.entrySet()) {
+          writeOptimizedLink(bytes, change.getKey());
+          int posAll = bytes.alloc(1);
+          bytes.bytes[posAll] = change.getValue().getType();
+          OVarIntSerializer.write(bytes, change.getValue().getValue());
+        }
+      } else {
+        OVarIntSerializer.write(bytes, 0);
+      }
+    }
+  }
+
+  private ORidBag readRidBag(BytesContainer bytes) {
+    UUID uuid = OUUIDSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
+    bytes.skip(OUUIDSerializer.UUID_SIZE);
+    if (uuid.getMostSignificantBits() == -1 && uuid.getLeastSignificantBits() == -1)
+      uuid = null;
+    byte b = bytes.bytes[bytes.offset];
+    bytes.skip(1);
+    if (b == 1) {
+      ORidBag bag = new ORidBag(uuid);
+      int size = OVarIntSerializer.readAsInteger(bytes);
+      for (int i = 0; i < size; i++) {
+        OIdentifiable id = readOptimizedLink(bytes);
+        if (id.equals(NULL_RECORD_ID))
+          bag.add(null);
+        else
+          bag.add(id);
+      }
+      return bag;
+    } else {
+      long fileId = OVarIntSerializer.readAsLong(bytes);
+      long pageIndex = OVarIntSerializer.readAsLong(bytes);
+      int pageOffset = OVarIntSerializer.readAsInteger(bytes);
+
+      Map<OIdentifiable, Change> changes = new HashMap<>();
+      int size = OVarIntSerializer.readAsInteger(bytes);
+      while (size-- > 0) {
+        OIdentifiable link = readOptimizedLink(bytes);
+        byte type = bytes.bytes[bytes.offset];
+        bytes.skip(1);
+        int change = OVarIntSerializer.readAsInteger(bytes);
+        changes.put(link, ChangeSerializationHelper.createChangeInstance(type, change));
+      }
+
+      OBonsaiCollectionPointer pointer = null;
+      if (fileId != -1)
+        pointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
+      return new ORidBag(pointer, changes, uuid);
+    }
   }
 
   private byte[] readBinary(BytesContainer bytes) {
@@ -495,7 +586,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       writeEmbeddedMap(bytes, (Map<Object, Object>) value);
       break;
     case LINKBAG:
-      ((ORidBag) value).toStream(bytes);
+      writeRidBag(bytes, (ORidBag) value);
       break;
     case CUSTOM:
       if (!(value instanceof OSerializableStream))
@@ -548,8 +639,6 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
   @SuppressWarnings("unchecked")
   private int writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
-    final int[] pos = new int[map.size()];
-    Entry<Object, Object> values[] = new Entry[map.size()];
     final int fullPos = OVarIntSerializer.write(bytes, map.size());
     for (Entry<Object, Object> entry : map.entrySet()) {
       writeString(bytes, entry.getKey().toString());

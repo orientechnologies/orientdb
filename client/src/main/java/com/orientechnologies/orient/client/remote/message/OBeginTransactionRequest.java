@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class OBeginTransactionRequest implements OBinaryRequest<OBinaryResponse> {
+public class OBeginTransactionRequest implements OBinaryRequest<OBeginTransactionResponse> {
 
   private int                           txId;
   private boolean                       usingLog;
@@ -116,7 +116,7 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBinaryResponse>
   }
 
   @Override
-  public OBinaryResponse createResponse() {
+  public OBeginTransactionResponse createResponse() {
     return new OBeginTransactionResponse();
   }
 

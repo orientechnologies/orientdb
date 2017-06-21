@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -38,6 +39,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
   private final Map<ORID, ORecordOperation> tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
   private final Map<ORecordId, ORecord>     createdRecords = new HashMap<ORecordId, ORecord>();
   private final Map<ORecordId, ORecord>     updatedRecords = new HashMap<ORecordId, ORecord>();
+  private final Set<ORID>                   deletedRecord  = new HashSet<>();
   private final int                           clientTxId;
   private       List<ORecordOperationRequest> operations;
   private final List<IndexChange>             indexChanges;
@@ -97,6 +99,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
             ORecordInternal.setVersion(rec, deleteVersion);
             entry.setRecord(rec);
           }
+          deletedRecord.add(rec.getIdentity());
           break;
 
         default:
@@ -223,6 +226,10 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     return updatedRecords;
   }
 
+  public Set<ORID> getDeletedRecord() {
+    return deletedRecord;
+  }
+
   /**
    * Unmarshalls collections. This prevent temporary RIDs remains stored as are.
    */
@@ -249,6 +256,8 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       updatedRecords.put((ORecordId) iRecord.getIdentity(), iRecord);
     } else if (iStatus == ORecordOperation.CREATED) {
       createdRecords.put((ORecordId) iRecord.getIdentity().copy(), iRecord);
+    } else if (iStatus == ORecordOperation.DELETED) {
+      deletedRecord.add(iRecord.getIdentity());
     }
   }
 

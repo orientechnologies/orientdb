@@ -24,9 +24,9 @@ import java.util.NavigableMap;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
@@ -35,13 +35,13 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
  * @since 11/26/13
  */
 public class ORidBagUpdateSerializationOperation implements ORecordSerializationOperation {
-  private final NavigableMap<OIdentifiable, OSBTreeRidBag.Change> changedValues;
+  private final NavigableMap<OIdentifiable, Change> changedValues;
 
   private final OBonsaiCollectionPointer                          collectionPointer;
 
   private final OSBTreeCollectionManager                          collectionManager;
 
-  public ORidBagUpdateSerializationOperation(final NavigableMap<OIdentifiable, OSBTreeRidBag.Change> changedValues,
+  public ORidBagUpdateSerializationOperation(final NavigableMap<OIdentifiable, Change> changedValues,
       OBonsaiCollectionPointer collectionPointer) {
     this.changedValues = changedValues;
     this.collectionPointer = collectionPointer;
@@ -56,7 +56,7 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
 
     OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
     try {
-      for (Map.Entry<OIdentifiable, OSBTreeRidBag.Change> entry : changedValues.entrySet()) {
+      for (Map.Entry<OIdentifiable, Change> entry : changedValues.entrySet()) {
         Integer storedCounter = tree.get(entry.getKey());
 
         storedCounter = entry.getValue().applyTo(storedCounter);

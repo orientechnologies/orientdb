@@ -826,28 +826,44 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   }
 
-  public ORemoteQueryResult query(ODatabase db, String query, Object[] args) {
+  public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Object[] args) {
+    OQueryRequest request = new OQueryRequest("sql", query, args, true, db.getSerializer(), 100);
+    OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
+    ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
+        response.getQueryStats(), response.isHasNextPage());
+
+    return new ORemoteQueryResult(rs, response.isTxChanges());
+  }
+
+  public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Map args) {
     OQueryRequest request = new OQueryRequest("sql", query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
-    return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
+
+    ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
+        response.getQueryStats(), response.isHasNextPage());
+
+    return new ORemoteQueryResult(rs, response.isTxChanges());
+
   }
 
-  public ORemoteQueryResult query(ODatabase db, String query, Map args) {
-    OQueryRequest request = new OQueryRequest("sql", query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
-    OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
-    return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
-  }
-
-  public ORemoteQueryResult command(ODatabase db, String language, String query, Object[] args) {
+  public ORemoteQueryResult command(ODatabaseDocumentRemote db, String language, String query, Object[] args) {
     OQueryRequest request = new OQueryRequest(language, query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
-    return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
+    ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
+        response.getQueryStats(), response.isHasNextPage());
+
+    return new ORemoteQueryResult(rs, response.isTxChanges());
+
   }
 
-  public ORemoteQueryResult command(ODatabase db, String language, String query, Map args) {
+  public ORemoteQueryResult command(ODatabaseDocumentRemote db, String language, String query, Map args) {
     OQueryRequest request = new OQueryRequest(language, query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
-    return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
+    ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
+        response.getQueryStats(), response.isHasNextPage());
+
+    return new ORemoteQueryResult(rs, response.isTxChanges());
+
   }
 
   public void closeQuery(ODatabaseDocumentRemote database, String queryId) {
@@ -859,14 +875,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryNextPageRequest request = new OQueryNextPageRequest(rs.getQueryId(), 100);
     OQueryResponse response = networkOperation(request, "Error on fetching next page for statment: " + rs.getQueryId());
 
-    ORemoteResultSet remoteRs = ((ORemoteResultSet) response.getResult());
-    rs.setCurrentPage(remoteRs.getCurrentPage());
-    rs.setHasNextPage(remoteRs.hasNextPage());
-    Map<String, Long> newQueryStats = remoteRs.getQueryStats();
-    if (newQueryStats != null) {
-      rs.setQueryStats(newQueryStats);
-    }
-    remoteRs.getExecutionPlan().ifPresent(x -> rs.setExecutionPlan(x));
+    rs.fetched(response.getResult(), response.isHasNextPage(), response.getExecutionPlan(), response.getQueryStats());
   }
 
   public List<ORecordOperation> commit(final OTransaction iTx, final Runnable callback) {
@@ -1785,15 +1794,19 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void beginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
     OBeginTransactionRequest request = new OBeginTransactionRequest(transaction.getId(), true, transaction.isUsingLog(),
         transaction.getAllRecordEntries(), transaction.getIndexEntries());
-    OBinaryResponse response = networkOperation(request, "Error on remote treansaction begin");
-
+    OBeginTransactionResponse response = networkOperation(request, "Error on remote treansaction begin");
+    for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
+      transaction.updateIdentityAfterCommit(entry.getKey(), entry.getValue());
+    }
   }
 
   public void reBeginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
     ORebeginTransactionRequest request = new ORebeginTransactionRequest(transaction.getId(), transaction.isUsingLog(),
         transaction.getAllRecordEntries(), transaction.getIndexEntries());
-    OBinaryResponse response = networkOperation(request, "Error on remote treansaction begin");
-
+    OBeginTransactionResponse response = networkOperation(request, "Error on remote treansaction begin");
+    for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
+      transaction.updateIdentityAfterCommit(entry.getKey(), entry.getValue());
+    }
   }
 
   public void fetchTransaction(ODatabaseDocumentRemote remote) {
