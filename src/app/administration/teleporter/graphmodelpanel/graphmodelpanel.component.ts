@@ -78,6 +78,10 @@ class GraphModelPanelComponent implements OnInit, OnChanges {
     }
   }
 
+  redraw() {
+    this.graphComponent.redraw();
+  }
+
   prepareSearchOptions() {
 
     // collect all the node names for search auto-complete
@@ -176,6 +180,10 @@ class GraphModelPanelComponent implements OnInit, OnChanges {
   hideLegend() {
     this.legendShown = false;
     (<any>$('.graph-legend')).fadeTo(0, 0);
+  }
+
+  startEdgeCreation() {
+    this.graphComponent.startEdgeCreation();
   }
 
 }

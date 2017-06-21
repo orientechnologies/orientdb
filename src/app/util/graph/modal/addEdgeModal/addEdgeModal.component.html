@@ -1,0 +1,88 @@
+<modal #addEdgeModal [size]="modalSize" (onDismiss)="dismissEdgeAdding()">
+  <modal-header [show-close]="true">
+    <h4 class="modal-title"><b>Add Edge</b></h4>
+  </modal-header>
+  <modal-body>
+    <div class="form-group">
+      <form class="form-horizontal" #addEdgeForm="ngForm">
+        <h5><b>Edge Class</b></h5>
+        <hr/>
+        <input type="radio" [(ngModel)]="activeFormNewEdge" name="activeFormNewProp" value="1" checked> Add New Edge Class<br>
+        <div *ngIf="activeFormNewEdge ==='1'"><br/>
+          <div class="row">
+            <label class="col-md-2 control-label">Edge Class Name* </label>
+            <div class="col-md-10">
+              <input type="text" class="form-control" [(ngModel)]="tmpEdgeName" name="edgeName"
+                     placeholder="Edge Class Name" required/>
+            </div>
+          </div>
+        </div>
+        <br/><br/>
+        <input type="radio" [(ngModel)]="activeFormNewEdge" name="activeFormNewEdge" value="2"> Choose Existent Edge Class<br>
+        <div *ngIf="activeFormNewEdge ==='2'"><br/>
+          <div class="row">
+            <label class="col-md-2 control-label">Edge Class Name* </label>
+            <div class="col-md-10">
+              <select class="form-control" [(ngModel)]="tmpEdgeName" name="edgeName" required>
+                <option *ngFor="let edgeName of edgeClassesNames" [value]="edgeName">
+                  {{edgeName}} </option>
+              </select><br/>
+            </div>
+          </div>
+        </div>
+
+        <br/><br/>
+
+        <h5><b>Mapping Info</b></h5>
+        <hr/>
+
+        <div class="row">
+          <label class="col-md-2 control-label">From Table* </label>
+          <div class="col-md-10">
+            <input type="text" class="form-control" [(ngModel)]="tmpEdgeMapping.fromTable" name="fromTable"
+                   placeholder="From Table Name" required readonly/>
+          </div>
+        </div><br/>
+        <div class="row">
+          <label class="col-md-2 control-label">From Columns* </label>
+          <div class="col-md-10">
+            <select2 [(data)]="fromColumnsNames"
+                     [options]="columnsSelectOptions"
+                     [(value)]="selectedFromColumns"
+                     (valueChanged)="updatedFromColumns($event)" required></select2>
+          </div>
+        </div><br/>
+        <div class="row">
+          <label class="col-md-2 control-label">To Table* </label>
+          <div class="col-md-10">
+            <input type="text" class="form-control" [(ngModel)]="tmpEdgeMapping.toTable" name="toTable"
+                   placeholder="To Table Name" required readonly/>
+          </div>
+        </div><br/>
+        <div class="row">
+          <label class="col-md-2 control-label">To Columns* </label>
+          <div class="col-md-10">
+            <select2 [data]="toColumnsNames"
+                     [options]="columnsSelectOptions"
+                     [value]="selectedToColumns"
+                     (valueChanged)="updatedToColumns($event)" required></select2>
+          </div>
+        </div><br/>
+        <div class="row">
+          <label class="col-md-2 control-label">Direction* </label>
+          <div class="col-md-10">
+            <select class="form-control" [(ngModel)]="tmpEdgeMapping.direction" name="direction" required>
+              <option *ngFor="let direction of directions" [value]="direction">
+                {{direction}} </option>
+            </select><br/>
+          </div>
+        </div><br/>
+
+      </form>
+    </div>
+  </modal-body>
+  <modal-footer [show-default-buttons]="false">
+    <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissEdgeAdding()">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="addNewEdge()" [disabled]="!addEdgeForm.valid">Save</button>
+  </modal-footer>
+</modal>

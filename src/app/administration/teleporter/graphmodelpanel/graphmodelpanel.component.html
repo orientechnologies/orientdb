@@ -21,16 +21,25 @@
             <ul class="dropdown-menu" role="menu">
               <li *ngIf="!legendShown" class="dropdown-item actions-dropdown-item" (click)="showLegend()"><a>Show Legend</a></li>
               <li *ngIf="legendShown" class="dropdown-item actions-dropdown-item" (click)="hideLegend()"><a>Hide Legend</a></li>
+              <li class="divider"></li>
+              <li *ngIf="!(selectedElement && selectedElement.name)" class="dropdown-item actions-dropdown-item">
+                <a style="opacity: 0.3; cursor: not-allowed;" data-toggle="popover" data-html="true" data-content="Please select a node."
+                   data-trigger="hover" data-container="#stepAdvanced" data-animation="am-fade-and-scale">Add Edge</a>
+              </li>
+              <li *ngIf="selectedElement && selectedElement.name" class="dropdown-item actions-dropdown-item" (click)="startEdgeCreation()">
+                <a>Add Edge</a>
+              </li>
               <li class="dropdown-item actions-dropdown-item"><a>Aggregate Classes</a></li>
               <li class="dropdown-item actions-dropdown-item"><a>Split Class</a></li>
             </ul>
+            <button type="button" class="btn btn-primary" (click)="redraw()">Redraw</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="canvas" class="panel-body svg-content-responsive" style="height: 485px;">
+  <div id="canvas" class="panel-body svg-content-responsive" style="height: 485px; padding: 0px;">
     <graph *ngIf="dataLoaded" #graph id="graph" [(modellingConfig)]="modellingConfig" [(selectedElement)]="selectedElement" (onSelectedElement)="updateSelectedElement($event)"
            style="height: 100%; width: 100%;"></graph>
 

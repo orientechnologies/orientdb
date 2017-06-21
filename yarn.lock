@@ -2653,6 +2653,10 @@ ng2-bootstrap@^1.3.3:
   dependencies:
     moment "2.17.1"
 
+ng2-bs3-modal@^0.10.4:
+  version "0.10.4"
+  resolved "https://registry.yarnpkg.com/ng2-bs3-modal/-/ng2-bs3-modal-0.10.4.tgz#80f350cd3f7346193c8f9324c899d58db1714581"
+
 ng2-codemirror@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/ng2-codemirror/-/ng2-codemirror-1.1.1.tgz#10e678c2f618820565a711de63d98ec317ea7f1b"

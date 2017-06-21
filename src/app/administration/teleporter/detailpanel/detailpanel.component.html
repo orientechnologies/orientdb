@@ -96,7 +96,7 @@
     </modal-body>
     <modal-footer [show-default-buttons]="false">
       <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissPropertyAdding()">Cancel</button>
-      <button type="button" class="btn btn-primary" (click)="addNewPropToSelectedElement()" [disabled]="!addPropForm.valid">Save</button>
+      <button type="button" class="btn btn-primary" (click)="addNewPropToSelectedClass()" [disabled]="!addPropForm.valid">Save</button>
     </modal-footer>
   </modal>
 
@@ -190,7 +190,7 @@
             <span class="hideOverflow" data-toggle="popover"
                   data-placement="top"
                   data-trigger="hover"
-                  data-container="#panelArea"
+                  data-container="body"
                   [attr.data-content]="selectedElement.name">
               <b>{{selectedElement.name}}</b><br><br>
             </span>

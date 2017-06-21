@@ -94,7 +94,7 @@ class TeleporterComponent implements AfterViewChecked {
       "protocol": "plocal",
       "outDBName": "testdb",
       "outDbUrl": "",
-      "strategy": "naive-aggregate",
+      "strategy": "naive",
       "mapper": "basicDBMapper",
       "xmlPath": "",
       "nameResolver": "original",
@@ -103,7 +103,7 @@ class TeleporterComponent implements AfterViewChecked {
     }
 
     this.config = angular.copy(this.defaultConfig);
-    this.step = '1';
+    this.step = '4';
 
     // fetching driver name and jurl pattern
     this.drivers().then((data) => {
@@ -148,7 +148,7 @@ class TeleporterComponent implements AfterViewChecked {
     this.key = "id";
     this.fieldToDisplay = "tableName";
 
-    // this.buildConfigJSON();
+    this.buildConfigJSON();
 
     this.selectedElement = undefined;
     this.configFetched = false;
@@ -191,6 +191,9 @@ class TeleporterComponent implements AfterViewChecked {
       })
     }
     this.step = step;
+
+    // popovers need being enabled
+    this.popoversEnabled = false;
   }
 
   changeSelectedElement(e) {
@@ -208,6 +211,17 @@ class TeleporterComponent implements AfterViewChecked {
 
   getMigrationConfig() {
     return this.teleporterService.getMigrationConfig(this.config);
+  }
+
+  updateIncludedTables(includedTables) {
+
+    var includedTablesRaw = [];
+
+    for(var i=0; i<includedTables.length; i++) {
+      includedTablesRaw[i] = includedTables[i].tableName;
+    }
+
+    this.config.includedTables = includedTablesRaw;
   }
 
   changeJurlAccordingToDriver() {
@@ -243,14 +257,37 @@ class TeleporterComponent implements AfterViewChecked {
 
   launch() {
 
-    // fetching modelling config if it's not undefined
+    // fetching modelling config if it's not undefined and preparation
     if(this.modellingConfig) {
 
       // deleting source and target for each edge definition
-      for(var edge of this.modellingConfig.edges) {
+      for (var edge of this.modellingConfig.edges) {
         delete edge.source;
         delete edge.target;
       }
+
+      // aggregating edges with the same name (that is all the edges representing the same edge class)
+      for (var i = 0; i < this.modellingConfig.edges.length; i++) {
+        var elementToAggregate = this.modellingConfig.edges[i];
+        var elementToAggregateName = this.getEdgeClassName(elementToAggregate);
+        for (var j = i + 1; j < this.modellingConfig.edges.length; j++) {
+          var currEdge = this.modellingConfig.edges[j];
+          var currEdgeName = this.getEdgeClassName(currEdge);
+
+          if (elementToAggregateName === currEdgeName) {
+
+            // aggregate mapping information
+            elementToAggregate[elementToAggregateName].mapping.push(currEdge[currEdgeName].mapping[0]);
+
+            // delete the duplicate edges
+            this.modellingConfig.edges.splice(j, 1);
+
+            // decreasing j as the array shifted after the delete
+            j--;
+          }
+        }
+      }
+
       this.config.migrationConfig = JSON.stringify(this.modellingConfig);
     }
 
@@ -270,6 +307,21 @@ class TeleporterComponent implements AfterViewChecked {
     }).catch(function (error) {
       alert("Error during migration!")
     });
+  }
+
+  getEdgeClassName(link) {
+
+    var edgeClassName = undefined;
+    var keys = Object.keys(link);
+
+    for(var key of keys) {
+      if(key !== 'source' && key !== 'target') {
+        edgeClassName = key;
+        break;
+      }
+    }
+
+    return edgeClassName;
   }
 
   status() {

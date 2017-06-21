@@ -44,7 +44,7 @@
             </div>
             <div class="col-md-5">
               <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                      [attr.data-content]="hints.driver" data-animation="am-fade-and-scale"><b>?</b></button>
+                      [attr.data-content]="hints.driver" data-trigger="hover" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
@@ -251,6 +251,7 @@
           <div class="form-group">
             <div class="col-md-offset-1 col-md-10">
               <dual-list [sort]="keepSorted" [source]="sourceDBTables" [key]="key" [display]="fieldToDisplay" [(destination)]="includedTables"
+                         (destinationChange)="updateIncludedTables(includedTables)"
                          headerLeft="Source DB Tables" headerRight="Included Tables"
                          addBtn="Include" removeBtn="Exclude"
                          height="265px"></dual-list>
@@ -259,7 +260,7 @@
 
         </div>
 
-        <div class="stepAdvanced" *ngSwitchCase="'4'">
+        <div id="stepAdvanced" *ngSwitchCase="'4'">
           <h4>
             <div class="row">
               <div class="col-md-6">

@@ -1,8 +1,6 @@
-import {Component, Input, AfterViewInit, OnChanges, Output, EventEmitter, NgZone} from '@angular/core';
+import {Component, Input, AfterViewInit, Output, EventEmitter, NgZone, ViewChild} from '@angular/core';
 import {OGraph} from './d3-graph/OGraph';
-
-import * as $ from "jquery"
-import './orientdb-graphviz'
+import {AddEdgeModal} from './modal/addEdgeModal/addEdgeModal.component'
 
 import {downgradeComponent} from '@angular/upgrade/static';
 import {NotificationService} from "../../core/services/notification.service";
@@ -13,12 +11,12 @@ declare var angular:any;
 @Component({
   selector: 'graph',
   templateUrl: "./graph.component.html",
-  styleUrls: []
 })
 
 class GraphComponent implements AfterViewInit {
 
   private orientGraph:OGraph;
+  private self = this;
 
   @Input() modellingConfig = this.modellingConfig !== 'undefined' ? this.modellingConfig : 'no config from parent.';
   @Output() modellingConfigChange = new EventEmitter();
@@ -28,6 +26,11 @@ class GraphComponent implements AfterViewInit {
 
   private elementId = '#graph';
   private opts;
+
+  /**
+   * Modals
+   */
+  @ViewChild('addEdgeModalWrapper') addEdgeModalWrapper;
 
   constructor(private notification: NotificationService, private zone: NgZone) {
     this.init();
@@ -367,17 +370,21 @@ class GraphComponent implements AfterViewInit {
     this.orientGraph.updateElementsAccordingToRenamedClassed(oldClassName, newClassName, classType);
   }
 
-  // executeFunctionWhenConfigReady(funct) {
-  //   if(!this.modellingConfig) {
-  //
-  //     // wait and retry
-  //     setTimeout(() => {
-  //       this.zone.run(() => {this.executeFunctionWhenConfigReady}); // checks config every 100 ms
-  //     }, 100)
-  //   } else {
-  //     funct();
-  //   }
-  // }
+  startEdgeCreation() {
+    this.orientGraph.startEdgeCreation();
+  }
+
+  openEdgeCreationModal(fromVertex, toVertex, edgeClassesNames) {
+    this.addEdgeModalWrapper.openAddEdgeModal(fromVertex, toVertex, edgeClassesNames);
+  }
+
+  endEdgeCreation(newEdge) {
+    this.orientGraph.endEdgeCreation(newEdge);
+  }
+
+  redraw() {
+    this.orientGraph.redraw();
+  }
 
 }
 

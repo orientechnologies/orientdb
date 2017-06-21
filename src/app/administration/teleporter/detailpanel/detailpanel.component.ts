@@ -6,8 +6,7 @@ import * as $ from "jquery"
 import {downgradeComponent} from '@angular/upgrade/static';
 
 declare var angular:any
-import * as d3 from 'd3';
-import {first} from "rxjs/operator/first";
+import edge = require("selenium-webdriver/edge");
 
 
 @Component({
@@ -105,27 +104,6 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
 
   enablePopovers() {
     (<any>$('[data-toggle="popover"]')).popover();
-    // (<any>$('[data-toggle="popover"]')).popover().css("max-width", "100%");
-
-    // (<any>$('[data-toggle="popover"]')).on('shown.bs.popover', function () {
-    //   $($(this)).css('max-width', 100);
-    // });
-
-    // $('[data-toggle="popover"]').on('shown.bs.popover', function () {
-    //   console.log("Element:");
-    //   console.log(this);
-    //   console.log("Element next:");
-    //   console.log($($(this).next()));
-    //   console.log("Popover width:");
-    //   console.log($($(this).next()).width());
-    // });
-
-    // $('[data-toggle="popover"]').on('shown.bs.popover', function () {
-    //   var popoverID = $(this).attr('aria-describedby');
-    //   $("#"+popoverID).css("max-width", "100%");
-    //   console.log($(this));
-    //   console.log($("#"+popoverID).width());
-    // });
   }
 
   ngOnChanges(changes) {
@@ -135,19 +113,21 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
     }
   }
 
-  getEdgeNameFromSelectedElement() {
+  getEdgeClassName(link) {
 
-    var firstLevelProps = Object.keys(this.selectedElement);
+    var edgeClassName = undefined;
+    var firstLevelKeys = Object.keys(link);
 
-    for(var i=0; i<firstLevelProps.length; i++) {
-      if(firstLevelProps[i] !== 'source' && firstLevelProps[i] !== 'target') {
-        return firstLevelProps[i];
+    for(var key of firstLevelKeys) {
+      if(key !== 'source' && key !== 'target') {
+        edgeClassName = key;
+        break;
       }
     }
 
-    return undefined;
-
+    return edgeClassName;
   }
+
 
   /**
    * Updates the set of properties to include back in a vertex or edge class when the input value changes.
@@ -164,8 +144,7 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
       if (!this.selectedElement.name) {
 
         // when an edge is selected we store the edge name
-        // this.edgeName = Object.keys(this.selectedElement)[0];
-        this.edgeName = this.getEdgeNameFromSelectedElement();
+        this.edgeName = this.getEdgeClassName(this.selectedElement);
 
         // filling properties array
         this.propertiesName = [];
@@ -361,7 +340,7 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
 
     if(action === 'close') {
 
-      this.dropPropertyFromSelectedElement();
+      this.dropPropertyFromSelectedClass();
 
       // closing the modal
       this.dropModal.close();
@@ -388,8 +367,9 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
   /**
    * It drops a property from the selected element according to the property name of the temporary property definition.
    * Then it opens the modal.
+   * If we are dropping a property in an edge class, it will deleted automatically from all the instances of the current selected edge class.
    */
-  dropPropertyFromSelectedElement() {
+  dropPropertyFromSelectedClass() {
 
     var propertyNameToDrop = this.tmpPropertyDefinition.name;
 
@@ -409,18 +389,25 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
         }
       }
     }
-    else {      // dropping from an edge class
-      for (var currentPropName in this.selectedElement[this.edgeName].properties) {
-        if (currentPropName === propertyNameToDrop) {
-          if (this.selectedElement[this.edgeName].properties[currentPropName].mapping) {
-            // removing a property present in the source table means excluding it
-            this.selectedElement[this.edgeName].properties[currentPropName].include = false;
+    else {
+
+      // dropping the property from all the instances of the current selected edge class
+      for(var edge of this.modellingConfig.edges) {
+        if (this.getEdgeClassName(edge) === this.edgeName) {
+
+          for (var currentPropName in edge[this.edgeName].properties) {
+            if (currentPropName === propertyNameToDrop) {
+              if (edge[this.edgeName].properties[currentPropName].mapping) {
+                // removing a property present in the source table means excluding it
+                edge[this.edgeName].properties[currentPropName].include = false;
+              }
+              else {
+                // removing a property NOT present in the source table means deleting it
+                delete edge[this.edgeName].properties[currentPropName];
+              }
+              break;
+            }
           }
-          else {
-            // removing a property NOT present in the source table means deleting it
-            delete this.selectedElement[this.edgeName].properties[currentPropName];
-          }
-          break;
         }
       }
     }
@@ -440,6 +427,9 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
     this.renameModal.open();
   }
 
+  /**
+   * Renames the selected vertex class.
+   */
   renameSelectedVertexClass() {
 
     var oldVertexName = this.selectedElement.name;
@@ -452,18 +442,30 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
     this.renameModal.close();
   }
 
+  /**
+   * Renames the selected edge class, automatically updating all the instances of the class.
+   */
   renameSelectedEdgeClass() {
 
-    var oldEdgeName = Object.keys(this.selectedElement)[0];
-    var edgeDef = this.selectedElement[oldEdgeName];
-    delete this.selectedElement[oldEdgeName];
+    var oldEdgeName = this.getEdgeClassName(this.selectedElement);
+    var edgeDef = undefined;
 
-    this.selectedElement[this.tmpClassName] = edgeDef;
+    // update potential all the instances of the edge class
+    for(var i=0; i<this.modellingConfig.edges.length; i++) {
+      var currEdge = this.modellingConfig.edges[i];
+      var currEdgeName = this.getEdgeClassName(currEdge);
+      if(oldEdgeName === currEdgeName) {
+        edgeDef = currEdge[currEdgeName];
+        delete currEdge[currEdgeName];
+        currEdge[this.tmpClassName] = edgeDef;
+      }
+    }
+
+    // emitting event for the graph update
     this.onElementRenamed.emit({oldClassName: oldEdgeName, newClassName: this.tmpClassName, classType: "edgeClass"});
 
     this.tmpClassName = undefined;    // maybe not needed, tmpClassName overwritten in prepareAndOpenRenameClassModal !!!! check
     this.updateSelectedElementInfo();
-
     this.renameModal.close();
   }
 
@@ -477,8 +479,12 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
     this.addPropertyModal.open();
   }
 
-
-  addNewPropToSelectedElement() {
+  /**
+   * Add the defined property in the selected class, so if the current selected element is an edge the property will be added:
+   * - in the current selected element
+   * - in all the other instances of the selected edge class
+   */
+  addNewPropToSelectedClass() {
 
     if (this.activeFormNewProp === '1') {
       // property to be added in the selected element properties list
@@ -497,12 +503,21 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
         }
         this.selectedElement.properties[this.tmpPropertyDefinition.name] = newProp;
       }
-      else {      // setting the newProp in an edgeClass
-        // if properties field is not present, it will be added
-        if(!this.selectedElement[this.edgeName].properties) {
-          this.selectedElement[this.edgeName].properties = {};
+      else {
+        // setting the newProp in an edgeClass
+
+        // setting the property in all the instances of the current selected edge class
+        for(var edge of this.modellingConfig.edges) {
+          if(this.getEdgeClassName(edge) === this.edgeName) {
+
+            // if properties field is not present, it will be added
+            if(!edge[this.edgeName].properties) {
+              edge[this.edgeName].properties = {};
+            }
+            edge[this.edgeName].properties[this.tmpPropertyDefinition.name] = newProp;
+
+          }
         }
-        this.selectedElement[this.edgeName].properties[this.tmpPropertyDefinition.name] = newProp;
       }
       this.cleanTmpPropertyDefinition();
     }
@@ -591,6 +606,7 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
   /**
    * It copies the temporary property definition into the current property being edited,
    * then it closes the modal.
+   * If we are editing a property in an edge class, it will updated automatically in all the instances of the current selected edge class.
    */
   closeEditPropertyModal() {
 
@@ -621,11 +637,16 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
     }
     else {      // editing a property in an edge class
 
-      // deleting old property (delete is needed in case of property renaming)
-      delete this.selectedElement[this.edgeName].properties[oldPropertyName];
+      for(var edge of this.modellingConfig.edges) {
+        if(this.getEdgeClassName(edge) === this.edgeName) {
 
-      // copying temporary property definition into the current property being edited
-      this.selectedElement[this.edgeName].properties[newPropertyName] = JSON.parse(JSON.stringify(this.tmpPropertyDefinition));
+          // deleting old property (delete is needed in case of property renaming)
+          delete this.selectedElement[this.edgeName].properties[oldPropertyName];
+
+          // copying temporary property definition into the current property being edited
+          this.selectedElement[this.edgeName].properties[newPropertyName] = JSON.parse(JSON.stringify(this.tmpPropertyDefinition));
+        }
+      }
     }
 
     // setting default values back for the temporary property definition
