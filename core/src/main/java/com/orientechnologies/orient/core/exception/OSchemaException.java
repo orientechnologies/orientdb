@@ -19,7 +19,9 @@
  */
 package com.orientechnologies.orient.core.exception;
 
-public class OSchemaException extends OCoreException {
+import com.orientechnologies.common.exception.OHighLevelException;
+
+public class OSchemaException extends OCoreException implements OHighLevelException {
 
   private static final long serialVersionUID = -8486291378415776372L;
 
