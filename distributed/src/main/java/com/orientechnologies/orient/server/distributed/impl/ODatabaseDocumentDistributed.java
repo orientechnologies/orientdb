@@ -11,6 +11,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
@@ -339,5 +341,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     out.write(chunk.buffer);
 
     return chunk.buffer.length;
+  }
+
+  @Override
+  public OResultSet queryOnNode(String nodeName, OResult serializedExecutionPlan, Map<Object, Object> inputParameters) {
+    //TODO
+    return null;
   }
 }
