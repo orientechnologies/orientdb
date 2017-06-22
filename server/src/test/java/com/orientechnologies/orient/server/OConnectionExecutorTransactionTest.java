@@ -513,4 +513,52 @@ public class OConnectionExecutorTransactionTest {
     assertEquals("update", results.get(0).getProperty("name"));
 
   }
+
+  @Test
+  public void testBeginBatchQueryRollbackTransaction() {
+
+    OConnectionBinaryExecutor executor = new OConnectionBinaryExecutor(connection, server);
+
+    ODocument test = new ODocument("test");
+
+    ORecordInternal.setIdentity(test, -1, -2);
+    // Begin Op
+    List<ORecordOperation> operations = new ArrayList<>();
+    operations.add(new ORecordOperation(test, ORecordOperation.CREATED));
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, true, operations, new HashMap<>());
+    OBinaryResponse response = request.execute(executor);
+
+    assertTrue(database.getTransaction().isActive());
+    assertTrue(response instanceof OBeginTransactionResponse);
+    OBeginTransactionResponse txResponse = (OBeginTransactionResponse) response;
+    assertEquals(1, txResponse.getUpdatedIds().size());
+
+    // Batch Op
+
+    operations = new ArrayList<>();
+
+    test = new ODocument("test");
+
+    ORecordInternal.setIdentity(test, -1, -3);
+
+    operations.add(new ORecordOperation(test, ORecordOperation.CREATED));
+
+    OBatchOperationsRequest batchRequest = new OBatchOperationsRequest(10, operations);
+    OBinaryResponse response1 = batchRequest.execute(executor);
+    assertTrue(response1 instanceof OBatchOperationsResponse);
+
+    OBatchOperationsResponse batchResponse = (OBatchOperationsResponse) response1;
+
+    assertEquals(1, batchResponse.getCreated().size());
+
+    OResultSet query = database.query("select from test ");
+
+    System.out.println(query.getExecutionPlan().get().prettyPrint(1, 1));
+
+    assertEquals(2, query.stream().count());
+
+    assertEquals(2, database.countClass("test"));
+
+  }
+
 }

@@ -50,7 +50,6 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
         filteredClassClusters.add(clusterId);
       }
     }
-    filteredClassClusters.add(-1);
     int[] clusterIds = new int[filteredClassClusters.size() + 1];
     for (int i = 0; i < filteredClassClusters.size(); i++) {
       clusterIds[i] = filteredClassClusters.get(i);
