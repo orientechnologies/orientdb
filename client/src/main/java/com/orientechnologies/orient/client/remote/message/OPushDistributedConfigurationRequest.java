@@ -53,7 +53,7 @@ public class OPushDistributedConfigurationRequest implements OBinaryPushRequest<
 
   @Override
   public OBinaryPushResponse createResponse() {
-    return new OPushDistributedConfigurationResponse();
+    return null;
   }
 
   public List<String> getHosts() {

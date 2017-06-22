@@ -1832,7 +1832,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   @Override
   public OBinaryPushResponse executeUpdateDistributedConfig(OPushDistributedConfigurationRequest request) {
     updateDistributedNodes(request.getHosts());
-    return new OPushDistributedConfigurationResponse();
+    return null;
   }
 
   public OLiveQueryMonitor liveQuery(ODatabaseDocumentRemote database, String query, OLiveQueryClientListener listener,
