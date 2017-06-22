@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
 import org.junit.Assert;
 
 import java.text.SimpleDateFormat;
@@ -90,9 +89,6 @@ public final class DistributedDatabaseCRUDTest {
         if ((i % 100) == 0) {
           log("Created " + i + " nodes");
         }
-
-        if (!graph.getURL().startsWith("remote:"))
-          Assert.assertTrue(graph.getClass("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
       }
     }
     int edgeCounter = 1;
@@ -130,8 +126,6 @@ public final class DistributedDatabaseCRUDTest {
         }
         graph.command(new OCommandSQL(edgeSQL)).execute();
 
-        if (!graph.getURL().startsWith("remote:"))
-          Assert.assertTrue(graph.getClass("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
       }
       System.out.println();
     }
@@ -232,8 +226,6 @@ public final class DistributedDatabaseCRUDTest {
             }
             ODatabaseDocument graph = graphFactory.acquire();
 
-            if (!graph.getURL().startsWith("remote:"))
-              Assert.assertTrue(graph.getClass("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
 
             try {
               boolean update = true;
@@ -348,8 +340,6 @@ public final class DistributedDatabaseCRUDTest {
                   Exception tex = null;
                   int k = 1;
                   for (; k <= 100 && retry; k++) {
-                    if (!graph.getURL().startsWith("remote:"))
-                      Assert.assertTrue(graph.getClass("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
 
                     OVertex vtx1 = vtx.asVertex().get();
                     try {

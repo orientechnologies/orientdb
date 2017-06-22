@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
+import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import org.junit.Assert;
 
@@ -232,7 +232,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     private void checkClusterStrategy(ODatabaseDocument database) {
 //      if (!databaseUrl.startsWith("remote:"))
       Assert.assertTrue(
-          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+          database.getMetadata().getSchema().getClass("Person") instanceof OClassDistributed);
     }
 
     protected void deleteRecord(ODatabaseDocument database, ODocument doc) {

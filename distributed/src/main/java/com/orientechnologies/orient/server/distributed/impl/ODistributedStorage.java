@@ -65,6 +65,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedire
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -201,6 +202,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public Object command(final OCommandRequestText iCommand) {
+    if (distributedConfiguration == null) {
+      //Not yet distributed
+      return wrapped.command(iCommand);
+    }
 
     List<String> servers = (List<String>) iCommand.getContext().getVariable("servers");
     if (servers == null) {
@@ -338,10 +343,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           else
             result = executeCommand(iCommand, localNodeName, involvedClusters, task, nodes, executedLocally);
         }
-
-        if (exec.involveSchema())
-          // UPDATE THE SCHEMA
-          dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
 
         break;
       }
@@ -750,6 +751,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
       final boolean iIgnoreCache, final boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
+
+    if (iRecordId.getClusterId() == 0) {
+      return (OStorageOperationResult<ORawBuffer>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
+        @Override
+        public Object call() throws Exception {
+          return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, prefetchRecords, iCallback);
+        }
+      });
+    }
 
     final ORawBuffer memCopy = localDistributedDatabase.getRecordIfLocked(iRecordId);
     if (memCopy != null)
@@ -2094,16 +2104,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     final OClass cls = db.getMetadata().getSchema().getClassByClusterId(cl.getId());
     String newClusterName = null;
     if (cls != null) {
-      OClusterSelectionStrategy clSel = cls.getClusterSelection();
-      if (!(clSel instanceof OLocalClusterWrapperStrategy)) {
-        dManager.propagateSchemaChanges(db);
-        clSel = cls.getClusterSelection();
-      }
 
-      if (!(clSel instanceof OLocalClusterWrapperStrategy))
+      if (!(cls instanceof OClassDistributed))
         throw new ODistributedException("Cannot install local cluster strategy on class '" + cls.getName() + "'");
 
-      dbCfg = ((OLocalClusterWrapperStrategy) clSel).readConfiguration();
+      dbCfg = ((OClassDistributed) cls).readConfiguration((ODatabaseDocumentDistributed) db,getDistributedManager());
 
       final String newOwnerNode = dbCfg.getClusterOwner(clusterName);
       if (newOwnerNode.equals(localNodeName))

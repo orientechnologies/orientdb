@@ -287,7 +287,7 @@ public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements O
     }
   }
 
-  void setLinkedClassInternal(final OClass iLinkedClass) {
+  protected void setLinkedClassInternal(final OClass iLinkedClass) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
@@ -317,7 +317,7 @@ public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements O
     }
   }
 
-  void setLinkedTypeInternal(final OType iLinkedType) {
+  protected void setLinkedTypeInternal(final OType iLinkedType) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     acquireSchemaWriteLock();
     try {

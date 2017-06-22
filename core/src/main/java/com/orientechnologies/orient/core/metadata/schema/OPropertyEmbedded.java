@@ -14,15 +14,15 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
  * Created by tglman on 14/06/17.
  */
 public class OPropertyEmbedded extends OPropertyImpl {
-  OPropertyEmbedded(OClassImpl owner) {
+  protected OPropertyEmbedded(OClassImpl owner) {
     super(owner);
   }
 
-  OPropertyEmbedded(OClassImpl owner, ODocument document) {
+  protected OPropertyEmbedded(OClassImpl owner, ODocument document) {
     super(owner, document);
   }
 
-  public OPropertyEmbedded(OClassImpl oClassImpl, OGlobalProperty global) {
+  protected OPropertyEmbedded(OClassImpl oClassImpl, OGlobalProperty global) {
     super(oClassImpl, global);
   }
 

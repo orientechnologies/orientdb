@@ -305,19 +305,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         distribDatabase.setOnline();
       }
 
-      if (!(iDatabase.getStorage() instanceof ODistributedStorage) || ((ODistributedStorage) iDatabase.getStorage())
-          .getDistributedManager().isOffline()) {
-
-        final ODistributedStorage storage = getStorage(dbName);
-
-        // INIT IT
-        storage.wrap((OAbstractPaginatedStorage) iDatabase.getStorage().getUnderlying());
-
-        iDatabase.replaceStorage(storage);
-
-        if (isNodeOnline(nodeName, dbName))
-          installDbClustersLocalStrategy(iDatabase);
-      }
     } catch (HazelcastException e) {
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
@@ -1309,7 +1296,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     serverInstance.getDatabases().forceDatabaseClose(iDatabaseName);
 
     // MOVE DIRECTORY TO ../backup/databases/<db-name>
-    final String backupDirectory = serverInstance.getContextConfiguration().getValueAsString(OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY);
+    final String backupDirectory = serverInstance.getContextConfiguration()
+        .getValueAsString(OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY);
 
     if (backupDirectory == null || OIOUtils.getStringContent(backupDirectory).trim().isEmpty())
       // SKIP BACKUP
@@ -1490,35 +1478,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   /**
-   * Guarantees, foreach class, that has own master cluster.
-   */
-  @Override
-  public void propagateSchemaChanges(final ODatabaseInternal iDatabase) {
-    final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
-    if (cfg == null)
-      return;
-
-    for (OClass c : iDatabase.getMetadata().getSchema().getClasses()) {
-      if (!(c.getClusterSelection() instanceof OLocalClusterWrapperStrategy))
-        // INSTALL ONLY ON NON-ENHANCED CLASSES
-        ((OClassImpl) c)
-            .setClusterSelectionInternal(new OLocalClusterWrapperStrategy(this, iDatabase.getName(), c, c.getClusterSelection()));
-    }
-  }
-
-  /**
    * Guarantees that each class has own master cluster.
    */
   public boolean installClustersOfClass(final ODatabaseInternal iDatabase, final OClass iClass,
       OModifiableDistributedConfiguration cfg) {
 
     final String databaseName = iDatabase.getName();
-
-    if (!(iClass.getClusterSelection() instanceof OLocalClusterWrapperStrategy))
-      // INJECT LOCAL CLUSTER STRATEGY
-      ((OClassImpl) iClass)
-          .setClusterSelectionInternal(new OLocalClusterWrapperStrategy(this, databaseName, iClass, iClass.getClusterSelection()));
-
     if (iClass.isAbstract())
       return false;
 
@@ -1684,17 +1649,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     ODistributedServerLog
         .info(this, nodeName, null, DIRECTION.NONE, "Reassignment of clusters for database '%s' completed (classes=%d)",
             iDatabase.getName(), cluster2CreateMap.size());
-  }
-
-  protected void installDbClustersLocalStrategy(final ODatabaseInternal iDatabase) {
-    final OSchema schema = iDatabase.getDatabaseOwner().getMetadata().getSchema();
-
-    for (OClass c : schema.getClasses()) {
-      if (!(c.getClusterSelection() instanceof OLocalClusterWrapperStrategy))
-        // OVERWRITE CLUSTER SELECTION STRATEGY
-        ((OClassImpl) c)
-            .setClusterSelectionInternal(new OLocalClusterWrapperStrategy(this, iDatabase.getName(), c, c.getClusterSelection()));
-    }
   }
 
   protected void assignNodeName() {
@@ -2008,6 +1962,22 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final ODistributedStorage oldStorage = storages.putIfAbsent(dbName, storage);
       if (oldStorage != null)
         storage = oldStorage;
+    }
+    return storage;
+  }
+
+  public ODistributedStorage getStorage(final String dbName, OAbstractPaginatedStorage wrapped) {
+    ODistributedStorage storage = storages.get(dbName);
+    if (storage == null) {
+      storage = new ODistributedStorage(serverInstance, dbName);
+
+      final ODistributedStorage oldStorage = storages.putIfAbsent(dbName, storage);
+      if (oldStorage != null)
+        storage = oldStorage;
+
+    }
+    if (storage.getUnderlying() == null) {
+      storage.wrap(wrapped);
     }
     return storage;
   }

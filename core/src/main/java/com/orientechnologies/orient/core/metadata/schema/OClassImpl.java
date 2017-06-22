@@ -65,7 +65,7 @@ import java.util.concurrent.Callable;
 public abstract class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private static final long serialVersionUID        = 1L;
   private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
-  final OSchemaShared owner;
+  protected final OSchemaShared owner;
   protected final Map<String, OProperty> properties       = new HashMap<String, OProperty>();
   private         int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
   protected String name;
@@ -306,7 +306,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     return setSuperClasses(classes);
   }
 
-  void setSuperClassesInternal(final List<? extends OClass> classes) {
+  protected void setSuperClassesInternal(final List<? extends OClass> classes) {
       List<OClassImpl> newSuperClasses = new ArrayList<OClassImpl>();
       OClassImpl cls;
       for (OClass superClass : classes) {
@@ -337,7 +337,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
       superClasses.addAll(newSuperClasses);
   }
 
-  void addSuperClassInternal(ODatabaseDocumentInternal database, final OClass superClass) {
+  protected void addSuperClassInternal(ODatabaseDocumentInternal database, final OClass superClass) {
     acquireSchemaWriteLock();
     try {
       final OClassImpl cls;
@@ -367,7 +367,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  void removeSuperClassInternal(final OClass superClass) {
+  protected void removeSuperClassInternal(final OClass superClass) {
     acquireSchemaWriteLock();
     try {
       final OClassImpl cls;
@@ -823,7 +823,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  OClass removeBaseClassInternal(final OClass baseClass) {
+  protected OClass removeBaseClassInternal(final OClass baseClass) {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();

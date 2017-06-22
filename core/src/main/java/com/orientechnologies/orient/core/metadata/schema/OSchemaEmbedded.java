@@ -149,7 +149,6 @@ public class OSchemaEmbedded extends OSchemaShared {
       if (className == null || className.length() == 0)
         throw new OSchemaException("Found class name null or empty");
 
-      final OStorage storage = database.getStorage();
       checkEmbedded();
 
       checkClustersAreAbsent(clusterIdsToAdd);
@@ -168,7 +167,7 @@ public class OSchemaEmbedded extends OSchemaShared {
       if (classes.containsKey(key))
         throw new OSchemaException("Class '" + className + "' already exists in current database");
 
-      OClassImpl cls = new OClassEmbedded(this, className, clusterIds);
+      OClassImpl cls = createClassInstance(className, clusterIds);
 
       classes.put(key, cls);
 
@@ -194,6 +193,10 @@ public class OSchemaEmbedded extends OSchemaShared {
     } finally {
       releaseSchemaWriteLock(database);
     }
+  }
+
+  protected OClassImpl createClassInstance(String className, int[] clusterIds) {
+    return new OClassEmbedded(this, className, clusterIds);
   }
 
   public OClass getOrCreateClass(ODatabaseDocumentInternal database, final String iClassName, final OClass... superClasses) {
@@ -513,6 +516,5 @@ public class OSchemaEmbedded extends OSchemaShared {
 
   public void checkEmbedded() {
   }
-
 
 }

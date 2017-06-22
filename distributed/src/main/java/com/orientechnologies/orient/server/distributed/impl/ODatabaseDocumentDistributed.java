@@ -7,11 +7,14 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -28,6 +31,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
@@ -39,6 +43,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * Created by tglman on 30/03/17.
@@ -46,7 +51,6 @@ import java.util.*;
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private final OHazelcastPlugin hazelcastPlugin;
-  private Map<String, OClusterSelectionStrategy> remapped = new HashMap<>();
 
   public ODatabaseDocumentDistributed(OStorage storage, OHazelcastPlugin hazelcastPlugin) {
     super(storage);
@@ -79,6 +83,20 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       result.put(server, cfg.getClustersOnServer(server));
     }
     return result;
+  }
+
+  @Override
+  protected void loadMetadata() {
+    metadata = new OMetadataDefault(this);
+    sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+      @Override
+      public OSharedContext call() throws Exception {
+        OSharedContext shared = new OSharedContextDistributed(getStorage());
+        return shared;
+      }
+    });
+    metadata.init(sharedContext);
+    sharedContext.load(this);
   }
 
   /**
@@ -389,17 +407,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     // if cluster id is not set yet try to find it out
     if (rid.getClusterId() <= ORID.CLUSTER_ID_INVALID && getStorage().isAssigningClusterIds()) {
       if (record instanceof ODocument) {
-        schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+        //Immutable Schema Class not support distributed yet.
+        schemaClass = ((ODocument) record).getSchemaClass();
         if (schemaClass != null) {
           if (schemaClass.isAbstract())
             throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
-          OClusterSelectionStrategy remappedStrategy = remapped.get(schemaClass.getName());
-          if (remappedStrategy == null) {
-            remappedStrategy = new OLocalClusterWrapperStrategy(getStorageDistributed().getDistributedManager(), getName(),
-                ((ODocument) record).getSchemaClass(), schemaClass.getClusterSelection());
-            remapped.put(schemaClass.getName(), remappedStrategy);
-          }
-          rid.setClusterId(remappedStrategy.getCluster(schemaClass, (ODocument) record));
+          rid.setClusterId(schemaClass.getClusterForNewInstance((ODocument) record));
         } else
           rid.setClusterId(getDefaultClusterId());
       } else {

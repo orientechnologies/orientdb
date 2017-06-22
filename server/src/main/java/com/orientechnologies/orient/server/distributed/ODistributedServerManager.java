@@ -215,8 +215,6 @@ public interface ODistributedServerManager {
 
   ODocument getLocalNodeConfiguration();
 
-  void propagateSchemaChanges(ODatabaseInternal iStorage);
-
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName, boolean createIfNotPresent);

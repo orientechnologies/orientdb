@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -52,9 +51,6 @@ public class HAClusterStrategyTest extends AbstractHARemoveNode {
       System.out.println("StrategyClassName: " + graph.getClass("Test").getClusterSelection().getClass().getName());
       System.out.println(
           "ClusterSelectionStrategy for " + graph.getURL() + ": " + graph.getClass("Test").getClusterSelection().getName());
-
-      Assert.assertEquals(graph.getClass("Test").getClusterSelection().getClass().getName(),
-          OLocalClusterWrapperStrategy.class.getName());
 
       Assert.assertEquals(graph.getClass("Test").getClusterSelection().getName(), "round-robin");
 

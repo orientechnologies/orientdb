@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -117,7 +118,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     iServer.getDatabases().replaceFactory(new OEmbeddedDatabaseInstanceFactory() {
       @Override
       public ODatabaseDocumentEmbedded newInstance(OStorage storage) {
-        return new ODatabaseDocumentDistributed(storage, OHazelcastPlugin.this);
+        return new ODatabaseDocumentDistributed(getStorage(storage.getName(), (OAbstractPaginatedStorage) storage), OHazelcastPlugin.this);
       }
 
       @Override

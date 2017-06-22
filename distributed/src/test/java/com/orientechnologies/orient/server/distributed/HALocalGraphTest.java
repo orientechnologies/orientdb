@@ -18,15 +18,14 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
@@ -215,9 +214,6 @@ System.out.println("\n\n ----------- startThread()");
 System.out.println("\n\n ----------- graph.getURL() = " + graph.getURL());
 
 System.out.println("\n\n ----------- getClusterSelection() = " + graph.getClass("Test").getClusterSelection());
-
-            if (!graph.getURL().startsWith("remote:"))
-              Assert.assertTrue(graph.getClass("Test").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
 
             try {
               if (useSQL) {

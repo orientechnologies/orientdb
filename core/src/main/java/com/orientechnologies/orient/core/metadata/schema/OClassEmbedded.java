@@ -398,7 +398,7 @@ public class OClassEmbedded extends OClassImpl {
 
       OGlobalProperty global = owner.findOrCreateGlobalProperty(name, type);
 
-      prop = new OPropertyEmbedded(this, global);
+      prop = createPropertyInstance(global);
 
       properties.put(name, prop);
 
@@ -414,6 +414,10 @@ public class OClassEmbedded extends OClassImpl {
       fireDatabaseMigration(getDatabase(), name, type);
 
     return prop;
+  }
+
+  protected OPropertyImpl createPropertyInstance(OGlobalProperty global) {
+    return new OPropertyEmbedded(this, global);
   }
 
   /**

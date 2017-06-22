@@ -58,10 +58,6 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
       // NO MASTER, AVOID REASSIGNMENT
       return EMPTY_LIST;
 
-    if (!(iClass.getClusterSelection() instanceof OLocalClusterWrapperStrategy))
-      ((OClassImpl) iClass).setClusterSelectionInternal(
-          new OLocalClusterWrapperStrategy(manager, iDatabase.getName(), iClass, iClass.getClusterSelection()));
-
     if (iClass.isAbstract())
       return EMPTY_LIST;
 
