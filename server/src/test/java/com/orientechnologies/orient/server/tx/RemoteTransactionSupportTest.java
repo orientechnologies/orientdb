@@ -203,6 +203,19 @@ public class RemoteTransactionSupportTest {
   }
 
   @Test
+  public void testDoubleSaveTransaction() {
+    database.begin();
+    OElement someTx = database.newElement("SomeTx");
+    someTx.setProperty("name", "foo");
+    database.save(someTx);
+    database.save(someTx);
+    assertEquals(database.getTransaction().getEntryCount(),1);
+    assertEquals(database.countClass("SomeTx"), 1);
+    database.commit();
+    assertEquals(database.countClass("SomeTx"), 1);
+  }
+
+  @Test
   public void testUpdateCreatedInTxIndexGetTransaction() {
     OIndex<?> index = database.getClass("IndexedTx").getProperty("name").getAllIndexes().iterator().next();
     database.begin();

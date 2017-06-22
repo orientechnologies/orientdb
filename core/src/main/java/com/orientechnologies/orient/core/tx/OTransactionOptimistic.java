@@ -423,7 +423,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       try {
         final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
-        if (!rid.isPersistent() && !rid.isTemporary()) {
+        if (!rid.isValid()) {
           ORecordInternal.onBeforeIdentityChanged(iRecord);
           database.assignAndCheckCluster(iRecord, iClusterName);
 
