@@ -503,17 +503,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           releaseExclusiveLock();
         }
 
-        if (storage instanceof OAbstractPaginatedStorage) {
-          final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
-          abstractPaginatedStorage.getAtomicOperationsManager().switchOnUnsafeMode();
-        }
-
         try {
           recreateIndexes(indexesToRebuild, newDb);
         } finally {
           if (storage instanceof OAbstractPaginatedStorage) {
             final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
-            abstractPaginatedStorage.getAtomicOperationsManager().switchOffUnsafeMode();
             abstractPaginatedStorage.synch();
           }
           newDb.close();

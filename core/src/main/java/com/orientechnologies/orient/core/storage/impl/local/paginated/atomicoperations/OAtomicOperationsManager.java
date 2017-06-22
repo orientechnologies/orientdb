@@ -81,19 +81,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<OAtomicOperation>();
   private final OPerformanceStatisticManager performanceStatisticManager;
 
-  /**
-   * Flag which indicates whether we work in unsafe mode for current thread. Unsafe mode means that all operations in this thread
-   * may violate violate ACID properties but system performance will be faster.
-   * <p>
-   * <p>To start unsafe mode call {@link #switchOnUnsafeMode()}, to stop unsafe mode call {@link #switchOffUnsafeMode()}.
-   */
-  private static final ThreadLocal<Boolean> unsafeMode = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return false;
-    }
-  };
-
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
@@ -215,24 +202,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       acquireExclusiveLockTillOperationComplete(operation, lockName);
 
     return operation;
-  }
-
-  /**
-   * Switch off unsafe mode. During this mode it is not guaranteed that operations will support ACID properties but system
-   * performance will be faster.
-   * <p>
-   * <p>To switch off unsafe mode call {@link #switchOffUnsafeMode()}
-   */
-  public void switchOnUnsafeMode() {
-    unsafeMode.set(true);
-  }
-
-  /**
-   * Switch off unsafe mode. It is highly recommended to call {@link OStorage#synch()}  after calling of this method.
-   * Otherwise there is risk that database may be in broken state after crash/restore cycle if this method will not be called.
-   */
-  public void switchOffUnsafeMode() {
-    unsafeMode.set(false);
   }
 
   private void addThreadInWaitingList(Thread thread) {
@@ -594,9 +563,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
   private boolean useWal() {
     if (writeAheadLog == null)
-      return false;
-
-    if (unsafeMode.get())
       return false;
 
     final OStorageTransaction storageTransaction = storage.getStorageTransaction();
