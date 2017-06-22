@@ -5,10 +5,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -392,6 +389,27 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     return dManager.sendRequest(databaseName, null, Collections.singletonList(nodeName), task, dManager.getNextMessageIdCounter(),
         ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+  }
+
+  @Override
+  public void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config, boolean checkPassword) {
+    OScenarioThreadLocal.executeAsDistributed(() -> {
+      super.internalOpen(iUserName, iUserPassword, config,checkPassword);
+      return null;
+    });
+  }
+
+  protected void createMetadata() {
+    // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
+    OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+      @Override
+      public OSharedContext call() throws Exception {
+        OSharedContext shared = new OSharedContextDistributed(getStorage());
+        return shared;
+      }
+    });
+    metadata.init(shared);
+    ((OSharedContextDistributed) shared).create(this);
   }
 
   public int assignAndCheckCluster(ORecord record, String iClusterName) {

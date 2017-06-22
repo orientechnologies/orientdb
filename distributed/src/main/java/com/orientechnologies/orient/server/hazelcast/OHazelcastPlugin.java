@@ -123,7 +123,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       @Override
       public ODatabaseDocumentEmbedded newPoolInstance(ODatabasePoolInternal pool, OStorage storage) {
-        return new ODatabaseDocumentDistributedPooled(pool, storage, OHazelcastPlugin.this);
+        return new ODatabaseDocumentDistributedPooled(pool, getStorage(storage.getName(), (OAbstractPaginatedStorage) storage), OHazelcastPlugin.this);
       }
     });
   }

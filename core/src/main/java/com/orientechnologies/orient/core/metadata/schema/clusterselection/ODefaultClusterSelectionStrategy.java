@@ -20,13 +20,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Returns always the first cluster configured.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ODefaultClusterSelectionStrategy implements OClusterSelectionStrategy {
   public static final String NAME = "default";
 
   public int getCluster(final OClass iClass, final ODocument doc) {
+    return iClass.getDefaultClusterId();
+  }
+
+  @Override
+  public int getCluster(OClass iClass, int[] selection, ODocument doc) {
     return iClass.getDefaultClusterId();
   }
 

@@ -22,17 +22,21 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Returns the cluster selecting the most empty between all configured clusters.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OBalancedClusterSelectionStrategy implements OClusterSelectionStrategy {
-  public static final String  NAME             = "balanced";
-  protected static final long REFRESH_TIMEOUT  = 5000;
-  protected long              lastCount        = -1;
-  protected int               smallerClusterId = -1;
+  public static final    String NAME             = "balanced";
+  protected static final long   REFRESH_TIMEOUT  = 5000;
+  protected              long   lastCount        = -1;
+  protected              int    smallerClusterId = -1;
 
   public int getCluster(final OClass iClass, final ODocument doc) {
-    final int[] clusters = iClass.getClusterIds();
+    return getCluster(iClass, iClass.getClusterIds(), doc);
+  }
+
+  public int getCluster(final OClass iClass, final int[] clusters, final ODocument doc) {
+
     if (clusters.length == 1)
       // ONLY ONE: RETURN THE FIRST ONE
       return clusters[0];

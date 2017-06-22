@@ -31,8 +31,8 @@ import java.util.List;
 /**
  * Returns the cluster selecting through the hash function.
  *
- * @since 3.0
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @since 3.0
  */
 public class OAutoShardingClusterSelectionStrategy implements OClusterSelectionStrategy {
   public static final String NAME = "auto-sharding";
@@ -66,6 +66,11 @@ public class OAutoShardingClusterSelectionStrategy implements OClusterSelectionS
       throw new OConfigurationException("Cannot use auto-sharding cluster strategy because the underlying index has not found");
 
     clusters = clazz.getClusterIds();
+  }
+
+  public int getCluster(final OClass iClass, int[] clusters, final ODocument doc) {
+    // Ignore the subselection.
+    return getCluster(iClass, doc);
   }
 
   public int getCluster(final OClass clazz, final ODocument doc) {

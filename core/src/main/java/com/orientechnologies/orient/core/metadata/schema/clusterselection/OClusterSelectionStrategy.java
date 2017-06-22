@@ -26,5 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public interface OClusterSelectionStrategy {
   int getCluster(final OClass iClass, final ODocument doc);
 
+  int getCluster(final OClass iClass,int [] selection, final ODocument doc);
+
   String getName();
 }

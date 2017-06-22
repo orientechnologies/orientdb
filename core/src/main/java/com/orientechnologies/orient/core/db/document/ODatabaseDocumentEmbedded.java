@@ -188,16 +188,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     applyListeners(config);
     metadata = new OMetadataDefault(this);
     installHooksEmbedded();
-    // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
-    OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextEmbedded(getStorage());
-        return shared;
-      }
-    });
-    metadata.init(shared);
-    ((OSharedContextEmbedded) shared).create(this);
+    createMetadata();
 
     registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
     registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
@@ -213,6 +204,19 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       } catch (Throwable ignore) {
       }
 
+  }
+
+  protected void createMetadata() {
+    // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
+    OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+      @Override
+      public OSharedContext call() throws Exception {
+        OSharedContext shared = new OSharedContextEmbedded(getStorage());
+        return shared;
+      }
+    });
+    metadata.init(shared);
+    ((OSharedContextEmbedded) shared).create(this);
   }
 
   @Override

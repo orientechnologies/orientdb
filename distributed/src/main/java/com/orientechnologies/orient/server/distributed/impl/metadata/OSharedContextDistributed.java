@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl.metadata;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
@@ -22,7 +23,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class OSharedContextDistributed extends OSharedContext {
 
   public OSharedContextDistributed(OStorage storage) {
-    schema = new OSchemaEmbedded();
+    schema = new OSchemaDistributed();
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerShared();
     functionLibrary = new OFunctionLibraryImpl();
@@ -38,24 +39,26 @@ public class OSharedContextDistributed extends OSharedContext {
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {
-    final long timer = PROFILER.startChrono();
+    OScenarioThreadLocal.executeAsDistributed(() -> {
+      final long timer = PROFILER.startChrono();
 
-    try {
-      if (!loaded) {
-        schema.load(database);
-        security.load();
-        indexManager.load(database);
-        functionLibrary.load(database);
-        scheduler.load(database);
-        sequenceLibrary.load(database);
-        schema.onPostIndexManagement();
-        loaded = true;
+      try {
+        if (!loaded) {
+          schema.load(database);
+          security.load();
+          indexManager.load(database);
+          functionLibrary.load(database);
+          scheduler.load(database);
+          sequenceLibrary.load(database);
+          schema.onPostIndexManagement();
+          loaded = true;
+        }
+      } finally {
+        PROFILER.stopChrono(PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"),
+            "Loading of database metadata", timer, "db.*.metadata.load");
       }
-    } finally {
-      PROFILER
-          .stopChrono(PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"), "Loading of database metadata",
-              timer, "db.*.metadata.load");
-    }
+      return null;
+    });
   }
 
   @Override
@@ -73,27 +76,33 @@ public class OSharedContextDistributed extends OSharedContext {
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
-    schema.reload();
-    indexManager.reload();
-    security.load();
-    functionLibrary.load(database);
-    sequenceLibrary.load(database);
-    commandCache.clear();
-    scheduler.load(database);
+    OScenarioThreadLocal.executeAsDistributed(() -> {
+      schema.reload();
+      indexManager.reload();
+      security.load();
+      functionLibrary.load(database);
+      sequenceLibrary.load(database);
+      commandCache.clear();
+      scheduler.load(database);
+      return null;
+    });
   }
 
   public synchronized void create(ODatabaseDocumentInternal database) {
-    schema.create(database);
-    indexManager.create(database);
-    security.create();
-    functionLibrary.create(database);
-    sequenceLibrary.create(database);
-    security.createClassTrigger();
-    scheduler.create(database);
+    OScenarioThreadLocal.executeAsDistributed(() -> {
+      schema.create(database);
+      indexManager.create(database);
+      security.create();
+      functionLibrary.create(database);
+      sequenceLibrary.create(database);
+      security.createClassTrigger();
+      scheduler.create(database);
 
-    // CREATE BASE VERTEX AND EDGE CLASSES
-    schema.createClass(database, "V");
-    schema.createClass(database, "E");
-    loaded = true;
+      // CREATE BASE VERTEX AND EDGE CLASSES
+      schema.createClass(database, "V");
+      schema.createClass(database, "E");
+      loaded = true;
+      return null;
+    });
   }
 }

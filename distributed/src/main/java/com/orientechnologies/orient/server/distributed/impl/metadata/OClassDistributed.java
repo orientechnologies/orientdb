@@ -85,7 +85,7 @@ public class OClassDistributed extends OClassEmbedded {
       // ONLY ONE: RETURN IT
       return bestClusterIds[0];
 
-    final int cluster = super.getClusterForNewInstance(doc);
+    final int cluster = super.getClusterSelection().getCluster(this, bestClusterIds, doc);
 
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
