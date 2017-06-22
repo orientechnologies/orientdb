@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
@@ -62,8 +63,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCl
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.network.protocol.binary.*;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
@@ -917,12 +920,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().driverName = handshakeInfo.getDriverName();
     connection.getData().driverVersion = handshakeInfo.getDriverVersion();
     connection.getData().protocolVersion = handshakeInfo.getProtocolVersion();
-    connection.getData().clientId = request.getClientId();
     connection.getData().setSerializer(handshakeInfo.getSerializer());
 
-    connection.setTokenBased(request.isTokenBased());
-    connection.getData().supportsPushMessages = request.isSupportPush();
-    connection.getData().collectStats = request.isCollectStats();
+    connection.setTokenBased(true);
+    connection.getData().supportsPushMessages = true;
+    connection.getData().collectStats = true;
 
     connection.setServerUser(server.serverLogin(request.getUsername(), request.getPassword(), "server.connect"));
 
@@ -1003,10 +1005,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeDatabaseOpen37(OOpen37Request request) {
-    connection.getData().clientId = request.getClientId();
-    connection.setTokenBased(request.isUseToken());
-    connection.getData().supportsPushMessages = request.isSupportsPush();
-    connection.getData().collectStats = request.isCollectStats();
+    connection.setTokenBased(true);
+    connection.getData().supportsPushMessages = true;
+    connection.getData().collectStats = true;
     connection.getData().driverName = handshakeInfo.getDriverName();
     connection.getData().driverVersion = handshakeInfo.getDriverVersion();
     connection.getData().protocolVersion = handshakeInfo.getProtocolVersion();
@@ -1311,4 +1312,28 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new OSubscribeLiveQueryResponse(monitor.getMonitorId());
   }
 
+  @Override
+  public OBinaryResponse executeDistributedConnect(ODistributedConnectRequest request) {
+
+    //TODO:check auth type
+    OServerUserConfiguration serverUser = server.serverLogin(request.getUsername(), request.getPassword(), "server.connect");
+
+    if (serverUser == null) {
+      throw new OSecurityAccessException("Wrong user/password to [connect] to the remote OrientDB Server instance");
+    }
+
+    connection.getData().driverName = "OrientDB Distributed";
+    connection.getData().clientId = "OrientDB Distributed";
+    connection.getData().setSerializer(ORecordSerializerNetworkV37.INSTANCE);
+    connection.setTokenBased(true);
+    connection.getData().supportsPushMessages = false;
+    connection.getData().collectStats = false;
+    int chosenProtocolVersion = Math.min(request.getDistributedProtocolVersion(), ORemoteServerController.CURRENT_PROTOCOL_VERSION);
+    connection.setServerUser(serverUser);
+    connection.getData().serverUsername = serverUser.name;
+    connection.getData().serverUser = true;
+    byte[] token = server.getTokenHandler().getSignedBinaryToken(null, null, connection.getData());
+
+    return new ODistributedConnectResponse(connection.getId(), token, chosenProtocolVersion);
+  }
 }

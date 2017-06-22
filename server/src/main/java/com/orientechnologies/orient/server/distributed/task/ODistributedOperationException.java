@@ -46,7 +46,7 @@ public class ODistributedOperationException extends ONeedRetryException implemen
       return false;
 
     final String message = ((ODistributedOperationException) obj).getMessage();
-    return (getMessage() == message) || (getMessage() != null && getMessage().equals(message));
+    return getMessage() != null && getMessage().equals(message);
   }
 
   @Override

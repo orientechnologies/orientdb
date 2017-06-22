@@ -28,4 +28,6 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
  */
 public interface ORemoteTaskFactory {
   ORemoteTask createTask(final int code);
+
+  int getProtocolVersion();
 }

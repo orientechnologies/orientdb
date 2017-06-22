@@ -94,7 +94,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
         String newClusterName;
         for (int i = 0; ; ++i) {
           newClusterName = iClass.getName().toLowerCase(Locale.ENGLISH) + "_" + i;
-          if (!allClusterNames.contains(newClusterName))
+          if (!allClusterNames.contains(newClusterName) && !serversToCreateANewCluster.contains(newClusterName))
             break;
         }
 

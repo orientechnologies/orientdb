@@ -113,6 +113,7 @@ public class OChannelBinaryProtocol {
   // TASK
   public static final byte DISTRIBUTED_REQUEST  = 120;
   public static final byte DISTRIBUTED_RESPONSE = 121;
+  public static final byte DISTRIBUTED_CONNECT  = 122;
 
   // INCOMING
   public static final byte RESPONSE_STATUS_OK    = 0;

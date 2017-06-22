@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -40,7 +41,7 @@ public interface ODistributedDatabase {
 
   ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, Collection<String> iNodes,
       ODistributedRequest.EXECUTION_MODE iExecutionMode, Object localResult,
-      OCallable<Void, ODistributedRequestId> iAfterSentCallback);
+      OCallable<Void, ODistributedRequestId> iAfterSentCallback, OCallable<Void, ODistributedResponseManager> endCallback);
 
   void setOnline();
 
@@ -57,26 +58,35 @@ public interface ODistributedDatabase {
    * Locks the record to be sure distributed transactions never work concurrently against the same records in the meanwhile the
    * transaction is executed and the OCompleteTxTask is not arrived.
    *
-   * @param iRecord    Record to lock
-   * @param iRequestId Request id
-   * @param timeout    Timeout in ms to wait for the lock
+   * @param record    Record to lock
+   * @param requestId Request id
+   * @param timeout   Timeout in ms to wait for the lock
    *
    * @throws com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException if the record wasn't locked
    * @see #unlockRecord(OIdentifiable, ODistributedRequestId)
    */
-  boolean lockRecord(ORID iRecord, final ODistributedRequestId iRequestId, long timeout);
+  boolean lockRecord(ORID record, ODistributedRequestId requestId, long timeout);
 
   /**
    * Unlocks the record previously locked through #lockRecord method.
    *
-   * @param iRecord
-   * @param requestId
+   * @param record    Record to unlock
+   * @param requestId Request id
    *
    * @see #lockRecord(ORID, ODistributedRequestId, long)
    */
-  void unlockRecord(OIdentifiable iRecord, ODistributedRequestId requestId);
+  void unlockRecord(OIdentifiable record, ODistributedRequestId requestId);
 
-  void dumpLocks();
+  /**
+   * Force the locking of a record. If the record was previously locked by a transaction (context), then that transaction is
+   * canceled.
+   *
+   * @param record    Record to lock
+   * @param requestId Request id
+   */
+  boolean forceLockRecord(ORID record, ODistributedRequestId requestId);
+
+  String dump();
 
   void unlockResourcesOfServer(ODatabaseDocumentInternal database, String serverName);
 
@@ -104,6 +114,8 @@ public interface ODistributedDatabase {
   long getReceivedRequests();
 
   long getProcessedRequests();
+
+  void checkNodeInConfiguration(ODistributedConfiguration cfg, String serverName);
 
   void setLSN(String sourceNodeName, OLogSequenceNumber taskLastLSN, boolean writeLastOperation) throws IOException;
 

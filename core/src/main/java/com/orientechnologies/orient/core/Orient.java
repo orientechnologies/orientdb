@@ -525,6 +525,10 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
+  public OSignalHandler getSignalHandler() {
+    return signalHandler;
+  }
+
   public void removeSignalHandler() {
     if (signalHandler != null) {
       signalHandler.cancel();

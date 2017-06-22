@@ -151,11 +151,8 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
                     }
                   }
 
-                  String[] fnArray = fileNames.toArray(new String[fileNames.size()]);
-
-                  OZIPCompressionUtil.compressFiles(dbPath, fnArray, fileOutputStream, null, iServer.getContextConfiguration()
-                    .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION));
-                      
+                  OZIPCompressionUtil.compressFiles(dbPath, fileNames.toArray(new String[fileNames.size()]), fileOutputStream, null,
+                      OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger());
 
                 } catch (IOException e) {
                   OLogManager.instance()

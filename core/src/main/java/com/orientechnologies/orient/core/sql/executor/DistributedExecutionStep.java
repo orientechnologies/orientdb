@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 
 import java.util.Map;
 import java.util.Optional;
@@ -11,12 +12,14 @@ import java.util.Optional;
  */
 public class DistributedExecutionStep extends AbstractExecutionStep {
 
-  private final OInternalExecutionPlan subExecuitonPlan;
-  private final String                 nodeName;
+  private final OSelectExecutionPlan subExecuitonPlan;
+  private final String               nodeName;
 
   private boolean inited;
 
-  public DistributedExecutionStep(OInternalExecutionPlan subExecutionPlan, String nodeName, OCommandContext ctx,
+  private OResultSet remoteResultSet;
+
+  public DistributedExecutionStep(OSelectExecutionPlan subExecutionPlan, String nodeName, OCommandContext ctx,
       boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.subExecuitonPlan = subExecutionPlan;
@@ -25,15 +28,17 @@ public class DistributedExecutionStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+    init(ctx);
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
       @Override
       public boolean hasNext() {
-        return false;//TODO
+        throw new UnsupportedOperationException("Implement distributed execution step!");
       }
 
       @Override
       public OResult next() {
-        return null;//TODO
+        throw new UnsupportedOperationException("Implement distributed execution step!");
       }
 
       @Override
@@ -56,15 +61,22 @@ public class DistributedExecutionStep extends AbstractExecutionStep {
   public void init(OCommandContext ctx) {
     if (!inited) {
       inited = true;
-      //TODO serialize and send the sub-execution plan to the remote node
+      OResult serializedExecutionPlan = subExecuitonPlan.toResult();
+      this.remoteResultSet = sendSerializedExecutionPlan(nodeName, serializedExecutionPlan, ctx);
     }
+  }
 
+  private OResultSet sendSerializedExecutionPlan(String nodeName, OResult serializedExecutionPlan, OCommandContext ctx) {
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
+    return db.queryOnNode(nodeName, serializedExecutionPlan, ctx.getInputParameters());
   }
 
   @Override
   public void close() {
     super.close();
-    //TODO close the remote connection and execution
+    if (this.remoteResultSet != null) {
+      this.remoteResultSet.close();
+    }
   }
 
   @Override

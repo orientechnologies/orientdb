@@ -36,6 +36,8 @@ import java.io.IOException;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface ORemoteTask {
+  boolean hasResponse();
+
   enum RESULT_STRATEGY {
     ANY, UNION
   }
@@ -68,6 +70,11 @@ public interface ORemoteTask {
   boolean isUsingDatabase();
 
   int getFactoryId();
+
+  /**
+   * Checks the request is still valid.
+   */
+  void checkIsValid(ODistributedServerManager dManager);
 
   void toStream(DataOutput out) throws IOException;
 

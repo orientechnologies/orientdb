@@ -53,14 +53,12 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
   protected transient ORecord previousRecord;
 
-  public OAbstractRecordReplicatedTask() {
+  public OAbstractRecordReplicatedTask init(final ORecord record) {
+    init((ORecordId) record.getIdentity(), record.getVersion());
+    return this;
   }
 
-  protected OAbstractRecordReplicatedTask(final ORecord record) {
-    this((ORecordId) record.getIdentity(), record.getVersion());
-  }
-
-  protected OAbstractRecordReplicatedTask(final ORecordId iRid, final int iVersion) {
+  public OAbstractRecordReplicatedTask init(final ORecordId iRid, final int iVersion) {
     this.rid = iRid;
     this.version = iVersion;
 
@@ -77,6 +75,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
         }
       }
     }
+    return this;
   }
 
   public abstract Object executeRecordTask(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
@@ -98,8 +97,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
     if (lockRecords) {
       // TRY LOCKING RECORD
-      ddb.lockRecord(rid2Lock, requestId,
-          iServer.getContextConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT) / 2);
+      ddb.lockRecord(rid2Lock, requestId, OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong() / 2);
     }
 
     try {
@@ -182,10 +180,6 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
   public void setLockRecords(final boolean lockRecords) {
     this.lockRecords = lockRecords;
-  }
-
-  public OLogSequenceNumber getLastLSN() {
-    return lastLSN;
   }
 
   public void setLastLSN(final OLogSequenceNumber lastLSN) {

@@ -307,8 +307,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
   }
 
   void setSuperClassesInternal(final List<? extends OClass> classes) {
-    acquireSchemaWriteLock();
-    try {
       List<OClassImpl> newSuperClasses = new ArrayList<OClassImpl>();
       OClassImpl cls;
       for (OClass superClass : classes) {
@@ -337,9 +335,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
       }
       superClasses.clear();
       superClasses.addAll(newSuperClasses);
-    } finally {
-      releaseSchemaWriteLock();
-    }
   }
 
   void addSuperClassInternal(ODatabaseDocumentInternal database, final OClass superClass) {

@@ -47,7 +47,13 @@ public interface ODistributedTxContext {
 
   void destroy();
 
+  void clearUndo();
+
   void unlock();
 
   long getStartedOn();
+
+  void cancel(ODistributedServerManager current, ODatabaseDocumentInternal database);
+
+  boolean isCanceled();
 }

@@ -122,4 +122,6 @@ public interface OBinaryRequestExecutor {
   OBinaryResponse executeUnsubscribe(OUnsubscribeRequest request);
 
   OBinaryResponse executeUnsubscribeLiveQuery(OUnsubscribeLiveQueryRequest request);
+
+  OBinaryResponse executeDistributedConnect(ODistributedConnectRequest request);
 }

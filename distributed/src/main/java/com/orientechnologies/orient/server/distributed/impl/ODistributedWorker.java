@@ -25,7 +25,6 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -39,6 +38,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedOperatio
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -66,14 +66,13 @@ public class ODistributedWorker extends Thread {
   private AtomicBoolean waitingForNextRequest = new AtomicBoolean(true);
 
   private static final long MAX_SHUTDOWN_TIMEOUT = 5000l;
+  private volatile ODistributedRequest currentExecuting;
 
   public ODistributedWorker(final ODistributedDatabaseImpl iDistributed, final String iDatabaseName, final int i) {
     id = i;
     setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
-    OContextConfiguration config = distributed.getManager().getServerInstance().getContextConfiguration();
-    localQueue = new ArrayBlockingQueue<>(config.getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE));
-    
+    localQueue = new ArrayBlockingQueue<ODistributedRequest>(OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getValueAsInteger());
     databaseName = iDatabaseName;
     manager = distributed.getManager();
     msgService = distributed.msgService;
@@ -81,13 +80,19 @@ public class ODistributedWorker extends Thread {
   }
 
   public void processRequest(final ODistributedRequest request) {
-    try {
-      localQueue.put(request);
-    } catch (InterruptedException e) {
-      ODistributedServerLog.warn(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-          "Received interruption signal, closing distributed worker thread (worker=%d)", id);
+    if (!localQueue.offer(request)) {
+//    throw new ODistributedException(
+//        "Local queue for database '" + this.databaseName + "' is full, cannot process further requests");
+      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+          "Local queue for database '%s' is full, cannot process further requests", this.databaseName);
 
-      shutdown();
+      // BLOCK WAITING THE QUEUE IS NOT FULL
+      try {
+        localQueue.put(request);
+      } catch (InterruptedException e) {
+        // JUST RETURN
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
@@ -99,11 +104,15 @@ public class ODistributedWorker extends Thread {
       try {
         message = readRequest();
 
+        currentExecuting = message;
+
         if (message != null) {
           message.getId();
           reqId = message.getId();
           onMessage(message);
         }
+
+        currentExecuting = null;
 
       } catch (InterruptedException e) {
         // EXIT CURRENT THREAD
@@ -165,6 +174,7 @@ public class ODistributedWorker extends Thread {
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
+      database.activateOnCurrentThread();
       database.close();
       database = distributed.getDatabaseInstance();
     }
@@ -228,6 +238,8 @@ public class ODistributedWorker extends Thread {
   protected ODistributedRequest readRequest() throws InterruptedException {
     // GET FROM DISTRIBUTED QUEUE. IF EMPTY WAIT FOR A MESSAGE
     ODistributedRequest req = nextMessage();
+    if (req == null)
+      return null;
 
     if (manager.isOffline())
       waitNodeIsOnline();
@@ -248,7 +260,7 @@ public class ODistributedWorker extends Thread {
 
   protected ODistributedRequest nextMessage() throws InterruptedException {
     waitingForNextRequest.set(true);
-    final ODistributedRequest req = localQueue.take();
+    final ODistributedRequest req = localQueue.poll(2000, TimeUnit.MILLISECONDS);
     waitingForNextRequest.set(false);
     processedRequests.incrementAndGet();
     return req;
@@ -345,7 +357,8 @@ public class ODistributedWorker extends Thread {
       }
 
     } catch (RuntimeException e) {
-      sendResponseBack(iRequest, e);
+      if (task.hasResponse())
+        sendResponseBack(iRequest, e);
       throw e;
 
     } finally {
@@ -360,7 +373,8 @@ public class ODistributedWorker extends Thread {
       }
     }
 
-    sendResponseBack(iRequest, responsePayload);
+    if (task.hasResponse())
+      sendResponseBack(iRequest, responsePayload);
   }
 
   protected String getLocalNodeName() {
@@ -381,9 +395,11 @@ public class ODistributedWorker extends Thread {
 
     final String senderNodeName = manager.getNodeNameById(iRequest.getId().getNodeId());
 
-    final ODistributedResponse response = new ODistributedResponse(iRequest.getId(), localNodeName, senderNodeName,
+    final ODistributedResponse response = new ODistributedResponse(null, iRequest.getId(), localNodeName, senderNodeName,
         responsePayload);
 
+    // TODO: check if using remote channel for local node still makes sense
+    //    if (!senderNodeName.equalsIgnoreCase(manager.getLocalNodeName()))
     try {
       // GET THE SENDER'S RESPONSE QUEUE
       final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
@@ -444,6 +460,9 @@ public class ODistributedWorker extends Thread {
 
   public void sendShutdown() {
     running = false;
-    this.interrupt();
+  }
+
+  public ODistributedRequest getProcessing() {
+    return currentExecuting;
   }
 }

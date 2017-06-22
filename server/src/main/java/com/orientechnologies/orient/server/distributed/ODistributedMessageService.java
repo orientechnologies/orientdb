@@ -50,4 +50,8 @@ public interface ODistributedMessageService {
   long getReceivedRequests();
 
   long getProcessedRequests();
+
+  long getCurrentLatency(String server);
+
+  ODistributedResponseManager getResponseManager(ODistributedRequestId reqId);
 }

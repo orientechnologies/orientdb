@@ -19,12 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.OServer;
@@ -36,6 +34,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Distributed task to fix delete record in conflict on synchronization.
@@ -43,14 +42,14 @@ import java.util.Arrays;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OResurrectRecordTask extends OUpdateRecordTask {
-  private static final long serialVersionUID = 1L;
   public static final  int  FACTORYID        = 11;
 
   public OResurrectRecordTask() {
   }
 
-  public OResurrectRecordTask(final ORecord record) {
-    super(record);
+  public OResurrectRecordTask init(final ORecord record) {
+    super.init(record);
+    return this;
   }
 
   @Override
@@ -61,12 +60,7 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
             database.getName(), rid.toString(), version, requestId);
 
     try {
-      database.getStorage().recyclePosition(rid, new byte[] {}, version, recordType);
-
-      // CREATE A RECORD TO CALL ALL THE HOOKS (LIKE INDEXES FOR UNIQUE CONSTRAINTS)
-      final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-      ORecordInternal.fill(loadedRecordInstance, rid, version, content, true);
-      loadedRecordInstance.save();
+      database.recycle(getRecord());
 
       ODistributedServerLog
           .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> resurrected deleted record");
@@ -75,10 +69,11 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
     } catch (OPaginatedClusterException e) {
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
           "+-> no resurrection, because the record was not deleted");
+
       // CHECK THE RECORD CONTENT IS THE SAME
       final OStorageOperationResult<ORawBuffer> storedRecord = database.getStorage().readRecord(rid, null, true, false, null);
       return Arrays.equals(content, storedRecord.getResult().getBuffer());
-      
+
     } catch (Exception e) {
       ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
           "+-> error on resurrecting deleted record: the record is already deleted");
@@ -91,7 +86,7 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
   }
 
   @Override
-  public ORemoteTask getUndoTask(ODistributedRequestId reqId) {
+  public ORemoteTask getUndoTask(ODistributedServerManager dManager, ODistributedRequestId reqId, List<String> servers) {
     return null;
   }
 

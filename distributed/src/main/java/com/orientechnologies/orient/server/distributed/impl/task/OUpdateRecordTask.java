@@ -41,6 +41,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Distributed updated record task used for synchronization.
@@ -50,33 +51,36 @@ import java.util.Arrays;
  */
 public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 3;
+  public static final  int  FACTORYID        = 3;
 
-  protected byte            recordType;
-  protected byte[]          content;
+  protected byte   recordType;
+  protected byte[] content;
 
   private transient ORecord record;
-  private byte[]            previousRecordContent;
+  private           byte[]  previousRecordContent;
 
   public OUpdateRecordTask() {
   }
 
-  public OUpdateRecordTask(final ORecord iRecord) {
-    super((ORecordId) iRecord.getIdentity(), iRecord.getVersion() - 1);
+  public OUpdateRecordTask init(final ORecord iRecord) {
+    super.init((ORecordId) iRecord.getIdentity(), iRecord.getVersion() - 1);
     content = iRecord.toStream();
     recordType = ORecordInternal.getRecordType(iRecord);
+    return this;
   }
 
-  public OUpdateRecordTask(final ORecord iRecord, final int version) {
-    super((ORecordId) iRecord.getIdentity(), version);
+  public OUpdateRecordTask init(final ORecord iRecord, final int version) {
+    super.init((ORecordId) iRecord.getIdentity(), version);
     content = iRecord.toStream();
     recordType = ORecordInternal.getRecordType(iRecord);
+    return this;
   }
 
-  public OUpdateRecordTask(final ORecordId iRecordId, final byte[] iContent, final int iVersion, final byte iRecordType) {
-    super(iRecordId, iVersion);
+  public OUpdateRecordTask init(final ORecordId iRecordId, final byte[] iContent, final int iVersion, final byte iRecordType) {
+    super.init(iRecordId, iVersion);
     content = iContent;
     recordType = iRecordType;
+    return this;
   }
 
   @Override
@@ -92,20 +96,21 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "Updating record %s/%s v.%d reqId=%s...", database.getName(), rid.toString(), version, requestId);
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Updating record %s/%s v.%d reqId=%s...",
+              database.getName(), rid.toString(), version, requestId);
 
     prepareUndoOperation();
     if (previousRecord == null) {
       // RESURRECT/CREATE IT
 
-      final OPlaceholder ph = (OPlaceholder) new OCreateRecordTask(rid, content, version, recordType).executeRecordTask(requestId,
-          iServer, iManager, database);
+      final OPlaceholder ph = (OPlaceholder) new OCreateRecordTask().init(rid, content, version, recordType)
+          .executeRecordTask(requestId, iServer, iManager, database);
       record = ph.getRecord();
 
       if (record == null)
-        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-            "+-> Error on updating record %s", rid);
+        ODistributedServerLog
+            .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Error on updating record %s", rid);
 
     } else {
       // UPDATE IT
@@ -132,18 +137,23 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
         record = database.save(loadedRecord);
 
         if (record == null)
-          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "+-> Error on updating record %s", rid);
+          ODistributedServerLog
+              .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Error on updating record %s", rid);
 
         if (version < 0 && ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "+-> Reverted %s from version %d to %d", rid, loadedVersion, record.getVersion());
+          ODistributedServerLog
+              .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Reverted %s from version %d to %d", rid,
+                  loadedVersion, record.getVersion());
       }
     }
 
+    if (record == null)
+      throw new ODistributedException("Cannot update record " + rid);
+
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "+-> updated record %s/%s v.%d [%s]", database.getName(), rid.toString(), record.getVersion(), record);
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%d [%s]",
+              database.getName(), rid.toString(), record.getVersion(), record);
 
     return record.getVersion();
   }
@@ -160,25 +170,31 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     if (iGoodResponse instanceof Integer) {
       // JUST VERSION
       final int versionCopy = ORecordVersionHelper.setRollbackMode((Integer) iGoodResponse);
-      return new OFixUpdateRecordTask(rid, content, versionCopy, recordType);
+
+      return ((OFixUpdateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerName(executorNodeName)
+          .createTask(OFixUpdateRecordTask.FACTORYID)).init(rid, content, versionCopy, recordType);
 
     } else if (iGoodResponse instanceof ORecord) {
       // RECORD
       final ORecord goodRecord = (ORecord) iGoodResponse;
       final int versionCopy = ORecordVersionHelper.setRollbackMode(goodRecord.getVersion());
-      return new OFixUpdateRecordTask(rid, goodRecord.toStream(), versionCopy, recordType);
+
+      return ((OFixUpdateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerName(executorNodeName)
+          .createTask(OFixUpdateRecordTask.FACTORYID)).init(rid, goodRecord.toStream(), versionCopy, recordType);
     }
 
     return null;
   }
 
   @Override
-  public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
+  public ORemoteTask getUndoTask(ODistributedServerManager dManager, final ODistributedRequestId reqId, List<String> servers) {
     if (previousRecord == null)
       return null;
 
     final int versionCopy = ORecordVersionHelper.setRollbackMode(previousRecord.getVersion());
-    final OUpdateRecordTask task = new OFixUpdateRecordTask(rid, previousRecord.toStream(), versionCopy, recordType);
+
+    final OUpdateRecordTask task = ((OFixUpdateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(servers)
+        .createTask(OFixUpdateRecordTask.FACTORYID)).init(rid, previousRecord.toStream(), versionCopy, recordType);
     task.setLockRecords(false);
     return task;
   }
@@ -239,5 +255,10 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
       ORecordInternal.fill(previousRecord, rid, loaded.getResult().version, loaded.getResult().getBuffer(), false);
     }
     return previousRecord;
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    return false;
   }
 }

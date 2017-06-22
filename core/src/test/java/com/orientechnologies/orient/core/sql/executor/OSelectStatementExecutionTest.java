@@ -298,7 +298,7 @@ public class OSelectStatementExecutionTest {
     }
     long begin = System.nanoTime();
     OResultSet result = db.query("select from " + className + " order by surname asc limit 100");
-    System.out.println("elapsed: " + (System.nanoTime() - begin));
+//    System.out.println("elapsed: " + (System.nanoTime() - begin));
     printExecutionPlan(result);
 
     for (int i = 0; i < 100; i++) {
@@ -323,7 +323,7 @@ public class OSelectStatementExecutionTest {
     }
     long begin = System.nanoTime();
     OResultSet result = db.query("select name from " + className + " order by surname asc");
-    System.out.println("elapsed: " + (System.nanoTime() - begin));
+//    System.out.println("elapsed: " + (System.nanoTime() - begin));
     printExecutionPlan(result);
 
     String lastName = null;
@@ -354,7 +354,7 @@ public class OSelectStatementExecutionTest {
     }
     long begin = System.nanoTime();
     OResultSet result = db.query("select name from " + className + " order by name asc, surname asc");
-    System.out.println("elapsed: " + (System.nanoTime() - begin));
+//    System.out.println("elapsed: " + (System.nanoTime() - begin));
     printExecutionPlan(result);
 
     String lastName = null;

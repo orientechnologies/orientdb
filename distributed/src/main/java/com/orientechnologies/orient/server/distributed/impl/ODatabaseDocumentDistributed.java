@@ -9,8 +9,19 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
@@ -32,14 +43,14 @@ import java.util.*;
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private final OHazelcastPlugin hazelcastPlugin;
+  private Map<String, OClusterSelectionStrategy> remapped = new HashMap<>();
 
   public ODatabaseDocumentDistributed(OStorage storage, OHazelcastPlugin hazelcastPlugin) {
     super(storage);
     this.hazelcastPlugin = hazelcastPlugin;
   }
 
-  @Override
-  public ODistributedStorage getStorage() {
+  public ODistributedStorage getStorageDistributed() {
     return (ODistributedStorage) super.getStorage();
   }
 
@@ -49,7 +60,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @return the name of local node in the cluster
    */
   public String getLocalNodeName() {
-    return getStorage().getNodeId();
+    return getStorageDistributed().getNodeId();
   }
 
   /**
@@ -60,7 +71,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    */
   public Map<String, Set<String>> getActiveClusterMap() {
     Map<String, Set<String>> result = new HashMap<>();
-    ODistributedConfiguration cfg = getStorage().getDistributedConfiguration();
+    ODistributedConfiguration cfg = getStorageDistributed().getDistributedConfiguration();
     for (String server : cfg.getRegisteredServers()) {
       result.put(server, cfg.getClustersOnServer(server));
     }
@@ -74,7 +85,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    */
   public Map<String, Set<String>> getActiveDataCenterMap() {
     Map<String, Set<String>> result = new HashMap<>();
-    ODistributedConfiguration cfg = getStorage().getDistributedConfiguration();
+    ODistributedConfiguration cfg = getStorageDistributed().getDistributedConfiguration();
     Set<String> servers = cfg.getRegisteredServers();
     for (String server : servers) {
       String dc = cfg.getDataCenterOfServer(server);
@@ -127,8 +138,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     final String databaseName = getName();
 
-    return dManager
-        .installDatabase(true, databaseName, dStg.getDistributedConfiguration().getDocument(), forceDeployment, tryWithDelta);
+    return dManager.installDatabase(true, databaseName, forceDeployment, tryWithDelta);
   }
 
   @Override
@@ -213,7 +223,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     final OSyncClusterTask task = new OSyncClusterTask(clusterName);
     final ODistributedResponse response = dManager
         .sendRequest(databaseName, null, nodesWhereClusterIsCfg, task, dManager.getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
     final Map<String, Object> results = (Map<String, Object>) response.getPayload();
 
@@ -250,7 +260,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           for (int chunkNum = 2; !chunk.last; chunkNum++) {
             final Object result = dManager.sendRequest(databaseName, null, OMultiValue.getSingletonList(r.getKey()),
                 new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-                dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+                dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
             if (result instanceof Boolean)
               continue;
@@ -340,4 +350,67 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     return chunk.buffer.length;
   }
+
+  @Override
+  public OResultSet queryOnNode(String nodeName, OResult serializedExecutionPlan, Map<Object, Object> inputParameters) {
+    //TODO
+    return null;
+  }
+
+  public int assignAndCheckCluster(ORecord record, String iClusterName) {
+    ORecordId rid = (ORecordId) record.getIdentity();
+    // if provided a cluster name use it.
+    if (rid.getClusterId() <= ORID.CLUSTER_POS_INVALID && iClusterName != null) {
+      rid.setClusterId(getClusterIdByName(iClusterName));
+      if (rid.getClusterId() == -1)
+        throw new IllegalArgumentException("Cluster name '" + iClusterName + "' is not configured");
+
+    }
+    OClass schemaClass = null;
+    // if cluster id is not set yet try to find it out
+    if (rid.getClusterId() <= ORID.CLUSTER_ID_INVALID && getStorage().isAssigningClusterIds()) {
+      if (record instanceof ODocument) {
+        schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+        if (schemaClass != null) {
+          if (schemaClass.isAbstract())
+            throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
+          OClusterSelectionStrategy remappedStrategy = remapped.get(schemaClass.getName());
+          if (remappedStrategy == null) {
+            remappedStrategy = new OLocalClusterWrapperStrategy(getStorageDistributed().getDistributedManager(), getName(),
+                ((ODocument) record).getSchemaClass(), schemaClass.getClusterSelection());
+            remapped.put(schemaClass.getName(), remappedStrategy);
+          }
+          rid.setClusterId(remappedStrategy.getCluster(schemaClass, (ODocument) record));
+        } else
+          rid.setClusterId(getDefaultClusterId());
+      } else {
+        rid.setClusterId(getDefaultClusterId());
+        if (record instanceof OBlob && rid.getClusterId() != ORID.CLUSTER_ID_INVALID) {
+          // Set<Integer> blobClusters = getMetadata().getSchema().getBlobClusters();
+          // if (!blobClusters.contains(rid.clusterId) && rid.clusterId != getDefaultClusterId() && rid.clusterId != 0) {
+          // if (iClusterName == null)
+          // iClusterName = getClusterNameById(rid.clusterId);
+          // throw new IllegalArgumentException(
+          // "Cluster name '" + iClusterName + "' (id=" + rid.clusterId + ") is not configured to store blobs, valid are "
+          // + blobClusters.toString());
+          // }
+        }
+      }
+    } else if (record instanceof ODocument)
+      schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+    // If the cluster id was set check is validity
+    if (rid.getClusterId() > ORID.CLUSTER_ID_INVALID) {
+      if (schemaClass != null) {
+        String messageClusterName = getClusterNameById(rid.getClusterId());
+        checkRecordClass(schemaClass, messageClusterName, rid);
+        if (!schemaClass.hasClusterId(rid.getClusterId())) {
+          throw new IllegalArgumentException(
+              "Cluster name '" + messageClusterName + "' (id=" + rid.getClusterId() + ") is not configured to store the class '"
+                  + schemaClass.getName() + "', valid are " + Arrays.toString(schemaClass.getClusterIds()));
+        }
+      }
+    }
+    return rid.getClusterId();
+  }
+
 }

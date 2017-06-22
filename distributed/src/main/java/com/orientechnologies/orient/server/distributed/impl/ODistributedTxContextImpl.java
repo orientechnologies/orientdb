@@ -23,15 +23,12 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Stores a transaction request that is waiting for the "completed" message (2-phase) by the leader node. Objects of this class are
@@ -45,6 +42,7 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   private final List<ORemoteTask> undoTasks     = new ArrayList<ORemoteTask>();
   private final List<ORID>        acquiredLocks = new ArrayList<ORID>();
   private final long              startedOn     = System.currentTimeMillis();
+  private final AtomicBoolean     canceled      = new AtomicBoolean(false);
 
   public ODistributedTxContextImpl(final ODistributedDatabase iDatabase, final ODistributedRequestId iRequestId) {
     db = iDatabase;
@@ -57,6 +55,22 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
+  public void cancel(final ODistributedServerManager dManager, final ODatabaseDocumentInternal database) {
+    canceled.set(true);
+
+    ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+        "Distributed transaction %s: canceled (locks=%s undo=%d startedOn=%s thread=%d)", reqId, acquiredLocks, undoTasks.size(),
+        new Date(this.startedOn), Thread.currentThread().getId());
+
+    final ODistributedResponseManager respMgr = dManager.getMessageService().getResponseManager(reqId);
+    if (respMgr != null)
+      respMgr.cancel();
+
+    rollback(database);
+    destroy();
+  }
+
+  @Override
   public synchronized void lock(ORID rid) {
     lock(rid, -1);
   }
@@ -64,8 +78,7 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   @Override
   public synchronized void lock(ORID rid, long timeout) {
     if (timeout < 0)
-      timeout = db.getManager().getServerInstance().getContextConfiguration()
-          .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
+      timeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger();
 
     if (!rid.isPersistent())
       // CREATE A COPY TO MAINTAIN THE LOCK ON THE CLUSTER AVOIDING THE RID IS TRANSFORMED IN PERSISTENT. THIS ALLOWS TO HAVE
@@ -88,30 +101,18 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
 
   public synchronized void commit() {
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-        "Distributed transaction %s: committing transaction", reqId);
+        "Distributed transaction %s: committing transaction on database '%s' (locks=%s thread=%d)", reqId, db.getDatabaseName(),
+        acquiredLocks, Thread.currentThread().getId());
   }
 
   public synchronized void fix(final ODatabaseDocumentInternal database, final List<ORemoteTask> fixTasks) {
-    ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-        "Distributed transaction %s: fixing transaction (db=%s tasks=%d)", reqId, db.getDatabaseName(), fixTasks.size());
-
-    for (ORemoteTask fixTask : fixTasks) {
-      try {
-        if (fixTask instanceof OAbstractRecordReplicatedTask)
-          ((OAbstractRecordReplicatedTask) fixTask).setLockRecords(false);
-
-        fixTask.execute(reqId, db.getManager().getServerInstance(), db.getManager(), database);
-
-      } catch (Exception e) {
-        ODistributedServerLog.error(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Error on fixing transaction %s db=%s task=%s", e, reqId, db.getDatabaseName(), fixTask);
-      }
-    }
+    executeFix(this, this, database, fixTasks, reqId, db);
   }
 
   public synchronized int rollback(final ODatabaseDocumentInternal database) {
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-        "Distributed transaction %s: rolling back transaction (%d ops) on database '%s'", reqId, undoTasks.size(), database);
+        "Distributed transaction %s: rolling back transaction on database '%s' (undo=%d tx=%s)", reqId,
+        database != null ? database.getName() : "?", undoTasks.size(), database.getTransaction().isActive());
 
     for (ORemoteTask task : undoTasks) {
       try {
@@ -127,9 +128,18 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     return undoTasks.size();
   }
 
+  public boolean isCanceled() {
+    return canceled.get();
+  }
+
   @Override
   public synchronized void destroy() {
     unlock();
+    clearUndo();
+  }
+
+  @Override
+  public synchronized void clearUndo() {
     undoTasks.clear();
   }
 
@@ -144,5 +154,41 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
 
   public long getStartedOn() {
     return startedOn;
+  }
+
+  public static void executeFix(final Object me, final ODistributedTxContext context, final ODatabaseDocumentInternal database,
+      final List<ORemoteTask> fixTasks, ODistributedRequestId requestId, final ODistributedDatabase ddb) {
+    ODistributedServerLog.debug(me, ddb.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+        "Distributed transaction %s: fixing transaction (db=%s tasks=%d)", requestId, ddb.getDatabaseName(), fixTasks.size());
+
+    // LOCK ALL THE RECORDS FIRST BY CANCELING ANY PENDING LOCKS
+    final Set<ORID> locked = new HashSet<ORID>();
+    for (ORemoteTask fixTask : fixTasks) {
+      if (fixTask instanceof OAbstractRecordReplicatedTask) {
+        final ORecordId rid = ((OAbstractRecordReplicatedTask) fixTask).getRid();
+        if (ddb.forceLockRecord(rid, requestId))
+          locked.add(rid);
+      }
+    }
+
+    try {
+      for (ORemoteTask fixTask : fixTasks) {
+        try {
+          if (fixTask instanceof OAbstractRecordReplicatedTask)
+            // AVOID LOCKING BECAUSE LOCKS WAS ALREADY ACQUIRED IN CONTEXT
+            ((OAbstractRecordReplicatedTask) fixTask).setLockRecords(false);
+
+          fixTask.execute(requestId, ddb.getManager().getServerInstance(), ddb.getManager(), database);
+
+        } catch (Exception e) {
+          ODistributedServerLog.debug(me, ddb.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+              "Error on fixing transaction %s db=%s task=%s", e, requestId, ddb.getDatabaseName(), fixTask);
+        }
+      }
+    } finally {
+      // UNLOCK ALL THE RECORDS (THE TX IS FINISHED)
+      for (ORID r : locked)
+        ddb.unlockRecord(r, requestId);
+    }
   }
 }

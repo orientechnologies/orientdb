@@ -2871,7 +2871,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     }
   }
 
-  private void checkRecordClass(final OClass recordClass, final String iClusterName, final ORecordId rid) {
+  protected void checkRecordClass(final OClass recordClass, final String iClusterName, final ORecordId rid) {
     final OClass clusterIdClass = metadata.getImmutableSchemaSnapshot().getClassByClusterId(rid.getClusterId());
     if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null || (recordClass != null
         && !recordClass.equals(clusterIdClass)))

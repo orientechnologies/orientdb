@@ -33,19 +33,19 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class OReadRecordIfNotLatestTask extends OAbstractReadRecordTask {
-  private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 2;
+  public static final int FACTORYID = 2;
 
-  protected int             recordVersion;
+  protected int recordVersion;
 
   public OReadRecordIfNotLatestTask() {
     this.lockRecords = false;
   }
 
-  public OReadRecordIfNotLatestTask(final ORecordId iRid, final int recordVersion) {
-    super(iRid);
+  public OReadRecordIfNotLatestTask init(final ORecordId rid, final int recordVersion) {
+    super.init(rid);
     this.recordVersion = recordVersion;
     this.lockRecords = false;
+    return this;
   }
 
   @Override

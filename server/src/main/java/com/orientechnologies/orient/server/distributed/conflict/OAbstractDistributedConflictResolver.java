@@ -20,6 +20,10 @@
 
 package com.orientechnologies.orient.server.distributed.conflict;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -29,8 +33,34 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OAbstractDistributedConflictResolver implements ODistributedConflictResolver {
-  protected Object getBestResult(final Map<Object, List<String>> groupedResult, final List<Object> exclude) {
-    Object bestResult = null;
+  protected ODocument configuration;
+
+  @Override
+  public void configure(final ODocument config) {
+    configuration = config;
+  }
+
+  public static boolean compareRecords(final ORawBuffer key1, final ORawBuffer key2) {
+    boolean matched = false;
+    if (Arrays.equals(key1.buffer, key2.buffer)) {
+      matched = true;
+    } else if (key1.recordType == ODocument.RECORD_TYPE) {
+      // DOCUMENTS COULD BE THE SAME EVEN IF THE BINARY CONTENT IS NOT, COMPARING DOCUMENTS INSTEAD
+      final ODocument currentDocument = new ODocument().fromStream(key1.buffer);
+
+      if (key2.recordType == ODocument.RECORD_TYPE) {
+        final ODocument otherDocument = new ODocument().fromStream(key2.buffer);
+        if (currentDocument.hasSameContentOf(otherDocument)) {
+          // SAME CONTENT = EQUALS
+          matched = true;
+        }
+      }
+    }
+    return matched;
+  }
+
+  protected static Object getBestResult(final Map<Object, List<String>> groupedResult, final List<Object> exclude) {
+    Object bestResult = NOT_FOUND;
     int max = -1;
     for (Map.Entry<Object, List<String>> entry : groupedResult.entrySet()) {
       boolean skip = false;

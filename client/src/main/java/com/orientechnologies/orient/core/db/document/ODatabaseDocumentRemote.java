@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -349,5 +350,10 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
     return storage.liveQuery(this, query, new OLiveQueryClientListener(this.copy(), listener), args);
+  }
+
+  @Override
+  public void recycle(ORecord record) {
+    throw new UnsupportedOperationException();
   }
 }

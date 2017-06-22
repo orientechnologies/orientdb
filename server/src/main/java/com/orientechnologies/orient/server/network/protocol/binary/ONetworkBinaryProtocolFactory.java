@@ -197,6 +197,8 @@ public class ONetworkBinaryProtocolFactory {
 
     case OChannelBinaryProtocol.REQUEST_DB_IMPORT:
       return new OImportRequest();
+    case OChannelBinaryProtocol.DISTRIBUTED_CONNECT:
+      return new ODistributedConnectRequest();
     default:
       throw new ODatabaseException("binary protocol command with code: " + requestType);
     }
@@ -373,6 +375,8 @@ public class ONetworkBinaryProtocolFactory {
 
     case OChannelBinaryProtocol.REQUEST_DB_IMPORT:
       return new OImportRequest();
+    case OChannelBinaryProtocol.DISTRIBUTED_CONNECT:
+      return new ODistributedConnectRequest();
     default:
       throw new ODatabaseException("binary protocol command with code: " + requestType + " for protocol version 37");
     }

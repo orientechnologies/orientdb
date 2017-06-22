@@ -24,10 +24,12 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
    * iterates over a class and its subclasses
    *
    * @param className the class name
+   * @param clusters  if present (it can be null), filter by only these clusters
    * @param ctx       the query context
    * @param ridOrder  true to sort by RID asc, false to sort by RID desc, null for no sort.
    */
-  public FetchFromClassExecutionStep(String className, OCommandContext ctx, Boolean ridOrder, boolean profilingEnabled) {
+  public FetchFromClassExecutionStep(String className, Set<String> clusters, OCommandContext ctx, Boolean ridOrder,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
 
     this.className = className;
@@ -41,8 +43,18 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
       throw new OCommandExecutionException("Class " + className + " not found");
     }
     int[] classClusters = clazz.getPolymorphicClusterIds();
-    int[] clusterIds = new int[classClusters.length + 1];
-    System.arraycopy(classClusters, 0, clusterIds, 0, classClusters.length);
+    List<Integer> filteredClassClusters = new ArrayList<>();
+    for (int clusterId : classClusters) {
+      String clusterName = ctx.getDatabase().getClusterNameById(clusterId);
+      if (clusters == null || clusters.contains(clusterName)) {
+        filteredClassClusters.add(clusterId);
+      }
+    }
+    filteredClassClusters.add(-1);
+    int[] clusterIds = new int[filteredClassClusters.size() + 1];
+    for (int i = 0; i < filteredClassClusters.size(); i++) {
+      clusterIds[i] = filteredClassClusters.get(i);
+    }
     clusterIds[clusterIds.length - 1] = -1;//temporary cluster, data in tx
 
     subSteps = new AbstractExecutionStep[clusterIds.length];

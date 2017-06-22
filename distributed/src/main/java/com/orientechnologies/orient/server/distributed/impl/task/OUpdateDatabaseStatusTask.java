@@ -94,11 +94,6 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public boolean isIdempotent() {
-    return true;
-  }
-
-  @Override
   public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong();
   }

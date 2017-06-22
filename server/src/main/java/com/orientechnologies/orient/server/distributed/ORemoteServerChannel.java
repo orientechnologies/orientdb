@@ -21,7 +21,14 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
+import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
+import com.orientechnologies.orient.client.remote.OStorageRemoteOperation;
+import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.client.remote.message.ODistributedConnectRequest;
+import com.orientechnologies.orient.client.remote.message.ODistributedConnectResponse;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -45,6 +52,7 @@ public class ORemoteServerChannel {
   private final String                    userPassword;
   private final String                    server;
   private       OChannelBinarySynchClient channel;
+  private       int                       protocolVersion;
 
   private static final int     MAX_RETRY     = 3;
   private static final String  CLIENT_TYPE   = "OrientDB Server";
@@ -58,7 +66,7 @@ public class ORemoteServerChannel {
   private final static int MAX_CONSECUTIVE_ERRORS = 10;
 
   public ORemoteServerChannel(final ODistributedServerManager manager, final String iServer, final String iURL, final String user,
-      final String passwd) throws IOException {
+      final String passwd, final int currentProtocolVersion) throws IOException {
     this.manager = manager;
     this.server = iServer;
     this.url = iURL;
@@ -69,7 +77,13 @@ public class ORemoteServerChannel {
     remoteHost = iURL.substring(0, sepPos);
     remotePort = Integer.parseInt(iURL.substring(sepPos + 1));
 
+    protocolVersion = currentProtocolVersion;
+
     connect();
+  }
+
+  public int getDistributedProtocolVersion() {
+    return protocolVersion;
   }
 
   public interface OStorageRemoteOperation<T> {
@@ -104,27 +118,22 @@ public class ORemoteServerChannel {
     channel = new OChannelBinarySynchClient(remoteHost, remotePort, null, contextConfig,
         OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
 
-    networkOperation(OChannelBinaryProtocol.REQUEST_CONNECT, new OStorageRemoteOperation<Void>() {
+    networkOperation(OChannelBinaryProtocol.DISTRIBUTED_CONNECT, new OStorageRemoteOperation<Void>() {
       @Override
       public Void execute() throws IOException {
-        channel.writeString(CLIENT_TYPE).writeString(OConstants.ORIENT_VERSION)
-            .writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION).writeString("0");
-        channel.writeString(ODatabaseDocumentTx.getDefaultSerializer().toString());
-        channel.writeBoolean(true);
-        channel.writeBoolean(false); // SUPPORT PUSH
-        channel.writeBoolean(COLLECT_STATS); // COLLECT STATS
 
-        channel.writeString(userName);
-        channel.writeString(userPassword);
-
+        ODistributedConnectRequest request = new ODistributedConnectRequest(protocolVersion,userName,userPassword);
+        request.write(channel, null);
         channel.flush();
 
         channel.beginResponse(false);
-        sessionId = channel.readInt();
-        sessionToken = channel.readBytes();
-        if (sessionToken.length == 0) {
-          sessionToken = null;
-        }
+        ODistributedConnectResponse response = request.createResponse();
+        response.read(channel, null);
+        sessionId = response.getSessionId();
+        sessionToken = response.getToken();
+
+        // SET THE PROTOCOL TO THE MINIMUM NUMBER TO SUPPORT BACKWARD COMPATIBILITY
+        protocolVersion = response.getDistributedProtocolVersion();
 
         return null;
       }
