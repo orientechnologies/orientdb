@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.ORemoteImportTest;
@@ -209,10 +210,93 @@ public class RemoteTransactionSupportTest {
     someTx.setProperty("name", "foo");
     database.save(someTx);
     database.save(someTx);
-    assertEquals(database.getTransaction().getEntryCount(),1);
+    assertEquals(database.getTransaction().getEntryCount(), 1);
     assertEquals(database.countClass("SomeTx"), 1);
     database.commit();
     assertEquals(database.countClass("SomeTx"), 1);
+  }
+
+  @Test
+  public void testDoubleSaveDoubleFlushTransaction() {
+    database.begin();
+    OElement someTx = database.newElement("SomeTx");
+    someTx.setProperty("name", "foo");
+    database.save(someTx);
+    database.save(someTx);
+    OResultSet result = database.query("select from SomeTx");
+    assertEquals(1, result.stream().count());
+    result.close();
+    database.save(someTx);
+    database.save(someTx);
+    result = database.query("select from SomeTx");
+    assertEquals(1, result.stream().count());
+    result.close();
+    assertEquals(database.getTransaction().getEntryCount(), 1);
+    assertEquals(database.countClass("SomeTx"), 1);
+    database.commit();
+    assertEquals(database.countClass("SomeTx"), 1);
+  }
+
+  @Test
+  public void testRefFlushedInTransaction() {
+    database.begin();
+    OElement someTx = database.newElement("SomeTx");
+    someTx.setProperty("name", "foo");
+    database.save(someTx);
+
+    OElement oneMore = database.newElement("SomeTx");
+    oneMore.setProperty("name", "bar");
+    oneMore.setProperty("ref", someTx);
+    OResultSet result = database.query("select from SomeTx");
+    assertEquals(1, result.stream().count());
+    result.close();
+    database.save(oneMore);
+    database.commit();
+    OResultSet result1 = database.query("select ref from SomeTx where name='bar'");
+    assertTrue(result1.hasNext());
+    assertEquals(someTx.getIdentity(), result1.next().getProperty("ref"));
+    result1.close();
+  }
+
+  @Test
+  public void testDoubleRefFlushedInTransaction() {
+    database.begin();
+    OElement someTx = database.newElement("SomeTx");
+    someTx.setProperty("name", "foo");
+    database.save(someTx);
+
+    OElement oneMore = database.newElement("SomeTx");
+    oneMore.setProperty("name", "bar");
+    oneMore.setProperty("ref", someTx.getIdentity());
+
+    OResultSet result = database.query("select from SomeTx");
+    assertEquals(1, result.stream().count());
+    result.close();
+
+    OElement ref2 = database.newElement("SomeTx");
+    ref2.setProperty("name", "other");
+    database.save(ref2);
+
+    oneMore.setProperty("ref2", ref2.getIdentity());
+    result = database.query("select from SomeTx");
+    assertEquals(2, result.stream().count());
+    result.close();
+
+    database.save(oneMore);
+    OResultSet result1 = database.query("select ref,ref2 from SomeTx where name='bar'");
+    assertTrue(result1.hasNext());
+    OResult next = result1.next();
+    assertEquals(someTx.getIdentity(), next.getProperty("ref"));
+    assertEquals(ref2.getIdentity(), next.getProperty("ref2"));
+    result1.close();
+
+    database.commit();
+    result1 = database.query("select ref,ref2 from SomeTx where name='bar'");
+    assertTrue(result1.hasNext());
+    next = result1.next();
+    assertEquals(someTx.getIdentity(), next.getProperty("ref"));
+    assertEquals(ref2.getIdentity(), next.getProperty("ref2"));
+    result1.close();
   }
 
   @Test
