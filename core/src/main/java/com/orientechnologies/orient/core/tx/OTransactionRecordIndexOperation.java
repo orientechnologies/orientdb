@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2014 OrientDB LTD (info(at)orientdb.com)
+ *  *  Copyright 2010-2017 OrientDB LTD (http://orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -17,29 +17,20 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.common.concur.lock;
 
-import java.util.Collection;
-import java.util.concurrent.locks.Lock;
+package com.orientechnologies.orient.core.tx;
 
 /**
- * Lock Manager interface.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * @since 2.2.0
+ * Represents information for each index operation for each record in DB.
  */
-public interface OLockManager<T> {
-  Lock acquireSharedLock(T key);
+public final class OTransactionRecordIndexOperation {
+  public String                             index;
+  public Object                             key;
+  public OTransactionIndexChanges.OPERATION operation;
 
-  void releaseSharedLock(T key);
-
-  Lock acquireExclusiveLock(T key);
-
-  void releaseExclusiveLock(T key);
-
-  Lock[] acquireExclusiveLocksInBatch(T... values);
-
-  Lock[] acquireExclusiveLocksInBatch(Collection<T> values);
-
-  Lock[] acquireSharedLocksInBatch(T[] keys);
+  public OTransactionRecordIndexOperation(String index, Object key, OTransactionIndexChanges.OPERATION operation) {
+    this.index = index;
+    this.key = key;
+    this.operation = operation;
+  }
 }

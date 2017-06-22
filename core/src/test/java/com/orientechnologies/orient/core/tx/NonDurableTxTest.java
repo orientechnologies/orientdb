@@ -124,28 +124,4 @@ public class NonDurableTxTest {
     Assert.assertEquals(startLsn, endLsn);
   }
 
-  @Test
-  public void testWalNotGrowingWhileWalDisabledInAtomicManager() throws Exception {
-    db.newInstance().field("some-unrelated-key", "some-unrelated-value").save();
-
-    wal.flush();
-    final OLogSequenceNumber startLsn = wal.getFlushedLsn();
-
-    atomicOperationsManager.switchOnUnsafeMode();
-    try {
-      db.begin();
-      final ODocument doc1 = db.newInstance().field("tx-key", "tx-value").save();
-      db.commit();
-
-      doc1.field("non-tx-key", "non-tx-value").save();
-
-      wal.flush();
-      final OLogSequenceNumber endLsn = wal.getFlushedLsn();
-
-      Assert.assertEquals(startLsn, endLsn);
-    } finally {
-      atomicOperationsManager.switchOffUnsafeMode();
-    }
-  }
-
 }

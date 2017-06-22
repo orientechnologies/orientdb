@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
 
 import java.util.Locale;
 
@@ -33,13 +34,16 @@ public class ORecordOperation implements Comparable {
 
   private static final long serialVersionUID = 1L;
 
-  public static final byte  LOADED           = 0;
-  public static final byte  UPDATED          = 1;
-  public static final byte  DELETED          = 2;
-  public static final byte  CREATED          = 3;
+  public static final byte LOADED  = 0;
+  public static final byte UPDATED = 1;
+  public static final byte DELETED = 2;
+  public static final byte CREATED = 3;
 
-  public byte               type;
-  public OIdentifiable      record;
+  public byte          type;
+  public OIdentifiable record;
+
+  public ORecordCallback<Long>    createdCallback = null;
+  public ORecordCallback<Integer> updatedCallback = null;
 
   public ORecordOperation() {
   }

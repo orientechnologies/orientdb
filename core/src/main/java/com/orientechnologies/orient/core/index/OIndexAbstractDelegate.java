@@ -210,10 +210,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.iterateEntries(keys, ascSortOrder);
   }
 
-  public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
-    return delegate.checkEntry(iRecord, iKey);
-  }
-
   public Set<String> getClusters() {
     return delegate.getClusters();
   }

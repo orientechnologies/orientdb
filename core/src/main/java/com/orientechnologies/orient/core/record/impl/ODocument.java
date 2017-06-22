@@ -47,9 +47,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 import java.io.*;
 import java.lang.ref.WeakReference;
@@ -331,7 +330,6 @@ public class ODocument extends ORecordAbstract
   protected <RET> RET getRawProperty(final String iFieldName) {
     if (iFieldName == null)
       return null;
-
 
     checkForLoading();
     return (RET) ODocumentHelper.getIdentifiableValue(this, iFieldName);
@@ -841,9 +839,7 @@ public class ODocument extends ORecordAbstract
       destination._owners = null;
 
     if (_fields != null) {
-      destination._fields = _fields instanceof LinkedHashMap ?
-          new LinkedHashMap<>() :
-          new HashMap<>();
+      destination._fields = _fields instanceof LinkedHashMap ? new LinkedHashMap<>() : new HashMap<>();
       for (Entry<String, ODocumentEntry> entry : _fields.entrySet()) {
         ODocumentEntry docEntry = entry.getValue().clone();
         destination._fields.put(entry.getKey(), docEntry);
@@ -1763,15 +1759,11 @@ public class ODocument extends ORecordAbstract
       addToChangedList = true;
 
     if (addToChangedList) {
-      final ODatabaseDocument database = getDatabaseIfDefined();
+      final ODatabaseDocumentInternal database = getDatabaseIfDefined();
 
       if (database != null) {
-        final OTransaction transaction = database.getTransaction();
-
-        if (transaction instanceof OTransactionOptimistic) {
-          OTransactionOptimistic transactionOptimistic = (OTransactionOptimistic) transaction;
-          transactionOptimistic.addChangedDocument(this);
-        }
+        final OBasicTransaction transaction = database.getMicroOrRegularTransaction();
+        transaction.addChangedDocument(this);
       }
     }
 
@@ -2694,8 +2686,7 @@ public class ODocument extends ORecordAbstract
       ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(entry.changeListener);
     } else {
       // no listener was there add it only to the new value
-      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<>(this,
-          entry);
+      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<>(this, entry);
       ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(listener);
       entry.changeListener = listener;
     }
@@ -3084,8 +3075,7 @@ public class ODocument extends ORecordAbstract
     if (!(entry.value instanceof OTrackedMultiValue))
       return false;
     if (entry.changeListener == null) {
-      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<>(this,
-          entry);
+      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<>(this, entry);
       ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(listener);
       entry.changeListener = listener;
     }

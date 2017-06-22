@@ -356,6 +356,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
     }
   }
 
+  @Override
+  public void addChangedDocument(ODocument document) {
+    // do nothing
+  }
+
   public void clearIndexEntries() {
   }
 
@@ -384,7 +389,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
-  public OTransactionIndexChanges getIndexChangesInternal(String iName) {
+  public OTransactionIndexChanges getIndexChangesInternal(String indexName) {
     return null;
   }
 

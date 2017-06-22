@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
@@ -30,11 +29,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -85,79 +80,67 @@ public class OIndexFullText extends OIndexMultiValues {
 
     key = getCollatingValue(key);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
+    final Set<String> words = splitIntoWords(key.toString());
 
-    if (!txIsActive)
-      keyLockManager.acquireExclusiveLock(key);
-
-    try {
-      final Set<String> words = splitIntoWords(key.toString());
-
-      // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
-      for (final String word : words) {
-        acquireSharedLock();
-        try {
-          Set<OIdentifiable> refs;
-          while (true) {
-            try {
-              refs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
-              break;
-            } catch (OInvalidIndexEngineIdException e) {
-              doReloadIndexEngine();
-            }
+    // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
+    for (final String word : words) {
+      acquireSharedLock();
+      try {
+        Set<OIdentifiable> refs;
+        while (true) {
+          try {
+            refs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
+            break;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
           }
-
-          final boolean durable;
-          if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-            durable = true;
-          else
-            durable = false;
-
-          final Set<OIdentifiable> refsc = refs;
-
-          // SAVE THE INDEX ENTRY
-          while (true) {
-            try {
-              storage.updateIndexEntry(indexId, word, new Callable<Object>() {
-                @Override
-                public Object call() throws Exception {
-                  Set<OIdentifiable> result = null;
-
-                  if (refsc == null) {
-                    // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-                    if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-                      result = new OIndexRIDContainer(getName(), durable);
-                    } else {
-                      throw new IllegalStateException("MBRBTreeContainer is not supported any more");
-                    }
-                  } else {
-                    result = refsc;
-                  }
-
-                  // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-                  result.add(singleValue);
-
-                  return result;
-                }
-              });
-
-              break;
-            } catch (OInvalidIndexEngineIdException e) {
-              doReloadIndexEngine();
-            }
-          }
-
-        } finally {
-          releaseSharedLock();
         }
-      }
-      return this;
 
-    } finally {
-      if (!txIsActive)
-        keyLockManager.releaseExclusiveLock(key);
+        final boolean durable;
+        if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+          durable = true;
+        else
+          durable = false;
+
+        final Set<OIdentifiable> refsc = refs;
+
+        // SAVE THE INDEX ENTRY
+        while (true) {
+          try {
+            storage.updateIndexEntry(indexId, word, new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                Set<OIdentifiable> result = null;
+
+                if (refsc == null) {
+                  // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+                  if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+                    result = new OIndexRIDContainer(getName(), durable);
+                  } else {
+                    throw new IllegalStateException("MBRBTreeContainer is not supported any more");
+                  }
+                } else {
+                  result = refsc;
+                }
+
+                // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+                result.add(singleValue);
+
+                return result;
+              }
+            });
+
+            break;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
+          }
+        }
+
+      } finally {
+        releaseSharedLock();
+      }
     }
+    return this;
   }
 
   /**
@@ -176,50 +159,40 @@ public class OIndexFullText extends OIndexMultiValues {
 
     key = getCollatingValue(key);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
+    final Set<String> words = splitIntoWords(key.toString());
+    final OModifiableBoolean removed = new OModifiableBoolean(false);
 
-    if (!txIsActive)
-      keyLockManager.acquireExclusiveLock(key);
-    try {
-      final Set<String> words = splitIntoWords(key.toString());
-      final OModifiableBoolean removed = new OModifiableBoolean(false);
+    for (final String word : words) {
+      acquireSharedLock();
+      try {
+        Set<OIdentifiable> recs;
+        while (true) {
+          try {
+            recs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
+            break;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
+          }
+        }
 
-      for (final String word : words) {
-        acquireSharedLock();
-        try {
-          Set<OIdentifiable> recs;
+        if (recs != null && !recs.isEmpty()) {
           while (true) {
             try {
-              recs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
+              storage.updateIndexEntry(indexId, word, new EntityRemover(recs, value, removed));
               break;
             } catch (OInvalidIndexEngineIdException e) {
               doReloadIndexEngine();
             }
-          }
-
-          if (recs != null && !recs.isEmpty()) {
-            while (true) {
-              try {
-                storage.updateIndexEntry(indexId, word, new EntityRemover(recs, value, removed));
-                break;
-              } catch (OInvalidIndexEngineIdException e) {
-                doReloadIndexEngine();
-              }
-
-            }
 
           }
-        } finally {
-          releaseSharedLock();
+
         }
+      } finally {
+        releaseSharedLock();
       }
-
-      return removed.getValue();
-    } finally {
-      if (!txIsActive)
-        keyLockManager.releaseExclusiveLock(key);
     }
+
+    return removed.getValue();
   }
 
   @Override

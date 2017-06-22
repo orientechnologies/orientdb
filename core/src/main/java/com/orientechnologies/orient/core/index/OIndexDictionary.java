@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -43,40 +42,20 @@ public class OIndexDictionary extends OIndexOneValue {
 
     key = getCollatingValue(key);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-
-    if (!txIsActive) {
-      keyLockManager.acquireExclusiveLock(key);
-    }
-
+    acquireSharedLock();
     try {
-      acquireSharedLock();
-      try {
-        while (true) {
-          try {
-            storage.putIndexValue(indexId, key, value);
-            return this;
-          } catch (OInvalidIndexEngineIdException e) {
-            doReloadIndexEngine();
-          }
+      while (true) {
+        try {
+          storage.putIndexValue(indexId, key, value);
+          return this;
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
         }
-
-      } finally {
-        releaseSharedLock();
       }
-    } finally {
-      if (!txIsActive)
-        keyLockManager.releaseExclusiveLock(key);
-    }
-  }
 
-  /**
-   * Disables check of entries.
-   */
-  @Override
-  public ODocument checkEntry(final OIdentifiable record, final Object key) {
-    return null;
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   public boolean canBeUsedInEqualityOperators() {

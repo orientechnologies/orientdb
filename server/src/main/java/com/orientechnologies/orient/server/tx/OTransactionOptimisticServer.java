@@ -24,10 +24,10 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 
 import java.util.*;
 
@@ -209,7 +209,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
   @Override
   public ORecord getRecord(final ORID rid) {
     ORecord record = super.getRecord(rid);
-    if (record == OTransactionRealAbstract.DELETED_RECORD)
+    if (record == OBasicTransaction.DELETED_RECORD)
       return record;
     else if (record == null && rid.isNew())
       // SEARCH BETWEEN CREATED RECORDS
@@ -249,8 +249,8 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
   }
 
   @Override
-  public void addRecord(ORecord iRecord, byte iStatus, String iClusterName) {
-    super.addRecord(iRecord, iStatus, iClusterName);
+  public ORecordOperation addRecord(ORecord iRecord, byte iStatus, String iClusterName) {
+    final ORecordOperation operation = super.addRecord(iRecord, iStatus, iClusterName);
 
     if (iStatus == ORecordOperation.UPDATED) {
       updatedRecords.put((ORecordId) iRecord.getIdentity(), iRecord);
@@ -259,6 +259,8 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     } else if (iStatus == ORecordOperation.DELETED) {
       deletedRecord.add(iRecord.getIdentity());
     }
+
+    return operation;
   }
 
   public void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName, OTransaction oldTx) {

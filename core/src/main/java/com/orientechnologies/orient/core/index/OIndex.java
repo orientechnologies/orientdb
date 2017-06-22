@@ -125,14 +125,6 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   long getKeySize();
 
   /**
-   * For unique indexes it will throw exception if passed in key is contained in index.
-   *
-   * @param iRecord
-   * @param iKey
-   */
-  ODocument checkEntry(OIdentifiable iRecord, Object iKey);
-
-  /**
    * Flushes in-memory changes to disk.
    */
   public void flush();

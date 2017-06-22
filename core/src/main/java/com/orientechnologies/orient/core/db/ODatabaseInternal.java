@@ -22,9 +22,13 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 public interface ODatabaseInternal<T> extends ODatabase<T> {
@@ -89,6 +93,13 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
   <DB extends ODatabase> DB open(final OToken iToken);
 
   OSharedContext getSharedContext();
+
+  /**
+   * The active implicit micro-transaction or active/inactive regular transaction. Use the transaction returned by this method if
+   * you are doing "system" things that affect both regular database transactions and implicit storage micro-transactions wrapping
+   * non-transactional operations on the database-storage level.
+   */
+  OBasicTransaction getMicroOrRegularTransaction();
 
   /**
    * returns the cluster map for current deploy. The keys of the map are node names, the values contain names of clusters (data

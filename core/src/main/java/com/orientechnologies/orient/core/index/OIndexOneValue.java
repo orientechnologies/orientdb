@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -46,80 +45,32 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public OIdentifiable get(Object iKey) {
     iKey = getCollatingValue(iKey);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-    if (!txIsActive)
-      keyLockManager.acquireSharedLock(iKey);
+    acquireSharedLock();
     try {
-      acquireSharedLock();
-      try {
-        while (true)
-          try {
-            return (OIdentifiable) storage.getIndexValue(indexId, iKey);
-          } catch (OInvalidIndexEngineIdException e) {
-            doReloadIndexEngine();
-          }
-      } finally {
-        releaseSharedLock();
-      }
+      while (true)
+        try {
+          return (OIdentifiable) storage.getIndexValue(indexId, iKey);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
     } finally {
-      if (!txIsActive)
-        keyLockManager.releaseSharedLock(iKey);
+      releaseSharedLock();
     }
-
   }
 
   public long count(Object iKey) {
     iKey = getCollatingValue(iKey);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-    if (!txIsActive)
-      keyLockManager.acquireSharedLock(iKey);
-
+    acquireSharedLock();
     try {
-      acquireSharedLock();
-      try {
-        while (true)
-          try {
-            return storage.indexContainsKey(indexId, iKey) ? 1 : 0;
-          } catch (OInvalidIndexEngineIdException e) {
-            doReloadIndexEngine();
-          }
-      } finally {
-        releaseSharedLock();
-      }
+      while (true)
+        try {
+          return storage.indexContainsKey(indexId, iKey) ? 1 : 0;
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
     } finally {
-      if (!txIsActive)
-        keyLockManager.releaseSharedLock(iKey);
-    }
-  }
-
-  @Override
-  public ODocument checkEntry(final OIdentifiable record, Object key) {
-    key = getCollatingValue(key);
-
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-
-    if (!txIsActive)
-      keyLockManager.acquireSharedLock(key);
-    try {
-      // CHECK IF ALREADY EXIST
-      final OIdentifiable indexedRID = get(key);
-      if (indexedRID != null && !indexedRID.getIdentity().equals(record.getIdentity())) {
-        final Boolean mergeSameKey = metadata != null && (Boolean) metadata.field(OIndex.MERGE_KEYS);
-        if (mergeSameKey != null && mergeSameKey)
-          return (ODocument) indexedRID.getRecord();
-        else
-          throw new ORecordDuplicatedException(String
-              .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                  record, key, getName(), indexedRID), getName(), indexedRID.getIdentity());
-      }
-      return null;
-    } finally {
-      if (!txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      releaseSharedLock();
     }
   }
 

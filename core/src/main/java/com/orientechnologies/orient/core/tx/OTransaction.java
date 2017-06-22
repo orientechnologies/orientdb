@@ -29,14 +29,14 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.HashMap;
 import java.util.List;
 
-public interface OTransaction {
-
+public interface OTransaction extends OBasicTransaction {
   enum TXTYPE {
     NOTX, OPTIMISTIC, PESSIMISTIC
   }
@@ -96,11 +96,6 @@ public interface OTransaction {
   ORecord loadRecordIfVersionIsNotLatest(ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException;
 
-  ORecord saveRecord(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback);
-
-  void deleteRecord(ORecord iRecord, OPERATION_MODE iMode);
-
   int getId();
 
   TXSTATUS getStatus();
@@ -114,35 +109,16 @@ public interface OTransaction {
 
   List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds);
 
-  ORecord getRecord(ORID iRid);
-
   ORecordOperation getRecordEntry(ORID rid);
 
   List<String> getInvolvedIndexes();
 
   ODocument getIndexChanges();
 
-  void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
-      final Object iKey, final OIdentifiable iValue);
-
   @Deprecated
   void clearIndexEntries();
 
-  OTransactionIndexChanges getIndexChanges(String iName);
-  OTransactionIndexChanges getIndexChangesInternal(String iName);
-
-  /**
-   * Tells if the transaction is active.
-   *
-   * @return
-   */
-  boolean isActive();
-
   boolean isUsingLog();
-
-  void setCustomData(String iName, Object iValue);
-
-  Object getCustomData(String iName);
 
   /**
    * If you set this flag to false, you are unable to

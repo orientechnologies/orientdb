@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 import java.util.Map;
-import java.util.Set;
 
 public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseInternal<ORecord> {
 
@@ -101,8 +100,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
   ODatabaseDocumentInternal copy();
 
   void recycle(ORecord record);
-
-  Set<ORecord> executeReadRecords(final Set<ORecordId> iRids, final boolean ignoreCache);
 
   void checkIfActive();
 

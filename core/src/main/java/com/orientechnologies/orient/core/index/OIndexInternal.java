@@ -91,66 +91,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
   boolean hasRangeQuerySupport();
 
-  /**
-   * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
-   *
-   * <ol>
-   * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
-   * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
-   * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
-   * <li>{@link #remove(Object)}</li>
-   * </ol>
-   *
-   * <p>
-   * If you want to lock several keys in single thread, you should pass all those keys in single method call. Several calls of this
-   * method in single thread are not allowed because it may lead to deadlocks.
-   * </p>
-   *
-   * This is internal method and cannot be used by end users.
-   *
-   * @param key Keys to lock.
-   */
-  void lockKeysForUpdate(Object... key);
-
-  /**
-   * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
-   *
-   * <ol>
-   * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
-   * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
-   * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
-   * <li>{@link #remove(Object)}</li>
-   * </ol>
-   *
-   * <p>
-   * If you want to lock several keys in single thread, you should pass all those keys in single method call. Several calls of this
-   * method in single thread are not allowed because it may lead to deadlocks.
-   * </p>
-   *
-   * This is internal method and cannot be used by end users.
-   *
-   * @param keys Keys to lock.
-   *
-   * @return the array of locks which should be unlocked when done.
-   */
-  Lock[] lockKeysForUpdate(Collection<Object> keys);
-
-  /**
-   * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
-   *
-   * <ol>
-   * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
-   * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
-   * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
-   * <li>{@link #remove(Object)}</li>
-   * </ol>
-   *
-   * This is internal method and cannot be used by end users.
-   *
-   * @param key Keys to unlock.
-   */
-  void releaseKeysForUpdate(Object... key);
-
   OIndexMetadata loadMetadata(ODocument iConfig);
 
   void setRebuildingFlag();
