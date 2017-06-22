@@ -226,7 +226,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
     acquireExclusiveLock();
     try {
-      getServerLocale();
       final OIndex<?> idx = indexes.remove(iIndexName);
       if (idx != null) {
         final Set<String> clusters = idx.getClusters();
@@ -355,7 +354,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
       clearMetadata();
       final Collection<ODocument> indexDocuments = document.field(CONFIG_INDEXES);
-      getServerLocale();
 
       if (indexDocuments != null) {
         OIndexInternal<?> index;
@@ -553,6 +551,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       final boolean automatic = indexDefinition != null && indexDefinition.isAutomatic();
       // XXX: At this moment Lucene-based indexes are not durable, so we still need to rebuild them.
       final boolean durable = !"LUCENE".equalsIgnoreCase(indexMetadata.getAlgorithm());
+
+      // The database and its index manager are in a special half-open state now, the index manager is created, but not populated
+      // with the index metadata, we have to rebuild the whole index list manually and insert it into the index manager.
 
       if (automatic) {
         if (durable) {
