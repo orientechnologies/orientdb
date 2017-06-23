@@ -6,6 +6,8 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -374,6 +376,32 @@ public class RemoteTransactionSupportTest {
     val.add(edge.getIdentity());
     assertEquals(result1.next().getProperty("out_MyE"), val);
     result1.close();
+  }
+
+  @Test
+  public void testRidbagsTx() {
+    database.begin();
+
+    OElement v1 = database.newElement("SomeTx");
+    OElement v2 = database.newElement("SomeTx");
+    database.save(v2);
+    ORidBag ridbag = new ORidBag();
+    ridbag.add(v2.getIdentity());
+    v1.setProperty("rids", ridbag);
+    database.save(v1);
+    OResultSet result1 = database.query("select rids from SomeTx where rids is not null");
+    assertTrue(result1.hasNext());
+    OElement v3 = database.newElement("SomeTx");
+    database.save(v3);
+    ArrayList<Object> val = new ArrayList<>();
+    val.add(v2.getIdentity());
+    assertEquals(result1.next().getProperty("rids"), val);
+    result1.close();
+    result1 = database.query("select rids from SomeTx where rids is not null");
+    assertTrue(result1.hasNext());
+    assertEquals(result1.next().getProperty("rids"), val);
+    result1.close();
+
   }
 
   @After

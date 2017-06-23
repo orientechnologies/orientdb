@@ -466,7 +466,9 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   private OIdentifiable readOptimizedLink(final BytesContainer bytes) {
     ORecordId id = new ORecordId(OVarIntSerializer.readAsInteger(bytes), OVarIntSerializer.readAsLong(bytes));
     if (id.isTemporary()) {
-      return id.getRecord();
+      OIdentifiable persRef = id.getRecord();
+      if (persRef != null)
+        return persRef;
     }
     return id;
   }
