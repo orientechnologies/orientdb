@@ -13,9 +13,9 @@ import java.io.IOException;
  */
 public class OSubscribeLiveQueryResponse implements OBinaryResponse {
 
-  private long monitorId;
+  private int monitorId;
 
-  public OSubscribeLiveQueryResponse(long monitorId) {
+  public OSubscribeLiveQueryResponse(int monitorId) {
     this.monitorId = monitorId;
   }
 
@@ -24,15 +24,15 @@ public class OSubscribeLiveQueryResponse implements OBinaryResponse {
 
   @Override
   public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-    channel.writeLong(monitorId);
+    channel.writeInt(monitorId);
   }
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    monitorId = network.readLong();
+    monitorId = network.readInt();
   }
 
-  public long getMonitorId() {
+  public int getMonitorId() {
     return monitorId;
   }
 }

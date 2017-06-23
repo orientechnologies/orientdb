@@ -120,7 +120,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private final Set<OStorageRemoteSession> sessions = Collections
       .newSetFromMap(new ConcurrentHashMap<OStorageRemoteSession, Boolean>());
 
-  private final Map<Long, OLiveQueryClientListener> liveQueryListener = new ConcurrentHashMap<>();
+  private final Map<Integer, OLiveQueryClientListener> liveQueryListener = new ConcurrentHashMap<>();
   private volatile OStorageRemotePushThread pushThread;
 
   public OStorageRemote(final String iURL, final String iMode, ORemoteConnectionManager connectionManager) throws IOException {
@@ -472,7 +472,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       }
     }
     // FROM HERE FORWARD COMPLETELY CLOSE THE STORAGE
-    for (Entry<Long, OLiveQueryClientListener> listener : liveQueryListener.entrySet()) {
+    for (Entry<Integer, OLiveQueryClientListener> listener : liveQueryListener.entrySet()) {
       listener.getValue().onEnd();
     }
     liveQueryListener.clear();
@@ -1852,12 +1852,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return new OLiveQueryMonitorRemote(database, response.getMonitorId());
   }
 
-  public void unsubscribeLive(ODatabaseDocumentRemote database, long monitorId) {
+  public void unsubscribeLive(ODatabaseDocumentRemote database, int monitorId) {
     OUnsubscribeRequest request = new OUnsubscribeRequest(new OUnsubscribeLiveQueryRequest(monitorId));
     OUnsubscribeResponse response = networkOperation(request, "Error on unsubscribe of live query");
   }
 
-  public void registerLiveListener(long monitorId, OLiveQueryClientListener listener) {
+  public void registerLiveListener(int monitorId, OLiveQueryClientListener listener) {
     liveQueryListener.put(monitorId, listener);
   }
 

@@ -16,24 +16,24 @@ import java.io.IOException;
  */
 public class OUnsubscribeLiveQueryRequest implements OBinaryRequest<OUnsubscribLiveQueryResponse> {
 
-  private long monitorId;
+  private int monitorId;
 
   public OUnsubscribeLiveQueryRequest() {
 
   }
 
-  public OUnsubscribeLiveQueryRequest(long monitorId) {
+  public OUnsubscribeLiveQueryRequest(int monitorId) {
     this.monitorId = monitorId;
   }
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
-    network.writeLong(monitorId);
+    network.writeInt(monitorId);
   }
 
   @Override
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-    monitorId = channel.readLong();
+    monitorId = channel.readInt();
   }
 
   @Override
@@ -51,7 +51,7 @@ public class OUnsubscribeLiveQueryRequest implements OBinaryRequest<OUnsubscribL
     return executor.executeUnsubscribeLiveQuery(this);
   }
 
-  public long getMonitorId() {
+  public int getMonitorId() {
     return monitorId;
   }
 

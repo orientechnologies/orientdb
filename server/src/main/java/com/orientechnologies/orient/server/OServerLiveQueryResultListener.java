@@ -16,13 +16,13 @@ import java.util.Collections;
  */
 class OServerLiveQueryResultListener implements OLiveQueryResultListener {
   private final ONetworkProtocolBinary protocol;
-  private       long                   monitorId;
+  private       int                    monitorId;
 
   public OServerLiveQueryResultListener(ONetworkProtocolBinary protocol) {
     this.protocol = protocol;
   }
 
-  public void setMonitorId(long monitorId) {
+  public void setMonitorId(int monitorId) {
     this.monitorId = monitorId;
   }
 

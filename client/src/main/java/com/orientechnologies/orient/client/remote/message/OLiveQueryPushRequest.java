@@ -20,11 +20,11 @@ public class OLiveQueryPushRequest implements OBinaryPushRequest {
   public static final byte HAS_MORE = 1;
   public static final byte END      = 2;
 
-  private long                   monitorId;
+  private int                    monitorId;
   private byte                   status;
   private List<OLiveQueryResult> events;
 
-  public OLiveQueryPushRequest(long monitorId, byte status, List<OLiveQueryResult> events) {
+  public OLiveQueryPushRequest(int monitorId, byte status, List<OLiveQueryResult> events) {
     this.monitorId = monitorId;
     this.status = status;
     this.events = events;
@@ -36,7 +36,7 @@ public class OLiveQueryPushRequest implements OBinaryPushRequest {
 
   @Override
   public void write(OChannelDataOutput channel) throws IOException {
-    channel.writeLong(monitorId);
+    channel.writeInt(monitorId);
     channel.writeByte(status);
     channel.writeInt(events.size());
     for (OLiveQueryResult event : events) {
@@ -50,7 +50,7 @@ public class OLiveQueryPushRequest implements OBinaryPushRequest {
 
   @Override
   public void read(OChannelDataInput network) throws IOException {
-    monitorId = network.readLong();
+    monitorId = network.readInt();
     status = network.readByte();
     int eventSize = network.readInt();
     events = new ArrayList<>(eventSize);
@@ -81,7 +81,7 @@ public class OLiveQueryPushRequest implements OBinaryPushRequest {
     return OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY;
   }
 
-  public long getMonitorId() {
+  public int getMonitorId() {
     return monitorId;
   }
 
