@@ -118,12 +118,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     iServer.getDatabases().replaceFactory(new OEmbeddedDatabaseInstanceFactory() {
       @Override
       public ODatabaseDocumentEmbedded newInstance(OStorage storage) {
-        return new ODatabaseDocumentDistributed(getStorage(storage.getName(), (OAbstractPaginatedStorage) storage), OHazelcastPlugin.this);
+        if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
+          return new ODatabaseDocumentEmbedded(storage);
+        }
+        return new ODatabaseDocumentDistributed(getStorage(storage.getName(), (OAbstractPaginatedStorage) storage),
+            OHazelcastPlugin.this);
       }
 
       @Override
       public ODatabaseDocumentEmbedded newPoolInstance(ODatabasePoolInternal pool, OStorage storage) {
-        return new ODatabaseDocumentDistributedPooled(pool, getStorage(storage.getName(), (OAbstractPaginatedStorage) storage), OHazelcastPlugin.this);
+        if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
+          return new OEmbeddedDatabasePool(pool, storage);
+        }
+        return new ODatabaseDocumentDistributedPooled(pool, getStorage(storage.getName(), (OAbstractPaginatedStorage) storage),
+            OHazelcastPlugin.this);
       }
     });
   }
