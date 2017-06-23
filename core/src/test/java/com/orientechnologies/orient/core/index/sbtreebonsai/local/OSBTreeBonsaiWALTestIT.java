@@ -302,13 +302,13 @@ public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalTestIT {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1);
+            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1, false);
             if (cacheEntry == null) {
               do {
                 if (cacheEntry != null)
                   expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
 
-                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
+                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false);
               } while (cacheEntry.getPageIndex() != pageIndex);
             }
 

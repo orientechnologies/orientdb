@@ -47,6 +47,7 @@
             -Ddb.makeFullCheckpointOnSchemaChange=false
             -Dsecurity.userPasswordSaltIterations=10
             -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager
+            -Dstorage.diskCache.checksumMode=storeAndThrow
         </argLine>
     </properties>
 

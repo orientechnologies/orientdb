@@ -118,7 +118,7 @@ public class OAtomicOperation {
         if (pageChangesContainer.isNew) {
           return pageChangesContainer;
         } else {
-          OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount);
+          OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
           pageChangesContainer.delegate = delegate;
           return pageChangesContainer;
         }
@@ -400,14 +400,14 @@ public class OAtomicOperation {
             continue;
           final long pageIndex = filePageChangesEntry.getKey();
 
-          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1);
+          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, true);
           if (cacheEntry == null) {
             assert filePageChanges.isNew;
             do {
               if (cacheEntry != null)
                 readCache.releaseFromWrite(cacheEntry, writeCache);
 
-              cacheEntry = readCache.allocateNewPage(fileId, writeCache);
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache, true);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 

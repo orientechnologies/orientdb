@@ -38,7 +38,10 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -197,10 +200,9 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     }
   }
 
-
   @Override
-  public OCacheEntry loadForWrite(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount)
-      throws IOException {
+  public OCacheEntry loadForWrite(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
+      boolean verifyChecksums) throws IOException {
 
     final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
 
@@ -213,8 +215,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OCacheEntry loadForRead(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount)
-      throws IOException {
+  public OCacheEntry loadForRead(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
+      boolean verifyChecksums) throws IOException {
 
     final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
 
@@ -259,7 +261,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) {
+  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums) {
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
         .getSessionPerformanceStatistic();
 
@@ -308,7 +310,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
     doRelease(cacheEntry);
   }
-
 
   private void doRelease(OCacheEntry cacheEntry) {
     synchronized (cacheEntry) {
@@ -645,7 +646,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit) {
+  public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
+      boolean verifyChecksums) {
     throw new UnsupportedOperationException();
   }
 

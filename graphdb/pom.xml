@@ -60,6 +60,7 @@
             -Ddb.makeFullCheckpointOnIndexChange=false
             -Ddb.makeFullCheckpointOnSchemaChange=false
             -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager
+            -Dstorage.diskCache.checksumMode=storeAndThrow
         </argLine>
     </properties>
 

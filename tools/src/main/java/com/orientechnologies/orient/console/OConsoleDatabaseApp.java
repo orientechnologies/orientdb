@@ -2514,7 +2514,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         resultSet.add(row);
 
         row.field("NAME", cfg.getKey());
-        row.field("VALUE", cfg.getValue());
+        row.field("VALUE", (Object) cfg.getValue());
       }
 
       final OTableFormatter formatter = new OTableFormatter(this);

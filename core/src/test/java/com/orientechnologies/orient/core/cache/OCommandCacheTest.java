@@ -100,8 +100,8 @@ public class OCommandCacheTest {
       int maxResultsetSize = cfg.field("maxResultsetSize");
       Assert.assertEquals(enabled, OGlobalConfiguration.COMMAND_CACHE_ENABLED.getValue());
       Assert.assertEquals(evictStrategy.toString(), OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY.getValue().toString());
-      Assert.assertEquals(minExecutionTime, OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValue());
-      Assert.assertEquals(maxResultsetSize, OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValue());
+      Assert.assertEquals((Object) minExecutionTime, OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValue());
+      Assert.assertEquals((Object) maxResultsetSize, OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValue());
 
     } catch (IOException e) {
       Assert.fail("Cannot find file configuration");

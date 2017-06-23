@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.OChecksumMode;
 
 import java.io.PrintStream;
 import java.util.Locale;
@@ -152,6 +153,14 @@ public enum OGlobalConfiguration {
       "Keep disk cache state between moment when storage is closed and moment when it is opened again. true by default",
       Boolean.class, true),
 
+  STORAGE_CHECKSUM_MODE("storage.diskCache.checksumMode", "Controls the per-page checksum storage and verification done by "
+      + "the file cache. Possible modes: 'off' – checksums are completely off; 'store' – checksums are calculated and stored "
+      + "on page flushes, no verification is done on page loads, stored checksums are verified only during user-initiated health "
+      + "checks; 'storeAndVerify' (default) – checksums are calculated and stored on page flushes, verification is performed on "
+      + "each page load, errors are reported in the log; 'storeAndThrow' – same as `storeAndVerify` with addition of exceptions "
+      + "thrown on errors, this mode is useful for debugging and testing, but should be avoided in a production environment.",
+      OChecksumMode.class, OChecksumMode.StoreAndVerify, false),
+
   @Deprecated STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Indicates a force sync should be performed for each update on the storage configuration", Boolean.class, true),
 
@@ -226,9 +235,6 @@ public enum OGlobalConfiguration {
 
   WAL_LOCATION("storage.wal.path", "Path to the WAL file on the disk. By default, it is placed in the DB directory, but"
       + " it is highly recommended to use a separate disk to store log operations", String.class, null),
-
-  DISK_CACHE_ADD_DATA_VERIFICATION("storage.diskCache.addDataVerification", "Add CRC32 and magic number to the page", Boolean.class,
-      false),
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer (in kilobytes). !!! NEVER CHANGE THIS VALUE !!!",
       Integer.class, 64),
@@ -439,8 +445,7 @@ public enum OGlobalConfiguration {
   NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length (in KB) of BINARY requests",
       Integer.class, 16384, true),
 
-  @Deprecated
-  NETWORK_BINARY_READ_RESPONSE_MAX_TIMES("network.binary.readResponse.maxTimes",
+  @Deprecated NETWORK_BINARY_READ_RESPONSE_MAX_TIMES("network.binary.readResponse.maxTimes",
       "Maximum attempts, until a response can be read. Otherwise, the response will be dropped from the channel", Integer.class, 20,
       true),
 
@@ -919,9 +924,9 @@ public enum OGlobalConfiguration {
     readConfiguration();
   }
 
-  private final String   key;
-  private final Object   defValue;
-  private final Class<?> type;
+  private final String                       key;
+  private final Object                       defValue;
+  private final Class<?>                     type;
   private final String                       description;
   private final OConfigurationChangeCallback changeCallback;
   private final Boolean                      canChangeAtRuntime;
@@ -1025,8 +1030,9 @@ public enum OGlobalConfiguration {
     }
   }
 
-  public Object getValue() {
-    return value != null ? value : defValue;
+  public <T> T getValue() {
+    //noinspection unchecked
+    return (T) (value != null ? value : defValue);
   }
 
   public void setValue(final Object iValue) {
@@ -1041,7 +1047,29 @@ public enum OGlobalConfiguration {
         value = Float.parseFloat(iValue.toString());
       else if (type == String.class)
         value = iValue.toString();
-      else
+      else if (type.isEnum()) {
+        boolean accepted = false;
+
+        if (type.isInstance(iValue)) {
+          value = iValue;
+          accepted = true;
+        } else if (iValue instanceof String) {
+          final String string = (String) iValue;
+
+          for (Object constant : type.getEnumConstants()) {
+            final Enum<?> enumConstant = (Enum<?>) constant;
+
+            if (enumConstant.name().equalsIgnoreCase(string)) {
+              value = enumConstant;
+              accepted = true;
+              break;
+            }
+          }
+        }
+
+        if (!accepted)
+          throw new IllegalArgumentException("Invalid value of `" + key + "` option.");
+      } else
         value = iValue;
 
     if (changeCallback != null) {

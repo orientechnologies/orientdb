@@ -4163,13 +4163,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
 
-        OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1);
+        OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, false);
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null)
               readCache.releaseFromWrite(cacheEntry, writeCache);
 
-            cacheEntry = readCache.allocateNewPage(fileId, writeCache);
+            cacheEntry = readCache.allocateNewPage(fileId, writeCache, false);
           } while (cacheEntry.getPageIndex() != pageIndex);
         }
 

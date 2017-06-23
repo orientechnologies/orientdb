@@ -16,11 +16,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -303,13 +299,13 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1);
+            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1, false);
             if (cacheEntry == null) {
               do {
                 if (cacheEntry != null)
                   expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
 
-                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
+                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false);
               } while (cacheEntry.getPageIndex() != pageIndex);
             }
 
