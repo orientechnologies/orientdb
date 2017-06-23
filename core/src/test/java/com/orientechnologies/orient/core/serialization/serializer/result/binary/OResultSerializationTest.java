@@ -147,6 +147,7 @@ public class OResultSerializationTest {
     listMixed.add("hello");
     listMixed.add(new Date());
     listMixed.add((byte) 10);
+    listMixed.add(null);
     document.setProperty("listMixed", listMixed);
 
     OResult extr = serializeDeserialize(document);

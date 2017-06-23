@@ -743,6 +743,7 @@ public class ODocumentSchemalessBinarySerializationTest {
     List<ODocument> embeddedList = new ArrayList<ODocument>();
     embeddedList.add(embeddedInList);
     embeddedList.add(embeddedInList2);
+    embeddedList.add(null);
     embeddedList.add(new ODocument());
     document.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
 
@@ -764,10 +765,11 @@ public class ODocumentSchemalessBinarySerializationTest {
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
 
     List<ODocument> ser = extr.field("embeddedList");
-    assertEquals(ser.size(), 3);
+    assertEquals(ser.size(), 4);
     assertNotNull(ser.get(0));
     assertNotNull(ser.get(1));
-    assertNotNull(ser.get(2));
+    assertNull(ser.get(2));
+    assertNotNull(ser.get(3));
     ODocument inList = ser.get(0);
     assertNotNull(inList);
     assertEquals(inList.<Object>field("name"), embeddedInList.field("name"));
@@ -858,7 +860,7 @@ public class ODocumentSchemalessBinarySerializationTest {
     document.removeField("oldAge");
 
     byte[] res = serializer.toStream(document, false);
-    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] { });
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
 
     assertEquals(document.field("name"), extr.<Object>field("name"));
     assertEquals(document.<Object>field("age"), extr.field("age"));
@@ -877,22 +879,18 @@ public class ODocumentSchemalessBinarySerializationTest {
 
     byte[] res = serializer.toStream(document, false);
 
-
     ODocument extr = new ODocument(res);
 
-    ORecordInternal.setRecordSerializer(extr,serializer);
+    ORecordInternal.setRecordSerializer(extr, serializer);
 
     assertEquals(document.field("name"), extr.<Object>field("name"));
     assertEquals(document.<Object>field("age"), extr.field("age"));
     assertEquals(document.<Object>field("youngAge"), extr.field("youngAge"));
     assertEquals(document.<Object>field("oldAge"), extr.field("oldAge"));
 
-
-    assertEquals(document.fieldNames().length,extr.fieldNames().length);
-
+    assertEquals(document.fieldNames().length, extr.fieldNames().length);
 
   }
-
 
   public static class Custom implements OSerializableStream {
     byte[] bytes = new byte[10];

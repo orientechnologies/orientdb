@@ -331,7 +331,7 @@ public class OResultSerializerNetwork {
     final int items = OVarIntSerializer.readAsInteger(bytes);
     for (int i = 0; i < items; i++) {
       OType itemType = readOType(bytes);
-      if (itemType == OType.ANY)
+      if (itemType == null)
         found.add(null);
       else
         found.add(deserializeValue(bytes, itemType));
