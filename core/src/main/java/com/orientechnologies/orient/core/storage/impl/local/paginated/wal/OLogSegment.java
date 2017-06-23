@@ -175,7 +175,8 @@ final class OLogSegment implements Comparable<OLogSegment> {
         }
 
         OLogSequenceNumber lsn = null;
-        int pageIndex = 0;
+        long pageIndex = 0;
+
         int pos;
         boolean lastToFlush = false;
 
@@ -183,7 +184,8 @@ final class OLogSegment implements Comparable<OLogSegment> {
         for (OLogRecord log : toFlush) {
           lsn = new OLogSequenceNumber(order, log.writeFrom);
           pos = (int) (log.writeFrom % OWALPage.PAGE_SIZE);
-          pageIndex = (int) (log.writeFrom / OWALPage.PAGE_SIZE);
+          pageIndex = log.writeFrom / OWALPage.PAGE_SIZE;
+
           int written = 0;
 
           while (written < log.record.length) {
