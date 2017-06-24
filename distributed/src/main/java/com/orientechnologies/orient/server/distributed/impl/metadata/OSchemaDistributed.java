@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -30,5 +31,23 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   @Override
   protected OClassImpl createClassInstance(ODocument c) {
     return new OClassDistributed(this, c, (String) c.field("name"));
+  }
+
+  public void acquireSchemaWriteLock(ODatabaseDocumentInternal database) {
+    if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+      ((OAutoshardedStorage) database.getStorage()).acquireDistributedExclusiveLock(0);
+    }
+    super.acquireSchemaWriteLock(database);
+  }
+
+  @Override
+  public void releaseSchemaWriteLock(ODatabaseDocumentInternal database) {
+    try {
+      super.releaseSchemaWriteLock(database);
+    } finally {
+      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+        ((OAutoshardedStorage) database.getStorage()).releaseDistributedExclusiveLock();
+      }
+    }
   }
 }

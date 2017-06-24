@@ -201,7 +201,8 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     return getOrCreateClass(database, iClassName, superClass == null ? new OClass[0] : new OClass[] { superClass });
   }
 
-  public abstract OClass getOrCreateClass(ODatabaseDocumentInternal database, final String iClassName, final OClass... superClasses);
+  public abstract OClass getOrCreateClass(ODatabaseDocumentInternal database, final String iClassName,
+      final OClass... superClasses);
 
   public OClass createAbstractClass(ODatabaseDocumentInternal database, final String className) {
     return createClass(database, className, null, new int[] { -1 });
@@ -219,9 +220,11 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     return createClass(database, className, clusterIds, superClass);
   }
 
-  public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int[] clusterIds, OClass... superClasses);
+  public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int[] clusterIds,
+      OClass... superClasses);
 
-  public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters, OClass... superClasses);
+  public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters,
+      OClass... superClasses);
 
   public abstract void checkEmbedded();
 
@@ -358,15 +361,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     rwSpinLock.releaseReadLock();
   }
 
-  private boolean isDistributed(ODatabaseDocumentInternal database) {
-    return database.getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
-  }
-
   public void acquireSchemaWriteLock(ODatabaseDocumentInternal database) {
-    if (isDistributed(database)) {
-      ((OAutoshardedStorage) database.getStorage()).acquireDistributedExclusiveLock(0);
-      acquiredDistributed = true;
-    }
     rwSpinLock.acquireWriteLock();
     modificationCounter.increment();
   }
@@ -377,7 +372,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   public void releaseSchemaWriteLock(ODatabaseDocumentInternal database, final boolean iSave) {
     int count;
-    boolean releaseDistributed = acquiredDistributed;
     try {
       if (modificationCounter.intValue() == 1) {
         // if it is embedded storage modification of schema is done by internal methods otherwise it is done by
@@ -390,16 +384,12 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
             reload();
         else
           snapshot = new OImmutableSchema(this);
-        this.acquiredDistributed = false;
         version++;
       }
     } finally {
       modificationCounter.decrement();
       count = modificationCounter.intValue();
       rwSpinLock.releaseWriteLock();
-      if (isDistributed(database) && releaseDistributed) {
-        ((OAutoshardedStorage) database.getStorage()).releaseDistributedExclusiveLock();
-      }
     }
     assert count >= 0;
 

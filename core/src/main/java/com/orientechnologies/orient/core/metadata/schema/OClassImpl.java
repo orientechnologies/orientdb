@@ -745,7 +745,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
 
   public static OClass addClusters(final OClass cls, final int iClusters) {
     final String clusterBase = cls.getName().toLowerCase(Locale.ENGLISH) + "_";
-    for (int i = 1; i < iClusters; ++i) {
+    for (int i = 0; i < iClusters; ++i) {
       cls.addCluster(clusterBase + i);
     }
     return cls;
