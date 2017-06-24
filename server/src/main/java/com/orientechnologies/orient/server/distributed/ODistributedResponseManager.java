@@ -1029,7 +1029,10 @@ public class ODistributedResponseManager {
               quorumResponse);
 
           for (String s : serversToFollowup) {
-            final Object response = responses.get(s);
+            Object response = responses.get(s);
+            if( response == NO_RESPONSE)
+              response = null;
+
             if (quorumResponse != null && !quorumResponse.equals(response)) {
               // SEND FIX
               final Object payload = response instanceof ODistributedResponse ?
