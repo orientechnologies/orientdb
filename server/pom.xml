@@ -15,7 +15,7 @@
     <name>OrientDB Gremlin Server Plugin</name>
     <artifactId>orientdb-gremlin-server</artifactId>
     <properties>
-        <tinkerpop.version>3.2.4</tinkerpop.version>
+        <tinkerpop.version>3.2.5</tinkerpop.version>
     </properties>
     <dependencies>
         <dependency>
@@ -46,23 +46,13 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-lucene</artifactId>
             <version>${project.parent.version}</version>
-            <!--<exclusions>-->
-            <!--<exclusion>-->
-            <!--<groupId>com.orientechnologies</groupId>-->
-            <!--<artifactId>orientdb-graphdb</artifactId>-->
-            <!--</exclusion>-->
-            <!--</exclusions>-->
+
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-distributed</artifactId>
             <version>${project.parent.version}</version>
-            <!--<exclusions>-->
-            <!--<exclusion>-->
-            <!--<groupId>com.orientechnologies</groupId>-->
-            <!--<artifactId>orientdb-graphdb</artifactId>-->
-            <!--</exclusion>-->
-            <!--</exclusions>-->
+
         </dependency>
 
         <dependency>
