@@ -488,6 +488,12 @@ public class ODocumentHelper {
                 if (Boolean.TRUE.equals(result)) {
                   values.add(v);
                 }
+              } else if (v instanceof Map) {
+                ODocument doc = new ODocument().fromMap((Map<String, ? extends Object>) v);
+                Object result = pred.evaluate(doc, doc, iContext);
+                if (Boolean.TRUE.equals(result)) {
+                  values.add(v);
+                }
               }
             }
 

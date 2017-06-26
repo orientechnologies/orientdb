@@ -1632,6 +1632,22 @@ public class OCommandExecutorSQLSelectTest {
     Assert.assertEquals(results.get(0).field("name"), "bar");
   }
 
+  @Test
+  public void testFilterListsOfMaps() {
+
+    String className = "testFilterListaOfMaps";
+
+    db.command(new OCommandSQL("create class " + className)).execute();
+    db.command(new OCommandSQL("create property " + className + ".tagz embeddedmap")).execute();
+    db.command(new OCommandSQL("insert into " + className + " set tagz = {}")).execute();
+    db.command(new OCommandSQL("update " + className + " SET tagz.foo = [{name:'a', surname:'b'}, {name:'c', surname:'d'}]")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select tagz.values()[0][name = 'a'] as t from "+className));
+    Assert.assertEquals(results.size(), 1);
+    Map map = results.get(0).field("t");
+    Assert.assertEquals(map.get("surname"), "b");
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {
