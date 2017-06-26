@@ -82,6 +82,11 @@ class GraphModelPanelComponent implements OnInit, OnChanges {
     this.graphComponent.redraw();
   }
 
+  invalidateMigrationConfig() {
+    this.dataLoaded = false;
+    this.modellingConfig = undefined;
+  }
+
   prepareSearchOptions() {
 
     // collect all the node names for search auto-complete

@@ -59,13 +59,9 @@ class TeleporterComponent implements AfterViewChecked {
   @ViewChild('graphPanel') graphPanel;
 
   constructor(private teleporterService: TeleporterService, private notification: NotificationService,
-              private agentService: AgentService, private zone: NgZone) {
+              private zone: NgZone) {
 
-    // agent
-    this.agentService.isActive().then(() => {
-      this.init();
-    });
-
+    this.init();
   }
 
   init() {
@@ -185,10 +181,7 @@ class TeleporterComponent implements AfterViewChecked {
     else if(step === '4') {
 
       // fetching migration config
-      this.getMigrationConfig().then((data) => {
-        this.modellingConfig = data;
-        this.onMigrationConfigFetched.emit();
-      })
+      this.getMigrationConfig();
     }
     this.step = step;
 
@@ -210,7 +203,12 @@ class TeleporterComponent implements AfterViewChecked {
   }
 
   getMigrationConfig() {
-    return this.teleporterService.getMigrationConfig(this.config);
+    this.teleporterService.getMigrationConfig(this.config).then((data) => {
+      this.modellingConfig = data;
+      this.onMigrationConfigFetched.emit();
+    }).catch((error) => {
+      this.notification.push({content: error.json(), error: true, autoHide: true});
+    });
   }
 
   updateIncludedTables(includedTables) {
@@ -260,18 +258,21 @@ class TeleporterComponent implements AfterViewChecked {
     // fetching modelling config if it's not undefined and preparation
     if(this.modellingConfig) {
 
+      // copying the configuration object
+      var configCopy = JSON.parse(JSON.stringify(this.modellingConfig));
+
       // deleting source and target for each edge definition
-      for (var edge of this.modellingConfig.edges) {
+      for (var edge of configCopy.edges) {
         delete edge.source;
         delete edge.target;
       }
 
       // aggregating edges with the same name (that is all the edges representing the same edge class)
-      for (var i = 0; i < this.modellingConfig.edges.length; i++) {
-        var elementToAggregate = this.modellingConfig.edges[i];
+      for (var i = 0; i < configCopy.edges.length; i++) {
+        var elementToAggregate = configCopy.edges[i];
         var elementToAggregateName = this.getEdgeClassName(elementToAggregate);
-        for (var j = i + 1; j < this.modellingConfig.edges.length; j++) {
-          var currEdge = this.modellingConfig.edges[j];
+        for (var j = i + 1; j < configCopy.edges.length; j++) {
+          var currEdge = configCopy.edges[j];
           var currEdgeName = this.getEdgeClassName(currEdge);
 
           if (elementToAggregateName === currEdgeName) {
@@ -280,15 +281,14 @@ class TeleporterComponent implements AfterViewChecked {
             elementToAggregate[elementToAggregateName].mapping.push(currEdge[currEdgeName].mapping[0]);
 
             // delete the duplicate edges
-            this.modellingConfig.edges.splice(j, 1);
+            configCopy.edges.splice(j, 1);
 
             // decreasing j as the array shifted after the delete
             j--;
           }
         }
       }
-
-      this.config.migrationConfig = JSON.stringify(this.modellingConfig);
+      this.config.migrationConfig = JSON.stringify(configCopy);
     }
 
     this.config.outDbUrl = this.config.protocol + ":" + this.config.outDBName;
@@ -299,6 +299,11 @@ class TeleporterComponent implements AfterViewChecked {
         this.config.includedTables.push(this.includedTables[i].tableName);
       }
     }
+
+    // invalidate the old migration config
+    this.modellingConfig = undefined;
+    this.selectedElement = undefined;
+    this.graphPanel.invalidateMigrationConfig();
 
     this.teleporterService.launch(this.config).then((data) => {
       this.step = "running";
