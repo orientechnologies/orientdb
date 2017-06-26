@@ -26,10 +26,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
  * checks all the clients can auto-reconnect to the next available server.
  */
 public class HACrashTest extends AbstractServerClusterTxTest {
-  final static int         SERVERS         = 3;
-  volatile private boolean inserting       = true;
-  volatile private int     serverStarted   = 0;
-  volatile private boolean serverRestarted = false;
+  private final static int     SERVERS         = 3;
+  private volatile     boolean inserting       = true;
+  private volatile     int     serverStarted   = 0;
+  private volatile     boolean serverRestarted = false;
 
   @Test
   public void test() throws Exception {

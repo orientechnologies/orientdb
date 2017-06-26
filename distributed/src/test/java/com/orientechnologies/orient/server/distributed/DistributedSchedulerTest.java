@@ -47,6 +47,13 @@ public class DistributedSchedulerTest extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
+
+    waitForDatabaseIsOnline(0, serverInstance.get(1).getServerInstance().getDistributedManager().getLocalNodeName(),
+        getDatabaseName(), 20000);
+
+    waitForDatabaseIsOnline(1, serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName(),
+        getDatabaseName(), 20000);
+
     eventByAPI();
     eventBySQL();
 

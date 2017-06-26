@@ -7,9 +7,11 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import org.junit.Assert;
+import org.junit.Ignore;
 
 import java.util.concurrent.CountDownLatch;
 
+@Ignore
 public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2ServerTest {
 
   private static final int TOTAL   = 5;

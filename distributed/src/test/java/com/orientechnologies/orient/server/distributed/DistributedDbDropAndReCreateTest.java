@@ -26,7 +26,7 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
  * Distributed test on drop + recreate database.
  */
 public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTest {
-  final static int SERVERS = 3;
+  private final static int SERVERS = 3;
 
   @Test
   public void test() throws Exception {
@@ -40,10 +40,7 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
   protected void onAfterExecution() throws Exception {
     int s = 0;
     do {
-      ServerRun server = serverInstance.get(s);
-
-      Thread.sleep(10000);
-
+      ServerRun server = serverInstance.get(0);
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
       db.open("admin", "admin");
 
@@ -55,7 +52,7 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
 
       db.drop();
 
-      Thread.sleep(10000);
+      Thread.sleep(2000);
 
       Assert.assertFalse(server.getServerInstance().getDistributedManager().getConfigurationMap()
           .containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getDatabaseName()));

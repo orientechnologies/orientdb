@@ -74,17 +74,16 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
   @Override
   protected void onServerStarted(ServerRun server) {
     if (serverStarted++ == 0) {
-      // START THE TEST DURING 2ND NODE STARTUP
       createSchemaAndFirstVertices(server);
       startTest(server);
-
+      // START THE TEST DURING 2ND NODE STARTUP
       task = new TimerTask() {
         @Override
         public void run() {
 
           final OServer server2 = serverInstance.get(SERVERS - 1).getServerInstance();
 
-          if (server2 != null)
+          if (server2 != null) {
             if (serverDown.get() && !serverRestarting.get() && !serverRestarted.get() && !server2.isActive()
                 && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 2 / 4) {
               serverRestarting.set(true);
@@ -109,7 +108,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
                 && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 1 / 4) {
 
               // SLOW DOWN A LITTLE BIT
-              sleep = 30;
+              sleep = 5;
 
               // SHUTDOWN LASt SERVER AT 1/3 OF PROGRESS
               banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
@@ -117,9 +116,11 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
 
               serverDown.set(true);
             }
+          }
         }
       };
-      Orient.instance().scheduleTask(task, 2000, 100);
+
+      Orient.instance().scheduleTask(task, 1000, 1000);
     }
   }
 

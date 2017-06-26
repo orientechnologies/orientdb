@@ -59,9 +59,7 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
 
       banner("(RE)CREATING DATABASE " + dbName + " ON SERVER " + server.getServerId());
 
-      if(!server.getServerInstance().existsDatabase(getDatabaseName())) {
-        server.getServerInstance().createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
-      }
+      server.getServerInstance().createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
 
       waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 15000);
       waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 15000);
@@ -81,6 +79,8 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
     banner("EXECUTING FINAL TESTS");
 
     dumpDistributedDatabaseCfgOfAllTheServers();
+
+    Thread.sleep(10000);
 
     executeMultipleTest(0);
   }
