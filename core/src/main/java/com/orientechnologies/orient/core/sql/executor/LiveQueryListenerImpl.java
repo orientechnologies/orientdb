@@ -87,6 +87,7 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
 
     } catch (Exception e) {
       clientListener.onError(db);
+      throw e;
     }
   }
 
