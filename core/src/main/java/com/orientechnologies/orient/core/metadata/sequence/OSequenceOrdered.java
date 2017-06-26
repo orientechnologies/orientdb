@@ -52,7 +52,7 @@ public class OSequenceOrdered extends OSequence {
         long newValue = getValue() + getIncrement();
         setValue(newValue);
 
-        save();
+        save(getDatabase());
 
         return newValue;
       }
@@ -71,7 +71,7 @@ public class OSequenceOrdered extends OSequence {
       public Long call() throws Exception {
         long newValue = getStart();
         setValue(newValue);
-        save();
+        save(getDatabase());
 
         return newValue;
       }

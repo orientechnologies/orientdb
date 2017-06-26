@@ -66,7 +66,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
 
     sequence.updateParams(params);
     sequence.reset();
-    sequence.save();
+    sequence.save(database);
 
     OInternalResultSet result = new OInternalResultSet();
     OResultInternal item = new OResultInternal();

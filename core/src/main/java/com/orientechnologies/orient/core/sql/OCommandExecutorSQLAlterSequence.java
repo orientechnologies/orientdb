@@ -78,7 +78,7 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
 
     final boolean result = sequence.updateParams(this.params);
     sequence.reset();
-    sequence.save();
+    sequence.save(getDatabase());
     return result;
   }
 

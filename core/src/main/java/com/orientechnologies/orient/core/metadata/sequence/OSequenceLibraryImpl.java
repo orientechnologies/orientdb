@@ -96,7 +96,7 @@ public class OSequenceLibraryImpl {
     validateSequenceNoExists(key);
 
     final OSequence sequence = OSequenceHelper.createSequence(sequenceType, params, null).setName(iName);
-    sequence.save();
+    sequence.save(database);
     sequences.put(key, sequence);
 
     return sequence;

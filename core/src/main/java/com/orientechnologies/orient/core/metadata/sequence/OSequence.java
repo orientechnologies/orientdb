@@ -24,6 +24,7 @@ import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -119,6 +120,10 @@ public abstract class OSequence {
 
   public void save() {
     tlDocument.get().save();
+  }
+
+  public void save(ODatabaseDocument database) {
+    database.save(tlDocument.get());
   }
 
   void bindOnLocalThread() {
