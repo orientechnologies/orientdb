@@ -125,9 +125,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     // LOAD CFG FROM JSON FILE. THIS FILE, IF SPECIFIED, OVERWRITE DEFAULT AND XML SETTINGS
     configure();
 
-
-    if(Boolean.TRUE.equals(configuration.field("enabled"))) {
-
+    if(enabled) {
       if (delay <= 0)
         throw new OConfigurationException("Cannot find mandatory parameter 'delay'");
       if (!targetDirectory.endsWith("/"))
@@ -271,9 +269,11 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
       final String settingValueAsString = settingValue != null ? settingValue.toString() : null;
 
       if (settingName.equalsIgnoreCase("enabled")) {
-        if (!(Boolean) settingValue)
+        if (!(Boolean) settingValue) {
+          enabled = false;
           // DISABLE IT
           return;
+        }
       } else if (settingName.equalsIgnoreCase("delay"))
         delay = OIOUtils.getTimeAsMillisecs(settingValue);
       else if (settingName.equalsIgnoreCase("firstTime")) {

@@ -153,6 +153,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     try {
       manager.setDatabaseStatus(manager.getLocalNodeName(), iDatabaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
     } catch (Throwable t) {
+      ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, null, "error un-registering database", t);
       // IGNORE IT
     }
 

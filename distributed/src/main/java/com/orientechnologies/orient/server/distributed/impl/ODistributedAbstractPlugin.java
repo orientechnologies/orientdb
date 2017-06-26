@@ -648,7 +648,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (!isRelatedToLocalServer(iDatabase))
       return;
 
-    if (messageService.getDatabase(iDatabase.getName()) == null)
+    if (messageService == null || messageService.getDatabase(iDatabase.getName()) == null)
       // NOT INITIALIZED YET
       return;
 
