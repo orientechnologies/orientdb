@@ -419,6 +419,8 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
       DocumentApi.createDocument($scope.database, $scope.doc['@rid'], $scope.doc, function (data) {
         Notification.push({content: JSON.stringify(data)});
         $location.path('database/' + $scope.database + '/browse/edit/' + data['@rid'].replace('#', ''));
+      }, (err) => {
+        Notification.push({content: err, error: true, autoHide: true});
       });
     }
   }

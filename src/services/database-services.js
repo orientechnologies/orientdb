@@ -665,7 +665,6 @@ database.factory('CommandApi', ["$http", "$resource", "Notification", "Spinner",
         $('#download').append(form);
 
 
-
         query = query.replace(/ /gi, '');
         query = query.replace(/[^\w\s]/gi, '');
         query = query.replace(/^\*/gi, '');
@@ -804,7 +803,7 @@ database.factory('BatchApi', ["$http", "$resource", "Notification", "Spinner", "
 database.factory('DocumentApi', ["$http", "$resource", "Database", "$q", function ($http, $resource, Database, $q) {
 
   var resource = $resource(API + 'document/:database/:document');
-  resource.updateDocument = function (database, rid, doc, callback) {
+  resource.updateDocument = function (database, rid, doc, callback, err) {
     var deferred = $q.defer()
     $http.put(API + 'document/' + database + "/" + rid.replace('#', ''), doc).success(function (data) {
       if (callback) {
@@ -813,7 +812,7 @@ database.factory('DocumentApi', ["$http", "$resource", "Database", "$q", functio
       deferred.resolve(data);
     }).error(function (data) {
       if (callback) {
-        callback(data)
+        err(data)
       }
       deferred.reject(data);
     });
@@ -832,7 +831,7 @@ database.factory('DocumentApi', ["$http", "$resource", "Database", "$q", functio
     });
     //$http.put(API + 'document/' + database + "/" + rid.replace('#',''),doc,{headers: { 'Content-Type': undefined }}).success(callback).error(callback);
   }
-  resource.createDocument = function (database, rid, doc, callback) {
+  resource.createDocument = function (database, rid, doc, callback, err) {
     var deferred = $q.defer()
     $http.post(API + 'document/' + database + "/" + rid.replace('#', ''), doc).success(function (data) {
 
@@ -841,8 +840,8 @@ database.factory('DocumentApi', ["$http", "$resource", "Database", "$q", functio
       }
       deferred.resolve(data);
     }).error(function (data) {
-      if (callback) {
-        callback(data)
+      if (err) {
+        err(data)
       }
       deferred.reject(data);
     });
