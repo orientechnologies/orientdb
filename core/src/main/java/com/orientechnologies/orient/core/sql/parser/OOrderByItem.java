@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
 
@@ -136,5 +137,33 @@ public class OOrderByItem {
 
   public OModifier getModifier() {
     return modifier;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("alias", alias);
+    if (modifier != null) {
+      result.setProperty("modifier", modifier.serialize());
+    }
+    result.setProperty("recordAttr", recordAttr);
+    if (rid != null) {
+      result.setProperty("rid", rid.serialize());
+    }
+    result.setProperty("type", type);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    alias = fromResult.getProperty("alias");
+    if (fromResult.getProperty("modifier") != null) {
+      modifier = new OModifier(-1);
+      modifier.deserialize(fromResult.getProperty("modifier"));
+    }
+    recordAttr = fromResult.getProperty("recordAttr");
+    if (fromResult.getProperty("rid") != null) {
+      rid = new ORid(-1);
+      rid.deserialize(fromResult.getProperty("rid"));
+    }
+    type = DESC.equals(fromResult.getProperty("type")) ? DESC : ASC;
   }
 }

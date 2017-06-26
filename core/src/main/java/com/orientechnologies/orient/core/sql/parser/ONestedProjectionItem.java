@@ -3,6 +3,8 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
 
@@ -124,6 +126,41 @@ public class ONestedProjectionItem extends SimpleNode {
 
   public Object expand(OExpression expression, String name, Object value, OCommandContext ctx, int recursion) {
     return expansion.apply(expression, value, ctx);
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("exclude", exclude);
+    result.setProperty("star", star);
+    if (field != null) {
+      result.setProperty("field", field.serialize());
+    }
+    result.setProperty("rightWildcard", rightWildcard);
+    if (expansion != null) {
+      result.setProperty("expansion", expansion.serialize());
+    }
+    if (alias != null) {
+      result.setProperty("alias", alias.serialize());
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    exclude = fromResult.getProperty("exclude");
+    star = fromResult.getProperty("star");
+    if (fromResult.getProperty("field") != null) {
+      field = new OIdentifier(-1);
+      field.deserialize(fromResult.getProperty("field"));
+    }
+    rightWildcard = fromResult.getProperty("rightWildcard");
+    if (fromResult.getProperty("expansion") != null) {
+      expansion = new ONestedProjection(-1);
+      expansion.deserialize(fromResult.getProperty("expansion"));
+    }
+    if (fromResult.getProperty("alias") != null) {
+      alias = new OIdentifier(-1);
+      alias.deserialize(fromResult.getProperty("alias"));
+    }
   }
 }
 /* JavaCC - OriginalChecksum=606b3fe37ff952934e3e2e3daa9915f2 (do not edit this line) */

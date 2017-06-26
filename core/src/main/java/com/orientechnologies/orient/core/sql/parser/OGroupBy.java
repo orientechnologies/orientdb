@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +49,8 @@ public class OGroupBy extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -60,7 +64,8 @@ public class OGroupBy extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return items != null ? items.hashCode() : 0;
   }
 
@@ -77,6 +82,27 @@ public class OGroupBy extends SimpleNode {
       }
     }
     return false;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (items != null) {
+      result.setProperty("items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+
+    if (fromResult.getProperty("items") != null) {
+      List<OResult> ser = fromResult.getProperty("items");
+      items = new ArrayList<>();
+      for (OResult r : ser) {
+        OExpression exp = new OExpression(-1);
+        exp.deserialize(r);
+        items.add(exp);
+      }
+    }
   }
 }
 /* JavaCC - OriginalChecksum=4739190aa6c1a3533a89b76a15bd6fdf (do not edit this line) */

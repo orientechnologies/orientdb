@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -173,6 +174,27 @@ public class OJson extends SimpleNode {
       }
     }
     return false;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (items != null) {
+      result.setProperty("items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+
+    if (fromResult.getProperty("items") != null) {
+      List<OResult> ser = fromResult.getProperty("items");
+      items = new ArrayList<>();
+      for (OResult r : ser) {
+        OJsonItem exp = new OJsonItem();
+        exp.deserialize(r);
+        items.add(exp);
+      }
+    }
   }
 }
 /* JavaCC - OriginalChecksum=3beec9f6db486de944498588b51a505d (do not edit this line) */

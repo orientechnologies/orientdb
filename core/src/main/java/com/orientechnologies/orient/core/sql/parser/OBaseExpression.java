@@ -17,9 +17,6 @@ import java.util.Set;
 
 public class OBaseExpression extends OMathExpression {
 
-  private static final Object UNSET           = new Object();
-  private              Object inputFinalValue = UNSET;
-
   protected ONumber number;
 
   protected OBaseIdentifier identifier;
@@ -371,6 +368,51 @@ public class OBaseExpression extends OMathExpression {
         Object val = identifier.execute(result, ctx);
         modifier.applyRemove(val, result, ctx);
       }
+    }
+  }
+
+  public OResult serialize() {
+    OResultInternal result = (OResultInternal) super.serialize();
+
+    if (number != null) {
+      result.setProperty("number", number.serialize());
+    }
+    if (identifier != null) {
+      result.setProperty("identifier", identifier.serialize());
+    }
+    if (inputParam != null) {
+      result.setProperty("inputParam", inputParam.serialize());
+    }
+    if (string != null) {
+      result.setProperty("string", string);
+    }
+    if (modifier != null) {
+      result.setProperty("modifier", modifier.serialize());
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    super.deserialize(fromResult);
+
+    if (fromResult.getProperty("number") != null) {
+      number = new ONumber(-1);
+      number.deserialize(fromResult.getProperty("number"));
+    }
+    if (fromResult.getProperty("identifier") != null) {
+      identifier = new OBaseIdentifier(-1);
+      identifier.deserialize(fromResult.getProperty("identifier"));
+    }
+    if (fromResult.getProperty("inputParam") != null) {
+      inputParam = OInputParameter.deserializeFromOResult(fromResult.getProperty("inputParam"));
+    }
+
+    if (fromResult.getProperty("string") != null) {
+      string = fromResult.getProperty("string");
+    }
+    if (fromResult.getProperty("modifier") != null) {
+      modifier = new OModifier(-1);
+      modifier.deserialize(fromResult.getProperty("modifier"));
     }
   }
 }

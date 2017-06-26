@@ -4,6 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.math.BigDecimal;
 import java.text.DateFormat;
@@ -37,7 +40,7 @@ public class OInputParameter extends SimpleNode {
     return null;
   }
 
-  public Object getValue(Map<Object, Object> params){
+  public Object getValue(Map<Object, Object> params) {
     return null;
   }
 
@@ -145,6 +148,27 @@ public class OInputParameter extends SimpleNode {
   }
 
   public OInputParameter copy() {
+    throw new UnsupportedOperationException();
+  }
+
+  public static OInputParameter deserializeFromOResult(OResult doc) {
+    try {
+      OInputParameter result = (OInputParameter) Class.forName(doc.getProperty("__class")).getConstructor(Integer.class)
+          .newInstance(-1);
+      result.deserialize(doc);
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
+    return null;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("__class", getClass().getName());
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
     throw new UnsupportedOperationException();
   }
 }

@@ -232,5 +232,47 @@ public class ONestedProjection extends SimpleNode {
     }
     return value;
   }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (includeItems != null) {
+      result.setProperty("includeItems", includeItems.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    if (excludeItems != null) {
+      result.setProperty("excludeItems", excludeItems.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    if (starItem != null) {
+      result.setProperty("starItem", starItem.serialize());
+    }
+    result.setProperty("recursion", recursion);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("includeItems") != null) {
+      includeItems = new ArrayList<>();
+      List<OResult> ser = fromResult.getProperty("includeItems");
+      for (OResult x : ser) {
+        ONestedProjectionItem item = new ONestedProjectionItem(-1);
+        item.deserialize(x);
+        includeItems.add(item);
+      }
+    }
+    if (fromResult.getProperty("excludeItems") != null) {
+      excludeItems = new ArrayList<>();
+      List<OResult> ser = fromResult.getProperty("excludeItems");
+      for (OResult x : ser) {
+        ONestedProjectionItem item = new ONestedProjectionItem(-1);
+        item.deserialize(x);
+        excludeItems.add(item);
+      }
+    }
+    if (fromResult.getProperty("starItem") != null) {
+      starItem = new ONestedProjectionItem(-1);
+      starItem.deserialize(fromResult.getProperty("starItem"));
+    }
+    recursion = fromResult.getProperty("recursion");
+
+  }
 }
 /* JavaCC - OriginalChecksum=a7faf9beb3c058e28999b17cb43b26f6 (do not edit this line) */

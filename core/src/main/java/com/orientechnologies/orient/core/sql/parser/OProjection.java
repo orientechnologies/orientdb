@@ -102,10 +102,12 @@ public class OProjection extends SimpleNode {
         }
       } else {
         result.setProperty(item.getProjectionAliasAsString(), item.execute(iRecord, iContext));
-      } if (item.nestedProjection != null) {
+      }
+      if (item.nestedProjection != null) {
         result = (OResultInternal) item.nestedProjection.apply(item.expression, result, iContext);
       }
-    } return result;
+    }
+    return result;
   }
 
   public OLegacyResultSet calculateExpand(OCommandContext iContext, OResult iRecord) {
@@ -192,6 +194,29 @@ public class OProjection extends SimpleNode {
       }
     }
     return false;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("distinct", distinct);
+    if (items != null) {
+      result.setProperty("items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    distinct = fromResult.getProperty("distinct");
+    if (fromResult.getProperty("items") != null) {
+      items = new ArrayList<>();
+
+      List<OResult> ser = fromResult.getProperty("items");
+      for (OResult x : ser) {
+        OProjectionItem item = new OProjectionItem(-1);
+        item.deserialize(x);
+        items.add(item);
+      }
+    }
   }
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

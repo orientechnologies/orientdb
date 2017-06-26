@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -28,7 +29,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginated
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
+import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.File;
@@ -352,9 +355,25 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
-  public OResultSet queryOnNode(String nodeName, OResult serializedExecutionPlan, Map<Object, Object> inputParameters) {
-    //TODO
-    return null;
+  public OResultSet queryOnNode(String nodeName, OExecutionPlan executionPlan, Map<Object, Object> inputParameters) {
+    ORunQueryExecutionPlanTask task = new ORunQueryExecutionPlanTask(executionPlan, inputParameters);
+    return (OResultSet) executeTaskOnNode(task, nodeName);
+  }
+
+  protected ODistributedResponse executeTaskOnNode(ORemoteTask task, String nodeName) {
+    final String dbUrl = getURL();
+
+    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
+    final OServer serverInstance = OServer.getInstanceByPath(path);
+
+    ODistributedServerManager dManager = serverInstance.getDistributedManager();
+    if (dManager == null || !dManager.isEnabled())
+      throw new ODistributedException("OrientDB is not started in distributed mode");
+
+    final String databaseName = getName();
+
+    return dManager.sendRequest(databaseName, null, Collections.singletonList(nodeName), task, dManager.getNextMessageIdCounter(),
+        ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
   }
 
   public int assignAndCheckCluster(ORecord record, String iClusterName) {

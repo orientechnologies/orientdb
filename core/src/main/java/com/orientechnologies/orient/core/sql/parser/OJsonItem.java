@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -101,4 +104,28 @@ public class OJsonItem {
     result = 31 * result + (right != null ? right.hashCode() : 0);
     return result;
   }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("leftIdentifier", leftIdentifier.serialize());
+    result.setProperty("leftString", leftString);
+    result.setProperty("right", right.serialize());
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("leftIdentifier") != null) {
+      leftIdentifier = new OIdentifier(-1);
+      leftIdentifier.deserialize(fromResult.getProperty("leftIdentifier"));
+    }
+    if (fromResult.getProperty("leftString") != null) {
+      leftString = fromResult.getProperty("leftString");
+    }
+    if (fromResult.getProperty("right") != null) {
+      right = new OExpression(-1);
+      right.deserialize(fromResult.getProperty("right"));
+    }
+
+  }
+
 }

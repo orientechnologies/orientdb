@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.Map;
 
 public class OFloatingPoint extends ONumber {
@@ -18,7 +21,8 @@ public class OFloatingPoint extends ONumber {
     super(p, id);
   }
 
-  @Override public Number getValue() {
+  @Override
+  public Number getValue() {
     if (finalValue != null) {
       return finalValue;
     }
@@ -72,14 +76,16 @@ public class OFloatingPoint extends ONumber {
     builder.append(stringValue);
   }
 
-  @Override public OFloatingPoint copy() {
+  @Override
+  public OFloatingPoint copy() {
     OFloatingPoint result = new OFloatingPoint(-1);
     result.sign = sign;
     result.stringValue = stringValue;
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -95,10 +101,25 @@ public class OFloatingPoint extends ONumber {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = sign;
     result = 31 * result + (stringValue != null ? stringValue.hashCode() : 0);
     return result;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("sign", sign);
+    result.setProperty("stringValue", stringValue);
+    result.setProperty("finalValue", finalValue);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    sign = fromResult.getProperty("sign");
+    stringValue = fromResult.getProperty("stringValue");
+    finalValue = fromResult.getProperty("finalValue");
   }
 }
 /* JavaCC - OriginalChecksum=46acfb589f666717595e28f1b19611ae (do not edit this line) */

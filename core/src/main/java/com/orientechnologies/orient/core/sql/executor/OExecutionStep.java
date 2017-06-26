@@ -20,6 +20,7 @@ public interface OExecutionStep {
 
   /**
    * returns the absolute cost (in nanoseconds) of the execution of this step
+   *
    * @return the absolute cost (in nanoseconds) of the execution of this step, -1 if not calculated
    */
   default long getCost() {
@@ -31,11 +32,12 @@ public interface OExecutionStep {
     result.setProperty("name", getName());
     result.setProperty("type", getType());
     result.setProperty("targetNode", getType());
-    result.setProperty("javaType", getClass().getName());
+    result.setProperty(OInternalExecutionPlan.JAVA_TYPE, getClass().getName());
     result.setProperty("cost", getCost());
     result.setProperty("subSteps",
         getSubSteps() == null ? null : getSubSteps().stream().map(x -> x.toResult()).collect(Collectors.toList()));
     result.setProperty("description", getDescription());
     return result;
   }
+
 }

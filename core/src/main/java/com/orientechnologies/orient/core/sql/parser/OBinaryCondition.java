@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.*;
 
@@ -345,6 +346,26 @@ public class OBinaryCondition extends OBooleanExpression {
     OExpression result = new OExpression(-1);
     result.mathExpression = bexp;
     return result;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("left", left.serialize());
+    result.setProperty("operator", operator.getClass().getName());
+    result.setProperty("right", right.serialize());
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    left = new OExpression(-1);
+    left.deserialize(fromResult.getProperty("left"));
+    try {
+      operator = (OBinaryCompareOperator) Class.forName(String.valueOf(fromResult.getProperty("operator"))).newInstance();
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
+    right = new OExpression(-1);
+    right.deserialize(fromResult.getProperty("right"));
   }
 
 }

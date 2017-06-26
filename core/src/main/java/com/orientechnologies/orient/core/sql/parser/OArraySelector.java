@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -202,6 +203,41 @@ public class OArraySelector extends SimpleNode {
   private void setArrayValue(Object target, int idx, Object value, OCommandContext ctx) {
     if (idx >= 0 && idx < Array.getLength(target)) {
       Array.set(target, idx, value);
+    }
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (rid != null) {
+      result.setProperty("rid", rid.serialize());
+    }
+    if (inputParam != null) {
+      result.setProperty("inputParam", inputParam.serialize());
+    }
+    if (expression != null) {
+      result.setProperty("expression", expression.serialize());
+    }
+    if (integer != null) {
+      result.setProperty("integer", integer.serialize());
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("rid") != null) {
+      rid = new ORid(-1);
+      rid.deserialize(fromResult.getProperty("rid"));
+    }
+    if (fromResult.getProperty("inputParam") != null) {
+      inputParam = OInputParameter.deserializeFromOResult(fromResult.getProperty("inputParam"));
+    }
+    if (fromResult.getProperty("expression") != null) {
+      expression = new OExpression(-1);
+      expression.deserialize(fromResult.getProperty("expression"));
+    }
+    if (fromResult.getProperty("integer") != null) {
+      integer = new OInteger(-1);
+      integer.deserialize(fromResult.getProperty("integer"));
     }
   }
 }

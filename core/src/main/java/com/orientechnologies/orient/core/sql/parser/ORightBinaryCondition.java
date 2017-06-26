@@ -4,7 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.*;
 
@@ -162,6 +164,30 @@ public class ORightBinaryCondition extends SimpleNode {
       return true;
     }
     return false;
+  }
+
+  public OResult serialize() {
+
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operator", operator.getClass().getName());
+    result.setProperty("not", not);
+    result.setProperty("in", inOperator != null);
+    result.setProperty("right", right.serialize());
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    try {
+      operator = (OBinaryCompareOperator) Class.forName(String.valueOf(fromResult.getProperty("operator"))).newInstance();
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
+    not = fromResult.getProperty("not");
+    if (Boolean.TRUE.equals(fromResult.getProperty("in"))) {
+      inOperator = new OInOperator(-1);
+    }
+    right = new OExpression(-1);
+    right.deserialize(fromResult.getProperty("right"));
   }
 }
 /* JavaCC - OriginalChecksum=29d59ae04778eb611547292a27863da4 (do not edit this line) */

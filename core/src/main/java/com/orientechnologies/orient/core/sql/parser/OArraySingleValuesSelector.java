@@ -189,5 +189,25 @@ public class OArraySingleValuesSelector extends SimpleNode {
     }
   }
 
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (items != null) {
+      result.setProperty("items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+
+    if (fromResult.getProperty("items") != null) {
+      List<OResult> ser = fromResult.getProperty("items");
+      items = new ArrayList<>();
+      for (OResult r : ser) {
+        OArraySelector exp = new OArraySelector(-1);
+        exp.deserialize(r);
+        items.add(exp);
+      }
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=991998c77a4831184b6dca572513fd8d (do not edit this line) */

@@ -3,8 +3,10 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.*;
 
@@ -217,4 +219,26 @@ public abstract class OBooleanExpression extends SimpleNode {
   public void translateLuceneOperator(){
 
   }
+
+  public static OBooleanExpression deserializeFromOResult(OResult doc) {
+    try {
+      OBooleanExpression result = (OBooleanExpression) Class.forName(doc.getProperty("__class")).getConstructor(Integer.class)
+          .newInstance(-1);
+      result.deserialize(doc);
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
+    return null;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("__class", getClass().getName());
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    throw new UnsupportedOperationException();
+  }
+
 }

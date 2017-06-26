@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
 
@@ -82,6 +84,27 @@ public class OLimit extends SimpleNode {
     int result = num != null ? num.hashCode() : 0;
     result = 31 * result + (inputParam != null ? inputParam.hashCode() : 0);
     return result;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (num != null) {
+      result.setProperty("num", num.serialize());
+    }
+    if (inputParam != null) {
+      result.setProperty("inputParam", inputParam.serialize());
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("num") != null) {
+      num = new OInteger(-1);
+      num.deserialize(fromResult.getProperty("num"));
+    }
+    if (fromResult.getProperty("inputParam") != null) {
+      inputParam = OInputParameter.deserializeFromOResult(fromResult.getProperty("inputParam"));
+    }
   }
 }
 /* JavaCC - OriginalChecksum=1063b9489290bb08de6048ba55013171 (do not edit this line) */

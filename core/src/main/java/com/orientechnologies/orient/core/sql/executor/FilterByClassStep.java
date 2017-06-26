@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
@@ -12,7 +13,7 @@ import java.util.Optional;
  * Created by luigidellaquila on 01/03/17.
  */
 public class FilterByClassStep extends AbstractExecutionStep {
-  private final OIdentifier identifier;
+  private OIdentifier identifier;
 
   OResultSet prevResult = null;
 
@@ -123,4 +124,22 @@ public class FilterByClassStep extends AbstractExecutionStep {
         .getIndent(depth, indent) + "  " + identifier.getStringValue();
   }
 
+  @Override
+  public OResult serialize() {
+    OResultInternal result = OExecutionStepInternal.basicSerialize(this);
+    result.setProperty("identifier", identifier.serialize());
+
+    return result;
+  }
+
+  @Override
+  public void deserialize(OResult fromResult) {
+    try {
+      OExecutionStepInternal.basicDeserialize(fromResult, this);
+      identifier = new OIdentifier(-1);
+      identifier.deserialize(fromResult.getProperty("identifier"));
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
+  }
 }

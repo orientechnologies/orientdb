@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
 import java.util.Set;
@@ -279,6 +280,30 @@ public class OLevelZeroIdentifier extends SimpleNode {
 
   public OCollection getCollection() {
     return collection;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (functionCall != null) {
+      result.setProperty("functionCall", functionCall.serialize());
+    }
+    result.setProperty("self", self);
+    if (collection != null) {
+      result.setProperty("collection", collection.serialize());
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("functionCall") != null) {
+      functionCall = new OFunctionCall(-1);
+      functionCall.deserialize(fromResult.getProperty("functionCall"));
+    }
+    self = fromResult.getProperty("self");
+    if (fromResult.getProperty("collection") != null) {
+      collection = new OCollection(-1);
+      collection.deserialize(fromResult.getProperty("collection"));
+    }
   }
 
 }

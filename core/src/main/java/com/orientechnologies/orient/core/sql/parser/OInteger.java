@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.Map;
 
 public class OInteger extends ONumber {
@@ -92,6 +95,16 @@ public class OInteger extends ONumber {
   @Override
   public int hashCode() {
     return value != null ? value.hashCode() : 0;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("value", value);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    value = fromResult.getProperty("value");
   }
 }
 /* JavaCC - OriginalChecksum=2e6eee6366ff4e864dd6c8184d2766f5 (do not edit this line) */

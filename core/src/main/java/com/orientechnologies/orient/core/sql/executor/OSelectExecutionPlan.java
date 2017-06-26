@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,15 +24,18 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     this.ctx = ctx;
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
     lastStep.close();
   }
 
-  @Override public OResultSet fetchNext(int n) {
+  @Override
+  public OResultSet fetchNext(int n) {
     return lastStep.syncPull(ctx, n);
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < steps.size(); i++) {
       OExecutionStepInternal step = steps.get(i);
@@ -43,7 +47,8 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     return result.toString();
   }
 
-  @Override public void reset(OCommandContext ctx) {
+  @Override
+  public void reset(OCommandContext ctx) {
     steps.forEach(OExecutionStepInternal::reset);
   }
 
@@ -56,7 +61,8 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     steps.add(nextStep);
   }
 
-  @Override public List<OExecutionStep> getSteps() {
+  @Override
+  public List<OExecutionStep> getSteps() {
     //TODO do a copy of the steps
     return (List) steps;
   }
@@ -70,18 +76,44 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     }
   }
 
-  @Override public OResult toResult() {
+  @Override
+  public OResult toResult() {
     OResultInternal result = new OResultInternal();
     result.setProperty("type", "QueryExecutionPlan");
-    result.setProperty("javaType", getClass().getName());
+    result.setProperty(JAVA_TYPE, getClass().getName());
     result.setProperty("cost", getCost());
     result.setProperty("prettyPrint", prettyPrint(0, 2));
     result.setProperty("steps", steps == null ? null : steps.stream().map(x -> x.toResult()).collect(Collectors.toList()));
     return result;
   }
 
-  @Override public long getCost() {
+  @Override
+  public long getCost() {
     return 0l;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("type", "QueryExecutionPlan");
+    result.setProperty(JAVA_TYPE, getClass().getName());
+    result.setProperty("cost", getCost());
+    result.setProperty("prettyPrint", prettyPrint(0, 2));
+    result.setProperty("steps", steps == null ? null : steps.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    return result;
+  }
+
+  public void deserialize(OResult serializedExecutionPlan) {
+    List<OResult> serializedSteps = serializedExecutionPlan.getProperty("steps");
+    for (OResult serializedStep : serializedSteps) {
+      try {
+        String className = serializedStep.getProperty(JAVA_TYPE);
+        OExecutionStepInternal step = (OExecutionStepInternal) Class.forName(className).newInstance();
+        step.deserialize(serializedStep);
+        chain( step);
+      } catch (Exception e) {
+        throw new OCommandExecutionException("Cannot deserialize execution step:" + serializedStep);
+      }
+    }
   }
 }
 

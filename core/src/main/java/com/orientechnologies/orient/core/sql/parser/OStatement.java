@@ -5,9 +5,12 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
@@ -100,6 +103,27 @@ public class OStatement extends SimpleNode {
 
   public boolean isIdempotent() {
     return false;
+  }
+
+  public static OStatement deserializeFromOResult(OResult doc) {
+    try {
+      OStatement result = (OStatement) Class.forName(doc.getProperty("__class")).getConstructor(Integer.class)
+          .newInstance(-1);
+      result.deserialize(doc);
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
+    return null;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("__class", getClass().getName());
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    throw new UnsupportedOperationException();
   }
 }
 /* JavaCC - OriginalChecksum=589c4dcc8287f430e46d8eb12b0412c5 (do not edit this line) */

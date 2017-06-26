@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -188,12 +188,12 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
    * sends an execution plan to a remote node for a remote query execution
    *
    * @param nodeName                the node name
-   * @param serializedExecutionPlan the serialized representation of the execution plan
+   * @param executionPlan           the execution plan
    * @param inputParameters         the input parameters for execution
    *
    * @return an OResultSet to fetch the results of the query execution
    */
-  default OResultSet queryOnNode(String nodeName, OResult serializedExecutionPlan, Map<Object, Object> inputParameters) {
+  default OResultSet queryOnNode(String nodeName, OExecutionPlan executionPlan, Map<Object, Object> inputParameters) {
     throw new UnsupportedOperationException();
   }
 

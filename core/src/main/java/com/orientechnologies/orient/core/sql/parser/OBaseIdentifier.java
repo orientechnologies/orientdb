@@ -301,5 +301,27 @@ public class OBaseIdentifier extends SimpleNode {
     }
   }
 
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (levelZero != null) {
+      result.setProperty("levelZero", levelZero.serialize());
+    }
+    if (suffix != null) {
+      result.setProperty("suffix", suffix.serialize());
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("levelZero") != null) {
+      levelZero = new OLevelZeroIdentifier(-1);
+      levelZero.deserialize(fromResult.getProperty("levelZero"));
+    }
+    if (fromResult.getProperty("suffix") != null) {
+      suffix = new OSuffixIdentifier(-1);
+      suffix.deserialize(fromResult.getProperty("suffix"));
+    }
+  }
+
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

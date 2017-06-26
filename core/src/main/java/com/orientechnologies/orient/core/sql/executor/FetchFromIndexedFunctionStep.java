@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
 
@@ -14,8 +15,8 @@ import java.util.Optional;
  * Created by luigidellaquila on 06/08/16.
  */
 public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
-  private final OBinaryCondition functionCondition;
-  private final OFromClause      queryTarget;
+  private OBinaryCondition functionCondition;
+  private OFromClause      queryTarget;
 
   private long cost = 0;
   //runtime
@@ -116,5 +117,29 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   @Override
   public long getCost() {
     return cost;
+  }
+
+  @Override
+  public OResult serialize() {
+    OResultInternal result = OExecutionStepInternal.basicSerialize(this);
+    result.setProperty("functionCondition", this.functionCondition.serialize());
+    result.setProperty("queryTarget", this.queryTarget.serialize());
+
+    return result;
+  }
+
+  @Override
+  public void deserialize(OResult fromResult) {
+    try {
+      OExecutionStepInternal.basicDeserialize(fromResult, this);
+      functionCondition = new OBinaryCondition(-1);
+      functionCondition.deserialize(fromResult.getProperty("functionCondition "));
+
+      queryTarget = new OFromClause(-1);
+      queryTarget.deserialize(fromResult.getProperty("functionCondition "));
+
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
   }
 }

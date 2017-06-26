@@ -163,10 +163,11 @@ public class OSuffixIdentifier extends SimpleNode {
     while (iterator.hasNext()) {
       result.add(execute(iterator.next(), ctx));
     }
-    if(iterator instanceof OResultSet){
-      try{
+    if (iterator instanceof OResultSet) {
+      try {
         ((OResultSet) iterator).reset();
-      }catch (Exception e){}
+      } catch (Exception e) {
+      }
     }
     return result;
   }
@@ -378,5 +379,28 @@ public class OSuffixIdentifier extends SimpleNode {
     }
   }
 
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (identifier != null) {
+      result.setProperty("identifier", identifier.serialize());
+    }
+    if (recordAttribute != null) {
+      result.setProperty("recordAttribute", recordAttribute.serialize());
+    }
+    result.setProperty("star", star);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("identifier") != null) {
+      identifier = new OIdentifier(-1);
+      identifier.deserialize(fromResult.getProperty("identifier"));
+    }
+    if (fromResult.getProperty("recordAttribute") != null) {
+      recordAttribute = new ORecordAttribute(-1);
+      recordAttribute.deserialize(fromResult.getProperty("recordAttribute"));
+    }
+    star = fromResult.getProperty("star");
+  }
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */

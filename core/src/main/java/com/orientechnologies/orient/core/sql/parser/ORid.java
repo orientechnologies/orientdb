@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
 
@@ -155,6 +156,37 @@ public class ORid extends SimpleNode {
       }
     }
     return position;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if(cluster!=null){
+      result.setProperty("cluster", cluster.serialize());
+    }
+    if(position!=null){
+      result.setProperty("position", position.serialize());
+    }
+    if(expression!=null){
+      result.setProperty("expression", expression.serialize());
+    }
+    result.setProperty("legacy", legacy);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if(fromResult.getProperty("cluster")!=null){
+      cluster = new OInteger(-1);
+      cluster.deserialize(fromResult.getProperty("cluster"));
+    }
+    if(fromResult.getProperty("position")!=null){
+      position = new OInteger(-1);
+      position.deserialize(fromResult.getProperty("position"));
+    }
+    if(fromResult.getProperty("expression")!=null){
+      expression = new OExpression(-1);
+      expression.deserialize(fromResult.getProperty("expression"));
+    }
+    legacy = fromResult.getProperty("legacy");
   }
 }
 /* JavaCC - OriginalChecksum=c2c6d67d7722e29212e438574698d7cd (do not edit this line) */

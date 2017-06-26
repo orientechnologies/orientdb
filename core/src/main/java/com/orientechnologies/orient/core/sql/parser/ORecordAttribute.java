@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.Map;
 
 public class ORecordAttribute extends SimpleNode {
@@ -33,7 +36,8 @@ public class ORecordAttribute extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -47,7 +51,8 @@ public class ORecordAttribute extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return name != null ? name.hashCode() : 0;
   }
 
@@ -57,6 +62,16 @@ public class ORecordAttribute extends SimpleNode {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("name", name);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    name = fromResult.getProperty("name");
   }
 }
 /* JavaCC - OriginalChecksum=45ce3cd16399dec7d7ef89f8920d02ae (do not edit this line) */

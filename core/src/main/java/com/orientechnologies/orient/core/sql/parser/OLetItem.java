@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.Map;
 
 public class OLetItem extends SimpleNode {
@@ -57,7 +60,8 @@ public class OLetItem extends SimpleNode {
     this.query = query;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -75,7 +79,8 @@ public class OLetItem extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = varName != null ? varName.hashCode() : 0;
     result = 31 * result + (expression != null ? expression.hashCode() : 0);
     result = 31 * result + (query != null ? query.hashCode() : 0);
@@ -108,6 +113,35 @@ public class OLetItem extends SimpleNode {
     //this is to transform LET expressions with subqueries in simple LET, plus LET with query only, so the direct query is ignored
     if (expression != null) {
       expression.extractSubQueries(varName, collector);
+    }
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (varName != null) {
+      result.setProperty("varName", varName.serialize());
+    }
+    if (expression != null) {
+      result.setProperty("expression", expression.serialize());
+    }
+    if (query != null) {
+      result.setProperty("query", query.serialize());
+    }
+
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("varName") != null) {
+      varName = new OIdentifier(-1);
+      varName.deserialize(fromResult.getProperty("varName"));
+    }
+    if (fromResult.getProperty("expression") != null) {
+      expression = new OExpression(-1);
+      expression.deserialize(fromResult.getProperty("expression"));
+    }
+    if (fromResult.getProperty("query") != null) {
+      query = OStatement.deserializeFromOResult(fromResult.getProperty("expression"));
     }
   }
 }

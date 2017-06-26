@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +85,27 @@ public class OLetClause extends SimpleNode {
   public void extractSubQueries(SubQueryCollector collector) {
     for(OLetItem item:items){
       item.extractSubQueries(collector);
+    }
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (items != null) {
+      result.setProperty("items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+
+    if (fromResult.getProperty("items") != null) {
+      List<OResult> ser = fromResult.getProperty("items");
+      items = new ArrayList<>();
+      for (OResult r : ser) {
+        OLetItem exp = new OLetItem(-1);
+        exp.deserialize(r);
+        items.add(exp);
+      }
     }
   }
 }

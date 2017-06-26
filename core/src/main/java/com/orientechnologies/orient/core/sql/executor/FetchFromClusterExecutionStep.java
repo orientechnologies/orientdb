@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -17,9 +18,10 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   public static final Object ORDER_ASC  = "ASC";
   public static final Object ORDER_DESC = "DESC";
 
-  private final int                    clusterId;
-  private       ORecordIteratorCluster iterator;
-  private       Object                 order;
+  private int    clusterId;
+  private Object order;
+
+  private ORecordIteratorCluster iterator;
   private long cost = 0;
 
   public FetchFromClusterExecutionStep(int clusterId, OCommandContext ctx, boolean profilingEnabled) {
@@ -147,5 +149,27 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   @Override
   public long getCost() {
     return cost;
+  }
+
+  @Override
+  public OResult serialize() {
+    OResultInternal result = OExecutionStepInternal.basicSerialize(this);
+    result.setProperty("clusterId", clusterId);
+    result.setProperty("order", order);
+    return result;
+  }
+
+  @Override
+  public void deserialize(OResult fromResult) {
+    try {
+      OExecutionStepInternal.basicDeserialize(fromResult, this);
+      this.clusterId = fromResult.getProperty("clusterId");
+      Object orderProp = fromResult.getProperty("order");
+      if (orderProp != null) {
+        this.order = ORDER_ASC.equals(fromResult.getProperty("order")) ? ORDER_ASC : ORDER_DESC;
+      }
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
   }
 }

@@ -172,9 +172,9 @@ public class OExpression extends SimpleNode {
 
   public OIdentifier getDefaultAlias() {
     OIdentifier identifier = new OIdentifier(-1);
-    if(isBaseIdentifier()){
-      identifier.setValue(((OBaseExpression)mathExpression).identifier.getSuffix().identifier.getStringValue());
-    }else {
+    if (isBaseIdentifier()) {
+      identifier.setValue(((OBaseExpression) mathExpression).identifier.getSuffix().identifier.getStringValue());
+    } else {
       identifier.setValue(this.toString());
     }
     return identifier;
@@ -574,6 +574,51 @@ public class OExpression extends SimpleNode {
 
   public void setArrayConcatExpression(OArrayConcatExpression arrayConcatExpression) {
     this.arrayConcatExpression = arrayConcatExpression;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("singleQuotes", singleQuotes);
+    result.setProperty("doubleQuotes", doubleQuotes);
+    result.setProperty("isNull", isNull);
+
+    if (rid != null) {
+      result.setProperty("rid", rid.serialize());
+    }
+    if (mathExpression != null) {
+      result.setProperty("mathExpression", mathExpression.serialize());
+    }
+    if (arrayConcatExpression != null) {
+      result.setProperty("arrayConcatExpression", arrayConcatExpression.serialize());
+    }
+    if (json != null) {
+      result.setProperty("json", json.serialize());
+    }
+    result.setProperty("booleanValue", booleanValue);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    singleQuotes = fromResult.getProperty("singleQuotes");
+    doubleQuotes = fromResult.getProperty("doubleQuotes");
+    isNull = fromResult.getProperty("isNull");
+
+    if (fromResult.getProperty("rid") != null) {
+      rid = new ORid(-1);
+      rid.deserialize(fromResult.getProperty("rid"));
+    }
+    if (fromResult.getProperty("mathExpression") != null) {
+      mathExpression = OMathExpression.deserializeFromResult(fromResult.getProperty("mathExpression"));
+    }
+    if (fromResult.getProperty("arrayConcatExpression") != null) {
+      arrayConcatExpression = new OArrayConcatExpression(-1);
+      arrayConcatExpression.deserialize(fromResult.getProperty("arrayConcatExpression"));
+    }
+    if (fromResult.getProperty("json") != null) {
+      json = new OJson(-1);
+      json.deserialize(fromResult.getProperty("json"));
+    }
+    booleanValue = fromResult.getProperty("booleanValue");
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

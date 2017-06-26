@@ -5,16 +5,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
 import java.util.Set;
 
 public class OArrayNumberSelector extends SimpleNode {
-  private static final Object UNSET           = new Object();
-  private              Object inputFinalValue = UNSET;
-
   OInputParameter inputValue;
-
   OMathExpression expressionValue;
 
   Integer integer;
@@ -97,7 +94,8 @@ public class OArrayNumberSelector extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -105,21 +103,16 @@ public class OArrayNumberSelector extends SimpleNode {
 
     OArrayNumberSelector that = (OArrayNumberSelector) o;
 
-    if (inputFinalValue != null ? !inputFinalValue.equals(that.inputFinalValue) : that.inputFinalValue != null)
-      return false;
     if (inputValue != null ? !inputValue.equals(that.inputValue) : that.inputValue != null)
       return false;
     if (expressionValue != null ? !expressionValue.equals(that.expressionValue) : that.expressionValue != null)
       return false;
-    if (integer != null ? !integer.equals(that.integer) : that.integer != null)
-      return false;
-
-    return true;
+    return integer != null ? integer.equals(that.integer) : that.integer == null;
   }
 
-  @Override public int hashCode() {
-    int result = inputFinalValue != null ? inputFinalValue.hashCode() : 0;
-    result = 31 * result + (inputValue != null ? inputValue.hashCode() : 0);
+  @Override
+  public int hashCode() {
+    int result = inputValue != null ? inputValue.hashCode() : 0;
     result = 31 * result + (expressionValue != null ? expressionValue.hashCode() : 0);
     result = 31 * result + (integer != null ? integer.hashCode() : 0);
     return result;
@@ -136,6 +129,29 @@ public class OArrayNumberSelector extends SimpleNode {
       return true;
     }
     return false;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (inputValue != null) {
+      result.setProperty("inputValue", inputValue.serialize());
+    }
+    if (expressionValue != null) {
+      result.setProperty("expressionValue", expressionValue.serialize());
+    }
+    result.setProperty("integer", integer);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("inputValue") != null) {
+      inputValue = OInputParameter.deserializeFromOResult(fromResult.getProperty("inputValue"));
+    }
+    if (fromResult.getProperty("toSelector") != null) {
+      expressionValue = new OMathExpression(-1);
+      expressionValue.deserialize(fromResult.getProperty("expressionValue"));
+    }
+    integer = fromResult.getProperty("integer");
   }
 }
 /* JavaCC - OriginalChecksum=5b2e495391ede3ccdc6c25aa63c8e591 (do not edit this line) */

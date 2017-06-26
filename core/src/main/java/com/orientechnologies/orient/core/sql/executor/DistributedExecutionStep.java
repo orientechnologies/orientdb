@@ -61,12 +61,11 @@ public class DistributedExecutionStep extends AbstractExecutionStep {
   public void init(OCommandContext ctx) {
     if (!inited) {
       inited = true;
-      OResult serializedExecutionPlan = subExecuitonPlan.toResult();
-      this.remoteResultSet = sendSerializedExecutionPlan(nodeName, serializedExecutionPlan, ctx);
+      this.remoteResultSet = sendSerializedExecutionPlan(nodeName, subExecuitonPlan, ctx);
     }
   }
 
-  private OResultSet sendSerializedExecutionPlan(String nodeName, OResult serializedExecutionPlan, OCommandContext ctx) {
+  private OResultSet sendSerializedExecutionPlan(String nodeName, OExecutionPlan serializedExecutionPlan, OCommandContext ctx) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     return db.queryOnNode(nodeName, serializedExecutionPlan, ctx.getInputParameters());
   }

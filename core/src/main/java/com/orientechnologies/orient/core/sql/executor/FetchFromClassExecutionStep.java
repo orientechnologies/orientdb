@@ -12,12 +12,12 @@ import java.util.*;
  */
 public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
-  private final String className;
-  AbstractExecutionStep[] subSteps;
-  OResultSet              currentResultSet;
-  private boolean orderByRidAsc  = false;
-  private boolean orderByRidDesc = false;
+  private String className;
+  private boolean              orderByRidAsc  = false;
+  private boolean              orderByRidDesc = false;
+  private List<OExecutionStep> subSteps       = new ArrayList<>();
 
+  OResultSet currentResultSet;
   int currentStep = 0;
 
   /**
@@ -56,7 +56,6 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     }
     clusterIds[clusterIds.length - 1] = -1;//temporary cluster, data in tx
 
-    subSteps = new AbstractExecutionStep[clusterIds.length];
     sortClusers(clusterIds);
     for (int i = 0; i < clusterIds.length; i++) {
       int clusterId = clusterIds[i];
@@ -67,7 +66,7 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
         } else if (orderByRidDesc) {
           step.setOrder(FetchFromClusterExecutionStep.ORDER_DESC);
         }
-        subSteps[i] = step;
+        getSubSteps().add(step);
       } else {
         //current tx
         FetchTemporaryFromTxStep step = new FetchTemporaryFromTxStep(ctx, className, profilingEnabled);
@@ -76,7 +75,7 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
         } else if (orderByRidDesc) {
           step.setOrder(FetchFromClusterExecutionStep.ORDER_DESC);
         }
-        subSteps[i] = step;
+        getSubSteps().add(step);
       }
     }
   }
@@ -109,12 +108,12 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
             return false;
           }
           if (currentResultSet == null || !currentResultSet.hasNext()) {
-            if (currentStep >= subSteps.length) {
+            if (currentStep >= getSubSteps().size()) {
               return false;
             }
-            currentResultSet = subSteps[currentStep].syncPull(ctx, nRecords);
+            currentResultSet = ((AbstractExecutionStep) getSubSteps().get(currentStep)).syncPull(ctx, nRecords);
             if (!currentResultSet.hasNext()) {
-              currentResultSet = subSteps[currentStep++].syncPull(ctx, nRecords);
+              currentResultSet = ((AbstractExecutionStep) getSubSteps().get(currentStep++)).syncPull(ctx, nRecords);
             }
           }
           if (!currentResultSet.hasNext()) {
@@ -131,12 +130,12 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
             throw new IllegalStateException();
           }
           if (currentResultSet == null || !currentResultSet.hasNext()) {
-            if (currentStep >= subSteps.length) {
+            if (currentStep >= getSubSteps().size()) {
               throw new IllegalStateException();
             }
-            currentResultSet = subSteps[currentStep].syncPull(ctx, nRecords);
+            currentResultSet = ((AbstractExecutionStep) getSubSteps().get(currentStep)).syncPull(ctx, nRecords);
             if (!currentResultSet.hasNext()) {
-              currentResultSet = subSteps[currentStep++].syncPull(ctx, nRecords);
+              currentResultSet = ((AbstractExecutionStep) getSubSteps().get(currentStep++)).syncPull(ctx, nRecords);
             }
           }
           if (!currentResultSet.hasNext()) {
@@ -151,8 +150,8 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
       @Override
       public void close() {
-        for (AbstractExecutionStep step : subSteps) {
-          step.close();
+        for (OExecutionStep step : getSubSteps()) {
+          ((AbstractExecutionStep) step).close();
         }
       }
 
@@ -171,16 +170,16 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
   @Override
   public void sendTimeout() {
-    for (OExecutionStepInternal step : subSteps) {
-      step.sendTimeout();
+    for (OExecutionStep step : getSubSteps()) {
+      ((AbstractExecutionStep) step).sendTimeout();
     }
     prev.ifPresent(p -> p.sendTimeout());
   }
 
   @Override
   public void close() {
-    for (OExecutionStepInternal step : subSteps) {
-      step.close();
+    for (OExecutionStep step : getSubSteps()) {
+      ((AbstractExecutionStep) step).close();
     }
     prev.ifPresent(p -> p.close());
   }
@@ -195,10 +194,10 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
       builder.append(" (" + getCostFormatted() + ")");
     }
     builder.append("\n");
-    for (int i = 0; i < subSteps.length; i++) {
-      OExecutionStepInternal step = subSteps[i];
+    for (int i = 0; i < getSubSteps().size(); i++) {
+      OExecutionStepInternal step = (OExecutionStepInternal) getSubSteps().get(i);
       builder.append(step.prettyPrint(depth + 1, indent));
-      if (i < subSteps.length - 1) {
+      if (i < getSubSteps().size() - 1) {
         builder.append("\n");
       }
     }
@@ -206,15 +205,34 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public List<OExecutionStep> getSubSteps() {
-    if (subSteps == null) {
-      return super.getSubSteps();
-    }
-    return Arrays.asList(subSteps);
+  public long getCost() {
+    return getSubSteps().stream().map(x -> x.getCost()).reduce((a, b) -> a + b).orElse(0L);
   }
 
   @Override
-  public long getCost() {
-    return Arrays.stream(this.subSteps).map(x -> x.getCost()).reduce((a, b) -> a + b).orElse(0L);
+  public OResult serialize() {
+    OResultInternal result = OExecutionStepInternal.basicSerialize(this);
+    result.setProperty("className", className);
+    result.setProperty("orderByRidAsc", orderByRidAsc);
+    result.setProperty("orderByRidDesc", orderByRidDesc);
+    return result;
+  }
+
+  @Override
+  public void deserialize(OResult fromResult) {
+    try {
+      OExecutionStepInternal.basicDeserialize(fromResult, this);
+      this.className = fromResult.getProperty("className");
+      this.orderByRidAsc = fromResult.getProperty("orderByRidAsc");
+      this.orderByRidDesc = fromResult.getProperty("orderByRidDesc");
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
+  }
+
+  @Override
+  public List<OExecutionStep> getSubSteps() {
+    return subSteps;
   }
 }
+

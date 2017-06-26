@@ -378,7 +378,38 @@ public class OArrayRangeSelector extends SimpleNode {
       throw new OCommandExecutionException(
           "Trying to remove elements from " + currentValue + " (" + currentValue.getClass().getSimpleName() + ")");
     }
+  }
 
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("from", from);
+    result.setProperty("to", to);
+    result.setProperty("newRange", newRange);
+    result.setProperty("included", included);
+
+    if (fromSelector != null) {
+      result.setProperty("fromSelector", fromSelector.serialize());
+    }
+    if (toSelector != null) {
+      result.setProperty("toSelector", toSelector.serialize());
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    from = fromResult.getProperty("from");
+    to = fromResult.getProperty("to");
+    newRange = fromResult.getProperty("newRange");
+    included = fromResult.getProperty("included");
+
+    if (fromResult.getProperty("fromSelector") != null) {
+      fromSelector = new OArrayNumberSelector(-1);
+      fromSelector.deserialize(fromResult.getProperty("fromSelector"));
+    }
+    if (fromResult.getProperty("toSelector") != null) {
+      toSelector = new OArrayNumberSelector(-1);
+      toSelector.deserialize(fromResult.getProperty("toSelector"));
+    }
   }
 }
 /* JavaCC - OriginalChecksum=594a372e31fcbcd3ed962c2260e76468 (do not edit this line) */

@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.Map;
 
 public class OTimeout extends SimpleNode {
@@ -41,7 +44,8 @@ public class OTimeout extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -57,7 +61,8 @@ public class OTimeout extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = val != null ? val.hashCode() : 0;
     result = 31 * result + (failureStrategy != null ? failureStrategy.hashCode() : 0);
     return result;
@@ -69,6 +74,18 @@ public class OTimeout extends SimpleNode {
 
   public String getFailureStrategy() {
     return failureStrategy;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("val", val);
+    result.setProperty("failureStrategy", failureStrategy);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    val = fromResult.getProperty("val");
+    failureStrategy = fromResult.getProperty("failureStrategy");
   }
 }
 /* JavaCC - OriginalChecksum=fef7f5d488f7fca1b6ad0b70c6841931 (do not edit this line) */

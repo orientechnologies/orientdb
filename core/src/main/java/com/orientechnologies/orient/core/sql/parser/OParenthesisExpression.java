@@ -211,7 +211,28 @@ public class OParenthesisExpression extends OMathExpression {
     } else {
       throw new OCommandExecutionException("Cannot apply REMOVE " + toString());
     }
+  }
 
+  public OResult serialize() {
+    OResultInternal result = (OResultInternal) super.serialize();
+    if (expression != null) {
+      result.setProperty("expression", expression.serialize());
+    }
+    if (statement != null) {
+      result.setProperty("statement", statement.serialize());
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    super.deserialize(fromResult);
+    if (fromResult.getProperty("expression") != null) {
+      expression = new OExpression(-1);
+      expression.deserialize(fromResult.getProperty("expression"));
+    }
+    if (fromResult.getProperty("statement") != null) {
+      statement = OStatement.deserializeFromOResult(fromResult.getProperty("statement"));
+    }
   }
 }
 /* JavaCC - OriginalChecksum=4656e5faf4f54dc3fc45a06d8e375c35 (do not edit this line) */

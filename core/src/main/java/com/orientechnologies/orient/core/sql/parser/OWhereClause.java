@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -228,7 +229,8 @@ public class OWhereClause extends SimpleNode {
       }
       if (result instanceof Iterator) {
         return new Iterable() {
-          @Override public Iterator iterator() {
+          @Override
+          public Iterator iterator() {
             return (Iterator) result;
           }
         };
@@ -291,7 +293,8 @@ public class OWhereClause extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -307,21 +310,22 @@ public class OWhereClause extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = baseExpression != null ? baseExpression.hashCode() : 0;
     result = 31 * result + (flattened != null ? flattened.hashCode() : 0);
     return result;
   }
 
   public void extractSubQueries(SubQueryCollector collector) {
-    if(baseExpression!=null){
+    if (baseExpression != null) {
       baseExpression.extractSubQueries(collector);
     }
     flattened = null;
   }
 
   public boolean refersToParent() {
-    return baseExpression!=null && baseExpression.refersToParent();
+    return baseExpression != null && baseExpression.refersToParent();
   }
 
   public OBooleanExpression getBaseExpression() {
@@ -334,6 +338,32 @@ public class OWhereClause extends SimpleNode {
 
   public void setFlattened(List<OAndBlock> flattened) {
     this.flattened = flattened;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (baseExpression != null) {
+      result.setProperty("baseExpression", baseExpression.serialize());
+    }
+    if (flattened != null) {
+      result.setProperty("flattened", flattened.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("baseExpression") != null) {
+      baseExpression = OBooleanExpression.deserializeFromOResult(fromResult.getProperty("baseExpression"));
+    }
+    if (fromResult.getProperty("flattened") != null) {
+      List<OResult> ser = fromResult.getProperty("flattened");
+      flattened = new ArrayList<>();
+      for (OResult r : ser) {
+        OAndBlock block = new OAndBlock(-1);
+        block.deserialize(r);
+        flattened.add(block);
+      }
+    }
   }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */

@@ -355,5 +355,67 @@ public class OModifier extends SimpleNode {
     }
 
   }
+
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("squareBrackets", squareBrackets);
+    if (arrayRange != null) {
+      result.setProperty("arrayRange", arrayRange.serialize());
+    }
+    if (condition != null) {
+      result.setProperty("condition", condition.serialize());
+    }
+    if (arraySingleValues != null) {
+      result.setProperty("arraySingleValues", arraySingleValues.serialize());
+    }
+    if (rightBinaryCondition != null) {
+      result.setProperty("rightBinaryCondition", rightBinaryCondition.serialize());
+    }
+    if (methodCall != null) {
+      result.setProperty("methodCall", methodCall.serialize());
+    }
+    if (suffix != null) {
+      result.setProperty("suffix", suffix.serialize());
+    }
+    if (next != null) {
+      result.setProperty("next", next.serialize());
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    squareBrackets = fromResult.getProperty("squareBrackets");
+
+    if (fromResult.getProperty("arrayRange") != null) {
+      arrayRange = new OArrayRangeSelector(-1);
+      arrayRange.deserialize(fromResult.getProperty("arrayRange"));
+    }
+    if (fromResult.getProperty("condition") != null) {
+      condition = new OOrBlock(-1);
+      condition.deserialize(fromResult.getProperty("condition"));
+    }
+    if (fromResult.getProperty("arraySingleValues") != null) {
+      arraySingleValues = new OArraySingleValuesSelector(-1);
+      arraySingleValues.deserialize(fromResult.getProperty("arraySingleValues"));
+    }
+    if (fromResult.getProperty("rightBinaryCondition") != null) {
+      rightBinaryCondition = new ORightBinaryCondition(-1);
+      rightBinaryCondition.deserialize(fromResult.getProperty("arraySingleValues"));
+    }
+    if (fromResult.getProperty("methodCall") != null) {
+      methodCall = new OMethodCall(-1);
+      methodCall.deserialize(fromResult.getProperty("methodCall"));
+    }
+    if (fromResult.getProperty("suffix") != null) {
+      suffix = new OSuffixIdentifier(-1);
+      suffix.deserialize(fromResult.getProperty("suffix"));
+    }
+
+    if (fromResult.getProperty("next") != null) {
+      next = new OModifier(-1);
+      next.deserialize(fromResult.getProperty("next"));
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

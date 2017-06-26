@@ -771,6 +771,7 @@ public class OMathExpression extends SimpleNode {
    * @param context  the execution context
    * @param operator
    * @param right
+   *
    * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false
    * otherwise
    */
@@ -789,6 +790,7 @@ public class OMathExpression extends SimpleNode {
    * @param context  the execution context
    * @param operator
    * @param right
+   *
    * @return true if current expression is an indexed function AND that function can be used on this target, false otherwise
    */
   public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
@@ -806,6 +808,7 @@ public class OMathExpression extends SimpleNode {
    *
    * @param target  the query target
    * @param context the execution context
+   *
    * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
    */
   public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
@@ -863,7 +866,7 @@ public class OMathExpression extends SimpleNode {
   }
 
   public boolean isCount() {
-    if(this.childExpressions.size()!=1){
+    if (this.childExpressions.size() != 1) {
       return false;
     }
     return this.childExpressions.get(0).isCount();
@@ -978,5 +981,49 @@ public class OMathExpression extends SimpleNode {
     childExpressions.get(0).applyRemove(result, ctx);
   }
 
+  public static OMathExpression deserializeFromResult(OResult fromResult) {
+    String className = fromResult.getProperty("__class");
+    try {
+      OMathExpression result = (OMathExpression) Class.forName(className).getConstructor(Integer.class).newInstance(-1);
+      result.deserialize(fromResult);
+      return result;
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
+
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("__class", getClass().getName());
+    if (childExpressions != null) {
+      result.setProperty("childExpressions", childExpressions.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    if (operators != null) {
+      result.setProperty("operators", operators.stream().map(x -> serializeOperator(x)).collect(Collectors.toList()));
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("childExpressions") != null) {
+      List<OResult> ser = fromResult.getProperty("childExpressions");
+      childExpressions = ser.stream().map(x -> deserializeFromResult(x)).collect(Collectors.toList());
+
+    }
+    if (fromResult.getProperty("operators") != null) {
+      List<String> ser = fromResult.getProperty("operators");
+      operators = ser.stream().map(x -> deserializeOperator(x)).collect(Collectors.toList());
+
+    }
+  }
+
+  private String serializeOperator(Operator x) {
+    return x.toString();
+  }
+
+  private Operator deserializeOperator(String x) {
+    return Operator.valueOf(x);
+  }
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.Map;
 
 public class ONamedParameter extends OInputParameter {
@@ -98,6 +101,18 @@ public class ONamedParameter extends OInputParameter {
     int result = paramNumber;
     result = 31 * result + (paramName != null ? paramName.hashCode() : 0);
     return result;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = (OResultInternal) super.serialize();
+    result.setProperty("paramNumber", paramNumber);
+    result.setProperty("paramName", paramName);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    paramNumber = fromResult.getProperty("paramNumber");
+    paramName = fromResult.getProperty("paramName");
   }
 }
 /* JavaCC - OriginalChecksum=8a00a9cf51a15dd75202f6372257fc1c (do not edit this line) */

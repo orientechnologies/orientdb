@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OFuncitonAggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 
@@ -394,5 +395,33 @@ public class OFunctionCall extends SimpleNode {
     result.params = params.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (name != null) {
+      result.setProperty("name", name.serialize());
+    }
+    if (params != null) {
+      result.setProperty("collection", params.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("name") != null) {
+      name = new OIdentifier(-1);
+      name.deserialize(fromResult.getProperty("name"));
+    }
+    if (fromResult.getProperty("params") != null) {
+      params = new ArrayList<>();
+      List<OResult> ser = fromResult.getProperty("params");
+      for (OResult item : ser) {
+        OExpression exp = new OExpression(-1);
+        exp.deserialize(item);
+        params.add(exp);
+      }
+    }
+  }
+
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */

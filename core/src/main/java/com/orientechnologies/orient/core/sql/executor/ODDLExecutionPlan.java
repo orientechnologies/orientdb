@@ -68,7 +68,7 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
   @Override public OResult toResult() {
     OResultInternal result = new OResultInternal();
     result.setProperty("type", "DDLExecutionPlan");
-    result.setProperty("javaType", getClass().getName());
+    result.setProperty(JAVA_TYPE, getClass().getName());
     result.setProperty("stmText", statement.toString());
     result.setProperty("cost", getCost());
     result.setProperty("prettyPrint", prettyPrint(0, 2));

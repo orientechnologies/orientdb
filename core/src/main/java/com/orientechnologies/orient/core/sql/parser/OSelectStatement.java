@@ -10,9 +10,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlanner;
+import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.HashMap;
@@ -397,6 +395,102 @@ public class OSelectStatement extends OStatement {
 
   public void setNoCache(Boolean noCache) {
     this.noCache = noCache;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = (OResultInternal) super.serialize();
+    if (target != null) {
+      result.setProperty("target", target.serialize());
+    }
+    if (projection != null) {
+      result.setProperty("projection", projection.serialize());
+    }
+    if (whereClause != null) {
+      result.setProperty("whereClause", whereClause.serialize());
+    }
+    if (groupBy != null) {
+      result.setProperty("groupBy", groupBy.serialize());
+    }
+    if (orderBy != null) {
+      result.setProperty("orderBy", orderBy.serialize());
+    }
+    if (unwind != null) {
+      result.setProperty("unwind", unwind.serialize());
+    }
+    if (skip != null) {
+      result.setProperty("skip", skip.serialize());
+    }
+    if (limit != null) {
+      result.setProperty("limit", limit.serialize());
+    }
+    if (lockRecord != null) {
+      result.setProperty("lockRecord", lockRecord.toString());
+    }
+    if (fetchPlan != null) {
+      result.setProperty("fetchPlan", fetchPlan.serialize());
+    }
+    if (letClause != null) {
+      result.setProperty("letClause", letClause.serialize());
+    }
+    if (timeout != null) {
+      result.setProperty("timeout", timeout.serialize());
+    }
+    result.setProperty("parallel", parallel);
+    result.setProperty("noCache", noCache);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("target") != null) {
+      target = new OFromClause(-1);
+      target.deserialize(fromResult.getProperty("target"));
+    }
+    if (fromResult.getProperty("projection") != null) {
+      projection = new OProjection(-1);
+      projection.deserialize(fromResult.getProperty("projection"));
+    }
+    if (fromResult.getProperty("whereClause") != null) {
+      whereClause = new OWhereClause(-1);
+      whereClause.deserialize(fromResult.getProperty("whereClause"));
+    }
+    if (fromResult.getProperty("groupBy") != null) {
+      groupBy = new OGroupBy(-1);
+      groupBy.deserialize(fromResult.getProperty("groupBy"));
+    }
+    if (fromResult.getProperty("orderBy") != null) {
+      orderBy = new OOrderBy(-1);
+      orderBy.deserialize(fromResult.getProperty("orderBy"));
+    }
+    if (fromResult.getProperty("unwind") != null) {
+      unwind = new OUnwind(-1);
+      unwind.deserialize(fromResult.getProperty("unwind"));
+    }
+    if (fromResult.getProperty("skip") != null) {
+      skip = new OSkip(-1);
+      skip.deserialize(fromResult.getProperty("skip"));
+    }
+    if (fromResult.getProperty("limit") != null) {
+      limit = new OLimit(-1);
+      limit.deserialize(fromResult.getProperty("limit"));
+    }
+    if (fromResult.getProperty("lockRecord") != null) {
+      lockRecord = OStorage.LOCKING_STRATEGY.valueOf(fromResult.getProperty("lockRecord"));
+    }
+    if (fromResult.getProperty("fetchPlan") != null) {
+      fetchPlan = new OFetchPlan(-1);
+      fetchPlan.deserialize(fromResult.getProperty("fetchPlan"));
+    }
+    if (fromResult.getProperty("letClause") != null) {
+      letClause = new OLetClause(-1);
+      letClause.deserialize(fromResult.getProperty("letClause"));
+    }
+    if (fromResult.getProperty("timeout") != null) {
+      timeout = new OTimeout(-1);
+      timeout.deserialize(fromResult.getProperty("timeout"));
+    }
+
+    parallel = fromResult.getProperty("parallel");
+    noCache = fromResult.getProperty("noCache");
   }
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.Map;
 
 public class OIndexIdentifier extends SimpleNode {
@@ -95,6 +98,27 @@ public class OIndexIdentifier extends SimpleNode {
     result = 31 * result + (indexNameString != null ? indexNameString.hashCode() : 0);
     result = 31 * result + (indexName != null ? indexName.hashCode() : 0);
     return result;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("type", type.toString());
+    result.setProperty("indexNameString", indexNameString);
+
+    if (indexName != null) {
+      result.setProperty("indexName", indexName.serialize());
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    type = Type.valueOf(fromResult.getProperty("type"));
+    indexNameString = fromResult.getProperty("indexNameString");
+
+    if (fromResult.getProperty("indexName") != null) {
+      indexName = new OIndexName(-1);
+      indexName.deserialize(fromResult.getProperty("indexName"));
+    }
   }
 }
 /* JavaCC - OriginalChecksum=025f134fd4b27b84210738cdb6dd027c (do not edit this line) */

@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFiltered;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
@@ -90,18 +91,17 @@ public class OMethodCall extends SimpleNode {
       OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
       if (function instanceof OSQLFunctionFiltered) {
         Object current = ctx.getVariable("$current");
-        if(current instanceof OResult){
+        if (current instanceof OResult) {
           current = ((OResult) current).getElement().orElse(null);
         }
         return ((OSQLFunctionFiltered) function)
-            .execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), iPossibleResults,
-                ctx);
+            .execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), iPossibleResults, ctx);
       } else {
         Object current = ctx.getVariable("$current");
-        if(current instanceof OIdentifiable) {
+        if (current instanceof OIdentifiable) {
           return function.execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
-        }else if(current instanceof OResult){
-          return function.execute(targetObjects,((OResult) current).getElement().orElse(null), null, paramValues.toArray(), ctx);
+        } else if (current instanceof OResult) {
+          return function.execute(targetObjects, ((OResult) current).getElement().orElse(null), null, paramValues.toArray(), ctx);
         } else {
           return function.execute(targetObjects, null, null, paramValues.toArray(), ctx);
         }
@@ -176,7 +176,8 @@ public class OMethodCall extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -192,7 +193,8 @@ public class OMethodCall extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = methodName != null ? methodName.hashCode() : 0;
     result = 31 * result + (params != null ? params.hashCode() : 0);
     return result;
@@ -215,6 +217,33 @@ public class OMethodCall extends SimpleNode {
       }
     }
     return false;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (methodName != null) {
+      result.setProperty("methodName", methodName.serialize());
+    }
+    if (params != null) {
+      result.setProperty("items", params.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("methodName") != null) {
+      methodName = new OIdentifier(-1);
+      methodName.deserialize(fromResult.getProperty("methodName"));
+    }
+    if (fromResult.getProperty("params") != null) {
+      List<OResult> ser = fromResult.getProperty("params");
+      params = new ArrayList<>();
+      for (OResult r : ser) {
+        OExpression exp = new OExpression(-1);
+        exp.deserialize(r);
+        params.add(exp);
+      }
+    }
   }
 }
 /* JavaCC - OriginalChecksum=da95662da21ceb8dee3ad88c0d980413 (do not edit this line) */

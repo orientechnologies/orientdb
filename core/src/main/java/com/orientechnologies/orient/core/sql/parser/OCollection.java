@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -113,7 +114,8 @@ public class OCollection extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -127,7 +129,8 @@ public class OCollection extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return expressions != null ? expressions.hashCode() : 0;
   }
 
@@ -140,6 +143,26 @@ public class OCollection extends SimpleNode {
       }
     }
     return false;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (expressions != null) {
+      result.setProperty("expressions", expressions.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("expressions") != null) {
+      expressions = new ArrayList<>();
+      List<OResult> ser = fromResult.getProperty("expressions");
+      for (OResult item : ser) {
+        OExpression exp = new OExpression(-1);
+        exp.deserialize(item);
+        expressions.add(exp);
+      }
+    }
   }
 }
 /* JavaCC - OriginalChecksum=c93b20138b2ae58c5f76e458c34b5946 (do not edit this line) */

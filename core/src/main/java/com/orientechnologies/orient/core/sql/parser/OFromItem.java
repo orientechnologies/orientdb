@@ -2,6 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,9 +23,6 @@ public class OFromItem extends SimpleNode {
   protected OIdentifier           identifier;
   protected OFunctionCall         functionCall;
   protected OModifier             modifier;
-
-  private static final Object UNSET           = new Object();
-  private              Object inputFinalValue = UNSET;
 
   public OFromItem(int id) {
     super(id);
@@ -262,6 +263,101 @@ public class OFromItem extends SimpleNode {
 
   public void setInputParams(List<OInputParameter> inputParams) {
     this.inputParams = inputParams;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (rids != null) {
+      result.setProperty("rids", rids.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    if (inputParams != null) {
+      result.setProperty("inputParams", rids.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    if (cluster != null) {
+      result.setProperty("cluster", cluster.serialize());
+    }
+    if (clusterList != null) {
+      result.setProperty("clusterList", clusterList.serialize());
+    }
+    if (index != null) {
+      result.setProperty("index", index.serialize());
+    }
+    if (metadata != null) {
+      result.setProperty("metadata", metadata.serialize());
+    }
+    if (statement != null) {
+      result.setProperty("statement", statement.serialize());
+    }
+    if (inputParam != null) {
+      result.setProperty("inputParam", inputParam.serialize());
+    }
+    if (identifier != null) {
+      result.setProperty("identifier", identifier.serialize());
+    }
+    if (functionCall != null) {
+      result.setProperty("functionCall", functionCall.serialize());
+    }
+    if (modifier != null) {
+      result.setProperty("modifier", modifier.serialize());
+    }
+
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    if (fromResult.getProperty("rids") != null) {
+      List<OResult> serRids = fromResult.getProperty("rids");
+      rids = new ArrayList<>();
+      for (OResult res : serRids) {
+        ORid rid = new ORid(-1);
+        rid.deserialize(res);
+        rids.add(rid);
+      }
+    }
+
+    if (fromResult.getProperty("inputParams") != null) {
+      List<OResult> ser = fromResult.getProperty("inputParams");
+      inputParams = new ArrayList<>();
+      for (OResult res : ser) {
+        inputParams.add(OInputParameter.deserializeFromOResult(res));
+      }
+    }
+
+    if (fromResult.getProperty("cluster") != null) {
+      cluster = new OCluster(-1);
+      cluster.deserialize(fromResult.getProperty("cluster"));
+    }
+    if (fromResult.getProperty("clusterList") != null) {
+      clusterList = new OClusterList(-1);
+      clusterList.deserialize(fromResult.getProperty("clusterList"));
+    }
+
+    if (fromResult.getProperty("index") != null) {
+      index = new OIndexIdentifier(-1);
+      index.deserialize(fromResult.getProperty("index"));
+    }
+    if (fromResult.getProperty("metadata") != null) {
+      metadata = new OMetadataIdentifier(-1);
+      metadata.deserialize(fromResult.getProperty("metadata"));
+    }
+    if (fromResult.getProperty("statement") != null) {
+      statement = OStatement.deserializeFromOResult(fromResult.getProperty("statement"));
+    }
+    if (fromResult.getProperty("inputParam") != null) {
+      inputParam = OInputParameter.deserializeFromOResult(fromResult.getProperty("inputParam"));
+    }
+    if (fromResult.getProperty("identifier") != null) {
+      identifier = new OIdentifier(-1);
+      identifier.deserialize(fromResult.getProperty("identifier"));
+    }
+    if (fromResult.getProperty("functionCall") != null) {
+      functionCall = new OFunctionCall(-1);
+      functionCall.deserialize(fromResult.getProperty("functionCall"));
+    }
+    if (fromResult.getProperty("modifier") != null) {
+      modifier = new OModifier(-1);
+      modifier.deserialize(fromResult.getProperty("modifier"));
+    }
   }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */

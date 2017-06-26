@@ -8,8 +8,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class OArrayConcatExpression extends SimpleNode {
 
@@ -205,6 +207,27 @@ public class OArrayConcatExpression extends SimpleNode {
   @Override
   public int hashCode() {
     return childExpressions != null ? childExpressions.hashCode() : 0;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    if (childExpressions != null) {
+      result.setProperty("childExpressions", childExpressions.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+
+    if (fromResult.getProperty("childExpressions") != null) {
+      List<OResult> ser = fromResult.getProperty("childExpressions");
+      childExpressions = new ArrayList<>();
+      for (OResult r : ser) {
+        OArrayConcatExpressionElement exp = new OArrayConcatExpressionElement(-1);
+        exp.deserialize(r);
+        childExpressions.add(exp);
+      }
+    }
   }
 }
 /* JavaCC - OriginalChecksum=8d976a02f84460bf21c4304009135345 (do not edit this line) */

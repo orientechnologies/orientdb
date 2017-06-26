@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.Map;
 
 public class OIdentifier extends SimpleNode {
@@ -77,7 +80,8 @@ public class OIdentifier extends SimpleNode {
     }
   }
 
-  @Override public String toString(String prefix) {
+  @Override
+  public String toString(String prefix) {
     if (quoted) {
       return '`' + value + '`';
     }
@@ -107,7 +111,8 @@ public class OIdentifier extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -125,11 +130,24 @@ public class OIdentifier extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = value != null ? value.hashCode() : 0;
     result = 31 * result + (quoted ? 1 : 0);
     result = 31 * result + (internalAlias ? 1 : 0);
     return result;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("value", value);
+    result.setProperty("quoted", quoted);
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    value = fromResult.getProperty("value");
+    quoted = fromResult.getProperty("quoted");
   }
 }
 /* JavaCC - OriginalChecksum=691a2eb5096f7b5e634b2ca8ac2ded3a (do not edit this line) */

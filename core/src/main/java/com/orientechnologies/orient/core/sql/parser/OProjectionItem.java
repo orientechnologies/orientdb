@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -251,6 +252,39 @@ public class OProjectionItem extends SimpleNode {
       return expression.refersToParent();
     }
     return false;
+  }
+
+  public OResult serialize() {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("all", all);
+    if (alias != null) {
+      result.setProperty("alias", alias.serialize());
+    }
+    if (expression != null) {
+      result.setProperty("expression", expression.serialize());
+    }
+    result.setProperty("aggregate", aggregate);
+    if (nestedProjection != null) {
+      result.setProperty("nestedProjection", nestedProjection.serialize());
+    }
+    return result;
+  }
+
+  public void deserialize(OResult fromResult) {
+    all = fromResult.getProperty("all");
+    if (fromResult.getProperty("alias") != null) {
+      alias = new OIdentifier(-1);
+      alias.deserialize(fromResult.getProperty("alias"));
+    }
+    if (fromResult.getProperty("expression") != null) {
+      expression = new OExpression(-1);
+      expression.deserialize(fromResult.getProperty("expression"));
+    }
+    aggregate = fromResult.getProperty("aggregate");
+    if (fromResult.getProperty("nestedProjection") != null) {
+      nestedProjection = new ONestedProjection(-1);
+      nestedProjection.deserialize(fromResult.getProperty("nestedProjection"));
+    }
   }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */
