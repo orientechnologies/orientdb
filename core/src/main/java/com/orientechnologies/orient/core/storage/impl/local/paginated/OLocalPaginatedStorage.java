@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
@@ -56,7 +55,8 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -116,15 +116,23 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   public void create(OContextConfiguration contextConfiguration) throws IOException {
-    stateLock.acquireWriteLock();
     try {
-      final Path storageFolder = storagePath;
-      if (!Files.exists(storageFolder))
-        Files.createDirectories(storageFolder);
+      stateLock.acquireWriteLock();
+      try {
+        final Path storageFolder = storagePath;
+        if (!Files.exists(storageFolder))
+          Files.createDirectories(storageFolder);
 
-      super.create(contextConfiguration);
-    } finally {
-      stateLock.releaseWriteLock();
+        super.create(contextConfiguration);
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
@@ -140,10 +148,18 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   public boolean exists() {
-    if (status == STATUS.OPEN)
-      return true;
+    try {
+      if (status == STATUS.OPEN)
+        return true;
 
-    return exists(storagePath);
+      return exists(storagePath);
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
@@ -167,58 +183,82 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   public List<String> backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iOutput, final int compressionLevel, final int bufferSize) throws IOException {
-    if (out == null)
-      throw new IllegalArgumentException("Backup output is null");
-
-    freeze(false);
     try {
-      if (callable != null)
-        try {
-          callable.call();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on callback invocation during backup", e);
-        }
+      if (out == null)
+        throw new IllegalArgumentException("Backup output is null");
 
-      final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
+      freeze(false);
       try {
-        return OZIPCompressionUtil
-            .compressDirectory(getStoragePath().toString(), bo, new String[] { ".wal", ".fl" }, iOutput, compressionLevel);
-      } finally {
-        if (bufferSize > 0) {
-          bo.flush();
-          bo.close();
+        if (callable != null)
+          try {
+            callable.call();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error on callback invocation during backup", e);
+          }
+
+        final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
+        try {
+          return OZIPCompressionUtil
+              .compressDirectory(getStoragePath().toString(), bo, new String[] { ".wal", ".fl" }, iOutput, compressionLevel);
+        } finally {
+          if (bufferSize > 0) {
+            bo.flush();
+            bo.close();
+          }
         }
+      } finally {
+        release();
       }
-    } finally {
-      release();
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
   @Override
   public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener) throws IOException {
-    if (!isClosed())
-      close(true, false);
+    try {
+      if (!isClosed())
+        close(true, false);
 
-    OZIPCompressionUtil.uncompressDirectory(in, getStoragePath().toString(), iListener);
+      OZIPCompressionUtil.uncompressDirectory(in, getStoragePath().toString(), iListener);
 
-    if (callable != null)
-      try {
-        callable.call();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error on calling callback on database restore");
-      }
+      if (callable != null)
+        try {
+          callable.call();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error on calling callback on database restore");
+        }
 
-    open(null, null, new OContextConfiguration());
+      open(null, null, new OContextConfiguration());
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
   }
 
   @Override
   public OStorageConfiguration getConfiguration() {
-    stateLock.acquireReadLock();
     try {
-      return super.getConfiguration();
-    } finally {
-      stateLock.releaseReadLock();
+      stateLock.acquireReadLock();
+      try {
+        return super.getConfiguration();
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
     }
   }
 
