@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.client.remote.message;
 
+import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.orient.client.remote.message.live.OLiveQueryResult;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -41,6 +42,22 @@ public class OLiveQueryMessagesTests {
     OSubscribeLiveQueryResponse responseRead = new OSubscribeLiveQueryResponse();
     responseRead.read(channel, null);
     assertEquals(responseRead.getMonitorId(), 20);
+  }
+
+  @Test
+  public void testLiveQueryErrorPushRequest() throws IOException {
+
+    OLiveQueryPushRequest pushRequest = new OLiveQueryPushRequest(10, 20, OErrorCode.GENERIC_ERROR, "the message");
+    MockChannel channel = new MockChannel();
+    pushRequest.write(channel);
+    channel.close();
+    OLiveQueryPushRequest pushRequestRead = new OLiveQueryPushRequest();
+    pushRequestRead.read(channel);
+    assertEquals(pushRequestRead.getMonitorId(), 10);
+    assertEquals(pushRequestRead.getStatus(), OLiveQueryPushRequest.ERROR);
+    assertEquals(pushRequestRead.getErrorIdentifier(), 20);
+    assertEquals(pushRequestRead.getErrorCode(), OErrorCode.GENERIC_ERROR);
+    assertEquals(pushRequestRead.getErrorMessage(), "the message");
   }
 
   @Test

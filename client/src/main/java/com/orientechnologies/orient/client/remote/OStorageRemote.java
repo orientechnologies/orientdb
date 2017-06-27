@@ -1915,7 +1915,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       }
     } else {
       for (OLiveQueryClientListener liveListener : liveQueryListener.values()) {
-        liveListener.onError();
+        if (e instanceof OException) {
+          liveListener.onError((OException) e);
+        } else {
+          liveListener.onError(OException.wrapException(new ODatabaseException("Live query disconnection "), e));
+        }
       }
     }
   }

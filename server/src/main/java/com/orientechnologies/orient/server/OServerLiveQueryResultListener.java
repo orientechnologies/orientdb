@@ -1,9 +1,12 @@
 package com.orientechnologies.orient.server;
 
+import com.orientechnologies.common.exception.OErrorCode;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.remote.message.OLiveQueryPushRequest;
 import com.orientechnologies.orient.client.remote.message.live.OLiveQueryResult;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.exception.OLiveQueryInterruptedException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
@@ -50,9 +53,15 @@ class OServerLiveQueryResultListener implements OLiveQueryResultListener {
   }
 
   @Override
-  public void onError(ODatabaseDocument database) {
+  public void onError(ODatabaseDocument database, OException exception) {
     try {
-      protocol.push(new OLiveQueryPushRequest(monitorId, OLiveQueryPushRequest.END, Collections.emptyList()));
+      //TODO: resolve error identifier
+      int errorIdentifier = 0;
+      OErrorCode code = OErrorCode.GENERIC_ERROR;
+      if (exception instanceof OCoreException) {
+        code = ((OCoreException) exception).getErrorCode();
+      }
+      protocol.push(new OLiveQueryPushRequest(monitorId, errorIdentifier, code, exception.getMessage()));
     } catch (IOException e) {
       throw new OLiveQueryInterruptedException("Live query interrupted by socket close");
     }

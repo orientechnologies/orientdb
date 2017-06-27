@@ -67,10 +67,14 @@ public enum OErrorCode {
   }
 
   public void throwException(String message, Throwable parent) {
+    OException exc = newException(message, parent);
+    throw exc;
+  }
+
+  public OException newException(String message, Throwable parent) {
     final String fullMessage = String.format("%1$06d_%2$06d - %s", category.code, code, message);
     try {
-      OException exc = OException.wrapException(exceptionClass.getConstructor(String.class).newInstance(message), parent);
-      throw exc;
+      return OException.wrapException(exceptionClass.getConstructor(String.class).newInstance(fullMessage), parent);
     } catch (InstantiationException e) {
       OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass);
       e.printStackTrace();
@@ -88,9 +92,10 @@ public enum OErrorCode {
       e.printStackTrace();
       parent.printStackTrace();
     }
+    return null;
   }
 
-  public static  OErrorCode getErrorCode(int code) {
+  public static OErrorCode getErrorCode(int code) {
     return codes[code];
   }
 

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.remote.message.OLiveQueryPushRequest;
 import com.orientechnologies.orient.client.remote.message.live.OLiveQueryResult;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
@@ -45,7 +46,7 @@ public class ORemoteLiveQueryPushTest {
     }
 
     @Override
-    public void onError(ODatabaseDocument database) {
+    public void onError(ODatabaseDocument database, OException exception) {
 
     }
 

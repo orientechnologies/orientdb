@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -75,7 +76,7 @@ public class OLiveQueryV2Test {
     }
 
     @Override
-    public void onError(ODatabaseDocument database) {
+    public void onError(ODatabaseDocument database, OException exception) {
 
     }
 
@@ -173,7 +174,7 @@ public class OLiveQueryV2Test {
             }
 
             @Override
-            public void onError(ODatabaseDocument database) {
+            public void onError(ODatabaseDocument database, OException exception) {
 
             }
 

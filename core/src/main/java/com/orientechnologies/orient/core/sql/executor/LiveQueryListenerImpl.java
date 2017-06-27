@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -53,42 +54,35 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
     }
     OStatement stm = OSQLEngine.parse(query, (ODatabaseDocumentInternal) db);
     if (!(stm instanceof OSelectStatement)) {
-      clientListener.onError(db);
       throw new OCommandExecutionException("Only SELECT statement can be used as a live query: " + query);
     }
     this.statement = (OSelectStatement) stm;
-
-    try {
-      validateStatement(statement);
-      this.className = statement.getTarget().getItem().getIdentifier().getStringValue();
-      if (db.getClass(className) == null) {
-        throw new OCommandExecutionException("Class " + className + " not found in the schema: " + query);
-      }
-      execInSeparateDatabase(new OCallable() {
-        @Override
-        public Object call(Object iArgument) {
-          return execDb = ((ODatabaseDocumentInternal) db).copy();
-        }
-      });
-
-      synchronized (random) {
-        token = random.nextInt();// TODO do something better ;-)!
-      }
-      OLiveQueryHookV2.subscribe(token, this, (ODatabaseInternal) db);
-
-      OCommandContext ctx = new OBasicCommandContext();
-      if (iArgs != null)
-      // BIND ARGUMENTS INTO CONTEXT TO ACCESS FROM ANY POINT (EVEN FUNCTIONS)
-      {
-        for (Map.Entry<Object, Object> arg : iArgs.entrySet()) {
-          ctx.setVariable(arg.getKey().toString(), arg.getValue());
-        }
-      }
-
-    } catch (Exception e) {
-      clientListener.onError(db);
-      throw e;
+    validateStatement(statement);
+    this.className = statement.getTarget().getItem().getIdentifier().getStringValue();
+    if (db.getClass(className) == null) {
+      throw new OCommandExecutionException("Class " + className + " not found in the schema: " + query);
     }
+    execInSeparateDatabase(new OCallable() {
+      @Override
+      public Object call(Object iArgument) {
+        return execDb = ((ODatabaseDocumentInternal) db).copy();
+      }
+    });
+
+    synchronized (random) {
+      token = random.nextInt();// TODO do something better ;-)!
+    }
+    OLiveQueryHookV2.subscribe(token, this, (ODatabaseInternal) db);
+
+    OCommandContext ctx = new OBasicCommandContext();
+    if (iArgs != null)
+    // BIND ARGUMENTS INTO CONTEXT TO ACCESS FROM ANY POINT (EVEN FUNCTIONS)
+    {
+      for (Map.Entry<Object, Object> arg : iArgs.entrySet()) {
+        ctx.setVariable(arg.getKey().toString(), arg.getValue());
+      }
+    }
+
   }
 
   private void validateStatement(OSelectStatement statement) {
