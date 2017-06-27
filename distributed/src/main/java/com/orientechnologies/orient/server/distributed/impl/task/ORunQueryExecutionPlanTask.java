@@ -2,17 +2,14 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.result.binary.OResultSerializerNetwork;
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.*;
+import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 import java.io.DataInput;
@@ -51,7 +48,30 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
   @Override
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
-    return null;
+
+    ODatabaseDocumentInternal prev = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    try {
+      ODatabaseDocumentInternal db = database.copy();
+      db.activateOnCurrentThread();
+      OLocalResultSetLifecycleDecorator result = ((ODatabaseDocumentEmbedded) db).query(plan, inputParams);
+
+      //TODO implement serialization
+
+      throw new UnsupportedOperationException();
+    } finally {
+      if (prev == null) {
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
+      } else {
+        ODatabaseRecordThreadLocal.INSTANCE.set(prev);
+      }
+    }
+  }
+
+  public OResultSet getResult(ODistributedResponse resp) {
+    Object payload = resp.getPayload();
+    //TODO implement deserialization
+
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -105,4 +125,5 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
   public int getFactoryId() {
     return FACTORYID;
   }
+
 }

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 import java.util.Map;
 import java.util.Optional;
@@ -13,8 +14,8 @@ import java.util.stream.Collectors;
  * Created by luigidellaquila on 01/03/17.
  */
 public class FilterByClustersStep extends AbstractExecutionStep {
-  private final Set<String>  clusters;
-  private final Set<Integer> clusterIds;
+  private Set<String>  clusters;
+  private Set<Integer> clusterIds;
 
   OResultSet prevResult = null;
 
@@ -22,11 +23,19 @@ public class FilterByClustersStep extends AbstractExecutionStep {
     super(ctx, profilingEnabled);
     this.clusters = filterClusters;
     ODatabase db = ctx.getDatabase();
-    this.clusterIds = clusters.stream().map(x -> db.getClusterIdByName(x)).filter(x -> x != null).collect(Collectors.toSet());
+    init(db);
+
+  }
+
+  private void init(ODatabase db) {
+    if (this.clusterIds == null) {
+      this.clusterIds = clusters.stream().map(x -> db.getClusterIdByName(x)).filter(x -> x != null).collect(Collectors.toSet());
+    }
   }
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+    init(ctx.getDatabase());
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
@@ -63,7 +72,8 @@ public class FilterByClustersStep extends AbstractExecutionStep {
             if (clusterIds.contains(nextItem.getIdentity().get().getClusterId())) {
               break;
             }
-          } nextItem = null;
+          }
+          nextItem = null;
         }
       }
 
@@ -123,6 +133,26 @@ public class FilterByClustersStep extends AbstractExecutionStep {
   public String prettyPrint(int depth, int indent) {
     return OExecutionStepInternal.getIndent(depth, indent) + "+ FILTER ITEMS BY CLUSTERS \n" + OExecutionStepInternal
         .getIndent(depth, indent) + "  " + clusters.stream().collect(Collectors.joining(", "));
+  }
+
+  @Override
+  public OResult serialize() {
+    OResultInternal result = OExecutionStepInternal.basicSerialize(this);
+    if (clusters != null) {
+      result.setProperty("clusters", clusters);
+    }
+
+    return result;
+  }
+
+  @Override
+  public void deserialize(OResult fromResult) {
+    try {
+      OExecutionStepInternal.basicDeserialize(fromResult, this);
+      clusters = fromResult.getProperty("clusters");
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
   }
 
 }

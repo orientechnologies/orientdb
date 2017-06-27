@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 
 /**
@@ -8,22 +9,41 @@ import com.orientechnologies.orient.core.index.OIndex;
  */
 public class FetchFromIndexValuesStep extends FetchFromIndexStep {
 
-  private final boolean asc;
+  private boolean asc;
 
   public FetchFromIndexValuesStep(OIndex<?> index, boolean asc, OCommandContext ctx, boolean profilingEnabled) {
     super(index, null, null, ctx, profilingEnabled);
     this.asc = asc;
   }
 
-  @Override protected boolean isOrderAsc() {
+  @Override
+  protected boolean isOrderAsc() {
     return asc;
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
-    if(isOrderAsc()) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    if (isOrderAsc()) {
       return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX VAUES ASC " + index.getName();
-    }else{
+    } else {
       return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX VAUES DESC " + index.getName();
+    }
+  }
+
+  @Override
+  public OResult serialize() {
+    OResultInternal result = (OResultInternal) super.serialize();
+    result.setProperty("asc", asc);
+    return result;
+  }
+
+  @Override
+  public void deserialize(OResult fromResult) {
+    try {
+      super.deserialize(fromResult);
+      this.asc = fromResult.getProperty("asc");
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
     }
   }
 

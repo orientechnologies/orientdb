@@ -4,6 +4,7 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -20,11 +21,13 @@ import java.util.*;
  * Created by luigidellaquila on 23/07/16.
  */
 public class FetchFromIndexStep extends AbstractExecutionStep {
-  protected final OIndex             index;
-  protected final OBooleanExpression condition;
-  private final   OBinaryCondition   additionalRangeCondition;
+  protected OIndex             index;
+  protected OBooleanExpression condition;
+  private   OBinaryCondition   additionalRangeCondition;
 
-  private final boolean orderAsc;
+  private boolean orderAsc;
+
+  protected String indexName;//for distributed serialization only
 
   private long cost  = 0;
   private long count = 0;
@@ -51,7 +54,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    init();
+    init(ctx.getDatabase());
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
       int localCount = 0;
@@ -163,16 +166,19 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     stats.pushIndexStats(indexName, size, range, additionalRangeCondition != null, count);
   }
 
-  private synchronized void init() {
+  private synchronized void init(ODatabase db) {
     if (inited) {
       return;
     }
     inited = true;
-    init(condition);
+    init(condition, db);
   }
 
-  private void init(OBooleanExpression condition) {
+  private void init(OBooleanExpression condition, ODatabase db) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
+    if (index == null) {
+      index = db.getMetadata().getIndexManager().getIndex(indexName);
+    }
     try {
       if (index.getDefinition() == null) {
         return;
@@ -544,5 +550,37 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   @Override
   public long getCost() {
     return cost;
+  }
+
+  @Override
+  public OResult serialize() {
+    OResultInternal result = OExecutionStepInternal.basicSerialize(this);
+    result.setProperty("indexName", index.getName());
+    if (condition != null) {
+      result.setProperty("condition", condition.serialize());
+    }
+    if (additionalRangeCondition != null) {
+      result.setProperty("additionalRangeCondition", additionalRangeCondition.serialize());
+    }
+    result.setProperty("orderAsc", orderAsc);
+    return result;
+  }
+
+  @Override
+  public void deserialize(OResult fromResult) {
+    try {
+      OExecutionStepInternal.basicDeserialize(fromResult, this);
+      indexName = fromResult.getProperty("indexName");
+      if (fromResult.getProperty("condition") != null) {
+        condition = OBooleanExpression.deserializeFromOResult(fromResult.getProperty("condition"));
+      }
+      if (fromResult.getProperty("additionalRangeCondition") != null) {
+        additionalRangeCondition = new OBinaryCondition(-1);
+        additionalRangeCondition.deserialize(fromResult.getProperty("additionalRangeCondition"));
+      }
+      orderAsc = fromResult.getProperty("orderAsc");
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
   }
 }

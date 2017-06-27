@@ -3,18 +3,17 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by luigidellaquila on 22/07/16.
  */
 public class FetchFromRidsStep extends AbstractExecutionStep {
-  private final Collection<ORecordId> rids;
+  private Collection<ORecordId> rids;
 
   private Iterator<ORecordId> iterator;
 
@@ -31,7 +30,8 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
     nextResult = null;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
       int internalNext = 0;
@@ -56,7 +56,8 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
         return;
       }
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (internalNext >= nRecords) {
           return false;
         }
@@ -66,7 +67,8 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
         return nextResult != null;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (!hasNext()) {
           throw new IllegalStateException();
         }
@@ -77,22 +79,49 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM RIDs\n" +
-        OExecutionStepInternal.getIndent(depth, indent) + "  " + rids;
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM RIDs\n" + OExecutionStepInternal.getIndent(depth, indent)
+        + "  " + rids;
+  }
+
+  @Override
+  public OResult serialize() {
+    OResultInternal result = OExecutionStepInternal.basicSerialize(this);
+    if (rids != null) {
+      result.setProperty("rids", rids.stream().map(x -> x.toString()).collect(Collectors.toList()));
+    }
+    return result;
+  }
+
+  @Override
+  public void deserialize(OResult fromResult) {
+    try {
+      OExecutionStepInternal.basicDeserialize(fromResult, this);
+      if (fromResult.getProperty("rids") != null) {
+        List<String> ser = fromResult.getProperty("rids");
+        rids = ser.stream().map(x -> new ORecordId(x)).collect(Collectors.toList());
+      }
+      reset();
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
   }
 }

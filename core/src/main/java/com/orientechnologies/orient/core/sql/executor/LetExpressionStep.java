@@ -13,8 +13,8 @@ import java.util.Optional;
  * Created by luigidellaquila on 03/08/16.
  */
 public class LetExpressionStep extends AbstractExecutionStep {
-  private final OIdentifier varname;
-  private final OExpression expression;
+  private OIdentifier varname;
+  private OExpression expression;
 
   public LetExpressionStep(OIdentifier varName, OExpression expression, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -66,4 +66,33 @@ public class LetExpressionStep extends AbstractExecutionStep {
     return spaces + "+ LET (for each record)\n" + spaces + "  " + varname + " = " + expression;
   }
 
+  @Override
+  public OResult serialize() {
+    OResultInternal result = OExecutionStepInternal.basicSerialize(this);
+    if (varname != null) {
+      result.setProperty("varname", varname.serialize());
+    }
+    if (expression != null) {
+      result.setProperty("expression", expression.serialize());
+    }
+    return result;
+  }
+
+  @Override
+  public void deserialize(OResult fromResult) {
+    try {
+      OExecutionStepInternal.basicDeserialize(fromResult, this);
+      if (fromResult.getProperty("varname") != null) {
+        varname = new OIdentifier(-1);
+        varname.deserialize(fromResult.getProperty("varname"));
+      }
+      if (fromResult.getProperty("expression") != null) {
+        expression = new OExpression(-1);
+        expression.deserialize(fromResult.getProperty("expression"));
+      }
+      reset();
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
+  }
 }

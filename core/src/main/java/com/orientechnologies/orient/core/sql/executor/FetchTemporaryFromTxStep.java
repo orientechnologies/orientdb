@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -17,9 +18,9 @@ import java.util.*;
  */
 public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
 
-  private final String            className;
-  private       Iterator<ORecord> txEntries;
-  private       Object            order;
+  private String            className;
+  private Iterator<ORecord> txEntries;
+  private Object            order;
 
   private long cost = 0;
 
@@ -188,5 +189,22 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
       result.append(" (" + getCostFormatted() + ")");
     }
     return result.toString();
+  }
+
+  @Override
+  public OResult serialize() {
+    OResultInternal result = OExecutionStepInternal.basicSerialize(this);
+    result.setProperty("className", className);
+    return result;
+  }
+
+  @Override
+  public void deserialize(OResult fromResult) {
+    try {
+      OExecutionStepInternal.basicDeserialize(fromResult, this);
+      className = fromResult.getProperty("className");
+    } catch (Exception e) {
+      throw new OCommandExecutionException("");
+    }
   }
 }
