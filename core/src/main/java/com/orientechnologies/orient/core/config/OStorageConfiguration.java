@@ -264,6 +264,20 @@ public class OStorageConfiguration implements OSerializableStream {
 
     localeLanguage = read(values[index++]);
     localeCountry = read(values[index++]);
+
+    //@COMPATIBILIY with 2.1 version, in this version locale was not mandatory
+    if (localeLanguage == null || localeCountry == null) {
+      final Locale locale = Locale.getDefault();
+
+      if (localeLanguage == null)
+        OLogManager.instance().warn(this,
+            "Information about storage locale is undefined (language is undefined) default locale " + locale + " will be used");
+
+      if (localeCountry == null)
+        OLogManager.instance().warn(this,
+            "Information about storage locale is undefined (country is undefined) default locale " + locale + " will be used");
+    }
+
     dateFormat = read(values[index++]);
     dateTimeFormat = read(values[index++]);
 
