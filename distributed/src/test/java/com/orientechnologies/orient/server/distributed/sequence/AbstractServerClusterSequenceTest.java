@@ -21,16 +21,16 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 3/2/2015
  */
 public abstract class AbstractServerClusterSequenceTest extends AbstractServerClusterTest {
-  private static final boolean                  RUN_PARALLEL_SYNC_TEST = true;
-  private static final int                      SEQ_RUN_COUNT          = 20;
+  private static final boolean RUN_PARALLEL_SYNC_TEST = true;
+  private static final int     SEQ_RUN_COUNT          = 20;
 
   private static final int THREAD_COUNT     = 2;
   private static final int THREAD_POOL_SIZE = 2;
   private static final int CACHE_SIZE       = 27;
 
-  private AtomicLong                            failures               = new AtomicLong();
+  private AtomicLong failures = new AtomicLong();
 
-  private final OPartitionedDatabasePoolFactory poolFactory            = new OPartitionedDatabasePoolFactory();
+  private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
 
   @Override
   public String getDatabaseName() {
@@ -57,8 +57,8 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     // Assuming seq2.next() is called once after calling seq1.next() once, and cache size is
     // C, seq2.current() - seq1.current() = C
 
-    OSequence seq1 = dbs[0].getMetadata().getSequenceLibrary().createSequence(sequenceName, SEQUENCE_TYPE.CACHED,
-        new OSequence.CreateParams().setDefaults().setCacheSize(CACHE_SIZE));
+    OSequence seq1 = dbs[0].getMetadata().getSequenceLibrary()
+        .createSequence(sequenceName, SEQUENCE_TYPE.CACHED, new OSequence.CreateParams().setDefaults().setCacheSize(CACHE_SIZE));
     OSequence seq2 = dbs[1].getMetadata().getSequenceLibrary().getSequence(sequenceName);
 
     Assert.assertEquals(seq1.getName(), seq2.getName());
@@ -80,26 +80,27 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     OSequenceLibrary seq1 = dbs[0].getMetadata().getSequenceLibrary();
     OSequenceLibrary seq2 = dbs[1].getMetadata().getSequenceLibrary();
 
+    dbs[0].activateOnCurrentThread();
     seq1.createSequence(sequenceName, SEQUENCE_TYPE.ORDERED, null);
     Assert.assertEquals(SEQUENCE_TYPE.ORDERED, seq1.getSequence(sequenceName).getSequenceType());
 
     Assert.assertNotNull("The sequence has not be propagated to the 2nd server", seq2.getSequence(sequenceName));
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[0]);
+    dbs[0].activateOnCurrentThread();
     Assert.assertEquals(0L, seq1.getSequence(sequenceName).current());
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[1]);
+    dbs[1].activateOnCurrentThread();
     Assert.assertEquals(0L, seq2.getSequence(sequenceName).current());
     Assert.assertEquals(1L, seq2.getSequence(sequenceName).next());
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[0]);
+    dbs[0].activateOnCurrentThread();
     Assert.assertEquals(2L, seq1.getSequence(sequenceName).next());
     Assert.assertEquals(3L, seq1.getSequence(sequenceName).next());
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[1]);
+    dbs[1].activateOnCurrentThread();
     Assert.assertEquals(0L, seq2.getSequence(sequenceName).reset());
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[0]);
+    dbs[0].activateOnCurrentThread();
     Assert.assertEquals(0L, seq1.getSequence(sequenceName).current());
 
     if (RUN_PARALLEL_SYNC_TEST) {
