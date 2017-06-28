@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.server.OServerInfo;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -42,7 +43,7 @@ public class OServerCommandGetServerVersion extends OServerCommandGetConnections
 
     iRequest.data.commandInfo = "Server status";
 
-    final String result = OServerInfo.getServerInfo(server);
+    final String result = OConstants.ORIENT_VERSION;
 
     iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, result, null);
 
