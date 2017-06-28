@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.client.remote.message.live;
 
+import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 /**
@@ -43,4 +44,5 @@ public class OLiveQueryResult {
   public OResult getOldValue() {
     return oldValue;
   }
+
 }

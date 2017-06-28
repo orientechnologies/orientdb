@@ -544,7 +544,7 @@ public class OFetchHelper {
         } else if (OMultiValue.isMultiValue(o)) {
           fetchCollection(iRootRecord, iUserObject, iFetchPlan, o, null, iCurrentLevel + 1, iLevelFromRoot, iFieldDepthLevel,
               parsedRecords, iFieldPathFromRoot, iListener, iContext);
-        } else if (o instanceof String || o instanceof Number || o instanceof Boolean) {
+        } else if ((o instanceof String || o instanceof Number || o instanceof Boolean) && iContext instanceof OJSONFetchContext) {
           ((OJSONFetchContext) iContext).getJsonWriter().writeValue(0, false, o);
         }
       }

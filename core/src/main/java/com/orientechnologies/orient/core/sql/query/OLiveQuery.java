@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -91,7 +92,7 @@ public class OLiveQuery<T> extends OSQLSynchQuery<T> {
     }
 
     @Override
-    public void onError(ODatabaseDocument database) {
+    public void onError(ODatabaseDocument database, OException exception) {
       ((OLocalLiveResultListener) getResultListener()).onError(token);
     }
 

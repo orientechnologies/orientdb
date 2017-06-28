@@ -1,19 +1,15 @@
 package com.orientechnologies.orient.server.network;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.OLiveQueryV2Test;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
 import org.junit.Assert;
@@ -21,7 +17,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -90,7 +85,7 @@ public class OLiveQueryRemoteTest {
     }
 
     @Override
-    public void onError(ODatabaseDocument database) {
+    public void onError(ODatabaseDocument database, OException exception) {
 
     }
 
@@ -177,7 +172,7 @@ public class OLiveQueryRemoteTest {
           }
 
           @Override
-          public void onError(ODatabaseDocument database) {
+          public void onError(ODatabaseDocument database, OException exception) {
 
           }
 
