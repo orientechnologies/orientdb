@@ -38,6 +38,12 @@ public class OServerCommandGetServerVersion extends OServerCommandGetConnections
   }
 
   @Override
+  public boolean authenticate(final OHttpRequest iRequest, final OHttpResponse iResponse, final boolean iAskForAuthentication) {
+    // return always true, as authentication is not needed
+    return true;
+  }
+
+  @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     checkSyntax(iRequest.url, 1, "Syntax error: server");
 
