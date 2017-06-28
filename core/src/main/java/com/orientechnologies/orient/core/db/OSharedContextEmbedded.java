@@ -14,10 +14,15 @@ import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by tglman on 13/06/17.
  */
 public class OSharedContextEmbedded extends OSharedContext {
+
+  Map<String, DistributedQueryContext> activeDistributedQueries;
 
   public OSharedContextEmbedded(OStorage storage) {
     schema = new OSchemaEmbedded();
@@ -32,7 +37,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     statementCache = new OStatementCache(
         storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
     queryStats = new OQueryStats();
-
+    activeDistributedQueries = new HashMap<>();
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {
@@ -68,6 +73,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     commandCache.shutdown();
     liveQueryOps.close();
     liveQueryOpsV2.close();
+    activeDistributedQueries.values().forEach(x -> x.close());
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
@@ -93,5 +99,9 @@ public class OSharedContextEmbedded extends OSharedContext {
     schema.createClass(database, "V");
     schema.createClass(database, "E");
     loaded = true;
+  }
+
+  public Map<String, DistributedQueryContext> getActiveDistributedQueries() {
+    return activeDistributedQueries;
   }
 }

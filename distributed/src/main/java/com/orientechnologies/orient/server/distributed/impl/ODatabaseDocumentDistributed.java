@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -370,14 +369,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public OResultSet queryOnNode(String nodeName, OExecutionPlan executionPlan, Map<Object, Object> inputParameters) {
-    ORunQueryExecutionPlanTask task = new ORunQueryExecutionPlanTask(executionPlan, inputParameters);
+    ORunQueryExecutionPlanTask task = new ORunQueryExecutionPlanTask(executionPlan, inputParameters, nodeName);
     ODistributedResponse result =  executeTaskOnNode(task, nodeName);
-
-
-    return task.getResult(result);
+    return task.getResult(result, this);
   }
 
-  protected ODistributedResponse executeTaskOnNode(ORemoteTask task, String nodeName) {
+  public ODistributedResponse executeTaskOnNode(ORemoteTask task, String nodeName) {
     final String dbUrl = getURL();
 
     final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
