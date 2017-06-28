@@ -227,6 +227,9 @@ public class OSelectExecutionPlanner {
       nextNodeClusters = new HashSet<>();
       nextNodeClusters.addAll(clusterMap.get(nextNode));
       nextNodeClusters.retainAll(uncovered);
+      if(nextNodeClusters.size()==0){
+        throw new OCommandExecutionException("Cannot execute sharded query: clusters ["+uncovered.stream().collect(Collectors.joining(", "))+"] are not present on any node");
+      }
       result.put(nextNode, nextNodeClusters);
       uncovered.removeAll(nextNodeClusters);
     }
