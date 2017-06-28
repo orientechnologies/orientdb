@@ -729,6 +729,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     cmdManager.registerCommand(new OServerCommandGetDocumentByClass());
     cmdManager.registerCommand(new OServerCommandGetQuery());
     cmdManager.registerCommand(new OServerCommandGetServer());
+    cmdManager.registerCommand(new OServerCommandGetServerVersion());
     cmdManager.registerCommand(new OServerCommandGetConnections());
     cmdManager.registerCommand(new OServerCommandGetStorageAllocation());
     cmdManager.registerCommand(new OServerCommandGetFileDownload());
