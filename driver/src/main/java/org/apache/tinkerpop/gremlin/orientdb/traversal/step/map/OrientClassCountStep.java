@@ -12,7 +12,8 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import java.util.NoSuchElementException;
 
 /**
- * Created by Enrico Risa on 27/06/2017.
+ *
+ * @author Enrico Risa
  */
 public class OrientClassCountStep<S> extends AbstractStep<S, Long> {
 
