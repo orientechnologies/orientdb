@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -243,5 +245,44 @@ public class OSequenceTest {
     mtSeq.reloadSequence();
     assertThat(mtSeq.getDocument().getVersion()).isEqualTo(1001);
     assertThat(mtSeq.current()).isEqualTo(1000);
+  }
+
+  @Test
+  public void shouldSequenceWithDefaultValueNoTx(){
+
+    db.command(new OCommandSQL("CREATE CLASS Person EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE SEQUENCE personIdSequence TYPE ORDERED;")).execute();
+    db.command(new OCommandSQL("CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");")).execute();
+    db.command(new OCommandSQL("CREATE INDEX Person.id ON Person (id) UNIQUE")).execute();
+
+
+    for (int i = 0; i < 10; i++) {
+      ODocument person = db.newInstance("Person");
+      person.field("name", "Foo" + i);
+      person.save();
+    }
+
+    assertThat(db.countClass("Person")).isEqualTo(10);
+  }
+  @Test
+  public void shouldSequenceWithDefaultValueTx(){
+
+    db.command(new OCommandSQL("CREATE CLASS Person EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE SEQUENCE personIdSequence TYPE ORDERED;")).execute();
+    db.command(new OCommandSQL("CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");")).execute();
+    db.command(new OCommandSQL("CREATE INDEX Person.id ON Person (id) UNIQUE")).execute();
+
+
+    db.begin();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument person = db.newInstance("Person");
+      person.field("name", "Foo" + i);
+      person.save();
+    }
+
+    db.commit();
+
+    assertThat(db.countClass("Person")).isEqualTo(10);
   }
 }
