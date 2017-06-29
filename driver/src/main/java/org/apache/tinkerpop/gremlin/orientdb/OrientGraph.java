@@ -27,6 +27,7 @@ import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.orientdb.executor.OGremlinResultSet;
+import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphCountStrategy;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
@@ -58,8 +59,9 @@ import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 @Graph.OptIn("org.apache.tinkerpop.gremlin.orientdb.gremlintest.suite.OrientDBDebugSuite")
 public final class OrientGraph implements Graph {
     static {
-        TraversalStrategies.GlobalCache.registerStrategies(OrientGraph.class,
-                TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone().addStrategies(OrientGraphStepStrategy.instance()));
+        TraversalStrategies.GlobalCache
+                .registerStrategies(OrientGraph.class,
+                        TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone().addStrategies(OrientGraphStepStrategy.instance(), OrientGraphCountStrategy.instance()));
     }
 
     private static final Map<String, String> INTERNAL_CLASSES_TO_TINKERPOP_CLASSES;
@@ -442,7 +444,9 @@ public final class OrientGraph implements Graph {
         try {
             return id.getRecord();
         } catch (ORecordNotFoundException e) {
-            throw new NoSuchElementException("The " + getClass().getSimpleName().toLowerCase() + " with id " + id + " of type " + id.getClass().getSimpleName() + " does not exist in the graph");
+            throw new NoSuchElementException(
+                    "The " + getClass().getSimpleName().toLowerCase() + " with id " + id + " of type " + id.getClass().getSimpleName()
+                            + " does not exist in the graph");
         }
     }
 
