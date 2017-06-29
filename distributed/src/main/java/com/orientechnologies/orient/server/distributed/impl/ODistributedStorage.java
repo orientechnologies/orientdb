@@ -1383,6 +1383,20 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       shutdownAsynchronousWorker();
   }
 
+  public void closeOnDrop() {
+    if (wrapped == null)
+      return;
+    if (wrapped instanceof OLocalPaginatedStorage) {
+      // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
+      dropStorageFiles();
+    }
+
+    wrapped.close(true, false);
+
+    if (isClosed())
+      shutdownAsynchronousWorker();
+  }
+
   @Override
   public boolean isClosed() {
     if (wrapped == null)

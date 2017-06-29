@@ -326,19 +326,18 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
-    removeStorage(iDatabase.getName());
-
     final ODistributedMessageService msgService = getMessageService();
     if (msgService != null) {
       msgService.unregisterDatabase(iDatabase.getName());
     }
+    removeStorage(iDatabase.getName());
   }
 
   public void removeStorage(final String name) {
     synchronized (storages) {
       final ODistributedStorage storage = storages.remove(name);
       if (storage != null) {
-        storage.close(true, true);
+        storage.closeOnDrop();
       }
     }
   }
@@ -916,8 +915,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                     databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName, cfg);
 
                   } catch (ODistributedDatabaseDeltaSyncException e) {
-                    // FALL BACK TO FULL BACKUP
-                    removeStorage(databaseName);
 
                     if (deploy == null || !deploy) {
                       // NO AUTO DEPLOY
