@@ -12,9 +12,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-// copy of TinkerGraphStepStrategyTest
 public class OrientGraphCountStrategyTest {
-    public static final String URL = "memory:" + OrientGraphCountStrategyTest.class.getSimpleName();
 
     @Test
     public void shouldUseGlobalCountStepWithV() {
@@ -165,13 +163,18 @@ public class OrientGraphCountStrategyTest {
     @Test
     public void shouldUseLocalCountStep() {
         OrientGraph graph = OrientGraph.open();
+        Vertex v1 = graph.addVertex(T.label, "Person");
+        Vertex v2 = graph.addVertex(T.label, "Person");
 
+        for (int i = 0; i < 10; i++) {
+            v1.addEdge("HasFriend", v2);
+        }
         try {
             GraphTraversalSource traversal = graph.traversal();
 
-            GraphTraversal.Admin<Vertex, Long> admin = traversal.V().hasLabel("Person").out("HasFriend").count().asAdmin();
+            Long count = traversal.V().hasLabel("Person").out("HasFriend").count().toStream().findFirst().get();
 
-            admin.applyStrategies();
+            Assert.assertEquals(10L, count.longValue());
 
         } finally {
             graph.close();

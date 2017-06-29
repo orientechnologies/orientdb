@@ -28,6 +28,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.orientdb.executor.OGremlinResultSet;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphCountStrategy;
+import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphMatchStepStrategy;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
@@ -61,7 +62,8 @@ public final class OrientGraph implements Graph {
     static {
         TraversalStrategies.GlobalCache
                 .registerStrategies(OrientGraph.class,
-                        TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone().addStrategies(OrientGraphStepStrategy.instance(), OrientGraphCountStrategy.instance()));
+                        TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone().addStrategies(OrientGraphStepStrategy.instance(), OrientGraphCountStrategy.instance(),
+                                OrientGraphMatchStepStrategy.instance()));
     }
 
     private static final Map<String, String> INTERNAL_CLASSES_TO_TINKERPOP_CLASSES;

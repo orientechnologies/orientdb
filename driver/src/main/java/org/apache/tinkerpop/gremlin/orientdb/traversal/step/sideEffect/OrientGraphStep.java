@@ -9,6 +9,7 @@ import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientIndexQuery;
 import org.apache.tinkerpop.gremlin.process.traversal.Compare;
 import org.apache.tinkerpop.gremlin.process.traversal.Contains;
+import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.step.HasContainerHolder;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
@@ -19,7 +20,6 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import org.apache.tinkerpop.gremlin.util.function.TriFunction;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
-import org.javatuples.Pair;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -111,19 +111,22 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
     private Set<String> findClassLabelsInHasContainers() {
         Set<String> classLabels = new HashSet<>();
 
-        Optional<HasContainer> container = this.hasContainers.stream()
+        HasContainer container = this.hasContainers.stream()
                 .filter(hasContainer -> isLabelKey(hasContainer.getKey()))
-                .findFirst();
+                .findFirst()
+                .orElseGet(() -> {
+                    String defaultClass = Vertex.class.isAssignableFrom(getReturnClass()) ? "V" : "E";
+                    HasContainer defaultContainer = new HasContainer(T.label.name(), P.eq(defaultClass));
+                    return defaultContainer;
+                });
 
-        if (container.isPresent()) {
-            Object value = container.get().getValue();
+        Object value = container.getValue();
 
-            //The ugly part. Is there anyway to know the return type of a predicate value ?
-            if (value instanceof List) {
-                ((List) value).forEach(label -> classLabels.add((String) label));
-            } else {
-                classLabels.add((String) value);
-            }
+        //The ugly part. Is there anyway to know the return type of a predicate value ?
+        if (value instanceof List) {
+            ((List) value).forEach(label -> classLabels.add((String) label));
+        } else {
+            classLabels.add((String) value);
         }
 
         return classLabels;
