@@ -135,6 +135,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentDistributed database = new ODatabaseDocumentDistributed(getStorage(), hazelcastPlugin);
     database.internalOpen(getUser().getName(), null, getConfig(), false);
+    database.callOnOpenListeners();
     this.activateOnCurrentThread();
     return database;
   }
@@ -370,7 +371,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public OResultSet queryOnNode(String nodeName, OExecutionPlan executionPlan, Map<Object, Object> inputParameters) {
     ORunQueryExecutionPlanTask task = new ORunQueryExecutionPlanTask(executionPlan, inputParameters, nodeName);
-    ODistributedResponse result =  executeTaskOnNode(task, nodeName);
+    ODistributedResponse result = executeTaskOnNode(task, nodeName);
     return task.getResult(result, this);
   }
 
@@ -393,7 +394,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config, boolean checkPassword) {
     OScenarioThreadLocal.executeAsDistributed(() -> {
-      super.internalOpen(iUserName, iUserPassword, config,checkPassword);
+      super.internalOpen(iUserName, iUserPassword, config, checkPassword);
       return null;
     });
   }

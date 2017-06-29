@@ -142,9 +142,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_READ);
       }
 
-      // WAKE UP LISTENERS
-      callOnOpenListeners();
-
     } catch (OException e) {
       ODatabaseRecordThreadLocal.INSTANCE.remove();
       throw e;
@@ -195,7 +192,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
     registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
+  }
 
+  public void callOnCreateListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
     for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
       it.next().onCreate(getDatabaseOwner());
@@ -206,7 +205,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         listener.onCreate(this);
       } catch (Throwable ignore) {
       }
-
   }
 
   protected void createMetadata() {
@@ -272,6 +270,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage);
     database.internalOpen(getUser().getName(), null, config, false);
+    database.callOnOpenListeners();
     this.activateOnCurrentThread();
     return database;
   }

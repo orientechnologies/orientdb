@@ -93,18 +93,22 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public synchronized ODatabaseDocumentInternal open(String name, String user, String password) {
+  public ODatabaseDocumentInternal open(String name, String user, String password) {
     return open(name, user, password, null);
   }
 
-  public synchronized ODatabaseDocumentInternal openNoAuthenticate(String name, String user) {
+  public ODatabaseDocumentEmbedded openNoAuthenticate(String name, String user) {
     try {
-      OrientDBConfig config = solveConfig(null);
-      OAbstractPaginatedStorage storage = getStorage(name);
-      // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-      storage.open(config.getConfigurations());
-      final ODatabaseDocumentEmbedded embedded = factory.newInstance(storage);
-      embedded.internalOpen(user, "nopwd", config, false);
+      final ODatabaseDocumentEmbedded embedded;
+      synchronized (this) {
+        OrientDBConfig config = solveConfig(null);
+        OAbstractPaginatedStorage storage = getStorage(name);
+        // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+        storage.open(config.getConfigurations());
+        embedded = factory.newInstance(storage);
+        embedded.internalOpen(user, "nopwd", config, false);
+      }
+      embedded.callOnOpenListeners();
       return embedded;
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
@@ -112,16 +116,19 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public synchronized ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
-    checkOpen();
+  public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
     try {
-      config = solveConfig(config);
-      OAbstractPaginatedStorage storage = getStorage(name);
-      // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-      storage.open(config.getConfigurations());
-      final ODatabaseDocumentEmbedded embedded = factory.newInstance(storage);
-      embedded.internalOpen(user, password, config);
-
+      final ODatabaseDocumentEmbedded embedded;
+      synchronized (this) {
+        checkOpen();
+        config = solveConfig(config);
+        OAbstractPaginatedStorage storage = getStorage(name);
+        // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+        storage.open(config.getConfigurations());
+        embedded = factory.newInstance(storage);
+        embedded.internalOpen(user, password, config);
+      }
+      embedded.callOnOpenListeners();
       return embedded;
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
@@ -140,12 +147,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   }
 
-  public synchronized ODatabaseDocumentInternal poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
-    checkOpen();
-    OAbstractPaginatedStorage storage = getStorage(name);
-    storage.open(pool.getConfig().getConfigurations());
-    final ODatabaseDocumentEmbedded embedded = factory.newPoolInstance(pool, storage);
-    embedded.internalOpen(user, password, pool.getConfig());
+  public ODatabaseDocumentInternal poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
+    final ODatabaseDocumentEmbedded embedded;
+    synchronized (this) {
+      checkOpen();
+      OAbstractPaginatedStorage storage = getStorage(name);
+      storage.open(pool.getConfig().getConfigurations());
+      embedded = factory.newPoolInstance(pool, storage);
+      embedded.internalOpen(user, password, pool.getConfig());
+    }
+    embedded.callOnOpenListeners();
     return embedded;
   }
 
@@ -171,38 +182,46 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public synchronized void create(String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
-    if (!exists(name, user, password)) {
-      try {
-        config = solveConfig(config);
-        OAbstractPaginatedStorage storage;
-        if (type == ODatabaseType.MEMORY) {
-          storage = (OAbstractPaginatedStorage) memory.createStorage(name, new HashMap<>());
-        } else {
-          storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
+  public void create(String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
+    final ODatabaseDocumentEmbedded embedded;
+    synchronized (this) {
+      if (!exists(name, user, password)) {
+        try {
+          config = solveConfig(config);
+          OAbstractPaginatedStorage storage;
+          if (type == ODatabaseType.MEMORY) {
+            storage = (OAbstractPaginatedStorage) memory.createStorage(name, new HashMap<>());
+          } else {
+            storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
+          }
+          storages.put(name, storage);
+          embedded = internalCreate(config, storage);
+        } catch (Exception e) {
+          throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
         }
-        storages.put(name, storage);
-        internalCreate(config, storage);
-      } catch (Exception e) {
-        throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
-      }
-    } else
-      throw new ODatabaseException("Cannot create new database '" + name + "' because it already exists");
+      } else
+        throw new ODatabaseException("Cannot create new database '" + name + "' because it already exists");
+    }
+    embedded.callOnCreateListeners();
   }
 
-  public synchronized void restore(String name, String path, OrientDBConfig config) {
-    if (!exists(name, null, null)) {
-      try {
-        OAbstractPaginatedStorage storage;
-        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
-        internalCreate(config, storage);
-        storage.restoreFromIncrementalBackup(path);
-        storages.put(name, storage);
-      } catch (Exception e) {
-        throw OException.wrapException(new ODatabaseException("Cannot restore database '" + name + "'"), e);
-      }
-    } else
-      throw new ODatabaseException("Cannot create new storage '" + name + "' because it already exists");
+  public void restore(String name, String path, OrientDBConfig config) {
+    final ODatabaseDocumentEmbedded embedded;
+    synchronized (this) {
+      if (!exists(name, null, null)) {
+        try {
+          OAbstractPaginatedStorage storage;
+          storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
+          embedded = internalCreate(config, storage);
+          storage.restoreFromIncrementalBackup(path);
+          storages.put(name, storage);
+        } catch (Exception e) {
+          throw OException.wrapException(new ODatabaseException("Cannot restore database '" + name + "'"), e);
+        }
+      } else
+        throw new ODatabaseException("Cannot create new storage '" + name + "' because it already exists");
+    }
+    embedded.callOnCreateListeners();
   }
 
   public synchronized void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
@@ -216,7 +235,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  protected void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
+  protected ODatabaseDocumentEmbedded internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
     try {
       storage.create(config.getConfigurations());
     } catch (IOException e) {
@@ -237,7 +256,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     final ODatabaseDocumentEmbedded embedded = factory.newInstance(storage);
     embedded.setSerializer(serializer);
     embedded.internalCreate(config);
-
+    return embedded;
   }
 
   @Override
@@ -254,16 +273,20 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public synchronized void drop(String name, String user, String password) {
-    checkOpen();
-    if (exists(name, user, password)) {
-      ODatabaseDocumentInternal db = openNoAuthenticate(name,user);
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); ) {
-        it.next().onDrop(db);
+  public void drop(String name, String user, String password) {
+    synchronized (this) {
+      checkOpen();
+    }
+    ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); ) {
+      it.next().onDrop(db);
+    }
+    db.close();
+    synchronized (this) {
+      if (exists(name, user, password)) {
+        getStorage(name).delete();
+        storages.remove(name);
       }
-      db.close();
-      getStorage(name).delete();
-      storages.remove(name);
     }
   }
 
@@ -361,14 +384,18 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   public synchronized void initCustomStorage(String name, String path, String userName, String userPassword) {
-    boolean exists = OLocalPaginatedStorage.exists(Paths.get(path));
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) disk.createStorage(path, new HashMap<>());
-    // TODO: Add Creation settings and parameters
-    if (!exists) {
-      internalCreate(getConfigurations(), storage);
+    ODatabaseDocumentEmbedded embedded = null;
+    synchronized (this) {
+      boolean exists = OLocalPaginatedStorage.exists(Paths.get(path));
+      OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) disk.createStorage(path, new HashMap<>());
+      // TODO: Add Creation settings and parameters
+      if (!exists) {
+        embedded = internalCreate(getConfigurations(), storage);
+      }
+      storages.put(name, storage);
     }
-    storages.put(name, storage);
-
+    if (embedded != null)
+      embedded.callOnCreateListeners();
   }
 
   public synchronized void removeShutdownHook() {
