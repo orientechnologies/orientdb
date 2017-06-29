@@ -798,18 +798,21 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   public OBinaryPushResponse push(OBinaryPushRequest request) throws IOException {
     expectedPushResponse = request.createResponse();
     channel.acquireWriteLock();
-    channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-    channel.writeByte(request.getPushCommand());
-    request.write(channel);
-    channel.flush();
-    if (expectedPushResponse != null) {
-      try {
-        return pushResponse.take();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+    try {
+      channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+      channel.writeByte(request.getPushCommand());
+      request.write(channel);
+      channel.flush();
+      if (expectedPushResponse != null) {
+        try {
+          return pushResponse.take();
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
       }
+    } finally {
+      channel.releaseWriteLock();
     }
-    channel.releaseWriteLock();
     return null;
   }
 

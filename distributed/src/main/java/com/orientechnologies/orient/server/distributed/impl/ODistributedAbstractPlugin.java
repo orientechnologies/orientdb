@@ -1575,6 +1575,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   public <T> T executeInDistributedDatabaseLock(final String databaseName, final long timeoutLocking,
       OModifiableDistributedConfiguration lastCfg, final OCallable<T, OModifiableDistributedConfiguration> iCallback) {
 
+    boolean updated;
+    T result;
     lockManagerRequester.acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
     try {
 
@@ -1589,7 +1591,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       try {
 
-        return (T) iCallback.call(lastCfg);
+        result = (T) iCallback.call(lastCfg);
 
       } finally {
         if (ODistributedServerLog.isDebugEnabled())
@@ -1598,7 +1600,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                   lastCfg.getDocument().toJSON());
 
         // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
-        updateCachedDatabaseConfiguration(databaseName, lastCfg, true);
+        updated = updateCachedDatabaseConfiguration(databaseName, lastCfg, true);
 
       }
 
@@ -1610,7 +1612,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     } finally {
       lockManagerRequester.releaseExclusiveLock(databaseName, nodeName);
     }
+    if (updated) {
+      // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
+      notifyClients(databaseName);
+      serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
+    }
+    return result;
   }
+
+  protected abstract void notifyClients(String databaseName);
 
   protected void onDatabaseEvent(final String nodeName, final String databaseName, final DB_STATUS status) {
     updateLastClusterChange();

@@ -816,17 +816,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       } else
         configurationMap.putInLocalCache(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, document);
 
-      // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
-      notifyClients(databaseName);
-      serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
-
       dumpServersStatus();
     }
 
     return updated;
   }
 
-  private void notifyClients(String databaseName) {
+  protected void notifyClients(String databaseName) {
     List<String> hosts = new ArrayList<>();
     for (Member member : activeNodes.values()) {
       ODocument memberConfig = getNodeConfigurationByUuid(member.getUuid(), true);
