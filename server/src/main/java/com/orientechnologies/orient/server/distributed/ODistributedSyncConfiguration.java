@@ -67,7 +67,10 @@ public class ODistributedSyncConfiguration {
 
   public void setLastLSN(final String server, final OLogSequenceNumber lsn, final boolean updateLastOperationTimestamp)
       throws IOException {
-    lastLSN.put(server, lsn);
+    if (lsn == null)
+      lastLSN.put(server, new OLogSequenceNumber(-1, -1));
+    else
+      lastLSN.put(server, lsn);
 
     if (updateLastOperationTimestamp) {
       final long clusterTime = dManager.getClusterTime();
