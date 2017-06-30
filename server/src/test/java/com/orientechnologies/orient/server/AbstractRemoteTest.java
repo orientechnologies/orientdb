@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.Orient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,7 +43,7 @@ public class AbstractRemoteTest {
 
   @After
   public void teardown() {
-
     server.shutdown();
+    Orient.instance().startup();
   }
 }
