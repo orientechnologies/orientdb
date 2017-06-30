@@ -40,5 +40,5 @@ public interface OAutoshardedStorage {
 
   void releaseDistributedExclusiveLock();
 
-  boolean isDistributedEnv();
+  boolean isLocalEnv();
 }

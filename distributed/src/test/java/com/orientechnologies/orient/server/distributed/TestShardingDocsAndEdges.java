@@ -127,7 +127,9 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
       if (o instanceof List) {
         List<ODocument> resultList = (List) o;
         for (OIdentifiable d : resultList) {
-          resultSet.add((String) ((ODocument) d.getRecord()).field("name"));
+          if(d.getRecord() instanceof  ODocument) {
+            resultSet.add((String) ((ODocument) d.getRecord()).field("name"));
+          }
         }
       }
     } finally {
