@@ -657,6 +657,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    *
    * @param iRecord  Record to handle
    * @param iContext
+   *
    * @return false if limit has been reached, otherwise true
    */
   @Override
@@ -686,6 +687,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * Returns the temporary RID counter assuring it's unique per query tree.
    *
    * @param iContext
+   *
    * @return Serial as integer
    */
   public int getTemporaryRIDCounter(final OCommandContext iContext) {
@@ -695,11 +697,27 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         serialTempRID.getAndIncrement();
   }
 
+  protected void checkForSystemClusters(final ODatabaseDocumentInternal iDatabase, final int[] iClusterIds) {
+    for (int clId : iClusterIds) {
+      if (clId < 0) {
+        continue;
+      }
+      final com.orientechnologies.orient.core.storage.OCluster cl = iDatabase.getStorage().getClusterById(clId);
+      if (cl != null && cl.isSystemCluster()) {
+        final OSecurityUser dbUser = iDatabase.getUser();
+        if (dbUser == null || dbUser.allow(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_READ) != null)
+          // AUTHORIZED
+          break;
+      }
+    }
+  }
+
   protected boolean addResult(OIdentifiable iRecord, final OCommandContext iContext) {
     resultCount++;
     if (iRecord == null)
       return true;
 
+    checkForSystemClusters(getDatabase(), new int[] { iRecord.getIdentity().getClusterId() });
     if (projections != null || groupByFields != null && !groupByFields.isEmpty()) {
       if (!aggregate) {
         // APPLY PROJECTIONS IN LINE
@@ -2175,7 +2193,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               context.setVariable("$limit", limit);
 
               cursor = operator.executeIndexQuery(context, index, keyParams, ascSortOrder);
-              if(cursor!=null){
+              if (cursor != null) {
                 metricRecorder.recordInvolvedIndexesMetric(index);
               }
 
@@ -2342,6 +2360,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * Use index to order documents by provided fields.
    *
    * @param iSchemaClass where search for indexes for optimization.
+   *
    * @return true if execution was optimized
    */
   private boolean optimizeSort(OClass iSchemaClass) {
