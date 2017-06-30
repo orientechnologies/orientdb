@@ -46,7 +46,6 @@ import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -202,7 +201,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public Object command(final OCommandRequestText iCommand) {
-    if (!isDistributedEnv())
+    if (isLocalEnv())
       // ALREADY DISTRIBUTED
       return wrapped.command(iCommand);
 
@@ -597,7 +596,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       final int iRecordVersion, final byte iRecordType, final int iMode, final ORecordCallback<Long> iCallback) {
     resetLastValidBackup();
 
-    if (!isDistributedEnv()) {
+    if (isLocalEnv()) {
       // ALREADY DISTRIBUTED
       return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
     }
@@ -744,15 +743,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   }
 
-  public boolean isDistributedEnv() {
-    return localDistributedDatabase != null && dManager != null && distributedConfiguration != null && OScenarioThreadLocal.INSTANCE
+  public boolean isLocalEnv() {
+    return localDistributedDatabase == null || dManager == null || distributedConfiguration == null || OScenarioThreadLocal.INSTANCE
         .isRunModeDistributed();
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
       final boolean iIgnoreCache, final boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
 
-    if (!isDistributedEnv()) {
+    if (isLocalEnv()) {
       // ALREADY DISTRIBUTED
       return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, prefetchRecords, iCallback);
     }
@@ -818,8 +817,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   @Override
   public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
       final boolean ignoreCache, final int recordVersion) throws ORecordNotFoundException {
-    if (!isDistributedEnv()) {
-      return  wrapped.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion);
+    if (isLocalEnv()) {
+      return wrapped.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion);
     }
     final ORawBuffer memCopy = localDistributedDatabase.getRecordIfLocked(rid);
     if (memCopy != null)
@@ -884,7 +883,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       final ORecordCallback<Integer> iCallback) {
     resetLastValidBackup();
 
-    if (!isDistributedEnv()) {
+    if (isLocalEnv()) {
       // ALREADY DISTRIBUTED
       return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
     }
@@ -1032,7 +1031,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       final ORecordCallback<Boolean> iCallback) {
     resetLastValidBackup();
 
-    if (!isDistributedEnv()) {
+    if (isLocalEnv()) {
       // ALREADY DISTRIBUTED
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
     }
@@ -1417,7 +1416,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   public List<ORecordOperation> commit(final OTransaction iTx, final Runnable callback) {
     resetLastValidBackup();
 
-    if (!isDistributedEnv()) {
+    if (isLocalEnv()) {
       // ALREADY DISTRIBUTED
       try {
         return wrapped.commit(iTx, callback);
@@ -1585,7 +1584,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     for (int retry = 0; retry < 10; ++retry) {
       final AtomicInteger clId = new AtomicInteger();
 
-      if (isDistributedEnv()) {
+      if (!isLocalEnv()) {
 
         final StringBuilder cmd = new StringBuilder("create cluster `");
         cmd.append(iClusterName);

@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -115,7 +114,7 @@ public class OClassEmbedded extends OClassImpl {
   }
 
   private boolean isDistributedCommand(ODatabaseDocumentInternal database) {
-    return database.getStorage() instanceof OAutoshardedStorage && ((OAutoshardedStorage) database.getStorage()).isDistributedEnv();
+    return database.getStorage() instanceof OAutoshardedStorage && !((OAutoshardedStorage) database.getStorage()).isLocalEnv();
   }
 
   public OClassImpl setEncryption(final String iValue) {
