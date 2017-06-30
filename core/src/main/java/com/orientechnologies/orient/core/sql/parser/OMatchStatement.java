@@ -40,6 +40,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   long threshold = 20;
   private int limitFromProtocol = -1;
 
+  public List<ONestedProjection> getReturnNestedProjections() {
+    return returnNestedProjections;
+  }
+
+  public void setReturnNestedProjections(List<ONestedProjection> returnNestedProjections) {
+    this.returnNestedProjections = returnNestedProjections;
+  }
+
   public class MatchContext {
     int currentEdgeNumber = 0;
 
@@ -85,12 +93,13 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     public String rootAlias;
   }
 
-  public static final String                 KEYWORD_MATCH    = "MATCH";
+  public static final String                  KEYWORD_MATCH           = "MATCH";
   // parsed data
-  protected           List<OMatchExpression> matchExpressions = new ArrayList<OMatchExpression>();
-  protected           List<OExpression>      returnItems      = new ArrayList<OExpression>();
-  protected           List<OIdentifier>      returnAliases    = new ArrayList<OIdentifier>();
-  protected           boolean                returnDistinct   = false;
+  protected           List<OMatchExpression>  matchExpressions        = new ArrayList<>();
+  protected           List<OExpression>       returnItems             = new ArrayList<>();
+  protected           List<OIdentifier>       returnAliases           = new ArrayList<>();
+  protected           List<ONestedProjection> returnNestedProjections = new ArrayList<>();
+  protected           boolean                 returnDistinct          = false;
   protected OOrderBy orderBy;
   protected OLimit   limit;
 
@@ -1072,11 +1081,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       return null;
     }
 
-    if(targetResult instanceof OCommandExecutorSQLSelect){
+    if (targetResult instanceof OCommandExecutorSQLSelect) {
       ((OCommandExecutorSQLSelect) targetResult).getContext().setRecordingMetrics(ctx.isRecordingMetrics());
-    }else if(targetResult instanceof OCommandExecutorSQLResultsetDelegate){
+    } else if (targetResult instanceof OCommandExecutorSQLResultsetDelegate) {
       OCommandExecutor delegate = ((OCommandExecutorSQLResultsetDelegate) targetResult).getDelegate();
-      if(delegate instanceof OCommandExecutorSQLSelect){
+      if (delegate instanceof OCommandExecutorSQLSelect) {
         delegate.getContext().setRecordingMetrics(ctx.isRecordingMetrics());
       }
     }
@@ -1328,6 +1337,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         builder.append(", ");
       }
       expr.toString(params, builder);
+      if (returnNestedProjections != null && i < returnNestedProjections.size() && returnNestedProjections.get(i) != null) {
+        returnNestedProjections.get(i).toString(params, builder);
+      }
       if (returnAliases != null && i < returnAliases.size() && returnAliases.get(i) != null) {
         builder.append(" AS ");
         returnAliases.get(i).toString(params, builder);
@@ -1361,6 +1373,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         matchExpressions == null ? null : matchExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.returnItems = returnItems == null ? null : returnItems.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.returnAliases = returnAliases == null ? null : returnAliases.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.returnNestedProjections =
+        returnNestedProjections == null ? null : returnNestedProjections.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.orderBy = orderBy == null ? null : orderBy.copy();
     result.limit = limit == null ? null : limit.copy();
     result.returnDistinct = this.returnDistinct;
@@ -1383,6 +1397,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       return false;
     if (returnAliases != null ? !returnAliases.equals(that.returnAliases) : that.returnAliases != null)
       return false;
+    if (returnNestedProjections != null ?
+        !returnNestedProjections.equals(that.returnNestedProjections) :
+        that.returnNestedProjections != null)
+      return false;
     if (orderBy != null ? !orderBy.equals(that.orderBy) : that.orderBy != null)
       return false;
     if (limit != null ? !limit.equals(that.limit) : that.limit != null)
@@ -1399,6 +1417,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     int result = matchExpressions != null ? matchExpressions.hashCode() : 0;
     result = 31 * result + (returnItems != null ? returnItems.hashCode() : 0);
     result = 31 * result + (returnAliases != null ? returnAliases.hashCode() : 0);
+    result = 31 * result + (returnNestedProjections != null ? returnNestedProjections.hashCode() : 0);
     result = 31 * result + (orderBy != null ? orderBy.hashCode() : 0);
     result = 31 * result + (limit != null ? limit.hashCode() : 0);
     return result;

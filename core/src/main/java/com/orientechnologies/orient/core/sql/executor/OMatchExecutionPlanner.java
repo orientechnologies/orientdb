@@ -20,9 +20,10 @@ public class OMatchExecutionPlanner {
 
   static final String DEFAULT_ALIAS_PREFIX = "$ORIENT_DEFAULT_ALIAS_";
 
-  protected List<OMatchExpression> matchExpressions;
-  protected List<OExpression>      returnItems;
-  protected List<OIdentifier>      returnAliases;
+  protected List<OMatchExpression>  matchExpressions;
+  protected List<OExpression>       returnItems;
+  protected List<OIdentifier>       returnAliases;
+  protected List<ONestedProjection> returnNestedProjections;
   boolean returnElements     = false;
   boolean returnPaths        = false;
   boolean returnPatterns     = false;
@@ -44,6 +45,8 @@ public class OMatchExecutionPlanner {
     this.matchExpressions = stm.getMatchExpressions().stream().map(x -> x.copy()).collect(Collectors.toList());
     this.returnItems = stm.getReturnItems().stream().map(x -> x.copy()).collect(Collectors.toList());
     this.returnAliases = stm.getReturnAliases().stream().map(x -> x == null ? null : x.copy()).collect(Collectors.toList());
+    this.returnNestedProjections = stm.getReturnNestedProjections().stream().map(x -> x == null ? null : x.copy())
+        .collect(Collectors.toList());
     this.limit = stm.getLimit() == null ? null : stm.getLimit().copy();
     //    this.skip = stm.getSkip() == null ? null : stm.getSkip().copy();
 
@@ -125,6 +128,7 @@ public class OMatchExecutionPlanner {
         OProjectionItem item = new OProjectionItem(-1);
         item.setExpression(returnItems.get(i));
         item.setAlias(returnAliases.get(i));
+        item.setNestedProjection(returnNestedProjections.get(i));
         projection.getItems().add(item);
       }
       result.chain(new ProjectionCalculationStep(projection, context, profilingEnabled));
@@ -201,7 +205,7 @@ public class OMatchExecutionPlanner {
         if (visitedNodes.contains(currentNode)) {
           // If a previous traversal already visited this alias, remove it from further consideration.
           startsToRemove.add(currentAlias);
-        } else if (remainingDependencies.get(currentAlias)==null || remainingDependencies.get(currentAlias).isEmpty()) {
+        } else if (remainingDependencies.get(currentAlias) == null || remainingDependencies.get(currentAlias).isEmpty()) {
           // If it hasn't been visited, and has all dependencies satisfied, visit it.
           startsToRemove.add(currentAlias);
           startingNode = currentNode;

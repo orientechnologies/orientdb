@@ -1233,6 +1233,7 @@ OMatchStatement MatchStatement():
     OMatchExpression lastMatchExpr = null;
     OExpression lastReturn = null;
     OIdentifier lastReturnAlias = null;
+    ONestedProjection lastNestedProjection = null;
 }
 {
     (
@@ -1248,25 +1249,30 @@ OMatchStatement MatchStatement():
           (
               <DISTINCT> { jjtThis.returnDistinct = true; }
               lastReturn = Expression() {lastReturnAlias = null;}
+              [ lastNestedProjection = NestedProjection() ]
           )
           |
           LOOKAHEAD(Expression())
           (
               lastReturn = Expression() {lastReturnAlias = null;}
+              [ lastNestedProjection = NestedProjection() ]
           )
         )
         [ <AS> lastReturnAlias = Identifier() ]
         {
             jjtThis.returnAliases.add(lastReturnAlias);
             jjtThis.returnItems.add(lastReturn);
+            jjtThis.returnNestedProjections.add(lastNestedProjection);
         }
         (
             <COMMA>
             lastReturn = Expression() {lastReturnAlias = null;}
+            [ lastNestedProjection = NestedProjection() ]
             [ <AS> lastReturnAlias = Identifier() ]
             {
                 jjtThis.returnAliases.add(lastReturnAlias);
                 jjtThis.returnItems.add(lastReturn);
+                jjtThis.returnNestedProjections.add(lastNestedProjection);
             }
         )*
         [ jjtThis.orderBy = OrderBy() ]

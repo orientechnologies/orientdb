@@ -1657,6 +1657,26 @@ public class OMatchStatementExecutionNewTest {
     Assert.assertTrue(result.hasNext());
     Assert.assertEquals("aaa", result.next().getProperty("name"));
     Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testNestedProjections() {
+    String clazz = "testNestedProjections";
+    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb', surname = 'ccc'")).execute();
+
+    String query = "MATCH { class: "+clazz+", as:a} RETURN a:{name}, 'x' ";
+
+    OResultSet result = db.query(query);
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    OResult a = item.getProperty("a");
+    Assert.assertEquals("bbb", a.getProperty("name"));
+    Assert.assertNull( a.getProperty("surname"));
+    Assert.assertFalse(result.hasNext());
+    result.close();
   }
 
   private OResultSet getManagedPathElements(String managerName) {
