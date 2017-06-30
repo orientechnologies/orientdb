@@ -123,7 +123,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     return false;
   }
 
-  private String getFetchPlanFromStatement(OStatement statement) {
+  public static String getFetchPlanFromStatement(OStatement statement) {
     if (statement instanceof OSelectStatement) {
       OFetchPlan fp = ((OSelectStatement) statement).getFetchPlan();
       if (fp != null) {
@@ -135,7 +135,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     return null;
   }
 
-  private OStatement parseStatement(String language, String text, ODatabaseDocument db) {
+  public static OStatement parseStatement(String language, String text, ODatabaseDocument db) {
     try {
       if (language != null && language.equalsIgnoreCase("sql")) {
         return OSQLEngine.parse(text, (ODatabaseDocumentInternal) db);
@@ -145,7 +145,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     return null;
   }
 
-  private int getLimitFromStatement(OStatement statement, int previousLimit) {
+  public static int getLimitFromStatement(OStatement statement, int previousLimit) {
     try {
       OLimit limit = null;
       if (statement instanceof OSelectStatement) {
@@ -164,7 +164,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     return previousLimit;
   }
 
-  protected OResultSet executeStatement(String language, String text, Object params, ODatabaseDocument db) {
+  public static OResultSet executeStatement(String language, String text, Object params, ODatabaseDocument db) {
     OResultSet result;
     if (params instanceof Map) {
       result = db.command(text, (Map) params);
