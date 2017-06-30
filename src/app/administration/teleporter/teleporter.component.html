@@ -4,6 +4,12 @@
 
     <div id="stepSwitch" [ngSwitch]="getStep()">
 
+      <!-- to delete -->
+      <div class="stepOne" *ngSwitchCase="'0'">
+        <news-box></news-box>
+      </div>
+      <!-- to delete -->
+
       <div class="stepOne" *ngSwitchCase="'1'">
 
         <h4>
@@ -114,7 +120,6 @@
                     [attr.data-content]="hints.password" data-animation="am-fade-and-scale"><b>?</b></button>
           </div>
         </div>
-
       </div>
 
       <div class="stepTwo" *ngSwitchCase="'2'">

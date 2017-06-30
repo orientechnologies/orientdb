@@ -5,7 +5,6 @@ import * as $ from "jquery"
 import {downgradeComponent} from '@angular/upgrade/static';
 import {TeleporterService} from '../../core/services';
 import {NotificationService} from "../../core/services/notification.service";
-import {AgentService} from "../../core/services/agent.service";
 
 declare var angular:any
 
@@ -99,7 +98,7 @@ class TeleporterComponent implements AfterViewChecked {
     }
 
     this.config = angular.copy(this.defaultConfig);
-    this.step = '1';
+    this.step = '0';
 
     // fetching driver name and jurl pattern
     this.drivers().then((data) => {

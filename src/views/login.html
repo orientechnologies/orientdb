@@ -1,99 +1,143 @@
 <div class="row">
-    <div class="col-md-7 col-sm-7 col-lg-6">
-        <div class="jumbotron ologin">
-            <form id="signin" name="loginForm" ng-submit="connect()" class="form-horizontal" novalidate>
-                <fieldset>
-                    <div class="form-group">
-                        <label class="control-label col-md-2 col-sm-2">Database</label>
+  <div class="col-md-7 col-sm-7 col-lg-6">
+    <div class="jumbotron ologin">
+      <form id="signin" name="loginForm" ng-submit="connect()" class="form-horizontal" novalidate>
+        <fieldset>
+          <div class="form-group">
+            <label class="control-label col-md-2 col-sm-2">Database</label>
 
-                        <div class="col-md-4 col-sm-4">
-                            <select ng-model="database" class="form-control" required
-                                    ng-options="i for i in databases">
-                            </select>
-                        </div>
-                        <div class="col-md-6 col-sm-6">
-                            <div class="btn-group pull-right">
-                                <a class="btn btn-warning btn-sm btn" ng-click="createNew()"
-                                   data-title="{{ 'login.newDb' | translate }}"
-                                   data-animation="am-fade-and-scale" data-container="body"
-                                   bs-tooltip>
-                                    <i class="fa fa-plus-circle"></i>
-                                    New DB
-                                </a>
-                                <a class="btn btn-warning btn-sm" ng-click="importPublic()"
-                                   data-title="{{ 'login.importDb' | translate }}"
-                                   data-animation="am-fade-and-scale" data-container="body"
-                                   bs-tooltip> <i
-                                        class="fa fa-cloud-download"></i>
-                                </a>
-                                <a class="btn btn-warning btn-sm ee-disabled"
-                                   ng-class="{disabled: !isEE}" ng-click="goToTeleporter()"
-                                   data-placement="top"
-                                   data-content="{{ importHint | translate }}"
-                                   data-trigger="hover" data-delay="100,2000"
-                                   data-animation="am-fade-and-scale" data-container="body"
-                                   bs-popover> <i class="fa fa-database">
-                                   </i>
-                                </a>
-                                <a class="btn btn-danger btn-sm" ng-click="deleteDb()"
-                                   data-title="{{ 'login.deleteDb' | translate }}"
-                                   data-animation="am-fade-and-scale" data-container="body"
-                                   bs-tooltip>
-                                    <i class="fa fa-trash-o">
-                                    </i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label col-md-2 col-sm-2">User</label>
-
-                        <div class="col-md-10 col-sm-10">
-                            <input id="user" type="text" class="form-control" required ng-model="username"
-                                   autofill="autofill" value=""/>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label col-md-2 col-sm-2">Password</label>
-
-                        <div class="controls col-md-10 col-sm-10">
-                            <input id="password" type="password" required class="form-control"
-                                   ng-model="password"
-                                   autofill="autofill"
-                                   value=""/>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="col-md-2 col-sm-2">
-
-                        </div>
-                        <div class="col-md-2 col-sm-2">
-                            <a class="btn btn-trasparent" tabindex="1"
-                               data-trigger="focus" data-placement="bottom"
-                               data-container="body"
-                               data-content="{{ 'login.help' | translate:link }}" bs-popover>
-                                <i class="fa fa-question-circle"></i>
-                            </a>
-                        </div>
-                        <div class=" col-md-8 col-sm-8 ">
-                            <button type="submit"
-                                    class="btn btn-sm btn-warning pull-right"
-                                    rel="tooltip" data-placement="right"
-                                    data-title="{{ 'login.connectDb' | translate }}"
-                                    data-animation="am-fade-and-scale" data-container="body"
-                                    bs-tooltip>
-                                Connect
-                            </button>
-                        </div>
-                    </div>
-                </fieldset>
-            </form>
-            <div class="alert alert-danger " ng-show="errorMsg">
-                <button type="button" class="close" ng-click="errorMsg = null"><span
-                        aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                {{ errorMsg}}
+            <div class="col-md-4 col-sm-4">
+              <select ng-model="database" class="form-control" required
+                      ng-options="i for i in databases">
+              </select>
             </div>
-        </div>
+            <div class="col-md-6 col-sm-6">
+              <div class="btn-group pull-right">
+                <a class="btn btn-warning btn-sm btn" ng-click="createNew()"
+                   data-title="{{ 'login.newDb' | translate }}"
+                   data-animation="am-fade-and-scale" data-container="body"
+                   bs-tooltip>
+                  <i class="fa fa-plus-circle"></i>
+                  New DB
+                </a>
+                <a class="btn btn-warning btn-sm" ng-click="importPublic()"
+                   data-title="{{ 'login.importDb' | translate }}"
+                   data-animation="am-fade-and-scale" data-container="body"
+                   bs-tooltip> <i
+                  class="fa fa-cloud-download"></i>
+                </a>
+                <a class="btn btn-warning btn-sm ee-disabled"
+                   ng-class="{disabled: !isEE}" ng-click="goToTeleporter()"
+                   data-placement="top"
+                   data-content="{{ importHint | translate }}"
+                   data-trigger="hover" data-delay="100,2000"
+                   data-animation="am-fade-and-scale" data-container="body"
+                   bs-popover> <i class="fa fa-database">
+                </i>
+                </a>
+                <a class="btn btn-danger btn-sm" ng-click="deleteDb()"
+                   data-title="{{ 'login.deleteDb' | translate }}"
+                   data-animation="am-fade-and-scale" data-container="body"
+                   bs-tooltip>
+                  <i class="fa fa-trash-o">
+                  </i>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-md-2 col-sm-2">User</label>
+
+            <div class="col-md-10 col-sm-10">
+              <input id="user" type="text" class="form-control" required ng-model="username"
+                     autofill="autofill" value=""/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-md-2 col-sm-2">Password</label>
+
+            <div class="controls col-md-10 col-sm-10">
+              <input id="password" type="password" required class="form-control"
+                     ng-model="password"
+                     autofill="autofill"
+                     value=""/>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-md-2 col-sm-2">
+
+            </div>
+            <div class="col-md-2 col-sm-2">
+              <a class="btn btn-trasparent" tabindex="1"
+                 data-trigger="focus" data-placement="bottom"
+                 data-container="body"
+                 data-content="{{ 'login.help' | translate:link }}" bs-popover>
+                <i class="fa fa-question-circle"></i>
+              </a>
+            </div>
+            <div class=" col-md-8 col-sm-8 ">
+              <button type="submit"
+                      class="btn btn-sm btn-warning pull-right"
+                      rel="tooltip" data-placement="right"
+                      data-title="{{ 'login.connectDb' | translate }}"
+                      data-animation="am-fade-and-scale" data-container="body"
+                      bs-tooltip>
+                Connect
+              </button>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+      <div class="alert alert-danger " ng-show="errorMsg">
+        <button type="button" class="close" ng-click="errorMsg = null"><span
+          aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        {{ errorMsg}}
+      </div>
     </div>
-    <div class="col-md-6"></div>
+  </div>
+  <div class="col-md-6">
+    <news-box></news-box>
+
+    <!-- HERE -->
+    <!--
+<div class="panel panel-default" style="margin-top: 100px; margin-left: 30px;">
+<div class="panel-heading">
+  <i class="fa fa-newspaper-o" aria-hidden="true"></i>
+  &nbsp;<b>News</b>
+</div>
+<div class="panel-body" style="height: 400px; overflow: auto;">
+  <div class="row" style="padding: 20px;">
+
+
+              <h2>Next Live Global Training Class</h2>
+              <p>Join the next training class online. This is the best way to learn OrientDB in only 3 days.</p>
+              <p>When: July 26, 27 and 28, 2017</p>
+              <ul>
+                <li>Day 1: Design & Modeling</li>
+                <li>Day 2: Development</li>
+                <li>Day 3: Administration and Operations</li>
+              </ul>
+              <a href="http://orientdb.com/event/july-26-28-orientdb-3-day-live-global-class/">Check availability</a>.
+
+              <h2>Download last OrientDB GA</h2>
+              <ul>
+                <li><a href="https://bit.ly/2ryI3et">v2.2.22</a> released on May 31, 2017 (<a href="https://github.com/orientechnologies/orientdb/wiki/OrientDB-2.2-Release-Notes#2221---may-31-2017">Release Notes</a>)</li>
+              </ul>
+
+              <h2>Try v3.0.0 Milestone 1</h2>
+              <p>This release is a preview of the new v3.0 with many new features and improvements. This release is not GA, not use in production. Check v3.0.0-M1 on <a href="http://orientdb.com/orientdb-labs/">OrientDB Labs</a>.</p>
+              <h2>Upgrade to OrientDB Enterprise Edition</h2>
+              <p style="text-align: left;">Leverage the power of a <a href="https://en.wikipedia.org/wiki/Graph_database">Graph Database</a> engine and <a href="https://en.wikipedia.org/wiki/Document-oriented_database">Document</a> capabilities with OrientDB Enterprise Edition, our <strong>Commercial</strong> software designed specifically for applications seeking a scalable, robust and secure <a href="https://en.wikipedia.org/wiki/NoSQL">NoSQL</a> Multi-Model database. Its main goal is to save time and money on your OrientDB investment by reducing risk, cost, effort &amp; time invested in a business critical application. It includes all Community features plus professional enterprise tools such as <a href="/docs/master/Studio-Query-Profiler.html">Query Profiler</a>, <a href="/docs/master/Studio-Cluster-Management.html">Distributed Clustering configuration</a>, <a href="/docs/master/Studio-Auditing.html">Auditing Tools</a>, <a href="/enterprise/last/charts.html">Metrics recording</a>, <a href="/docs/master/Studio-Server-Management.html">Live Monitor</a> with configurable <a href="/enterprise/last/alerts.html">Alerts</a>, <a href="/docs/master/Incremental-Backup-And-Restore.html">Non-Stop Incremental Backups</a> and <a href="/orientdb-teleporter">Teleporter</a> to sync or migrate an RDBMS to OrientDB.</p>
+              <a href="http://orientdb.com/orientdb-enterprise/">Upgrade now</a>.
+
+
+  </div>
+</div>
+<div class="panel-footer"></div>
+-->
+
+    <!--HERE -->
+  </div>
+
+</div>
 </div>

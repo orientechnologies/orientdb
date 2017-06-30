@@ -1,5 +1,5 @@
 import {ImportExportComponent} from './dbconfiguration';
-import {TeleporterComponent, GraphModelPanelComponent, DetailPanelComponent, SchedulerComponent} from './administration';
+import {TeleporterComponent, GraphModelPanelComponent, DetailPanelComponent, SchedulerComponent, NewsBoxComponent} from './administration';
 import {DualListComponent, GraphComponent, AddEdgeModal} from './util';
 
 
@@ -11,5 +11,6 @@ export const APP_DECLARATIONS = [
   SchedulerComponent,
   DualListComponent,
   GraphComponent,
-  AddEdgeModal
+  AddEdgeModal,
+  NewsBoxComponent
 ];
