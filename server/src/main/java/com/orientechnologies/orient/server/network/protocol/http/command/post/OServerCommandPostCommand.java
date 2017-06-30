@@ -93,7 +93,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         if (limit >= 0 && i >= limit) {
           break;
         }
-        response.add(result.next().toElement());
+        response.add(result.next());
         i++;
       }
 

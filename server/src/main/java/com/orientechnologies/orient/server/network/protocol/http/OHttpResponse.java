@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OClientConnection;
 
 import java.io.*;
@@ -210,8 +211,9 @@ public class OHttpResponse {
           doc.field(key, entry.getValue());
         }
         newResult = Collections.singleton(doc).iterator();
-      } else if (OMultiValue.isMultiValue(iResult) && (OMultiValue.getSize(iResult) > 0 && !(OMultiValue
-          .getFirstValue(iResult) instanceof OIdentifiable))) {
+      } else if (OMultiValue.isMultiValue(iResult) && (OMultiValue.getSize(iResult) > 0 && !(
+          (OMultiValue.getFirstValue(iResult) instanceof OIdentifiable) || ((OMultiValue
+              .getFirstValue(iResult) instanceof OResult))))) {
         newResult = Collections.singleton(new ODocument().field("value", iResult)).iterator();
       } else if (iResult instanceof OIdentifiable) {
         // CONVERT SINGLE VALUE IN A COLLECTION
@@ -411,7 +413,10 @@ public class OHttpResponse {
             buffer.append(", ");
           }
 
-          if (entry instanceof OIdentifiable) {
+          if (entry instanceof OResult) {
+            objectJson = ((OResult) entry).toJSON();
+            buffer.append(objectJson);
+          } else if (entry instanceof OIdentifiable) {
             ORecord rec = ((OIdentifiable) entry).getRecord();
             if (rec != null) {
               try {

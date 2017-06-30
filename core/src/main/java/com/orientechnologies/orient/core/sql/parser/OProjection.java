@@ -98,7 +98,7 @@ public class OProjection extends SimpleNode {
           OElement x = iRecord.getElement().get();
           result.setProperty("@rid", x.getIdentity());
           result.setProperty("@version", x.getVersion());
-//          result.setProperty("@class", x.getSchemaType().orElse(null));
+          result.setProperty("@class", x.getSchemaType().map(clazz -> clazz.getName()).orElse(null));
         }
       } else {
         result.setProperty(item.getProjectionAliasAsString(), item.execute(iRecord, iContext));
