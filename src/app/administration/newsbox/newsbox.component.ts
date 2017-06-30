@@ -84,7 +84,7 @@ class NewsBoxComponent {
 }
 
 angular.module('newsbox.component', []).directive(
-  `news-box`,
+  `newsBox`,
   downgradeComponent({component: NewsBoxComponent}));
 
 

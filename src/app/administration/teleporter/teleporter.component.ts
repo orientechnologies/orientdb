@@ -98,7 +98,7 @@ class TeleporterComponent implements AfterViewChecked {
     }
 
     this.config = angular.copy(this.defaultConfig);
-    this.step = '0';
+    this.step = '1';
 
     // fetching driver name and jurl pattern
     this.drivers().then((data) => {
