@@ -1704,7 +1704,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
           if (operationResult.getModifiedRecordContent() != null)
             stream = operationResult.getModifiedRecordContent();
-          else if (version > record.getVersion() + 1)
+          else if (version > record.getVersion() + 1 && getStorage() instanceof OStorageProxy)
             // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
             record.unload();
 
