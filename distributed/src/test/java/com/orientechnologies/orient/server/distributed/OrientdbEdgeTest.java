@@ -184,7 +184,7 @@ public class OrientdbEdgeTest {
       } catch (OSchemaException ex) {
         if (!ex.getMessage().contains("exists"))
           throw (ex);
-        g.command(new OCommandSQL("delete edge some-label")).execute();
+        g.command(new OCommandSQL("delete edge `some-label`")).execute();
       }
 
       try {
@@ -192,7 +192,7 @@ public class OrientdbEdgeTest {
       } catch (OSchemaException ex) {
         if (!ex.getMessage().contains("exists"))
           throw (ex);
-        g.command(new OCommandSQL("delete vertex some-v-label")).execute();
+        g.command(new OCommandSQL("delete vertex `some-v-label`")).execute();
       }
     } finally {
       g.close();

@@ -137,7 +137,7 @@ public class WOWCacheTestIT {
       cachePointer.releaseExclusiveLock();
 
       wowCache.store(fileId, i, cachePointer);
-      cachePointer.decrementReferrer();
+      cachePointer.decrementReadersReferrer();
     }
 
     for (int i = 0; i < pageData.length; i++) {
@@ -148,7 +148,7 @@ public class WOWCacheTestIT {
       ByteBuffer buffer = cachePointer.getSharedBuffer();
       buffer.position(systemOffset);
       buffer.get(dataTwo);
-      cachePointer.decrementReferrer();
+      cachePointer.decrementReadersReferrer();
 
       Assert.assertArrayEquals(dataTwo, dataOne);
     }
@@ -185,7 +185,7 @@ public class WOWCacheTestIT {
       cachePointer.releaseExclusiveLock();
 
       wowCache.store(fileId, pageIndex, cachePointer);
-      cachePointer.decrementReferrer();
+      cachePointer.decrementReadersReferrer();
     }
 
     for (Map.Entry<Long, byte[]> entry : pageIndexDataMap.entrySet()) {
@@ -198,7 +198,7 @@ public class WOWCacheTestIT {
       buffer.position(systemOffset);
       buffer.get(dataTwo);
 
-      cachePointer.decrementReferrer();
+      cachePointer.decrementReadersReferrer();
       Assert.assertArrayEquals(dataTwo, dataOne);
     }
 
@@ -222,7 +222,7 @@ public class WOWCacheTestIT {
       cachePointer.releaseExclusiveLock();
 
       wowCache.store(fileId, pageIndex, cachePointer);
-      cachePointer.decrementReferrer();
+      cachePointer.decrementReadersReferrer();
     }
 
     for (Map.Entry<Long, byte[]> entry : pageIndexDataMap.entrySet()) {
@@ -233,7 +233,7 @@ public class WOWCacheTestIT {
       ByteBuffer buffer = cachePointer.getSharedBuffer();
       buffer.position(systemOffset);
       buffer.get(dataTwo);
-      cachePointer.decrementReferrer();
+      cachePointer.decrementReadersReferrer();
 
       Assert.assertArrayEquals(dataTwo, dataOne);
     }

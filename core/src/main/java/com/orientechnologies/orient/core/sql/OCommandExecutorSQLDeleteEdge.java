@@ -168,7 +168,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
             query = curDb.command(new OSQLAsynchQuery<ODocument>("select from E" + where, this));
           else
             // DELETE EDGES OF CLASS X
-            query = curDb.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
+            query = curDb.command(new OSQLAsynchQuery<ODocument>("select from `" + clazz.getName()+"` " + where, this));
 
         return this;
       } finally {

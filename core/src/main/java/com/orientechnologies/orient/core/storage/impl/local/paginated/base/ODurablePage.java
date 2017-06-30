@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
@@ -178,7 +177,7 @@ public class ODurablePage {
     return changes.getByteValue(buffer, pageOffset);
   }
 
-  protected int setIntValue(int pageOffset, int value) throws IOException {
+  protected int setIntValue(int pageOffset, int value) {
     assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
     final ByteBuffer buffer = pointer.getExclusiveBuffer();
@@ -206,7 +205,7 @@ public class ODurablePage {
     return OByteSerializer.BYTE_SIZE;
   }
 
-  protected int setLongValue(int pageOffset, long value) throws IOException {
+  protected int setLongValue(int pageOffset, long value) {
     assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
     final ByteBuffer buffer = pointer.getExclusiveBuffer();
@@ -220,7 +219,7 @@ public class ODurablePage {
     return OLongSerializer.LONG_SIZE;
   }
 
-  protected int setBinaryValue(int pageOffset, byte[] value) throws IOException {
+  protected int setBinaryValue(int pageOffset, byte[] value) {
     assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
     if (value.length == 0)
@@ -238,7 +237,7 @@ public class ODurablePage {
     return value.length;
   }
 
-  protected void moveData(int from, int to, int len) throws IOException {
+  protected void moveData(int from, int to, int len) {
     assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
     if (len == 0)

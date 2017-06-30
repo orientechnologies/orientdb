@@ -215,7 +215,10 @@ public class OSelectExecutionPlanner {
 
     //try local node first
     Set<String> nextNodeClusters = new HashSet<>();
-    nextNodeClusters.addAll(clusterMap.get(localNode));
+    Set<String> clustersForNode = clusterMap.get(localNode);
+    if(clustersForNode != null) {
+      nextNodeClusters.addAll(clustersForNode);
+    }
     nextNodeClusters.retainAll(uncovered);
     if (nextNodeClusters.size() > 0) {
       result.put(localNode, nextNodeClusters);

@@ -115,7 +115,7 @@ public class OClassEmbedded extends OClassImpl {
   }
 
   private boolean isDistributedCommand(ODatabaseDocumentInternal database) {
-    return database.getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
+    return database.getStorage() instanceof OAutoshardedStorage && ((OAutoshardedStorage) database.getStorage()).isDistributedEnv();
   }
 
   public OClassImpl setEncryption(final String iValue) {

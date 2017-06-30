@@ -30,8 +30,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -59,6 +57,10 @@ public class OClusterPage extends ODurablePage {
   public static final int MAX_ENTRY_SIZE = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
 
   public static final int MAX_RECORD_SIZE = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
+
+  private static final int ENTRY_KIND_HOLE    = -1;
+  private static final int ENTRY_KIND_UNKNOWN = 0;
+  private static final int ENTRY_KIND_DATA    = +1;
 
   public OClusterPage(OCacheEntry cacheEntry, boolean newPage) throws IOException {
     super(cacheEntry);
@@ -458,14 +460,7 @@ public class OClusterPage extends ODurablePage {
 
   private boolean insideRecordBounds(final int entryPosition, final int offset, final int contentSize) {
     final int recordSize = getIntValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE);
-
-    if (offset < 0)
-      return false;
-
-    if (offset + contentSize > recordSize)
-      return false;
-
-    return true;
+    return offset >= 0 && offset + contentSize <= recordSize;
   }
 
   private void incrementEntriesCount() throws IOException {
@@ -481,39 +476,70 @@ public class OClusterPage extends ODurablePage {
     return recordPosition < indexesLength;
   }
 
-  private void doDefragmentation() throws IOException {
-    int freePosition = getIntValue(FREE_POSITION_OFFSET);
+  private void doDefragmentation() {
+    final int recordsCount = getRecordsCount();
+    final int freePosition = getIntValue(FREE_POSITION_OFFSET);
 
+    // 1. Build the entries "map" and merge consecutive holes.
+
+    final int maxEntries = recordsCount /* live records */ + recordsCount + 1 /* max holes after merging */;
+    final int[] positions = new int[maxEntries];
+    final int[] sizes = new int[maxEntries];
+
+    int count = 0;
     int currentPosition = freePosition;
-    final List<Integer> processedPositions = new ArrayList<Integer>();
-
+    int lastEntryKind = ENTRY_KIND_UNKNOWN;
     while (currentPosition < PAGE_SIZE) {
-      int entrySize = getIntValue(currentPosition);
+      final int size = getIntValue(currentPosition);
+      final int entryKind = Integer.signum(size);
+      assert entryKind != ENTRY_KIND_UNKNOWN;
 
-      if (entrySize > 0) {
-        int positionIndex = getIntValue(currentPosition + OIntegerSerializer.INT_SIZE);
-        processedPositions.add(positionIndex);
+      if (entryKind == ENTRY_KIND_HOLE && lastEntryKind == ENTRY_KIND_HOLE)
+        sizes[count - 1] += size;
+      else {
+        positions[count] = currentPosition;
+        sizes[count] = size;
 
-        currentPosition += entrySize;
-      } else {
-        entrySize = -entrySize;
-        moveData(freePosition, freePosition + entrySize, currentPosition - freePosition);
-        currentPosition += entrySize;
-        freePosition += entrySize;
+        ++count;
 
-        shiftPositions(processedPositions, entrySize);
+        lastEntryKind = entryKind;
       }
+
+      currentPosition += entryKind == ENTRY_KIND_HOLE ? -size : size;
     }
 
-    setIntValue(FREE_POSITION_OFFSET, freePosition);
-  }
+    // 2. Iterate entries in reverse, update data offsets, merge consecutive data segments and move them in a single operation.
 
-  private void shiftPositions(final List<Integer> processedPositions, final int entrySize) throws IOException {
-    for (int positionIndex : processedPositions) {
-      final int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * positionIndex;
-      final int entryPosition = getIntValue(entryIndexPosition);
-      setIntValue(entryIndexPosition, entryPosition + entrySize);
+    int shift = 0;
+    int lastDataPosition = 0;
+    int mergedDataSize = 0;
+    for (int i = count - 1; i >= 0; --i) {
+      final int position = positions[i];
+      final int size = sizes[i];
+
+      final int entryKind = Integer.signum(size);
+      assert entryKind != ENTRY_KIND_UNKNOWN;
+
+      if (entryKind == ENTRY_KIND_DATA && shift > 0) {
+        final int positionIndex = getIntValue(position + OIntegerSerializer.INT_SIZE);
+        setIntValue(PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * positionIndex, position + shift);
+
+        lastDataPosition = position;
+        mergedDataSize += size; // accumulate consecutive data segments size
+      }
+
+      if (mergedDataSize > 0 && (entryKind == ENTRY_KIND_HOLE || i == 0)) { // move consecutive merged data segments in one go
+        moveData(lastDataPosition, lastDataPosition + shift, mergedDataSize);
+        mergedDataSize = 0;
+      }
+
+      if (entryKind == ENTRY_KIND_HOLE)
+        shift += -size;
     }
+
+    // 3. Update free position.
+
+    setIntValue(FREE_POSITION_OFFSET, freePosition + shift);
   }
 
 }

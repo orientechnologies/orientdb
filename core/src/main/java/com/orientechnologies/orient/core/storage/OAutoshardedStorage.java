@@ -39,4 +39,6 @@ public interface OAutoshardedStorage {
   void acquireDistributedExclusiveLock(final long timeout);
 
   void releaseDistributedExclusiveLock();
+
+  boolean isDistributedEnv();
 }
