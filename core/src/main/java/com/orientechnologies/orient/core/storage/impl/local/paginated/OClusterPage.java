@@ -525,10 +525,10 @@ public class OClusterPage extends ODurablePage {
         setIntValue(PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * positionIndex, position + shift);
 
         lastDataPosition = position;
-        mergedDataSize += size;
+        mergedDataSize += size; // accumulate consecutive data segments size
       }
 
-      if (mergedDataSize > 0 && (entryKind == ENTRY_KIND_HOLE || i == 0)) {
+      if (mergedDataSize > 0 && (entryKind == ENTRY_KIND_HOLE || i == 0)) { // move consecutive merged data segments in one go
         moveData(lastDataPosition, lastDataPosition + shift, mergedDataSize);
         mergedDataSize = 0;
       }
