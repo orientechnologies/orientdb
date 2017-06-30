@@ -1,0 +1,13 @@
+create class Item  IF NOT EXISTS;
+
+create property Item.content STRING;
+
+create index Item.content on Item(content) FULLTEXT ENGINE LUCENE;
+
+insert into Item content  {  "content": "Joe is coming to town"};
+insert into Item content  {  "content": "Привет мир Харько"};
+insert into Item content  {  "content": "Впоследствии в 2013 году Ferrari 250 GTO 1963 года был продан за рекордные 52 миллиона долларов и стал самым дорогим автомобилем в мире Харько"};
+insert into Item content  {  "content": "Эмблема Феррари, гарцующий жеребец на жёлтом фоне, впервые появилась на печатных материалах и официальных документах компании в Харько"};
+insert into Item content  {  "content": "Я все ещё храню фотографию аса с посвящением его родителей, в котором они вверяют мне этот знак с конём. Конь был и остался чёрным. Я же добавил золотистый фон, который является цветом города Модены"};
+insert into Item content  {  "content": "Из России с любовью"};
+
