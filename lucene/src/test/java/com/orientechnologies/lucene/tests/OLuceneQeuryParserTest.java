@@ -6,6 +6,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,7 +55,7 @@ public class OLuceneQeuryParserTest extends OLuceneBaseTest {
   }
 
   @Test
-  public void shouldFailIfLeadinWild() {
+  public void shouldFailIfLeadingWild() {
 
     //enabling leading wildcard
     db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {\"allowLeadingWildcard\": true}");
@@ -62,6 +64,42 @@ public class OLuceneQeuryParserTest extends OLuceneBaseTest {
     OResultSet docs = db.query("select * from Song where search_class ('title:*tain')=true");
 
     assertThat(docs).hasSize(4);
+  }
+
+  @Test
+  public void shouldUseBoosts() throws Exception {
+    //enabling leading wildcard
+    db.command("create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE ");
+
+//querying with boost
+    List<String> boostedDocs = db.query("select * from Song where search_class ('(title:forever)^2 OR author:Boudleaux')=true")
+        .stream()
+        .map(r -> r.<String>getProperty("title"))
+        .collect(Collectors.toList());
+
+    assertThat(boostedDocs).hasSize(5);
+
+    //forever in title is boosted
+    assertThat(boostedDocs).contains("THIS TIME FOREVER"
+        , "FOREVER YOUNG"
+        , "TOMORROW IS FOREVER"
+        , "STARS AND STRIPES FOREVER" //boosted
+        , "ALL I HAVE TO DO IS DREAM");
+
+    List<String> docs = db.query("select * from Song where search_class ('(title:forever) OR author:Boudleaux')=true")
+        .stream()
+        .map(r -> r.<String>getProperty("title"))
+        .collect(Collectors.toList());
+
+    assertThat(docs).hasSize(5);
+
+    //no boost, order changed
+    assertThat(docs).contains("THIS TIME FOREVER"
+        , "FOREVER YOUNG"
+        , "TOMORROW IS FOREVER"
+        , "ALL I HAVE TO DO IS DREAM"
+        , "STARS AND STRIPES FOREVER"); //no boost, last position
+
   }
 
 }
