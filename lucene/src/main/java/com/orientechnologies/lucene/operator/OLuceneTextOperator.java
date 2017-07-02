@@ -17,9 +17,9 @@
 package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
+import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -74,8 +74,13 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-      boolean ascSortOrder) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+    if (!index.getType().toLowerCase().contains("fulltext")) {
+      return null;
+    }
+    if (index.getAlgorithm() == null || !index.getAlgorithm().toLowerCase().contains("lucene")) {
+      return null;
+    }
 
     Set<OIdentifiable> indexResult = (Set<OIdentifiable>) index
         .get(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(keyParams).setContext(iContext), new ODocument()));
@@ -108,12 +113,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public Object evaluateRecord(OIdentifiable iRecord,
-      ODocument iCurrentResult,
-      OSQLFilterCondition iCondition,
-      Object iLeft,
-      Object iRight,
-      OCommandContext iContext) {
+  public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
+      Object iRight, OCommandContext iContext) {
 
     OLuceneFullTextIndex index = involvedIndex(iRecord, iCurrentResult, iCondition, iLeft, iRight);
     if (index == null) {
