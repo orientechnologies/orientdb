@@ -1669,11 +1669,24 @@ OInsertStatement InsertStatement():
     [
         [ <FROM> { jjtThis.selectWithFrom = true; } ]
         (
-             jjtThis.selectStatement = SelectStatement()
+             (
+                 LOOKAHEAD( SelectStatement() )
+                 jjtThis.selectStatement = SelectStatement()
+                 |
+                 jjtThis.selectStatement = SelectWithoutTargetStatement()
+             )
              |
              LOOKAHEAD(2)
             (
-                <LPAREN> jjtThis.selectStatement = SelectStatement() { jjtThis.selectInParentheses = true; } <RPAREN>
+                <LPAREN>
+                (
+                    LOOKAHEAD( SelectStatement() )
+                    jjtThis.selectStatement = SelectStatement()
+                    |
+                    jjtThis.selectStatement = SelectWithoutTargetStatement()
+                )
+                { jjtThis.selectInParentheses = true; }
+                <RPAREN>
             )
         )
     ]
