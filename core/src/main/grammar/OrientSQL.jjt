@@ -1999,13 +1999,14 @@ ONestedProjectionItem NestedProjectionItem():
 {
   (
     (
+      LOOKAHEAD(1)
+      <STAR> { jjtThis.star = true; }
+      |
       (
         [<BANG> {jjtThis.exclude = true;} ]
-        jjtThis.field = Identifier()
+        jjtThis.expression = Expression()
         [<STAR> {jjtThis.rightWildcard = true;} ]
       )
-      |
-      <STAR> { jjtThis.star = true; }
     )
     [jjtThis.expansion = NestedProjection() ]
     [<AS> jjtThis.alias = Identifier()]

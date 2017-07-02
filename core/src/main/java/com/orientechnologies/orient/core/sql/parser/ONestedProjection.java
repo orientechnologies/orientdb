@@ -62,21 +62,25 @@ public class ONestedProjection extends SimpleNode {
     return input;
   }
 
-  private Object apply(OExpression expression, OResult input, OCommandContext ctx, int recursion) {
+  private Object apply(OExpression expression, OResult elem, OCommandContext ctx, int recursion) {
     OResultInternal result = new OResultInternal();
     if (starItem != null || includeItems.size() == 0) {
-      for (String property : input.getPropertyNames()) {
+      for (String property : elem.getPropertyNames()) {
         if (isExclude(property)) {
           continue;
         }
-        result.setProperty(property, convert(tryExpand(expression, property, input.getProperty(property), ctx, recursion)));
+        result.setProperty(property, convert(tryExpand(expression, property, elem.getProperty(property), ctx, recursion)));
       }
     }
     if (includeItems.size() > 0) {
+      //TODO manage wildcards!
       for (ONestedProjectionItem item : includeItems) {
-        String name = item.field.getStringValue();
-        Object value = input.getProperty(name);
-        result.setProperty(name, convert(tryExpand(expression, name, value, ctx, recursion)));
+        String alias = item.alias != null ? item.alias.getStringValue() : item.expression.getDefaultAlias().getStringValue();
+        Object value = item.expression.execute(elem, ctx);
+        if (item.expansion != null) {
+          value = item.expand(expression, alias, value, ctx, recursion - 1);
+        }
+        result.setProperty(alias, convert(value));
       }
     }
     return result;
@@ -123,14 +127,13 @@ public class ONestedProjection extends SimpleNode {
     }
     if (includeItems.size() > 0) {
       //TODO manage wildcards!
-      //TODO aliases
       for (ONestedProjectionItem item : includeItems) {
-        String name = item.field.getStringValue();
-        Object value = elem.getProperty(name);
+        String alias = item.alias != null ? item.alias.getStringValue() : item.expression.getDefaultAlias().getStringValue();
+        Object value = item.expression.execute(elem, ctx);
         if (item.expansion != null) {
-          value = item.expand(expression, name, value, ctx, recursion - 1);
+          value = item.expand(expression, alias, value, ctx, recursion - 1);
         }
-        result.setProperty(name, convert(value));
+        result.setProperty(alias, convert(value));
       }
     }
     return result;
@@ -138,6 +141,7 @@ public class ONestedProjection extends SimpleNode {
 
   private Object apply(OExpression expression, Map<String, Object> input, OCommandContext ctx, int recursion) {
     OResultInternal result = new OResultInternal();
+
     if (starItem != null || includeItems.size() == 0) {
       for (String property : input.keySet()) {
         if (isExclude(property)) {
@@ -147,13 +151,18 @@ public class ONestedProjection extends SimpleNode {
       }
     }
     if (includeItems.size() > 0) {
+      //TODO manage wildcards!
       for (ONestedProjectionItem item : includeItems) {
-        String name = item.field.getStringValue();
-        Object value = input.get(name);
-        result.setProperty(name, convert(tryExpand(expression, name, value, ctx, recursion)));
+        String alias = item.alias != null ? item.alias.getStringValue() : item.expression.getDefaultAlias().getStringValue();
+        OResultInternal elem = new OResultInternal();
+        input.entrySet().forEach(x -> elem.setProperty(x.getKey(), x.getValue()));
+        Object value = item.expression.execute(elem, ctx);
+        if (item.expansion != null) {
+          value = item.expand(expression, alias, value, ctx, recursion - 1);
+        }
+        result.setProperty(alias, convert(value));
       }
     }
-
     return result;
   }
 

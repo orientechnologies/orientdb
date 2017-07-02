@@ -14,7 +14,7 @@ public class ONestedProjectionItem extends SimpleNode {
 
   protected boolean star = false;
 
-  protected OIdentifier field;
+  protected OExpression expression;
   protected boolean rightWildcard = false;
 
   protected ONestedProjection expansion;
@@ -33,7 +33,7 @@ public class ONestedProjectionItem extends SimpleNode {
     ONestedProjectionItem result = new ONestedProjectionItem(-1);
     result.exclude = exclude;
     result.star = star;
-    result.field = field == null ? null : field.copy();
+    result.expression = expression == null ? null : expression.copy();
     result.rightWildcard = rightWildcard;
     result.expansion = expansion == null ? null : expansion.copy();
     result.alias = alias == null ? null : alias.copy();
@@ -56,8 +56,8 @@ public class ONestedProjectionItem extends SimpleNode {
     if (star) {
       return true;
     }
-    if (field != null) {
-      String fieldString = field.getStringValue();
+    if (expression != null) {
+      String fieldString = expression.getDefaultAlias().getStringValue();
       if (fieldString.equals(propertyName)) {
         return true;
       }
@@ -76,8 +76,8 @@ public class ONestedProjectionItem extends SimpleNode {
     if (star) {
       builder.append("*");
     }
-    if (field != null) {
-      field.toString(params, builder);
+    if (expression != null) {
+      expression.toString(params, builder);
       if (rightWildcard) {
         builder.append("*");
       }
@@ -106,7 +106,7 @@ public class ONestedProjectionItem extends SimpleNode {
       return false;
     if (rightWildcard != that.rightWildcard)
       return false;
-    if (field != null ? !field.equals(that.field) : that.field != null)
+    if (expression != null ? !expression.equals(that.expression) : that.expression != null)
       return false;
     if (expansion != null ? !expansion.equals(that.expansion) : that.expansion != null)
       return false;
@@ -117,7 +117,7 @@ public class ONestedProjectionItem extends SimpleNode {
   public int hashCode() {
     int result = (exclude ? 1 : 0);
     result = 31 * result + (star ? 1 : 0);
-    result = 31 * result + (field != null ? field.hashCode() : 0);
+    result = 31 * result + (expression != null ? expression.hashCode() : 0);
     result = 31 * result + (rightWildcard ? 1 : 0);
     result = 31 * result + (expansion != null ? expansion.hashCode() : 0);
     result = 31 * result + (alias != null ? alias.hashCode() : 0);
@@ -132,8 +132,8 @@ public class ONestedProjectionItem extends SimpleNode {
     OResultInternal result = new OResultInternal();
     result.setProperty("exclude", exclude);
     result.setProperty("star", star);
-    if (field != null) {
-      result.setProperty("field", field.serialize());
+    if (expression != null) {
+      result.setProperty("expression", expression.serialize());
     }
     result.setProperty("rightWildcard", rightWildcard);
     if (expansion != null) {
@@ -149,8 +149,8 @@ public class ONestedProjectionItem extends SimpleNode {
     exclude = fromResult.getProperty("exclude");
     star = fromResult.getProperty("star");
     if (fromResult.getProperty("field") != null) {
-      field = new OIdentifier(-1);
-      field.deserialize(fromResult.getProperty("field"));
+      expression = new OExpression(-1);
+      expression.deserialize(fromResult.getProperty("expression"));
     }
     rightWildcard = fromResult.getProperty("rightWildcard");
     if (fromResult.getProperty("expansion") != null) {

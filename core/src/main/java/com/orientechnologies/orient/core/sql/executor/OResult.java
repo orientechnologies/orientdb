@@ -147,14 +147,18 @@ public interface OResult {
       jsonVal = builder.toString();
     } else if (val instanceof byte[]) {
       jsonVal = "\"" + Base64.getEncoder().encodeToString((byte[]) val) + "\"";
+    } else if (val instanceof Date) {
+      //TODO use "2012-04-23T18:25:43.511Z" instead...?
+      jsonVal = String.valueOf(((Date) val).getTime());
     } else {
+
       throw new UnsupportedOperationException("Cannot convert " + val + " - " + val.getClass() + " to JSON");
     }
     return jsonVal;
   }
 
   default String encode(String s) {
-    String result = s.replaceAll("\"", "\\\"");
+    String result = s.replaceAll("\"", "\\\\\"");
     result = result.replaceAll("\n", "\\\\n");
     result = result.replaceAll("\t", "\\\\t");
     return result;
