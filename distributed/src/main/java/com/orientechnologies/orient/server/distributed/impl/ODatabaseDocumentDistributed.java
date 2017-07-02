@@ -75,7 +75,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     Map<String, Set<String>> result = new HashMap<>();
     ODistributedConfiguration cfg = getStorageDistributed().getDistributedConfiguration();
     for (String server : cfg.getRegisteredServers()) {
-      result.put(server, cfg.getClustersOnServer(server));
+      if (server.equals("*") && cfg.getClustersOnServer(getLocalNodeName()).size() == 1 && cfg
+          .getClustersOnServer(getLocalNodeName()).iterator().next().equals("*")) {
+        //TODO check this!!!
+        result.put(getLocalNodeName(), getStorage().getClusterNames());
+      } else {
+        result.put(server, cfg.getClustersOnServer(server));
+      }
     }
     return result;
   }
