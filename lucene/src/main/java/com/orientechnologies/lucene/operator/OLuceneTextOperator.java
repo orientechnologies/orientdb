@@ -42,12 +42,7 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class OLuceneTextOperator extends OQueryTargetOperator {
 
@@ -70,15 +65,19 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
       List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
     // FIXME questo non trova l'indice se l'ordine e' errato
-    OIndexSearchResult result = OLuceneOperatorUtil.buildOIndexSearchResult(iSchemaClass, iCondition,
-        iIndexSearchResults, context);
+    OIndexSearchResult result = OLuceneOperatorUtil.buildOIndexSearchResult(iSchemaClass, iCondition, iIndexSearchResults, context);
 
     return result;
   }
 
   @Override
   public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
-
+    if (!index.getType().toLowerCase().contains("fulltext")) {
+      return null;
+    }
+    if (index.getAlgorithm() == null || !index.getAlgorithm().toLowerCase().contains("lucene")) {
+      return null;
+    }
     Object indexResult = index.get(new OFullTextCompositeKey(keyParams).setContext(iContext));
 
     if (indexResult == null || indexResult instanceof OIdentifiable)
