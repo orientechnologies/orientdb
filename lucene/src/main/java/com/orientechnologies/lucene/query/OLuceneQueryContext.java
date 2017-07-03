@@ -74,7 +74,7 @@ public class OLuceneQueryContext {
     return this;
   }
 
-  public OLuceneQueryContext addHighLight(String field, TextFragment[] fieldFragment) {
+  public OLuceneQueryContext addHighlightFragment(String field, TextFragment[] fieldFragment) {
     fragments.put(field,fieldFragment);
 
     return this;

@@ -32,12 +32,12 @@ import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.highlight.Formatter;
 import org.apache.lucene.search.highlight.*;
 
 import java.io.IOException;
@@ -55,6 +55,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
   private final String              indexName;
   private final Highlighter         highlighter;
   private final List<String>        highlighted;
+  private final int                 maxNumFragments;
   private       TopDocs             topDocs;
   private int deletedMatchCount = 0;
 
@@ -67,12 +68,26 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
     fetchFirstBatch();
     deletedMatchCount = calculateDeletedMatch();
 
-    Scorer scorer = new QueryTermScorer(queryContext.getQuery());
-    highlighter = new Highlighter(scorer);
+    //TODO: parametrize
 
-    highlighted = Optional.ofNullable(metadata.<List<String>>getProperty("highlight"))
+    Map<String, Object> highlight = Optional.ofNullable(metadata.<Map>getProperty("highlight"))
+        .orElse(Collections.emptyMap());
+
+    highlighted = Optional.ofNullable((List<String>) highlight.get("fields"))
         .orElse(Collections.emptyList());
 
+    String startElement = (String) Optional.ofNullable(highlight.get("start"))
+        .orElse("<B>");
+
+    String endElement = (String) Optional.ofNullable(highlight.get("end"))
+        .orElse("</B>");
+
+    Scorer scorer = new QueryTermScorer(queryContext.getQuery());
+    Formatter formatter = new SimpleHTMLFormatter(startElement, endElement);
+    highlighter = new Highlighter(formatter, scorer);
+
+    maxNumFragments = (int) Optional.ofNullable(highlight.get("maxNumFragments"))
+        .orElse(2);
   }
 
   protected void fetchFirstBatch() {
@@ -230,13 +245,10 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
       try {
 
         for (String field : highlighted) {
-
           String text = doc.get(field);
-          Fields fields = indexReader.getTermVectors(score.doc);
-//        TokenStream tokenStream = TokenSources.getTokenStream("text", fields, text, engine.queryAnalyzer(), 0);
-          TokenStream tokenStream = TokenSources.getAnyTokenStream(indexReader, score.doc, field, doc, engine.queryAnalyzer());
-          TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, true, 4);
-          queryContext.addHighLight(field, frag);
+          TokenStream tokenStream = TokenSources.getAnyTokenStream(indexReader, score.doc, field, doc, engine.indexAnalyzer());
+          TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, true, maxNumFragments);
+          queryContext.addHighlightFragment(field, frag);
         }
 
         engine.onRecordAddedToResultSet(queryContext, res, doc, score);

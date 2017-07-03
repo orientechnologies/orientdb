@@ -84,7 +84,8 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
   private ODocument getMetadata(Object[] params) {
 
     if (params.length == 2) {
-      return new ODocument().fromMap((Map<String, ?>) params[1]);
+      return new ODocument()
+          .fromMap((Map<String, ?>) params[1]);
     }
 
     return OLuceneQueryBuilder.EMPTY_METADATA;
