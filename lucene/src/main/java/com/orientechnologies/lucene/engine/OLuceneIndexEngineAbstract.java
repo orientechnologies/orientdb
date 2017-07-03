@@ -148,8 +148,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
     // FIXME how many timers are around?
 
-    Orient.instance().scheduleTask(commitTask, 10000, 10000);
-
     this.index = indexDefinition;
     this.automatic = isAutomatic;
     this.metadata = metadata;
@@ -178,6 +176,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       }
     };
 
+    Orient.instance().scheduleTask(commitTask, 10000, 10000);
   }
 
   protected void commit() {
