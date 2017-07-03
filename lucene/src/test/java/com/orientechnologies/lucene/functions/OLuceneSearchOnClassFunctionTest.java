@@ -96,4 +96,5 @@ public class OLuceneSearchOnClassFunctionTest extends BaseLuceneTest {
 
   }
 
+
 }

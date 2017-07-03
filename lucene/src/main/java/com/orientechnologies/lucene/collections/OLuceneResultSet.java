@@ -18,28 +18,30 @@
 
 package com.orientechnologies.lucene.collections;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineUtils;
+import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesAbstract;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Fields;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.highlight.Highlighter;
-import org.apache.lucene.search.highlight.QueryTermScorer;
-import org.apache.lucene.search.highlight.Scorer;
+import org.apache.lucene.search.highlight.*;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Enrico Risa on 16/09/15.
@@ -52,10 +54,11 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
   private final OLuceneQueryContext queryContext;
   private final String              indexName;
   private final Highlighter         highlighter;
+  private final List<String>        highlighted;
   private       TopDocs             topDocs;
   private int deletedMatchCount = 0;
 
-  public OLuceneResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext) {
+  public OLuceneResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext, ODocument metadata) {
     this.engine = engine;
     this.queryContext = queryContext;
     this.query = queryContext.getQuery();
@@ -66,6 +69,9 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
 
     Scorer scorer = new QueryTermScorer(queryContext.getQuery());
     highlighter = new Highlighter(scorer);
+
+    highlighted = Optional.ofNullable(metadata.<List<String>>getProperty("highlight"))
+        .orElse(Collections.emptyList());
 
   }
 
@@ -189,7 +195,6 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
         scoreDoc = fetchNext();
         doc = toDocument(scoreDoc);
 
-//        highlighter.getBestFragments()
         res = toRecordId(doc, scoreDoc);
       } while (isToSkip(res, doc));
       index++;
@@ -220,8 +225,26 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
     private OContextualRecordId toRecordId(Document doc, ScoreDoc score) {
       String rId = doc.get(OLuceneIndexEngineAbstract.RID);
       OContextualRecordId res = new OContextualRecordId(rId);
-      engine.onRecordAddedToResultSet(queryContext, res, doc, score);
-      return res;
+
+      IndexReader indexReader = queryContext.getSearcher().getIndexReader();
+      try {
+
+        for (String field : highlighted) {
+
+          String text = doc.get(field);
+          Fields fields = indexReader.getTermVectors(score.doc);
+//        TokenStream tokenStream = TokenSources.getTokenStream("text", fields, text, engine.queryAnalyzer(), 0);
+          TokenStream tokenStream = TokenSources.getAnyTokenStream(indexReader, score.doc, field, doc, engine.queryAnalyzer());
+          TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, true, 4);
+          queryContext.addHighLight(field, frag);
+        }
+
+        engine.onRecordAddedToResultSet(queryContext, res, doc, score);
+        return res;
+      } catch (IOException | InvalidTokenOffsetsException e) {
+        throw OException.wrapException(new OLuceneIndexException("error while highlighting"), e);
+      }
+
     }
 
     private boolean isToSkip(OContextualRecordId res, Document doc) {

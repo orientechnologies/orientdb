@@ -76,6 +76,7 @@ public class OLuceneDocumentBuilder {
         doc.add(createField(field, val, Field.Store.YES));
         //for cross class index
         doc.add(createField(definition.getClassName() + "." + field, val, Field.Store.YES));
+
       }
     }
 

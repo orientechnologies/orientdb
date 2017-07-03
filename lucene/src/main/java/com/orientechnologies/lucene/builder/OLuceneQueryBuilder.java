@@ -93,10 +93,12 @@ public class OLuceneQueryBuilder {
     final OLuceneMultiFieldQueryParser queryParser = new OLuceneMultiFieldQueryParser(types, fields, analyzer, new HashMap<>());
 
     queryParser.setAllowLeadingWildcard(
-        Optional.ofNullable(metadata.<Boolean>getProperty("allowLeadingWildcard")).orElse(allowLeadingWildcard));
+        Optional.ofNullable(metadata.<Boolean>getProperty("allowLeadingWildcard"))
+            .orElse(allowLeadingWildcard));
 
     queryParser.setLowercaseExpandedTerms(
-        Optional.ofNullable(metadata.<Boolean>getProperty("lowercaseExpandedTerms")).orElse(lowercaseExpandedTerms));
+        Optional.ofNullable(metadata.<Boolean>getProperty("lowercaseExpandedTerms"))
+            .orElse(lowercaseExpandedTerms));
 
     try {
       return queryParser.parse(query);

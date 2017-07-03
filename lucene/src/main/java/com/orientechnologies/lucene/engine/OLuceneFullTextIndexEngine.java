@@ -44,6 +44,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.store.Directory;
 
 import java.io.IOException;
@@ -94,11 +95,28 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret,
       final ScoreDoc score) {
-    recordId.setContext(new HashMap<String, Object>() {
-      {
-        put("$score", score.score);
-      }
-    });
+
+    recordId.setContext(new HashMap<String, Object>() {{
+
+      HashMap<String, TextFragment[]> frag = queryContext.getFragments();
+
+      frag.entrySet()
+          .stream()
+          .forEach(f -> {
+
+                TextFragment[] fragments = f.getValue();
+                StringBuilder hlField = new StringBuilder();
+                for (int j = 0; j < fragments.length; j++) {
+                  if ((fragments[j] != null) && (fragments[j].getScore() > 0)) {
+                    hlField.append(fragments[j].toString());
+                  }
+                }
+                put("$" + f.getKey() + "_hl", hlField.toString());
+              }
+          );
+
+      put("$score", score.score);
+    }});
   }
 
   @Override
@@ -163,12 +181,14 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     return new OLuceneIndexCursor((OLuceneResultSet) get(rangeFrom), rangeFrom);
   }
 
-  private Set<OIdentifiable> getResults(Query query, OCommandContext context, Object key, OLuceneTxChanges changes) {
+  private Set<OIdentifiable> getResults(Query query, OCommandContext context, OLuceneTxChanges changes,
+      ODocument metadata) {
 
     IndexSearcher searcher = searcher();
-    OLuceneQueryContext queryContext = new OLuceneQueryContext(context, searcher, query).withChanges(changes);
+    OLuceneQueryContext queryContext = new OLuceneQueryContext(context, searcher, query)
+        .withChanges(changes);
 
-    return new OLuceneResultSet(this, queryContext);
+    return new OLuceneResultSet(this, queryContext, metadata);
 
   }
 
@@ -252,7 +272,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
         Query query = queryBuilder.query(indexDefinition, q.key, q.metadata, queryAnalyzer());
 
         OCommandContext commandContext = q.key.getContext();
-        return getResults(query, commandContext, key, changes);
+        return getResults(query, commandContext, changes, q.metadata);
 
       } else {
         Query query = queryBuilder.query(indexDefinition, key, EMPTY_METADATA, queryAnalyzer());
@@ -261,7 +281,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
         if (key instanceof OLuceneCompositeKey) {
           commandContext = ((OLuceneCompositeKey) key).getContext();
         }
-        return getResults(query, commandContext, key, changes);
+        return getResults(query, commandContext, changes, EMPTY_METADATA);
       }
     } catch (ParseException e) {
       throw OException.wrapException(new OIndexEngineException("Error parsing lucene query"), e);
