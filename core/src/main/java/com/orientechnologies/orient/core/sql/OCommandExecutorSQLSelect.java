@@ -1610,13 +1610,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final OIdentifiable next = iTarget.next();
       if (!executeSearchRecord(next, context, false))
         return false;
-
-      if (tipActivated && browsed > queryScanThresholdWarning) {
-        reportTip(String.format(
-            "Query '%s' fetched more than %d records: to speed up the execution, create an index or change the query to use an existent index",
-            parserText, queryScanThresholdWarning));
-        tipActivated = false;
-      }
     }
     return true;
   }
