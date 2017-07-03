@@ -32,7 +32,6 @@ public abstract class BareBoneBase1ClientTest extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    new ODatabaseDocumentTx(getLocalURL()).open("admin", "admin").drop();
     OFileUtils.deleteRecursively(new File(DB1_DIR));
   }
 
