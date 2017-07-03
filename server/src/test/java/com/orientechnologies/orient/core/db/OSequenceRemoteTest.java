@@ -32,6 +32,12 @@ public class OSequenceRemoteTest extends AbstractRemoteTest {
 
   }
 
+  @Override
+  public void teardown() {
+    super.teardown();
+    db.close();
+  }
+
   @Test
   public void shouldSequenceWithDefaultValueNoTx() {
 
