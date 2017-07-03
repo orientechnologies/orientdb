@@ -29,6 +29,7 @@ public class ORecordConflictStrategyFactory extends OConfigurableStatelessFactor
     registerImplementation(OVersionRecordConflictStrategy.NAME, def);
     registerImplementation(OAutoMergeRecordConflictStrategy.NAME, new OAutoMergeRecordConflictStrategy());
     registerImplementation(OContentRecordConflictStrategy.NAME, new OContentRecordConflictStrategy());
+    registerImplementation(OOverwriteConflictStrategy.NAME, new OOverwriteConflictStrategy());
 
     setDefaultImplementation(def);
   }
