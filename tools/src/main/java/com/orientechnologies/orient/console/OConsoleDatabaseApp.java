@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.conflict.OVersionRecordConflictStrategy;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -1795,9 +1794,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           clusterId = currentDatabase.getClusterIdByName(clusterName);
           final OCluster cluster = currentDatabase.getStorage().getClusterById(clusterId);
 
-          final String conflictStrategy = cluster.getRecordConflictStrategy() != null ?
-              cluster.getRecordConflictStrategy().getName() :
-              OVersionRecordConflictStrategy.NAME;
+          final String conflictStrategy =
+              cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy().getName() : null;
 
           count = currentDatabase.countClusterElements(clusterName);
           totalElements += count;

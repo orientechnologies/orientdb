@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -314,9 +315,10 @@ public class OStorageConfiguration implements OSerializableStream {
     }
 
     final ORecordConflictStrategyFactory conflictStrategyFactory = Orient.instance().getRecordConflictStrategy();
-    if (version >= 12)
-      conflictStrategy = conflictStrategyFactory.getStrategy(read(values[index++])).getName();
-    else
+    if (version >= 12) {
+      ORecordConflictStrategy strategy = conflictStrategyFactory.getStrategy(read(values[index++]));
+      conflictStrategy = strategy == null ? conflictStrategyFactory.getDefaultStrategy() : strategy.getName();
+    } else
       conflictStrategy = conflictStrategyFactory.getDefaultStrategy();
 
     // @COMPATIBILITY
