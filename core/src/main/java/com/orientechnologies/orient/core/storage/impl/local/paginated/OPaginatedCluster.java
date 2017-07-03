@@ -338,8 +338,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
                   .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY));
           break;
         case CONFLICTSTRATEGY:
-          setRecordConflictStrategy(stringValue);
-          break;
+          return setRecordConflictStrategy(stringValue);
         case STATUS: {
           if (stringValue == null)
             throw new IllegalStateException("Value of attribute is null");
@@ -1695,10 +1694,11 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     return recordConflictStrategy;
   }
 
-  private void setRecordConflictStrategy(final String stringValue) {
+  private String setRecordConflictStrategy(final String stringValue) {
     recordConflictStrategy = Orient.instance().getRecordConflictStrategy().getStrategy(stringValue);
     config.conflictStrategy = stringValue;
     storageLocal.getConfiguration().update();
+    return recordConflictStrategy == null ? null : recordConflictStrategy.getName();
   }
 
   private void updateClusterState(long fileId, long pinnedStateEntryIndex, long sizeDiff, long recordsSizeDiff,

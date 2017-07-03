@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.conflict.OVersionRecordConflictStrategy;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -473,7 +474,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Alters a cluster in the current database. The cluster can be physical or memory")
   public void alterCluster(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("alter", iCommandText, "\nCluster updated successfully.\n", false);
+    Object result = sqlCommand("alter", iCommandText, "\nCluster updated successfully.\n", false);
+    message("\nCluster modified, new value set to: " + result);
     updateDatabaseInfo();
   }
 
@@ -1793,8 +1795,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           clusterId = currentDatabase.getClusterIdByName(clusterName);
           final OCluster cluster = currentDatabase.getStorage().getClusterById(clusterId);
 
-          final String conflictStrategy =
-              cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy().getName() : "";
+          final String conflictStrategy = cluster.getRecordConflictStrategy() != null ?
+              cluster.getRecordConflictStrategy().getName() :
+              OVersionRecordConflictStrategy.NAME;
 
           count = currentDatabase.countClusterElements(clusterName);
           totalElements += count;
