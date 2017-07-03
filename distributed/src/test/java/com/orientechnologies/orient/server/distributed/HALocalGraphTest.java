@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -253,22 +255,23 @@ System.out.println("\n\n ----------- getClusterSelection() = " + graph.getClass(
               } else {
                 boolean retry = true;
 
-                Iterable<OVertex> vtxs = null;
+                OResultSet vtxs = null;
                 for (int k = 0; k < 100 && retry; k++)
                   try {
-                    vtxs = graph.command(new OCommandSQL(query)).execute();
+                    vtxs = graph.query(query);
                     break;
                   } catch (ONeedRetryException e) {
                     // RETRY
                   }
 
-                for (OVertex vtx : vtxs) {
+                while(vtxs.hasNext()) {
+                  OResult vtx = vtxs.next();
                   if (retry) {
                     retry = true;
                     boolean isException = false;
 
                     for (int k = 0; k < 100 && retry; k++) {
-                      OVertex vtx1 = vtx;
+                      OVertex vtx1 = vtx.getVertex().get();
                       try {
                         vtx1.setProperty("prop5", "prop55");
                         vtx1.setProperty("updateTime", new Date().toString());

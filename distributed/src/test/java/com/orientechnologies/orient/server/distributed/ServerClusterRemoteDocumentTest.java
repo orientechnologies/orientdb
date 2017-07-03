@@ -48,6 +48,8 @@ public class ServerClusterRemoteDocumentTest extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
     String id = String.valueOf(Math.random());
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:localhost/" + getDatabaseName()).open("admin", "admin");
+    db.createClass("Client");
+    db.createClass("Matter");
     db.begin();
     try {
       ODocument client = new ODocument("Client");
