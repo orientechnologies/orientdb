@@ -1058,7 +1058,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
-      if (tokenConnection && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && (
+
+      boolean isToken;
+      if (connection != null) {
+        isToken = Boolean.TRUE.equals(connection.getTokenBased());
+      } else {
+        isToken = tokenConnection;
+      }
+      if (isToken && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && (
           requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.DISTRIBUTED_CONNECT
               && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN || (connection != null && connection.getData() != null
               && connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32))
