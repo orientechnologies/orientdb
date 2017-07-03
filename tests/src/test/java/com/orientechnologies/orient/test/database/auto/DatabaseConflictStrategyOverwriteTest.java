@@ -101,13 +101,5 @@ public class DatabaseConflictStrategyOverwriteTest {
       db.shutdown();
     }
   }
-
-  private static void sleep(int i) {
-    try {
-      Thread.sleep(i);
-    } catch (InterruptedException xcpt) {
-      xcpt.printStackTrace();
-    }
-  }
-
+  
 }
