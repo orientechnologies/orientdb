@@ -26,9 +26,9 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Auto merges new record with the existent. Collections are also merged, item by item.
+ * Overwrites the record with latest provided value, regardless of the version number
  *
- * @author Luca Garulli
+ * @author Luigi Dell'Aquila
  */
 public class OOverwriteConflictStrategy extends OVersionRecordConflictStrategy {
   public static final String NAME = "overwrite";
