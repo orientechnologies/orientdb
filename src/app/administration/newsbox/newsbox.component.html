@@ -1,9 +1,9 @@
-<div class="panel panel-default" style="margin-top: 100px; margin-left: 30px;">
+<div class="panel panel-default" [ngStyle]="{'margin-top': boxMarginTop, 'margin-left': '30px'}">
   <div class="panel-heading">
     <i class="fa fa-newspaper-o" aria-hidden="true"></i>
     &nbsp;<b>News</b>
   </div>
-  <div class="panel-body" style="height: 400px; overflow: auto; padding: 20px;">
+  <div class="panel-body" [ngStyle]="{'height': boxHeight, 'overflow': 'auto', 'padding': '20px'}">
 
       <div [innerHTML]="newsHTMLPlainText">
       </div>

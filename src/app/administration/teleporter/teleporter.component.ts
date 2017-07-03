@@ -302,11 +302,13 @@ class TeleporterComponent implements AfterViewChecked {
     // invalidate the old migration config
     this.modellingConfig = undefined;
     this.selectedElement = undefined;
-    this.graphPanel.invalidateMigrationConfig();
+    if(this.graphPanel !== undefined) {
+      this.graphPanel.invalidateMigrationConfig();
+    }
 
-    this.teleporterService.launch(this.config).then((data) => {
-      this.step = "running";
-      this.jobRunning = true;
+    this.step = "running";
+    this.jobRunning = true;
+    this.teleporterService.launch(this.config).then(() => {
       this.status();
     }).catch(function (error) {
       alert("Error during migration!")

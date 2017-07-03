@@ -1,4 +1,4 @@
-import {Component, OnInit, EventEmitter, Input, ViewChild} from '@angular/core';
+import {Component, OnInit, Input} from '@angular/core';
 import {AgentService,DBService} from "../../core/services/";
 
 
@@ -11,10 +11,12 @@ declare var angular:any
 @Component({
   selector: 'news-box',
   templateUrl: "./newsbox.component.html",
-  styleUrls: []
 })
 
-class NewsBoxComponent {
+class NewsBoxComponent implements OnInit {
+
+  @Input() boxHeight: String;
+  @Input() boxMarginTop: String;
 
   private orientdbVersion;
 
@@ -39,6 +41,16 @@ class NewsBoxComponent {
 
   }
 
+  ngOnInit() {
+    if(this.boxHeight === undefined) {
+      this.boxHeight = "420px";
+    }
+
+    if(this.boxMarginTop === undefined) {
+      this.boxMarginTop = "40px";
+    }
+  }
+
   makeRequestAccordingVersionAndEdition() {
 
     // agent
@@ -61,11 +73,13 @@ class NewsBoxComponent {
     var self = this;
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function() {
-      if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-        callback.call(self, xmlHttp.responseText);
-      }
-      else {
-        self.newsHTMLPlainText = self.errorHTMLPLainText;
+      if (xmlHttp.readyState == 4) {
+        if (xmlHttp.status == 200) {
+          callback.call(self, xmlHttp.responseText);
+        }
+        else {
+          self.newsHTMLPlainText = self.errorHTMLPLainText;
+        }
       }
     }
     xmlHttp.open("GET", theUrl, true); // true for asynchronous
@@ -85,7 +99,7 @@ class NewsBoxComponent {
 
 angular.module('newsbox.component', []).directive(
   `newsBox`,
-  downgradeComponent({component: NewsBoxComponent}));
+  downgradeComponent({component: NewsBoxComponent, inputs: ["boxHeight", "boxMarginTop"]}));
 
 
 export {NewsBoxComponent};
