@@ -6,6 +6,8 @@ import '../views/widget/string.html';
 import '../views/widget/short.html';
 import '../views/widget/embedded.html';
 import '../views/widget/embeddedmap.html';
+import '../views/widget/linklist.html';
+import '../views/widget/linkset.html';
 import '../views/widget/boolean.html';
 import '../views/widget/binary.html';
 import '../views/widget/byte.html';

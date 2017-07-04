@@ -118,12 +118,13 @@ GraphModule.controller("VertexEditController", ['$scope', '$injector', '$routePa
   if (!$scope.doc) {
     $scope.reload();
   } else {
-    $scope.headers = Database.getPropertyFromDoc($scope.doc);
+    $scope.headers = Database.getPropertyFromDoc($scope.doc, true);
+
     $scope.isGraph = Database.isGraph($scope.doc['@class']);
     $scope.incomings = Database.getEdge($scope.doc, 'in_');
     $scope.outgoings = Database.getEdge($scope.doc, 'out_');
     $scope.exclude = $scope.outgoings.concat($scope.incomings);
-    $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc, $scope.exclude)));
+
 
     $scope.label = Database.isEdge($scope.doc['@class']) ? "Edge" : "Vertex";
 
@@ -1363,7 +1364,7 @@ GraphModule.controller("VertexAsideController", ['$scope', '$routeParams', '$loc
     $scope.icons = data;
 
 
-    $scope.headers = Database.getPropertyFromDoc($scope.doc);
+    $scope.headers = Database.getPropertyFromDoc($scope.doc,true);
     $scope.headers.unshift("@class");
     $scope.headers.unshift("@rid");
     $scope.active = 'properties';

@@ -550,7 +550,7 @@ export class OGraph {
 
   transform(d) {
     if(!d) {
-      console.log("Fuck!");
+      console.log("Duck!");
     }
     return "translate(" + d.x + "," + d.y + ")";
   }

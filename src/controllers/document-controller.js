@@ -106,7 +106,7 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
   $scope.database = $scope.db;
   $scope.reload = function () {
     $scope.doc = DocumentApi.get({database: $scope.db, document: $scope.rid}, function () {
-      $scope.headers = Database.getPropertyFromDoc($scope.doc);
+      $scope.headers = Database.getPropertyFromDoc($scope.doc,true);
       $scope.onReload();
     }, function (error) {
       Notification.push({content: JSON.stringify(error)});

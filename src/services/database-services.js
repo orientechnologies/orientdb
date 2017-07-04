@@ -345,10 +345,12 @@ database.factory('Database', ["DatabaseApi", "localStorageService", "SchemaServi
      * @param {doc} OrientDB Document.
      * @return {Array} Property name Array.
      */
-    getPropertyFromDoc: function (doc) {
+    getPropertyFromDoc: function (doc, includeLinks) {
       var c = doc['@class'];
       var isGraph = this.isGraph(c);
       var fixedHeader = this.header.concat(this.exclude);
+
+
       var self = this;
       var fields = this.listField(c);
       var all = Object.keys(doc).filter(function (element, index, array) {
@@ -356,6 +358,10 @@ database.factory('Database', ["DatabaseApi", "localStorageService", "SchemaServi
         if (isGraph) {
           return (fixedHeader.indexOf(element) == -1 && (!element.startsWith("in_") && !element.startsWith("out_")) && !self.isLink(type));
         } else {
+
+          if (includeLinks === true) {
+            return true;
+          }
           return (fixedHeader.indexOf(element) == -1 && !self.isLink(type));
         }
       });
@@ -366,6 +372,9 @@ database.factory('Database', ["DatabaseApi", "localStorageService", "SchemaServi
           var bool = true;
           if (isGraph) {
             bool = (fixedHeader.indexOf(elem) == -1 && (!elem.startsWith("in_") && !elem.startsWith("out_")) && !self.isLink(type));
+            if (self.isLink(type) && includeLinks === true) {
+              bool = true;
+            }
           } else {
             bool = (fixedHeader.indexOf(elem) == -1 && !self.isLink(type));
           }
