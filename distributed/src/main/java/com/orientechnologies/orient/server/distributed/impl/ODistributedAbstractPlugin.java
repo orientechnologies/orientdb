@@ -49,11 +49,13 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -1227,6 +1229,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value, false,
             uniqueClustersBackupDirectory, cfg);
 
+        OStorage storage = storages.get(databaseName);
+        replaceStorageInSessions(storage);
         distrDatabase.resume();
 
         return true;
@@ -1236,6 +1240,20 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
 
     throw new ODistributedException("No response received from remote nodes for auto-deploy of database '" + databaseName + "'");
+  }
+
+  private void replaceStorageInSessions(OStorage storage) {
+    for (OClientConnection conn : serverInstance.getClientConnectionManager().getConnections()) {
+      ODatabaseDocumentInternal connDb = conn.getDatabase();
+      if (connDb != null && connDb.getName().equals(storage.getName())) {
+        conn.acquire();
+        try {
+          conn.getDatabase().replaceStorage(storage);
+        } finally {
+          conn.release();
+        }
+      }
+    }
   }
 
   protected File getClusterOwnedExclusivelyByCurrentNode(final String dbPath, final String iDatabaseName) {
