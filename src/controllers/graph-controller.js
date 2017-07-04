@@ -1347,7 +1347,7 @@ GraphModule.controller('ModalEdgeEditController', ['$scope', '$controller', 'Dat
 
 
   $scope.onReload = function () {
-    $scope.headers = $scope.headers = Database.getPropertyFromDoc($scope.doc).filter((c) => {
+    $scope.headers = $scope.headers = Database.getPropertyFromDoc($scope.doc, true).filter((c) => {
       return c != "in" && c != "out";
     });
   }
@@ -1364,7 +1364,7 @@ GraphModule.controller("VertexAsideController", ['$scope', '$routeParams', '$loc
     $scope.icons = data;
 
 
-    $scope.headers = Database.getPropertyFromDoc($scope.doc,true);
+    $scope.headers = Database.getPropertyFromDoc($scope.doc, true);
     $scope.headers.unshift("@class");
     $scope.headers.unshift("@rid");
     $scope.active = 'properties';
@@ -1475,7 +1475,7 @@ GraphModule.controller("EdgeAsideController", ['$scope', '$routeParams', '$locat
   $scope.active = 'properties';
   if ($scope.doc) {
 
-    $scope.headers = Database.getPropertyFromDoc($scope.doc);
+    $scope.headers = Database.getPropertyFromDoc($scope.doc, true);
     $scope.headers.unshift("@class");
     $scope.headers.unshift("@rid");
     $scope.active = 'properties';
