@@ -28,8 +28,10 @@ import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.highlight.TextFragment;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Optional;
 
 /**
@@ -37,12 +39,13 @@ import java.util.Optional;
  */
 public class OLuceneQueryContext {
 
-  private final OCommandContext            context;
-  private final IndexSearcher              searcher;
-  private final Query                      query;
-  private final Sort                       sort;
-  private final QueryContextCFG            cfg;
-  private       Optional<OLuceneTxChanges> changes;
+  private final OCommandContext               context;
+  private final IndexSearcher                 searcher;
+  private final Query                         query;
+  private final Sort                          sort;
+  private final QueryContextCFG               cfg;
+  private       Optional<OLuceneTxChanges>    changes;
+  private       HashMap<String, TextFragment[]> fragments;
 
   public OLuceneQueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
     this(context, searcher, query, null);
@@ -59,15 +62,21 @@ public class OLuceneQueryContext {
       cfg = QueryContextCFG.FILTER;
 
     changes = Optional.empty();
-
+    fragments = new HashMap<>();
   }
 
   public boolean isInTx() {
-    return changes != null;
+    return changes.isPresent();
   }
 
   public OLuceneQueryContext withChanges(OLuceneTxChanges changes) {
     this.changes = Optional.ofNullable(changes);
+    return this;
+  }
+
+  public OLuceneQueryContext addHighlightFragment(String field, TextFragment[] fieldFragment) {
+    fragments.put(field,fieldFragment);
+
     return this;
   }
 
@@ -117,6 +126,10 @@ public class OLuceneQueryContext {
 
     return changes.map(c -> c.isDeleted(doc, key, value)).orElse(false);
 
+  }
+
+  public HashMap<String, TextFragment[]> getFragments() {
+    return fragments;
   }
 
   public enum QueryContextCFG {

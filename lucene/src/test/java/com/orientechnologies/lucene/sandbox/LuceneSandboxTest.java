@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.sandbox;
 
 import com.orientechnologies.lucene.tests.OLuceneBaseTest;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -77,5 +78,22 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
     Assertions.assertThat(res).hasSize(1);
   }
 
+  @Test
+  public void testHierarchy() throws Exception {
 
+    db.command("CREATE Class Father EXTENDS V");
+    db.command("CREATE PROPERTY Father.text STRING");
+
+    db.command("CREATE INDEX Father.text ON Father(text) FULLTEXT ENGINE LUCENE ");
+
+
+    db.command("CREATE Class Son EXTENDS Father");
+    db.command("CREATE PROPERTY Son.textOfSon STRING");
+
+    db.command("CREATE INDEX Son.textOfSon ON Son(textOfSon) FULLTEXT ENGINE LUCENE ");
+    OClass father = db.getMetadata().getSchema().getClass("Father");
+
+
+
+  }
 }

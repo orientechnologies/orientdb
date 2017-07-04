@@ -24,16 +24,19 @@ public class TestReplicationVersionIncrementedByOne extends BareBoneBase1ClientT
 
     try {
       OVertex v1 = graph.newVertex("vertextype");
+      v1.save();
       graph.commit();
       graph.begin();
       assertEquals(1, v1.getVersion());
 
       OVertex v2 = graph.newVertex("vertextype");
+      v2.save();
       graph.commit();
       graph.begin();
       assertEquals(1, v2.getVersion());
 
       v1.addEdge(v2, "edgetype");
+      v1.save();
       graph.commit();
       graph.begin();
       assertEquals(2, v1.getVersion());

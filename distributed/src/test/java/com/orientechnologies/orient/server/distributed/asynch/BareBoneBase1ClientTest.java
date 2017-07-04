@@ -32,7 +32,6 @@ public abstract class BareBoneBase1ClientTest extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    new ODatabaseDocumentTx(getLocalURL()).open("admin", "admin").drop();
     OFileUtils.deleteRecursively(new File(DB1_DIR));
   }
 
@@ -76,11 +75,11 @@ public abstract class BareBoneBase1ClientTest extends TestCase {
   protected BareBonesServer dbServer(String dbDirectory, String orientUrl, String dbConfigName) {
     BareBonesServer dbServer = new BareBonesServer();
     dbServer.deleteRecursively(new File(dbDirectory));
+    System.setProperty("ORIENTDB_HOME", dbDirectory);
+    dbServer.start(CONFIG_DIR, dbConfigName);
     if (orientUrl != null) {
       dbServer.createDB(orientUrl);
     }
-    System.setProperty("ORIENTDB_HOME", dbDirectory);
-    dbServer.start(CONFIG_DIR, dbConfigName);
 
     return dbServer;
   }

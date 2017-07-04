@@ -1,10 +1,9 @@
 package com.orientechnologies.lucene.functions;
 
-import com.orientechnologies.lucene.test.BaseLuceneTest;
+import com.orientechnologies.lucene.tests.OLuceneBaseTest;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -14,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by frank on 15/01/2017.
  */
-public class OLuceneSearchOnClassFunctionTest extends BaseLuceneTest {
+public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
 
   @Before
   public void setUp() throws Exception {
@@ -38,14 +37,11 @@ public class OLuceneSearchOnClassFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-//  @Ignore
   public void shouldSearchOnSingleFieldWithLeadingWildcard() throws Exception {
 
-    //TODO: metadata still not used
     OResultSet resultSet = db
         .query("SELECT from Song where SEARCH_CLASS( '*EVE*', {'allowLeadingWildcard': true}) = true");
 
-//    resultSet.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 2)));
     assertThat(resultSet).hasSize(14);
 
     resultSet.close();
@@ -63,9 +59,7 @@ public class OLuceneSearchOnClassFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-//  @Ignore
   public void shouldSearchInAnd() throws Exception {
-
 
     OResultSet resultSet = db
         .query(
@@ -93,6 +87,18 @@ public class OLuceneSearchOnClassFunctionTest extends BaseLuceneTest {
     OResultSet resultSet = db
         .query(
             "SELECT from Song where SEARCH_CLASS('not important, will fail') = true ");
+
+  }
+
+  @Test
+  public void shouldHighlightTitle() throws Exception {
+
+    OResultSet resultSet = db.query(
+        "SELECT title, $title_hl from Song where SEARCH_CLASS('believe', {"
+            + "highlight: { fields: ['title'], 'start': '<span>', 'end': '</span>' } }) = true ");
+
+    resultSet.stream()
+        .forEach(r -> assertThat(r.<String>getProperty("$title_hl")).containsIgnoringCase("<span>believe</span>"));
 
   }
 
