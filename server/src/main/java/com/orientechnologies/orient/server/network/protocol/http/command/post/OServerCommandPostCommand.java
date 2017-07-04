@@ -164,7 +164,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     return previousLimit;
   }
 
-  public static OResultSet executeStatement(String language, String text, Object params, ODatabaseDocument db) {
+  protected OResultSet executeStatement(String language, String text, Object params, ODatabaseDocument db) {
     OResultSet result;
     if (params instanceof Map) {
       result = db.command(text, (Map) params);
