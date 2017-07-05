@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -70,9 +71,15 @@ public class OHttpGraphResponse extends OHttpResponse {
       final Iterator<Object> iIterator = OMultiValue.getMultiValueIterator(iRecords);
       while (iIterator.hasNext()) {
         Object entry = iIterator.next();
-        if (entry == null || !(entry instanceof OIdentifiable))
+
+        if (entry != null && entry instanceof OResult && ((OResult) entry).isElement()) {
+
+          entry = ((OResult) entry).getElement().get();
+
+        } else if (entry == null || !(entry instanceof OIdentifiable)) {
           // IGNORE IT
           continue;
+        }
 
         entry = ((OIdentifiable) entry).getRecord();
 
