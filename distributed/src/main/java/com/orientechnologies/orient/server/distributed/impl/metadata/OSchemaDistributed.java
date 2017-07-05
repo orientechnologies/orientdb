@@ -24,7 +24,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   }
 
   public void acquireSchemaWriteLock(ODatabaseDocumentInternal database) {
-    if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+    if (executeThroughDistributedStorage(database)) {
       ((OAutoshardedStorage) database.getStorage()).acquireDistributedExclusiveLock(0);
       acquiredDistributeLock = true;
     }

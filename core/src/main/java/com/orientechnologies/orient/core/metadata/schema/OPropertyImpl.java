@@ -1003,7 +1003,7 @@ public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements O
   }
 
   protected boolean isDistributedCommand() {
-    return getDatabase().getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
+    return getDatabase().getStorage() instanceof OAutoshardedStorage && !((OAutoshardedStorage) getDatabase().getStorage()).isLocalEnv();
   }
 
   @Override

@@ -40,16 +40,15 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -298,15 +297,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       if (cfg == null)
         return;
 
-      ODistributedDatabaseImpl distribDatabase = getMessageService().getDatabase(dbName);
-      if (distribDatabase == null) {
-        // CHECK TO PUBLISH IT TO THE CLUSTER
-        distribDatabase = messageService.registerDatabase(dbName, cfg);
-        distribDatabase.checkNodeInConfiguration(cfg, getLocalNodeName());
-        distribDatabase.resume();
-        distribDatabase.setOnline();
-      }
-
     } catch (HazelcastException e) {
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
@@ -316,6 +306,17 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     } finally {
       // RESTORE ORIGINAL DATABASE INSTANCE IN TL
       ODatabaseRecordThreadLocal.INSTANCE.set(currDb);
+    }
+  }
+
+  protected void registerNewDatabaseIfNeeded(String dbName, ODistributedConfiguration cfg) {
+    ODistributedDatabaseImpl distribDatabase = getMessageService().getDatabase(dbName);
+    if (distribDatabase == null) {
+      // CHECK TO PUBLISH IT TO THE CLUSTER
+      distribDatabase = messageService.registerDatabase(dbName, cfg);
+      distribDatabase.checkNodeInConfiguration(cfg, getLocalNodeName());
+      distribDatabase.resume();
+      distribDatabase.setOnline();
     }
   }
 
@@ -639,7 +640,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
-    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed())
+    if (iDatabase.getStorage() instanceof OAutoshardedStorage && ((OAutoshardedStorage) iDatabase.getStorage()).isLocalEnv())
       return;
 
     if (isOffline() && status != NODE_STATUS.STARTING)

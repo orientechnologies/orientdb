@@ -40,5 +40,10 @@ public interface OAutoshardedStorage {
 
   void releaseDistributedExclusiveLock();
 
+  /**
+   * Check if the distributed need to run only as local env
+   *
+   * @return
+   */
   boolean isLocalEnv();
 }

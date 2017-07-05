@@ -129,7 +129,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       asynchronousOperationsQueue = new LinkedBlockingQueue<OAsynchDistributedOperation>();
     else
       asynchronousOperationsQueue = new LinkedBlockingQueue<OAsynchDistributedOperation>(queueSize);
+    startAsynchronousWorker();
+  }
 
+  public void startAsynchronousWorker() {
     asynchWorker = new Thread() {
       @Override
       public void run() {
@@ -189,6 +192,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     asynchWorker.setName("OrientDB Distributed asynch ops node=" + getNodeId() + " db=" + getName());
     asynchWorker.start();
   }
+
 
   @Override
   public boolean isDistributed() {
@@ -2128,7 +2132,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         return null;
 
       // ONLY IF IT'S A CLIENT REQUEST (NON DISTRIBUTED) AND THE AVAILABLE SERVER IS ONLINE, REDIRECT THE REQUEST TO THAT SERVER
-      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+      if (!isLocalEnv()) {
         if (dManager.isNodeAvailable(ownerServer, getName())) {
           final String ownerUUID = dManager.getNodeUuidByName(ownerServer);
           if (ownerUUID != null) {
@@ -2231,4 +2235,5 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   protected File getDistributedConfigFile() {
     return new File(serverInstance.getDatabaseDirectory() + getName() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
   }
+
 }

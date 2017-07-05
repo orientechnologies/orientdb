@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
@@ -230,6 +231,6 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
   }
 
   private boolean isDistributedCommand() {
-    return database.getStorage().isDistributed() && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
+    return database.getStorage().isDistributed() && !((OAutoshardedStorage) database.getStorage()).isLocalEnv();
   }
 }
