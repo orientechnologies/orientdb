@@ -199,7 +199,7 @@
   <!--   ****************   Modals' definitions - END -   ****************   -->
 
 
-  <div class="panel-heading">
+  <div class="panel-heading" style="height: 41px;">
     <span class="h4 center">Details</span>
   </div>
   <div id="upperArea" class="panel-body" style="height: 255px; overflow: auto;">
@@ -210,7 +210,7 @@
       <div *ngIf="selectedElement.name">
 
         <div class="row">
-          <div class="col-md-8">
+          <div class="col-md-9">
             <div class="col-md-3" style="margin: 0px; padding: 0px;">
               Vertex Class:
             </div>
@@ -224,7 +224,7 @@
             </span>
             </div>
           </div>
-          <div class="col-md-4 btn-group">
+          <div class="col-md-3 btn-group">
             <button type="button" class="btn btn-primary btn-xs dropdown-toggle" data-toggle="dropdown">
               Edit Class <span class="caret"></span></button>
             <ul class="dropdown-menu" role="menu">
@@ -276,7 +276,7 @@
       <div *ngIf="!selectedElement.name">
 
         <div class="row">
-          <div class="col-md-8">
+          <div class="col-md-9">
             <div class="col-md-3" style="margin: 0px; padding: 0px;">
               Edge Class:
             </div>
@@ -290,7 +290,7 @@
             </span>
             </div>
           </div>
-          <div class="col-md-4 btn-group">
+          <div class="col-md-3 btn-group">
             <button type="button" class="btn btn-primary btn-xs dropdown-toggle" data-toggle="dropdown">
               Edit Class <span class="caret"></span></button>
             <ul class="dropdown-menu" role="menu">
@@ -350,7 +350,7 @@
   </div>
 </div>
 <div class="panel panel-success">
-  <div id="lowerArea" class="panel-body" style="height: 256px; overflow: auto;">
+  <div id="lowerArea" class="panel-body" style="height: 255px; overflow: auto;">
     <div *ngIf="selectedElement">
 
       <!--Table rendering-->

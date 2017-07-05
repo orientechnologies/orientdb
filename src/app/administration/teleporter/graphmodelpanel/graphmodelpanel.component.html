@@ -1,6 +1,6 @@
 <div class="panel panel-info">
 
-  <div class="panel-heading">
+  <div class="panel-heading" style="height: 68px;">
     <div class="row" id="firstRow">
       <div class="col-md-9">
         <div *ngIf="searchOptionsLoaded" class="input-group">
@@ -29,8 +29,10 @@
               <li *ngIf="selectedElement && selectedElement.name" class="dropdown-item actions-dropdown-item" (click)="startEdgeCreation()">
                 <a>Add Edge</a>
               </li>
+              <!--
               <li class="dropdown-item actions-dropdown-item"><a>Aggregate Classes</a></li>
               <li class="dropdown-item actions-dropdown-item"><a>Split Class</a></li>
+              -->
             </ul>
           </div>
         </div>
