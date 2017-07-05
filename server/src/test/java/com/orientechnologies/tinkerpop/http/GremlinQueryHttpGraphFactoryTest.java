@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -54,13 +55,13 @@ public class GremlinQueryHttpGraphFactoryTest extends BaseGremlinHttpGraphFactor
 
     ODocument entry = asDocument(body);
 
-    final Collection<ODocument> res = entry.field("result");
+    final Collection<Map> res = entry.field("result");
 
     Assert.assertEquals(res.size(), 1);
 
-    ODocument next = res.iterator().next();
+    Map next = res.iterator().next();
 
-    Assert.assertEquals(next.field("value"), new Long(2));
+    Assert.assertEquals(new Long(2).intValue(),next.get("value"));
 
   }
 
