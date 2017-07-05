@@ -21,11 +21,11 @@ package com.orientechnologies.tinkerpop.command;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommandGraph;
 
 import java.util.Map;
 
-public class OServerCommandPostCommandGremlin extends OServerCommandPostCommand {
+public class OServerCommandPostCommandGremlin extends OServerCommandPostCommandGraph {
   public OServerCommandPostCommandGremlin() {
   }
 
