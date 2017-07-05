@@ -163,7 +163,7 @@ public final class OIndexes {
       }
     }
     throw new OIndexException(
-        "Index type: " + indexType + " is not supported. Types are " + OCollections.toString(getIndexTypes()));
+        "Index type " + indexType + " with engine " + algorithm + " is not supported. Types are " + OCollections.toString(getIndexTypes()));
   }
 
   public static OIndexEngine createIndexEngine(final String name, final String algorithm, final String type,
