@@ -19,9 +19,7 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -44,40 +42,46 @@ import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
  * it.
- * 
+ *
  * @author Luca Garulli
  */
 public abstract class OIdentifiableIterator<REC extends OIdentifiable> implements Iterator<REC>, Iterable<REC> {
   protected final ODatabaseDocumentInternal database;
-  protected final ORecordId                 current                = new ORecordId();
-  private final ODatabaseDocumentInternal   lowLevelDatabase;
-  private final OStorage                    dbStorage;
-  private final boolean                     iterateThroughTombstones;
-  protected boolean                         liveUpdated            = false;
-  protected long                            limit                  = -1;
-  protected long                            browsedRecords         = 0;
-  protected OStorage.LOCKING_STRATEGY       lockingStrategy        = OStorage.LOCKING_STRATEGY.NONE;
-  protected long                            totalAvailableRecords;
-  protected List<ORecordOperation>          txEntries;
-  protected int                             currentTxEntryPosition = -1;
-  protected long                            firstClusterEntry      = 0;
-  protected long                            lastClusterEntry       = Long.MAX_VALUE;
-  private String                            fetchPlan;
-  private ORecord                           reusedRecord           = null;                          // DEFAULT = NOT
+  protected final ORecordId current = new ORecordId();
+  private final ODatabaseDocumentInternal lowLevelDatabase;
+  private final OStorage                  dbStorage;
+  private final boolean                   iterateThroughTombstones;
+  protected boolean                   liveUpdated     = false;
+  protected long                      limit           = -1;
+  protected long                      browsedRecords  = 0;
+  protected OStorage.LOCKING_STRATEGY lockingStrategy = OStorage.LOCKING_STRATEGY.NONE;
+  protected long                   totalAvailableRecords;
+  protected List<ORecordOperation> txEntries;
+  protected int  currentTxEntryPosition = -1;
+  protected long firstClusterEntry      = 0;
+  protected long lastClusterEntry       = Long.MAX_VALUE;
+  private String fetchPlan;
+  private ORecord reusedRecord = null;                          // DEFAULT = NOT
   // REUSE IT
-  private Boolean                           directionForward;
-  private long                              currentEntry           = ORID.CLUSTER_POS_INVALID;
-  private int                               currentEntryPosition   = -1;
-  private OPhysicalPosition[]               positionsToProcess     = null;
+  private Boolean directionForward;
+  private long                currentEntry         = ORID.CLUSTER_POS_INVALID;
+  private int                 currentEntryPosition = -1;
+  private OPhysicalPosition[] positionsToProcess   = null;
+
+  /**
+   * Set of RIDs of records which were indicated as broken during cluster iteration.
+   * Mainly used during JSON export/import procedure to fix links on broken records.
+   */
+  final Set<ORID> brokenRIDs = new HashSet<ORID>();
 
   public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase) {
     this(iDatabase, iLowLevelDatabase, false, OStorage.LOCKING_STRATEGY.NONE);
   }
 
-  @Deprecated
   /**
    * @deprecated usage of this constructor may lead to deadlocks.
    */
+  @Deprecated
   public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     database = iDatabase;
@@ -131,9 +135,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    * performance and reduce memory utilization since it does not create a new one for each operation, but pay attention to copy the
    * data of the record once read otherwise they will be reset to the next operation.
    *
-   * @param reuseSameRecord
-   *          if true the same record will be used for iteration. If false new record will be created each time iterator retrieves
-   *          record from db.
+   * @param reuseSameRecord if true the same record will be used for iteration. If false new record will be created each time
+   *                        iterator retrieves record from db.
+   *
    * @return @see #isReuseSameRecord()
    */
   public OIdentifiableIterator<REC> setReuseSameRecord(final boolean reuseSameRecord) {
@@ -162,6 +166,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    * Return the current limit on browsing record. -1 means no limits (default).
    *
    * @return The limit if setted, otherwise -1
+   *
    * @see #setLimit(long)
    */
   public long getLimit() {
@@ -171,8 +176,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   /**
    * Set the limit on browsing record. -1 means no limits. You can set the limit even while you're browsing.
    *
-   * @param limit
-   *          The current limit on browsing record. -1 means no limits (default).
+   * @param limit The current limit on browsing record. -1 means no limits (default).
+   *
    * @see #getLimit()
    */
   public OIdentifiableIterator<REC> setLimit(final long limit) {
@@ -180,10 +185,15 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
     return this;
   }
 
+  public Set<ORID> getBrokenRIDs() {
+    return brokenRIDs;
+  }
+
   /**
    * Return current configuration of live updates.
    *
    * @return True to activate it, otherwise false (default)
+   *
    * @see #setLiveUpdated(boolean)
    */
   public boolean isLiveUpdated() {
@@ -193,9 +203,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   /**
    * Tell to the iterator that the upper limit must be checked at every cycle. Useful when concurrent deletes or additions change
    * the size of the cluster while you're browsing it. Default is false.
-   * 
-   * @param liveUpdated
-   *          True to activate it, otherwise false (default)
+   *
+   * @param liveUpdated True to activate it, otherwise false (default)
+   *
    * @see #isLiveUpdated()
    */
   public OIdentifiableIterator<REC> setLiveUpdated(final boolean liveUpdated) {
@@ -229,7 +239,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   /**
    * Return the record to use for the operation.
-   * 
+   *
    * @return the record to use for the operation.
    */
   protected ORecord getRecord() {
@@ -253,9 +263,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   /**
    * Read the current record and increment the counter if the record was found.
-   * 
-   * @param iRecord
-   *          to read value from database inside it. If record is null link will be created and stored in it.
+   *
+   * @param iRecord to read value from database inside it. If record is null link will be created and stored in it.
+   *
    * @return record which was read from db.
    */
   protected ORecord readCurrentRecord(ORecord iRecord, final int iMovement) {
@@ -296,6 +306,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
         if (e.getCause() instanceof OSecurityException)
           throw e;
 
+        brokenRIDs.add(current.copy());
+
         OLogManager.instance().error(this, "Error on fetching record during browsing. The record has been skipped", e);
       }
 
@@ -320,7 +332,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
     incrementEntreePosition();
     while (positionsToProcess.length > 0 && currentEntryPosition >= positionsToProcess.length) {
-      positionsToProcess = dbStorage.higherPhysicalPositions(current.getClusterId(), positionsToProcess[positionsToProcess.length - 1]);
+      positionsToProcess = dbStorage
+          .higherPhysicalPositions(current.getClusterId(), positionsToProcess[positionsToProcess.length - 1]);
 
       currentEntryPosition = -1;
       incrementEntreePosition();
@@ -411,7 +424,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       else
         do {
           currentEntryPosition--;
-        } while (currentEntryPosition >= 0 && ORecordVersionHelper.isTombstone(positionsToProcess[currentEntryPosition].recordVersion));
+        } while (currentEntryPosition >= 0 && ORecordVersionHelper
+            .isTombstone(positionsToProcess[currentEntryPosition].recordVersion));
   }
 
   private void incrementEntreePosition() {
@@ -421,7 +435,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       else
         do {
           currentEntryPosition++;
-        } while (currentEntryPosition < positionsToProcess.length
-            && ORecordVersionHelper.isTombstone(positionsToProcess[currentEntryPosition].recordVersion));
+        } while (currentEntryPosition < positionsToProcess.length && ORecordVersionHelper
+            .isTombstone(positionsToProcess[currentEntryPosition].recordVersion));
   }
 }

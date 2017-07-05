@@ -25,7 +25,9 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
@@ -48,16 +50,16 @@ import java.util.zip.GZIPOutputStream;
 
 /**
  * Export data from a database to a file.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-  public static final int VERSION           = 11;
+  public static final int VERSION = 12;
 
-  protected OJSONWriter   writer;
-  protected long          recordExported;
-  protected int           compressionLevel  = Deflater.BEST_SPEED;
-  protected int           compressionBuffer = 16384;              // 16Kb
+  protected OJSONWriter writer;
+  protected long        recordExported;
+  protected int compressionLevel  = Deflater.BEST_SPEED;
+  protected int compressionBuffer = 16384;              // 16Kb
 
   public ODatabaseExport(final ODatabaseDocumentInternal iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -142,6 +144,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     int level = 1;
     listener.onMessage("\nExporting records...");
 
+    final Set<ORID> brokenRids = new HashSet<ORID>();
+
     writer.beginCollection(level, true, "records");
     int exportedClusters = 0;
     int maxClusterId = getMaxClusterId();
@@ -172,10 +176,13 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       listener.onMessage("\n- Cluster " + (clusterName != null ? "'" + clusterName + "'" : "NULL") + " (id=" + i + ")...");
 
       long clusterExportedRecordsCurrent = 0;
+
       if (clusterName != null) {
         ORecord rec = null;
         try {
-          for (ORecordIteratorCluster<ORecord> it = database.browseCluster(clusterName); it.hasNext();) {
+          ORecordIteratorCluster<ORecord> it = database.browseCluster(clusterName);
+
+          for (; it.hasNext(); ) {
 
             rec = it.next();
             if (rec instanceof ODocument) {
@@ -192,16 +199,18 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
             } else if (includeClasses != null && !includeClasses.isEmpty())
               continue;
 
-            if (exportRecord(clusterExportedRecordsTot, clusterExportedRecordsCurrent, rec))
+            if (exportRecord(clusterExportedRecordsTot, clusterExportedRecordsCurrent, rec, brokenRids))
               clusterExportedRecordsCurrent++;
           }
+
+          brokenRids.addAll(it.getBrokenRIDs());
         } catch (IOException e) {
           OLogManager.instance().error(this, "\nError on exporting record %s because of I/O problems", e, rec.getIdentity());
           // RE-THROW THE EXCEPTION UP
           throw e;
         } catch (OIOException e) {
-          OLogManager.instance().error(this, "\nError on exporting record %s because of I/O problems", e,
-              rec == null ? null : rec.getIdentity());
+          OLogManager.instance()
+              .error(this, "\nError on exporting record %s because of I/O problems", e, rec == null ? null : rec.getIdentity());
           // RE-THROW THE EXCEPTION UP
           throw e;
         } catch (Throwable t) {
@@ -222,7 +231,24 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     }
     writer.endCollection(level, true);
 
-    listener.onMessage("\n\nDone. Exported " + totalExportedRecords + " of total " + totalFoundRecords + " records\n");
+    listener.onMessage(
+        "\n\nDone. Exported " + totalExportedRecords + " of total " + totalFoundRecords + " records. " + brokenRids.size()
+            + " records were detected as broken\n");
+
+    writer.beginCollection(level, true, "brokenRids");
+
+    boolean firsBrokenRid = true;
+
+    for (ORID rid : brokenRids) {
+      if (firsBrokenRid)
+        firsBrokenRid = false;
+      else
+        writer.append(",");
+
+      writer.append(rid.toString());
+    }
+
+    writer.endCollection(level, true);
 
     return totalExportedRecords;
   }
@@ -551,7 +577,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     listener.onMessage("OK (" + s.getClasses().size() + " classes)");
   }
 
-  private boolean exportRecord(long recordTot, long recordNum, ORecord rec) throws IOException {
+  private boolean exportRecord(long recordTot, long recordNum, ORecord rec, Set<ORID> brokenRids) throws IOException {
     if (rec != null)
       try {
         if (rec.getIdentity().isValid())
@@ -574,6 +600,12 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         return true;
       } catch (Throwable t) {
         if (rec != null) {
+          final ORID rid = rec.getIdentity().copy();
+
+          if (rid != null) {
+            brokenRids.add(rid);
+          }
+
           final byte[] buffer = rec.toStream();
 
           OLogManager.instance().error(this,

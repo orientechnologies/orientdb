@@ -74,36 +74,37 @@ import java.util.zip.GZIPInputStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseImport extends ODatabaseImpExpAbstract {
-  public static final String         EXPORT_IMPORT_MAP_NAME          = "___exportImportRIDMap";
-  public static final int            IMPORT_RECORD_DUMP_LAP_EVERY_MS = 5000;
+  public static final String EXPORT_IMPORT_MAP_NAME          = "___exportImportRIDMap";
+  public static final int    IMPORT_RECORD_DUMP_LAP_EVERY_MS = 5000;
 
-  private Map<OPropertyImpl, String> linkedClasses                   = new HashMap<OPropertyImpl, String>();
-  private Map<OClass, List<String>>  superClasses                    = new HashMap<OClass, List<String>>();
-  private OJSONReader                jsonReader;
-  private ORecord                    record;
-  private boolean                    schemaImported                  = false;
-  private int                        exporterVersion                 = -1;
-  private ORID                       schemaRecordId;
-  private ORID                       indexMgrRecordId;
+  private Map<OPropertyImpl, String> linkedClasses = new HashMap<OPropertyImpl, String>();
+  private Map<OClass, List<String>>  superClasses  = new HashMap<OClass, List<String>>();
+  private OJSONReader jsonReader;
+  private ORecord     record;
+  private boolean schemaImported  = false;
+  private int     exporterVersion = -1;
+  private ORID schemaRecordId;
+  private ORID indexMgrRecordId;
 
-  private boolean                    deleteRIDMapping                = true;
+  private boolean deleteRIDMapping = true;
 
-  private OIndex<OIdentifiable>      exportImportHashTable;
+  private OIndex<OIdentifiable> exportImportHashTable;
 
-  private boolean                    preserveClusterIDs              = true;
-  private boolean                    migrateLinks                    = true;
-  private boolean                    merge                           = false;
-  private boolean                    rebuildIndexes                  = true;
+  private boolean preserveClusterIDs = true;
+  private boolean migrateLinks       = true;
+  private boolean merge              = false;
+  private boolean rebuildIndexes     = true;
 
-  private Set<String>                indexesToRebuild                = new HashSet<String>();
-  private Map<String, String>        convertedClassNames             = new HashMap<String, String>();
+  private Set<String>         indexesToRebuild    = new HashSet<String>();
+  private Map<String, String> convertedClassNames = new HashMap<String, String>();
 
   private interface ValuesConverter<T> {
     T convert(T value);
   }
 
   private static final class ConvertersFactory {
-    public static final ConvertersFactory INSTANCE = new ConvertersFactory();
+    public static final ORID              BROKEN_LINK = new ORecordId(-1, -42);
+    public static final ConvertersFactory INSTANCE    = new ConvertersFactory();
 
     public ValuesConverter getConverter(Object value) {
       if (value instanceof Map)
@@ -146,6 +147,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         multiValue.setAutoConvertToRecord(oldAutoConvertValue);
       }
 
+      //this code intentionally uses == instead of equals, in such case we may distinguish rids which already contained in
+      //document and RID which is used to indicate broken record
+      if (newValue == ConvertersFactory.BROKEN_LINK)
+        return null;
+
       return newValue;
     }
 
@@ -180,7 +186,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             .getConverter(item);
 
         final OIdentifiable newValue = converter.convert((OIdentifiable) item);
-        result.add(newValue);
+
+        //this code intentionally uses == instead of equals, in such case we may distinguish rids which already contained in
+        //document and RID which is used to indicate broken record
+        if (newValue != ConvertersFactory.BROKEN_LINK)
+          result.add(newValue);
 
         if (!newValue.equals(item))
           updated = true;
@@ -312,13 +322,17 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private static final class LinkConverter implements ValuesConverter<OIdentifiable> {
     public static final LinkConverter INSTANCE = new LinkConverter();
 
-    private OIndex<OIdentifiable>     exportImportHashTable;
+    private OIndex<OIdentifiable> exportImportHashTable;
+    private Set<ORID> brokenRids = new HashSet<ORID>();
 
     @Override
     public OIdentifiable convert(OIdentifiable value) {
       final ORID rid = value.getIdentity();
       if (!rid.isPersistent())
         return value;
+
+      if (brokenRids.contains(rid))
+        return ConvertersFactory.BROKEN_LINK;
 
       final OIdentifiable newRid = exportImportHashTable.get(rid);
       if (newRid == null)
@@ -329,6 +343,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     public void setExportImportHashTable(OIndex<OIdentifiable> exportImportHashTable) {
       this.exportImportHashTable = exportImportHashTable;
+    }
+
+    public void setBrokenRids(Set<ORID> brokenRids) {
+      this.brokenRids = brokenRids;
     }
   }
 
@@ -442,8 +460,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     } catch (Exception e) {
       final StringWriter writer = new StringWriter();
-      writer.append("Error on database import happened just before line " + jsonReader.getLineNumber() + ", column "
-          + jsonReader.getColumnNumber() + "\n");
+      writer.append("Error on database import happened just before line " + jsonReader.getLineNumber() + ", column " + jsonReader
+          .getColumnNumber() + "\n");
       final PrintWriter printWriter = new PrintWriter(writer);
       e.printStackTrace(printWriter);
       printWriter.flush();
@@ -635,7 +653,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       if (!dbClass.isSuperClassOf(orole) && !dbClass.isSuperClassOf(ouser) && !dbClass.isSuperClassOf(oidentity)) {
         classesToDrop.put(className, dbClass);
-        for(OIndex<?> index: dbClass.getIndexes()){
+        for (OIndex<?> index : dbClass.getIndexes()) {
           indexes.add(index.getName());
         }
       }
@@ -645,7 +663,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     for (String indexName : indexes) {
       indexManager.dropIndex(indexName);
     }
-    
+
     int removedClasses = 0;
     while (!classesToDrop.isEmpty()) {
       final AbstractList<String> classesReadyToDrop = new ArrayList<String>();
@@ -714,9 +732,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           doc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, doc, null);
           doc.setLazyLoad(false);
 
-          final OIdentifiable oldRid = doc.<OIdentifiable> field("rid");
+          final OIdentifiable oldRid = doc.<OIdentifiable>field("rid");
           final OIdentifiable newRid;
-          if (!doc.<Boolean> field("binary")) {
+          if (!doc.<Boolean>field("binary")) {
             if (exportImportHashTable != null)
               newRid = exportImportHashTable.get(oldRid);
             else
@@ -728,11 +746,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             OBinarySerializer<?> binarySerializer = runtimeKeyIndexDefinition.getSerializer();
 
             if (exportImportHashTable != null)
-              newRid = exportImportHashTable.get(doc.<OIdentifiable> field("rid")).getIdentity();
+              newRid = exportImportHashTable.get(doc.<OIdentifiable>field("rid")).getIdentity();
             else
-              newRid = doc.<OIdentifiable> field("rid");
+              newRid = doc.<OIdentifiable>field("rid");
 
-            index.put(binarySerializer.deserialize(doc.<byte[]> field("key"), 0), newRid != null ? newRid : oldRid);
+            index.put(binarySerializer.deserialize(doc.<byte[]>field("key"), 0), newRid != null ? newRid : oldRid);
           }
           tot++;
         }
@@ -930,12 +948,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             cls.setClusterSelection(jsonReader.readString(OJSONReader.NEXT_IN_OBJECT));
           }
         }
-        
+
         classImported++;
 
         jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
       } while (jsonReader.lastChar() == ',');
-      
+
       // REBUILD ALL THE INHERITANCE
       for (Map.Entry<OClass, List<String>> entry : superClasses.entrySet())
         for (String s : entry.getValue()) {
@@ -1112,15 +1130,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (name != null)
         // CHECK IF THE CLUSTER IS INCLUDED
         if (includeClusters != null) {
-        if (!includeClusters.contains(name)) {
-        jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-        continue;
-        }
+          if (!includeClusters.contains(name)) {
+            jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+            continue;
+          }
         } else if (excludeClusters != null) {
-        if (excludeClusters.contains(name)) {
-        jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-        continue;
-        }
+          if (excludeClusters.contains(name)) {
+            jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+            continue;
+          }
         }
 
       int id;
@@ -1174,9 +1192,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
       }
 
-      if (name != null && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
-          || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME)
-          || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
+      if (name != null && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME) || name
+          .equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
+          .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
         if (!merge)
           database.command(new OCommandSQL("truncate cluster `" + name + "`")).execute();
 
@@ -1250,12 +1268,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     long total = 0;
 
     database.getMetadata().getIndexManager().dropIndex(EXPORT_IMPORT_MAP_NAME);
-    OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(),
-        OHashIndexFactory.HASH_INDEX_ALGORITHM);
+    OIndexFactory factory = OIndexes
+        .getFactory(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(), OHashIndexFactory.HASH_INDEX_ALGORITHM);
 
-    exportImportHashTable = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager().createIndex(EXPORT_IMPORT_MAP_NAME,
-        OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(), new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.LINK),
-        null, null, null);
+    exportImportHashTable = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager()
+        .createIndex(EXPORT_IMPORT_MAP_NAME, OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(),
+            new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.LINK), null, null, null);
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
@@ -1285,9 +1303,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           final List<String> sortedClusters = new ArrayList<String>(involvedClusters);
           Collections.sort(sortedClusters);
 
-          listener.onMessage(String.format(
-              "\n- Imported %,d records into clusters: %s. Total records imported so far: %,d (%,.2f/sec)", lastLapRecords,
-              sortedClusters, totalRecords, (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
+          listener.onMessage(String
+              .format("\n- Imported %,d records into clusters: %s. Total records imported so far: %,d (%,.2f/sec)", lastLapRecords,
+                  sortedClusters, totalRecords, (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
 
           // RESET LAP COUNTERS
           last = now;
@@ -1300,8 +1318,30 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       record = null;
     }
 
-    if (migrateLinks)
-      migrateLinksInImportedDocuments();
+    final Set<ORID> brokenRids = new HashSet<ORID>();
+
+    if (exporterVersion >= 12) {
+      listener.onMessage("Reading of set of RIDs of records which were detected as broken during database export\n");
+
+      jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+
+      while (true) {
+        jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+
+        final ORecordId recordId = new ORecordId(jsonReader.getValue());
+        brokenRids.add(recordId);
+
+        if (jsonReader.lastChar() == ']')
+          break;
+      }
+    }
+    if (migrateLinks) {
+      if (exporterVersion >= 12)
+        listener.onMessage(
+            brokenRids.size() + " were detected as broken during database export, links on those records will be removed from"
+                + " result database");
+      migrateLinksInImportedDocuments(brokenRids);
+    }
 
     listener.onMessage(String.format("\n\nDone. Imported %,d records in %,.2f secs\n", totalRecords,
         ((float) (System.currentTimeMillis() - begin)) / 1000));
@@ -1413,8 +1453,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     } catch (Exception t) {
       if (record != null)
-        OLogManager.instance().error(this, "Error importing record " + record.getIdentity() + ". Source line "
-            + jsonReader.getLineNumber() + ", column " + jsonReader.getColumnNumber());
+        OLogManager.instance().error(this,
+            "Error importing record " + record.getIdentity() + ". Source line " + jsonReader.getLineNumber() + ", column "
+                + jsonReader.getColumnNumber());
       else
         OLogManager.instance().error(this,
             "Error importing record. Source line " + jsonReader.getLineNumber() + ", column " + jsonReader.getColumnNumber());
@@ -1511,8 +1552,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           i++;
         }
 
-        final OIndex index = indexManager.createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata,
-            indexAlgorithm);
+        final OIndex index = indexManager
+            .createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata, indexAlgorithm);
 
         if (blueprintsIndexClass != null) {
           ODocument configuration = index.getConfiguration();
@@ -1577,7 +1618,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return indexDefinition;
   }
 
-  private void migrateLinksInImportedDocuments() throws IOException {
+  private void migrateLinksInImportedDocuments(Set<ORID> brokenRids) throws IOException {
     listener.onMessage("\n\nStarted migration of links (-migrateLinks=true). Links are going to be updated according to new RIDs:");
 
     final long begin = System.currentTimeMillis();
@@ -1606,7 +1647,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           ORecord record = database.load(new ORecordId(clusterId, position.clusterPosition));
           if (record instanceof ODocument) {
             ODocument document = (ODocument) record;
-            rewriteLinksInDocument(document);
+            rewriteLinksInDocument(document, brokenRids);
 
             documents++;
             documentsLastLap++;
@@ -1634,13 +1675,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage(String.format("\nTotal links updated: %,d", totalDocuments));
   }
 
-  private void rewriteLinksInDocument(ODocument document) {
-    rewriteLinksInDocument(document, exportImportHashTable);
+  private void rewriteLinksInDocument(ODocument document, Set<ORID> brokenRids) {
+    rewriteLinksInDocument(document, exportImportHashTable, brokenRids);
     document.save();
   }
 
-  protected static void rewriteLinksInDocument(ODocument document, OIndex<OIdentifiable> rewrite) {
+  protected static void rewriteLinksInDocument(ODocument document, OIndex<OIdentifiable> rewrite, Set<ORID> brokenRids) {
     LinkConverter.INSTANCE.setExportImportHashTable(rewrite);
+    LinkConverter.INSTANCE.setBrokenRids(brokenRids);
+
     final LinksRewriter rewriter = new LinksRewriter();
     final ODocumentFieldWalker documentFieldWalker = new ODocumentFieldWalker();
     documentFieldWalker.walkDocument(document, rewriter);
