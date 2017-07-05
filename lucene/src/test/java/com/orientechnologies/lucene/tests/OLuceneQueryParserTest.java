@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by frank on 19/05/2016.
  */
-public class OLuceneQeuryParserTest extends OLuceneBaseTest {
+public class OLuceneQueryParserTest extends OLuceneBaseTest {
 
   @Before
   public void init() {
@@ -108,7 +108,8 @@ public class OLuceneQeuryParserTest extends OLuceneBaseTest {
     db.command("create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE ");
 
     //querying with boost
-    List<String> boostedDocs = db.query("select * from Song where search_class ('title:forever OR author:Boudleaux' , {'boost':{ 'title': 2  }  })=true")
+    List<String> boostedDocs = db
+        .query("select * from Song where search_class ('title:forever OR author:Boudleaux' , {'boost':{ 'title': 2  }  })=true")
         .stream()
         .map(r -> r.<String>getProperty("title"))
         .collect(Collectors.toList());
@@ -138,5 +139,20 @@ public class OLuceneQeuryParserTest extends OLuceneBaseTest {
 
   }
 
+  @Test
+  public void ahouldOverrideAnalyzer() throws Exception {
+
+    //enabling leading wildcard
+    db.command("create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE ");
+
+    //querying with boost
+    OResultSet resultSet = db.query("select * from Song where search_class ('title:forever OR author:boudleaux' , "
+        + "{'customAnalysis': true, "
+        + "  \"query\": \"org.apache.lucene.analysis.core.KeywordAnalyzer\" } "
+        + ")=true");
+
+    assertThat(resultSet).hasSize(5);
+
+  }
 }
 
