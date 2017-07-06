@@ -194,7 +194,34 @@
                     </execution>
                 </executions>
             </plugin>
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>${surefire.version}</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <storage.lockTimeout>60000</storage.lockTimeout>
+                        <storage.makeFullCheckpointAfterCreate>false</storage.makeFullCheckpointAfterCreate>
+                        <storage.makeFullCheckpointAfterClusterCreate>false
+                        </storage.makeFullCheckpointAfterClusterCreate>
+                        <storage.wal.syncOnPageFlush>false</storage.wal.syncOnPageFlush>
+                        <storage.configuration.syncOnUpdate>false</storage.configuration.syncOnUpdate>
+                        <index.flushAfterCreate>false</index.flushAfterCreate>
+                        <security.userPasswordSaltIterations>10</security.userPasswordSaltIterations>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                        <testPath>${project.basedir}</testPath>
+                        <orientdb.test.keepDatabase>true</orientdb.test.keepDatabase>
+                        <storage.diskCache.bufferSize>4096</storage.diskCache.bufferSize>
+                        <memory.directMemory.trackMode>true</memory.directMemory.trackMode>
+                    </systemPropertyVariables>
+                    <properties>
+                        <property>
+                            <name>listener</name>
+                            <value>com.orientechnologies.OTestNGTestLeaksListener</value>
+                        </property>
+                    </properties>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

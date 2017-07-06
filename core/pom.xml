@@ -176,6 +176,22 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>${surefire.version}</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                    </systemPropertyVariables>
+                    <properties>
+                        <property>
+                            <name>listener</name>
+                            <value>com.orientechnologies.OJUnitTestLeaksListener</value>
+                        </property>
+                    </properties>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <archive>
