@@ -216,7 +216,7 @@ public class OSelectExecutionPlanner {
     //try local node first
     Set<String> nextNodeClusters = new HashSet<>();
     Set<String> clustersForNode = clusterMap.get(localNode);
-    if(clustersForNode != null) {
+    if (clustersForNode != null) {
       nextNodeClusters.addAll(clustersForNode);
     }
     nextNodeClusters.retainAll(uncovered);
@@ -230,8 +230,12 @@ public class OSelectExecutionPlanner {
       nextNodeClusters = new HashSet<>();
       nextNodeClusters.addAll(clusterMap.get(nextNode));
       nextNodeClusters.retainAll(uncovered);
-      if(nextNodeClusters.size()==0){
-        throw new OCommandExecutionException("Cannot execute sharded query: clusters ["+uncovered.stream().collect(Collectors.joining(", "))+"] are not present on any node");
+      if (nextNodeClusters.size() == 0) {
+        throw new OCommandExecutionException(
+            "Cannot execute a sharded query: clusters [" + uncovered.stream().collect(Collectors.joining(", "))
+                + "] are not present on any node" + "\n [" + clusterMap.entrySet().stream()
+                .map(x -> "" + x.getKey() + ":(" + x.getValue().stream().collect(Collectors.joining(",")) + ")")
+                .collect(Collectors.joining(", ")) + "]");
       }
       result.put(nextNode, nextNodeClusters);
       uncovered.removeAll(nextNodeClusters);

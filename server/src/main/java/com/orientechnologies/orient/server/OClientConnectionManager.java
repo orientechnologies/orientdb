@@ -30,15 +30,13 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.*;
@@ -46,7 +44,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.net.ssl.SSLSocket;
 
 public class OClientConnectionManager {
   private static final long TIMEOUT_PUSH = 3000;
@@ -507,13 +504,15 @@ public class OClientConnectionManager {
   }
 
   public void pushDistributedConfig(String database, List<String> hosts) {
-    for (ONetworkProtocolBinary protocolBinary : distributeConfigPush) {
+    Iterator<ONetworkProtocolBinary> iter = distributeConfigPush.iterator();
+    while(iter.hasNext()){
+      ONetworkProtocolBinary protocolBinary = iter.next();
       //TODO Filter by database, push just list of active server for a specific database
       OPushDistributedConfigurationRequest request = new OPushDistributedConfigurationRequest(hosts);
       try {
         OBinaryPushResponse response = protocolBinary.push(request);
       } catch (IOException e) {
-        e.printStackTrace();
+        iter.remove();
       }
     }
   }
