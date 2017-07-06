@@ -5,12 +5,14 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTableTestIT;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -27,6 +29,9 @@ public class SBTreeTestIT {
     buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = ".";
+
+    final File dbDirectory = new File(buildDirectory, "localSBTreeTest");
+    System.out.println(this.getClass().getSimpleName() + " test is initializing using DB directory = " + dbDirectory);
 
     databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localSBTreeTest");
     if (databaseDocumentTx.exists()) {

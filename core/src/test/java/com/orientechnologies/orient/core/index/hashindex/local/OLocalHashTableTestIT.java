@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.junit.After;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -15,13 +16,16 @@ import java.io.IOException;
  */
 public class OLocalHashTableTestIT extends OLocalHashTableBase {
 
-  public OLocalHashTableTestIT() {
+  public OLocalHashTableTestIT() throws Exception {
 
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableTest");
+    final File dbDirectory = new File(buildDirectory, "localHashTableTest");
+    System.out.println(this.getClass().getSimpleName() + " test is initializing using DB directory = " + dbDirectory);
+
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + dbDirectory.getCanonicalPath());
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
