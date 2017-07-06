@@ -80,7 +80,21 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         //TODO check this!!!
         result.put(getLocalNodeName(), getStorage().getClusterNames());
       } else {
-        result.put(server, cfg.getClustersOnServer(server));
+        result.put(server, getClustersOnServer(cfg, server));
+      }
+    }
+    return result;
+  }
+
+  public Set<String> getClustersOnServer(ODistributedConfiguration cfg, String server) {
+    Set<String> result = cfg.getClustersOnServer(server);
+    if (result.size() == 1 && result.iterator().next().equals("*")) {
+      result = new HashSet<>();
+      result.addAll(getStorage().getClusterNames());
+      for (String s : cfg.getClusterNames()) {
+        if (!cfg.getServers(s, null).contains(s)) {
+          result.remove(s);
+        }
       }
     }
     return result;
