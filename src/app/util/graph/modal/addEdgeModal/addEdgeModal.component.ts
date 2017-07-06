@@ -88,11 +88,13 @@ class AddEdgeModal {
     for(var i=0; i<fromPropsNames.length; i++) {
       var currPropName = fromPropsNames[i];
       var currPropertyDef = fromVertex.properties[currPropName];
-      var currOption = {
-        id: currPropertyDef.mapping.columnName,
-        text: currPropertyDef.mapping.columnName
+      if(currPropertyDef.mapping) {
+        var currOption = {
+          id: currPropertyDef.mapping.columnName,
+          text: currPropertyDef.mapping.columnName
+        }
+        this.fromColumnsNames[i] = currOption;
       }
-      this.fromColumnsNames[i] = currOption;
     }
 
     // initializing to columns
@@ -101,11 +103,13 @@ class AddEdgeModal {
     for(var i=0; i<toPropsNames.length; i++) {
       var currPropName = toPropsNames[i];
       var currPropertyDef = toVertex.properties[currPropName];
-      var currOption = {
-        id: currPropertyDef.mapping.columnName,
-        text: currPropertyDef.mapping.columnName
+      if(currPropertyDef.mapping) {
+        var currOption = {
+          id: currPropertyDef.mapping.columnName,
+          text: currPropertyDef.mapping.columnName
+        }
+        this.toColumnsNames[i] = currOption;
       }
-      this.toColumnsNames[i] = currOption;
     }
 
     // setting edge classes' names
