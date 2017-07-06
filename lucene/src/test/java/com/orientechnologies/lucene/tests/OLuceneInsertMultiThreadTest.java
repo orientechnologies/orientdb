@@ -136,6 +136,7 @@ public class OLuceneInsertMultiThreadTest {
         }
 
       }
+      db.commit();
 
       db.close();
     }

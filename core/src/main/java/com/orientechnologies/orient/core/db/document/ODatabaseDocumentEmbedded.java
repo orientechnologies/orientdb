@@ -294,7 +294,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     }
 
     try {
-      commit(true);
+      rollback(true);
     } catch (Exception e) {
       OLogManager.instance().error(this, "Exception during commit of active transaction", e);
     }
@@ -337,7 +337,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
     String serializeName = getStorage().getConfiguration().getRecordSerializer();
     if (serializeName == null)
-      serializeName = ORecordSerializerSchemaAware2CSV.NAME;
+      throw new ODatabaseException("Impossible to open database from version before 2.x use export import instead");
     serializer = serializerFactory.getFormat(serializeName);
     if (serializer == null)
       throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");

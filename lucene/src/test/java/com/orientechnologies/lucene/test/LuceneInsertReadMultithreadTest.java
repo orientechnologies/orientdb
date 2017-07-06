@@ -112,6 +112,7 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
         }
 
       }
+      db.commit();
 
       db.close();
     }

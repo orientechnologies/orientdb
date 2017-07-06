@@ -140,6 +140,7 @@ public class LuceneInsertMultithreadTest {
         }
 
       }
+      db.commit();
 
       db.close();
     }
