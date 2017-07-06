@@ -5,15 +5,14 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
+import com.orientechnologies.lucene.parser.OLuceneMultiFieldQueryParser;
+import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -24,11 +23,11 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.highlight.TextFragment;
 
 import java.io.IOException;
 import java.util.*;
@@ -40,8 +39,9 @@ import static com.orientechnologies.lucene.OLuceneIndexFactory.LUCENE_ALGORITHM;
  */
 public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
 
-  private final OStorage storage;
-  private final String   indexName;
+  private final OStorage  storage;
+  private final String    indexName;
+  private       ODocument metadata;
 
   public OLuceneCrossClassIndexEngine(OStorage storage, String indexName) {
 
@@ -66,6 +66,9 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
       ODocument metadata) {
+    this.metadata = metadata;
+
+    System.out.println("metadata = " + metadata);
 
   }
 
@@ -108,13 +111,16 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   @Override
   public Object get(Object key) {
 
+    OLuceneKeyAndMetadata keyAndMeta = (OLuceneKeyAndMetadata) key;
+
     Collection<? extends OIndex> indexes = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager().getIndexes();
 
     OLucenePerFieldAnalyzerWrapper globalAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
 
-    List<String> fields = new ArrayList<String>();
+    List<String> globalFields = new ArrayList<String>();
 
-    List<IndexReader> readers = new ArrayList<IndexReader>();
+    List<IndexReader> globalReaders = new ArrayList<IndexReader>();
+    Map<String, OType> types = new HashMap<>();
 
     try {
       for (OIndex index : indexes) {
@@ -124,31 +130,56 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
           final OIndexDefinition definition = index.getDefinition();
           final String className = definition.getClassName();
 
-          for (String field : definition.getFields()) {
+          String[] indexFields = definition.getFields().toArray(new String[definition.getFields().size()]);
 
-            fields.add(className + "." + field);
+          for (int i = 0; i < indexFields.length; i++) {
+            String field = indexFields[i];
+
+            types.put(className + "." + field, definition.getTypes()[i]);
+            globalFields.add(className + "." + field);
+
           }
 
           OLuceneFullTextIndex fullTextIndex = (OLuceneFullTextIndex) index.getInternal();
 
           globalAnalyzer.add((OLucenePerFieldAnalyzerWrapper) fullTextIndex.queryAnalyzer());
 
-          readers.add(fullTextIndex.searcher().getIndexReader());
+          globalReaders.add(fullTextIndex.searcher().getIndexReader());
 
         }
 
       }
 
-      IndexReader indexReader = new MultiReader(readers.toArray(new IndexReader[] {}));
+      IndexReader indexReader = new MultiReader(globalReaders.toArray(new IndexReader[] {}));
 
       IndexSearcher searcher = new IndexSearcher(indexReader);
 
-      MultiFieldQueryParser parser = new MultiFieldQueryParser(fields.toArray(new String[] {}), globalAnalyzer);
+      Map<String, Float> boost = Optional.ofNullable(keyAndMeta.metadata.<Map<String, Float>>getProperty("boost"))
+          .orElse(new HashMap<>());
 
-      Query query = parser.parse(key.toString());
+      System.out.println("boost = " + boost);
+      System.out.println("globalFields = " + globalFields);
+
+      OLuceneMultiFieldQueryParser p = new OLuceneMultiFieldQueryParser(types,
+          globalFields.toArray(new String[] {}),
+          globalAnalyzer,
+          boost);
+
+      p.setAllowLeadingWildcard(
+          Optional.ofNullable(keyAndMeta.metadata.<Boolean>getProperty("allowLeadingWildcard"))
+              .orElse(false));
+
+      p.setLowercaseExpandedTerms(
+          Optional.ofNullable(keyAndMeta.metadata.<Boolean>getProperty("lowercaseExpandedTerms"))
+              .orElse(false));
+
+      Object params = ((OCompositeKey) keyAndMeta.key).getKeys().get(0);
+
+      System.out.println("params.toString() = " + params.toString());
+      Query query = p.parse(params.toString());
 
       OLuceneQueryContext ctx = new OLuceneQueryContext(null, searcher, query);
-      return new OLuceneResultSet(this, ctx);
+      return new OLuceneResultSet(this, ctx, keyAndMeta.metadata);
     } catch (IOException e) {
       OLogManager.instance().error(this, "unable to create multi-reader", e);
     } catch (ParseException e) {
@@ -250,11 +281,28 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret,
       final ScoreDoc score) {
 
-    recordId.setContext(new HashMap<String, Object>() {
-      {
-        put("score", score.score);
-      }
-    });
+
+    recordId.setContext(new HashMap<String, Object>() {{
+
+      HashMap<String, TextFragment[]> frag = queryContext.getFragments();
+
+      frag.entrySet()
+          .stream()
+          .forEach(f -> {
+
+                TextFragment[] fragments = f.getValue();
+                StringBuilder hlField = new StringBuilder();
+                for (int j = 0; j < fragments.length; j++) {
+                  if ((fragments[j] != null) && (fragments[j].getScore() > 0)) {
+                    hlField.append(fragments[j].toString());
+                  }
+                }
+                put("$" + f.getKey() + "_hl", hlField.toString());
+              }
+          );
+
+      put("$score", score.score);
+    }});
 
   }
 
