@@ -104,8 +104,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
         storage.open(config.getConfigurations());
         embedded = factory.newInstance(storage);
-        embedded.internalOpen(user, "nopwd", config, false);
       }
+      embedded.internalOpen(user, "nopwd", config, false);
       embedded.callOnOpenListeners();
       return embedded;
     } catch (Exception e) {
@@ -124,8 +124,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
         storage.open(config.getConfigurations());
         embedded = factory.newInstance(storage);
-        embedded.internalOpen(user, password, config);
       }
+      embedded.internalOpen(user, password, config);
       embedded.callOnOpenListeners();
       return embedded;
     } catch (Exception e) {
@@ -152,8 +152,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
       OAbstractPaginatedStorage storage = getOrInitStorage(name);
       storage.open(pool.getConfig().getConfigurations());
       embedded = factory.newPoolInstance(pool, storage);
-      embedded.internalOpen(user, password, pool.getConfig());
     }
+    embedded.internalOpen(user, password, pool.getConfig());
     embedded.callOnOpenListeners();
     return embedded;
   }
