@@ -98,8 +98,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public ODatabaseDocumentEmbedded openNoAuthenticate(String name, String user) {
     try {
       final ODatabaseDocumentEmbedded embedded;
+      OrientDBConfig config = solveConfig(null);
       synchronized (this) {
-        OrientDBConfig config = solveConfig(null);
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
         storage.open(config.getConfigurations());
