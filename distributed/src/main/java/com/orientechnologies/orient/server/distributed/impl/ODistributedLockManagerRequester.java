@@ -52,16 +52,18 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
   @Override
   public void acquireExclusiveLock(final String resource, final String nodeSource, final long timeout) {
     while (true) {
+      OModifiableInteger counter;
+      if ((counter = acquired.get().get(resource)) != null) {
+        counter.increment();
+        return;
+      }
+
       if (server == null || server.equals(manager.getLocalNodeName())) {
         // NO MASTERS, USE LOCAL SERVER
         manager.getLockManagerExecutor().acquireExclusiveLock(resource, manager.getLocalNodeName(), timeout);
+        acquired.get().put(resource, new OModifiableInteger(0));
         break;
       } else {
-        OModifiableInteger counter;
-        if ((counter = acquired.get().get(resource)) != null) {
-          counter.increment();
-          return;
-        }
 
         // SEND A DISTRIBUTED MSG TO THE LOCK MANAGER SERVER
         final Set<String> servers = new HashSet<String>();
@@ -135,22 +137,23 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
   @Override
   public void releaseExclusiveLock(final String resource, final String nodeSource) {
     while (true) {
+      OModifiableInteger counter = acquired.get().get(resource);
+      if (counter == null)
+        //DO NOTHING BECAUSE THE ACQUIRE DIDN'T HAPPEN IN DISTRIBUTED
+        return;
+
+      if (counter.getValue() > 0) {
+        counter.decrement();
+        return;
+      }
+
+      acquired.get().remove(resource);
+
       if (server == null || server.equals(manager.getLocalNodeName())) {
         // THE LOCK MANAGER SERVER IS THE LOCAL SERVER, RELEASE IT LOCALLY
         manager.getLockManagerExecutor().releaseExclusiveLock(resource, manager.getLocalNodeName());
         break;
       } else {
-        OModifiableInteger counter = acquired.get().get(resource);
-        if (counter == null)
-          //DO NOTHING BECAUSE THE ACQUIRE DIDN'T HAPPEN IN DISTRIBUTED
-          return;
-
-        if (counter.getValue() > 0) {
-          counter.decrement();
-          return;
-        }
-
-        acquired.get().remove(resource);
         // RELEASE THE LOCK INTO THE LOCK MANAGER SERVER SERVER
         ODistributedServerLog.debug(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
             "Releasing distributed lock on resource '%s'", resource);

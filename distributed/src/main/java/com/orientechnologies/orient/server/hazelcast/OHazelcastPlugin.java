@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -121,6 +122,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
           return new ODatabaseDocumentEmbedded(storage);
         }
+        registerNewDatabaseIfNeeded(storage.getName(),getDatabaseConfiguration(storage.getName()));
         return new ODatabaseDocumentDistributed(getStorage(storage.getName(), (OAbstractPaginatedStorage) storage),
             OHazelcastPlugin.this);
       }
@@ -130,6 +132,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
           return new OEmbeddedDatabasePool(pool, storage);
         }
+        registerNewDatabaseIfNeeded(storage.getName(),getDatabaseConfiguration(storage.getName()));
         return new ODatabaseDocumentDistributedPooled(pool, getStorage(storage.getName(), (OAbstractPaginatedStorage) storage),
             OHazelcastPlugin.this);
       }
@@ -1162,21 +1165,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       final String dbName = iDatabase.getName();
 
-      final ODocument dCfg = (ODocument) configurationMap.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
-      if (dCfg != null && getAvailableNodes(dbName) > 0) {
-        throw new ODistributedException(
-            "Cannot create the new database '" + dbName + "' because it is already present in distributed configuration");
-      }
+//      final ODocument dCfg = (ODocument) configurationMap.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
+//      if (dCfg != null && getAvailableNodes(dbName) > 0) {
+//        throw new ODistributedException(
+//            "Cannot create the new database '" + dbName + "' because it is already present in distributed configuration");
+//      }
 
       // INIT THE STORAGE
       getStorage(dbName);
 
       final ODistributedConfiguration cfg = getDatabaseConfiguration(dbName);
 
-      final ODistributedDatabaseImpl distribDatabase = messageService.registerDatabase(dbName, cfg);
-      distribDatabase.checkNodeInConfiguration(cfg, getLocalNodeName());
-      distribDatabase.resume();
-      distribDatabase.setOnline();
 
       // TODO: TEMPORARY PATCH TO WAIT FOR DB PROPAGATION IN CFG TO ALL THE OTHER SERVERS
       try {
@@ -1234,7 +1233,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Dropping database %s...", dbName);
 
-    if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+    if (iDatabase.getStorage() instanceof OAutoshardedStorage && !((OAutoshardedStorage) iDatabase.getStorage()).isLocalEnv()) {
       // DROP THE DATABASE ON ALL THE SERVERS
       final ODistributedConfiguration dCfg = getDatabaseConfiguration(dbName);
 

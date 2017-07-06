@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.builder;
 
+import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
 import com.orientechnologies.lucene.parser.OLuceneMultiFieldQueryParser;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -39,8 +40,9 @@ public class OLuceneQueryBuilder {
 
   public static final ODocument EMPTY_METADATA = new ODocument();
 
-  private final boolean allowLeadingWildcard;
-  private final boolean lowercaseExpandedTerms;
+  private final boolean                allowLeadingWildcard;
+  private final boolean                lowercaseExpandedTerms;
+  private       OLuceneAnalyzerFactory analyzerFactory;
 
   public OLuceneQueryBuilder(ODocument metadata) {
     this(Optional.ofNullable(metadata.<Boolean>field("allowLeadingWildcard")).orElse(false),
@@ -50,6 +52,8 @@ public class OLuceneQueryBuilder {
   public OLuceneQueryBuilder(boolean allowLeadingWildcard, boolean lowercaseExpandedTerms) {
     this.allowLeadingWildcard = allowLeadingWildcard;
     this.lowercaseExpandedTerms = lowercaseExpandedTerms;
+
+    analyzerFactory = new OLuceneAnalyzerFactory();
   }
 
   public Query query(OIndexDefinition index, Object key, ODocument metadata, Analyzer analyzer) throws ParseException {
@@ -69,7 +73,7 @@ public class OLuceneQueryBuilder {
     return buildQuery(index, query, metadata, analyzer);
   }
 
-  protected Query buildQuery(OIndexDefinition index, String query, ODocument metadata, Analyzer analyzer)
+  protected Query buildQuery(OIndexDefinition index, String query, ODocument metadata, Analyzer queryAnalyzer)
       throws ParseException {
 
     String[] fields;
@@ -92,6 +96,11 @@ public class OLuceneQueryBuilder {
 
     Map<String, Float> boost = Optional.ofNullable(metadata.<Map<String, Float>>getProperty("boost"))
         .orElse(new HashMap<>());
+
+    Analyzer analyzer = Optional.ofNullable(metadata.<Boolean>getProperty("customAnalysis"))
+        .filter(b -> b == true)
+        .map(b -> analyzerFactory.createAnalyzer(index, OLuceneAnalyzerFactory.AnalyzerKind.QUERY, metadata))
+        .orElse(queryAnalyzer);
 
     final OLuceneMultiFieldQueryParser queryParser = new OLuceneMultiFieldQueryParser(types, fields, analyzer, boost);
 

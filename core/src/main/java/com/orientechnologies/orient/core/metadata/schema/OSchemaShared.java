@@ -714,7 +714,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   }
 
   protected boolean executeThroughDistributedStorage(ODatabaseDocumentInternal database) {
-    return database.getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
+    return database.getStorage() instanceof OAutoshardedStorage && !((OAutoshardedStorage) database.getStorage()).isLocalEnv();
   }
 
   private void saveInternal(ODatabaseDocumentInternal database) {
