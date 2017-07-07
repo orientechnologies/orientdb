@@ -348,9 +348,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     loadMetadata();
 
-    if (metadata.getIndexManager().autoRecreateIndexesAfterCrash()) {
-      metadata.getIndexManager().recreateIndexes();
-    }
+    rebuildIndexes();
 
     installHooksEmbedded();
     registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
@@ -359,6 +357,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     user = null;
 
     initialized = true;
+  }
+
+  public void rebuildIndexes() {
+    if (metadata.getIndexManager().autoRecreateIndexesAfterCrash()) {
+      metadata.getIndexManager().recreateIndexes();
+    }
   }
 
   protected void installHooksEmbedded() {

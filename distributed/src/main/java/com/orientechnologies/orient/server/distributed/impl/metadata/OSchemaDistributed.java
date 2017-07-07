@@ -12,8 +12,6 @@ import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
  */
 public class OSchemaDistributed extends OSchemaEmbedded {
 
-  private volatile boolean acquiredDistributeLock = false;
-
   protected OClassImpl createClassInstance(String className, int[] clusterIds) {
     return new OClassDistributed(this, className, clusterIds);
   }
@@ -26,7 +24,6 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   public void acquireSchemaWriteLock(ODatabaseDocumentInternal database) {
     if (executeThroughDistributedStorage(database)) {
       ((OAutoshardedStorage) database.getStorage()).acquireDistributedExclusiveLock(0);
-      acquiredDistributeLock = true;
     }
     super.acquireSchemaWriteLock(database);
   }
@@ -36,8 +33,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
     try {
       super.releaseSchemaWriteLock(database);
     } finally {
-      if (acquiredDistributeLock) {
-        acquiredDistributeLock = false;
+      if (executeThroughDistributedStorage(database)) {
         ((OAutoshardedStorage) database.getStorage()).releaseDistributedExclusiveLock();
       }
     }

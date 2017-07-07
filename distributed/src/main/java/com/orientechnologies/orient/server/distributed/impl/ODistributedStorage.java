@@ -1402,7 +1402,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       dropStorageFiles();
     }
 
-    wrapped.close(true, false);
+    serverInstance.getDatabases().forceDatabaseClose(getName());
 
     if (isClosed())
       shutdownAsynchronousWorker();

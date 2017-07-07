@@ -1205,8 +1205,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
         // CLOSE THE STORAGE FIRST
         final ODistributedStorage stg = storages.remove(databaseName);
-        if (stg != null)
-          stg.close(true, false);
+        if (stg != null) {
+          stg.shutdownAsynchronousWorker();
+          serverInstance.getDatabases().forceDatabaseClose(databaseName);
+        }
 
         if (backupDatabase)
           backupCurrentDatabase(databaseName);
