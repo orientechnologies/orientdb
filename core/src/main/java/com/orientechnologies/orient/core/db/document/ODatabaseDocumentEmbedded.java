@@ -106,24 +106,56 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     throw new UnsupportedOperationException("Use OrientDB");
   }
 
-  public void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config) {
-    internalOpen(iUserName, iUserPassword, config, true);
-  }
-
-  public void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config, boolean checkPassword) {
+  public void init(OrientDBConfig config) {
     activateOnCurrentThread();
     this.config = config;
     applyAttributes(config);
     applyListeners(config);
     try {
 
-      if (user != null && !user.getName().equals(iUserName))
-        initialized = false;
-
       status = STATUS.OPEN;
+      if (initialized)
+        return;
 
-      initAtFirstOpen();
+      ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
+      String serializeName = getStorage().getConfiguration().getRecordSerializer();
+      if (serializeName == null)
+        throw new ODatabaseException("Impossible to open database from version before 2.x use export import instead");
+      serializer = serializerFactory.getFormat(serializeName);
+      if (serializer == null)
+        throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");
+      if (getStorage().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
+        throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
 
+      localCache.startup();
+
+      loadMetadata();
+
+      rebuildIndexes();
+
+      installHooksEmbedded();
+      registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
+      registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
+
+      user = null;
+
+      initialized = true;
+    } catch (OException e) {
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      throw e;
+    } catch (Exception e) {
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      throw OException.wrapException(new ODatabaseException("Cannot open database url=" + getURL()), e);
+    }
+
+  }
+
+  public void internalOpen(final String iUserName, final String iUserPassword) {
+    internalOpen(iUserName, iUserPassword, true);
+  }
+
+  public void internalOpen(final String iUserName, final String iUserPassword, boolean checkPassword) {
+    try {
       OSecurity security = metadata.getSecurity();
 
       if (user == null || user.getVersion() != security.getVersion() || !user.getName().equalsIgnoreCase(iUserName)) {
@@ -269,7 +301,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    */
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage);
-    database.internalOpen(getUser().getName(), null, config, false);
+    database.init(config);
+    database.internalOpen(getUser().getName(), null, false);
     database.callOnOpenListeners();
     this.activateOnCurrentThread();
     return database;
@@ -328,35 +361,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   @Override
   public boolean isClosed() {
     return status == STATUS.CLOSED || storage.isClosed();
-  }
-
-  private void initAtFirstOpen() {
-    if (initialized)
-      return;
-
-    ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
-    String serializeName = getStorage().getConfiguration().getRecordSerializer();
-    if (serializeName == null)
-      throw new ODatabaseException("Impossible to open database from version before 2.x use export import instead");
-    serializer = serializerFactory.getFormat(serializeName);
-    if (serializer == null)
-      throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");
-    if (getStorage().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
-      throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
-
-    localCache.startup();
-
-    loadMetadata();
-
-    rebuildIndexes();
-
-    installHooksEmbedded();
-    registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
-
-    user = null;
-
-    initialized = true;
   }
 
   public void rebuildIndexes() {

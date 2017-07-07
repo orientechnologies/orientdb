@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 
 public class TestAsyncReplMode extends BareBoneBase2ClientTest {
@@ -30,6 +31,12 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
       }else{
         graph.create();
       }
+      graph.createVertexClass("vertextype1");
+      graph.createVertexClass("vertextype2");
+      graph.createVertexClass("vertextype3");
+      graph.createEdgeClass("edgetype1");
+      graph.createEdgeClass("edgetype2");
+
       graph.begin();
 
       try {
@@ -69,7 +76,8 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
 
           for (int attempt = 0; attempt < NUM_OF_RETRIES; attempt++) {
             try {
-              parentV1.addEdge(vertex, "edgetype1");
+              OEdge edge = parentV1.addEdge(vertex, "edgetype1");
+              graph.save(edge);
               graph.commit();
               graph.begin();
               assertNotNull(parentV1.getProperty("cnt"));
@@ -101,7 +109,8 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
 
           for (int attempt = 0; attempt < NUM_OF_RETRIES; attempt++) {
             try {
-              parentV2.addEdge(vertex, "edgetype2");
+              OEdge edge = parentV2.addEdge(vertex, "edgetype2");
+              graph.save(edge);
               graph.commit();
               graph.begin();
               assertNotNull(parentV2.getProperty("cnt"));
@@ -149,8 +158,8 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
       ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getRemoteURL());
       graph.open("admin", "admin");
       graph.begin();
-      OVertex parentV1 = null;
-      OVertex parentV2 = null;
+      OElement parentV1 = null;
+      OElement parentV2 = null;
       int countPropValue = 0;
       try {
         for (int i = 0; i < NUM_OF_LOOP_ITERATIONS; i++) {
@@ -167,7 +176,7 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
           for (int attempt = 0; attempt < NUM_OF_RETRIES; attempt++) {
             try {
               parentV1.setProperty("cnt", countPropValue);
-              parentV1.save();
+              graph.save(parentV1);
               graph.commit();
             } catch (OConcurrentModificationException c) {
               graph.rollback();
@@ -181,7 +190,7 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
           for (int attempt = 0; attempt < NUM_OF_RETRIES; attempt++) {
             try {
               parentV2.setProperty("cnt", countPropValue);
-              parentV2.save();
+              graph.save(parentV2);
               graph.commit();
             } catch (OConcurrentModificationException c) {
               graph.rollback();

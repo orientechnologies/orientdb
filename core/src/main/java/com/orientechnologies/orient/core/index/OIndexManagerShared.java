@@ -484,8 +484,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       try {
         final ODatabaseDocumentEmbedded newDb = new ODatabaseDocumentEmbedded(storage);
         newDb.activateOnCurrentThread();
-        newDb.resetInitialization();
-        newDb.internalOpen("admin", "nopass", null, false);
+        newDb.init(null);
+        newDb.internalOpen("admin", "nopass", false);
 
         final Collection<ODocument> indexesToRebuild;
         acquireExclusiveLock();

@@ -156,7 +156,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentDistributed database = new ODatabaseDocumentDistributed(getStorage(), hazelcastPlugin);
-    database.internalOpen(getUser().getName(), null, getConfig(), false);
+    database.init(getConfig());
+    database.internalOpen(getUser().getName(), null, false);
     database.callOnOpenListeners();
     this.activateOnCurrentThread();
     return database;
@@ -414,9 +415,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
-  public void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config, boolean checkPassword) {
+  public void init(OrientDBConfig config) {
     OScenarioThreadLocal.executeAsDistributed(() -> {
-      super.internalOpen(iUserName, iUserPassword, config, checkPassword);
+      super.init(config);
       return null;
     });
   }
