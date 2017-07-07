@@ -12,7 +12,10 @@ import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -67,8 +70,6 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
       OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
       ODocument metadata) {
     this.metadata = metadata;
-
-    System.out.println("metadata = " + metadata);
 
   }
 
@@ -157,9 +158,6 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
       Map<String, Float> boost = Optional.ofNullable(keyAndMeta.metadata.<Map<String, Float>>getProperty("boost"))
           .orElse(new HashMap<>());
 
-      System.out.println("boost = " + boost);
-      System.out.println("globalFields = " + globalFields);
-
       OLuceneMultiFieldQueryParser p = new OLuceneMultiFieldQueryParser(types,
           globalFields.toArray(new String[] {}),
           globalAnalyzer,
@@ -173,9 +171,8 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
           Optional.ofNullable(keyAndMeta.metadata.<Boolean>getProperty("lowercaseExpandedTerms"))
               .orElse(false));
 
-      Object params = ((OCompositeKey) keyAndMeta.key).getKeys().get(0);
+      Object params = keyAndMeta.key.getKeys().get(0);
 
-      System.out.println("params.toString() = " + params.toString());
       Query query = p.parse(params.toString());
 
       OLuceneQueryContext ctx = new OLuceneQueryContext(null, searcher, query);
@@ -280,7 +277,6 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   @Override
   public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret,
       final ScoreDoc score) {
-
 
     recordId.setContext(new HashMap<String, Object>() {{
 

@@ -38,7 +38,6 @@ public class OLuceneCrossClassSearchFunction extends OSQLFunctionAbstract implem
   public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
       OCommandContext ctx, OExpression... args) {
 
-    System.out.println("target = " + target);
     OLuceneFullTextIndex fullTextIndex = searchForIndex();
 
     OExpression expression = args[0];
@@ -139,7 +138,7 @@ public class OLuceneCrossClassSearchFunction extends OSQLFunctionAbstract implem
   @Override
   public String getSyntax() {
     OLogManager.instance().info(this, "syntax");
-    return "SEARCH('<lucene query>', {metadata})";
+    return "SEARCH_CROSS('<lucene query>', {metadata})";
   }
 
 }

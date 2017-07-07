@@ -118,7 +118,6 @@ public class OLuceneCrossClassIndexTest extends OLuceneBaseTest {
     assertThat(elements).isNotEmpty();
 
     elements.forEach(el -> {
-      System.out.println("el.toJSON() = " + el.toJSON());
       String className = el.getSchemaType().get().getName();
       assertThat(className).isIn("Song", "Author");
       if (className.equals("Song"))
@@ -143,7 +142,6 @@ public class OLuceneCrossClassIndexTest extends OLuceneBaseTest {
     assertThat(elements).isNotEmpty();
 
     elements.forEach(el -> {
-      System.out.println("el.toJSON() = " + el.toJSON());
       String className = el.getSchemaType().get().getName();
       assertThat(className).isIn("Song", "Author");
       if (className.equals("Song"))
