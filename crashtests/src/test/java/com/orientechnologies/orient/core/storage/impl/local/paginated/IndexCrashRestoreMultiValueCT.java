@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 9/25/14
  */
-public class IndexCrashRestoreMultiValueIT {
+public class IndexCrashRestoreMultiValueCT {
   private final AtomicLong          idGen;
   private final String              testIndexName;
   private final String              baseIndexName;
@@ -44,7 +44,7 @@ public class IndexCrashRestoreMultiValueIT {
   private       ExecutorService     executorService;
   private       Process             serverProcess;
 
-  public IndexCrashRestoreMultiValueIT() {
+  public IndexCrashRestoreMultiValueCT() {
     executorService = Executors.newCachedThreadPool();
     idGen = new AtomicLong();
 
@@ -108,7 +108,7 @@ public class IndexCrashRestoreMultiValueIT {
 
     serverProcess = processBuilder.start();
 
-    System.out.println(IndexCrashRestoreMultiValueIT.class.getSimpleName() + ": Wait for server start");
+    System.out.println(IndexCrashRestoreMultiValueCT.class.getSimpleName() + ": Wait for server start");
     boolean started = false;
     do {
       Thread.sleep(5000);
@@ -118,7 +118,7 @@ public class IndexCrashRestoreMultiValueIT {
 
     mutex.close();
     mutexFile.delete();
-    System.out.println(IndexCrashRestoreMultiValueIT.class.getSimpleName() + ": Server was started");
+    System.out.println(IndexCrashRestoreMultiValueCT.class.getSimpleName() + ": Server was started");
   }
 
   @After
@@ -235,7 +235,7 @@ public class IndexCrashRestoreMultiValueIT {
     long maxInterval = minLostTs == Long.MAX_VALUE ? 0 : lastTs - minLostTs;
     System.out.println("Lost records max interval (ms) : " + maxInterval);
 
-    assertThat(maxInterval).isLessThan(2000);
+    assertThat(maxInterval).isLessThan(4000);
 
   }
 

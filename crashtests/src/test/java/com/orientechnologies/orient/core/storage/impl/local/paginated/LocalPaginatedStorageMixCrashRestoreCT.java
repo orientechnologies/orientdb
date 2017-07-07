@@ -31,12 +31,14 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 6/25/13
  */
 
-public class LocalPaginatedStorageMixCrashRestoreIT {
+public class LocalPaginatedStorageMixCrashRestoreCT {
   private ODatabaseDocumentTx baseDocumentTx;
   private ODatabaseDocumentTx testDocumentTx;
 
@@ -75,7 +77,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
 
     process = processBuilder.start();
 
-    System.out.println(LocalPaginatedStorageMixCrashRestoreIT.class.getSimpleName() + ": Wait for server start");
+    System.out.println(LocalPaginatedStorageMixCrashRestoreCT.class.getSimpleName() + ": Wait for server start");
     boolean started = false;
     do {
       Thread.sleep(5000);
@@ -85,7 +87,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
 
     mutex.close();
     mutexFile.delete();
-    System.out.println(LocalPaginatedStorageMixCrashRestoreIT.class.getSimpleName() + ": Server was started");
+    System.out.println(LocalPaginatedStorageMixCrashRestoreCT.class.getSimpleName() + ": Server was started");
   }
 
   @After
@@ -310,10 +312,13 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
 
     System.out.println("Deleted records were checked." + deletedIds.size() + " were verified.");
 
-    System.out.println(
-        recordsRestored + " records were restored. Total records " + recordsTested + ". Max interval for lost records " + (lastTs
-            - minTs));
+    long maxInterval = minTs == Long.MAX_VALUE ? 0 : lastTs - minTs;
 
+    System.out.println(
+        recordsRestored + " records were restored. Total records " + recordsTested + ". Max interval for lost records "
+            + maxInterval);
+
+    assertThat(maxInterval).isLessThan(4000);
   }
 
   public static final class RemoteDBRunner {

@@ -3,13 +3,16 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import org.junit.After;
@@ -21,16 +24,17 @@ import java.io.File;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
- * @since 9/25/14
+ * @since 20.06.13
  */
-public class IndexCrashRestoreMultiValueAddDeleteIT {
+public class LocalPaginatedStorageCreateCrashRestoreCT {
   private final AtomicLong idGen = new AtomicLong();
   private ODatabaseDocumentTx baseDocumentTx;
   private ODatabaseDocumentTx testDocumentTx;
@@ -52,12 +56,11 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx4096m", "-XX:MaxDirectMemorySize=512g", "-classpath",
         System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(),
         "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(), RemoteDBRunner.class.getName());
-
     processBuilder.inheritIO();
 
     process = processBuilder.start();
 
-    System.out.println(IndexCrashRestoreMultiValueAddDeleteIT.class.getSimpleName() + ": Wait for server start");
+    System.out.println(LocalPaginatedStorageCreateCrashRestoreCT.class.getSimpleName() + ": Wait for server start");
     boolean started = false;
     do {
       Thread.sleep(5000);
@@ -67,11 +70,11 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
 
     mutex.close();
     mutexFile.delete();
-    System.out.println(IndexCrashRestoreMultiValueAddDeleteIT.class.getSimpleName() + ": Server was started");
+    System.out.println(LocalPaginatedStorageCreateCrashRestoreCT.class.getSimpleName() + ": Server was started");
   }
 
   @After
-  public void tearDown() {
+  public void afterClass() {
     testDocumentTx.activateOnCurrentThread();
     testDocumentTx.drop();
 
@@ -80,15 +83,15 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
 
     OFileUtils.deleteRecursively(buildDir);
     Assert.assertFalse(buildDir.exists());
+
   }
 
   @Before
   public void beforeMethod() throws Exception {
     OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
-    buildDirectory += "/indexCrashRestoreMultiValueAddDelete";
+    buildDirectory += "/localPaginatedStorageCreateCrashRestore";
 
     buildDir = new File(buildDirectory);
     buildDir = new File(buildDir.getCanonicalPath());
@@ -98,7 +101,7 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
 
     buildDir.mkdir();
 
-    baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/baseIndexCrashRestoreMultivalueAddDelete");
+    baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/baseLocalPaginatedStorageCrashRestore");
     if (baseDocumentTx.exists()) {
       baseDocumentTx.open("admin", "admin");
       baseDocumentTx.drop();
@@ -110,32 +113,31 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
 
     final OServerAdmin serverAdmin = new OServerAdmin("remote:localhost:3500");
     serverAdmin.connect("root", "root");
-    serverAdmin.createDatabase("testIndexCrashRestoreMultivalueAddDelete", "graph", "plocal");
+    serverAdmin.createDatabase("testLocalPaginatedStorageCrashRestore", "graph", "plocal");
     serverAdmin.close();
 
-    testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testIndexCrashRestoreMultivalueAddDelete");
+    testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testLocalPaginatedStorageCrashRestore");
     testDocumentTx.open("admin", "admin");
   }
 
   @Test
-  public void testEntriesAddition() throws Exception {
-
+  public void testDocumentCreation() throws Exception {
     createSchema(baseDocumentTx);
     createSchema(testDocumentTx);
 
-    System.out.println("Start data propagation");
-
     List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 5; i++) {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
     System.out.println("Wait for 5 minutes");
     TimeUnit.MINUTES.sleep(5);
 
-    System.out.println("Wait for process to destroy");
-    process.destroyForcibly();
+    long lastTs = System.currentTimeMillis();
 
+    System.out.println("Wait for process to destroy");
+
+    process.destroyForcibly();
     process.waitFor();
     System.out.println("Process was destroyed");
 
@@ -148,86 +150,89 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
     }
 
     testDocumentTx = new ODatabaseDocumentTx(
-        "plocal:" + new File(new File(buildDir.getAbsolutePath(), "databases"), "testIndexCrashRestoreMultivalueAddDelete")
-            .getCanonicalPath());
+        "plocal:" + new File(new File(buildDir, "databases"), "testLocalPaginatedStorageCrashRestore").getCanonicalPath());
+
     testDocumentTx.open("admin", "admin");
     testDocumentTx.close();
 
     testDocumentTx.open("admin", "admin");
-
-    System.out.println("Start data comparison.");
-    compareIndexes();
-  }
-
-  private void compareIndexes() {
-    baseDocumentTx.activateOnCurrentThread();
-    OIndexCursor cursor = baseDocumentTx.getMetadata().getIndexManager().getIndex("mi").cursor();
-
-    long lastTs = 0;
-    long minLostTs = Long.MAX_VALUE;
-
-    long restoredRecords = 0;
-
-    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
-    while (entry != null) {
-      baseDocumentTx.activateOnCurrentThread();
-      Integer key = (Integer) entry.getKey();
-
-      OIdentifiable identifiable = entry.getValue();
-      ODocument doc = identifiable.getRecord();
-
-      long ts = doc.<Long>field("ts");
-      if (ts > lastTs)
-        lastTs = ts;
-
-      entry = cursor.nextEntry();
-
-      testDocumentTx.activateOnCurrentThread();
-      OIndex testIndex = testDocumentTx.getMetadata().getIndexManager().getIndex("mi");
-
-      Set<OIdentifiable> result = (Set<OIdentifiable>) testIndex.get(key);
-      if (result == null || result.size() != 10) {
-        if (minLostTs > ts)
-          minLostTs = ts;
-      } else {
-        boolean cnt = true;
-        for (int i = 0; i < 10; i++) {
-          if (!result.contains(new ORecordId("#0:" + i))) {
-            cnt = false;
-            break;
-          }
-        }
-        if (!cnt) {
-          if (minLostTs > ts)
-            minLostTs = ts;
-        } else
-          restoredRecords++;
-      }
-
-    }
-
-    baseDocumentTx.activateOnCurrentThread();
-    System.out.println(
-        "Restored entries : " + restoredRecords + " out of : " + baseDocumentTx.getMetadata().getIndexManager().getIndex("mi")
-            .getSize());
-    System.out.println("Lost records max interval : " + (minLostTs == Long.MAX_VALUE ? 0 : lastTs - minLostTs));
-
+    compareDocuments(lastTs);
   }
 
   private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
-    dbDocumentTx.activateOnCurrentThread();
-    dbDocumentTx.command(new OCommandSQL("create index mi notunique integer")).execute();
-    dbDocumentTx.getMetadata().getIndexManager().reload();
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbDocumentTx);
+
+    OSchema schema = dbDocumentTx.getMetadata().getSchema();
+    if (!schema.existsClass("TestClass")) {
+      OClass testClass = schema.createClass("TestClass");
+      testClass.createProperty("id", OType.LONG);
+      testClass.createProperty("timestamp", OType.LONG);
+      testClass.createProperty("stringValue", OType.STRING);
+
+      testClass.createIndex("idIndex", OClass.INDEX_TYPE.UNIQUE, "id");
+
+      schema.save();
+    }
+  }
+
+  private void compareDocuments(long lastTs) {
+    long minTs = Long.MAX_VALUE;
+    baseDocumentTx.activateOnCurrentThread();
+    int clusterId = baseDocumentTx.getClusterIdByName("TestClass");
+
+    OStorage baseStorage = baseDocumentTx.getStorage();
+
+    OPhysicalPosition[] physicalPositions = baseStorage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(0));
+
+    int recordsRestored = 0;
+    int recordsTested = 0;
+    while (physicalPositions.length > 0) {
+      final ORecordId rid = new ORecordId(clusterId);
+
+      for (OPhysicalPosition physicalPosition : physicalPositions) {
+        rid.setClusterPosition(physicalPosition.clusterPosition);
+
+        baseDocumentTx.activateOnCurrentThread();
+        ODocument baseDocument = baseDocumentTx.load(rid);
+
+        testDocumentTx.activateOnCurrentThread();
+        List<ODocument> testDocuments = testDocumentTx
+            .query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = " + baseDocument.field("id")));
+        if (testDocuments.size() == 0) {
+          if (((Long) baseDocument.field("timestamp")) < minTs)
+            minTs = baseDocument.field("timestamp");
+        } else {
+          ODocument testDocument = testDocuments.get(0);
+          Assert.assertEquals((Object) testDocument.field("id"), baseDocument.field("id"));
+          Assert.assertEquals((Object) testDocument.field("timestamp"), baseDocument.field("timestamp"));
+          Assert.assertEquals((Object) testDocument.field("stringValue"), baseDocument.field("stringValue"));
+          recordsRestored++;
+        }
+
+        recordsTested++;
+
+        if (recordsTested % 10000 == 0)
+          System.out.println(recordsTested + " were tested, " + recordsRestored + " were restored ...");
+      }
+
+      physicalPositions = baseStorage.higherPhysicalPositions(clusterId, physicalPositions[physicalPositions.length - 1]);
+    }
+
+    long maxInterval = minTs == Long.MAX_VALUE ? 0 : lastTs - minTs;
+    System.out.println(
+        recordsRestored + " records were restored. Total records " + recordsTested + ". Max interval for lost records "
+            + maxInterval);
+
+    assertThat(maxInterval).isLessThan(4000);
   }
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
       OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
-      OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
 
       OServer server = OServerMain.create();
-      server.startup(RemoteDBRunner.class.getResourceAsStream(
-          "/com/orientechnologies/orient/core/storage/impl/local/paginated/index-crash-multivalue-value-add-delete-config.xml"));
+      server.startup(RemoteDBRunner.class
+          .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-create-config.xml"));
       server.activate();
 
       final String mutexFile = System.getProperty("mutexFile");
@@ -249,31 +254,20 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
 
     @Override
     public Void call() throws Exception {
+      Random random = new Random();
       baseDB.open("admin", "admin");
       testDB.open("admin", "admin");
 
       try {
         while (true) {
-          long id = idGen.getAndIncrement();
-          long ts = System.currentTimeMillis();
+          final ODocument document = new ODocument("TestClass");
+          document.field("id", idGen.incrementAndGet());
+          document.field("timestamp", System.currentTimeMillis());
+          document.field("stringValue", "sfe" + random.nextLong());
 
-          baseDB.activateOnCurrentThread();
-          ODocument doc = new ODocument();
-          doc.field("ts", ts);
-          doc.save();
-
-          baseDB.command(new OCommandSQL("insert into index:mi (key, rid) values (" + id + ", " + doc.getIdentity() + ")"))
-              .execute();
-
-          testDB.activateOnCurrentThread();
-          for (int i = 0; i < 15; i++) {
-            testDB.command(new OCommandSQL("insert into index:mi (key, rid) values (" + id + ", #0:" + i + ")")).execute();
-          }
-
-          for (int i = 10; i < 15; i++) {
-            testDB.command(new OCommandSQL("delete from index:mi where key = " + id + " and rid = #0:" + i)).execute();
-          }
+          saveDoc(document);
         }
+
       } finally {
         baseDB.activateOnCurrentThread();
         baseDB.close();
@@ -281,6 +275,22 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
         testDB.activateOnCurrentThread();
         testDB.close();
       }
+    }
+
+    private void saveDoc(ODocument document) {
+
+      baseDB.activateOnCurrentThread();
+      baseDB.begin();
+      ODocument testDoc = new ODocument();
+      document.copyTo(testDoc);
+      document.save();
+      baseDB.commit();
+
+      ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+      testDB.activateOnCurrentThread();
+      testDB.begin();
+      testDoc.save();
+      testDB.commit();
     }
   }
 

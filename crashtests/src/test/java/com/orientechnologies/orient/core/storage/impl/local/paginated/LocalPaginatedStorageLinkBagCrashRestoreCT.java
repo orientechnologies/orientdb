@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class LocalPaginatedStorageLinkBagCrashRestoreIT {
+public class LocalPaginatedStorageLinkBagCrashRestoreCT {
   private static String URL_BASE;
   private static String URL_TEST;
   private final OOneEntryPerKeyLockManager<ORID> lockManager     = new OOneEntryPerKeyLockManager<ORID>(true, 30000, 10000);
@@ -79,7 +79,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
 
     process = processBuilder.start();
 
-    System.out.println(LocalPaginatedStorageLinkBagCrashRestoreIT.class.getSimpleName() + ": Wait for server start");
+    System.out.println(LocalPaginatedStorageLinkBagCrashRestoreCT.class.getSimpleName() + ": Wait for server start");
     boolean started = false;
     do {
       Thread.sleep(5000);
@@ -89,7 +89,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
 
     mutex.close();
     mutexFile.delete();
-    System.out.println(LocalPaginatedStorageLinkBagCrashRestoreIT.class.getSimpleName() + ": Server was started");
+    System.out.println(LocalPaginatedStorageLinkBagCrashRestoreCT.class.getSimpleName() + ": Server was started");
   }
 
   @Test
@@ -254,7 +254,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
     long maxInterval = minTs == Long.MAX_VALUE ? 0 : lastTs - minTs;
     System.out.println("Lost records max interval (ms) : " + maxInterval);
 
-    assertThat(maxInterval).isLessThan(2000);
+    assertThat(maxInterval).isLessThan(4000);
 
     base_db.activateOnCurrentThread();
     base_db.close();

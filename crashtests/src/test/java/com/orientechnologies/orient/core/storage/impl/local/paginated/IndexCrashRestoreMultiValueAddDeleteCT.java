@@ -3,9 +3,9 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -30,54 +30,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
- * @since 9/22/14
+ * @since 9/25/14
  */
-
-public class IndexCrashRestoreSingleValueIT {
+public class IndexCrashRestoreMultiValueAddDeleteCT {
   private final AtomicLong idGen = new AtomicLong();
   private ODatabaseDocumentTx baseDocumentTx;
   private ODatabaseDocumentTx testDocumentTx;
   private File                buildDir;
   private ExecutorService executorService = Executors.newCachedThreadPool();
-  private Process serverProcess;
+  private Process process;
 
-  @Before
-  public void setuUp() throws Exception {
-    String buildDirectory = System.getProperty("buildDirectory", ".");
-    buildDirectory += "/uniqueIndexCrashRestore";
-
-    buildDir = new File(buildDirectory);
-
-    buildDirectory = buildDir.getCanonicalPath();
-    buildDir = new File(buildDirectory);
-
-    if (buildDir.exists())
-      OFileUtils.deleteRecursively(buildDir);
-
-    buildDir.mkdir();
-
-    baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/baseUniqueIndexCrashRestore");
-    if (baseDocumentTx.exists()) {
-      baseDocumentTx.open("admin", "admin");
-      baseDocumentTx.drop();
-    }
-
-    baseDocumentTx.create();
-
-    spwanServer();
-
-    final OServerAdmin serverAdmin = new OServerAdmin("remote:localhost:3500");
-    serverAdmin.connect("root", "root");
-    serverAdmin.createDatabase("testUniqueIndexCrashRestore", "graph", "plocal");
-    serverAdmin.close();
-
-    testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testUniqueIndexCrashRestore");
-    testDocumentTx.open("admin", "admin");
-  }
-
-  public void spwanServer() throws Exception {
-    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
-
+  public void spawnServer() throws Exception {
     final File mutexFile = new File(buildDir, "mutex.ct");
     final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
     mutex.seek(0);
@@ -89,13 +52,14 @@ public class IndexCrashRestoreSingleValueIT {
     System.setProperty("ORIENTDB_HOME", buildDir.getCanonicalPath());
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx4096m", "-XX:MaxDirectMemorySize=512g", "-classpath",
-        System.getProperty("java.class.path"), "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(),
-        "-DmutexFile=" + mutexFile.getCanonicalPath(), RemoteDBRunner.class.getName());
+        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(),
+        "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(), RemoteDBRunner.class.getName());
+
     processBuilder.inheritIO();
 
-    serverProcess = processBuilder.start();
+    process = processBuilder.start();
 
-    System.out.println(IndexCrashRestoreSingleValueIT.class.getSimpleName() + ": Wait for server start");
+    System.out.println(IndexCrashRestoreMultiValueAddDeleteCT.class.getSimpleName() + ": Wait for server start");
     boolean started = false;
     do {
       Thread.sleep(5000);
@@ -105,7 +69,7 @@ public class IndexCrashRestoreSingleValueIT {
 
     mutex.close();
     mutexFile.delete();
-    System.out.println(IndexCrashRestoreSingleValueIT.class.getSimpleName() + ": Server was started");
+    System.out.println(IndexCrashRestoreMultiValueAddDeleteCT.class.getSimpleName() + ": Server was started");
   }
 
   @After
@@ -120,6 +84,41 @@ public class IndexCrashRestoreSingleValueIT {
     Assert.assertFalse(buildDir.exists());
   }
 
+  @Before
+  public void beforeMethod() throws Exception {
+    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
+
+    String buildDirectory = System.getProperty("buildDirectory", ".");
+    buildDirectory += "/indexCrashRestoreMultiValueAddDelete";
+
+    buildDir = new File(buildDirectory);
+    buildDir = new File(buildDir.getCanonicalPath());
+
+    if (buildDir.exists())
+      OFileUtils.deleteRecursively(buildDir);
+
+    buildDir.mkdir();
+
+    baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/baseIndexCrashRestoreMultivalueAddDelete");
+    if (baseDocumentTx.exists()) {
+      baseDocumentTx.open("admin", "admin");
+      baseDocumentTx.drop();
+    }
+
+    baseDocumentTx.create();
+
+    spawnServer();
+
+    final OServerAdmin serverAdmin = new OServerAdmin("remote:localhost:3500");
+    serverAdmin.connect("root", "root");
+    serverAdmin.createDatabase("testIndexCrashRestoreMultivalueAddDelete", "graph", "plocal");
+    serverAdmin.close();
+
+    testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testIndexCrashRestoreMultivalueAddDelete");
+    testDocumentTx.open("admin", "admin");
+  }
+
   @Test
   public void testEntriesAddition() throws Exception {
 
@@ -129,29 +128,30 @@ public class IndexCrashRestoreSingleValueIT {
     System.out.println("Start data propagation");
 
     List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 8; i++) {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
+    System.out.println("Wait for 5 minutes");
     TimeUnit.MINUTES.sleep(5);
 
     System.out.println("Wait for process to destroy");
-    serverProcess.destroyForcibly();
+    process.destroyForcibly();
 
-    serverProcess.waitFor();
+    process.waitFor();
     System.out.println("Process was destroyed");
 
     for (Future future : futures) {
       try {
         future.get();
       } catch (Exception e) {
-        future.cancel(true);
+        e.printStackTrace();
       }
     }
 
     testDocumentTx = new ODatabaseDocumentTx(
-        "plocal:" + new File(new File(buildDir, "databases"), "testUniqueIndexCrashRestore").getCanonicalPath());
-
+        "plocal:" + new File(new File(buildDir.getAbsolutePath(), "databases"), "testIndexCrashRestoreMultivalueAddDelete")
+            .getCanonicalPath());
     testDocumentTx.open("admin", "admin");
     testDocumentTx.close();
 
@@ -162,7 +162,7 @@ public class IndexCrashRestoreSingleValueIT {
   }
 
   private void compareIndexes() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+    baseDocumentTx.activateOnCurrentThread();
     OIndexCursor cursor = baseDocumentTx.getMetadata().getIndexManager().getIndex("mi").cursor();
 
     long lastTs = 0;
@@ -172,7 +172,7 @@ public class IndexCrashRestoreSingleValueIT {
 
     Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
     while (entry != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+      baseDocumentTx.activateOnCurrentThread();
       Integer key = (Integer) entry.getKey();
 
       OIdentifiable identifiable = entry.getValue();
@@ -184,30 +184,44 @@ public class IndexCrashRestoreSingleValueIT {
 
       entry = cursor.nextEntry();
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+      testDocumentTx.activateOnCurrentThread();
       OIndex testIndex = testDocumentTx.getMetadata().getIndexManager().getIndex("mi");
 
       Set<OIdentifiable> result = (Set<OIdentifiable>) testIndex.get(key);
-      if (result == null || result.isEmpty()) {
+      if (result == null || result.size() != 10) {
         if (minLostTs > ts)
           minLostTs = ts;
-      } else
-        restoredRecords++;
+      } else {
+        boolean cnt = true;
+        for (int i = 0; i < 10; i++) {
+          if (!result.contains(new ORecordId("#0:" + i))) {
+            cnt = false;
+            break;
+          }
+        }
+        if (!cnt) {
+          if (minLostTs > ts)
+            minLostTs = ts;
+        } else
+          restoredRecords++;
+      }
+
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+    baseDocumentTx.activateOnCurrentThread();
     System.out.println(
         "Restored entries : " + restoredRecords + " out of : " + baseDocumentTx.getMetadata().getIndexManager().getIndex("mi")
             .getSize());
 
-    long maxInterval = minLostTs == Long.MAX_VALUE ? 0 : lastTs - minLostTs;
-    System.out.println("Lost records max interval (ms) : " + maxInterval);
+    final long maxInterval = minLostTs == Long.MAX_VALUE ? 0 : lastTs - minLostTs;
 
-    assertThat(maxInterval).isLessThan(2000);
+    System.out.println("Lost records max interval : " + maxInterval);
+    assertThat(maxInterval).isLessThan(4000);
+
   }
 
   private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbDocumentTx);
+    dbDocumentTx.activateOnCurrentThread();
     dbDocumentTx.command(new OCommandSQL("create index mi notunique integer")).execute();
     dbDocumentTx.getMetadata().getIndexManager().reload();
   }
@@ -215,10 +229,11 @@ public class IndexCrashRestoreSingleValueIT {
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
       OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
+      OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
 
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class.getResourceAsStream(
-          "/com/orientechnologies/orient/core/storage/impl/local/paginated/index-crash-single-value-config.xml"));
+          "/com/orientechnologies/orient/core/storage/impl/local/paginated/index-crash-multivalue-value-add-delete-config.xml"));
       server.activate();
 
       final String mutexFile = System.getProperty("mutexFile");
@@ -248,8 +263,7 @@ public class IndexCrashRestoreSingleValueIT {
           long id = idGen.getAndIncrement();
           long ts = System.currentTimeMillis();
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
-
+          baseDB.activateOnCurrentThread();
           ODocument doc = new ODocument();
           doc.field("ts", ts);
           doc.save();
@@ -257,13 +271,14 @@ public class IndexCrashRestoreSingleValueIT {
           baseDB.command(new OCommandSQL("insert into index:mi (key, rid) values (" + id + ", " + doc.getIdentity() + ")"))
               .execute();
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
-          doc = new ODocument();
-          doc.field("ts", ts);
-          doc.save();
+          testDB.activateOnCurrentThread();
+          for (int i = 0; i < 15; i++) {
+            testDB.command(new OCommandSQL("insert into index:mi (key, rid) values (" + id + ", #0:" + i + ")")).execute();
+          }
 
-          testDB.command(new OCommandSQL("insert into index:mi (key, rid) values (" + id + ", " + doc.getIdentity() + ")"))
-              .execute();
+          for (int i = 10; i < 15; i++) {
+            testDB.command(new OCommandSQL("delete from index:mi where key = " + id + " and rid = #0:" + i)).execute();
+          }
         }
       } finally {
         baseDB.activateOnCurrentThread();

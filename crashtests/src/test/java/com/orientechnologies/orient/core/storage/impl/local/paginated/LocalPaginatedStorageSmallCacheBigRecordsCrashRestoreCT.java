@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 6/26/13
  */
-public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
+public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreCT {
   private final AtomicLong idGen = new AtomicLong();
   private ODatabaseDocumentTx baseDocumentTx;
   private ODatabaseDocumentTx testDocumentTx;
@@ -60,7 +60,7 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
 
     process = processBuilder.start();
 
-    System.out.println(LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT.class.getSimpleName() + ": Wait for server start");
+    System.out.println(LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreCT.class.getSimpleName() + ": Wait for server start");
     boolean started = false;
     do {
       Thread.sleep(5000);
@@ -70,7 +70,7 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
 
     mutex.close();
     mutexFile.delete();
-    System.out.println(LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT.class.getSimpleName() + ": Server was started");
+    System.out.println(LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreCT.class.getSimpleName() + ": Server was started");
   }
 
   @After
@@ -231,9 +231,13 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
       physicalPositions = baseStorage.higherPhysicalPositions(clusterId, physicalPositions[physicalPositions.length - 1]);
     }
 
+    long maxInterval = minTs == Long.MAX_VALUE ? 0 : lastTs - minTs;
+
     System.out.println(
-        recordsRestored + " records were restored. Total records " + recordsTested + ". Max interval for lost records " + (lastTs
-            - minTs));
+        recordsRestored + " records were restored. Total records " + recordsTested + ". Max interval for lost records "
+            + maxInterval);
+
+    assertThat(maxInterval).isLessThan(4000);
   }
 
   public static final class RemoteDBRunner {

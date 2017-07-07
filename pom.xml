@@ -116,6 +116,7 @@
         <module>etl</module>
         <module>distribution</module>
         <module>distribution-tp2</module>
+        <module>crashtests</module>
     </modules>
 
     <scm>
