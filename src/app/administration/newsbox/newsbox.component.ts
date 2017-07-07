@@ -1,12 +1,12 @@
-import {Component, OnInit, Input} from '@angular/core';
-import {AgentService,DBService} from "../../core/services/";
+import {Component, OnInit, Input, OnChanges, SimpleChanges} from '@angular/core';
+import {AgentService, DBService} from "../../core/services/";
 
 
 import * as $ from "jquery"
 
 import {downgradeComponent} from '@angular/upgrade/static';
 
-declare var angular:any
+declare var angular: any
 
 @Component({
   selector: 'news-box',
@@ -15,6 +15,8 @@ declare var angular:any
 
 class NewsBoxComponent implements OnInit {
 
+
+  @Input() enterprise: boolean;
   @Input() boxHeight: String;
   @Input() boxMarginTop: String;
 
@@ -42,23 +44,23 @@ class NewsBoxComponent implements OnInit {
   }
 
   ngOnInit() {
-    if(this.boxHeight === undefined) {
+    if (this.boxHeight === undefined) {
       this.boxHeight = "420px";
     }
 
-    if(this.boxMarginTop === undefined) {
+    if (this.boxMarginTop === undefined) {
       this.boxMarginTop = "40px";
     }
   }
 
   makeRequestAccordingVersionAndEdition() {
 
-    // agent
-    this.agentService.isActive().then(() => {
+    console.log(this.enterprise);
+    if (this.enterprise) {
       this.httpGetAsync(this.eeNewsUrl, this.assignResponseToTheBox);
-    }).catch(() => {
+    } else {
       this.httpGetAsync(this.ceNewsUrl, this.assignResponseToTheBox);
-    });
+    }
   }
 
   enablePopovers() {
@@ -72,7 +74,7 @@ class NewsBoxComponent implements OnInit {
   httpGetAsync(theUrl, callback) {
     var self = this;
     var xmlHttp = new XMLHttpRequest();
-    xmlHttp.onreadystatechange = function() {
+    xmlHttp.onreadystatechange = function () {
       if (xmlHttp.readyState == 4) {
         if (xmlHttp.status == 200) {
           callback.call(self, xmlHttp.responseText);
@@ -99,7 +101,7 @@ class NewsBoxComponent implements OnInit {
 
 angular.module('newsbox.component', []).directive(
   `newsBox`,
-  downgradeComponent({component: NewsBoxComponent, inputs: ["boxHeight", "boxMarginTop"]}));
+  downgradeComponent({component: NewsBoxComponent, inputs: ["enterprise", "boxHeight", "boxMarginTop"]}));
 
 
 export {NewsBoxComponent};
