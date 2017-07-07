@@ -32,6 +32,7 @@ public abstract class BareBoneBase1ClientTest extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    ODatabaseDocumentTx.closeAll();
     OFileUtils.deleteRecursively(new File(DB1_DIR));
   }
 
@@ -63,13 +64,17 @@ public abstract class BareBoneBase1ClientTest extends TestCase {
   }
 
   protected void endTest(BareBonesServer[] servers) throws Throwable {
+    for (BareBonesServer server : servers)
+      if (server != null) {
+        try {
+          server.stop();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
     if (exceptionInThread != null) {
       throw exceptionInThread;
     }
-
-    for (BareBonesServer server : servers)
-      if (server != null)
-        server.stop();
   }
 
   protected BareBonesServer dbServer(String dbDirectory, String orientUrl, String dbConfigName) {
