@@ -524,13 +524,12 @@ public class ODistributedTransactionManager {
       recordsToLock.add((ORecordId) op.record.getIdentity());
     }
 
-    acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, recordsToLock, eventListener, reqContext, -1);
+    acquireMultipleRecordLocks(this, dManager, recordsToLock, eventListener, reqContext, -1);
   }
 
   public static void acquireMultipleRecordLocks(final Object iThis, final ODistributedServerManager dManager,
-      final ODistributedDatabase localDistributedDatabase, final List<ORecordId> recordsToLock,
-      final ODistributedStorageEventListener eventListener, final ODistributedTxContext reqContext, final long timeout)
-      throws InterruptedException {
+      final List<ORecordId> recordsToLock, final ODistributedStorageEventListener eventListener,
+      final ODistributedTxContext reqContext, final long timeout) throws InterruptedException {
 
     // CREATE A SORTED LIST OF RID TO AVOID DEADLOCKS
     Collections.sort(recordsToLock);
@@ -840,7 +839,7 @@ public class ODistributedTransactionManager {
             if (quorumResponse.equals(serverResponse)) {
               // SEND COMMIT
               ODistributedServerLog.debug(this, localNodeName, s, ODistributedServerLog.DIRECTION.OUT,
-                  "Sending 2pc message for distributed transaction (reqId=%s)", s, resp.getMessageId());
+                  "Sending 2pc message for distributed transaction (reqId=%s)", resp.getMessageId());
 
               final OCompleted2pcTask twopcTask = (OCompleted2pcTask) dManager.getTaskFactoryManager()
                   .getFactoryByServerNames(serversToFollowup).createTask(OCompleted2pcTask.FACTORYID);

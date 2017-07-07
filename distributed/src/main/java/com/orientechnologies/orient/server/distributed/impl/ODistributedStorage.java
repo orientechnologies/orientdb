@@ -320,8 +320,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
             return wrapped.command(iCommand);
 
-          final Object localResult;
-
           final boolean executedLocally = executeOnLocalNodeFirst && nodes.contains(localNodeName);
 
           if (exec.involveSchema())
