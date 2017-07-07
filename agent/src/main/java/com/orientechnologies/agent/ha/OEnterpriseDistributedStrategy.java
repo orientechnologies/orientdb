@@ -13,7 +13,7 @@ import java.util.Set;
 
 /**
  * EE implementation for quorum management. It extends the CE by supporting the data-center concept.
- * 
+ *
  * @author Luca Garulli
  */
 public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy {
@@ -23,9 +23,10 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
   /**
    * Returns only the subset of servers that are part of the local dc.
    */
+
   @Override
   public Set<String> getNodesConcurInQuorum(final ODistributedServerManager manager, final ODistributedConfiguration cfg,
-      final ODistributedRequest request, final Collection<String> iNodes, final Object localResult) {
+      final ODistributedRequest request, final Collection<String> iNodes, final String databaseName, final Object localResult) {
 
     final String localNode = manager.getLocalNodeName();
 
@@ -35,7 +36,7 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
 
     if (dc == null || !localDataCenterWriteQuorum || quorum == OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL)
       // NO DC: DEFAULT CFG
-      return super.getNodesConcurInQuorum(manager, cfg, request, iNodes, localResult);
+      return super.getNodesConcurInQuorum(manager, cfg, request, iNodes, databaseName, localResult);
 
     // DC CONFIGURATION
     final List<String> dcServers = cfg.getDataCenterServers(dc);

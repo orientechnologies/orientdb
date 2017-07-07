@@ -19,8 +19,7 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -38,143 +37,143 @@ import java.util.Set;
  */
 public class OServerCommandQueryCacheManager extends OServerCommandDistributedScope {
 
-    private static final String[] NAMES = { "GET|commandCache/*", "PUT|commandCache/*", "POST|commandCache/*" };
+  private static final String[] NAMES = { "GET|commandCache/*", "PUT|commandCache/*", "POST|commandCache/*" };
 
-    public OServerCommandQueryCacheManager() {
-        super("server.profiler");
+  public OServerCommandQueryCacheManager() {
+    super("server.profiler");
+  }
+
+  @Override
+  public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: commandCache/<database>");
+
+    if (isLocalNode(iRequest)) {
+
+      if ("GET".equals(iRequest.httpMethod)) {
+        doGet(iRequest, iResponse, urlParts);
+      } else if ("PUT".equals(iRequest.httpMethod)) {
+        doPut(iRequest, iResponse, urlParts);
+      } else if ("POST".equals(iRequest.httpMethod)) {
+        doPost(iRequest, iResponse, urlParts);
+      } else {
+        throw new IllegalArgumentException("Method " + iRequest.httpMethod + " not supported.");
+      }
+    } else {
+      proxyRequest(iRequest, iResponse);
     }
+    return false;
+  }
 
-    @Override
-    public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-        final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: commandCache/<database>");
+  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String[] urlParts) throws InterruptedException, IOException {
 
-        if (isLocalNode(iRequest)) {
+    if (urlParts.length > 2) {
+      String command = urlParts[2];
+      if ("results".equalsIgnoreCase(command)) {
+        iRequest.databaseName = urlParts[1];
+        ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+        OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
+        ODocument query = new ODocument().fromJSON(iRequest.content);
+        String q = query.field("query");
 
-            if ("GET".equals(iRequest.httpMethod)) {
-                doGet(iRequest, iResponse, urlParts);
-            } else if ("PUT".equals(iRequest.httpMethod)) {
-                doPut(iRequest, iResponse, urlParts);
-            } else if ("POST".equals(iRequest.httpMethod)) {
-                doPost(iRequest, iResponse, urlParts);
-            } else {
-                throw new IllegalArgumentException("Method " + iRequest.httpMethod + " not supported.");
-            }
-        } else {
-            proxyRequest(iRequest, iResponse);
-        }
-        return false;
-    }
+        int userPos = q.indexOf(".");
+        int limitPos = q.lastIndexOf(".");
 
-    private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String[] urlParts) throws InterruptedException, IOException {
+        String user = q.substring(0, userPos);
+        String realQuery = q.substring(userPos + 1, limitPos);
+        String limit = q.substring(limitPos + 1, q.length());
 
-        if (urlParts.length > 2) {
-            String command = urlParts[2];
-            if ("results".equalsIgnoreCase(command)) {
-                iRequest.databaseName = urlParts[1];
-                ODatabaseDocument profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
-                OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
-                ODocument query = new ODocument().fromJSON(iRequest.content);
-                String q = query.field("query");
+        OUser ouser = new OUser(user);
+        Object results = commandCache.get(ouser, realQuery, Integer.parseInt(limit));
 
-                int userPos = q.indexOf(".");
-                int limitPos = q.lastIndexOf(".");
+        iResponse.writeResult(results);
 
-                String user = q.substring(0, userPos);
-                String realQuery = q.substring(userPos + 1, limitPos);
-                String limit = q.substring(limitPos + 1, q.length());
-
-                OUser ouser = new OUser(user);
-                Object results = commandCache.get(ouser, realQuery, Integer.parseInt(limit));
-
-                iResponse.writeResult(results);
-
-            } else if ("purge".equalsIgnoreCase(command)) {
-
-                iRequest.databaseName = urlParts[1];
-                ODatabaseDocument profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
-                OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
-                commandCache.clear();
-                iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
-            } else {
-                throw new IllegalArgumentException("Method " + iRequest.httpMethod + " not supported.");
-            }
-
-        }
-    }
-
-    private void doPut(OHttpRequest iRequest, OHttpResponse iResponse, String[] urlParts) throws InterruptedException, IOException {
+      } else if ("purge".equalsIgnoreCase(command)) {
 
         iRequest.databaseName = urlParts[1];
-        ODatabaseDocument profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+        ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
         OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
+        commandCache.clear();
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
+      } else {
+        throw new IllegalArgumentException("Method " + iRequest.httpMethod + " not supported.");
+      }
 
-        if (urlParts.length == 2) {
+    }
+  }
 
-            ODocument cfg = new ODocument().fromJSON(iRequest.content);
+  private void doPut(OHttpRequest iRequest, OHttpResponse iResponse, String[] urlParts) throws InterruptedException, IOException {
 
-            commandCache.changeConfig(cfg);
+    iRequest.databaseName = urlParts[1];
+    ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+    OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
 
-            iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
-        } else {
-            if (urlParts.length > 2) {
-                String command = urlParts[2];
+    if (urlParts.length == 2) {
 
-                if ("enable".equalsIgnoreCase(command)) {
+      ODocument cfg = new ODocument().fromJSON(iRequest.content);
 
-                    commandCache.enable();
-                    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
-                } else if ("disable".equalsIgnoreCase(command)) {
+      commandCache.changeConfig(cfg);
 
-                    commandCache.disable();
-                    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
-                }
-            }
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
+    } else {
+      if (urlParts.length > 2) {
+        String command = urlParts[2];
+
+        if ("enable".equalsIgnoreCase(command)) {
+
+          commandCache.enable();
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
+        } else if ("disable".equalsIgnoreCase(command)) {
+
+          commandCache.disable();
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
         }
+      }
     }
+  }
 
-    private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String[] urlParts) throws InterruptedException, IOException {
+  private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String[] urlParts) throws InterruptedException, IOException {
 
-        iRequest.databaseName = urlParts[1];
+    iRequest.databaseName = urlParts[1];
 
-        ODatabaseDocument profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+    ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
 
-        OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
-        if (urlParts.length > 2 && urlParts[2].equalsIgnoreCase("results")) {
-            ODocument cache = new ODocument();
-            Collection<ODocument> results = new ArrayList<ODocument>();
-            cache.field("results", results);
+    OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
+    if (urlParts.length > 2 && urlParts[2].equalsIgnoreCase("results")) {
+      ODocument cache = new ODocument();
+      Collection<ODocument> results = new ArrayList<ODocument>();
+      cache.field("results", results);
 
-            Set<Map.Entry<String, OCommandCacheSoftRefs.OCachedResult>> entries = commandCache.entrySet();
+      Set<Map.Entry<String, OCommandCacheSoftRefs.OCachedResult>> entries = commandCache.entrySet();
 
-            for (Map.Entry<String, OCommandCacheSoftRefs.OCachedResult> entry : entries) {
-                ODocument doc = new ODocument();
-                doc.field("query", entry.getKey());
-                Object result = entry.getValue().getResult();
-                int size = 1;
-                if (result instanceof Collection) {
-                    size = ((Collection) result).size();
-                }
-                doc.field("size", size);
-                results.add(doc);
-            }
-            iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, cache.toJSON(), null);
-        } else {
-
-            ODocument cache = new ODocument();
-            cache.field("size", commandCache.size());
-            cache.field("evictStrategy", commandCache.getEvictStrategy());
-            cache.field("enabled", commandCache.isEnabled());
-            cache.field("maxResultsetSize", commandCache.getMaxResultsetSize());
-            cache.field("minExecutionTime", commandCache.getMinExecutionTime());
-
-            iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, cache.toJSON(), null);
+      for (Map.Entry<String, OCommandCacheSoftRefs.OCachedResult> entry : entries) {
+        ODocument doc = new ODocument();
+        doc.field("query", entry.getKey());
+        Object result = entry.getValue().getResult();
+        int size = 1;
+        if (result instanceof Collection) {
+          size = ((Collection) result).size();
         }
+        doc.field("size", size);
+        results.add(doc);
+      }
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, cache.toJSON(), null);
+    } else {
 
+      ODocument cache = new ODocument();
+      cache.field("size", commandCache.size());
+      cache.field("evictStrategy", commandCache.getEvictStrategy());
+      cache.field("enabled", commandCache.isEnabled());
+      cache.field("maxResultsetSize", commandCache.getMaxResultsetSize());
+      cache.field("minExecutionTime", commandCache.getMinExecutionTime());
+
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, cache.toJSON(), null);
     }
 
-    @Override
-    public String[] getNames() {
-        return NAMES;
-    }
+  }
+
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }
 

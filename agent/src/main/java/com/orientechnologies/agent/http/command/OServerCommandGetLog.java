@@ -262,7 +262,7 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
       return;
 
     if (value != null) {
-      if (!(info.toLowerCase().contains(value.toLowerCase()))) {
+      if (!(info.toLowerCase(Locale.ENGLISH).contains(value.toLowerCase(Locale.ENGLISH)))) {
         return;
       }
     }

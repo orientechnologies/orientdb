@@ -204,7 +204,8 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
-    boolean installDatabase = dManager.installDatabase(true, database, dStg.getDistributedConfiguration().getDocument(), false,
+    boolean installDatabase = dManager.installDatabase(true, database,
+        false,
         true);
 
     ODocument document = new ODocument().field("result", installDatabase);
@@ -218,7 +219,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     cfg.field("version", (Integer) cfg.field("version") + 1);
 
     OModifiableDistributedConfiguration config = new OModifiableDistributedConfiguration(cfg);
-    manager.updateCachedDatabaseConfiguration(database, config,true);
+    manager.updateCachedDatabaseConfiguration(database, config, true);
   }
 
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String[] parts) throws IOException {
@@ -266,7 +267,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       if (clusterStats == null) {
         doc = new ODocument();
       } else {
-        doc = new ODocument().fromMap(clusterStats.<Map<String, Object>> field(id));
+        doc = new ODocument().fromMap(clusterStats.<Map<String, Object>>field(id));
         doc.field("member", getMemberConfig(manager.getClusterConfiguration(), id));
       }
     } else {

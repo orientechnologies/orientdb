@@ -32,19 +32,20 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.impl.task.OStartReplicationTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
  * SQL HA START REPLICATION command: starts the replication against a server. The command is executed only on local server.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLHAStartReplication extends OCommandExecutorSQLAbstract
@@ -53,13 +54,24 @@ public class OCommandExecutorSQLHAStartReplication extends OCommandExecutorSQLAb
   public static final String KEYWORD_HA          = "HA";
   public static final String KEYWORD_START       = "START";
   public static final String KEYWORD_REPLICATION = "REPLICATION";
-
-  public enum MODE {
-    FULL, DELTA
-  }
-
-  private MODE   mode = MODE.DELTA;
+  private MODE mode = MODE.DELTA;
   private String server;
+
+  public static ODistributedResponse startReplication(ODatabaseDocumentInternal database, List<String> servers, MODE mode) {
+    final OStorage stg = database.getStorage();
+    if (!(stg instanceof ODistributedStorage))
+      throw new ODistributedException("HA START REPLICATION command cannot be executed against a non distributed server");
+
+    final ODistributedStorage dStg = (ODistributedStorage) stg;
+
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) dStg.getDistributedManager();
+    if (dManager == null || !dManager.isEnabled())
+      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
+
+    return dManager.sendRequest(database.getName(), null, servers,
+        new OStartReplicationTask(database.getName(), mode == MODE.DELTA), dManager.getNextMessageIdCounter(),
+        ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null, null);
+  }
 
   public OCommandExecutorSQLHAStartReplication parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
@@ -96,7 +108,7 @@ public class OCommandExecutorSQLHAStartReplication extends OCommandExecutorSQLAb
           throw new OCommandSQLParsingException("Missing mode. Use " + getSyntax(), parserText, oldPos);
 
         try {
-          mode = MODE.valueOf(word.toString().toUpperCase());
+          mode = MODE.valueOf(word.toString().toUpperCase(Locale.ENGLISH));
         } catch (IllegalArgumentException e) {
           throw new OCommandSQLParsingException("Invalid mode. Use " + getSyntax(), parserText, oldPos);
         }
@@ -132,22 +144,6 @@ public class OCommandExecutorSQLHAStartReplication extends OCommandExecutorSQLAb
     return startReplication(database, servers, mode);
   }
 
-  public static Object startReplication(ODatabaseDocumentInternal database, List<String> servers, MODE mode) {
-    final OStorage stg = database.getStorage();
-    if (!(stg instanceof ODistributedStorage))
-      throw new ODistributedException("HA START REPLICATION command cannot be executed against a non distributed server");
-
-    final ODistributedStorage dStg = (ODistributedStorage) stg;
-
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) dStg.getDistributedManager();
-    if (dManager == null || !dManager.isEnabled())
-      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-
-    return dManager.sendRequest(database.getName(), null, servers,
-        new OStartReplicationTask(database.getName(), mode == MODE.DELTA), dManager.getNextMessageIdCounter(),
-        ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
-  }
-
   /**
    * If server is specified, executes the command on the target server.
    */
@@ -169,5 +165,9 @@ public class OCommandExecutorSQLHAStartReplication extends OCommandExecutorSQLAb
   @Override
   public String getSyntax() {
     return "HA START REPLICATION <server> [-mode <FULL|DELTA>]";
+  }
+
+  public enum MODE {
+    FULL, DELTA
   }
 }

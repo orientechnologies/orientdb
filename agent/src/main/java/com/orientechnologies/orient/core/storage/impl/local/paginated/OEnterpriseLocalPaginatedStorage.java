@@ -53,9 +53,8 @@ import java.util.zip.ZipOutputStream;
 public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   public static final  String IBU_EXTENSION         = ".ibu";
   public static final  String CONF_ENTRY_NAME       = "database.ocf";
-  private static final String CONF_UTF_8_ENTRY_NAME = "database_utf8.ocf";
-
   public static final String        INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
+  private static final String CONF_UTF_8_ENTRY_NAME = "database_utf8.ocf";
   private final       AtomicBoolean backupInProgress              = new AtomicBoolean(false);
 
   public OEnterpriseLocalPaginatedStorage(String name, String filePath, String mode, int id, OReadCache readCache,
@@ -329,7 +328,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       stream.write(binaryFileId, 0, binaryFileId.length);
 
       for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-        final OCacheEntry cacheEntry = readCache.loadForRead(fileId, pageIndex, true, writeCache, 1);
+        final OCacheEntry cacheEntry = readCache.loadForRead(fileId, pageIndex, true, writeCache, 1, true);
         cacheEntry.acquireSharedLock();
         try {
           final OLogSequenceNumber pageLsn = ODurablePage
@@ -498,14 +497,14 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
           final long pageIndex = OLongSerializer.INSTANCE.deserializeNative(data, 0);
 
-          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1);
+          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, true);
 
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
                 readCache.releaseFromWrite(cacheEntry, writeCache);
 
-              cacheEntry = readCache.allocateNewPage(fileId, writeCache);
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache, true);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
