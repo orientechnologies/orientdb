@@ -59,10 +59,11 @@ import java.util.regex.Pattern;
  */
 public class OSQLFilterCondition {
   private static final String NULL_VALUE = "null";
-  protected Object            left;
-  protected OQueryOperator    operator;
-  protected Object            right;
-  protected boolean           inBraces   = false;
+  protected Object         left;
+  protected OQueryOperator operator;
+  protected Object         right;
+  private   OBinaryField   rightBinary;
+  protected boolean inBraces = false;
 
   public OSQLFilterCondition(final Object iLeft, final OQueryOperator iOperator) {
     this.left = iLeft;
@@ -76,7 +77,9 @@ public class OSQLFilterCondition {
   }
 
   public Object evaluate(final OIdentifiable iCurrentRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
-    boolean binaryEvaluation = operator != null && operator.isSupportingBinaryEvaluate() && iCurrentRecord!= null && iCurrentRecord.getIdentity().isPersistent();
+    boolean binaryEvaluation =
+        operator != null && operator.isSupportingBinaryEvaluate() && iCurrentRecord != null && iCurrentRecord.getIdentity()
+            .isPersistent();
 
     if (left instanceof OSQLQuery<?>)
       // EXECUTE SUB QUERIES ONLY ONCE
@@ -91,7 +94,8 @@ public class OSQLFilterCondition {
       // EXECUTE SUB QUERIES ONLY ONCE
       right = ((OSQLQuery<?>) right).setContext(iContext).execute();
 
-    Object r = evaluate(iCurrentRecord, iCurrentResult, right, iContext, binaryEvaluation);
+    Object r = evaluate(iCurrentRecord, iCurrentResult, binaryEvaluation && rightBinary != null ? rightBinary : right, iContext,
+        binaryEvaluation);
 
     if (binaryEvaluation && l instanceof OBinaryField) {
       if (r != null && !(r instanceof OBinaryField)) {
@@ -103,9 +107,10 @@ public class OSQLFilterCondition {
           bytes.offset = 0;
           final OCollate collate = r instanceof OSQLFilterItemField ? ((OSQLFilterItemField) r).getCollate(iCurrentRecord) : null;
           r = new OBinaryField(null, type, bytes, collate);
-          if (!(right instanceof OSQLFilterItem || right instanceof OSQLFilterCondition))
+          if (!(right instanceof OSQLFilterItem || right instanceof OSQLFilterCondition)) {
             // FIXED VALUE, REPLACE IT
-            right = r;
+            rightBinary = (OBinaryField) r;
+          }
         }
       } else if (r instanceof OBinaryField)
         // GET THE COPY OR MT REASONS
@@ -132,7 +137,6 @@ public class OSQLFilterCondition {
 
     if (binaryEvaluation)
       binaryEvaluation = l instanceof OBinaryField && r instanceof OBinaryField;
-
 
     if (!binaryEvaluation) {
       // no collate for regular expressions, otherwise quotes will result in no match
@@ -212,8 +216,8 @@ public class OSQLFilterCondition {
     if (left != null) {
       if (left instanceof OSQLFilterItemField) {
         if (((OSQLFilterItemField) left).isFieldChain()) {
-          list.add(((OSQLFilterItemField) left).getFieldChain().getItemName(
-              ((OSQLFilterItemField) left).getFieldChain().getItemCount() - 1));
+          list.add(((OSQLFilterItemField) left).getFieldChain()
+              .getItemName(((OSQLFilterItemField) left).getFieldChain().getItemCount() - 1));
         }
       } else if (left instanceof OSQLFilterCondition) {
         ((OSQLFilterCondition) left).getInvolvedFields(list);
@@ -340,8 +344,8 @@ public class OSQLFilterCondition {
       try {
         return new Date(new Double(stringValue).longValue());
       } catch (Exception pe2) {
-        throw OException.wrapException(new OQueryParsingException("Error on conversion of date '" + stringValue
-            + "' using the format: " + formatter.toPattern()), pe2);
+        throw OException.wrapException(new OQueryParsingException(
+            "Error on conversion of date '" + stringValue + "' using the format: " + formatter.toPattern()), pe2);
       }
     }
   }
@@ -425,17 +429,17 @@ public class OSQLFilterCondition {
 
     try {
       // DEFINED OPERATOR
-      if ((oldR instanceof String && oldR.equals(OSQLHelper.DEFINED))
-          || (oldL instanceof String && oldL.equals(OSQLHelper.DEFINED))) {
+      if ((oldR instanceof String && oldR.equals(OSQLHelper.DEFINED)) || (oldL instanceof String && oldL
+          .equals(OSQLHelper.DEFINED))) {
         result = new Object[] { ((OSQLFilterItemAbstract) this.left).getRoot(), r };
       }
 
       // NOT_NULL OPERATOR
-      else if ((oldR instanceof String && oldR.equals(OSQLHelper.NOT_NULL))
-          || (oldL instanceof String && oldL.equals(OSQLHelper.NOT_NULL))) {
+      else if ((oldR instanceof String && oldR.equals(OSQLHelper.NOT_NULL)) || (oldL instanceof String && oldL
+          .equals(OSQLHelper.NOT_NULL))) {
         result = null;
-      } else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass())
-          && !r.getClass().isAssignableFrom(l.getClass()))
+      } else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass()) && !r.getClass()
+          .isAssignableFrom(l.getClass()))
       // INTEGERS
       {
         if (r instanceof Integer && !(l instanceof Number || l instanceof Collection)) {

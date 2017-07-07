@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.List;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -34,6 +26,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import java.util.List;
 
 @RunWith(JUnit4.class)
 public class SQLCreateVertexAndEdgeTest {
@@ -96,8 +95,8 @@ public class SQLCreateVertexAndEdgeTest {
     edges = database.command(new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v3.getIdentity())).execute();
     Assert.assertFalse(edges.isEmpty());
 
-    edges = database.command(
-        new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v4.getIdentity() + " set weight = 3")).execute();
+    edges = database
+        .command(new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v4.getIdentity() + " set weight = 3")).execute();
     Assert.assertFalse(edges.isEmpty());
     ODocument e3 = ((OIdentifiable) edges.get(0)).getRecord();
     Assert.assertEquals(e3.getClassName(), OrientEdgeType.CLASS_NAME);
@@ -105,8 +104,9 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(e3.field("in"), v4);
     Assert.assertEquals(e3.field("weight"), 3);
 
-    edges = database.command(
-        new OCommandSQL("create edge E1 from " + v2.getIdentity() + " to " + v3.getIdentity() + " set weight = 10")).execute();
+    edges = database
+        .command(new OCommandSQL("create edge E1 from " + v2.getIdentity() + " to " + v3.getIdentity() + " set weight = 10"))
+        .execute();
     Assert.assertFalse(edges.isEmpty());
     ODocument e4 = ((OIdentifiable) edges.get(0)).getRecord();
     Assert.assertEquals(e4.getClassName(), "E1");
@@ -114,10 +114,8 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(e4.field("in"), v3);
     Assert.assertEquals(e4.field("weight"), 10);
 
-    edges = database
-        .command(
-            new OCommandSQL("create edge e1 cluster edefault from " + v3.getIdentity() + " to " + v5.getIdentity()
-                + " set weight = 17")).execute();
+    edges = database.command(new OCommandSQL(
+        "create edge e1 cluster edefault from " + v3.getIdentity() + " to " + v5.getIdentity() + " set weight = 17")).execute();
     Assert.assertFalse(edges.isEmpty());
     ODocument e5 = ((OIdentifiable) edges.get(0)).getRecord();
     Assert.assertEquals(e5.getClassName(), "E1");
@@ -195,14 +193,11 @@ public class SQLCreateVertexAndEdgeTest {
   }
 
   public void testSqlScriptThatDeletesEdge() {
-    long start = System.currentTimeMillis();
 
     database.command(new OCommandSQL("create vertex V set name = 'testSqlScriptThatDeletesEdge1'")).execute();
     database.command(new OCommandSQL("create vertex V set name = 'testSqlScriptThatDeletesEdge2'")).execute();
-    database
-        .command(
-            new OCommandSQL(
-                "create edge E from (select from V where name = 'testSqlScriptThatDeletesEdge1') to (select from V where name = 'testSqlScriptThatDeletesEdge2') set name = 'testSqlScriptThatDeletesEdge'"))
+    database.command(new OCommandSQL(
+        "create edge E from (select from V where name = 'testSqlScriptThatDeletesEdge1') to (select from V where name = 'testSqlScriptThatDeletesEdge2') set name = 'testSqlScriptThatDeletesEdge'"))
         .execute();
 
     try {
@@ -222,7 +217,34 @@ public class SQLCreateVertexAndEdgeTest {
       ex.printStackTrace(System.err);
     }
 
-    System.out.println("done in " + (System.currentTimeMillis() - start) + "ms");
+  }
+
+  @Test
+  public void testSqlScriptWithBinaryComparatorAndNewVerticesInTx() {
+    String vClassName = "testSqlScriptWithBinaryComparatorAndNewVerticesInTxV";
+    String eClassName = "testSqlScriptWithBinaryComparatorAndNewVerticesInTxE";
+
+    database.command(new OCommandSQL("create class " + vClassName + " extends V")).execute();
+    database.command(new OCommandSQL("create class " + eClassName + " extends E")).execute();
+
+    database.command(new OCommandSQL("create vertex " + vClassName + " set num = 12")).execute();
+
+    try {
+      String cmd = "BEGIN\n";
+      cmd += "CREATE VERTEX " + vClassName + " SET num = 13;\n";
+      cmd += "CREATE VERTEX " + vClassName + " SET num = 14;\n";
+      cmd += "CREATE EDGE " + eClassName + " FROM (SELECT FROM " + vClassName + " WHERE num = 13) TO (SELECT FROM " + vClassName
+          + " WHERE num = 14);\n";
+      cmd += "COMMIT\n";
+
+      Object r = database.command(new OCommandScript("sql", cmd)).execute();
+
+      List<?> edges = database.query(new OSQLSynchQuery<Vertex>("select from " + eClassName));
+
+      Assert.assertEquals(edges.size(), 1);
+    } catch (Exception ex) {
+      Assert.fail();
+    }
 
   }
 
