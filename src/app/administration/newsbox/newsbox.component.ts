@@ -54,8 +54,7 @@ class NewsBoxComponent implements OnInit {
   }
 
   makeRequestAccordingVersionAndEdition() {
-
-    console.log(this.enterprise);
+    
     if (this.enterprise) {
       this.httpGetAsync(this.eeNewsUrl, this.assignResponseToTheBox);
     } else {
