@@ -88,14 +88,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public Set<String> getClustersOnServer(ODistributedConfiguration cfg, String server) {
     Set<String> result = cfg.getClustersOnServer(server);
-    if (result.size() == 1 && result.iterator().next().equals("*")) {
-      result = new HashSet<>();
-      result.addAll(getStorage().getClusterNames());
+    if (result.contains("*")) {
+      result.remove("*");
+      HashSet<String> more = new HashSet<>();
+      more.addAll(getStorage().getClusterNames());
       for (String s : cfg.getClusterNames()) {
         if (!cfg.getServers(s, null).contains(s)) {
-          result.remove(s);
+          more.remove(s);
         }
       }
+      result.addAll(more);
     }
     return result;
   }
