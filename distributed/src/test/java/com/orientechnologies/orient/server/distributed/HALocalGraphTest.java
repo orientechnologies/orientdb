@@ -188,7 +188,7 @@ log("waitFor");
     Runnable th = new Runnable() {
       @Override
       public void run() {
-System.out.println("\n\n ----------- startThread()");      	
+System.out.println("\n\n ----------- startThread()");
         // OrientBaseGraph graph = new OrientGraph(getDBURL());
         // OrientGraph graph = graphFactory.getTx();
         boolean useSQL = false;
@@ -213,10 +213,6 @@ System.out.println("\n\n ----------- startThread()");
 
             ODatabaseDocument graph = graphFactory.acquire();
             graph.begin();
-
-System.out.println("\n\n ----------- graph.getURL() = " + graph.getURL());
-
-System.out.println("\n\n ----------- getClusterSelection() = " + graph.getClass("Test").getClusterSelection());
 
             try {
               if (useSQL) {

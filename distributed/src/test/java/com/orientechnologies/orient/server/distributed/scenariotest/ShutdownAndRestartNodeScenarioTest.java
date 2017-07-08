@@ -67,7 +67,6 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
   @Override
   public void executeTest() throws Exception {
 
-    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(SERVERS-1))).open("admin", "admin");
 
     try {
 
