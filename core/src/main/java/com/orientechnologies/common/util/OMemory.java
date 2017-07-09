@@ -79,6 +79,8 @@ public class OMemory {
         OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
       else
         OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+    } catch (RuntimeException e) {
+      OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.", e);
     }
 
     return osMemory;
