@@ -700,18 +700,21 @@ public class ODistributedResponseManager {
             ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
         if (responseGroups.get(0).size() + missingNodes.size() >= quorum) {
-          final ODistributedResponse response = responseGroups.get(0).get(0);
-          if (response != null) {
-            if (response.getPayload() instanceof Throwable) {
-              ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-                  "%d server(s) (%s) became unreachable during the request, even decreasing the quorum (%d) the response cannot be accepted because is an error: %s",
-                  missingNodes.size(), missingNodes, quorum, request);
-            } else {
-              ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-                  "%d server(s) (%s) became unreachable during the request, decreasing the quorum (%d) and accept the request: %s",
-                  missingNodes.size(), missingNodes, quorum, request);
-              setQuorumResponse(responseGroups.get(0).get(0));
-              return true;
+          List<ODistributedResponse> group = responseGroups.get(0);
+          if (group.size() > 0) {
+            final ODistributedResponse response = group.get(0);
+            if (response != null) {
+              if (response.getPayload() instanceof Throwable) {
+                ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+                    "%d server(s) (%s) became unreachable during the request, even decreasing the quorum (%d) the response cannot be accepted because is an error: %s",
+                    missingNodes.size(), missingNodes, quorum, request);
+              } else {
+                ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+                    "%d server(s) (%s) became unreachable during the request, decreasing the quorum (%d) and accept the request: %s",
+                    missingNodes.size(), missingNodes, quorum, request);
+                setQuorumResponse(responseGroups.get(0).get(0));
+                return true;
+              }
             }
           }
         }
@@ -1030,7 +1033,7 @@ public class ODistributedResponseManager {
 
           for (String s : serversToFollowup) {
             Object response = responses.get(s);
-            if( response == NO_RESPONSE)
+            if (response == NO_RESPONSE)
               response = null;
 
             if (quorumResponse != null && !quorumResponse.equals(response)) {
