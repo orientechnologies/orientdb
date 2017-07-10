@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -42,6 +43,9 @@ public class DistributedStressTests extends AbstractServerClusterTest {
   }
 
   @Test
+  @Ignore
+  //this test uses GINSERT workload, that is in the old graphdb (TP2) module, so it cannot run anymore.
+  //TODO migrate to the new multi-model API
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
