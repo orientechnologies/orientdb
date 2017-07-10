@@ -21,6 +21,7 @@
         <module>distribution-spatial</module>
         <module>distribution-community-importers</module>
         <module>distribution-community-tp2-importers</module>
+        <module>distribution-teleporter-community</module>
     </modules>
 
 </project>
