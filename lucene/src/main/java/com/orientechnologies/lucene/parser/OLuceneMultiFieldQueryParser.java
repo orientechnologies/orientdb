@@ -67,25 +67,28 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
         return NumericRangeQuery.newLongRange(field,
             Long.parseLong(part1),
             Long.parseLong(part2),
-            startInclusive, endInclusive);
+            startInclusive,
+            endInclusive);
       case INTEGER:
         return NumericRangeQuery.newIntRange(field,
             Integer.parseInt(part1),
             Integer.parseInt(part2),
-            startInclusive, endInclusive);
+            startInclusive,
+            endInclusive);
       case DOUBLE:
         return NumericRangeQuery.newDoubleRange(field,
             Double.parseDouble(part1),
             Double.parseDouble(part2),
-            startInclusive, endInclusive);
+            startInclusive,
+            endInclusive);
       case DATE:
       case DATETIME:
         try {
-
           return NumericRangeQuery.newLongRange(field,
               OLuceneDateTools.stringToTime(part1),
               OLuceneDateTools.stringToTime(part2),
-              startInclusive, endInclusive);
+              startInclusive,
+              endInclusive);
         } catch (java.text.ParseException e) {
           throw new ParseException(e.getMessage());
         }
