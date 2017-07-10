@@ -290,6 +290,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
             // load records to compare
             for (ODatabaseDocumentTx db : dbs) {
+              db.activateOnCurrentThread();
               verticesToCheck.add(loadVertex(db, clusterName, serverId, i, j + baseCount));
             }
 

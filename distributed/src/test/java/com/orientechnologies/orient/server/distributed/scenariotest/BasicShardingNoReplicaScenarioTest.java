@@ -26,9 +26,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Test;
 
@@ -76,7 +74,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
         graphNoTx.create();
       }
 
-      graphNoTx.command(" create class Client clusters 1");
+      graphNoTx.command(" create class Client extends V clusters 1");
       OSchema schema = graphNoTx.getMetadata().getSchema();
       schema.reload();
 
