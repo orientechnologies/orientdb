@@ -1171,8 +1171,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public void recyclePosition(final ORecordId iRecordId) {
-    wrapped.recyclePosition(iRecordId);
+  public void recyclePosition(final ORecordId iRecordId, final byte[] content, final int recordVersion, final byte recordType) {
+    wrapped.recyclePosition(iRecordId, content, recordVersion, recordType);
   }
 
   private Object executeRecordOperationInLock(final boolean iUnlockAtTheEnd, final ORecordId rid,

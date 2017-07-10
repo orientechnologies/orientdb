@@ -1315,15 +1315,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public void recyclePosition(final ORecordId rid) {
+  public void recyclePosition(final ORecordId record, final byte[] content, final int recordVersion, final byte recordType) {
     try {
       checkOpeness();
       checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
+      final ORecordId rid = (ORecordId) record.getIdentity();
+
       final OCluster cluster = getClusterById(rid.getClusterId());
+
+      final OPhysicalPosition ppos = new OPhysicalPosition(recordType);
+      final OPhysicalPosition allocated = new OPhysicalPosition(record.getClusterPosition());
 
       if (transaction.get() != null) {
         doRecycleRecord(rid, cluster);
+        doCreateRecord(rid, content, recordVersion, recordType, null, cluster, ppos, allocated);
+
         return;
       }
 
@@ -1336,6 +1343,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           // RECYCLING IT
           doRecycleRecord(rid, cluster);
+          doCreateRecord(rid, content, recordVersion, recordType, null, cluster, ppos, allocated);
 
         } finally {
           lock.unlock();
@@ -1669,7 +1677,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
                 final ORecord record = txEntry.getRecord();
                 record.setDirty();
-                recyclePosition(rid);
+                recyclePosition(rid, record.toStream(), record.getVersion(), ORecordInternal.getRecordType(record));
               }
 
               positions.put(txEntry, ppos);

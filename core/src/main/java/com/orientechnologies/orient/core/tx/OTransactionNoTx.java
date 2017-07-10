@@ -293,8 +293,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
     try {
       database.executeRecycleRecord(iRecord);
-      database
-          .executeSaveRecord(iRecord, getClusterName(iRecord), iRecord.getVersion(), OPERATION_MODE.SYNCHRONOUS, true, null, null);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();

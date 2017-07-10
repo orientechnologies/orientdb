@@ -2368,7 +2368,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new ODatabaseException(
           "Cannot recycle record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
 
-    storage.recyclePosition(rid);
+    storage.recyclePosition(rid, record.toStream(), record.getVersion(), ODocument.RECORD_TYPE);
   }
 
   /**

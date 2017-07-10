@@ -94,10 +94,9 @@ public interface OStorage extends OBackupable, OSharedContainer {
       byte iRecordType, int iMode, ORecordCallback<Integer> iCallback);
 
   /**
-   * Resurrects a record that was previously deleted, setting the record status = ALLOCATED, waiting for setting the content with a
-   * regular CREATE operation.
+   * Resurrects a record that was previously deleted.
    */
-  void recyclePosition(ORecordId iRecordId);
+  void recyclePosition(ORecordId record, byte[] content, int recordVersion, byte recordType);
 
   OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback);
 

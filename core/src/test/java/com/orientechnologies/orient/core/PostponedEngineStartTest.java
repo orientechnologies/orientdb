@@ -279,7 +279,7 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public void recyclePosition(ORecordId iRecordId) {
+        public void recyclePosition(ORecordId iRecordId, final byte[] content, final int recordVersion, final byte recordType) {
         }
 
         @Override
