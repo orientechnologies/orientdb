@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -63,7 +64,7 @@ public class OStorageRemotePushThread extends Thread {
         }
       } catch (IOException e) {
         pushHandler.onPushDisconnect(e);
-        while (true) {
+        while (!currentThread().isInterrupted()) {
           try {
             Thread.sleep(retryDelay);
           } catch (InterruptedException x) {
@@ -82,10 +83,9 @@ public class OStorageRemotePushThread extends Thread {
               pushHandler.onPushReconnect(this.host);
               break;
             } catch (OIOException ex) {
-              //Noting it jus retry
+              //Noting it just retry
             }
-          } else
-            break;
+          }
         }
       } catch (InterruptedException e) {
         pushHandler.onPushDisconnect(e);
@@ -102,9 +102,9 @@ public class OStorageRemotePushThread extends Thread {
       network.flush();
       return (T) blockingQueue.take().getResponse();
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().warn(this, "Exception on subscribe", e);
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      Thread.currentThread().interrupt();
     }
     return null;
   }
