@@ -1881,6 +1881,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   @Override
   public void onPushReconnect(String host) {
+    if (status != STATUS.OPEN) {
+      //AVOID RECONNECT ON CLOSE
+      return;
+    }
     OStorageRemoteSession aValidSession = null;
     for (OStorageRemoteSession session : sessions) {
       if (session.getServerSession(host) != null) {

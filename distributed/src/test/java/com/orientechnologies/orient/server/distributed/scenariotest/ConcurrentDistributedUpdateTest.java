@@ -1,11 +1,14 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,12 +37,11 @@ public class ConcurrentDistributedUpdateTest extends AbstractScenarioTest {
   public void executeTest() throws Exception {
 
     ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(0)));
-    if(orientGraph.exists()){
+    if (orientGraph.exists()) {
       orientGraph.open("admin", "admin");
-    }else{
+    } else {
       orientGraph.create();
     }
-
 
     OClass clazz = orientGraph.getClass("Test");
     if (clazz == null) {
@@ -50,12 +52,11 @@ public class ConcurrentDistributedUpdateTest extends AbstractScenarioTest {
     orientGraph.close();
 
     ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(0)));
-    if(graph.exists()){
+    if (graph.exists()) {
       graph.open("admin", "admin");
-    }else{
+    } else {
       graph.create();
     }
-
 
     for (int i = 0; i < 2; i++) {
       OVertex vertex = graph.newVertex("Test");
@@ -72,7 +73,7 @@ public class ConcurrentDistributedUpdateTest extends AbstractScenarioTest {
     executeMultipleTest();
   }
 
-  protected Callable<Void> createWriter(final int serverId, final int threadId, final String databaseURL) {
+  protected Callable<Void> createWriter(final int serverId, final int threadId, final ServerRun server) {
     return new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -80,13 +81,10 @@ public class ConcurrentDistributedUpdateTest extends AbstractScenarioTest {
 
         boolean isRunning = true;
 
-
-        ODatabaseDocumentTx graph = new ODatabaseDocumentTx(databaseURL);
-        if(graph.exists()){
-          graph.open("admin", "admin");
-        }else{
-          graph.create();
+        if (!server.getServerInstance().existsDatabase(getDatabaseName())) {
+          server.getServerInstance().createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, null);
         }
+        ODatabaseDocument graph = server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
         graph.begin();
 
         try {

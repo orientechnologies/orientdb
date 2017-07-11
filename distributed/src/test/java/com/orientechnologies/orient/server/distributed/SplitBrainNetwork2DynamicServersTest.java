@@ -89,7 +89,7 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
     count = 1000;
     // CREATE NEW RECORD IN THE MEANWHILE ON SERVERS 1 AND 2
     banner("RUNNING ONE WRITER ONLY ON SERVER 0");
-    createWriter(0, 100, getDatabaseURL(serverInstance.get(0))).call();
+    createWriter(0, 100, serverInstance.get(0)).call();
 
     expected += count;
 

@@ -309,7 +309,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
   }
 
-  protected void registerNewDatabaseIfNeeded(String dbName, ODistributedConfiguration cfg) {
+  public void registerNewDatabaseIfNeeded(String dbName, ODistributedConfiguration cfg) {
     ODistributedDatabaseImpl distribDatabase = getMessageService().getDatabase(dbName);
     if (distribDatabase == null) {
       // CHECK TO PUBLISH IT TO THE CLUSTER

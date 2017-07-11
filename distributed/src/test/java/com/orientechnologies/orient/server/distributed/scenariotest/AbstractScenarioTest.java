@@ -105,9 +105,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         for (int j = 0; j < writerCount; j++) {
           Callable writer = null;
           if (storageType.equals("plocal")) {
-            writer = createWriter(serverId, threadId++, getPlocalDatabaseURL(server));
+            writer = createWriter(serverId, threadId++, server);
           } else if (storageType.equals("remote")) {
-            writer = createWriter(serverId, threadId++, getRemoteDatabaseURL(server));
+            writer = createWriter(serverId, threadId++, server);
           } else
             throw new IllegalArgumentException("storageType " + storageType + " not supported");
           writerWorkers.add(writer);

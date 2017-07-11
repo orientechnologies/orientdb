@@ -94,9 +94,9 @@ public class SplitBrainNetwork3StaticServersTest extends AbstractHARemoveNode {
     count = 1000;
     // CREATE NEW RECORD IN THE MEANWHILE ON SERVERS 1 AND 2
     banner("RUNNING ONE WRITER ONLY ON SERVER 0");
-    createWriter(0, 100, getDatabaseURL(serverInstance.get(0))).call();
+    createWriter(0, 100, serverInstance.get(0)).call();
     banner("RUNNING ONE WRITER ONLY ON SERVER 1");
-    createWriter(1, 101, getDatabaseURL(serverInstance.get(1))).call();
+    createWriter(1, 101, serverInstance.get(1)).call();
 
     expected += count * 2;
 

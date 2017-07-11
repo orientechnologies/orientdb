@@ -49,14 +49,10 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
   protected boolean    expectedConcurrentException = true;
 
   class TxWriter implements Callable<Void> {
-    private final String databaseUrl;
     private final int    serverId;
 
-    public TxWriter(final int iServerId, final String db) {
+    public TxWriter(final int iServerId) {
       serverId = iServerId;
-      databaseUrl = db;
-      System.out.println("\nCreated Writer " + databaseUrl + " id=" + Thread.currentThread().getId() + " managed " + "0/" + count
-          + " vertices so far");
     }
 
     @Override
@@ -64,15 +60,13 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
       String name = Integer.toString(serverId);
 
       for (int i = 0; i < count; i++) {
-//        final ODatabaseDocument graph = pool.acquire();
-
         final ODatabaseDocument graph = getDatabase(serverId);
 
         final OVertex localVertex = getVertex(graph, v);
 
         try {
           if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
+            System.out.println("\nWriter " + graph.getURL() + " managed " + (i + 1) + "/" + count + " vertices so far");
 
           int retry = 0;
           boolean success = false;
@@ -107,11 +101,11 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
               success);
 
         } catch (InterruptedException e) {
-          System.out.println("Writer received interrupt (db=" + databaseUrl);
+          System.out.println("Writer received interrupt (db=" + graph.getURL());
           Thread.currentThread().interrupt();
           break;
         } catch (Exception e) {
-          System.out.println("Writer received exception (db=" + databaseUrl);
+          System.out.println("Writer received exception (db=" + graph.getURL());
           e.printStackTrace();
           break;
         } finally {
@@ -169,8 +163,8 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
   }
 
   @Override
-  protected Callable<Void> createWriter(final int serverId, final int threadId, String databaseURL) {
-    return new TxWriter(serverId, databaseURL);
+  protected Callable<Void> createWriter(final int serverId, final int threadId, ServerRun server) {
+    return new TxWriter(serverId);
   }
 
   protected OVertex createVertex(ODatabaseDocument graph, int serverId, int threadId, int i) {

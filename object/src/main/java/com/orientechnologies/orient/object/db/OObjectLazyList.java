@@ -71,6 +71,10 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
     return new OObjectLazyListIterator<TYPE>(this, sourceRecord);
   }
 
+  public Spliterator<TYPE> spliterator() {
+    return Spliterators.spliterator(this, Spliterator.ORDERED);
+  }
+
   public boolean contains(final Object o) {
     if (o instanceof Proxy)
       return recordList.contains(OObjectEntitySerializer.getDocument((Proxy) o));

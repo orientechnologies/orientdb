@@ -37,15 +37,12 @@ import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -116,33 +113,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         hazelcastConfigFile = OFileUtils.getPath(hazelcastConfigFile);
       }
     }
-    iServer.getDatabases().replaceFactory(new OEmbeddedDatabaseInstanceFactory() {
-      @Override
-      public ODatabaseDocumentEmbedded newInstance(OStorage storage) {
-        if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
-          return new ODatabaseDocumentEmbedded(storage);
-        }
-        registerNewDatabaseIfNeeded(storage.getName(),getDatabaseConfiguration(storage.getName()));
-        return new ODatabaseDocumentDistributed(getStorage(storage.getName(), (OAbstractPaginatedStorage) storage),
-            OHazelcastPlugin.this);
-      }
-
-      @Override
-      public ODatabaseDocumentEmbedded newPoolInstance(ODatabasePoolInternal pool, OStorage storage) {
-        if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
-          return new OEmbeddedDatabasePool(pool, storage);
-        }
-        registerNewDatabaseIfNeeded(storage.getName(),getDatabaseConfiguration(storage.getName()));
-        return new ODatabaseDocumentDistributedPooled(pool, getStorage(storage.getName(), (OAbstractPaginatedStorage) storage),
-            OHazelcastPlugin.this);
-      }
-    });
+    iServer.getDatabases().replaceFactory(new ODistributedEmbeddedDatabaseInstanceFactory(this));
   }
 
   @Override
   public void startup() {
     if (!enabled)
       return;
+
+    if (!(serverInstance.getDatabases().getFactory() instanceof ODistributedEmbeddedDatabaseInstanceFactory))
+      serverInstance.getDatabases().replaceFactory(new ODistributedEmbeddedDatabaseInstanceFactory(this));
 
     Orient.instance().setRunningDistributed(true);
 
@@ -609,6 +589,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
     });
 
+    serverInstance.getDatabases().replaceFactory(new ODefaultEmbeddedDatabaseInstanceFactory());
     setNodeStatus(NODE_STATUS.OFFLINE);
   }
 
@@ -1176,7 +1157,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       final ODistributedConfiguration cfg = getDatabaseConfiguration(dbName);
 
-
       // TODO: TEMPORARY PATCH TO WAIT FOR DB PROPAGATION IN CFG TO ALL THE OTHER SERVERS
       try {
         Thread.sleep(1000);
@@ -1714,4 +1694,5 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     OLogManager.instance().info(this, "Distributed Lock Manager server is '%s'", lockManagerServer);
   }
+
 }

@@ -40,14 +40,12 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
   protected ODatabasePool pool;
 
   class TxWriter implements Callable<Void> {
-    private final String databaseUrl;
-    private final int    serverId;
-    private final int    threadId;
+    private final int serverId;
+    private final int threadId;
 
-    public TxWriter(final int iServerId, final int iThreadId, final String db) {
+    public TxWriter(final int iServerId, final int iThreadId) {
       serverId = iServerId;
       threadId = iThreadId;
-      databaseUrl = db;
     }
 
     @Override
@@ -58,7 +56,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
         final ODatabaseDocument graph = pool.acquire();
         try {
           if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
+            System.out.println("\nWriter " + graph.getURL() + " managed " + (i + 1) + "/" + count + " vertices so far");
 
           try {
             OVertex person1 = createVertex(graph, serverId, threadId, i);
@@ -87,11 +85,11 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
             Thread.sleep(delayWriter);
 
         } catch (InterruptedException e) {
-          System.out.println("Writer received interrupt (db=" + databaseUrl);
+          System.out.println("Writer received interrupt (db=" + graph.getURL());
           Thread.currentThread().interrupt();
           break;
         } catch (Exception e) {
-          System.out.println("Writer received exception (db=" + databaseUrl);
+          System.out.println("Writer received exception (db=" + graph.getURL());
           e.printStackTrace();
           break;
         } finally {
@@ -135,8 +133,8 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
   }
 
   @Override
-  protected Callable<Void> createWriter(final int serverId, final int threadId, String databaseURL) {
-    return new TxWriter(serverId, threadId, databaseURL);
+  protected Callable<Void> createWriter(final int serverId, final int threadId, ServerRun server) {
+    return new TxWriter(serverId, threadId);
   }
 
   protected OVertex createVertex(ODatabaseDocument graph, int serverId, int threadId, int i) {
