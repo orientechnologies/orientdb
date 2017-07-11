@@ -8,13 +8,24 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by luigidellaquila on 06/07/16.
+ *
+ * <p>Execution Steps are the building blocks of a query execution plan</p>
+ * <p>Typically an execution plan is made of a chain of steps. The execution is pull-based, meaning that
+ * the result set that the client iterates is conceptually the one returned by <i>last</i> step of the execution plan</p>
+ * <p>At each `next()` invocation, the step typically fetches a record from the previous (upstream) step,
+ * does its elaboration (eg. for a filtering step, it can discard the record and fetch another one if it doesn't match
+ * the conditions) and returns the elaborated step</p>
+ *
+ * <p>The invocation of <code>syncPull(ctx, nResults)</code> has to return a result set of at most nResults records.
+ * If the upstream (the previous steps) return more records, they have to be returned by next call of <code>syncPull()</code>.
+ * The returned result set can have less than nResults records ONLY if current step cannot produce any more records (eg. the
+ * upstream does not have any more records)</p>
+ *
+ * @author Luigi Dell'Aquila l.dellaquila - at - orientdb.com
  */
-public interface OExecutionStepInternal extends OExecutionStep, OExecutionCallback {
+public interface OExecutionStepInternal extends OExecutionStep {
 
   OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException;
-
-  void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException;
 
   void sendTimeout();
 
