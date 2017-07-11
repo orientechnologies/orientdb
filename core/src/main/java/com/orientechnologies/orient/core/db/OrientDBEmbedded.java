@@ -55,17 +55,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected volatile Thread         shutdownThread;
   protected final    Orient         orient;
   private volatile boolean                          open    = true;
-  private volatile OEmbeddedDatabaseInstanceFactory factory = new OEmbeddedDatabaseInstanceFactory() {
-    @Override
-    public ODatabaseDocumentEmbedded newInstance(OStorage storage) {
-      return new ODatabaseDocumentEmbedded(storage);
-    }
-
-    @Override
-    public ODatabaseDocumentEmbedded newPoolInstance(ODatabasePoolInternal pool, OStorage storage) {
-      return new OEmbeddedDatabasePool(pool, storage);
-    }
-  };
+  private volatile OEmbeddedDatabaseInstanceFactory factory = new ODefaultEmbeddedDatabaseInstanceFactory();
 
   public OrientDBEmbedded(String directoryPath, OrientDBConfig configurations, Orient orient) {
     super();
@@ -442,7 +432,12 @@ public class OrientDBEmbedded implements OrientDBInternal {
     this.factory = factory;
   }
 
+  public OEmbeddedDatabaseInstanceFactory getFactory() {
+    return factory;
+  }
+
   public boolean isOpen() {
     return open;
   }
+
 }
