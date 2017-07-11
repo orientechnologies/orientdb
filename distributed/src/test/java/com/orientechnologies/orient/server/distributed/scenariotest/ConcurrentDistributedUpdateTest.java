@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.sun.security.ntlm.Server;
 import org.junit.Assert;
 import org.junit.Test;
 
