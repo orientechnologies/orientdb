@@ -36,7 +36,6 @@ import com.orientechnologies.orient.server.security.OSyslog;
  */
 public class ODefaultSyslog extends OServerPluginAbstract implements OSyslog {
   private boolean                debug    = false;
-  private boolean                enabled  = false;
   private String                 hostname = "localhost";
   private int                    port     = 514;        // Default syslog UDP port.
   private String                 appName  = "OrientDB";
@@ -65,6 +64,8 @@ public class ODefaultSyslog extends OServerPluginAbstract implements OSyslog {
 
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
+    enabled = false;
+
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
         enabled = Boolean.parseBoolean(param.value);
