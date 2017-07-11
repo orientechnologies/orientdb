@@ -37,7 +37,6 @@ import java.util.concurrent.Callable;
  * Test distributed TX
  */
 public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerClusterInsertTest {
-  protected ODatabasePool pool;
 
   class TxWriter implements Callable<Void> {
     private final int serverId;
@@ -50,6 +49,8 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
 
     @Override
     public Void call() throws Exception {
+      ODatabasePool pool = new ODatabasePool(serverInstance.get(serverId).getServerInstance().getContext(), getDatabaseName(),
+          "admin", "admin", OrientDBConfig.defaultConfig());
       String name = Integer.toString(serverId);
 
       for (int i = 0; i < count; i += 2) {
@@ -95,6 +96,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
         } finally {
           runningWriters.countDown();
           graph.close();
+          pool.close();
         }
       }
 
@@ -104,7 +106,6 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
   }
 
   protected void onAfterExecution() {
-    pool.close();
   }
 
   @Override
@@ -129,7 +130,6 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
 
     OClass knows = graph.createEdgeClass("Knows");
 
-    pool = new ODatabasePool(graph.getURL(), "admin", "admin", OrientDBConfig.defaultConfig());
   }
 
   @Override
