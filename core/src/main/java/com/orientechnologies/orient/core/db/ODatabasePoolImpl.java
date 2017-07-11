@@ -52,7 +52,7 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
   }
 
   @Override
-  public synchronized ODatabaseDocument acquire() {
+  public synchronized ODatabaseSession acquire() {
     // TODO:use configured timeout no property exist yet
     return pool.getResource(null, 1000);
   }

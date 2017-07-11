@@ -130,7 +130,7 @@ public class ODatabasePool implements AutoCloseable {
     internal = orientDb.openPool(database, user, password, configuration);
   }
 
-  public ODatabaseDocument acquire() {
+  public ODatabaseSession acquire() {
     return internal.acquire();
   }
 

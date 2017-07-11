@@ -9,7 +9,7 @@ import java.io.Closeable;
  */
 public interface ODatabasePoolInternal extends AutoCloseable {
 
-  ODatabaseDocument acquire();
+  ODatabaseSession acquire();
 
   void close();
 

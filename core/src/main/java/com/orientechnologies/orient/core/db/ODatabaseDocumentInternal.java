@@ -44,7 +44,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 
 import java.util.Map;
 
-public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseInternal<ORecord> {
+public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseInternal<ORecord> {
 
   /**
    * Internal. Returns the factory that defines a set of components that current database should use to be compatible to current
