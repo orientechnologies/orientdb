@@ -65,7 +65,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       threadId = iThreadId;
       this.serverRun = serverRun;
 
-      System.out.println("---- BaseWriter()");
     }
 
     @Override
@@ -74,7 +73,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       String name = Integer.toString(threadId);
 
       for (int i = 0; i < count; i++) {
-
         final ODatabaseDocument database = getDatabase(serverRun);
 
         try {
@@ -230,9 +228,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
 
     private void checkClusterStrategy(ODatabaseDocument database) {
-//      if (!databaseUrl.startsWith("remote:"))
-      Assert.assertTrue(
-          database.getMetadata().getSchema().getClass("Person") instanceof OClassDistributed);
+      if (!database.getURL().startsWith("remote:"))
+        Assert.assertTrue(database.getMetadata().getSchema().getClass("Person") instanceof OClassDistributed);
     }
 
     protected void deleteRecord(ODatabaseDocument database, ODocument doc) {
@@ -314,7 +311,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
   protected void executeMultipleTest(final int serverNum) throws InterruptedException, java.util.concurrent.ExecutionException {
     ODatabaseDocument database = getDatabase(serverNum); // serverInstance.get(serverNum).getEmbeddedDatabase(getDatabaseName());
-
 
     try {
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));

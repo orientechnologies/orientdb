@@ -63,6 +63,8 @@ public class OrientdbEdgeTest {
     if (server != null)
       server.shutdown();
 
+    ODatabaseDocumentTx.closeAll();
+
     File file = new File("./target/databases/");
     if (file.exists())
       OFileUtils.deleteRecursively(file);

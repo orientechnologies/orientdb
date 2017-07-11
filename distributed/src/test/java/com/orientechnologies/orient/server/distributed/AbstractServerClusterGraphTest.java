@@ -39,68 +39,45 @@ import java.util.concurrent.Callable;
  * Test distributed TX
  */
 public abstract class AbstractServerClusterGraphTest extends AbstractServerClusterInsertTest {
-//  protected ODatabasePool pool;
-  protected ORID          rootVertexId;
+  protected ORID rootVertexId;
   protected Object lock = new Object();
+  private ODatabasePool dbPool;
 
   class TxWriter implements Callable<Void> {
-    private final String databaseUrl;
     private final int    serverId;
     private final int    threadId;
-    
-    private ODatabasePool dbPool;
 
-    public TxWriter(final int iServerId, final int iThreadId, final String db) {
+    public TxWriter(final int iServerId, final int iThreadId) {
       serverId = iServerId;
       threadId = iThreadId;
-      databaseUrl = db;
-      
-      dbPool = new ODatabasePool(serverInstance.get(iServerId).getServerInstance().getContext(), getDatabaseName(), "admin", "admin", OrientDBConfig.defaultConfig());
-      setFactorySettings(dbPool);
-
-System.out.println("------ new TxWriter() serverId = " + iServerId + ", threadId = " + iThreadId);
     }
 
     @Override
     public Void call() throws Exception {
       String name = Integer.toString(serverId);
 
-System.out.println("------ TxWriter().call serverId = " + serverId + ", threadId = " + threadId);
-
       synchronized (lock) {
         if (rootVertexId == null) {
           // ONLY THE FIRST TIME CREATE THE ROOT
-System.out.println("------ pool.acquire()");
           ODatabaseDocument graph = dbPool.acquire();
-System.out.println("------ graph.begin()");
           try {
             graph.begin();
-System.out.println("------ createVertex()");
             OVertex root = createVertex(graph, serverId, threadId, 0);
-            root.save();
-            
             graph.commit();
-
             rootVertexId = root.getIdentity();
-            
-System.out.println("------ rootVertexId =" + rootVertexId);
-            
           } finally {
             graph.close();
           }
         }
       }
 
-System.out.println("------ ");
-
       int itemInTx = 0;
       final ODatabaseDocument graph = dbPool.acquire();
       try {
         graph.begin();
-      	
         for (int i = 1; i <= count; i++) {
           if (i % 100 == 0)
-            System.out.println("\nWriter " + databaseUrl + " managed " + i + "/" + count + " vertices so far");
+            System.out.println("\nWriter " + graph.getURL() + " managed " + i + "/" + count + " vertices so far");
 
           for (int retry = 0; retry < 100; retry++) {
             try {
@@ -109,16 +86,8 @@ System.out.println("------ ");
               checkVertex(graph, person);
 
               ODocument rootDoc = graph.load(rootVertexId);
-              
-if(rootDoc == null) System.out.println("!!!!!!!! rootDoc is null");
-  
               final OVertex root = rootDoc.asVertex().get();
-              
-if(root == null) System.out.println("!!!!!!!! rootis null");
-
-              
-              root.addEdge(person).save();
-              
+              graph.save(root.addEdge(person));
 
               // checkIndex(database, (String) person.field("name"), person.getIdentity());
 
@@ -132,9 +101,6 @@ if(root == null) System.out.println("!!!!!!!! rootis null");
               break;
 
             } catch (ONeedRetryException e) {
-
-System.out.println("---------- ONeedRetryException for serverId = " + serverId + ", threadId = " + threadId);
-System.out.println("---------- ONeedRetryException e = " + e.getMessage());
               graph.rollback();
               graph.begin();
               i -= itemInTx;
@@ -151,18 +117,14 @@ System.out.println("---------- ONeedRetryException e = " + e.getMessage());
             Thread.sleep(delayWriter);
         }
       } catch (InterruptedException e) {
-        System.out.println("Writer received interrupt (db=" + databaseUrl);
         Thread.currentThread().interrupt();
       } catch (Exception e) {
-        System.out.println("Writer received exception (db=" + databaseUrl);
         e.printStackTrace();
       } finally {
         runningWriters.countDown();
         graph.close();
-        dbPool.close();
       }
 
-      System.out.println("\nWriter " + name + " END");
       return null;
     }
   }
@@ -172,13 +134,8 @@ System.out.println("---------- ONeedRetryException e = " + e.getMessage());
     expected = writerCount * count * servers + baseCount + 1;
   }
 
-  @Override
-  protected void onBeforeExecution() {
-  }
-
-  @Override
   protected void onAfterExecution() {
-//    pool.close();
+    dbPool.close();
   }
 
   @Override
@@ -199,21 +156,28 @@ System.out.println("---------- ONeedRetryException e = " + e.getMessage());
     customer.createProperty("totalSold", OType.DECIMAL);
 
     OClass provider = graph.createClass("Provider", personClass.getName());
-    provider.createProperty("totalPurchased", OType.DECIMAL);    
+    provider.createProperty("totalPurchased", OType.DECIMAL);
+
   }
 
   protected void setFactorySettings(ODatabasePool pool) {
   }
 
   @Override
-  protected Callable<Void> createWriter(final int serverId, final int threadId, String databaseURL) {
-    return new TxWriter(serverId, threadId, databaseURL);
+  public void executeTest() throws Exception {
+    dbPool = new ODatabasePool(serverInstance.get(0).getServerInstance().getContext(), getDatabaseName(), "admin", "admin",
+        OrientDBConfig.defaultConfig());
+    setFactorySettings(dbPool);
+    super.executeTest();
+  }
+
+  @Override
+  protected Callable<Void> createWriter(final int serverId, final int threadId, ServerRun server) {
+    return new TxWriter(serverId, threadId);
   }
 
   protected OVertex createVertex(ODatabaseDocument graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
-    
-System.out.println("--createVertex() uniqueId = " + uniqueId);    
 
     OVertex result = graph.newVertex("Person");
     result.setProperty("id", UUID.randomUUID().toString());
@@ -221,7 +185,7 @@ System.out.println("--createVertex() uniqueId = " + uniqueId);
     result.setProperty("surname", "Mayes" + uniqueId);
     result.setProperty("birthday", new Date());
     result.setProperty("children", uniqueId);
-    result.save();
+    graph.save(result);
     return result;
   }
 
