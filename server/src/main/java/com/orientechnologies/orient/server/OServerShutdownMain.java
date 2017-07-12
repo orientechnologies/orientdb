@@ -75,10 +75,11 @@ public class OServerShutdownMain {
     OShutdownRequest request = new OShutdownRequest(rootUser, rootPassword);
     channel.writeByte(request.getCommand());
     channel.writeInt(0);
+    channel.writeBytes(null);
     request.write(channel, null);
     channel.flush();
 
-    channel.beginResponse(0, false);
+    channel.beginResponse(0, true);
   }
 
   public static void main(final String[] iArgs) {
