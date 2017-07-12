@@ -710,8 +710,11 @@ public class O2QCache implements OReadCache {
       return;
     }
 
-    cacheLock.acquireReadLock();
+    cacheLock.acquireWriteLock();
     try {
+      //we need to restore cache state only when we start server or
+      //embedded storage for all other cases we do not change queues
+      //to prevent memory leaks
       if (a1in.size() > 0 || a1out.size() > 0 || am.size() > 0)
         return;
 
@@ -741,10 +744,10 @@ public class O2QCache implements OReadCache {
         }
       }
     } catch (Exception e) {
-      OLogManager.instance()
-          .warn(this, "Cannot restore state of cache for storage placed under %s", writeCache.getRootDirectory(), e);
+      throw OException.wrapException(
+          new OStorageException("Cannot restore state of cache for storage placed under " + writeCache.getRootDirectory()), e);
     } finally {
-      cacheLock.releaseReadLock();
+      cacheLock.releaseWriteLock();
     }
   }
 
