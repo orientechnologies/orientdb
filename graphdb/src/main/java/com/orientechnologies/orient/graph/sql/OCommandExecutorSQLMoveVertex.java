@@ -31,11 +31,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
-import com.orientechnologies.orient.core.sql.OCommandParameters;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -47,75 +43,87 @@ import java.util.Set;
 
 /**
  * SQL MOVE VERTEX command.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
-  public static final String          NAME          = "MOVE VERTEX";
-  private static final String         KEYWORD_MERGE = "MERGE";
-  private static final String         KEYWORD_BATCH = "BATCH";
-  private String                      source        = null;
+  public static final  String NAME          = "MOVE VERTEX";
+  private static final String KEYWORD_MERGE = "MERGE";
+  private static final String KEYWORD_BATCH = "BATCH";
+  private              String source        = null;
   private String                      clusterName;
   private String                      className;
   private OClass                      clazz;
   private List<OPair<String, Object>> fields;
   private ODocument                   merge;
-  private int                         batch         = 100;
+  private int batch = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLMoveVertex parse(final OCommandRequest iRequest) {
-    final ODatabaseDocument database = getDatabase();
 
-    init((OCommandRequestText) iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      // System.out.println("NEW PARSER FROM: " + queryText);
+      queryText = preParse(queryText, iRequest);
+      // System.out.println("NEW PARSER TO: " + queryText);
+      textRequest.setText(queryText);
 
-    parserRequiredKeyword("MOVE");
-    parserRequiredKeyword("VERTEX");
+      final ODatabaseDocument database = getDatabase();
 
-    source = parserRequiredWord(false, "Syntax error", " =><,\r\n");
-    if (source == null)
-      throw new OCommandSQLParsingException("Cannot find source");
+      init((OCommandRequestText) iRequest);
 
-    parserRequiredKeyword("TO");
+      parserRequiredKeyword("MOVE");
+      parserRequiredKeyword("VERTEX");
 
-    String temp = parseOptionalWord(true);
+      source = parserRequiredWord(false, "Syntax error", " =><,\r\n");
+      if (source == null)
+        throw new OCommandSQLParsingException("Cannot find source");
 
-    while (temp != null) {
-      if (temp.startsWith("CLUSTER:")) {
-        if (className != null)
-          throw new OCommandSQLParsingException("Cannot define multiple sources. Found both cluster and class.");
+      parserRequiredKeyword("TO");
 
-        clusterName = temp.substring("CLUSTER:".length());
-        if (database.getClusterIdByName(clusterName) == -1)
-          throw new OCommandSQLParsingException("Cluster '" + clusterName + "' was not found");
+      String temp = parseOptionalWord(true);
 
-      } else if (temp.startsWith("CLASS:")) {
-        if (clusterName != null)
-          throw new OCommandSQLParsingException("Cannot define multiple sources. Found both cluster and class.");
+      while (temp != null) {
+        if (temp.startsWith("CLUSTER:")) {
+          if (className != null)
+            throw new OCommandSQLParsingException("Cannot define multiple sources. Found both cluster and class.");
 
-        className = temp.substring("CLASS:".length());
+          clusterName = temp.substring("CLUSTER:".length());
+          if (database.getClusterIdByName(clusterName) == -1)
+            throw new OCommandSQLParsingException("Cluster '" + clusterName + "' was not found");
 
-        clazz = database.getMetadata().getSchema().getClass(className);
+        } else if (temp.startsWith("CLASS:")) {
+          if (clusterName != null)
+            throw new OCommandSQLParsingException("Cannot define multiple sources. Found both cluster and class.");
 
-        if (clazz == null)
-          throw new OCommandSQLParsingException("Class '" + className + "' was not found");
+          className = temp.substring("CLASS:".length());
 
-      } else if (temp.equals(KEYWORD_SET)) {
-        fields = new ArrayList<OPair<String, Object>>();
-        parseSetFields(clazz, fields);
+          clazz = database.getMetadata().getSchema().getClass(className);
 
-      } else if (temp.equals(KEYWORD_MERGE)) {
-        merge = parseJSON();
+          if (clazz == null)
+            throw new OCommandSQLParsingException("Class '" + className + "' was not found");
 
-      } else if (temp.equals(KEYWORD_BATCH)) {
-        temp = parserNextWord(true);
-        if (temp != null)
-          batch = Integer.parseInt(temp);
+        } else if (temp.equals(KEYWORD_SET)) {
+          fields = new ArrayList<OPair<String, Object>>();
+          parseSetFields(clazz, fields);
+
+        } else if (temp.equals(KEYWORD_MERGE)) {
+          merge = parseJSON();
+
+        } else if (temp.equals(KEYWORD_BATCH)) {
+          temp = parserNextWord(true);
+          if (temp != null)
+            batch = Integer.parseInt(temp);
+        }
+
+        temp = parserOptionalWord(true);
+        if (parserIsEnded())
+          break;
       }
-
-      temp = parserOptionalWord(true);
-      if (parserIsEnded())
-        break;
+    } finally {
+      textRequest.setText(originalQuery);
     }
 
     return this;
@@ -124,6 +132,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
   /**
    * Executes the command and return the ODocument object created.
    */
+
   public Object execute(final Map<Object, Object> iArgs) {
     if (className == null && clusterName == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
@@ -164,8 +173,8 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
         newVertexDoc.save();
 
         // PUT THE MOVE INTO THE RESULT
-        result.add(new ODocument().setTrackingChanges(false).field("old", oldVertex, OType.LINK)
-            .field("new", newVertex, OType.LINK));
+        result
+            .add(new ODocument().setTrackingChanges(false).field("old", oldVertex, OType.LINK).field("new", newVertex, OType.LINK));
 
         if (batch > 0 && result.size() % batch == 0) {
           graph.commit();

@@ -362,6 +362,8 @@ TOKEN:
 	|
 	< RIDS: ( "R" | "r") ( "I" | "i") ( "D" | "d") ( "S" | "s") >
 	|
+	< MOVE: ( "m" | "M" ) ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -825,6 +827,8 @@ OIdentifier Identifier():
     |
     token = <RIDS>
     |
+    token = <MOVE>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -954,6 +958,9 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
                 result = CreateVertexStatementEmptyNoTarget()
+                |
+                LOOKAHEAD(MoveVertexStatement())
+                result = MoveVertexStatement()
                 |
                 LOOKAHEAD(CreateEdgeStatement())
                 result = CreateEdgeStatement()
@@ -1236,6 +1243,27 @@ ODeleteVertexStatement DeleteVertexStatement():
     [ jjtThis.limit = Limit() ]
     [ jjtThis.batch = Batch() ]
 ) {return jjtThis;}
+}
+
+OMoveVertexStatement MoveVertexStatement():
+{ OExpression lastSetExpr; }
+{
+  (
+     <MOVE> <VERTEX>
+     jjtThis.source = FromItem()
+     <TO>
+     (
+        jjtThis.targetCluster = Cluster()
+        |
+        (
+          <CLASS>
+          <COLON>
+          jjtThis.targetClass = Identifier()
+        )
+     )
+     [ jjtThis.updateOperations = UpdateOperations() ]
+     [ jjtThis.batch = Batch() ]
+  ){ return jjtThis; }
 }
 
 ODeleteEdgeStatement DeleteEdgeStatement():
