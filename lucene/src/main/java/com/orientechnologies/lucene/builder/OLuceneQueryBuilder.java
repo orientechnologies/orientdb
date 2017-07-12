@@ -94,6 +94,13 @@ public class OLuceneQueryBuilder {
       types.put(field, index.getTypes()[i]);
     }
 
+    return getQuery(index, query, metadata, queryAnalyzer, fields, types);
+
+  }
+
+  private Query getQuery(OIndexDefinition index, String query, ODocument metadata, Analyzer queryAnalyzer, String[] fields,
+      Map<String, OType> types) throws ParseException {
+
     Map<String, Float> boost = Optional.ofNullable(metadata.<Map<String, Float>>getProperty("boost"))
         .orElse(new HashMap<>());
 
@@ -118,7 +125,6 @@ public class OLuceneQueryBuilder {
     } catch (org.apache.lucene.queryparser.classic.ParseException e) {
       throw new ParseException(e.getMessage());
     }
-
   }
 
 }

@@ -68,8 +68,6 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
     fetchFirstBatch();
     deletedMatchCount = calculateDeletedMatch();
 
-    //TODO: parametrize
-
     Map<String, Object> highlight = Optional.ofNullable(metadata.<Map>getProperty("highlight"))
         .orElse(Collections.emptyMap());
 
@@ -198,7 +196,14 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
 
     @Override
     public boolean hasNext() {
-      return index < (totalHits - deletedMatchCount);
+      final boolean hasNext = index < (totalHits - deletedMatchCount);
+      if (!hasNext) {
+        final IndexSearcher searcher = queryContext.getSearcher();
+        if (searcher.getIndexReader().getRefCount() > 1) {
+          engine.release(searcher);
+        }
+      }
+      return hasNext;
     }
 
     @Override

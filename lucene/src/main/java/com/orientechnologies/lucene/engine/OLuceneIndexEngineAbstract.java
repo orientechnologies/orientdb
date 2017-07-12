@@ -204,8 +204,9 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   private void closeSearchManager() throws IOException {
-    if (searcherManager != null)
+    if (searcherManager != null) {
       searcherManager.close();
+    }
   }
 
   private void commitAndCloseWriter() throws IOException {
@@ -322,7 +323,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   public IndexSearcher searcher() {
     try {
       nrt.waitForGeneration(reopenToken);
-      return searcherManager.acquire();
+      IndexSearcher searcher = searcherManager.acquire();
+      return searcher;
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on get searcher from Lucene index", e);
       throw OException.wrapException(new OLuceneIndexException("Error on get searcher from Lucene index"), e);
@@ -404,6 +406,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       closeSearchManager();
 
       commitAndCloseWriter();
+
     } catch (Throwable e) {
       OLogManager.instance().error(this, "Error on closing Lucene index", e);
     }

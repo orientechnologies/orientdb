@@ -2,9 +2,9 @@ package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
-import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
+import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.OMetadata;
@@ -26,8 +26,6 @@ import static com.orientechnologies.lucene.functions.OLuceneFunctionsUtils.getOr
 public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate {
 
   public static final String NAME = "search_fields";
-
-  public static final ODocument EMPTY_METADATA = new ODocument();
 
   public OLuceneSearchOnFieldsFunction() {
     super(NAME, 2, 3);
@@ -86,7 +84,7 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
 
   private ODocument getMetadata(Object[] params) {
 
-    if (params.length ==3 ) {
+    if (params.length == 3) {
       return new ODocument().fromMap((Map<String, ?>) params[2]);
     }
 
