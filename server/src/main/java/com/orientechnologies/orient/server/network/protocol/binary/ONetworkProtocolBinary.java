@@ -196,14 +196,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   public boolean shouldReadToken(OClientConnection connection, int requestType) {
-    if (handshakeInfo != null) {
-      return true;
+    if (connection == null) {
+      return !isHandshaking(requestType) || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN;
     } else {
-      if (connection == null) {
-        return !isHandshaking(requestType) || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN;
-      } else {
-        return Boolean.TRUE.equals(connection.getTokenBased()) && !isHandshaking(requestType);
-      }
+      return Boolean.TRUE.equals(connection.getTokenBased()) && !isHandshaking(requestType);
     }
   }
 
@@ -545,26 +541,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
-      if (handshakeInfo != null) {
-        byte[] renewedToken = null;
-        if (connection != null && connection.getToken() != null) {
-          renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
-        }
-        channel.writeBytes(renewedToken);
-      } else {
-        if (tokenConnection && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && (
-            requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.DISTRIBUTED_CONNECT
-                && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN || (connection != null && connection.getData() != null
-                && connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32))
-            || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
-          // TODO: Check if the token is expiring and if it is send a new token
+      if (tokenConnection && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && (
+          requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.DISTRIBUTED_CONNECT
+              && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN || (connection != null && connection.getData() != null
+              && connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32))
+          || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
+        // TODO: Check if the token is expiring and if it is send a new token
 
-          if (connection != null && connection.getToken() != null) {
-            byte[] renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
-            channel.writeBytes(renewedToken);
-          } else
-            channel.writeBytes(new byte[] {});
-        }
+        if (connection != null && connection.getToken() != null) {
+          byte[] renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
+          channel.writeBytes(renewedToken);
+        } else
+          channel.writeBytes(new byte[] {});
       }
 
       final Throwable current;
@@ -656,21 +644,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
     channel.writeInt(iClientTxId);
     okSent = true;
-    if (handshakeInfo != null) {
-      byte[] renewedToken = null;
-      if (connection != null && connection.getToken() != null) {
-        renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
-      }
+    if (connection != null && Boolean.TRUE.equals(connection.getTokenBased()) && connection.getToken() != null
+        && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.DISTRIBUTED_CONNECT
+        && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
+      // TODO: Check if the token is expiring and if it is send a new token
+      byte[] renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
       channel.writeBytes(renewedToken);
+    }
+    if (handshakeInfo != null) {
       channel.writeByte((byte) requestType);
-    } else {
-      if (connection != null && Boolean.TRUE.equals(connection.getTokenBased()) && connection.getToken() != null
-          && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.DISTRIBUTED_CONNECT
-          && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
-        // TODO: Check if the token is expiring and if it is send a new token
-        byte[] renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
-        channel.writeBytes(renewedToken);
-      }
     }
   }
 

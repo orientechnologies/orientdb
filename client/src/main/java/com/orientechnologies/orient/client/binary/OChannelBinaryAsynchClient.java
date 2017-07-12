@@ -357,7 +357,13 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
     writeByte(iCommand);
     writeInt(nodeSession.getSessionId());
-    writeBytes(nodeSession.getToken());
+    if (nodeSession.getToken() != null) {
+      // if (!session.hasConnection(this) || true) {
+      writeBytes(nodeSession.getToken());
+      // session.addConnection(this);
+      // } else
+      // writeBytes(new byte[] {});
+    }
   }
 
   public int getSocketTimeout() {
