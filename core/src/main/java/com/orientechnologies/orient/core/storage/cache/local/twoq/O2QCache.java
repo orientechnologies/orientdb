@@ -644,6 +644,9 @@ public class O2QCache implements OReadCache {
 
     cacheLock.acquireReadLock();
     try {
+      if (a1in.size() > 0 || a1out.size() > 0 || am.size() > 0)
+        return;
+
       final File rootDirectory = writeCache.getRootDirectory();
       final File stateFile = new File(rootDirectory, CACHE_STATE_FILE);
       if (stateFile.exists()) {
