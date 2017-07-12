@@ -20,11 +20,14 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import junit.framework.Assert;
@@ -53,51 +56,54 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
           "admin", "admin", OrientDBConfig.defaultConfig());
       String name = Integer.toString(serverId);
 
-      for (int i = 0; i < count; i += 2) {
-        final ODatabaseDocument graph = pool.acquire();
-        try {
-          if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + graph.getURL() + " managed " + (i + 1) + "/" + count + " vertices so far");
-
+      try {
+        for (int i = 0; i < count; i += 2) {
+          final ODatabaseDocument graph = pool.acquire();
           try {
-            OVertex person1 = createVertex(graph, serverId, threadId, i);
-            OVertex person2 = createVertex(graph, serverId, threadId, i + 1);
+            if ((i + 1) % 100 == 0)
+              System.out.println("\nWriter " + graph.getURL() + " managed " + (i + 1) + "/" + count + " vertices so far");
 
-            OEdge knows = createEdge(graph, person1, person2);
+            try {
+              OVertex person1 = createVertex(graph, serverId, threadId, i);
+              OVertex person2 = createVertex(graph, serverId, threadId, i + 1);
 
-            Assert.assertEquals(knows.getFrom(), person1.getIdentity());
-            Assert.assertEquals(knows.getTo(), person2.getIdentity());
+              OEdge knows = createEdge(graph, person1, person2);
 
-            graph.commit();
+              Assert.assertEquals(knows.getFrom(), person1.getIdentity());
+              Assert.assertEquals(knows.getTo(), person2.getIdentity());
 
-            updateVertex(graph, person1);
-            checkVertex(graph, person1);
-            Assert.assertTrue(person1.getIdentity().isPersistent());
+              graph.commit();
 
-            updateVertex(graph, person2);
-            checkVertex(graph, person2);
-            Assert.assertTrue(person2.getIdentity().isPersistent());
+              updateVertex(graph, person1);
+              checkVertex(graph, person1);
+              Assert.assertTrue(person1.getIdentity().isPersistent());
+
+              updateVertex(graph, person2);
+              checkVertex(graph, person2);
+              Assert.assertTrue(person2.getIdentity().isPersistent());
+            } catch (Exception e) {
+              graph.rollback();
+              throw e;
+            }
+
+            if (delayWriter > 0)
+              Thread.sleep(delayWriter);
+
+          } catch (InterruptedException e) {
+            System.out.println("Writer received interrupt (db=" + graph.getURL());
+            Thread.currentThread().interrupt();
+            break;
           } catch (Exception e) {
-            graph.rollback();
-            throw e;
+            System.out.println("Writer received exception (db=" + graph.getURL());
+            e.printStackTrace();
+            break;
+          } finally {
+            runningWriters.countDown();
+            graph.close();
           }
-
-          if (delayWriter > 0)
-            Thread.sleep(delayWriter);
-
-        } catch (InterruptedException e) {
-          System.out.println("Writer received interrupt (db=" + graph.getURL());
-          Thread.currentThread().interrupt();
-          break;
-        } catch (Exception e) {
-          System.out.println("Writer received exception (db=" + graph.getURL());
-          e.printStackTrace();
-          break;
-        } finally {
-          runningWriters.countDown();
-          graph.close();
-          pool.close();
         }
+      }finally {
+        pool.close();
       }
 
       System.out.println("\nWriter " + name + " END");
@@ -144,13 +150,13 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
         "create vertex Person content {'id': '" + UUID.randomUUID().toString() + "', 'name': 'Billy" + uniqueId
             + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '" + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
             .getConfiguration().getDateFormatInstance().format(new Date()) + "', 'children': '" + uniqueId + "'}")).execute();
-    return (OVertex) result;
+    return ((OElement) result).asVertex().get();
   }
 
   protected OEdge createEdge(ODatabaseDocument graph, OVertex v1, OVertex v2) {
     final Iterable<OEdge> result = graph
         .command(new OCommandSQL("create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
-    return result.iterator().next();
+    return ((OElement)result.iterator().next()).asEdge().get();
   }
 
   protected void updateVertex(ODatabaseDocument graph, OVertex v) {
@@ -161,7 +167,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
     final Iterable<OVertex> result = graph.command(new OCommandSQL("select from " + v.getIdentity())).execute();
     Assert.assertTrue(result.iterator().hasNext());
 
-    final OVertex vertex = result.iterator().next();
+    final OVertex vertex = ((OElement)result.iterator().next()).asVertex().get();
     vertex.reload();
 
     Assert.assertTrue((Boolean) vertex.getProperty("updated"));
