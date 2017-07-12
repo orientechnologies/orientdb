@@ -20,6 +20,7 @@ package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Rule;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TestName;
@@ -52,6 +53,8 @@ public abstract class BaseLuceneTest {
       }
 
       db.create();
+
+      db.command(new OCommandSQL("ALTER DATABASE CHARSET UTF-8")).execute();
     }
 
     @Override
