@@ -35,9 +35,7 @@ public class OChannelBinarySynchClient extends OChannelBinaryClientAbstract {
   public void beginRequest(final byte iCommand, final int sessionId, final byte[] token) throws IOException {
     writeByte(iCommand);
     writeInt(sessionId);
-    if (token != null) {
-      writeBytes(token);
-    }
+    writeBytes(token);
   }
 
   public byte[] beginResponse(final boolean token) throws IOException {
@@ -49,6 +47,7 @@ public class OChannelBinarySynchClient extends OChannelBinaryClientAbstract {
       tokenBytes = this.readBytes();
     else
       tokenBytes = null;
+    int opCode = readByte();
     handleStatus(currentStatus, currentSessionId);
     return tokenBytes;
   }

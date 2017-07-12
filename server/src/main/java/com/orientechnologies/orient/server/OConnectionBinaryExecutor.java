@@ -1314,6 +1314,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeDistributedConnect(ODistributedConnectRequest request) {
+    HandshakeInfo handshakeInfo = new HandshakeInfo((short) OChannelBinaryProtocol.PROTOCOL_VERSION_37, "OrientDB Distributed", "",
+        (byte) 0, (byte) OChannelBinaryProtocol.ERROR_MESSAGE_JAVA);
+    ((ONetworkProtocolBinary) connection.getProtocol()).setHandshakeInfo(handshakeInfo);
 
     //TODO:check auth type
     OServerUserConfiguration serverUser = server.serverLogin(request.getUsername(), request.getPassword(), "server.connect");

@@ -115,7 +115,7 @@ public class OServerAdmin {
       }
       OConnectResponse response = request.createResponse();
       try {
-        network.beginResponse(nodeSession.getSessionId(), false);
+        network.beginResponse(nodeSession.getSessionId(), true);
         response.read(network, session);
       } finally {
         storage.endResponse(network);

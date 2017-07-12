@@ -126,7 +126,7 @@ public class ORemoteServerChannel {
         request.write(channel, null);
         channel.flush();
 
-        channel.beginResponse(false);
+        channel.beginResponse(true);
         ODistributedConnectResponse response = request.createResponse();
         response.read(channel, null);
         sessionId = response.getSessionId();
