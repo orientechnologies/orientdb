@@ -20,6 +20,7 @@ package com.orientechnologies.orient.graph.blueprints;
 
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -31,9 +32,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -114,6 +113,41 @@ public class GraphTest {
 
     Assert.assertEquals(true, enrico.iterator().hasNext());
 
+  }
+
+  @Test
+  public void testGetCompositeKeyBySingleValue() {
+    OrientGraph g = new OrientGraph(URL, "admin", "admin");
+
+    OrientVertexType vComposite = g.createVertexType("VComposite");
+    vComposite.createProperty("login", OType.STRING);
+    vComposite.createProperty("permissions", OType.EMBEDDEDSET, OType.STRING);
+
+    vComposite.createIndex("VComposite_Login_Perm", OClass.INDEX_TYPE.UNIQUE, "login", "permissions");
+
+    String loginOne = "admin";
+    Set<String> permissionsOne = new HashSet<String>();
+    permissionsOne.add("perm1");
+    permissionsOne.add("perm2");
+
+    String loginTwo = "user";
+    Set<String> permissionsTwo = new HashSet<String>();
+    permissionsTwo.add("perm3");
+    permissionsTwo.add("perm4");
+
+    g.addVertex("class:VComposite", "login", loginOne, "permissions", permissionsOne);
+    g.commit();
+
+    g.addVertex("class:VComposite", "login", loginTwo, "permissions", permissionsTwo);
+    g.commit();
+
+    Iterable<Vertex> vertices = g.getVertices("VComposite", new String[] { "login" }, new String[] { "admin" });
+    Iterator<Vertex> verticesIterator = vertices.iterator();
+
+    Assert.assertTrue(verticesIterator.hasNext());
+    Vertex vertex = verticesIterator.next();
+    Assert.assertEquals(vertex.getProperty("login"), "admin");
+    Assert.assertEquals(vertex.getProperty("permissions"), permissionsOne);
   }
 
   @Test
