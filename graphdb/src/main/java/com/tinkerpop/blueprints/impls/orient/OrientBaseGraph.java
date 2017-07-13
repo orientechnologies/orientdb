@@ -909,7 +909,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           }
           List<Object> keys = Arrays.asList(convertKeys(idx, sortedParams));
           Object key;
-          if (keys.size() == 1) {
+          if (indexFields.size() == 1) {
             key = keys.get(0);
           } else {
             key = new OCompositeKey(keys);
