@@ -21,10 +21,10 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -47,12 +47,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OServerCommandGetDatabase extends OServerCommandGetConnect {
   private static final String[] NAMES = { "GET|database/*" };
@@ -184,6 +179,18 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.writeAttribute("osArch", System.getProperty("os.arch"));
       json.writeAttribute("javaVendor", System.getProperty("java.vm.vendor"));
       json.writeAttribute("javaVersion", System.getProperty("java.vm.version"));
+
+      json.beginCollection("conflictStrategies");
+
+      Set<String> strategies = Orient.instance().getRecordConflictStrategy().getRegisteredImplementationNames();
+
+      int i = 0;
+      for (String strategy : strategies) {
+        json.write((i > 0 ? "," : "") + "\"" + strategy + "\"");
+        i++;
+      }
+      json.endCollection();
+
       json.endObject();
 
       if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClasses() != null) {
