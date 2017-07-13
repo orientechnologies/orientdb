@@ -1178,6 +1178,24 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
               }
             }
           }
+
+          // CHECK INDIVIDUAL LOCKS TOO
+          for (final Iterator<Map.Entry<ORID, ODistributedLock>> it = lockManager.entrySet().iterator(); it.hasNext(); ) {
+            final Map.Entry<ORID, ODistributedLock> entry = it.next();
+
+            final ODistributedLock lock = entry.getValue();
+            if (lock != null) {
+              final long elapsed = now - lock.acquiredOn;
+              if (elapsed > timeout) {
+                // EXPIRED
+                ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+                    "Distributed lock on database '%s' record %s is expired after %dms", databaseName, entry.getKey(), elapsed);
+
+                it.remove();
+              }
+            }
+          }
+
         } catch (Throwable t) {
           // CATCH EVERYTHING TO AVOID THE TIMER IS CANCELED
           ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
