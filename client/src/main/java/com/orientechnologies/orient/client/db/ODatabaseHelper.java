@@ -32,19 +32,21 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+@Deprecated
 public class ODatabaseHelper {
+  @Deprecated
   public static void createDatabase(ODatabase database, final String url) throws IOException {
     createDatabase(database, url, "server", "plocal");
   }
-
+  @Deprecated
   public static void createDatabase(ODatabase database, final String url, String type) throws IOException {
     createDatabase(database, url, "server", type);
   }
-
+  @Deprecated
   public static void openDatabase(ODatabase database) {
     database.open("admin", "admin");
   }
-
+  @Deprecated
   public static void createDatabase(ODatabase database, final String url, String directory, String type) throws IOException {
     if (url.startsWith(OEngineRemote.NAME)) {
       new OServerAdmin(url).connect("root", getServerRootPassword(directory)).createDatabase("document", type).close();
@@ -53,7 +55,7 @@ public class ODatabaseHelper {
       database.close();
     }
   }
-
+  @Deprecated
   public static void deleteDatabase(final ODatabase database, String storageType) throws IOException {
     deleteDatabase(database, "server", storageType);
   }
@@ -62,11 +64,11 @@ public class ODatabaseHelper {
   public static void deleteDatabase(final ODatabase database, final String directory, String storageType) throws IOException {
     dropDatabase(database, directory, storageType);
   }
-
+  @Deprecated
   public static void dropDatabase(final ODatabase database, String storageType) throws IOException {
     dropDatabase(database, "server", storageType);
   }
-
+  @Deprecated
   public static void dropDatabase(final ODatabase database, final String directory, String storageType) throws IOException {
     if (existsDatabase(database, storageType)) {
       if (database.getURL().startsWith("remote:")) {
@@ -84,7 +86,7 @@ public class ODatabaseHelper {
       }
     }
   }
-
+  @Deprecated
   public static boolean existsDatabase(final ODatabase database, String storageType) throws IOException {
     database.activateOnCurrentThread();
     if (database.getURL().startsWith("remote")) {
@@ -96,7 +98,7 @@ public class ODatabaseHelper {
 
     return database.exists();
   }
-
+  @Deprecated
   public static boolean existsDatabase(final String url) throws IOException {
     if (url.startsWith("remote")) {
       OServerAdmin admin = new OServerAdmin(url).connect("root", getServerRootPassword());
@@ -106,7 +108,7 @@ public class ODatabaseHelper {
     }
     return new ODatabaseDocumentTx(url).exists();
   }
-
+  @Deprecated
   public static void freezeDatabase(final ODatabase database) throws IOException {
     database.activateOnCurrentThread();
     if (database.getURL().startsWith("remote")) {
@@ -117,7 +119,7 @@ public class ODatabaseHelper {
       database.freeze();
     }
   }
-
+  @Deprecated
   public static void releaseDatabase(final ODatabase database) throws IOException {
     database.activateOnCurrentThread();
     if (database.getURL().startsWith("remote")) {
@@ -128,15 +130,15 @@ public class ODatabaseHelper {
       database.release();
     }
   }
-
+  @Deprecated
   public static File getConfigurationFile() {
     return getConfigurationFile(null);
   }
-
+  @Deprecated
   public static String getServerRootPassword() throws IOException {
     return getServerRootPassword("server");
   }
-
+  @Deprecated
   protected static String getServerRootPassword(final String iDirectory) throws IOException {
     String passwd = System.getProperty("ORIENTDB_ROOT_PASSWORD");
     if( passwd!=null)
@@ -155,7 +157,7 @@ public class ODatabaseHelper {
     pos += "password=\"".length();
     return fileContent.substring(pos, fileContent.indexOf('"', pos));
   }
-
+  @Deprecated
   protected static File getConfigurationFile(final String iDirectory) {
     // LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
     String sysProperty = System.getProperty("orientdb.config.file");

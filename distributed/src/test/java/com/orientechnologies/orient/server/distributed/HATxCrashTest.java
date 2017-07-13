@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.junit.Assert;
 import org.junit.Test;
@@ -85,7 +86,14 @@ public class HATxCrashTest extends AbstractHARemoveNode {
                       public Boolean call() throws Exception {
               	         // Why did this in the poolFactory version always use serverInstance.get(0)...?
               	         // Does it affect the test to use a specific server?
-                        final ODatabaseDocument database = getDatabase(server);
+                        ServerRun runningServer = null;
+                        for(ServerRun run : serverInstance){
+                          if(run.getServerInstance().getDatabases().isOpen()){
+                            runningServer = run;
+                            break;
+                          }
+                        }
+                        final ODatabaseDocument database = getDatabase(runningServer);
                             
                         try {
                           return database.countClass("Person") > (count * SERVERS) * 2 / 3;

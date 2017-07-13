@@ -511,6 +511,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public long getClusterTime() {
     try {
+      if(hazelcastInstance == null)
+        return -1;
       return hazelcastInstance.getCluster().getClusterTime();
     } catch (HazelcastInstanceNotActiveException e) {
       return -1;
