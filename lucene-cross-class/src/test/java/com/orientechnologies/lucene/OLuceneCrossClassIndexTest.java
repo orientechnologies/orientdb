@@ -109,6 +109,28 @@ public class OLuceneCrossClassIndexTest extends OLuceneBaseTest {
   }
 
   @Test
+  public void shouldSearchAcrossAllSubIndexesUsingMetadataFields() {
+
+    String query = "SELECT expand(SEARCH_CROSS('(+_CLASS:Song +title:mountain) (+_CLASS:Author +name:Chuck)') )";
+    OResultSet resultSet = db.query(query);
+
+    List<OElement> elements = fetchElements(resultSet).collect(Collectors.toList());
+
+    assertThat(elements).isNotEmpty();
+
+    elements.forEach(el -> {
+
+      String className = el.getSchemaType().get().getName();
+      if (className.equals("Song"))
+        assertThat(el.<String>getProperty("title")).containsIgnoringCase("mountain");
+
+      if (className.equals("Author"))
+        assertThat(el.<String>getProperty("name")).containsIgnoringCase("chuck");
+
+    });
+  }
+
+  @Test
   public void shouldSearchAcrossAllClassesWithRangeQuery() {
 
     String query = "select expand(SEARCH_CROSS('Song.title:mountain  Author.score:[4 TO 7]', {'allowLeadingWildcard' : true})) ";
@@ -148,10 +170,9 @@ public class OLuceneCrossClassIndexTest extends OLuceneBaseTest {
         assertThat(el.<String>getProperty("title")).containsIgnoringCase("mountain");
 
       if (className.equals("Author"))
-        assertThat(el.<String>getProperty("name")).containsIgnoringCase("bob") ;
+        assertThat(el.<String>getProperty("name")).containsIgnoringCase("bob");
 
     });
   }
-
 
 }
