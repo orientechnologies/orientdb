@@ -69,4 +69,19 @@ public class LuceneIssuesTest extends BaseLuceneTest {
 
   }
 
+  @Test
+  public void test_ph8929() throws Exception {
+
+    InputStream stream = ClassLoader.getSystemResourceAsStream("testPh_8929.osql");
+
+    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+
+    List<ODocument> documents = db
+        .query(new OSQLSynchQuery<Object>("select from Test where [a,b] lucene 'a:lion b:cat'"));
+
+    Assertions.assertThat(documents).hasSize(2);
+
+
+
+  }
 }
