@@ -1368,7 +1368,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final ODistributedDatabaseImpl distrDatabase, final String iNode, final ODistributedDatabaseChunk firstChunk,
       final boolean delta, final File uniqueClustersBackupDirectory, final OModifiableDistributedConfiguration cfg) {
 
-    final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
+    final String fileName = Orient.getTempPath() + "install_" + databaseName + "_server" + getLocalNodeId() + ".zip";
 
     final String localNodeName = nodeName;
 
