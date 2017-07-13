@@ -180,7 +180,10 @@ configModule.controller("UMLController", ['$scope', '$routeParams', '$location',
 configModule.controller("StructureController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', 'ClusterAlterApi', "Notification", function ($scope, $routeParams, $location, DatabaseApi, Database, ClusterAlterApi, Notification) {
 
   $scope.clusters = Database.getMetadata()['clusters'];
-  $scope.conflictStrategies = ['version', 'content', 'automerge']
+  $scope.conflictStrategies = Database.getMetadata()['server']['conflictStrategies'];
+  if (!$scope.conflictStrategies) {
+    $scope.conflictStrategies = ['version', 'content', 'automerge'];
+  }
   $scope.dataSegments = Database.getMetadata()['dataSegments'];
   $scope.txSegments = Database.getMetadata()['txSegment'];
 
@@ -243,7 +246,11 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
   $scope.customDirty = [];
   $scope.clusterStrategies = ['round-robin', "default", "balanced", "local"];
 
-  $scope.conflictStrategies = ['version', 'content', 'automerge']
+  $scope.conflictStrategies = Database.getMetadata()['server']['conflictStrategies'];
+
+  if (!$scope.conflictStrategies) {
+    $scope.conflictStrategies = ['version', 'content', 'automerge'];
+  }
   $scope.isDisabledVal = function (val) {
     return $scope.canChange.indexOf(val.name) == -1
   }
