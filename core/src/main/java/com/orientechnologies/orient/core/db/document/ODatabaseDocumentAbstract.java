@@ -116,7 +116,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   private boolean prefetchRecords;
 
-  private OMicroTransaction microTransaction = null;
+  protected OMicroTransaction microTransaction = null;
 
   protected ODatabaseDocumentAbstract() {
     // DO NOTHING IS FOR EXTENDED OBJECTS
@@ -3106,19 +3106,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return true;
   }
 
-  private OMicroTransaction beginMicroTransaction() {
-    final OStorage storage = getStorage();
-    if (!(storage instanceof OAbstractPaginatedStorage))
-      return null;
-
-    final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
-
-    if (microTransaction == null)
-      microTransaction = new OMicroTransaction(abstractPaginatedStorage, this);
-
-    microTransaction.begin();
-    return microTransaction;
-  }
+  protected abstract OMicroTransaction beginMicroTransaction();
 
   private void endMicroTransaction(boolean success) {
     assert microTransaction != null;

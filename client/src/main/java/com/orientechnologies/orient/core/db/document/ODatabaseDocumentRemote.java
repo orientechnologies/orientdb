@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
@@ -356,4 +357,9 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public void recycle(ORecord record) {
     throw new UnsupportedOperationException();
   }
+
+  protected OMicroTransaction beginMicroTransaction() {
+    return null;
+  }
+
 }
