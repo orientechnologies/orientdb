@@ -2572,7 +2572,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             if (r instanceof OIdentifiable) {
               ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) r);
             } else if (r instanceof Iterator || OMultiValue.isMultiValue(r)) {
+              int i = 0;
               for (Object o : OMultiValue.getMultiValueIterable(r)) {
+                if ((++i) % 100 == 0 && !checkInterruption()) {
+                  return;
+                }
                 ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) o);
               }
             }
@@ -2597,6 +2601,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
         for (OIdentifiable id : tempResult) {
+          if (!checkInterruption()) {
+            return;
+          }
           final Object fieldValue;
           if (expandTarget instanceof OSQLFilterItem) {
             fieldValue = ((OSQLFilterItem) expandTarget).getValue(id.getRecord(), null, context);
