@@ -738,8 +738,13 @@ public class O2QCache implements OReadCache {
         }
       }
     } catch (Exception e) {
-      throw OException.wrapException(
-          new OStorageException("Cannot restore state of cache for storage placed under " + writeCache.getRootDirectory()), e);
+      OLogManager.instance().warn(this, "Cannot restore state of cache for storage placed under " + writeCache.getRootDirectory()
+          + ", whole cache will be cleared", e);
+
+      am.clear();
+      a1in.clear();
+      a1out.clear();
+
     } finally {
       cacheLock.releaseWriteLock();
     }
