@@ -587,6 +587,8 @@ public enum OGlobalConfiguration {
 
   QUERY_LIVE_SUPPORT("query.live.support", "Enable/Disable the support of live query. (Use false to disable)", Boolean.class, true),
 
+  QUERY_TIMEOUT_DEFAULT_STRATEGY("query.timeout.defaultStrategy", "Default timeout strategy for queries (can be RETURN or EXCEPTION)", String.class, "EXCEPTION"),
+
   LUCENE_QUERY_PAGE_SIZE("lucene.query.pageSize",
       "Size of the page when fetching data from a lucene index", Long.class, 10000,true),
 
