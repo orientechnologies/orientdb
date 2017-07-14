@@ -72,7 +72,7 @@ public class OCreatePropertyStatement extends ODDLStatement {
         linkedType = OType.valueOf(linked.toUpperCase(Locale.ENGLISH));
     }
     // CREATE IT LOCALLY
-    OPropertyImpl internalProp = clazz.addPropertyInternal(propertyName.getStringValue(), type, linkedType, linkedClass, unsafe);
+    OPropertyImpl internalProp = (OPropertyImpl) clazz.addProperty(propertyName.getStringValue(), type, linkedType, linkedClass, unsafe);
     for (OCreatePropertyAttributeStatement attr : attributes) {
       Object val = attr.setOnProperty(internalProp, ctx);
       result.setProperty(attr.settingName.getStringValue(), val);

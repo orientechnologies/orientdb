@@ -31,7 +31,7 @@ public class OClassEmbedded extends OClassImpl {
     super(iOwner, iDocument, iName);
   }
 
-  protected OProperty addProperty(final String propertyName, final OType type, final OType linkedType, final OClass linkedClass,
+  public OProperty addProperty(final String propertyName, final OType type, final OType linkedType, final OClass linkedClass,
       final boolean unsafe) {
     if (type == null)
       throw new OSchemaException("Property type not defined.");
