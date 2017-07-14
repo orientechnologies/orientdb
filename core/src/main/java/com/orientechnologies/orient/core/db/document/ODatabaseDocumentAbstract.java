@@ -3091,18 +3091,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   private boolean supportsMicroTransactions(ORecord record) {
-    if (!(record instanceof ODocument))
-      return true;
-
-    final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass((ODocument) record);
-
-    // XXX: Function library is force reloading functions from disk on every change, see
-    // OFunctionLibraryImpl.load(ODatabaseDocumentInternal). This conflicts with the data stored in a micro-transaction. For now
-    // we just bypass them, but this makes changes to functions non-atomic. See #7507.
-    //noinspection RedundantIfStatement
-    if (class_ != null && class_.isFunction())
-      return false;
-
     return true;
   }
 

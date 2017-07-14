@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.function;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
@@ -29,7 +30,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Update the in-memory function library.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OFunctionTrigger extends ODocumentHookAbstract {
@@ -61,22 +62,20 @@ public class OFunctionTrigger extends ODocumentHookAbstract {
 
   @Override
   public void onRecordAfterCreate(final ODocument iDocument) {
-    reloadLibrary();
+    ((ODatabaseDocumentInternal) database).getSharedContext().getFunctionLibrary().createdFunction(iDocument);
+    Orient.instance().getScriptManager().close(database.getName());
   }
 
   @Override
   public void onRecordAfterUpdate(final ODocument iDocument) {
-    reloadLibrary();
+    ((ODatabaseDocumentInternal) database).getSharedContext().getFunctionLibrary().updatedFunction(iDocument);
+    Orient.instance().getScriptManager().close(database.getName());
   }
 
   @Override
   public void onRecordAfterDelete(final ODocument iDocument) {
-    reloadLibrary();
-  }
-
-  protected void reloadLibrary() {
-    database.getMetadata().getFunctionLibrary().load();
-
+    ((ODatabaseDocumentInternal) database).getSharedContext().getFunctionLibrary().droppedFunction(iDocument);
     Orient.instance().getScriptManager().close(database.getName());
   }
+
 }

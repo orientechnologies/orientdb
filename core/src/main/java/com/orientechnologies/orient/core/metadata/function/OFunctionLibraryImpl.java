@@ -90,6 +90,16 @@ public class OFunctionLibraryImpl {
     }
   }
 
+  public void droppedFunction(ODocument function) {
+    functions.remove(function.field("name").toString());
+  }
+
+  public void createdFunction(ODocument function) {
+    ODocument metadataCopy = function.copy();
+    final OFunction f = new OFunction(metadataCopy);
+    functions.put(metadataCopy.field("name").toString().toUpperCase(Locale.ENGLISH), f);
+  }
+
   public Set<String> getFunctionNames() {
     return Collections.unmodifiableSet(functions.keySet());
   }
@@ -150,5 +160,19 @@ public class OFunctionLibraryImpl {
     ODocument doc = function.getDocument();
     doc.delete();
     functions.remove(iName.toUpperCase(Locale.ENGLISH));
+  }
+
+  public void updatedFunction(ODocument function) {
+    ODocument metadataCopy = function.copy();
+    OCallable<Object, Map<Object, Object>> callBack = null;
+    OFunction oldFunction = functions.get(metadataCopy.field("name").toString());
+    if (oldFunction != null) {
+      callBack = oldFunction.getCallback();
+    }
+    final OFunction f = new OFunction(metadataCopy);
+    if (callBack != null) {
+      f.setCallback(callBack);
+    }
+    functions.put(metadataCopy.field("name").toString().toUpperCase(Locale.ENGLISH), f);
   }
 }
