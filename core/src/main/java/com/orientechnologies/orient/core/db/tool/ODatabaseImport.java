@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -1460,7 +1461,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         OLogManager.instance().error(this,
             "Error importing record. Source line " + jsonReader.getLineNumber() + ", column " + jsonReader.getColumnNumber());
 
-      throw t;
+      if (!(t instanceof ODatabaseException)) {
+        throw t;
+      }
     } finally {
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
     }
