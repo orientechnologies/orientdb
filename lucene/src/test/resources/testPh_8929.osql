@@ -1,13 +1,14 @@
 create class Test IF NOT EXISTS;
 
-create property Test.a STRING;
-create property Test.b STRING;
+create property Test.a EMBEDDEDLIST STRING;
+create property Test.b EMBEDDEDLIST STRING;
 
-create index Test.a_b on Test(a,b) FULLTEXT ENGINE LUCENE;
+create index Test.a on Test(a) FULLTEXT ENGINE LUCENE;
+create index Test.b on Test(b) FULLTEXT ENGINE LUCENE;
 
 
-insert into Test set a="fox", b="cat";
-insert into Test set a="dog", b="whale";
-insert into Test set a="snake", b="elephant";
-insert into Test set a="lion", b="tiger";
+insert into Test set a=["fox","bear"], b=["cat","fish"];
+insert into Test set a=["dog","wolf"], b=["whale","squid"];
+insert into Test set a=["snake","chicken"] , b=["elephant","mouse"];
+insert into Test set a=["lion","eagle"], b=["tiger","yak"];
 
