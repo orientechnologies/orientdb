@@ -61,6 +61,12 @@ class TeleporterService {
     })
   }
 
+  saveConfiguration(params) {
+    let url = API + 'teleporter/save-config';
+    return this.http.post(url, params).toPromise().then((data) => {
+      return data.json();
+    });
+  }
 }
 
 

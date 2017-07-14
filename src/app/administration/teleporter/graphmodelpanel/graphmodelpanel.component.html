@@ -2,7 +2,7 @@
 
   <div class="panel-heading" style="height: 68px;">
     <div class="row" id="firstRow">
-      <div class="col-md-9">
+      <div class="col-md-8">
         <div *ngIf="searchOptionsLoaded" class="input-group">
           <span class="input-group-addon" (click)="searchNodeOnButtonClick()" style="cursor:pointer">Search</span>
           <select2 id="search" [data]="searchOptions" [width]="300" (valueChanged)="searchNodeOnEvent($event)"
@@ -10,7 +10,15 @@
         </div>
       </div>
 
-      <div class="col-md-1"></div>
+      <div class="col-md-2">
+        <div class="btn-group">
+          <button class="btn btn-primary" (click)="saveConfiguration()"
+                  data-toggle="popover" data-placement="top" data-content="Save your current configuration" data-container="body" data-trigger="hover" data-animation="am-fade-and-scale">
+            <i class="fa fa-floppy-o"></i>
+            Save
+          </button>
+        </div>
+      </div>
 
       <div class="col-md-2" id="headerButtons">
         <div class="form-group">

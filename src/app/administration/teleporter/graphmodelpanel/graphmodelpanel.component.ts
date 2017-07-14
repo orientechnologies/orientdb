@@ -25,6 +25,8 @@ class GraphModelPanelComponent implements OnInit, OnChanges {
   @Input() selectedElement = this.selectedElement !== 'undefined' ? this.selectedElement : 'undefined';
   @Output() onSelectedElement = new EventEmitter();
 
+  @Output() onSaveConfigRequest = new EventEmitter();
+
   @Input() onMigrationConfigFetched;
 
   private dataLoaded:boolean;
@@ -39,7 +41,7 @@ class GraphModelPanelComponent implements OnInit, OnChanges {
 
   @ViewChild('graph') graphComponent;
 
-  constructor() {
+  constructor(private teleporterService: TeleporterService, private notification: NotificationService) {
 
     this.dataLoaded = false;
     this.searchOptions = [];
@@ -201,6 +203,10 @@ class GraphModelPanelComponent implements OnInit, OnChanges {
 
   startEdgeCreation() {
     this.graphComponent.startEdgeCreation();
+  }
+
+  saveConfiguration() {
+    this.onSaveConfigRequest.emit();
   }
 
 }

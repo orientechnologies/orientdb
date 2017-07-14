@@ -273,8 +273,8 @@
         <div class="border">
           <div class="col-sm-7">
             <graph-model-panel #graphPanel [(modellingConfig)]="modellingConfig" [(selectedElement)]="selectedElement"
-                               [(onMigrationConfigFetched)]="onMigrationConfigFetched"
-                               (onSelectedElement)="changeSelectedElement($event)"></graph-model-panel>
+                               [(onMigrationConfigFetched)]="onMigrationConfigFetched" (onSelectedElement)="changeSelectedElement($event)"
+                               (onSaveConfigRequest)="saveConfiguration()"></graph-model-panel>
           </div>
           <div class="col-md-5">
             <detail-panel #detailPanel [(modellingConfig)]="modellingConfig" [(selectedElement)]="selectedElement"

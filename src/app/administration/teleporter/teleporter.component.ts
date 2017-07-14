@@ -245,8 +245,22 @@ class TeleporterComponent implements AfterViewChecked {
   }
 
   testConnection() {
-    this.teleporterService.testConnection(this.config).then((data) => {
+    this.teleporterService.testConnection(this.config).then(() => {
       this.notification.push({content: "Connection is alive", autoHide: true});
+    }).catch((error) => {
+      this.notification.push({content: error.json(), error: true, autoHide: true});
+    });
+  }
+
+  saveConfiguration() {
+
+    var migrationConfigString = JSON.stringify(this.modellingConfig);
+    var params = {
+      "migrationConfig": migrationConfigString,
+      "outDBName": this.config.outDBName
+    };
+    this.teleporterService.saveConfiguration(params).then(() => {
+      this.notification.push({content: "Configuration correctly saved.", autoHide: true});
     }).catch((error) => {
       this.notification.push({content: error.json(), error: true, autoHide: true});
     });
