@@ -866,4 +866,11 @@ public class OVertexDelegate implements OVertex {
     iVertex.save();
   }
 
+  @Override
+  public String toString() {
+    if (element != null) {
+      return element.toString();
+    }
+    return super.toString();
+  }
 }

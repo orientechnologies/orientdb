@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -486,5 +485,36 @@ public class OEdgeDelegate implements OEdge {
     if (element != null)
       return element.getSize();
     return 0;
+  }
+
+  @Override
+  public String toString() {
+    if (element != null) {
+      return element.toString();
+    } else {
+      StringBuilder result = new StringBuilder();
+      boolean first = true;
+      result.append("{");
+      if (lightweightEdgeType != null) {
+        result.append("class: " + lightweightEdgeType.getName());
+        first = false;
+      }
+      if (vOut != null) {
+        if (!first) {
+          result.append(", ");
+        }
+        result.append("out: " + vOut.getIdentity());
+        first = false;
+      }
+      if (vIn != null) {
+        if (!first) {
+          result.append(", ");
+        }
+        result.append("in: " + vIn.getIdentity());
+        first = false;
+      }
+      result.append("} (lightweight)");
+      return result.toString();
+    }
   }
 }
