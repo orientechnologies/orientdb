@@ -178,11 +178,15 @@ public class OrientDBRemote implements OrientDBInternal {
 
   @Override
   public synchronized void close() {
+    if (!open)
+      return;
     Runtime.getRuntime().removeShutdownHook(shutdownThread);
     internalClose();
   }
 
   public synchronized void internalClose() {
+    if (!open)
+      return;
     final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
     for (OStorage stg : storagesCopy) {
       try {

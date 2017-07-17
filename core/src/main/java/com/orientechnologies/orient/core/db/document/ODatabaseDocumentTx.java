@@ -57,6 +57,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal.closeAllOnShutdown;
+
 /**
  * Created by tglman on 20/07/16.
  *
@@ -65,8 +67,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @Deprecated
 public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
-  private static ConcurrentMap<String, OrientDBInternal> embedded = new ConcurrentHashMap<>();
-  private static ConcurrentMap<String, OrientDBInternal> remote   = new ConcurrentHashMap<>();
+  protected static ConcurrentMap<String, OrientDBInternal> embedded = new ConcurrentHashMap<>();
+  protected static ConcurrentMap<String, OrientDBInternal> remote   = new ConcurrentHashMap<>();
 
   protected     ODatabaseDocumentInternal internal;
   private final String                    url;
@@ -89,7 +91,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   private static OShutdownHandler shutdownHandler = new OShutdownHandler() {
     @Override
     public void shutdown() throws Exception {
-      closeAll();
+      closeAllOnShutdown();
     }
 
     @Override

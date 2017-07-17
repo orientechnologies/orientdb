@@ -214,6 +214,12 @@ public interface OrientDBInternal extends AutoCloseable {
   void close();
 
   /**
+   * Should be called only by shutdown listeners
+   *
+   */
+  void internalClose();
+
+  /**
    * Internal API for pool close
    *
    * @param toRemove

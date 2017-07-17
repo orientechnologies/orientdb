@@ -168,7 +168,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return storages.get(name);
   }
 
-
   protected String buildName(String name) {
     if (basePath == null) {
       throw new ODatabaseException("OrientDB instanced created without physical path, only memory databases are allowed");
@@ -289,7 +288,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-
   protected interface DatabaseFound {
     void found(String name);
   }
@@ -334,12 +332,15 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   @Override
   public synchronized void close() {
+    if (!open)
+      return;
     removeShutdownHook();
     internalClose();
-    open = false;
   }
 
-  protected synchronized void internalClose() {
+  public synchronized void internalClose() {
+    if (!open)
+      return;
     final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
     for (OStorage stg : storagesCopy) {
       try {
@@ -350,8 +351,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
       }
     }
     storages.clear();
-
     orient.onEmbeddedFactoryClose(this);
+    open = false;
   }
 
   public OrientDBConfig getConfigurations() {
