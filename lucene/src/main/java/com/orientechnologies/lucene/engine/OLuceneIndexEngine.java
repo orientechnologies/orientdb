@@ -61,4 +61,7 @@ public interface OLuceneIndexEngine extends OIndexEngine, OFreezableStorageCompo
 
   Query deleteQuery(Object key, OIdentifiable value);
 
+
+  boolean isCollectionIndex();
+
 }

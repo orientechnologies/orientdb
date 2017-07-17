@@ -373,6 +373,11 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   @Override
+  public boolean isCollectionIndex() {
+    return isCollectionDelete();
+  }
+
+  @Override
   public IndexSearcher searcher() throws IOException {
     try {
       nrt.waitForGeneration(reopenToken);

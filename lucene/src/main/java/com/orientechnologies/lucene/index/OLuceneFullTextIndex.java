@@ -82,6 +82,22 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique implements OLuce
       }
   }
 
+  public boolean isCollectionIndex() {
+    while (true) {
+      try {
+        return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Boolean>() {
+          @Override
+          public Boolean callEngine(OIndexEngine engine) {
+            OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+            return indexEngine.isCollectionIndex();
+          }
+        });
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
+      }
+    }
+  }
+
   public Analyzer indexAnalyzer() {
     while (true) {
       try {

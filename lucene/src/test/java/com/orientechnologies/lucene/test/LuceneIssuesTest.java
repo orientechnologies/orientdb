@@ -62,8 +62,7 @@ public class LuceneIssuesTest extends BaseLuceneTest {
         .query(new OSQLSynchQuery<Object>("select expand(rid) from index:Item.content where key lucene 'Харько~0.2' limit 3 "));
 
     Assertions.assertThat(documents).hasSize(3);
-    documents = db
-        .query(new OSQLSynchQuery<Object>("select * from index:Item.content where key lucene 'Харько~0.2' limit 3 "));
+    documents = db.query(new OSQLSynchQuery<Object>("select * from index:Item.content where key lucene 'Харько~0.2' limit 3 "));
 
     Assertions.assertThat(documents).hasSize(3);
 
@@ -76,33 +75,44 @@ public class LuceneIssuesTest extends BaseLuceneTest {
 
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    List<ODocument> documents = db
-        .query(new OSQLSynchQuery<Object>("select from Test "));
+    List<ODocument> documents;
 
-    for (ODocument doc : documents) {
-
-      System.out.println("doc.toJSON() = " + doc.toJSON());
-    }
-
-    documents = db
-        .query(new OSQLSynchQuery<Object>("select from Test where [a] lucene 'lion'"));
+    documents = db.query(new OSQLSynchQuery<Object>("select from Test where [a] lucene 'lion'"));
 
     Assertions.assertThat(documents).hasSize(1);
 
-    documents = db
-        .query(new OSQLSynchQuery<Object>("select from Test where [b] lucene 'mouse'"));
+    documents = db.query(new OSQLSynchQuery<Object>("select from Test where [b] lucene 'mouse'"));
 
     Assertions.assertThat(documents).hasSize(1);
 
-    documents = db
-        .query(new OSQLSynchQuery<Object>("select from Test where a lucene 'lion' OR b LUCENE 'mouse' "));
-
-
+    documents = db.query(new OSQLSynchQuery<Object>("select from Test where [a] lucene 'lion' OR [b] LUCENE 'mouse' "));
 
     //FIXME
-//    Assertions.assertThat(documents).hasSize(2);
+    Assertions.assertThat(documents).hasSize(2);
 
+  }
 
+  @Test
+  public void test_ph8929_Single() throws Exception {
+
+    InputStream stream = ClassLoader.getSystemResourceAsStream("testPh_8929.osql");
+
+    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+
+    List<ODocument> documents;
+
+    documents = db.query(new OSQLSynchQuery<Object>("select from Test where a lucene 'lion'"));
+
+    Assertions.assertThat(documents).hasSize(1);
+
+    documents = db.query(new OSQLSynchQuery<Object>("select from Test where b lucene 'mouse'"));
+
+    Assertions.assertThat(documents).hasSize(1);
+
+    documents = db.query(new OSQLSynchQuery<Object>("select from Test where a lucene 'lion' OR b LUCENE 'mouse' "));
+
+    //FIXME
+    Assertions.assertThat(documents).hasSize(2);
 
   }
 }

@@ -124,10 +124,14 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     memoryIndex.reset();
 
     try {
-      for (IndexableField field : index.buildDocument(iLeft).getFields()) {
-        memoryIndex.addField(field.name(), field.tokenStream(index.indexAnalyzer(), null));
+
+      // In case of collection field evaluate the query with every item until matched
+
+      if (iLeft instanceof List && index.isCollectionIndex()) {
+        return matchCollectionIndex((List) iLeft, iRight, index, memoryIndex);
+      } else {
+        return matchField(iLeft, iRight, index, memoryIndex);
       }
-      return memoryIndex.search(index.buildQuery(iRight)) > 0.0f;
 
     } catch (ParseException e) {
       OLogManager.instance().error(this, "error occurred while building query", e);
@@ -137,6 +141,70 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
 
     }
     return null;
+  }
+
+  private boolean matchField(Object iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex)
+      throws IOException, ParseException {
+    for (IndexableField field : index.buildDocument(iLeft).getFields()) {
+      memoryIndex.addField(field.name(), field.tokenStream(index.indexAnalyzer(), null));
+    }
+    return memoryIndex.search(index.buildQuery(iRight)) > 0.0f;
+  }
+
+  private boolean matchCollectionIndex(List iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex)
+      throws IOException, ParseException {
+    boolean match = false;
+    List<Object> collections = transformInput(iLeft, iRight, index, memoryIndex);
+    for (Object collection : collections) {
+      match = match || matchField(collection, iRight, index, memoryIndex);
+      if (match) {
+        break;
+      }
+    }
+    return match;
+  }
+
+  private List<Object> transformInput(List iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex) {
+
+    Integer collectionIndex = getCollectionIndex(iLeft);
+    if (collectionIndex == -1) {
+      // collection not found;
+      return iLeft;
+    }
+    if (collectionIndex > 1) {
+      throw new UnsupportedOperationException("Index of collection cannot be > 1");
+    }
+    // otherwise the input is [val,[]] or [[],val]
+    Collection collection = (Collection) iLeft.get(collectionIndex);
+    if (iLeft.size() == 1) {
+      return new ArrayList<Object>(collection);
+    }
+    List<Object> transformed = new ArrayList<Object>(collection.size());
+    for (Object o : collection) {
+      List<Object> objects = new ArrayList<Object>();
+      //  [[],val]
+      if (collectionIndex == 0) {
+        objects.add(o);
+        objects.add(iLeft.get(1));
+        //  [val,[]]
+      } else {
+        objects.add(iLeft.get(0));
+        objects.add(o);
+      }
+      transformed.add(objects);
+    }
+    return transformed;
+  }
+
+  private Integer getCollectionIndex(List iLeft) {
+    int i = 0;
+    for (Object o : iLeft) {
+      if (o instanceof Collection) {
+        return i;
+      }
+      i++;
+    }
+    return -1;
   }
 
   protected OLuceneFullTextIndex involvedIndex(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition,
