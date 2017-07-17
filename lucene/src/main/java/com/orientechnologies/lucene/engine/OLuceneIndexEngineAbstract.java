@@ -141,7 +141,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     commitTask = new TimerTask() {
       @Override
       public boolean cancel() {
-        OLogManager.instance().info(this, " Cancelling commit task for index:: " + indexName());
+//        OLogManager.instance().info(this, " Cancelling commit task for index:: " + indexName());
         return super.cancel();
       }
 
@@ -150,12 +150,12 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
         if (System.currentTimeMillis() - lastAccess.get() > closeAfterInterval) {
 
-          OLogManager.instance().info(this, " Closing index:: " + indexName());
+//          OLogManager.instance().info(this, " Closing index:: " + indexName());
           close();
         }
         if (!closed.get()) {
 
-          OLogManager.instance().info(this, " Flushing index:: " + indexName());
+//          OLogManager.instance().info(this, " Flushing index:: " + indexName());
           flush();
         }
       }
