@@ -252,6 +252,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           sendShutdown();
           return;
         }
+        if (connection == null && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
+          //Backward compatible with old clients
+          return;
+        }
+
         OBinaryResponse response = null;
         if (exception == null) {
           try {
@@ -259,8 +264,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
               checkServerAccess(request.requiredServerRole(), connection);
             }
 
+            if (connection == null)
+              throw new ODatabaseException("Required session");
+
             if (request.requireDatabaseSession()) {
-              if (connection == null || connection.getDatabase() == null)
+              if (connection.getDatabase() == null)
                 throw new ODatabaseException("Required database session");
             }
             response = request.execute(connection.getExecutor());
@@ -303,7 +311,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             afterOperationRequest(connection);
           }
         }
-        tokenConnection = Boolean.TRUE.equals(connection.getTokenBased());
+        if(connection!= null)
+          tokenConnection = Boolean.TRUE.equals(connection.getTokenBased());
       } else {
         OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
         handleConnectionError(connection, new ONetworkProtocolException("Request not supported. Code: " + requestType));
