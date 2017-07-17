@@ -417,6 +417,8 @@ public class OClientConnectionManager {
   public void shutdown() {
     timerTask.cancel();
 
+    List<ONetworkProtocol> toWait = new ArrayList<ONetworkProtocol>();
+
     final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
     while (iterator.hasNext()) {
       final Entry<Integer, OClientConnection> entry = iterator.next();
@@ -464,15 +466,19 @@ public class OClientConnectionManager {
             OLogManager.instance().debug(this, "Sending interrupt signal to thread %s", protocol);
             protocol.interrupt();
           }
-          try {
-            protocol.join();
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-          }
-
+          toWait.add(protocol);
         }
       }
     }
+
+    for (ONetworkProtocol protocol : toWait) {
+      try {
+        protocol.join();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }
+
   }
 
   public void killAllChannels() {
