@@ -149,7 +149,7 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
 
     assertThat(results).hasSize(1);
 
-    results = db.query("select from AuthorOf where search_class('hurricane')=true");
+    results = db.query("select from AuthorOf where in.title lucene 'hurricane'");
 
     assertThat(results).hasSize(1);
   }

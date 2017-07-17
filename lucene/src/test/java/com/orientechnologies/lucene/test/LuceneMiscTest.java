@@ -142,6 +142,7 @@ public class LuceneMiscTest extends BaseLuceneTest {
 
     results = db.command(new OCommandSQL("select from AuthorOf where in.title lucene 'hurricane'")).execute();
 
+    System.out.println("results = " + results);
     Assert.assertEquals(results.size(), 1);
   }
 

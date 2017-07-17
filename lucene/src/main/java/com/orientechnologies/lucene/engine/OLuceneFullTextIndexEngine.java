@@ -62,6 +62,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   public OLuceneFullTextIndexEngine(OStorage storage, String idxName) {
     super(storage, idxName);
+    builder = new OLuceneDocumentBuilder();
 
   }
 
@@ -74,7 +75,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
     super.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
     queryBuilder = new OLuceneQueryBuilder(metadata);
-    builder = new OLuceneDocumentBuilder();
   }
 
   @Override
@@ -103,7 +103,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       frag.entrySet()
           .stream()
           .forEach(f -> {
-
                 TextFragment[] fragments = f.getValue();
                 StringBuilder hlField = new StringBuilder();
                 for (int j = 0; j < fragments.length; j++) {
@@ -126,7 +125,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public boolean remove(Object key) {
-
+    updateLastAccess();
+    openIfClosed();
     try {
       Query query = new QueryParser("", queryAnalyzer()).parse((String) key);
       deleteDocument(query);
@@ -146,6 +146,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public void put(Object key, Object value) {
 
+    updateLastAccess();
+    openIfClosed();
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
 
     for (OIdentifiable oIdentifiable : container) {
@@ -154,11 +156,9 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
       addDocument(doc);
 
-      if (!indexDefinition.isAutomatic()) {
-        flush();
-      }
     }
   }
+
 
   @Override
   public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
@@ -266,6 +266,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public Set<OIdentifiable> getInTx(Object key, OLuceneTxChanges changes) {
 
+    openIfClosed();
     try {
       if (key instanceof OLuceneKeyAndMetadata) {
         OLuceneKeyAndMetadata q = (OLuceneKeyAndMetadata) key;

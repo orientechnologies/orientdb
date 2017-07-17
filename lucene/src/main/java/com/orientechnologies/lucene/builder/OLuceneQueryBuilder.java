@@ -42,11 +42,13 @@ public class OLuceneQueryBuilder {
 
   private final boolean                allowLeadingWildcard;
   private final boolean                lowercaseExpandedTerms;
-  private       OLuceneAnalyzerFactory analyzerFactory;
+  private final OLuceneAnalyzerFactory analyzerFactory;
 
   public OLuceneQueryBuilder(ODocument metadata) {
-    this(Optional.ofNullable(metadata.<Boolean>field("allowLeadingWildcard")).orElse(false),
-        Optional.ofNullable(metadata.<Boolean>field("lowercaseExpandedTerms")).orElse(true));
+    this(Optional.ofNullable(metadata.<Boolean>field("allowLeadingWildcard"))
+            .orElse(false),
+        Optional.ofNullable(metadata.<Boolean>field("lowercaseExpandedTerms"))
+            .orElse(true));
   }
 
   public OLuceneQueryBuilder(boolean allowLeadingWildcard, boolean lowercaseExpandedTerms) {
