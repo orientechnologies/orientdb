@@ -190,7 +190,7 @@ public class OrientDB implements AutoCloseable {
    *
    * @return the opened database
    */
-  public ODatabaseDocument open(String database, String user, String password) {
+  public ODatabaseSession open(String database, String user, String password) {
     return open(database, user, password, OrientDBConfig.defaultConfig());
   }
 
@@ -205,7 +205,7 @@ public class OrientDB implements AutoCloseable {
    * @return the opened database
    */
 
-  public ODatabaseDocument open(String database, String user, String password, OrientDBConfig config) {
+  public ODatabaseSession open(String database, String user, String password, OrientDBConfig config) {
     return internal.open(database, user, password, config);
   }
 

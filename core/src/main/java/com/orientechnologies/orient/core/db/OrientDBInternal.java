@@ -103,7 +103,7 @@ public interface OrientDBInternal extends AutoCloseable {
    *
    * @return the opened database
    */
-  ODatabaseDocument open(String name, String user, String password);
+  ODatabaseSession open(String name, String user, String password);
 
   /**
    * Open a database specified by name using the username and password if needed, with specific configuration
@@ -115,7 +115,7 @@ public interface OrientDBInternal extends AutoCloseable {
    *
    * @return the opened database
    */
-  ODatabaseDocument open(String name, String user, String password, OrientDBConfig config);
+  ODatabaseSession open(String name, String user, String password, OrientDBConfig config);
 
   /**
    * Create a new database
