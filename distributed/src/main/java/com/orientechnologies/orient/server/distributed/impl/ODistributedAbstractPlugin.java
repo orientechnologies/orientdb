@@ -76,6 +76,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import java.io.*;
 import java.util.*;
+import java.nio.file.Files;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1338,11 +1339,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     backuppath += iDatabaseName;
 
     final File backupfullpath = new File(backuppath);
-    final File f = new File(backupdirectory);
-    if (f.exists())
+    if (backupfullpath.exists())
       OFileUtils.deleteRecursively(backupfullpath);
-    else
-      f.mkdirs();
+    backupfullpath.getParentFile().mkdirs();
 
     final String dbpath = serverInstance.getDatabaseDirectory() + iDatabaseName;
 
@@ -1352,11 +1351,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         backuppath);
 
     final File olddirectory = new File(dbpath);
-    if (!olddirectory.renameTo(backupfullpath)) {
+    try {
+      if (olddirectory.exists()) {
+        Files.move(olddirectory.toPath(), backupfullpath.toPath());
+      }
+    } catch (IOException e) {
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
-          "error on moving existent database '%s' located in '%s' to '%s'. deleting old database...", iDatabaseName, dbpath,
+          "error on moving existent database '%s' located in '%s' to '%s'. deleting old database...", e, iDatabaseName, dbpath,
           backupfullpath);
-
       OFileUtils.deleteRecursively(olddirectory);
     }
   }
