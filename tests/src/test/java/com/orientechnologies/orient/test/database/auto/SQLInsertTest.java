@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -296,6 +297,15 @@ public class SQLInsertTest extends DocumentDBBaseTest {
       Assert.assertEquals(((ODocument) r.getRecord()).getClassName(), "UserCopy");
       Assert.assertNotSame(((ODocument) r.getRecord()).field("name"), "admin");
     }
+  }
+
+  @Test(expectedExceptions = OValidationException.class)
+  public void insertSelectFromProjection() {
+    database.command(new OCommandSQL("CREATE CLASS ProjectedInsert")).execute();
+    database.command(new OCommandSQL("CREATE property ProjectedInsert.a Integer (max 3)")).execute();
+    database.getMetadata().getSchema().reload();
+
+    database.command(new OCommandSQL("INSERT INTO ProjectedInsert FROM select 10 as a ")).execute();
   }
 
   public void insertWithReturn() {
