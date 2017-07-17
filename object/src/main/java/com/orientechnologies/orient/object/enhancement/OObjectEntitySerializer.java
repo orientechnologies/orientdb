@@ -1382,11 +1382,11 @@ public class OObjectEntitySerializer {
 
     if (iMultiValue instanceof Set<?>) {
       for (Object o : sourceValues) {
-        ((Set<Object>) result).add(typeToStream(o, linkedType, db, null));
+        ((Set<Object>) result).add(typeToStream(o, linkedType, db, iRecord));
       }
     } else if (iMultiValue instanceof List<?>) {
       for (int i = 0; i < sourceValues.size(); i++) {
-        ((List<Object>) result).add(typeToStream(((List<?>) sourceValues).get(i), linkedType, db, null));
+        ((List<Object>) result).add(typeToStream(((List<?>) sourceValues).get(i), linkedType, db, iRecord));
       }
     } else {
       if (iMultiValue instanceof OObjectLazyMap<?>) {
@@ -1399,7 +1399,7 @@ public class OObjectEntitySerializer {
         else
           result = new ORecordLazyMap(iRecord);
         for (Entry<Object, Object> entry : ((Map<Object, Object>) iMultiValue).entrySet()) {
-          ((Map<Object, Object>) result).put(entry.getKey(), typeToStream(entry.getValue(), linkedType, db, null));
+          ((Map<Object, Object>) result).put(entry.getKey(), typeToStream(entry.getValue(), linkedType, db, iRecord));
         }
       }
     }
