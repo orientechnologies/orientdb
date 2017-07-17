@@ -110,9 +110,12 @@ class EtlComponent {
     this.sourcePrototype = {
       source: {
         value: undefined,
-        types: ["jdbc", "local file", "url", "upload"] // TODO uploader library
+        types: ["jdbc", "file", "http"] // TODO upload?
       },
       fileURL: undefined,
+      headers: {
+        userAgent: undefined
+      },
       URLMethod: {
         value: undefined,
         types: ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE"]
@@ -589,6 +592,7 @@ class EtlComponent {
       advancedHint: "The ETL module binds all values declared in the config block to the execution context and are accessible to ETL processing.",
       URLHint: "Defines the URL to look to for source data.",
       URLMethodHint: "Defines the HTTP method to use in extracting data.",
+      headerHint: "Defines the request headers.",
       pathHint: "Defines the path to the local file.",
       lockHint: "Defines whether to lock the file during the extraction phase.",
       customLabelHint: "Use a custom label if you want to use multiple transformers, to distinguish them clearly.",
@@ -680,7 +684,7 @@ class EtlComponent {
 
     if (this.sourcePrototype.source.value === "jdbc") this.source = null;
 
-    if (this.sourcePrototype.source.value === "local file")
+    if (this.sourcePrototype.source.value === "file")
       this.source = {
         file: {
           path: this.sourcePrototype.filePath,
@@ -689,16 +693,19 @@ class EtlComponent {
         }
       };
 
-    if (this.sourcePrototype.source.value === "url")
+    if (this.sourcePrototype.source.value === "http") {
       this.source = {
         http: {
           url: this.sourcePrototype.fileURL,
           method: this.sourcePrototype.URLMethod.value,
-          headers: {
-            "User-Agent": ""
-          }
+          headers: undefined
         }
       };
+      if (this.sourcePrototype.headers.userAgent)
+        this.source.http.headers = {
+          "User-Agent": this.sourcePrototype.headers.userAgent
+        };
+    }
   }
 
   extractorInit(type) {
@@ -1038,11 +1045,18 @@ class EtlComponent {
     this.currentTransformer = etl.transformers[etl.transformers.length -1];
     this.loaderType = Object.getOwnPropertyNames(etl.loader)[0];
 
-    if(etl.config) this.config = etl.config;
+    if(etl.config) { // initialize the advanced config if exists
+      this.addAdvanced();
+      if(etl.config.parallel != undefined) this.config.parallel = etl.config.parallel;
+      if(etl.config.haltOnError != undefined) this.config.haltOnError = etl.config.haltOnError;
+      if(etl.config.maxRetries != undefined) this.config.maxRetries = etl.config.maxRetries;
+      if(etl.config.log != undefined) this.config.log = etl.config.log;
+    }
+
     this.extractor = etl.extractor;
     this.transformers = etl.transformers;
     this.reverseBlockFix();
-    this.loader = etl.loader; // TODO manage objects inside
+    this.loader = etl.loader;
     // initialize the inner objects
     if(this.loaderType === 'orientdb') {
       this.classes = {
@@ -1059,15 +1073,25 @@ class EtlComponent {
       };
     }
 
-
-    // Skip step 1 if the old configuration uses a jdbc source
+    // skip step 1 if the old configuration uses a jdbc source
     if(etl.source) {
       this.source = etl.source;
       this.sourcePrototype.source.value = Object.getOwnPropertyNames(etl.source)[0];
+
+      if(this.sourcePrototype.source.value == "http") {
+        this.sourcePrototype.URLMethod.value = etl.source.http.method;
+        this.sourcePrototype.fileURL = etl.source.http.url;
+      }
+      if(this.sourcePrototype.source.value == "file") {
+        this.sourcePrototype.filePath = etl.source.file.path;
+        this.sourcePrototype.fileLock = etl.source.file.lock;
+      }
+
       if(direct) {
         this.launch();
         return;
       }
+      this.sourcePrototype.source.types = ["file", "http"]; // exclude jdbc to avoid weird behaviors
       this.setStep(1);
     }
     else {

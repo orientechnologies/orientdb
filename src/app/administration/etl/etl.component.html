@@ -69,7 +69,7 @@
           <br><br><br>
 
           <!-- URL configuration -->
-          <div class="form-group" *ngIf="sourcePrototype.source.value == 'url'">
+          <div class="form-group" *ngIf="sourcePrototype.source.value == 'http'">
             <label class="col-md-4 control-label">File URL</label>
             <div class="col-md-4">
               <input type="url" id="fileURL" class="form-control" name="fileURL" [(ngModel)]="sourcePrototype.fileURL"
@@ -92,14 +92,25 @@
                       [attr.data-content]="hints.URLMethodHint"><i class="fa fa-question-circle"></i>
               </button>
             </div>
+            <br><br>
+            <label class="col-md-4 control-label">HTTP Header</label>
+            <div class="col-md-4">
+              <input type="url" id="headers" class="form-control" name="headers" [(ngModel)]="sourcePrototype.headers.userAgent"
+                     placeholder="header, if needed"/>
+            </div>
+            <div class="col-md-4">
+              <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.headerHint"><i class="fa fa-question-circle"></i>
+              </button>
+            </div>
           </div>
 
           <!-- Local File configuration -->
-          <div class="form-group" *ngIf="sourcePrototype.source.value == 'local file'">
+          <div class="form-group" *ngIf="sourcePrototype.source.value == 'file'">
             <label class="col-md-4 control-label">File Path</label>
             <div class="col-md-4">
               <input type="text" id="filePath" class="form-control" name="filePath" [(ngModel)]="sourcePrototype.filePath"
-                     placeholder="Local path of your file" pattern="^(?:[\w]\:|\\)(\\[a-z_\-\s0-9\.]+)+\.?" required/>
+                     placeholder="Local path of your file" required/> <!-- TODO find a good control pattern -->
             </div>
             <div class="col-md-4">
               <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
@@ -129,7 +140,7 @@
                   <button type="button" class="btn btn-sm btn-primary" (click)="sourceInit()" [disabled]="!form.valid">Create modules</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-default" (click)="addAdvanced()">Add Advanced</button>
+                  <button type="button" class="btn btn-sm btn-default" (click)="addAdvanced()">Add/Reset Advanced</button>
                 </div>
               </div>
             </div>
@@ -441,7 +452,7 @@
 
                       <!-- Objects creation (classes and indexes) -->
                       <div *ngIf="loaderPrototype[loaderType][lParameter]['object']">
-                        <h6 style="color:grey;"><b>Created {{lParameter}}: {{loader[loaderType][lParameter].length}}</b></h6>
+                        <h6 style="color:grey;"><b>Created {{lParameter}}: {{loader[loaderType][lParameter].length}}</b></h6> <!-- TODO see them! -->
                         <div *ngFor="let oParameter of objectKeys.transform(loaderPrototype[loaderType][lParameter]['value'])">
                           &emsp;&emsp;<button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                                               [attr.data-content]="hints.loader[oParameter]"><i class="fa fa-question-circle"></i>
