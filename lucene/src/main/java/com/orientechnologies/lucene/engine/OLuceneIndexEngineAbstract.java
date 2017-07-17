@@ -360,6 +360,11 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     }
   }
 
+
+  public boolean isCollectionIndex() {
+    return isCollectionDelete();
+  }
+
   @Override
   public IndexSearcher searcher() {
     try {
