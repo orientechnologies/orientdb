@@ -27,6 +27,7 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
+import com.orientechnologies.orient.core.exception.OLoadCacheStateException;
 import com.orientechnologies.orient.core.exception.OReadCacheException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.*;
@@ -678,9 +679,11 @@ public class O2QCache implements OReadCache {
         }
 
       }
+    } catch (OLoadCacheStateException lcse) {
+      OLogManager.instance().warn(this, "Cannot restore state of cache for storage placed under " + writeCache.getRootDirectory());
     } catch (Exception e) {
-      OLogManager.instance()
-          .warn(this, "Cannot restore state of cache for storage placed under %s", writeCache.getRootDirectory(), e);
+      throw OException.wrapException(
+          new OStorageException("Cannot restore state of cache for storage placed under " + writeCache.getRootDirectory()), e);
     } finally {
       cacheLock.releaseWriteLock();
     }
@@ -724,34 +727,49 @@ public class O2QCache implements OReadCache {
    */
   private void restoreQueueWithoutPageLoad(OWriteCache writeCache, LRUList queue, DataInputStream dataInputStream)
       throws IOException {
-    // used only for statistics, and there is passed merely as stub
-    final OModifiableBoolean cacheHit = new OModifiableBoolean();
 
-    int internalFileId = dataInputStream.readInt();
-    while (internalFileId >= 0) {
-      final long pageIndex = dataInputStream.readLong();
-      try {
-        final long fileId = writeCache.externalFileId(internalFileId);
-        final OCacheEntry cacheEntry = new OCacheEntry(fileId, pageIndex, null, false);
+    //this set is only needed to rollback changes in case of IO Exception
+    final Set<PageKey> addedPages = new HashSet<PageKey>();
 
-        Set<Long> pages = filePages.get(fileId);
-        if (pages == null) {
-          pages = new HashSet<Long>();
+    try {
+      int internalFileId = dataInputStream.readInt();
 
-          Set<Long> op = filePages.putIfAbsent(fileId, pages);
-          if (op != null) {
-            pages = op;
+      while (internalFileId >= 0) {
+        final long pageIndex = dataInputStream.readLong();
+        try {
+          final long fileId = writeCache.externalFileId(internalFileId);
+          if (get(fileId, pageIndex, true) == null && !pinnedPages.containsKey(new PinnedPage(fileId, pageIndex))) {
+            final OCacheEntry cacheEntry = new OCacheEntry(fileId, pageIndex, null, false);
+
+            Set<Long> pages = filePages.get(fileId);
+            if (pages == null) {
+              pages = new HashSet<Long>();
+
+              Set<Long> op = filePages.putIfAbsent(fileId, pages);
+              if (op != null) {
+                pages = op;
+              }
+            }
+
+            queue.putToMRU(cacheEntry);
+            pages.add(cacheEntry.getPageIndex());
+
+            addedPages.add(new PageKey(fileId, pageIndex));
+            removeColdPagesWithCacheLock();
           }
+        } finally {
+          internalFileId = dataInputStream.readInt();
         }
-
-        queue.putToMRU(cacheEntry);
-        pages.add(cacheEntry.getPageIndex());
-
-        //truncate tail of the queue if queue will exceed limit is set by configuration
-        removeColdPagesWithCacheLock();
-      } finally {
-        internalFileId = dataInputStream.readInt();
       }
+    } catch (IOException e) {
+      for (PageKey pageKey : addedPages) {
+        queue.remove(pageKey.fileId, pageKey.pageIndex);
+
+        final Set<Long> pages = filePages.get(pageKey.fileId);
+        pages.remove(pageKey.pageIndex);
+      }
+
+      throw OException.wrapException(new OLoadCacheStateException("Can not restore state of cache from file"), e);
     }
   }
 
@@ -777,40 +795,53 @@ public class O2QCache implements OReadCache {
     // then to put data into the queue to restore position of entries in LRU list.
     final TreeSet<PageKey> filePositions = new TreeSet<PageKey>();
 
-    int internalFileId = dataInputStream.readInt();
-    while (internalFileId >= 0) {
-      final long pageIndex = dataInputStream.readLong();
-      try {
-        final long fileId = writeCache.externalFileId(internalFileId);
+    try {
+      int internalFileId = dataInputStream.readInt();
 
-        //we replace only pages which are not loaded yet
-        if (queue.get(fileId, pageIndex) == null) {
-          filePositions.add(new PageKey(fileId, pageIndex));
+      while (internalFileId >= 0) {
+        final long pageIndex = dataInputStream.readLong();
+        try {
+          final long fileId = writeCache.externalFileId(internalFileId);
 
-          //we put placeholder to the queue, later we will replace it with real data
-          //it is done to prevent cases when disk cache size will exceed limits
-          //set by configuration
-          final OCacheEntry cacheEntry = new OCacheEntry(fileId, pageIndex, null, false);
-          queue.putToMRU(cacheEntry);
+          //we replace only pages which are not loaded yet
+          if (get(fileId, pageIndex, true) == null && !pinnedPages.containsKey(new PinnedPage(fileId, pageIndex))) {
+            filePositions.add(new PageKey(fileId, pageIndex));
 
-          Set<Long> pages = filePages.get(fileId);
-          if (pages == null) {
-            pages = new HashSet<Long>();
+            //we put placeholder to the queue, later we will replace it with real data
+            //it is done to prevent cases when disk cache size will exceed limits
+            //set by configuration
+            final OCacheEntry cacheEntry = new OCacheEntry(fileId, pageIndex, null, false);
+            queue.putToMRU(cacheEntry);
 
-            Set<Long> op = filePages.putIfAbsent(fileId, pages);
-            if (op != null) {
-              pages = op;
+            Set<Long> pages = filePages.get(fileId);
+            if (pages == null) {
+              pages = new HashSet<Long>();
+
+              Set<Long> op = filePages.putIfAbsent(fileId, pages);
+              if (op != null) {
+                pages = op;
+              }
             }
+
+            pages.add(pageIndex);
+
+            //remove part of the queue if queue size is bigger than allowed
+            removeColdPagesWithCacheLock();
           }
-
-          pages.add(pageIndex);
-
-          //remove part of the queue if queue size is bigger than allowed
-          removeColdPagesWithCacheLock();
+        } finally {
+          internalFileId = dataInputStream.readInt();
         }
-      } finally {
-        internalFileId = dataInputStream.readInt();
       }
+    } catch (IOException e) {
+      for (PageKey pageKey : filePositions) {
+        //clear all place holders
+        queue.remove(pageKey.fileId, pageKey.pageIndex);
+
+        final Set<Long> pages = filePages.get(pageKey.fileId);
+        pages.remove(pageKey.pageIndex);
+      }
+
+      throw OException.wrapException(new OLoadCacheStateException("Can not restore state of cache from file"), e);
     }
 
     //second step: load pages sorted by position in a file and replace placeholders by real data
