@@ -151,7 +151,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   private boolean matchField(Object iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex)
       throws IOException, ParseException {
     for (IndexableField field : index.buildDocument(iLeft).getFields()) {
-      memoryIndex.addField(field.name(), field.tokenStream(index.indexAnalyzer(), null));
+      memoryIndex.addField(field, index.indexAnalyzer());
     }
     return memoryIndex.search(index.buildQuery(iRight)) > 0.0f;
   }
