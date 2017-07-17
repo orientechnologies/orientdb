@@ -30,6 +30,9 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -360,59 +363,59 @@ public class OClientConnectionManager {
   public void pushDistribCfg2Clients(final ODocument iConfig) {
     if (iConfig == null)
       return;
-//
-//    final Set<String> pushed = new HashSet<String>();
-//    for (OClientConnection c : connections.values()) {
-//      if (!c.getData().supportsPushMessages)
-//        continue;
-//
-//      try {
-//        final String remoteAddress = c.getRemoteAddress();
-//        if (pushed.contains(remoteAddress))
-//          // ALREADY SENT: JUMP IT
-//          continue;
-//
-//      } catch (Exception e) {
-//        // SOCKET EXCEPTION SKIP IT
-//        continue;
-//      }
-//
-//      if (!(c.getProtocol() instanceof ONetworkProtocolBinary) || c.getData().getSerializationImpl() == null)
-//        // INVOLVE ONLY BINARY PROTOCOLS
-//        continue;
-//
-//      final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.getProtocol();
-//      final OChannelBinary channel = p.getChannel();
-//      final ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(c.getData().getSerializationImpl());
-//      if (ser == null)
-//        return;
-//
-//      final byte[] content = ser.toStream(iConfig, false);
-//
-//      try {
-//        // TRY ACQUIRING THE LOCK FOR MAXIMUM 3 SECS TO AVOID TO FREEZE CURRENT THREAD
-//        if (channel.tryAcquireWriteLock(TIMEOUT_PUSH)) {
-//          try {
-//            channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-//            channel.writeInt(Integer.MIN_VALUE);
-//            channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG);
-//            channel.writeBytes(content);
-//            channel.flush();
-//
-//            pushed.add(c.getRemoteAddress());
-//            OLogManager.instance().debug(this, "Sent updated cluster configuration to the remote client %s", c.getRemoteAddress());
-//
-//          } finally {
-//            channel.releaseWriteLock();
-//          }
-//        } else {
-//          OLogManager.instance()
-//              .info(this, "Timeout on sending updated cluster configuration to the remote client %s", c.getRemoteAddress());
-//        }
-//      } catch (Exception e) {
-//        OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
-//      }
-//    }
+
+    final Set<String> pushed = new HashSet<String>();
+    for (OClientConnection c : connections.values()) {
+      if (!c.getData().supportsLegacyPushMessages)
+        continue;
+
+      try {
+        final String remoteAddress = c.getRemoteAddress();
+        if (pushed.contains(remoteAddress))
+          // ALREADY SENT: JUMP IT
+          continue;
+
+      } catch (Exception e) {
+        // SOCKET EXCEPTION SKIP IT
+        continue;
+      }
+
+      if (!(c.getProtocol() instanceof ONetworkProtocolBinary) || c.getData().getSerializationImpl() == null)
+        // INVOLVE ONLY BINARY PROTOCOLS
+        continue;
+
+      final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.getProtocol();
+      final OChannelBinary channel = p.getChannel();
+      final ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(c.getData().getSerializationImpl());
+      if (ser == null)
+        return;
+
+      final byte[] content = ser.toStream(iConfig, false);
+
+      try {
+        // TRY ACQUIRING THE LOCK FOR MAXIMUM 3 SECS TO AVOID TO FREEZE CURRENT THREAD
+        if (channel.tryAcquireWriteLock(TIMEOUT_PUSH)) {
+          try {
+            channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+            channel.writeInt(Integer.MIN_VALUE);
+            channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG);
+            channel.writeBytes(content);
+            channel.flush();
+
+            pushed.add(c.getRemoteAddress());
+            OLogManager.instance().debug(this, "Sent updated cluster configuration to the remote client %s", c.getRemoteAddress());
+
+          } finally {
+            channel.releaseWriteLock();
+          }
+        } else {
+          OLogManager.instance()
+              .info(this, "Timeout on sending updated cluster configuration to the remote client %s", c.getRemoteAddress());
+        }
+      } catch (Exception e) {
+        OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
+      }
+    }
   }
 
   public void shutdown() {

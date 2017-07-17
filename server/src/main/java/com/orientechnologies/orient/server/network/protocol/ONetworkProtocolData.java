@@ -37,17 +37,17 @@ public class ONetworkProtocolData {
   public String              serverInfo           = null;
   public String              caller               = null;
   public String              driverName           = null;
-  public String              driverVersion        = null;
-  public short               protocolVersion      = -1;
-  public int                 sessionId            = -1;
-  public String              clientId             = null;
-  public String              currentUserId        = null;
-  private String             serializationImpl    = null;
-  public boolean             serverUser           = false;
-  public String              serverUsername       = null;
-  public OCommandRequestText command              = null;
-  public boolean             supportsPushMessages = true;
-  public boolean             collectStats         = true;
+  public String              driverVersion              = null;
+  public short               protocolVersion            = -1;
+  public int                 sessionId                  = -1;
+  public String              clientId                   = null;
+  public String              currentUserId              = null;
+  private String             serializationImpl          = null;
+  public boolean             serverUser                 = false;
+  public String              serverUsername             = null;
+  public OCommandRequestText command                    = null;
+  public boolean             supportsLegacyPushMessages = true;
+  public boolean             collectStats               = true;
   private ORecordSerializer  serializer;
 
   public String getSerializationImpl() {

@@ -893,7 +893,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().setSerializationImpl(request.getRecordFormat());
 
     connection.setTokenBased(request.isTokenBased());
-    connection.getData().supportsPushMessages = request.isSupportPush();
+    connection.getData().supportsLegacyPushMessages = request.isSupportPush();
     connection.getData().collectStats = request.isCollectStats();
 
     connection.setServerUser(server.serverLogin(request.getUsername(), request.getPassword(), "server.connect"));
@@ -923,7 +923,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().setSerializer(handshakeInfo.getSerializer());
 
     connection.setTokenBased(true);
-    connection.getData().supportsPushMessages = true;
+    connection.getData().supportsLegacyPushMessages = false;
     connection.getData().collectStats = true;
 
     connection.setServerUser(server.serverLogin(request.getUsername(), request.getPassword(), "server.connect"));
@@ -953,7 +953,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().clientId = request.getClientId();
     connection.getData().setSerializationImpl(request.getRecordFormat());
     connection.setTokenBased(request.isUseToken());
-    connection.getData().supportsPushMessages = request.isSupportsPush();
+    connection.getData().supportsLegacyPushMessages = request.isSupportsPush();
     connection.getData().collectStats = request.isCollectStats();
 
     try {
@@ -1006,7 +1006,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeDatabaseOpen37(OOpen37Request request) {
     connection.setTokenBased(true);
-    connection.getData().supportsPushMessages = true;
+    connection.getData().supportsLegacyPushMessages = false;
     connection.getData().collectStats = true;
     connection.getData().driverName = handshakeInfo.getDriverName();
     connection.getData().driverVersion = handshakeInfo.getDriverVersion();
@@ -1329,7 +1329,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().clientId = "OrientDB Distributed";
     connection.getData().setSerializer(ORecordSerializerNetworkV37.INSTANCE);
     connection.setTokenBased(true);
-    connection.getData().supportsPushMessages = false;
+    connection.getData().supportsLegacyPushMessages = false;
     connection.getData().collectStats = false;
     int chosenProtocolVersion = Math.min(request.getDistributedProtocolVersion(), ORemoteServerController.CURRENT_PROTOCOL_VERSION);
     connection.setServerUser(serverUser);
