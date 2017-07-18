@@ -75,6 +75,8 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1327,37 +1329,51 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     Orient.instance().unregisterStorageByName(iDatabaseName);
 
     // move directory to ../backup/databases/<db-name>
-    final String backupdirectory = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
-    if (backupdirectory == null || OIOUtils.getStringContent(backupdirectory).trim().isEmpty())
+    final String backupDirectory = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
+    if (backupDirectory == null || OIOUtils.getStringContent(backupDirectory).trim().isEmpty())
       // skip backup
       return;
 
-    String backuppath = backupdirectory.startsWith("/") ? backupdirectory : serverInstance.getDatabaseDirectory() + backupdirectory;
-    if (!backuppath.endsWith("/"))
-      backuppath += "/";
-    backuppath += iDatabaseName;
+    String backupPath;
 
-    final File backupfullpath = new File(backuppath);
-    final File f = new File(backupdirectory);
-    if (f.exists())
+    if (backupDirectory.startsWith("/"))
+      backupPath = backupDirectory;
+    else {
+      if (backupDirectory.startsWith("../")) {
+        backupPath = new File(serverInstance.getDatabaseDirectory()).getParent() + backupDirectory.substring("..".length());
+      } else
+        backupPath = serverInstance.getDatabaseDirectory() + backupDirectory;
+    }
+
+    if (!backupPath.endsWith("/"))
+      backupPath += "/";
+
+    backupPath += iDatabaseName;
+
+    final File backupfullpath = new File(backupPath);
+    if (backupfullpath.exists())
       OFileUtils.deleteRecursively(backupfullpath);
     else
-      f.mkdirs();
+      backupfullpath.mkdirs();
 
     final String dbpath = serverInstance.getDatabaseDirectory() + iDatabaseName;
 
     // move the database on current node
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
-        "moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote node...", iDatabaseName, dbpath,
-        backuppath);
+        "Moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote node...", iDatabaseName, dbpath,
+        backupPath);
 
-    final File olddirectory = new File(dbpath);
-    if (!olddirectory.renameTo(backupfullpath)) {
-      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
-          "error on moving existent database '%s' located in '%s' to '%s'. deleting old database...", iDatabaseName, dbpath,
-          backupfullpath);
+    final File oldDirectory = new File(dbpath);
+    if (oldDirectory.exists() && oldDirectory.isDirectory()) {
+      try {
+        Files.move(oldDirectory.toPath(), backupfullpath.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      } catch (IOException e) {
+        ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
+            "Error on moving existent database '%s' located in '%s' to '%s' (error=%s). Deleting old database anyway",
+            iDatabaseName, dbpath, backupfullpath, e);
 
-      OFileUtils.deleteRecursively(olddirectory);
+        OFileUtils.deleteRecursively(oldDirectory);
+      }
     }
   }
 

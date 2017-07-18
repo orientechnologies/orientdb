@@ -572,7 +572,10 @@ public class ODistributedResponseManager {
   public Object getResponseFromServer(final String s) {
     synchronousResponsesLock.lock();
     try {
-      return responses.get(s);
+      final Object r = responses.get(s);
+      if (r == NO_RESPONSE)
+        return null;
+      return r;
     } finally {
       synchronousResponsesLock.unlock();
     }
@@ -1030,7 +1033,7 @@ public class ODistributedResponseManager {
 
           for (String s : serversToFollowup) {
             Object response = responses.get(s);
-            if( response == NO_RESPONSE)
+            if (response == NO_RESPONSE)
               response = null;
 
             if (quorumResponse != null && !quorumResponse.equals(response)) {
