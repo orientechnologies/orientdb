@@ -1905,6 +1905,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       long totalElements = 0;
       long count;
 
+      currentDatabase.getMetadata().reload();
       final List<OClass> classes = new ArrayList<OClass>(currentDatabase.getMetadata().getImmutableSchemaSnapshot().getClasses());
       Collections.sort(classes, new Comparator<OClass>() {
         public int compare(OClass o1, OClass o2) {
