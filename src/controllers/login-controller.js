@@ -145,9 +145,7 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
   }
 
   $scope.goToTeleporter = function () {
-    if($scope.isEE) {
       $location.path("/dashboard/teleporter");
-    }
   }
 
   $rootScope.$broadcast("request:logout");

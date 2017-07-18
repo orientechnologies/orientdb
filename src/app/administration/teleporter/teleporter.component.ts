@@ -254,10 +254,19 @@ class TeleporterComponent implements AfterViewChecked {
 
   saveConfiguration() {
 
-    var migrationConfigString = JSON.stringify(this.modellingConfig);
+    // fetching modelling config if it's not undefined and preparation
+    if(this.modellingConfig) {
+
+      // copying the configuration object
+      var configCopy = JSON.parse(JSON.stringify(this.modellingConfig));
+
+      this.prepareModellingConfig(configCopy);
+      var migrationConfigString = JSON.stringify(configCopy);
+    }
+
     var params = {
-      "migrationConfig": migrationConfigString,
-      "outDBName": this.config.outDBName
+      migrationConfig: migrationConfigString,
+      outDBName: this.config.outDBName
     };
     this.teleporterService.saveConfiguration(params).then(() => {
       this.notification.push({content: "Configuration correctly saved.", autoHide: true});
@@ -274,33 +283,7 @@ class TeleporterComponent implements AfterViewChecked {
       // copying the configuration object
       var configCopy = JSON.parse(JSON.stringify(this.modellingConfig));
 
-      // deleting source and target for each edge definition
-      for (var edge of configCopy.edges) {
-        delete edge.source;
-        delete edge.target;
-      }
-
-      // aggregating edges with the same name (that is all the edges representing the same edge class)
-      for (var i = 0; i < configCopy.edges.length; i++) {
-        var elementToAggregate = configCopy.edges[i];
-        var elementToAggregateName = this.getEdgeClassName(elementToAggregate);
-        for (var j = i + 1; j < configCopy.edges.length; j++) {
-          var currEdge = configCopy.edges[j];
-          var currEdgeName = this.getEdgeClassName(currEdge);
-
-          if (elementToAggregateName === currEdgeName) {
-
-            // aggregate mapping information
-            elementToAggregate[elementToAggregateName].mapping.push(currEdge[currEdgeName].mapping[0]);
-
-            // delete the duplicate edges
-            configCopy.edges.splice(j, 1);
-
-            // decreasing j as the array shifted after the delete
-            j--;
-          }
-        }
-      }
+      this.prepareModellingConfig(configCopy);
       this.config.migrationConfig = JSON.stringify(configCopy);
     }
 
@@ -327,6 +310,42 @@ class TeleporterComponent implements AfterViewChecked {
     }).catch(function (error) {
       alert("Error during migration!")
     });
+  }
+
+  prepareModellingConfig(configCopy) {
+
+    // deleting source and target for each edge definition
+    for (var edge of configCopy.edges) {
+      delete edge.source;
+      delete edge.target;
+    }
+
+    this.aggregateEdgesByNameInConfig(configCopy);
+  }
+
+  aggregateEdgesByNameInConfig(configCopy) {
+
+    // aggregating edges with the same name (that is all the edges representing the same edge class)
+    for (var i = 0; i < configCopy.edges.length; i++) {
+      var elementToAggregate = configCopy.edges[i];
+      var elementToAggregateName = this.getEdgeClassName(elementToAggregate);
+      for (var j = i + 1; j < configCopy.edges.length; j++) {
+        var currEdge = configCopy.edges[j];
+        var currEdgeName = this.getEdgeClassName(currEdge);
+
+        if (elementToAggregateName === currEdgeName) {
+
+          // aggregate mapping information
+          elementToAggregate[elementToAggregateName].mapping.push(currEdge[currEdgeName].mapping[0]);
+
+          // delete the duplicate edges
+          configCopy.edges.splice(j, 1);
+
+          // decreasing j as the array shifted after the delete
+          j--;
+        }
+      }
+    }
   }
 
   getEdgeClassName(link) {
@@ -2015,7 +2034,7 @@ class TeleporterComponent implements AfterViewChecked {
         "py": 145.96016246146698,
         "fixed": 1
       }],
-        "edges": [{
+      "edges": [{
         "has_city": {
           "mapping": [{
             "fromTable": "address",

@@ -1,4 +1,4 @@
-import {Component, ViewChild, Input} from '@angular/core';
+import {Component, ViewChild, Input, Output, OnChanges} from '@angular/core';
 import {ModalComponent} from 'ng2-bs3-modal/ng2-bs3-modal';
 import {Select2OptionData} from 'ng2-select2';
 
@@ -38,6 +38,8 @@ class AddEdgeModal {
   public selectedFromColumns: string[];
   public selectedToColumns: string[];
   private edgeClassesNames;
+
+  private isMappingFormValid = false;
 
   constructor() {
 
@@ -163,7 +165,10 @@ class AddEdgeModal {
    * @param e
    */
   updatedFromColumns(e: any) {
-    this.selectedFromColumns = e.value;
+    if(e.value) {
+      this.selectedFromColumns = e.value;
+      this.validateForm();
+    }
   }
 
   /**
@@ -171,7 +176,25 @@ class AddEdgeModal {
    * @param e
    */
   updatedToColumns(e: any) {
-    this.selectedToColumns = e.value;
+    if(e.value) {
+      this.selectedToColumns = e.value;
+      this.validateForm();
+    }
+  }
+
+  validateForm() {
+    if(!this.tmpEdgeMapping.direction) {
+      this.isMappingFormValid = false;
+      return;
+    }
+    this.isMappingFormValid = this.areFromAndToColumnsValid();
+  }
+
+  areFromAndToColumnsValid() {
+    if(this.selectedFromColumns.length > 0 && this.selectedToColumns.length > 0) {
+      return true;
+    }
+    return false;
   }
 
 }

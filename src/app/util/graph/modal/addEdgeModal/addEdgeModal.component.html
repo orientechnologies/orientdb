@@ -49,7 +49,7 @@
             <select2 [(data)]="fromColumnsNames"
                      [options]="columnsSelectOptions"
                      [(value)]="selectedFromColumns"
-                     (valueChanged)="updatedFromColumns($event)" required></select2>
+                     (valueChanged)="updatedFromColumns($event)"></select2>
           </div>
         </div><br/>
         <div class="row">
@@ -65,7 +65,7 @@
             <select2 [data]="toColumnsNames"
                      [options]="columnsSelectOptions"
                      [value]="selectedToColumns"
-                     (valueChanged)="updatedToColumns($event)" required></select2>
+                     (valueChanged)="updatedToColumns($event)"></select2>
           </div>
         </div><br/>
         <div class="row">
@@ -83,6 +83,6 @@
   </modal-body>
   <modal-footer [show-default-buttons]="false">
     <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissEdgeAdding()">Cancel</button>
-    <button type="button" class="btn btn-primary" (click)="addNewEdge()" [disabled]="!addEdgeForm.valid">Save</button>
+    <button type="button" class="btn btn-primary" (click)="addNewEdge()" [disabled]="!(addEdgeForm.valid && isMappingFormValid)">Save</button>
   </modal-footer>
 </modal>
