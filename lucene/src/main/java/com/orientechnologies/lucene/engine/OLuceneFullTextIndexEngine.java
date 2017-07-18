@@ -122,6 +122,9 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public void put(Object key, Object value) {
+    updateLastAccess();
+    openIfClosed();
+
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
 
@@ -145,7 +148,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       }
 
       if (!index.isAutomatic()) {
-        commit();
+        flush();
       }
     }
   }
@@ -251,6 +254,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Object getInTx(Object key, OLuceneTxChanges changes) {
+    openIfClosed();
+
     try {
       Query q = queryBuilder.query(index, key, queryAnalyzer());
       OCommandContext context = null;
