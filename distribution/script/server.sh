@@ -113,7 +113,7 @@ fi
 
 echo $$ > $ORIENTDB_PID
 
-exec "$JAVA" $JAVA_OPTS \
+exec "$JAVA" -d64 $JAVA_OPTS \
     $ORIENTDB_OPTS_MEMORY \
     $JAVA_OPTS_SCRIPT \
     $ORIENTDB_SETTINGS \
