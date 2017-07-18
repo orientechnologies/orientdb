@@ -379,7 +379,7 @@
                     <div *ngIf="objectKeys.transform(transformerPrototype[getTransformerType(this.currentTransformer)]).length == 0">
                       <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters!</h6>
                     </div>
-                    <!-- TODO use the prototype -->
+
                     <div *ngFor="let tParameter of objectKeys.transform(transformerPrototype[getTransformerType(this.currentTransformer)])">
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.transformer[tParameter]"><i class="fa fa-question-circle"></i>
@@ -422,7 +422,7 @@
                     <div *ngIf="objectKeys.transform(loaderPrototype[loaderType]).length == 0">
                       <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters!</h6>
                     </div>
-                    <!-- TODO use prototypes -->
+
                     <div *ngFor="let lParameter of objectKeys.transform(loaderPrototype[loaderType])">
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.loader[lParameter]"><i class="fa fa-question-circle"></i>
@@ -452,10 +452,23 @@
 
                       <!-- Objects creation (classes and indexes) -->
                       <div *ngIf="loaderPrototype[loaderType][lParameter]['object']">
-                        <h6 style="color:grey;"><b>Created {{lParameter}}: {{loader[loaderType][lParameter].length}}</b></h6>
+                        <h6 style="color:grey;"><b>Created {{lParameter}}: {{loader[loaderType][lParameter].length}}</b>
 
-                        <!-- Lists every object in both the arrays -->
-                        <div *ngFor="let object of loader[loaderType][lParameter]">{{object['name']}} {{object['class']}}</div>
+                          <!-- Lists every object in both the arrays -->
+                          <div class="btn-group">
+                            <button class="btn btn-trasparent btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                                    aria-expanded="false" id="show{{lParameter}}"><i class="fa fa-chevron-down"></i>
+                            </button>
+                            <!-- Dropdown list -->
+                            <div class="dropdown-menu" style="width: 200px">
+                              <div class="list-group-item" *ngFor="let object of loader[loaderType][lParameter]">
+                                <div *ngFor="let property of objectKeys.transform(object)">
+                                  <b>{{property}}:</b> {{object[property]}} <br>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </h6>
 
                         <div *ngFor="let oParameter of objectKeys.transform(loaderPrototype[loaderType][lParameter]['value'])">
                           &emsp;&emsp;<button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"

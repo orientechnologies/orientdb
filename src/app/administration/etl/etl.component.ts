@@ -110,7 +110,7 @@ class EtlComponent {
     this.sourcePrototype = {
       source: {
         value: undefined,
-        types: ["jdbc", "file", "http"] // TODO upload?
+        types: ["jdbc", "file", "http"]
       },
       fileURL: undefined,
       headers: {
@@ -1038,7 +1038,7 @@ class EtlComponent {
     $("#lCanvas").fadeOut(1000);
   }
 
-  oldConfigInit(oldConfig, direct = 0) { // TODO display missing parameters
+  oldConfigInit(oldConfig, direct = 0) {
     let etl = JSON.parse(oldConfig);
 
     // set types needed
