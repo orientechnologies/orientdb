@@ -40,10 +40,10 @@ UserModule.controller("UsersController", ['$scope', '$rootScope', '$routeParams'
 
 
   if ($scope.strictSql) {
-    var selectAllUsers = 'select *,roles{*} from oUser order by name';
+    var selectAllUsers = 'select *,roles:{*, @rid} from oUser order by name';
     var selectAllRoles = 'select * from oRole order by name fetchPlan *:1';
   } else {
-    var selectAllUsers = 'select *,roles{*} from oUser order by name';
+    var selectAllUsers = 'select *,roles:{*, @rid} from oUser order by name';
     var selectAllRoles = 'select * from oRole fetchPlan *:1 order by name ';
   }
 
