@@ -1038,14 +1038,16 @@ class EtlComponent {
     $("#lCanvas").fadeOut(1000);
   }
 
-  oldConfigInit(oldConfig, direct = 0) {
+  oldConfigInit(oldConfig, direct = 0) { // TODO display missing parameters
     let etl = JSON.parse(oldConfig);
 
+    // set types needed
     this.extractorType = Object.getOwnPropertyNames(etl.extractor)[0];
     this.currentTransformer = etl.transformers[etl.transformers.length -1];
     this.loaderType = Object.getOwnPropertyNames(etl.loader)[0];
 
-    if(etl.config) { // initialize the advanced config if exists
+    // initialize the advanced config if exists
+    if(etl.config) {
       this.addAdvanced();
       if(etl.config.parallel != undefined) this.config.parallel = etl.config.parallel;
       if(etl.config.haltOnError != undefined) this.config.haltOnError = etl.config.haltOnError;
@@ -1053,10 +1055,12 @@ class EtlComponent {
       if(etl.config.log != undefined) this.config.log = etl.config.log;
     }
 
+    // regenerate the modules
     this.extractor = etl.extractor;
     this.transformers = etl.transformers;
     this.reverseBlockFix();
     this.loader = etl.loader;
+
     // initialize the inner objects
     if(this.loaderType === 'orientdb') {
       this.classes = {
@@ -1077,10 +1081,12 @@ class EtlComponent {
     if(etl.source) {
       this.source = etl.source;
       this.sourcePrototype.source.value = Object.getOwnPropertyNames(etl.source)[0];
+      this.sourcePrototype.source.types = ["file", "http"]; // exclude jdbc to avoid weird behaviors
 
       if(this.sourcePrototype.source.value == "http") {
         this.sourcePrototype.URLMethod.value = etl.source.http.method;
         this.sourcePrototype.fileURL = etl.source.http.url;
+        this.sourcePrototype.headers = etl.source.http.headers;
       }
       if(this.sourcePrototype.source.value == "file") {
         this.sourcePrototype.filePath = etl.source.file.path;
@@ -1091,7 +1097,6 @@ class EtlComponent {
         this.launch();
         return;
       }
-      this.sourcePrototype.source.types = ["file", "http"]; // exclude jdbc to avoid weird behaviors
       this.setStep(1);
     }
     else {
@@ -1136,7 +1141,7 @@ class EtlComponent {
     (<any>$("#eCanvas")).slideDown(1000); // Canvas animation
   }
 
-  drawTransformerCanvas() { // TODO wrong interaction and they are unsortable with any new created transformer
+  drawTransformerCanvas() {
     for(let i = 0; i < this.transformers.length; i++) {
       let listEntry = document.createElement('li');
       let canvas = document.createElement('canvas');
@@ -1435,9 +1440,8 @@ class EtlComponent {
     }
   }
 
-  loaderEmpty(type) {
-    if(type === "classes") this.loader.orientdb.classes = [];
-    if(type === "indexes") this.loader.orientdb.indexes = [];
+  loaderDeleteLast(type) { // delete the last element in the array
+    this.loader.orientdb[type].pop();
   }
 
   // Getters and setters

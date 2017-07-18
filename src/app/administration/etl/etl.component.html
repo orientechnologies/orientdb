@@ -319,17 +319,17 @@
               <div class="panel-body">
                 <div id="panelPlaceholder" class="etl-panel"></div>
 
+                <!-- Advanced configurations. The parameters are taken from the prototypes to avoid unknown parameters during restore -->
                 <!-- Extractor advanced configuration -->
                 <div id="extractorOptions" style="display:none">
 
                   <div *ngIf="extractorType && extractor">
                     <h5 align="center"><b>{{extractorType.toUpperCase()}} EXTRACTOR OPTIONS</b></h5><br>
-                    <div *ngIf="objectKeys.transform(extractor[extractorType]).length == 0">
-                      <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters</h6>
+                    <div *ngIf="objectKeys.transform(extractorPrototype[extractorType]).length == 0">
+                      <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters!</h6>
                     </div>
 
                     <div *ngFor="let eParameter of objectKeys.transform(extractorPrototype[extractorType]);">
-                      <!-- Take the paremeters from the prototype to avoid the lack of parameters when restoring an old config -->
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.extractor[eParameter]"><i class="fa fa-question-circle"></i>
                       </button>
@@ -376,11 +376,11 @@
 
                   <div *ngIf="getTransformerType(currentTransformer) && transformers">
                     <h5 align="center"><b>{{getTransformerType(currentTransformer).toUpperCase()}} TRANSFORMER OPTIONS</b></h5><br>
-                    <div *ngIf="objectKeys.transform(currentTransformer[getTransformerType(this.currentTransformer)]).length == 0">
-                      <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters</h6>
+                    <div *ngIf="objectKeys.transform(transformerPrototype[getTransformerType(this.currentTransformer)]).length == 0">
+                      <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters!</h6>
                     </div>
-
-                    <div *ngFor="let tParameter of objectKeys.transform(currentTransformer[getTransformerType(this.currentTransformer)])">
+                    <!-- TODO use the prototype -->
+                    <div *ngFor="let tParameter of objectKeys.transform(transformerPrototype[getTransformerType(this.currentTransformer)])">
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.transformer[tParameter]"><i class="fa fa-question-circle"></i>
                       </button>
@@ -419,11 +419,11 @@
 
                   <div *ngIf="loaderType && loader">
                     <h5 align="center"><b>{{loaderType.toUpperCase()}} LOADER OPTIONS</b></h5><br>
-                    <div *ngIf="objectKeys.transform(loader[loaderType]).length == 0">
-                      <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters</h6>
+                    <div *ngIf="objectKeys.transform(loaderPrototype[loaderType]).length == 0">
+                      <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters!</h6>
                     </div>
-
-                    <div *ngFor="let lParameter of objectKeys.transform(loader[loaderType])">
+                    <!-- TODO use prototypes -->
+                    <div *ngFor="let lParameter of objectKeys.transform(loaderPrototype[loaderType])">
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                               [attr.data-content]="hints.loader[lParameter]"><i class="fa fa-question-circle"></i>
                       </button>
@@ -452,7 +452,11 @@
 
                       <!-- Objects creation (classes and indexes) -->
                       <div *ngIf="loaderPrototype[loaderType][lParameter]['object']">
-                        <h6 style="color:grey;"><b>Created {{lParameter}}: {{loader[loaderType][lParameter].length}}</b></h6> <!-- TODO see them! -->
+                        <h6 style="color:grey;"><b>Created {{lParameter}}: {{loader[loaderType][lParameter].length}}</b></h6>
+
+                        <!-- Lists every object in both the arrays -->
+                        <div *ngFor="let object of loader[loaderType][lParameter]">{{object['name']}} {{object['class']}}</div>
+
                         <div *ngFor="let oParameter of objectKeys.transform(loaderPrototype[loaderType][lParameter]['value'])">
                           &emsp;&emsp;<button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
                                               [attr.data-content]="hints.loader[oParameter]"><i class="fa fa-question-circle"></i>
@@ -484,8 +488,8 @@
                         <br><br><br>
                         <div class="btn-group-xs">
                           &emsp;&emsp;&emsp;
-                          <button type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderEmpty(lParameter)">
-                            Empty {{lParameter}}
+                          <button type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderDeleteLast(lParameter)">
+                            Remove last
                           </button>
                           &emsp;
                           <button *ngIf="lParameter === 'classes'" type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderAddTo(lParameter)"
@@ -515,22 +519,24 @@
 
           <br><br><br><br>
           <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-4">
+            <div class="col-sm-offset-2 col-sm-3">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="setStep('1'); reset()">Back</button>
+                  <button type="button" class="btn btn-md btn-primary" (click)="setStep('1'); reset()">Back</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="launch()" [disabled]="!ready">Run Etl</button>
+                  <button type="button" class="btn btn-md btn-primary" (click)="launch()" [disabled]="!ready">Run Etl</button>
                 </div>
               </div>
             </div>
 
             <!-- Quick tips panel -->
-            <div class="col-sm-6">
+            <div class="col-sm-7">
               <div class="panel panel-default text-center">
-                <b style="color:red;">*</b><b style="color:grey;"> means that the parameter is mandatory for a correct configuration.<br>
-                Click on an element to configure or delete it in the side panel.</b></div>
+                <b style="color:red;">*</b><b style="color:grey;"> means that the parameter is mandatory for a correct configuration.
+                An empty parameter when importing means that it wasn't in the imported configuration, so the default value will be used.<br>
+                For any doubt during the configuration, please refer to the
+                <a href="http://orientdb.com/docs/last/ETL-Introduction.html" target="_blank">official documentation</a>.</b></div>
             </div>
           </div>
         </div>
