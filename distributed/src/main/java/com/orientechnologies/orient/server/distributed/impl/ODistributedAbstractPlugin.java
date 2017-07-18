@@ -822,7 +822,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       try {
         Thread.sleep(100);
       } catch (InterruptedException e) {
-        Thread.interrupted();
+        Thread.currentThread().interrupt();
         throw new OOfflineNodeException("Message Service is not available");
       }
     return messageService;

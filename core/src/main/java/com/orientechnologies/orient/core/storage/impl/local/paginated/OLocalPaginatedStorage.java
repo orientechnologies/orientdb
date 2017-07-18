@@ -444,7 +444,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
           throw new OStorageException("Cannot terminate full checkpoint task");
       }
     } catch (InterruptedException e) {
-      Thread.interrupted();
       throw OException.wrapException(new OStorageException("Error on closing of storage '" + name), e);
     }
   }

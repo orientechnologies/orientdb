@@ -490,7 +490,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
           try {
             segmentCreationComplete.await();
           } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
             throw new OInterruptedException("Segment creation was interrupted");
           }
         }

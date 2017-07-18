@@ -181,7 +181,6 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
                   "Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
           }
         } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
           throw OException.wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"),
               e);
         }

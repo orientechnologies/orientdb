@@ -910,6 +910,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       try {
         workers.awaitTermination(2, TimeUnit.MINUTES);
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
     }
 

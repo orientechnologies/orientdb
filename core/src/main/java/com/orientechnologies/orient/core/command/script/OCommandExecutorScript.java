@@ -476,6 +476,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     try {
       Thread.sleep(new Random().nextInt(MAX_DELAY - 1) + 1);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       OLogManager.instance().error(this, "Wait was interrupted", e);
     }
   }
@@ -585,6 +586,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     try {
       Thread.sleep(Integer.parseInt(sleepTimeInMs));
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       OLogManager.instance().debug(this, "Sleep was interrupted in SQL batch");
     }
   }
