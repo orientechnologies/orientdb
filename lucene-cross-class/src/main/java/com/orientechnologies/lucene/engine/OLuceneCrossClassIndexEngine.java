@@ -358,6 +358,11 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   }
 
   @Override
+  public boolean isCollectionIndex() {
+    return false;
+  }
+
+  @Override
   public void freeze(boolean throwException) {
 
   }
