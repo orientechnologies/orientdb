@@ -477,7 +477,7 @@ public enum OGlobalConfiguration {
       "Enable the usage of JSONP, if requested by the client. The parameter name to use is 'callback'", Boolean.class, false, true),
 
   NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
-      "Timeout, after which an http session is considered to have expired (in seconds)", Integer.class, 300),
+      "Timeout, after which an http session is considered to have expired (in seconds)", Integer.class, 900),
 
   NETWORK_HTTP_USE_TOKEN("network.http.useToken", "Enable Token based sessions for http", Boolean.class, false),
 
