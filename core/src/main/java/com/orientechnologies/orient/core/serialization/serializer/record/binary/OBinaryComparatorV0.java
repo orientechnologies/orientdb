@@ -449,7 +449,8 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
         }
         case LONG:
         case DATETIME: {
-          final long value2 = OVarIntSerializer.readAsLong(fieldValue2);
+          long value2 = OVarIntSerializer.readAsLong(fieldValue2);
+          value2 = ORecordSerializerBinaryV0.convertDayToTimezone(ODateHelper.getDatabaseTimeZone(), TimeZone.getTimeZone("GMT"), value2);
           return value1 == value2;
         }
         case DATE: {
