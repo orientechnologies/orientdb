@@ -32,17 +32,16 @@ public class OMessageHelperTest {
     orientDB.create("testOIdentifiable", ODatabaseType.MEMORY);
 
     ODatabaseDocument open = orientDB.open("testOIdentifiable", "admin", "admin");
-
-
+    int id = open.getClusterIdByName("V");
     try {
       MockChannel channel = new MockChannel();
       ODocument doc = new ODocument();
       ORidBag bags = new ORidBag();
-      bags.add(new ORecordId(11,0));
-      doc.field("bag",bags );
+      bags.add(new ORecordId(id, 0));
+      doc.field("bag", bags);
 
       ODocumentInternal.fillClassNameIfNeeded(doc, "Test");
-      ORecordInternal.setIdentity(doc, new ORecordId(10, 0));
+      ORecordInternal.setIdentity(doc, new ORecordId(id, 1));
       ORecordInternal.setVersion(doc, 1);
 
       OMessageHelper.writeIdentifiable(channel, doc, ORecordSerializerNetworkFactory.INSTANCE.current());
@@ -55,11 +54,10 @@ public class OMessageHelperTest {
 
       ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(newDoc);
       assertThat(dirtyManager.getNewRecords()).isNull();
-      
-    }finally {
+
+    } finally {
       orientDB.close();
     }
-
 
   }
 }

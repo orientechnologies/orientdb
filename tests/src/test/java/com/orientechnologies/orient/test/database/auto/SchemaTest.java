@@ -418,7 +418,7 @@ public class SchemaTest extends DocumentDBBaseTest {
   public void testExchangeCluster() {
 
     try {
-      database.command(new OCommandSQL("CREATE CLASS TestRenameClusterOriginal")).execute();
+      database.command(new OCommandSQL("CREATE CLASS TestRenameClusterOriginal clusters 2")).execute();
 
       swapClusters(database, 1);
       swapClusters(database, 2);
