@@ -43,7 +43,7 @@ public class ONestedProjection extends SimpleNode {
       return apply(expression, (Map) input, ctx, recursion == null ? 0 : recursion.getValue().intValue());
     }
     if (input instanceof Collection) {
-      return ((Collection) input).stream().map(x -> apply(expression, input, ctx)).collect(Collectors.toList());
+      return ((Collection) input).stream().map(x -> apply(expression, x, ctx)).collect(Collectors.toList());
     }
     Iterator iter = null;
     if (input instanceof Iterable) {
