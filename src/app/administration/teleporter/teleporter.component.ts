@@ -73,9 +73,9 @@ class TeleporterComponent implements AfterViewChecked {
     this.logLevels = ["NO","DEBUG","INFO","WARNING","ERROR"];
 
     this.dbConnection = {
-      "host": "localhost",
-      "port": "5432",
-      "dbName": "dvdrental",
+      "host": "",
+      "port": "",
+      "dbName": "",
       "sid": ""
     }
 
@@ -84,10 +84,10 @@ class TeleporterComponent implements AfterViewChecked {
     this.defaultConfig = {
       "driver": "PostgreSQL",
       "jurl": "",
-      "username": "postgres",
-      "password": "postgres",
+      "username": "",
+      "password": "",
       "protocol": "plocal",
-      "outDBName": "testdb",
+      "outDBName": "",
       "outDbUrl": "",
       "strategy": "naive",
       "mapper": "basicDBMapper",
@@ -98,7 +98,7 @@ class TeleporterComponent implements AfterViewChecked {
     }
 
     this.config = angular.copy(this.defaultConfig);
-    this.step = '4';
+    this.step = '1';
 
     // fetching driver name and jurl pattern
     this.drivers().then((data) => {
@@ -143,7 +143,7 @@ class TeleporterComponent implements AfterViewChecked {
     this.key = "id";
     this.fieldToDisplay = "tableName";
 
-    this.buildConfigJSON();
+    // this.buildConfigJSON();
 
     this.selectedElement = undefined;
     this.configFetched = false;
