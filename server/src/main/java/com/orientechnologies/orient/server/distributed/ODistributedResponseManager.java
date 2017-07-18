@@ -572,7 +572,10 @@ public class ODistributedResponseManager {
   public Object getResponseFromServer(final String s) {
     synchronousResponsesLock.lock();
     try {
-      return responses.get(s);
+      final Object r = responses.get(s);
+      if (r == NO_RESPONSE)
+        return null;
+      return r;
     } finally {
       synchronousResponsesLock.unlock();
     }
