@@ -254,6 +254,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Object getInTx(Object key, OLuceneTxChanges changes) {
+    updateLastAccess();
     openIfClosed();
 
     try {
