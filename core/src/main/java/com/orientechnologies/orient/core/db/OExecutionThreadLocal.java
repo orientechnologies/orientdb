@@ -52,13 +52,13 @@ public class OExecutionThreadLocal extends ThreadLocal<OExecutionThreadLocal.OEx
 
   public void setInterruptCurrentOperation(final Thread t) {
     if (t instanceof OSoftThread)
-      ((OSoftThread) t).interruptCurrentOperation();
+      ((OSoftThread) t).softShutdown();
   }
 
   public static void setInterruptCurrentOperation() {
     final Thread t = Thread.currentThread();
     if (t instanceof OSoftThread)
-      ((OSoftThread) t).interruptCurrentOperation();
+      ((OSoftThread) t).softShutdown();
   }
 
   static {

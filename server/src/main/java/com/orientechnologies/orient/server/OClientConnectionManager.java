@@ -273,7 +273,7 @@ public class OClientConnectionManager {
       final ONetworkProtocol protocol = connection.getProtocol();
       if (protocol != null)
         // INTERRUPT THE NEWTORK MANAGER
-        protocol.interruptCurrentOperation();
+        protocol.softShutdown();
     }
   }
 
