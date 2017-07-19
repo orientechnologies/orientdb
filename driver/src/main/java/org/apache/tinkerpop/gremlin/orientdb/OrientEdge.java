@@ -67,6 +67,7 @@ public final class OrientEdge extends OrientElement implements Edge {
 
     @Override
     public Iterator<Vertex> vertices(Direction direction) {
+        this.graph.tx().readWrite();
         switch (direction) {
         case OUT:
             return graph.vertices(vOut.getIdentity());

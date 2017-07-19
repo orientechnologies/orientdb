@@ -1,5 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import org.apache.tinkerpop.gremlin.structure.util.AbstractThreadLocalTransaction;
 
 public class OrientTransaction extends AbstractThreadLocalTransaction {
@@ -9,27 +11,33 @@ public class OrientTransaction extends AbstractThreadLocalTransaction {
     public OrientTransaction(OrientGraph graph) {
         super(graph);
         this.graph = graph;
-        doOpen();
     }
 
     @Override
     public boolean isOpen() {
-        return !graph.isClosed();
+        return this.tx().isActive();
     }
 
     @Override
     protected void doOpen() {
-        graph.begin();
+        this.db().begin();
     }
 
     @Override
     protected void doCommit() throws TransactionException {
-        graph.commit();
+        this.db().commit();
     }
 
     @Override
     protected void doRollback() throws TransactionException {
-        graph.rollback();
+        this.db().rollback();
     }
 
+    protected OTransaction tx() {
+        return graph.getRawDatabase().getTransaction();
+    }
+
+    protected ODatabaseDocument db() {
+        return graph.getRawDatabase();
+    }
 }

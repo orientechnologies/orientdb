@@ -43,7 +43,7 @@ public class OGremlinResultSet implements Iterable<OGremlinResult>, AutoCloseabl
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         inner.close();
     }
 

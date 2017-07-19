@@ -29,7 +29,7 @@ public class OrientGraphProvider extends AbstractGraphProvider {
         System.setProperty("build.dir", buildDir.getAbsolutePath());
     }
 
-    private static final Map<Class<?>, List<String>> IGNORED_TESTS;
+    protected static final Map<Class<?>, List<String>> IGNORED_TESTS;
 
     static {
         IGNORED_TESTS = new HashMap<>();

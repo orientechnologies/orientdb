@@ -12,6 +12,7 @@ public class OrientDBDebugSuite extends AbstractGremlinSuite {
 
     private static final Class<?>[] allTests = new Class<?>[] {
             //        GraphTest.class,
+//            TransactionTest.class
     };
 
     public OrientDBDebugSuite(final Class<?> klass, final RunnerBuilder builder) throws InitializationError {

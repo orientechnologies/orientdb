@@ -41,6 +41,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
     }
 
     public Iterator<Vertex> vertices(final Direction direction, final String... labels) {
+        this.graph.tx().readWrite();
         Stream<Vertex> vertexStream = asStream(
                 getRawElement().getVertices(OrientGraphUtils.mapDirection(direction), labels).iterator()).map(v -> new OrientVertex(graph, v));
         return vertexStream.iterator();
@@ -105,6 +106,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
         graph.createEdgeClass(label);
 
+        this.graph.tx().readWrite();
+
         OEdge oEdge = getRawElement().addEdge(((OrientVertex) inVertex).getRawElement(), label);
         final OrientEdge edge = new OrientEdge(graph, oEdge);
         edge.property(keyValues);
@@ -113,12 +116,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
         return edge;
     }
 
-    public void remove() {
-        getRawElement().delete();
-    }
-
     public Iterator<Edge> edges(final Direction direction, String... edgeLabels) {
-
+        this.graph.tx().readWrite();
         // It should not collect but instead iterating through the relations.
         // But necessary in order to avoid loop in EdgeTest#shouldNotHaveAConcurrentModificationExceptionWhenIteratingAndRemovingAddingEdges
         Stream<Edge> edgeStream = asStream(

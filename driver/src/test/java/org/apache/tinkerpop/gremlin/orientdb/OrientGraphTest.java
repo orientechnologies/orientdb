@@ -342,8 +342,9 @@ public class OrientGraphTest {
         try {
 
             assertEquals(true, graph.features().graph().supportsTransactions());
-            Assert.assertEquals(true, graph.tx().isOpen());
+            Assert.assertEquals(false, graph.tx().isOpen());
             OrientVertex vertex = (OrientVertex) graph.addVertex(T.label, "V", "name", "Foo");
+            Assert.assertEquals(true, graph.tx().isOpen());
             Assert.assertEquals(true, vertex.getRawElement().getIdentity().isNew());
             graph.tx().commit();
             Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());

@@ -34,6 +34,7 @@ public abstract class OrientElement implements Element, OIdentifiable {
     }
 
     public String label() {
+        this.graph.tx().readWrite();
         String internalClassName = getRawElement().getSchemaType().get().getName();
         // User labels on edges/vertices are prepended with E_ or V_ . The user
         // should not see that.
@@ -55,6 +56,8 @@ public abstract class OrientElement implements Element, OIdentifiable {
             throw Property.Exceptions.propertyValueCanNotBeNull();
         if (Graph.Hidden.isHidden(key))
             throw Property.Exceptions.propertyKeyCanNotBeAHiddenKey(key);
+
+        this.graph.tx().readWrite();
 
         OElement doc = getRawElement();
         doc.setProperty(key, value);
@@ -82,9 +85,9 @@ public abstract class OrientElement implements Element, OIdentifiable {
     }
 
     public <V> Iterator<? extends Property<V>> properties(final String... propertyKeys) {
+        this.graph.tx().readWrite();
+
         ODocument record = rawElement.getRecord();
-        if (record == null)
-            record = new ODocument();
 
         Map<String, Object> properties = record.toMap();
         HashSet<String> keys = new HashSet<>(Arrays.asList(propertyKeys));
@@ -101,6 +104,7 @@ public abstract class OrientElement implements Element, OIdentifiable {
 
     @Override
     public void remove() {
+        this.graph.tx().readWrite();
         rawElement.delete();
     }
 

@@ -93,6 +93,7 @@ public final class OrientGraph implements Graph {
     protected final String password;
     protected OrientGraphFactory factory;
     protected boolean shouldCloseFactory = false;
+    protected OrientTransaction tx;
 
     public static OrientGraph open() {
         return open("memory:orientdb-" + Math.random(), "admin", "admin");
@@ -129,10 +130,11 @@ public final class OrientGraph implements Graph {
         this.configuration = configuration;
         this.connectionFailed = false;
         if (configuration.getBoolean(CONFIG_TRANSACTIONAL, false)) {
-            ensureTransaction();
             this.features = ODBFeatures.OrientFeatures.INSTANCE_TX;
+            this.tx = new OrientTransaction(this);
         } else {
             this.features = ODBFeatures.OrientFeatures.INSTANCE_NOTX;
+            this.tx = new OrientNoTransaction(this);
         }
     }
 
@@ -150,9 +152,10 @@ public final class OrientGraph implements Graph {
         this.configuration = configuration;
         if (configuration.getBoolean(CONFIG_TRANSACTIONAL, false)) {
             this.features = ODBFeatures.OrientFeatures.INSTANCE_TX;
-            ensureTransaction();
+            this.tx = new OrientTransaction(this);
         } else {
             this.features = ODBFeatures.OrientFeatures.INSTANCE_NOTX;
+            this.tx = new OrientNoTransaction(this);
         }
         this.shouldCloseFactory = closeFactory;
     }
@@ -207,7 +210,7 @@ public final class OrientGraph implements Graph {
 
     private <R> R executeOutsideTx(Function<ODatabaseDocument, R> lamba) {
 
-        if (isTransactionActive()) {
+        if (this.tx().isOpen()) {
             ODatabaseDocument oldDb = getRawDatabase();
             ODatabaseDocument newDb = null;
             try {
@@ -227,6 +230,7 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Vertex addVertex(Object... keyValues) {
+        this.tx().readWrite();
         return executeWithConnectionCheck(() -> {
             makeActive();
 
@@ -244,6 +248,7 @@ public final class OrientGraph implements Graph {
     }
 
     public OGremlinResultSet executeSql(String sql, Object... params) {
+        this.tx().readWrite();
         return executeWithConnectionCheck(() -> {
             makeActive();
             OResultSet resultSet = database.command(sql, params);
@@ -287,6 +292,7 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Iterator<Vertex> vertices(Object... vertexIds) {
+        this.tx().readWrite();
         return executeWithConnectionCheck(() -> {
             makeActive();
             return elements(OClass.VERTEX_CLASS_NAME, r -> new OrientVertex(this, getRawDocument(r).asVertex()
@@ -421,6 +427,7 @@ public final class OrientGraph implements Graph {
 
     @Override
     public Iterator<Edge> edges(Object... edgeIds) {
+        this.tx().readWrite();
         return executeWithConnectionCheck(() -> {
             makeActive();
             return elements(OClass.EDGE_CLASS_NAME, r -> new OrientEdge(this, getRawDocument(r).asEdge()
@@ -485,11 +492,8 @@ public final class OrientGraph implements Graph {
 
     @Override
     public OrientTransaction tx() {
-        if (!features.graph().supportsTransactions())
-            return new OrientNoTransaction(this);
-
         makeActive();
-        return new OrientTransaction(this);
+        return this.tx;
     }
 
     /**
@@ -511,51 +515,17 @@ public final class OrientGraph implements Graph {
 
     public void begin() {
         makeActive();
-
-        final boolean txBegun = database.getTransaction().isActive();
-        if (!txBegun) {
-            database.begin();
-            // TODO use setting to determine behavior settings.isUseLog()
-            database.getTransaction().setUsingLog(true);
-        }
+        this.tx().doOpen();
     }
 
     public void commit() {
         makeActive();
-
-        if (!features.graph().supportsTransactions()) {
-            return;
-        }
-        if (database == null) {
-            return;
-        }
-
-        database.commit();
-        if (isAutoStartTx()) {
-            begin();
-        }
+        this.tx().commit();
     }
 
     public void rollback() {
         makeActive();
-
-        if (!features.graph().supportsTransactions()) {
-            return;
-        }
-
-        if (database == null) {
-            return;
-        }
-
-        database.rollback();
-        if (isAutoStartTx()) {
-            begin();
-        }
-    }
-
-    public boolean isAutoStartTx() {
-        // TODO use configuration to determine behavior
-        return true;
+        this.tx().rollback();
     }
 
     @Override
@@ -572,20 +542,9 @@ public final class OrientGraph implements Graph {
     @Override
     public void close() {
         makeActive();
-        boolean commitTx = true;
         String url = database.getURL();
-
         try {
-            if (!database.isClosed() && commitTx) {
-                database.commit();
-            }
-
-        } catch (RuntimeException e) {
-            OLogManager.instance().info(this, "Error during context close for db " + url, e);
-            throw e;
-        } catch (Exception e) {
-            OLogManager.instance().error(this, "Error during context close for db " + url, e);
-            throw new RuntimeException("Error during context close for db " + url, e);
+            this.tx().close();
         } finally {
             try {
                 database.close();
@@ -633,7 +592,7 @@ public final class OrientGraph implements Graph {
                     s.createClass(className, superClass);
                     return null;
                 });
-                if (isTransactionActive())
+                if (this.tx().isOpen())
                     schema.reload();
             } catch (OException e) {
                 throw new IllegalArgumentException(e);
@@ -751,6 +710,7 @@ public final class OrientGraph implements Graph {
     }
 
     protected boolean isTransactionActive() {
+
         return getRawDatabase().getTransaction().isActive();
     }
 }
