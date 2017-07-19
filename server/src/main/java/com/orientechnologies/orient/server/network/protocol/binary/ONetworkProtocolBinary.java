@@ -154,6 +154,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected void execute() throws Exception {
     requestType = -1;
 
+    if(server.rejectRequests()){
+      this.softShutdown();
+      return;
+    }
     // do not remove this or we will get deadlock upon shutdown.
     if (isShutdownFlag())
       return;
