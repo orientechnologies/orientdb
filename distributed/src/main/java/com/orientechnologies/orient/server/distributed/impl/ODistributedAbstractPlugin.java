@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -2031,10 +2032,19 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     if (dbUrl.startsWith("plocal:")) {
       // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
-      final String dbDirectory = serverInstance.getDatabaseDirectory();
-      if (!dbUrl.substring("plocal:".length()).startsWith(dbDirectory))
-        // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
-        return false;
+      final OLocalPaginatedStorage storage = (OLocalPaginatedStorage) iDatabase.getStorage().getUnderlying();
+      try {
+        final String storagePath = new File(storage.getStoragePath()).getCanonicalPath();
+        final String dbDirectory = new File(serverInstance.getDatabaseDirectory()).getCanonicalPath();
+
+        if (!storagePath.startsWith(dbDirectory))
+          // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
+          return false;
+
+      } catch (IOException ioe) {
+        throw OException.wrapException(new OStorageException("Failed to resolve DB path"), ioe);
+      }
+
     } else if (dbUrl.startsWith("remote:"))
       return false;
 
