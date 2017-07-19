@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.sun.xml.internal.ws.policy.AssertionSet;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -36,21 +35,21 @@ public class InvalidRemovedFileIdsTest {
     db.close();
     storage.close(true, false);
 
-    final RandomAccessFile cacheState = new RandomAccessFile(new File(dbPath, "name_id_map.cm"), "rw");
-    cacheState.seek(cacheState.length());
+    final RandomAccessFile fileMap = new RandomAccessFile(new File(dbPath, "name_id_map.cm"), "rw");
+    fileMap.seek(fileMap.length());
 
-    writeNameIdEntry(cacheState, "c1.cpm", -100);
-    writeNameIdEntry(cacheState, "c1.pcl", -100);
+    writeNameIdEntry(fileMap, "c1.cpm", -100);
+    writeNameIdEntry(fileMap, "c1.pcl", -100);
 
-    writeNameIdEntry(cacheState, "c2.cpm", -200);
-    writeNameIdEntry(cacheState, "c2.pcl", -200);
-    writeNameIdEntry(cacheState, "c2.pcl", -400);
+    writeNameIdEntry(fileMap, "c2.cpm", -200);
+    writeNameIdEntry(fileMap, "c2.pcl", -200);
+    writeNameIdEntry(fileMap, "c2.pcl", -400);
 
-    writeNameIdEntry(cacheState, "c3.cpm", -500);
-    writeNameIdEntry(cacheState, "c3.pcl", -500);
-    writeNameIdEntry(cacheState, "c4.cpm", -500);
-    writeNameIdEntry(cacheState, "c4.pcl", -600);
-    writeNameIdEntry(cacheState, "c4.cpm", -600);
+    writeNameIdEntry(fileMap, "c3.cpm", -500);
+    writeNameIdEntry(fileMap, "c3.pcl", -500);
+    writeNameIdEntry(fileMap, "c4.cpm", -500);
+    writeNameIdEntry(fileMap, "c4.pcl", -600);
+    writeNameIdEntry(fileMap, "c4.cpm", -600);
 
     db = new ODatabaseDocumentTx("plocal:" + dbPath);
     db.open("admin", "admin");
