@@ -59,7 +59,7 @@ public abstract class OSoftThread extends Thread implements OService {
     interrupt();
   }
 
-  public void interruptCurrentOperation() {
+  public void softShutdown() {
     shutdownFlag = true;
   }
 

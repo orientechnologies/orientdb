@@ -90,6 +90,7 @@ public class OServer {
   private final boolean                                    shutdownEngineOnExit;
   protected ReentrantLock                                  lock                   = new ReentrantLock();
   protected volatile boolean                               running                = false;
+  protected volatile boolean                               rejectRequests         = true;
   protected OServerConfigurationManager                    serverCfg;
   protected OContextConfiguration                          contextConfiguration;
   protected OServerShutdownHook                            shutdownHook;
@@ -298,6 +299,7 @@ public class OServer {
       shutdownLatch = new CountDownLatch(1);
 
     clientConnectionManager = new OClientConnectionManager(this);
+    rejectRequests = false;
 
     initFromConfiguration();
 
@@ -495,6 +497,7 @@ public class OServer {
             OLogManager.instance().error(this, "Error during deactivation of server lifecycle listener %s", e, l);
           }
 
+        rejectRequests = true;
         clientConnectionManager.shutdown();
 
         if (pluginManager != null)
@@ -521,6 +524,10 @@ public class OServer {
     }
 
     return true;
+  }
+
+  public boolean rejectRequests() {
+    return rejectRequests;
   }
 
   public void waitForShutdown() {
