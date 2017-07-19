@@ -1929,7 +1929,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
     }
 
-    OLogManager.instance().warn(this, "Removed files " + fixedFiles + " had duplicated ids. Problem is fixed automatically.");
+    if (!fixedFiles.isEmpty())
+      OLogManager.instance().warn(this, "Removed files " + fixedFiles + " had duplicated ids. Problem is fixed automatically.");
   }
 
   private NameFileIdEntry readNextNameIdEntryV1() throws IOException {
