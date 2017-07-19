@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 
 import java.util.*;
 
@@ -47,6 +48,9 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
   public OTransactionOptimisticServer(ODatabaseDocumentInternal database, int txId, boolean usingLong,
       List<ORecordOperationRequest> operations, List<IndexChange> indexChanges) {
     super(database);
+    if (database.getTransaction().isActive()) {
+      this.newObjectCounter = ((OTransactionRealAbstract) database.getTransaction()).getNewObjectCounter();
+    }
     clientTxId = txId;
     this.setUsingLog(usingLong);
     this.operations = operations;

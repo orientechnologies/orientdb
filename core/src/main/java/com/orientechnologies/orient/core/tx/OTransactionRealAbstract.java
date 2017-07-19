@@ -561,4 +561,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   public Map<ORID, ORID> getUpdatedRids() {
     return updatedRids;
   }
+
+  public int getNewObjectCounter() {
+    return newObjectCounter;
+  }
 }

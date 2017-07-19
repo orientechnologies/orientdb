@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.tx;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -40,6 +41,7 @@ public class RemoteTransactionSupportTest {
 
   @Before
   public void before() throws Exception {
+    OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.setValue(1);
     server = new OServer();
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
