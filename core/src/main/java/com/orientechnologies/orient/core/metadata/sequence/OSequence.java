@@ -39,22 +39,22 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @since 3/2/2015
  */
 public abstract class OSequence {
-  public static final long       DEFAULT_START     = 0;
-  public static final int        DEFAULT_INCREMENT = 1;
-  public static final int        DEFAULT_CACHE     = 20;
+  public static final long DEFAULT_START     = 0;
+  public static final int  DEFAULT_INCREMENT = 1;
+  public static final int  DEFAULT_CACHE     = 20;
 
-  protected static final int     DEF_MAX_RETRY     = OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
-  public static final String     CLASS_NAME        = "OSequence";
+  protected static final int    DEF_MAX_RETRY = OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
+  public static final    String CLASS_NAME    = "OSequence";
 
-  private static final String    FIELD_START       = "start";
-  private static final String    FIELD_INCREMENT   = "incr";
-  private static final String    FIELD_VALUE       = "value";
+  private static final String FIELD_START     = "start";
+  private static final String FIELD_INCREMENT = "incr";
+  private static final String FIELD_VALUE     = "value";
 
-  private static final String    FIELD_NAME        = "name";
-  private static final String    FIELD_TYPE        = "type";
+  private static final String FIELD_NAME = "name";
+  private static final String FIELD_TYPE = "type";
 
-  private ODocument              document;
-  private ThreadLocal<ODocument> tlDocument        = new ThreadLocal<ODocument>();
+  private ODocument document;
+  private ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
 
   public static class CreateParams {
     public Long    start     = DEFAULT_START;
@@ -118,7 +118,9 @@ public abstract class OSequence {
   }
 
   public void save() {
-    tlDocument.get().save();
+    ODocument doc = tlDocument.get();
+    doc.save();
+    onUpdate(doc);
   }
 
   void bindOnLocalThread() {
@@ -214,7 +216,7 @@ public abstract class OSequence {
   public static SEQUENCE_TYPE getSequenceType(final ODocument document) {
     String sequenceTypeStr = document.field(FIELD_TYPE);
     if (sequenceTypeStr != null)
-     return SEQUENCE_TYPE.valueOf(sequenceTypeStr);
+      return SEQUENCE_TYPE.valueOf(sequenceTypeStr);
 
     return null;
   }
