@@ -1774,12 +1774,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
    * </ol>
    */
   private void readNameIdMapV2() throws IOException, InterruptedException {
-    //older versions of ODB incorrectly logged file deletions
-    //some deleted files have the same id
-    //because we reuse ids of removed files when we re-create them
-    //we need to fix this situation
-    final Map<Integer, Set<String>> filesWithfNegativeIds = new HashMap<Integer, Set<String>>();
-
     nameIdMap.clear();
 
     long localFileCounter = -1;
