@@ -82,6 +82,7 @@
                 <exclude.test.9>**/SBTreeWALTest.java</exclude.test.9>
                 <exclude.test.10>**/LocalPaginatedClusterWithWALTest.java</exclude.test.10>
                 <exclude.test.11>**/OSBTreeBonsaiWALTest.java</exclude.test.11>
+                <exclude.test.12>**/InvalidRemovedFileIdsTest.java</exclude.test.12>
             </properties>
         </profile>
 
@@ -105,6 +106,7 @@
                 <exclude.test.9>empty.java</exclude.test.9>
                 <exclude.test.10>empty.java</exclude.test.10>
                 <exclude.test.11>empty.java</exclude.test.11>
+                <exclude.test.12>empty.java</exclude.test.12>
             </properties>
 
         </profile>
@@ -128,6 +130,7 @@
                 <exclude.test.9>empty.java</exclude.test.9>
                 <exclude.test.10>empty.java</exclude.test.10>
                 <exclude.test.11>empty.java</exclude.test.11>
+                <exclude.test.12>empty.java</exclude.test.12>
             </properties>
 
         </profile>
@@ -201,6 +204,7 @@
                         <exclude>${exclude.test.9}</exclude>
                         <exclude>${exclude.test.10}</exclude>
                         <exclude>${exclude.test.11}</exclude>
+                        <exclude>${exclude.test.12}</exclude>
                     </excludes>
                     <properties>
                         <property>
