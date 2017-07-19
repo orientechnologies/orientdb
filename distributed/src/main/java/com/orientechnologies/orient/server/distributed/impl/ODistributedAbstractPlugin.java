@@ -75,6 +75,8 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.*;
@@ -1316,7 +1318,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     serverInstance.getDatabases().forceDatabaseClose(iDatabaseName);
 
     // move directory to ../backup/databases/<db-name>
-    final String backupDirectory =  serverInstance.getContextConfiguration()
+    final String backupDirectory = serverInstance.getContextConfiguration()
         .getValueAsString(OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY);
 
     if (backupDirectory == null || OIOUtils.getStringContent(backupDirectory).trim().isEmpty())
@@ -1966,9 +1968,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return false;
 
     if (dbUrl.startsWith("plocal:")) {
+      final OLocalPaginatedStorage paginatedStorage = (OLocalPaginatedStorage) iDatabase.getStorage().getUnderlying();
+
       // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
-      final String dbDirectory = serverInstance.getDatabaseDirectory();
-      if (!dbUrl.substring("plocal:".length()).startsWith(dbDirectory))
+      final Path storagePath = paginatedStorage.getStoragePath();
+      final Path dbDirectoryPath = Paths.get(serverInstance.getDatabaseDirectory());
+
+      if (!storagePath.startsWith(dbDirectoryPath))
         // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
         return false;
     } else if (dbUrl.startsWith("remote:"))
