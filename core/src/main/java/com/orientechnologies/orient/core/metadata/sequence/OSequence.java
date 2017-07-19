@@ -119,7 +119,9 @@ public abstract class OSequence {
   }
 
   public void save() {
-    tlDocument.get().save();
+    ODocument doc = tlDocument.get();
+    doc.save();
+    onUpdate(doc);
   }
 
   public void save(ODatabaseDocument database) {
@@ -220,7 +222,10 @@ public abstract class OSequence {
 
   public static SEQUENCE_TYPE getSequenceType(final ODocument document) {
     String sequenceTypeStr = document.field(FIELD_TYPE);
-    return SEQUENCE_TYPE.valueOf(sequenceTypeStr);
+    if (sequenceTypeStr != null)
+      return SEQUENCE_TYPE.valueOf(sequenceTypeStr);
+
+    return null;
   }
 
   public static void initClass(OClassImpl sequenceClass) {
