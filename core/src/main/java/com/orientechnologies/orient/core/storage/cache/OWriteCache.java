@@ -98,6 +98,14 @@ public interface OWriteCache {
 
   void renameFile(long fileId, String newFileName) throws IOException;
 
+  /**
+   * Replaces the file content with the content of the provided file.
+   *
+   * @param fileId         the file id of the file to replace the content of.
+   * @param newContentFile the new content file to replace the current content with.
+   */
+  void replaceFileContentWith(long fileId, Path newContentFile) throws IOException;
+
   long[] close() throws IOException;
 
   void close(long fileId, boolean flush) throws IOException;
@@ -107,6 +115,17 @@ public interface OWriteCache {
   long[] delete() throws IOException;
 
   String fileNameById(long fileId);
+
+  /**
+   * Obtains native file name by the given file id.
+   * <p>
+   * Native file name is a file name of a "physical" on-disk file, it may differ from the "virtual" logical file name.
+   *
+   * @param fileId the file id to obtain the native file name of.
+   *
+   * @return the obtained native file name or {@code null} if the passed file id doesn't correspond to any file.
+   */
+  String nativeFileNameById(long fileId);
 
   int getId();
 

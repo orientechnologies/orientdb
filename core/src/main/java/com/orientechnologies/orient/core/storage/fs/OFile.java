@@ -96,6 +96,13 @@ public interface OFile {
 
   void renameTo(Path newFile) throws IOException;
 
+  /**
+   * Replaces the file content with the content of the provided file.
+   *
+   * @param newContentFile the new content file to replace the content with.
+   */
+  void replaceContentWith(Path newContentFile) throws IOException;
+
   long allocateSpace(final long iSize) throws IOException;
 
   long getFileSize();

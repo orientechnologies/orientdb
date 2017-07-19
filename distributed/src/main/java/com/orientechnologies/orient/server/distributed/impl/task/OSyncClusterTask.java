@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexEngine;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
@@ -40,7 +42,8 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabase
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -126,34 +129,46 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
               try {
                 database.activateOnCurrentThread();
                 database.freeze();
+
                 try {
-
                   final String fileName = cluster.getFileName();
-
                   final String dbPath = iServer.getDatabaseDirectory() + databaseName;
 
-                  final ArrayList<String> fileNames = new ArrayList<String>();
-                  // COPY PCL AND CPM FILE
-                  fileNames.add(fileName);
-                  fileNames.add(fileName.substring(0, fileName.length() - 4) + OClusterPositionMap.DEF_EXTENSION);
+                  final Map<String, String> fileNames = new LinkedHashMap<>();
+
+                  final OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) database.getStorage();
+                  final OWriteCache writeCache = paginatedStorage.getWriteCache();
+
+                  addFileById(fileNames, cluster.getFileId(), writeCache);
+                  addFileByName(fileNames, fileName.substring(0, fileName.length() - OPaginatedCluster.DEF_EXTENSION.length())
+                      + OClusterPositionMap.DEF_EXTENSION, writeCache);
 
                   final OClass clazz = database.getMetadata().getSchema().getClassByClusterId(cluster.getId());
                   if (clazz != null) {
-                    // CHECK FOR AUTO-SHARDED INDEXES
-                    final OIndex<?> asIndex = clazz.getAutoShardingIndex();
-                    if (asIndex != null) {
+                    final OIndex<?> autoShardingIndex = clazz.getAutoShardingIndex();
+                    if (autoShardingIndex != null) {
                       final int partition = OCollections.indexOf(clazz.getClusterIds(), cluster.getId());
-                      final String indexName = asIndex.getName();
-                      fileNames.add(indexName + "_" + partition + OAutoShardingIndexEngine.SUBINDEX_METADATA_FILE_EXTENSION);
-                      fileNames.add(indexName + "_" + partition + OAutoShardingIndexEngine.SUBINDEX_TREE_FILE_EXTENSION);
-                      fileNames.add(indexName + "_" + partition + OAutoShardingIndexEngine.SUBINDEX_BUCKET_FILE_EXTENSION);
-                      fileNames.add(indexName + "_" + partition + OAutoShardingIndexEngine.SUBINDEX_NULL_BUCKET_FILE_EXTENSION);
+                      final String indexName = autoShardingIndex.getName();
+
+                      addFileByName(fileNames,
+                          indexName + "_" + partition + OAutoShardingIndexEngine.SUBINDEX_METADATA_FILE_EXTENSION, writeCache);
+                      addFileByName(fileNames, indexName + "_" + partition + OAutoShardingIndexEngine.SUBINDEX_TREE_FILE_EXTENSION,
+                          writeCache);
+                      addFileByName(fileNames,
+                          indexName + "_" + partition + OAutoShardingIndexEngine.SUBINDEX_BUCKET_FILE_EXTENSION, writeCache);
+                      addFileByName(fileNames,
+                          indexName + "_" + partition + OAutoShardingIndexEngine.SUBINDEX_NULL_BUCKET_FILE_EXTENSION, writeCache);
                     }
                   }
 
-                  OZIPCompressionUtil.compressFiles(dbPath, fileNames.toArray(new String[fileNames.size()]), fileOutputStream, null,
-                      OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger());
-
+                  final OutputStream outputStream = new BufferedOutputStream(fileOutputStream, CHUNK_MAX_SIZE);
+                  try {
+                    OZIPCompressionUtil.compressFiles(dbPath, fileNames, outputStream, null,
+                        OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger());
+                  } finally {
+                    outputStream.flush();
+                    outputStream.close();
+                  }
                 } catch (IOException e) {
                   OLogManager.instance()
                       .error(this, "Cannot execute backup of cluster '%s.%s' for deploy cluster", e, databaseName, clusterName);
@@ -239,6 +254,30 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   @Override
   public int getFactoryId() {
     return FACTORYID;
+  }
+
+  private static void addFileById(Map<String, String> entries, long fileId, OWriteCache writeCache) {
+    final String nativeFileName = writeCache.nativeFileNameById(fileId);
+    if (nativeFileName == null)
+      throw new IllegalStateException("unable to resolve native file name of `" + fileId + "`");
+
+    final String fileName = writeCache.fileNameById(fileId);
+    if (fileName == null)
+      throw new IllegalStateException("unable to resolve file name of `" + fileId + "`");
+
+    entries.put(nativeFileName, fileName);
+  }
+
+  private static void addFileByName(Map<String, String> entries, String fileName, OWriteCache writeCache) {
+    final long fileId = writeCache.fileIdByName(fileName);
+    if (fileId == -1)
+      throw new IllegalStateException("unable to resolve file id of `" + fileName + "`");
+
+    final String nativeFileName = writeCache.nativeFileNameById(fileId);
+    if (nativeFileName == null)
+      throw new IllegalStateException("unable to resolve native file name of `" + fileName + "`");
+
+    entries.put(nativeFileName, fileName);
   }
 
 }

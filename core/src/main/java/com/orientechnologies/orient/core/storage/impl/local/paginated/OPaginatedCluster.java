@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -52,8 +43,16 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -235,18 +234,21 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       acquireExclusiveLock();
       try {
-        final String newFileName = file.getName() + "$temp";
+        final String tempFileName = file.getName() + "$temp";
+        try {
+          final long tempFileId = writeCache.addFile(tempFileName);
+          writeCache.replaceFileContentWith(tempFileId, file.toPath());
 
-        final File rootDir = new File(storageLocal.getConfiguration().getDirectory());
-        final File newFile = new File(rootDir, newFileName);
+          readCache.deleteFile(fileId, writeCache);
+          writeCache.renameFile(tempFileId, getFullName());
+          fileId = tempFileId;
+        } finally {
+          // If, for some reason, the temp file is still exists, wipe it out.
 
-        OFileUtils.copyFile(file, newFile);
-
-        final long newFileId = writeCache.loadFile(newFileName);
-
-        readCache.deleteFile(fileId, writeCache);
-        fileId = newFileId;
-        writeCache.renameFile(fileId, getFullName());
+          final long tempFileId = writeCache.fileIdByName(tempFileName);
+          if (tempFileId >= 0)
+            writeCache.deleteFile(tempFileId);
+        }
       } finally {
         releaseExclusiveLock();
       }
