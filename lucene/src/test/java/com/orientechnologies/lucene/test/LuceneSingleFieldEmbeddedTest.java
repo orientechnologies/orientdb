@@ -34,6 +34,17 @@ import java.util.List;
  */
 public class LuceneSingleFieldEmbeddedTest extends BaseLuceneTest {
 
+  @Before
+  public void init() {
+    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
+
+    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+
+    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
+
+  }
+
   @Test
   public void loadAndTest() {
 
@@ -54,15 +65,5 @@ public class LuceneSingleFieldEmbeddedTest extends BaseLuceneTest {
     Assert.assertEquals(docs.size(), 1);
   }
 
-  @Before
-  public void init() {
-    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
-
-    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
-
-    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-    db.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
-
-  }
 
 }

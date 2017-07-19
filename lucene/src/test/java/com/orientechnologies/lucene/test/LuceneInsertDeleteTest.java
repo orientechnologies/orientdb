@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -26,22 +27,22 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.InputStream;
 import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by enricorisa on 28/06/14.
  */
 
 public class LuceneInsertDeleteTest extends BaseLuceneTest {
-
-  public LuceneInsertDeleteTest() {
-    super();
-  }
 
   @Before
   public void init() {
@@ -78,5 +79,28 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
     assertThat(coll).hasSize(0);
     assertThat(idx.getSize()).isEqualTo(0);
 
+  }
+
+  @Test
+  public void testDeleteWithQueryOnClosedIndex() throws Exception {
+
+    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
+
+    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+
+    db.command(new OCommandSQL(
+        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {'closeAfterInterval':1000 , 'firstFlushAfter':1000 }"))
+        .execute();
+
+
+    List<ODocument> docs = db.query(new OSQLSynchQuery<Object>("select from Song where title lucene 'mountain'"));
+
+    assertThat(docs).hasSize(4);
+    TimeUnit.SECONDS.sleep(5);
+
+    db.command(new OCommandSQL("delete vertex from Song where title lucene 'mountain'")).execute();
+
+    docs = db.query(new OSQLSynchQuery<Object>("select from Song where  title lucene 'mountain'"));
+    assertThat(docs).hasSize(0);
   }
 }

@@ -94,6 +94,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   private   TrackingIndexWriter mgrWriter;
   private   long                flushIndexInterval;
   private   long                closeAfterInterval;
+  private   long                firstFlushAfter;
 
   public OLuceneIndexEngineAbstract(OStorage storage, String indexName) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
@@ -160,8 +161,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   @Override
   public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
 
-    // FIXME how many timers are around?
-
     this.index = indexDefinition;
     this.automatic = isAutomatic;
     this.metadata = metadata;
@@ -173,16 +172,21 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     checkCollectionIndex(indexDefinition);
 
     if (metadata.containsField("flushIndexInterval")) {
-      flushIndexInterval = metadata.field("flushIndexInterval");
-
+      flushIndexInterval = Integer.valueOf(metadata.<Integer>field("flushIndexInterval")).longValue();
     } else {
       flushIndexInterval = 10000l;
     }
-    if (metadata.containsField("closeAfterInterval")) {
-      closeAfterInterval = metadata.field("closeAfterInterval");
 
+    if (metadata.containsField("closeAfterInterval")) {
+      closeAfterInterval = Integer.valueOf(metadata.<Integer>field("closeAfterInterval")).longValue();
     } else {
       closeAfterInterval = 10000l;
+    }
+
+    if (metadata.containsField("firstFlushAfter")) {
+      firstFlushAfter = Integer.valueOf(metadata.<Integer>field("firstFlushAfter")).longValue();
+    } else {
+      firstFlushAfter = 10000l;
     }
 
   }
@@ -211,7 +215,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       }
     };
 
-    Orient.instance().scheduleTask(commitTask, 10000, flushIndexInterval);
+    Orient.instance().scheduleTask(commitTask, firstFlushAfter, flushIndexInterval);
   }
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
@@ -323,6 +327,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public void delete() {
+    openIfClosed();
+
     updateLastAccess();
     if (mgrWriter != null && mgrWriter.getIndexWriter() != null) {
 
@@ -408,7 +414,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   protected void openIfClosed() {
     if (closed.get()) {
-      OLogManager.instance().info(this, "open closed index:: " + indexName());
+//      OLogManager.instance().info(this, "open closed index:: " + indexName());
 
       try {
         reOpen();
@@ -441,6 +447,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public long sizeInTx(OLuceneTxChanges changes) {
+    openIfClosed();
     IndexSearcher searcher = searcher();
     try {
       IndexReader reader = searcher.getIndexReader();
@@ -463,6 +470,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public Query deleteQuery(Object key, OIdentifiable value) {
+    openIfClosed();
     if (isCollectionDelete()) {
       return OLuceneIndexType.createDeleteQuery(value, index.getFields(), key);
     }
@@ -495,6 +503,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public void clear() {
+    openIfClosed();
     try {
       reopenToken = mgrWriter.deleteAll();
     } catch (IOException e) {
