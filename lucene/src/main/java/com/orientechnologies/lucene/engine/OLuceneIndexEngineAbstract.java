@@ -383,6 +383,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public boolean remove(Object key, OIdentifiable value) {
+    openIfClosed();
     updateLastAccess();
 
     Query query = deleteQuery(key, value);
@@ -503,6 +504,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public void clear() {
+    updateLastAccess();
     openIfClosed();
     try {
       reopenToken = mgrWriter.deleteAll();
@@ -550,6 +552,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   protected void release(IndexSearcher searcher) {
+    updateLastAccess();
+    openIfClosed();
     try {
       searcherManager.release(searcher);
     } catch (IOException e) {
