@@ -124,11 +124,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     // REMOVE ALL THE DIRTY ENTRIES AND UNDO ANY DIRTY DOCUMENT IF POSSIBLE.
     for (ORecordOperation v : allEntries.values()) {
       final ORecord rec = v.getRecord();
-      if (rec.isDirty())
-        if (rec instanceof ODocument && ((ODocument) rec).isTrackingChanges())
-          ((ODocument) rec).undo();
-        else
-          rec.unload();
+      rec.unload();
     }
 
     close();
