@@ -1827,6 +1827,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private void readNameIdMapV1() throws IOException, InterruptedException {
+    //older versions of ODB incorrectly logged file deletions
+    //some deleted files have the same id
+    //because we reuse ids of removed files when we re-create them
+    //we need to fix this situation
+    final Map<Integer, Set<String>> filesWithfNegativeIds = new HashMap<Integer, Set<String>>();
+
     nameIdMap.clear();
 
     long localFileCounter = -1;
@@ -1839,6 +1845,32 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final long absFileId = Math.abs(nameFileIdEntry.fileId);
       if (localFileCounter < absFileId)
         localFileCounter = absFileId;
+
+      final Integer existingId = nameIdMap.get(nameFileIdEntry.name);
+
+      if (existingId != null && existingId < 0) {
+        final Set<String> files = filesWithfNegativeIds.get(existingId);
+
+        if (files != null) {
+          files.remove(nameFileIdEntry.name);
+
+          if (files.isEmpty()) {
+            filesWithfNegativeIds.remove(existingId);
+          }
+        }
+      }
+
+      if (nameFileIdEntry.fileId < 0) {
+        Set<String> files = filesWithfNegativeIds.get(nameFileIdEntry.fileId);
+
+        if (files == null) {
+          files = new HashSet<String>();
+          files.add(nameFileIdEntry.name);
+          filesWithfNegativeIds.put(nameFileIdEntry.fileId, files);
+        } else {
+          files.add(nameFileIdEntry.name);
+        }
+      }
 
       nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
       idNameMap.put(nameFileIdEntry.fileId, nameFileIdEntry.name);
@@ -1870,6 +1902,29 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         }
       }
     }
+
+    final Set<String> fixedFiles = new HashSet<>();
+
+    for (Map.Entry<Integer, Set<String>> entry : filesWithfNegativeIds.entrySet()) {
+      final Set<String> files = entry.getValue();
+
+      if (files.size() > 1) {
+        idNameMap.remove(entry.getKey());
+
+        for (String fileName : files) {
+          nextInternalId++;
+
+          final int nextId = -nextInternalId;
+          nameIdMap.put(fileName, nextId);
+          idNameMap.put(nextId, fileName);
+
+          fixedFiles.add(fileName);
+        }
+      }
+    }
+
+    if (!fixedFiles.isEmpty())
+      OLogManager.instance().warn(this, "Removed files " + fixedFiles + " had duplicated ids. Problem is fixed automatically.");
   }
 
   private NameFileIdEntry readNextNameIdEntryV1() throws IOException {
