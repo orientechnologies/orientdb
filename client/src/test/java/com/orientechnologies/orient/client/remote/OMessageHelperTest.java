@@ -56,6 +56,7 @@ public class OMessageHelperTest {
       assertThat(dirtyManager.getNewRecords()).isNull();
 
     } finally {
+      open.close();
       orientDB.close();
     }
 
