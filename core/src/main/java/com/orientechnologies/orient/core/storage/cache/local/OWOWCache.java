@@ -29,7 +29,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -1339,6 +1338,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
     }
 
+    final Set<String> fixedFiles = new HashSet<String>();
+
     for (Map.Entry<Integer, Set<String>> entry : filesWithfNegativeIds.entrySet()) {
       final Set<String> files = entry.getValue();
 
@@ -1347,9 +1348,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           fileCounter++;
           final int nextId = -fileCounter;
           nameIdMap.put(fileName, nextId);
+
+          fixedFiles.add(fileName);
         }
       }
     }
+
+    if (!fixedFiles.isEmpty())
+      OLogManager.instance().warn(this, "Removed files " + fixedFiles + " had duplicated ids. Problem is fixed automatically.");
   }
 
   private NameFileIdEntry readNextNameIdEntry() throws IOException {
