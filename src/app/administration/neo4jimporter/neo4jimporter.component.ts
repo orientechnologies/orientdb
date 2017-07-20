@@ -64,7 +64,7 @@ class Neo4jImporterComponent implements AfterViewChecked {
 
     this.hints = {
       host: "Address of the host where the neo4j server is available.",
-      port: "The port where your neo4j server is listening for new connections.",
+      port: "The port where your neo4j server is listening for new connections via the bolt binary protocol (default port is 7687).",
       neo4jUsername: "The username to access neo4j server.",
       neo4jPassword: "The password to access neo4j server.",
       protocol: "The protocol to use during the migration in order to connect to OrientDB:<br>" +
