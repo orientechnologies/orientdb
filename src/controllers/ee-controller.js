@@ -1229,7 +1229,7 @@ ee.controller('EEDashboardController', ["$scope", "$rootScope", "$routeParams", 
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
     {name: "teleporter", title: "Teleporter", template: 'teleporterNew', icon: 'fa-usb'},
-    {name: "neo4jimporter", title: "Neo4j to OrientDB Importer", template: 'neo4jImporter', icon: 'fa-arrow-circle-right'},
+    // {name: "neo4jimporter", title: "Neo4j to OrientDB Importer", template: 'neo4jImporter', icon: 'fa-arrow-circle-right'},
     {name: "alerts", title: "Alerts Management", template: 'events', icon: 'fa-bell'}
 
   ]
