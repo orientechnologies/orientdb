@@ -653,7 +653,7 @@ public class SchemaTest extends DocumentDBBaseTest {
   }
 
   private void swapClusters(ODatabaseDocumentTx databaseDocumentTx, int i) {
-    databaseDocumentTx.command(new OCommandSQL("CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal")).execute();
+    databaseDocumentTx.command(new OCommandSQL("CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal clusters 2")).execute();
 
     databaseDocumentTx.command(new OCommandSQL("INSERT INTO TestRenameClusterNew (iteration) VALUES(" + i + ")")).execute();
 
