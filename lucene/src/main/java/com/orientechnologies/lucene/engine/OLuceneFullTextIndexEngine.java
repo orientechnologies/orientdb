@@ -132,7 +132,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       if (index.isAutomatic()) {
         doc = buildDocument(key, oIdentifiable);
       } else {
-        doc = putInManualindex(key, oIdentifiable);
+        doc = putInManualIndex(key, oIdentifiable);
       }
 
       if (facetManager.supportsFacets()) {
@@ -210,11 +210,11 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     if (index.isAutomatic()) {
       return builder.build(index, key, value, collectionFields, metadata);
     } else {
-      return putInManualindex(key, value);
+      return putInManualIndex(key, value);
     }
   }
 
-  private Document putInManualindex(Object key, OIdentifiable oIdentifiable) {
+  private Document putInManualIndex(Object key, OIdentifiable oIdentifiable) {
     Document doc = new Document();
     doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES));
 
