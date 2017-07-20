@@ -1,13 +1,5 @@
 <div class="row">
 
-  <div *ngIf="!agentService.agent.active">
-    <div class="col-md-12 studio-well-tips">
-      <h4>"This feature is available in OrientDB Enterprise Edition. To download OrientDB Enterprise Edition click <a href="http://orientdb.com/orientdb-enterprise/?#matrix" target='_blank'>here</a>.</h4>
-    </div>
-  </div>
-
-  <div *ngIf="agentService.agent.active">
-
     <form class="form-horizontal" id="teleporterForm" name="teleporterForm" #form="ngForm">
 
       <div id="stepSwitch" [ngSwitch]="getStep()">
@@ -250,6 +242,5 @@
       </div>
 
     </form>
-  </div>
 
 </div>

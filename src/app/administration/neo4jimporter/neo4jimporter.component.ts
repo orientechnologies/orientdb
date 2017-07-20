@@ -33,14 +33,8 @@ class Neo4jImporterComponent implements AfterViewChecked {
 
   private hints;
 
-  constructor(private neo4jImorterService: Neo4jImporterService, private notification: NotificationService,
-              private agentService: AgentService, private zone: NgZone) {
-
-    // agent
-    this.agentService.isActive().then(() => {
+  constructor(private neo4jImorterService: Neo4jImporterService, private notification: NotificationService, private zone: NgZone) {
       this.init();
-    });
-
   }
 
   init() {
