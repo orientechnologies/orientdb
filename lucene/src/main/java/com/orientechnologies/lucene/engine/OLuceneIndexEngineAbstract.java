@@ -299,7 +299,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   private void commitAndCloseWriter() throws IOException {
     if (mgrWriter != null && mgrWriter.getIndexWriter().isOpen()) {
-      OLogManager.instance().info(this, "commiting ad closing");
       mgrWriter.getIndexWriter().commit();
       mgrWriter.getIndexWriter().close();
       closed.set(true);
