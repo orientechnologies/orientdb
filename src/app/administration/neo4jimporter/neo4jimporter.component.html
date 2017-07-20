@@ -204,7 +204,7 @@
           <h3>Migration to OrientDB</h3><br/>
 
           <div class="row ">
-            <div class="col-md-12">
+            <div class="col-md-10">
               <div class="studio-well-tips-sm ">
                 <h5>
             <span class="tab">
@@ -217,13 +217,21 @@
             </span>
                 </h5>
                 <h5>
-            <span class="tab">
-              <b>To</b>: {{job.cfg.odbName }}
+            <span class="tab" *ngIf="config.odbProtocol === 'plocal'">
+              <b>To</b>: {{job.cfg.odbProtocol}}:$ORIENTDB_HOME/databases/{{job.cfg.odbName}}
+            </span>
+                  <span class="tab" *ngIf="config.odbProtocol === 'memory'">
+              <b>To</b>: {{job.cfg.odbProtocol}}:{{job.cfg.odbName}}
             </span>
             <span class="tab">
               <b>Protocol</b>: {{job.cfg.odbProtocol }}
             </span>
                 </h5>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="btn-group">
+                <button type="button" class="btn btn-md btn-primary" (click)="switchConfigStep('1')" [disabled]="jobRunning">New Migration</button>
               </div>
             </div>
           </div>
