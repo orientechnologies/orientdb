@@ -607,11 +607,14 @@ public abstract class OStringSerializerHelper {
       if (buffer.length() == 0 && c == ' ')
         continue;
 
-      if (c == iCollectionBegin) {
+      if (insideQuote == ' ' && (c == iCollectionBegin || c == '(')) {
         // BEGIN
         buffer.append(c);
         deep++;
-      } else if (c == iCollectionEnd) {
+      } else if (insideQuote == ' ' && c == ')') {
+        buffer.append(c);
+        deep--;
+      } else if (insideQuote == ' ' && c == iCollectionEnd) {
         // END
         if (deep > 1)
           buffer.append(c);
@@ -743,7 +746,9 @@ public abstract class OStringSerializerHelper {
    * Transforms, only if needed, the source string escaping the characters \ and ".
    *
    * @param iText Input String
+   *
    * @return Modified string if needed, otherwise the same input object
+   *
    * @see OStringSerializerHelper#decode(String)
    */
   public static String encode(final String iText) {
@@ -782,7 +787,9 @@ public abstract class OStringSerializerHelper {
    * Transforms, only if needed, the source string un-escaping the characters \ and ".
    *
    * @param iText Input String
+   *
    * @return Modified string if needed, otherwise the same input object
+   *
    * @see OStringSerializerHelper#encode(String)
    */
   public static String decode(final String iText) {
@@ -854,9 +861,11 @@ public abstract class OStringSerializerHelper {
    * Use OIOUtils.getStringContent(iValue) instead.
    *
    * @param iValue
+   *
    * @return
    */
-  @Deprecated public static String getStringContent(final Object iValue) {
+  @Deprecated
+  public static String getStringContent(final Object iValue) {
     // MOVED
     return OIOUtils.getStringContent(iValue);
   }
@@ -891,6 +900,7 @@ public abstract class OStringSerializerHelper {
    * Checks if a string contains alphanumeric only characters.
    *
    * @param iContent String to check
+   *
    * @return true is all the content is alphanumeric, otherwise false
    */
   public static boolean isAlphanumeric(final String iContent) {
