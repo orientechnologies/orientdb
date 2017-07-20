@@ -249,6 +249,9 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   private synchronized void open() throws IOException {
 
+    if (!closed.get())
+      return;
+
     OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
 
     directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
@@ -296,6 +299,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   private void commitAndCloseWriter() throws IOException {
     if (mgrWriter != null && mgrWriter.getIndexWriter().isOpen()) {
+      OLogManager.instance().info(this, "commiting ad closing");
       mgrWriter.getIndexWriter().commit();
       mgrWriter.getIndexWriter().close();
       closed.set(true);
@@ -519,15 +523,17 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       return;
 
     try {
-      OLogManager.instance().debug(this, "Closing Lucene index '" + this.name + "'...");
+//      OLogManager.instance().info(this, "Closing Lucene index '" + this.name + "'...");
 
       closeNRT();
-
-      cancelCommitTask();
 
       closeSearchManager();
 
       commitAndCloseWriter();
+
+//      OLogManager.instance().info(this, "Closed Lucene index '" + this.name);
+      cancelCommitTask();
+
     } catch (Throwable e) {
       OLogManager.instance().error(this, "Error on closing Lucene index", e);
     }

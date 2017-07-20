@@ -11,7 +11,10 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.InputStream;
@@ -77,16 +80,18 @@ public class OLuceneIndexCrashRestoreIT {
         "-classpath",
         System.getProperty("java.class.path"),
         "-DmutexFile=" + mutexFile.getAbsolutePath(),
+//        "-Djava.util.logging.config.file=" + new File("../server/config/orientdb-server-log.properties").getAbsolutePath(),
         "-DORIENTDB_HOME=" + buildDirectory,
         RemoteDBRunner.class.getName());
 
 //    processBuilder.inheritIO();
 
+    processBuilder.inheritIO();
     serverProcess = processBuilder.start();
 
-    System.out.println(": Wait for server start");
     boolean started = false;
     do {
+      System.out.println(": Wait for server start");
       TimeUnit.SECONDS.sleep(5);
       mutex.seek(0);
       started = mutex.read() == 1;
@@ -105,19 +110,41 @@ public class OLuceneIndexCrashRestoreIT {
   }
 
   @Test
-  @Ignore
+//  @Ignore
   public void testEntriesAddition() throws Exception {
     createSchema(testDocumentTx);
 
-    System.out.println("Start data propagation");
+    //first round
+    System.out.println("Start data propagation 1");
 
-    List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 4; i++) {
-      futures.add(executorService.submit(new DataPropagationTask(testDocumentTx)));
-    }
+    List<Future> futures = startLoaders();
 
-    System.out.println("Wait for 5 minutes");
-    TimeUnit.SECONDS.sleep(5);
+    System.out.println("Wait for 1 minutes");
+    TimeUnit.MINUTES.sleep(1);
+
+    System.out.println("stop loaders");
+    stopLoaders(futures);
+
+    System.out.println("Wait for 1 minutes");
+    TimeUnit.MINUTES.sleep(1);
+
+//second round
+    System.out.println("Start data propagation 2");
+
+    futures = startLoaders();
+
+    System.out.println("Wait for 1 minutes");
+    TimeUnit.MINUTES.sleep(1);
+
+    System.out.println("stop loaders");
+    stopLoaders(futures);
+
+    System.out.println("Wait for 1 minutes");
+    TimeUnit.MINUTES.sleep(1);
+
+    System.out.println("Start data propagation 3");
+
+    futures = startLoaders();
 
     //test query
     // verify that the keyword analyzer is doing is job
@@ -144,13 +171,7 @@ public class OLuceneIndexCrashRestoreIT {
     System.out.println("Process was CRASHED");
 
     //stop data pumpers
-    for (Future future : futures) {
-      try {
-        future.get();
-      } catch (Exception e) {
-        future.cancel(true);
-      }
-    }
+    stopLoaders(futures);
 
     System.out.println("All loaders done");
 
@@ -199,6 +220,25 @@ public class OLuceneIndexCrashRestoreIT {
     //shutdown embedded
     server.shutdown();
 
+  }
+
+  private void stopLoaders(List<Future> futures) {
+    for (Future future : futures) {
+      try {
+        future.cancel(true);
+      } catch (Exception e) {
+        future.cancel(true);
+      }
+    }
+  }
+
+  private List<Future> startLoaders() {
+    List<Future> futures = new ArrayList<Future>();
+    for (int i = 0; i < 4; i++) {
+      final DataPropagationTask loader = new DataPropagationTask(testDocumentTx);
+      futures.add(executorService.submit(loader));
+    }
+    return futures;
   }
 
   private void createSchema(ODatabaseDocumentTx db) {
@@ -258,6 +298,11 @@ public class OLuceneIndexCrashRestoreIT {
 
           if (id % 1000 == 0) {
             System.out.println(Thread.currentThread().getName() + " inserted:: " + id);
+            testDB.commit();
+          }
+          if (id % 2000 == 0) {
+            System.out.println("Deleting roberts");
+            testDB.command(new OCommandSQL("delete from Person where name lucene 'Robert' ")).execute();
             testDB.commit();
           }
           int nameIdx = (int) (id % names.size());
