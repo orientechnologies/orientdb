@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -30,6 +32,7 @@ public class OCommandExecutorSQLCreateEdgeTest {
 
   @Before
   public void setUp() throws Exception {
+    OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
     db = new ODatabaseDocumentTx("memory:" + OCommandExecutorSQLCreateEdgeTest.class.getSimpleName());
 
     if (db.exists()) {
