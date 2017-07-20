@@ -22,6 +22,12 @@ public class OSequenceRemoteTest  extends AbstractRemoteTest{
     db = factory.open(name.getMethodName(),"admin","admin");
   }
 
+  @Override
+  public void teardown() {
+    db.close();
+    super.teardown();
+  }
+
   @Test
   public void shouldSequenceWithDefaultValueNoTx() {
 
