@@ -110,7 +110,7 @@
             <label class="col-md-4 control-label">File Path</label>
             <div class="col-md-4">
               <input type="text" id="filePath" class="form-control" name="filePath" [(ngModel)]="sourcePrototype.filePath"
-                     placeholder="Local path of your file" required/> <!-- TODO find a good control pattern -->
+                     placeholder="Local path of your file" required/>
             </div>
             <div class="col-md-4">
               <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
@@ -134,13 +134,16 @@
           <br>
 
           <div class="form-group">
-            <div class="col-sm-offset-5 col-sm-7">
+            <div class="col-sm-offset-4 col-sm-8">
               <div class="btn-toolbar" style="height:80px">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="sourceInit()" [disabled]="!form.valid">Create modules</button>
+                  <button type="button" class="btn btn-md btn-default" (click)="reset(1)">Back</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-default" (click)="addAdvanced()">Add/Reset Advanced</button>
+                  <button type="button" class="btn btn-md btn-default" (click)="addAdvanced()">Add/Reset Advanced</button>
+                </div>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-md btn-primary" (click)="sourceInit()" [disabled]="!form.valid">Create modules</button>
                 </div>
               </div>
             </div>
@@ -249,7 +252,7 @@
                         <div class="dropdown-menu">
                           <div class="list-group-item list-group-item-info">Transformer Type</div>
 
-                          <!-- csv transformer is deprecated -->
+                          <!-- Csv transformer is deprecated -->
                           <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('let')">let block</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('console')">console block</button>
                           <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('code')">code</button>
@@ -319,7 +322,7 @@
               <div class="panel-body">
                 <div id="panelPlaceholder" class="etl-panel"></div>
 
-                <!-- Advanced configurations. The parameters are taken from the prototypes to avoid unknown parameters during restore -->
+                <!-- Advanced configurations. The parameters are taken from the prototypes to avoid unknown/missing parameters during restore -->
                 <!-- Extractor advanced configuration -->
                 <div id="extractorOptions" style="display:none">
 
@@ -535,7 +538,7 @@
             <div class="col-sm-offset-2 col-sm-3">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-md btn-primary" (click)="setStep('1'); reset()">Back</button>
+                  <button type="button" class="btn btn-md btn-default" (click)="reset(2);">Back</button>
                 </div>
                 <div class="btn-group">
                   <button type="button" class="btn btn-md btn-primary" (click)="launch()" [disabled]="!ready">Run Etl</button>
@@ -564,25 +567,25 @@
           </h4>
           <div class="row row-space-2x">
             <div class="col-md-12">
-              <textarea  #logArea class="form-control" id="logArea" name="logArea" rows="10" readonly>
+              <textarea  #logArea class="form-control" id="logArea" name="logArea" rows="10" readonly style="resize: vertical">
 
               </textarea> <!-- TODO object containing the log -->
             </div>
             <div class="col-md-12"><br><br>
-              <textarea  #sourceArea class="form-control" id="sourceArea" name="sourceArea" rows="10" readonly style="display:none">
+              <textarea  #sourceArea class="form-control" id="sourceArea" name="sourceArea" rows="10" readonly style="display: none; resize: vertical">
                 {{finalJson}}
               </textarea>
             </div>
           </div>
           <br><br>
           <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
+            <div class="col-sm-offset-4 col-sm-8">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="setStep(0); reset()">Restart</button>
+                  <button type="button" class="btn btn-md btn-default" (click)="reset(3)">Restart</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="showSource()">Show Source</button>
+                  <button type="button" class="btn btn-md btn-primary" (click)="showSource()">Show/hide source</button>
                 </div>
               </div>
             </div>

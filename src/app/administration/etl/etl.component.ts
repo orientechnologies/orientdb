@@ -848,7 +848,7 @@ class EtlComponent {
         }
       };
 
-    // let, code and console are part of the block transformer, they need a different management
+    // Let, code and console are part of the block transformer, they need a different management
     if (type === "let")
       transformer = {
         let: {
@@ -957,7 +957,7 @@ class EtlComponent {
           dbType: this.loaderPrototype.orientdb.dbType.value,
           class: this.loaderPrototype.orientdb.class.value,
           cluster: this.loaderPrototype.orientdb.cluster.value,
-          classes: [], // empty arrays. The default value of the related object is pushed and modified when the user click on the add button
+          classes: [], // Empty arrays. The default value of the related object is pushed and modified when the user click on the add button
           indexes: [],
           useLightweightEdges: this.loaderPrototype.orientdb.useLightweightEdges.value,
           standardElementConstraints: this.loaderPrototype.orientdb.standardElementConstraints.value
@@ -1012,7 +1012,7 @@ class EtlComponent {
     }
     this.currentTransformer = undefined;
 
-    // remove the canvas and update the ids to match the array indexes
+    // Remove the canvas and update the ids to match the array indexes
     $("#" + index).remove();
 
     let canvas = $("#transformerList").find("canvas");
@@ -1041,12 +1041,12 @@ class EtlComponent {
   oldConfigInit(oldConfig, direct = 0) {
     let etl = JSON.parse(oldConfig);
 
-    // set types needed
+    // Set types needed
     this.extractorType = Object.getOwnPropertyNames(etl.extractor)[0];
     this.currentTransformer = etl.transformers[etl.transformers.length -1];
     this.loaderType = Object.getOwnPropertyNames(etl.loader)[0];
 
-    // initialize the advanced config if exists
+    // Initialize the advanced config if exists
     if(etl.config) {
       this.addAdvanced();
       if(etl.config.parallel != undefined) this.config.parallel = etl.config.parallel;
@@ -1055,13 +1055,13 @@ class EtlComponent {
       if(etl.config.log != undefined) this.config.log = etl.config.log;
     }
 
-    // regenerate the modules
+    // Regenerate the modules
     this.extractor = etl.extractor;
     this.transformers = etl.transformers;
     this.reverseBlockFix();
     this.loader = etl.loader;
 
-    // initialize the inner objects
+    // Initialize the inner objects
     if(this.loaderType === 'orientdb') {
       this.classes = {
         name: this.loaderPrototype.orientdb.classes.value.name.value,
@@ -1077,11 +1077,12 @@ class EtlComponent {
       };
     }
 
-    // skip step 1 if the old configuration uses a jdbc source
+    // Skip step 1 if the old configuration uses a jdbc source
     if(etl.source) {
       this.source = etl.source;
       this.sourcePrototype.source.value = Object.getOwnPropertyNames(etl.source)[0];
-      this.sourcePrototype.source.types = ["file", "http"]; // exclude jdbc to avoid weird behaviors
+      // Exclude jdbc to avoid weird behaviors
+      this.sourcePrototype.source.types = ["file", "http"];
 
       if(this.sourcePrototype.source.value == "http") {
         this.sourcePrototype.URLMethod.value = etl.source.http.method;
@@ -1108,7 +1109,7 @@ class EtlComponent {
       this.setStep(2);
     }
 
-    // eventually activate the run button, the jquery part is triggered by the viewchecked event
+    // Eventually activate the run button, the jquery part is triggered by the viewchecked event
     this.readyForExecution();
     this.oldConfigJquery = true;
   }
@@ -1173,7 +1174,6 @@ class EtlComponent {
       let list = document.getElementById("transformerList");
       list.appendChild(listEntry);
       listEntry.appendChild(canvas);
-
 
       let tCanvas = $('#' + i);
 
@@ -1283,9 +1283,9 @@ class EtlComponent {
   }
 
   launch() {
-    let etl = {}; // optional source control. Is that needed?
+    let etl = {};
 
-    this.sortTransformers(); // Sorts transformer starting from the indexes
+    this.sortTransformers(); // Sort transformers starting from the indexes
     this.blockFix(); // Fixes the different behavior of block transformers
 
     if(this.source && this.config)
@@ -1348,7 +1348,7 @@ class EtlComponent {
           }
         }
 
-        // start status again after 3 secs
+        // Start status again after 3 secs
         setTimeout(() => {
           this.zone.run(() => {
             this.status();
@@ -1359,24 +1359,50 @@ class EtlComponent {
     }
   }
 
-  reset() {
-    // useful assignations to reset the configuration
-    this.transformers = [];
-    this.currentTransformer = undefined;
-    this.config = undefined;
-    this.extractor = undefined;
-    this.loader = undefined;
-    this.source = undefined;
-    this.sourcePrototype.source.value = undefined;
-    this.extractorType = undefined;
-    this.loaderType = undefined;
-    this.advanced = false;
-    this.ready = false;
-    this.classReady = false;
-    this.indexReady = false;
-    this.importReady = false;
-    this.oldConfigJquery = false;
-    this.oldConfig = undefined;
+  reset(fromStep) {
+    // Useful assignations to reset the configuration when clicking 'back' the parameter is the current step
+    if(!confirm('Every progress in this step will be lost.\nProceed anyway?')) return;
+
+    if(fromStep == 1 || fromStep == 3) {
+      this.transformers = [];
+      this.currentTransformer = undefined;
+      this.config = undefined;
+      this.extractor = undefined;
+      this.loader = undefined;
+      this.source = undefined;
+      this.sourcePrototype.source.value = undefined;
+      this.sourcePrototype.headers =undefined;
+      this.sourcePrototype.fileLock = undefined;
+      this.sourcePrototype.filePath = undefined;
+      this.sourcePrototype.fileURL = undefined;
+      this.sourcePrototype.URLMethod = undefined;
+      this.extractorType = undefined;
+      this.loaderType = undefined;
+      this.advanced = false;
+      this.ready = false;
+      this.classReady = false;
+      this.indexReady = false;
+      this.importReady = false;
+      this.oldConfigJquery = false;
+      this.oldConfig = undefined;
+      this.sourcePrototype.source.types = ["jdbc", "file", "http"];
+
+      this.setStep(0);
+    }
+
+    if(fromStep == 2) {
+      this.transformers = [];
+      this.currentTransformer = undefined;
+      this.extractor = undefined;
+      this.loader = undefined;
+      this.extractorType = undefined;
+      this.loaderType = undefined;
+      this.classReady = false;
+      this.indexReady = false;
+      this.oldConfigJquery = false;
+
+      this.setStep(1);
+    }
   }
 
   blockFix() {
@@ -1384,7 +1410,7 @@ class EtlComponent {
     let tmpBlock;
     for(let i = 0; i < this.transformers.length; i++) {
       if(this.transformers[i]['let'] || this.transformers[i]['console']) {
-        // even code transformer could be included in if statement
+        // Even code transformer could be included in if statement
         tmpBlock = {block: this.transformers[i]};
         tmp.push(tmpBlock);
       }
@@ -1410,7 +1436,7 @@ class EtlComponent {
     let IDs = [];
     let tmp = [];
     $("#transformerList").find("canvas").each(function(){ IDs.push(this.id); });
-    if(IDs.length == 0) return; // useful for direct run feature
+    if(IDs.length == 0) return; // Useful for direct run feature
     for(let i = 0; i < this.transformers.length; i++) {
       tmp.push(this.transformers[Number(IDs[i])]);
     }
@@ -1440,7 +1466,7 @@ class EtlComponent {
     }
   }
 
-  loaderDeleteLast(type) { // delete the last element in the array
+  loaderDeleteLast(type) { // Delete the last element in the array
     this.loader.orientdb[type].pop();
   }
 
@@ -1457,7 +1483,7 @@ class EtlComponent {
   getTransformerType(transformer) {
     if(!transformer) return undefined;
 
-    // for every transformer, and every property of every transformer (just the type), return the property (i.e. the type) if it's equal
+    // For every transformer, and every property of every transformer (just the type), return the property (i.e. the type) if it's equal
     for (let i = 0; i < this.transformers.length; i++) {
       for (let property in this.transformers[i]) {
         if (this.transformers[i].hasOwnProperty(property)) {
@@ -1495,7 +1521,7 @@ class EtlComponent {
 
         reader.readAsText(file);
       }
-      else fileDisplayArea.innerText = "You selected an invalid configuration";
+      else fileDisplayArea.innerText = "You selected an invalid configuration. Please select a json file!";
 
     });
   }
@@ -1513,7 +1539,8 @@ class EtlComponent {
   }
 
   showSource() {
-    $("#sourceArea").fadeIn(1000);
+    if($("#sourceArea").is(":visible")) $("#sourceArea").slideUp(1000);
+    else $("#sourceArea").slideDown(1000);
   }
 
   selectExtractor() {
@@ -1548,12 +1575,13 @@ class EtlComponent {
     this.enablePopovers();
 
     // Activate sortable and custom animations
-    if(this.step == 2) {
+    if(this.step === 2) {
+      console.log("entro");
       let adjustment;
       (<any>$("#transformerList")).sortable({
         group: 'transformerList',
-        pullPlaceholder: false,
-        // animation on drop
+        pullPlaceholder: true,
+        // Animation on drop
         onDrop: function ($item, container, _super) {
           let $clonedItem = $('<li/>').css({height: 0});
           $item.before($clonedItem);
@@ -1563,7 +1591,7 @@ class EtlComponent {
             _super($item, container);
           });
         },
-        // set $item relative to cursor position
+        // Set $item relative to cursor position
         onDragStart: function ($item, container, _super) {
           let offset = $item.offset(),
             pointer = container.rootGroup.pointer;
@@ -1581,6 +1609,7 @@ class EtlComponent {
           });
         }
       });
+      console.log("termino");
     }
     // Execute the Jquery part just one time
     if(this.oldConfig && this.step == 2 && this.oldConfigJquery) {
@@ -1603,7 +1632,6 @@ class EtlComponent {
 
   enablePopovers() {
     (<any>$('[data-toggle="popover"]')).popover({
-      // title: 'About this parameter',
       placement: 'right',
       trigger: 'hover'
     });
