@@ -159,7 +159,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     }
   }
 
-
   @Override
   public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
     throw new UnsupportedOperationException("Validated put is not supported by OLuceneFullTextIndexEngine");
@@ -265,7 +264,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Set<OIdentifiable> getInTx(Object key, OLuceneTxChanges changes) {
-
+    updateLastAccess();
     openIfClosed();
     try {
       if (key instanceof OLuceneKeyAndMetadata) {
