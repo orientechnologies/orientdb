@@ -24,7 +24,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -686,36 +685,6 @@ public class ODistributedResponseManager {
               } else if (++responsesForQuorum >= quorum) {
                 // QUORUM REACHED
                 setQuorumResponse(r);
-                return true;
-              }
-            }
-          }
-        }
-      }
-
-      if (reachedTimeout && responseGroups.size() == 1
-          && OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.getValueAsLong() == 0) {
-        // CHECK FOR OFFLINE SERVERS
-        final List<String> missingNodes = getMissingNodes();
-
-        // EXCLUDE THE SERVERS OFFLINE OR NOT_AVAILABLE
-        dManager.getNodesWithStatus(missingNodes, getDatabaseName(), ODistributedServerManager.DB_STATUS.OFFLINE,
-            ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-
-        if (responseGroups.get(0).size() + missingNodes.size() >= quorum) {
-          List<ODistributedResponse> group = responseGroups.get(0);
-          if (group.size() > 0) {
-            final ODistributedResponse response = group.get(0);
-            if (response != null) {
-              if (response.getPayload() instanceof Throwable) {
-                ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-                    "%d server(s) (%s) became unreachable during the request, even decreasing the quorum (%d) the response cannot be accepted because is an error: %s",
-                    missingNodes.size(), missingNodes, quorum, request);
-              } else {
-                ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-                    "%d server(s) (%s) became unreachable during the request, decreasing the quorum (%d) and accept the request: %s",
-                    missingNodes.size(), missingNodes, quorum, request);
-                setQuorumResponse(responseGroups.get(0).get(0));
                 return true;
               }
             }
