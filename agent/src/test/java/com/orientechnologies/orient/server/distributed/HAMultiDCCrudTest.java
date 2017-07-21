@@ -84,6 +84,48 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     } finally {
       db.close();
     }
+
+    // TRY AN INSERT AGAINST THE DC WITHOUT QUORUM EXPECTING TO FAIL
+    db = new ODatabaseDocumentTx("plocal:target/server2/databases/" + getDatabaseName());
+    db.open("admin", "admin");
+    try {
+      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this")).execute();
+      Assert.fail("Quorum not reached, but no failure has been caught");
+    } catch (Exception e) {
+      Assert.assertTrue(e.getCause().toString().contains("Quorum"));
+    } finally {
+      db.close();
+    }
+
+    // KILL ONE SERVER TO CHECK IF QUORUM FAILS
+    serverInstance.get(0).getServerInstance().shutdown();
+
+    // RETRY AN INSERT AND CHECK IT FAILS (NO QUORUM)
+    db = new ODatabaseDocumentTx("plocal:target/server1/databases/" + getDatabaseName());
+    db.open("admin", "admin");
+    try {
+      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this")).execute();
+      Assert.fail("Quorum not reached, but no failure has been caught");
+    } catch (Exception e) {
+      Assert.assertTrue(e.getCause().toString().contains("Quorum"));
+    } finally {
+      db.close();
+    }
+
+    // RESTART THE FIRST SERVER DOWN
+    serverInstance.get(0).getServerInstance().restart();
+
+    waitForDatabaseIsOnline(serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName(), getDatabaseName(),
+        30000);
+
+    // RETRY AN INSERT AND CHECK IT DOESN'T FAILS (QUORUM REACHED)
+    db = new ODatabaseDocumentTx("plocal:target/server1/databases/" + getDatabaseName());
+    db.open("admin", "admin");
+    try {
+      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this")).execute();
+    } finally {
+      db.close();
+    }
   }
 
   @Override

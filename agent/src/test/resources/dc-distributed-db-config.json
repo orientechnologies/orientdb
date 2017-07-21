@@ -22,7 +22,13 @@
     }
   },
   "servers": {
-    "*": "master"
+    "*": "master",
+    "europe-0": "master",
+    "europe-1": "master",
+    "europe-2": "master",
+    "usa-0": "master",
+    "usa-1": "master",
+    "usa-2": "master"
   },
   "clusters": {
     "internal": {
