@@ -280,21 +280,25 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       final int lastPosition = parserIsEnded() ? parserText.length() : parserGetCurrentPosition();
 
       if (word.length() > 0 && word.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
-        braces++;
+        if (uWord.startsWith("(SELECT") || uWord.startsWith("(TRAVERSE")) {
+          braces++;
 
-        // SUB-CONDITION
-        parserSetCurrentPosition(lastPosition - word.length() + 1);
+          // SUB-CONDITION
+          parserSetCurrentPosition(lastPosition - word.length() + 1);
 
-        final Object subCondition = extractConditions(null);
+          final Object subCondition = extractConditions(null);
 
-        if (!parserSkipWhiteSpaces() || parserGetCurrentChar() == ')') {
-          braces--;
-          parserMoveCurrentPosition(+1);
+          if (!parserSkipWhiteSpaces() || parserGetCurrentChar() == ')') {
+            braces--;
+            parserMoveCurrentPosition(+1);
+          }
+          if (subCondition instanceof OSQLFilterCondition) {
+            ((OSQLFilterCondition) subCondition).inBraces = true;
+          }
+          result[i] = subCondition;
+        } else {
+          return new OSQLPredicate(word.substring(1, word.length() - 1)).getRootCondition();
         }
-        if (subCondition instanceof OSQLFilterCondition) {
-          ((OSQLFilterCondition) subCondition).inBraces = true;
-        }
-        result[i] = subCondition;
       } else if (word.charAt(0) == OStringSerializerHelper.LIST_BEGIN) {
         // COLLECTION OF ELEMENTS
         parserSetCurrentPosition(lastPosition - getLastWordLength());
@@ -434,4 +438,6 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
     return iFields;
   }
+
+
 }

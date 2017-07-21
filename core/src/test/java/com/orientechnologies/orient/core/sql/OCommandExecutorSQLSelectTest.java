@@ -1640,12 +1640,31 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("create class " + className)).execute();
     db.command(new OCommandSQL("create property " + className + ".tagz embeddedmap")).execute();
     db.command(new OCommandSQL("insert into " + className + " set tagz = {}")).execute();
-    db.command(new OCommandSQL("update " + className + " SET tagz.foo = [{name:'a', surname:'b'}, {name:'c', surname:'d'}]")).execute();
+    db.command(new OCommandSQL("update " + className + " SET tagz.foo = [{name:'a', surname:'b'}, {name:'c', surname:'d'}]"))
+        .execute();
 
-    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select tagz.values()[0][name = 'a'] as t from "+className));
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select tagz.values()[0][name = 'a'] as t from " + className));
     Assert.assertEquals(results.size(), 1);
     Map map = results.get(0).field("t");
     Assert.assertEquals(map.get("surname"), "b");
+  }
+
+  @Test
+  public void testAndOrParentheses() {
+    //issue #6834
+
+    String className = "testAndOrParentheses";
+
+    db.command(new OCommandSQL("create class " + className)).execute();
+    db.command(new OCommandSQL("insert into " + className + " set name = 'foo'")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>(
+        " select * from " + className + " where  ( (1=1) or (1 in (select 1 from " + className + ")) ) and 1=1 "));
+    Assert.assertEquals(results.size(), 1);
+    results = db.query(new OSQLSynchQuery<ODocument>(
+        " select * from " + className + " where  ( (1=1) or (1 in (select 1 from " + className + ")) ) and 1=2 "));
+    Assert.assertEquals(results.size(), 0);
+
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
