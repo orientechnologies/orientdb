@@ -25,11 +25,13 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.InputStream;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,7 +40,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 
 public class OLuceneInsertDeleteTest extends OLuceneBaseTest {
-
 
   @Before
   public void init() {
@@ -76,4 +77,26 @@ public class OLuceneInsertDeleteTest extends OLuceneBaseTest {
     assertThat(idx.getSize()).isEqualTo(0);
 
   }
+
+  @Test
+  public void testDeleteWithQueryOnClosedIndex() throws Exception {
+
+    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
+
+    db.execute("sql", getScriptFromStream(stream));
+
+    db.command(
+        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {'closeAfterInterval':1000 , 'firstFlushAfter':1000 }");
+
+    OResultSet docs = db.query("select from Song where title lucene 'mountain'");
+
+    assertThat(docs).hasSize(4);
+    TimeUnit.SECONDS.sleep(5);
+
+    db.command("delete vertex from Song where title lucene 'mountain'");
+
+    docs = db.query("select from Song where  title lucene 'mountain'");
+    assertThat(docs).hasSize(0);
+  }
+
 }
