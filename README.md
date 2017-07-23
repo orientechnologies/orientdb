@@ -52,4 +52,4 @@ OrientDB Community Edition is free for any use (Apache 2 license). If you are in
 
 --------
 
-[![](http://www.softpedia.com/_img/softpedia_100_free.png)](http://mac.softpedia.com/get/Developer-Tools/Orient.shtml)
+[![](http://s1.softpedia-static.com/_img/sp100free.png?1)](http://www.softpedia.com/get/Internet/Servers/Database-Utils/OrientDB.shtml#status)
