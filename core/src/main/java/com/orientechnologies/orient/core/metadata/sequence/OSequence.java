@@ -19,12 +19,10 @@
  */
 package com.orientechnologies.orient.core.metadata.sequence;
 
-import java.util.Random;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -33,6 +31,9 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Random;
+import java.util.concurrent.Callable;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -117,10 +118,14 @@ public abstract class OSequence {
     }
   }
 
-  public void save() {
+  public void save(ODatabase db) {
     ODocument doc = tlDocument.get();
-    doc.save();
+    db.save(doc);
     onUpdate(doc);
+  }
+
+  public void save() {
+    save(getDatabase());
   }
 
   void bindOnLocalThread() {
@@ -268,6 +273,7 @@ public abstract class OSequence {
   protected <T> T callRetry(final Callable<T> callable, final String method) {
     for (int retry = 0; retry < maxRetry; ++retry) {
       try {
+        reloadSequence();
         return callable.call();
       } catch (OConcurrentModificationException ex) {
         try {
@@ -276,7 +282,7 @@ public abstract class OSequence {
           Thread.currentThread().interrupt();
           break;
         }
-        reloadSequence();
+
       } catch (OStorageException e) {
         if (e.getCause() instanceof OConcurrentModificationException) {
           reloadSequence();
