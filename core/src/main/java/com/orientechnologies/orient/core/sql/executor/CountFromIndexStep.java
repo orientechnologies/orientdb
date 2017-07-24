@@ -9,7 +9,9 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Created by luigidellaquila on 17/03/17.
+ * Returns the number of records contained in an index
+ *
+ * @author Luigi Dell'Aquila (luigi.dellaquila - at - gmail.com)
  */
 public class CountFromIndexStep extends AbstractExecutionStep {
   private final OIndexIdentifier target;
@@ -19,6 +21,12 @@ public class CountFromIndexStep extends AbstractExecutionStep {
 
   private boolean executed = false;
 
+  /**
+   * @param targetIndex the index name as it is parsed by the SQL parsed
+   * @param alias the name of the property returned in the result-set
+   * @param ctx the query context
+   * @param profilingEnabled true to enable the profiling of the execution (for SQL PROFILE)
+   */
   public CountFromIndexStep(OIndexIdentifier targetIndex, String alias, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.target = targetIndex;

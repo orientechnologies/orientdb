@@ -15,6 +15,11 @@ public class CountStep extends AbstractExecutionStep {
 
   boolean executed = false;
 
+  /**
+   *
+   * @param ctx the query context
+   * @param profilingEnabled true to enable the profiling of the execution (for SQL PROFILE)
+   */
   public CountStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }

@@ -12,7 +12,7 @@ import java.util.Optional;
  * Returns the number of records contained in a class (including subclasses)
  * Executes a count(*) on a class and returns a single record that contains that value (with a specific alias).
  *
- * Created by luigidellaquila on 17/03/17.
+ * @author Luigi Dell'Aquila (luigi.dellaquila - at - gmail.com)
  */
 public class CountFromClassStep extends AbstractExecutionStep {
   private final OIdentifier target;
