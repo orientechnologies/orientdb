@@ -25,18 +25,13 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -174,6 +169,29 @@ public class OZIPCompressionUtil {
         addFile(zos, folderName + "/" + entryName, entryName, iOutput);
     } finally {
       zos.close();
+    }
+  }
+
+  /**
+   * Compresses the given files stored at the given base directory into a zip archive.
+   *
+   * @param baseDirectory    the base directory where files are stored.
+   * @param fileNames        the file names map, keys are the file names stored on disk, values are the file names to be stored in a
+   *                         zip archive.
+   * @param output           the output stream.
+   * @param listener         the command listener.
+   * @param compressionLevel the desired compression level.
+   */
+  public static void compressFiles(String baseDirectory, Map<String, String> fileNames, OutputStream output,
+      OCommandOutputListener listener, int compressionLevel) throws IOException {
+    final ZipOutputStream zipOutputStream = new ZipOutputStream(output);
+    zipOutputStream.setComment("OrientDB Backup executed on " + new Date());
+    try {
+      zipOutputStream.setLevel(compressionLevel);
+      for (Map.Entry<String, String> entry : fileNames.entrySet())
+        addFile(zipOutputStream, baseDirectory + "/" + entry.getKey(), entry.getValue(), listener);
+    } finally {
+      zipOutputStream.close();
     }
   }
 

@@ -373,6 +373,11 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
+  public void replaceFileContentWith(long fileId, Path newContentFile) throws IOException {
+    throw new UnsupportedOperationException("replacing file content is not supported for memory storage");
+  }
+
+  @Override
   public void truncateFile(long fileId) {
     int intId = extractFileId(fileId);
 
@@ -481,6 +486,11 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     } finally {
       metadataLock.unlock();
     }
+  }
+
+  @Override
+  public String nativeFileNameById(long fileId) {
+    return fileNameById(fileId);
   }
 
   private static final class MemoryFile {

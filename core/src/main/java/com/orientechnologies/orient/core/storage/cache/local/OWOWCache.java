@@ -1287,6 +1287,28 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   @Override
+  public void replaceFileContentWith(long fileId, Path newContentFile) throws IOException {
+    final int intId = extractFileId(fileId);
+    fileId = composeFileId(id, intId);
+
+    filesLock.acquireWriteLock();
+    try {
+      removeCachedPages(intId);
+
+      final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
+      try {
+        entry.get().replaceContentWith(newContentFile);
+      } finally {
+        files.release(entry);
+      }
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("File content replacement was interrupted"), e);
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+  }
+
+  @Override
   public void renameFile(long fileId, String newFileName) throws IOException {
     final int intId = extractFileId(fileId);
     fileId = composeFileId(id, intId);
@@ -1619,6 +1641,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     return idNameMap.get(intId);
   }
 
+  @Override
   public String nativeFileNameById(long fileId) {
     final OFileClassic fileClassic = files.get(fileId);
     if (fileClassic != null)

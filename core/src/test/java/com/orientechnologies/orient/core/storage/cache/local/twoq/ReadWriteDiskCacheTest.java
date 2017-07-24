@@ -4,6 +4,7 @@ import com.orientechnologies.common.collection.closabledictionary.OClosableLinke
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -23,7 +24,10 @@ import org.junit.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -1070,6 +1074,59 @@ public class ReadWriteDiskCacheTest {
       File file = new File(storageLocal.getConfiguration().getDirectory() + "/" + nativeFileName);
       Assert.assertFalse(file.exists());
     }
+  }
+
+  @Test
+  public void testFileContentReplacement() throws IOException {
+    // Add a file.
+
+    final long fileId = writeBuffer.addFile(fileName);
+    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
+    final Path path = Paths.get(storageLocal.getConfiguration().getDirectory(), nativeFileName);
+    Assert.assertTrue(Files.exists(path));
+
+    // Set the file content to random.
+
+    final OCachePointer cachePointer = writeBuffer.load(fileId, 0, 1, true, new OModifiableBoolean(), true)[0];
+    cachePointer.acquireExclusiveLock();
+    final Random random = new Random(seed);
+    final ByteBuffer buffer = cachePointer.getSharedBuffer();
+    Assert.assertTrue(buffer.limit() > systemOffset);
+    for (int i = systemOffset; i < buffer.limit(); ++i)
+      buffer.put(i, (byte) random.nextInt());
+    cachePointer.releaseExclusiveLock();
+
+    writeBuffer.store(fileId, 0, cachePointer);
+    cachePointer.decrementReadersReferrer();
+
+    // Create a copy.
+
+    writeBuffer.flush();
+    final Path copyPath = Files.createTempFile("ReadWriteDiskCacheTest", "testFileContentReplacement");
+    Files.copy(path, copyPath, StandardCopyOption.REPLACE_EXISTING);
+
+    // Truncate the file.
+
+    writeBuffer.truncateFile(fileId);
+    writeBuffer.flush(); // just in case
+    Assert.assertTrue(Files.size(path) < Files.size(copyPath));
+
+    // Replace the file content back.
+
+    writeBuffer.replaceFileContentWith(fileId, copyPath);
+    Files.delete(copyPath); // cleanup
+
+    // Verify the content.
+
+    final OCachePointer verificationCachePointer = writeBuffer.load(fileId, 0, 1, false, new OModifiableBoolean(), true)[0];
+    verificationCachePointer.acquireSharedLock();
+    final Random verificationRandom = new Random(seed);
+    final ByteBuffer verificationBuffer = verificationCachePointer.getSharedBuffer();
+    Assert.assertTrue(verificationBuffer.limit() > systemOffset);
+    for (int i = systemOffset; i < verificationBuffer.limit(); ++i)
+      Assert.assertEquals("at " + i, (byte) verificationRandom.nextInt(), verificationBuffer.get(i));
+    verificationCachePointer.releaseSharedLock();
+    verificationCachePointer.decrementReadersReferrer();
   }
 
   @Test

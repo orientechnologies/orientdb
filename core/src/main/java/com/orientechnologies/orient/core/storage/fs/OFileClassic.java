@@ -31,7 +31,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -803,6 +806,20 @@ public class OFileClassic implements OFile, OClosableItem {
       close();
 
       osFile = Files.move(osFile, newFile);
+
+      open();
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void replaceContentWith(Path newContentFile) throws IOException {
+    acquireWriteLock();
+    try {
+      close();
+
+      Files.copy(newContentFile, osFile, StandardCopyOption.REPLACE_EXISTING);
 
       open();
     } finally {
