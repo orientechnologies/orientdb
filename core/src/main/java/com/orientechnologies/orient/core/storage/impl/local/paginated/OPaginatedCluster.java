@@ -257,6 +257,32 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
+  public void replaceClusterMapFile(File file) throws IOException {
+    startOperation();
+    try {
+      acquireExclusiveLock();
+      try {
+        final String tempFileName = file.getName() + "$temp";
+        try {
+          final long tempFileId = writeCache.addFile(tempFileName);
+          writeCache.replaceFileContentWith(tempFileId, file.toPath());
+
+          readCache.deleteFile(clusterPositionMap.getFileId(), writeCache);
+          writeCache.renameFile(tempFileId, clusterPositionMap.getFullName());
+          clusterPositionMap.replaceFileId(tempFileId);
+        } finally {
+          final long tempFileId = writeCache.fileIdByName(tempFileName);
+          if (tempFileId >= 0)
+            writeCache.deleteFile(tempFileId);
+        }
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      completeOperation();
+    }
+  }
+
   @Override
   public void close() throws IOException {
     close(true);
