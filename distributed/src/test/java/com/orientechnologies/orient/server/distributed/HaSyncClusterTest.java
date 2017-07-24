@@ -71,7 +71,7 @@ public class HaSyncClusterTest extends AbstractServerClusterTest {
     db.open("admin", "admin");
 
     final OClass person = db.getMetadata().getSchema().getClass("Person");
-//    person.createProperty("name", OType.STRING);
+    person.createProperty("other", OType.INTEGER).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 //    person.createIndex("testAutoSharding", OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null,
 //        "AUTOSHARDING", new String[] { "name" });
 
@@ -80,6 +80,7 @@ public class HaSyncClusterTest extends AbstractServerClusterTest {
 
         ODocument doc = new ODocument("Person");
         doc.field("name", "person" + i);
+        doc.field("other", i);
         db.save(doc);
       }
 
@@ -90,6 +91,7 @@ public class HaSyncClusterTest extends AbstractServerClusterTest {
       Long result0 = query.iterator().next().field("count");
 
       Assert.assertEquals(result1, result0);
+
 
     } finally {
       db.close();
