@@ -27,7 +27,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
 
     String sequenceName = name.getStringValue();
 
@@ -65,7 +66,6 @@ public class OAlterSequenceStatement extends ODDLStatement {
     }
 
     sequence.updateParams(params);
-    sequence.reset();
     sequence.save(database);
 
     OInternalResultSet result = new OInternalResultSet();
@@ -79,7 +79,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ALTER SEQUENCE ");
     name.toString(params, builder);
 
@@ -97,7 +98,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
     }
   }
 
-  @Override public OAlterSequenceStatement copy() {
+  @Override
+  public OAlterSequenceStatement copy() {
     OAlterSequenceStatement result = new OAlterSequenceStatement(-1);
     result.name = name == null ? null : name.copy();
     result.start = start == null ? null : start.copy();
@@ -106,7 +108,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -126,7 +129,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (start != null ? start.hashCode() : 0);
     result = 31 * result + (increment != null ? increment.hashCode() : 0);

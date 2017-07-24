@@ -159,6 +159,9 @@ public abstract class OSequence {
       any = true;
     }
 
+    save();
+    reset();
+
     return any;
   }
 
