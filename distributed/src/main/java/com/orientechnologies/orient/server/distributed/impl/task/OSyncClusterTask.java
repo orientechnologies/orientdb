@@ -143,24 +143,6 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
                   addFileByName(fileNames, fileName.substring(0, fileName.length() - OPaginatedCluster.DEF_EXTENSION.length())
                       + OClusterPositionMap.DEF_EXTENSION, writeCache);
 
-                  final OClass clazz = database.getMetadata().getSchema().getClassByClusterId(cluster.getId());
-                  if (clazz != null) {
-                    final OIndex<?> autoShardingIndex = clazz.getAutoShardingIndex();
-                    if (autoShardingIndex != null) {
-                      final int partition = OCollections.indexOf(clazz.getClusterIds(), cluster.getId());
-                      final String indexName = autoShardingIndex.getName();
-
-                      addFileByName(fileNames,
-                          indexName + "_" + partition + OAutoShardingIndexEngine.SUBINDEX_METADATA_FILE_EXTENSION, writeCache);
-                      addFileByName(fileNames, indexName + "_" + partition + OAutoShardingIndexEngine.SUBINDEX_TREE_FILE_EXTENSION,
-                          writeCache);
-                      addFileByName(fileNames,
-                          indexName + "_" + partition + OAutoShardingIndexEngine.SUBINDEX_BUCKET_FILE_EXTENSION, writeCache);
-                      addFileByName(fileNames,
-                          indexName + "_" + partition + OAutoShardingIndexEngine.SUBINDEX_NULL_BUCKET_FILE_EXTENSION, writeCache);
-                    }
-                  }
-
                   final OutputStream outputStream = new BufferedOutputStream(fileOutputStream, CHUNK_MAX_SIZE);
                   try {
                     OZIPCompressionUtil.compressFiles(dbPath, fileNames, outputStream, null,
