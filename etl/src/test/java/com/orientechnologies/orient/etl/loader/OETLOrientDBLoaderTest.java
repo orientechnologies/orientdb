@@ -20,9 +20,9 @@ package com.orientechnologies.orient.etl.loader;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.OETLBaseTest;
@@ -70,6 +70,45 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
     final ODocument indexMetadata = indexManager.getIndex("V.surname").getMetadata();
     assertThat(indexMetadata.containsField("ignoreNullValues")).isTrue();
     assertThat(indexMetadata.<String>field("ignoreNullValues")).isEqualTo("false");
+
+  }
+
+  @Test
+  public void testCreateLuceneIndex() {
+
+    configure("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, "
+        + "\"transformers\": [\n"
+        + "    {\n"
+        + "      \"vertex\": {\n"
+        + "        \"class\": \"Person\",\n"
+        + "        \"skipDuplicates\": true\n"
+        + "      }\n"
+        + "    }],"
+        + "loader: { orientdb: {\n"
+        + "      dbURL: 'memory:" + name.getMethodName() + "',\n" + "      dbUser: \"admin\",\n" + "      dbPassword: \"admin\",\n"
+        + "      dbAutoCreate: true,\n" + "      tx: false,\n" + "      batchCommit: 1000,\n" + "      wal : true,\n"
+        + "      dbType: \"graph\",\n" + "      classes: [\n" + "        {name:\"Person\", extends: \"V\" },\n" + "      ],\n"
+        + "      indexes: [{class:\"Person\" , fields:[\"surname:String\"], \"type\":\"FULLTEXT\",  \"algorithm\":\"LUCENE\",  \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
+
+    proc.execute();
+
+    ODatabaseDocument db = proc.getLoader().getPool().acquire();
+
+    final OIndexManager indexManager = db.getMetadata().getIndexManager();
+
+    assertThat(indexManager.existsIndex("Person.surname")).isTrue();
+
+    final OIndex<?> index = indexManager.getIndex("Person.surname");
+    final ODocument indexMetadata = index.getMetadata();
+    assertThat(index.getAlgorithm()).isEqualTo("LUCENE");
+
+    assertThat(indexMetadata.containsField("ignoreNullValues")).isTrue();
+    assertThat(indexMetadata.<String>field("ignoreNullValues")).isEqualTo("false");
+
+    final OResultSet resultSet = db.query("select from Person where search_class('mi*')=true");
+
+    assertThat(resultSet).hasSize(1);
+    resultSet.close();
 
   }
 
@@ -131,11 +170,11 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
 
     //create class
     ODatabaseDocument db = proc.getLoader().getPool().acquire();
-    db.command(new OCommandSQL("CREATE Class Person")).execute();
-    db.command(new OCommandSQL("CREATE property Person.name STRING")).execute();
-    db.command(new OCommandSQL("CREATE property Person.surname STRING")).execute();
-    db.command(new OCommandSQL("CREATE property Person.married BOOLEAN")).execute();
-    db.command(new OCommandSQL("CREATE property Person.birthday DATETIME")).execute();
+    db.command("CREATE Class Person");
+    db.command("CREATE property Person.name STRING");
+    db.command("CREATE property Person.surname STRING");
+    db.command("CREATE property Person.married BOOLEAN");
+    db.command("CREATE property Person.birthday DATETIME");
 
     db.close();
     //import data
@@ -143,10 +182,11 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
 
     db = proc.getLoader().getPool().acquire();
 
-    List<?> res = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM Person"));
+    OResultSet res = db.query("SELECT FROM Person");
 
-    assertThat(res.size()).isEqualTo(1);
+    assertThat(res).hasSize(1);
 
+    res.close();
     db.close();
   }
 }

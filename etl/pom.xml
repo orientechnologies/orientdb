@@ -118,7 +118,7 @@
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-core</artifactId>
+            <artifactId>orientdb-lucene</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>

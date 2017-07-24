@@ -36,8 +36,8 @@ public class OETLConsoleBlock extends OETLAbstractBlock {
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters()
-        + "{file:{optional:true,description:'Input filename with commands to execute'}}"
-        + "{commands:{optional:true,description:'Commands to execute in sequence as an array of strings'}}" + "]}");
+        + "{file:{optional:true,description:'Input filename with commands.sh to execute'}}"
+        + "{commands.sh:{optional:true,description:'Commands to execute in sequence as an array of strings'}}" + "]}");
   }
 
   @Override
@@ -46,11 +46,11 @@ public class OETLConsoleBlock extends OETLAbstractBlock {
     if (iConfiguration.containsField("file"))
       file = iConfiguration.field("file");
 
-    if (iConfiguration.containsField("commands"))
-      commands = iConfiguration.field("commands");
+    if (iConfiguration.containsField("commands.sh"))
+      commands = iConfiguration.field("commands.sh");
 
     if (file == null && commands == null)
-      throw new OConfigurationException("file or commands are mandatory");
+      throw new OConfigurationException("file or commands.sh are mandatory");
 
     if (file != null)
       console = new OConsoleDatabaseApp(new String[] { file });

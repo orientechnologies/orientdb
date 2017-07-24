@@ -32,8 +32,6 @@ import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.util.OURLConnection;
-import com.orientechnologies.orient.core.util.OURLHelper;
 import com.orientechnologies.orient.etl.OETLPipeline;
 
 import java.util.Arrays;
@@ -418,7 +416,6 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
     pipeline.setPool(pool);
   }
 
-
   private void createDatabasePool() {
     if (pool != null)
       return;
@@ -513,6 +510,8 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
         if (idxType == null)
           throw new OConfigurationException("Index 'type' missed in OrientDB Loader for index '" + idxName + "'");
 
+        final String algorithm = idx.field("algorithm");
+
         final List<String> idxFields = idx.field("fields");
         if (idxFields == null)
           throw new OConfigurationException("Index 'fields' missed in OrientDB Loader");
@@ -555,13 +554,11 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
           // ALREADY EXISTS
           continue;
 
-        index = cls.createIndex(idxName, idxType, null, metadata, fields);
+        index = cls.createIndex(idxName, idxType, null, metadata, algorithm, fields);
         log(Level.FINE, "- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s", idxName, idxType,
             idxClass, idxFields);
       }
     }
-//    db.activateOnCurrentThread();
-//    db.close();
   }
 
   @Override
