@@ -41,10 +41,10 @@ UserModule.controller("UsersController", ['$scope', '$rootScope', '$routeParams'
 
   if ($scope.strictSql) {
     var selectAllUsers = 'select *,roles:{*, @rid} from oUser order by name';
-    var selectAllRoles = 'select * from oRole order by name fetchPlan *:1';
+    var selectAllRoles = 'select *,inheritedRole:{*,@rid} from oRole order by name';
   } else {
     var selectAllUsers = 'select *,roles:{*, @rid} from oUser order by name';
-    var selectAllRoles = 'select * from oRole fetchPlan *:1 order by name ';
+    var selectAllRoles = 'select *,inheritedRole:{*,@rid} from oRole order by name ';
   }
 
   $scope.getListUsers = function () {
@@ -112,14 +112,15 @@ UserModule.controller("UsersController", ['$scope', '$rootScope', '$routeParams'
     modalScope.saveButton = "Add User"
     var modalPromise = $modal({templateUrl: 'views/database/users/newUser.html', scope: modalScope, show: false});
     modalScope.save = function () {
-      if (modalPromise.$scope.roles) {
-        modalPromise.$scope.user.roles = [];
-        modalPromise.$scope.roles.forEach(function (e) {
-          modalPromise.$scope.user.roles.push(e.text["@rid"])
+      var roles = [];
+      if (modalScope.user.roles) {
+        roles = modalScope.user.roles;
+        modalScope.user.roles = modalScope.user.roles.map((r) => {
+          return r["@rid"];
         });
       }
       DocumentApi.createDocument($scope.database.getName(), modalPromise.$scope.user["@rid"], modalPromise.$scope.user).then(function (data) {
-        data.roles = modalPromise.$scope.user.roles;
+        data.roles = roles;
         $scope.usersResult.push(data);
         $scope.tableParams.reload();
         Notification.push({content: 'User ' + data.name + ' has been created.'});
@@ -175,24 +176,25 @@ UserModule.controller("UsersController", ['$scope', '$rootScope', '$routeParams'
   }
   $scope.edit = function (user) {
     var modalScope = $scope.$new(true);
-    modalScope.user = user;
+    modalScope.user = angular.copy(user, {});
     modalScope.loadRoles = $scope.loadRoles;
     modalScope.title = "Edit User"
     modalScope.saveButton = "Save User"
     var modalPromise = $modal({templateUrl: 'views/database/users/newUser.html', scope: modalScope, show: false});
     modalScope.save = function () {
-      if (modalPromise.$scope.roles) {
-        modalPromise.$scope.user.roles = [];
-        modalPromise.$scope.roles.forEach(function (e) {
-          modalPromise.$scope.user.roles.push(e.text["@rid"])
+
+
+      var roles = [];
+      if (modalScope.user.roles) {
+        roles = modalScope.user.roles;
+        modalScope.user.roles = modalScope.user.roles.map((r) => {
+          return r["@rid"];
         });
       }
-      DocumentApi.updateDocument($scope.database.getName(), modalPromise.$scope.user["@rid"], modalPromise.$scope.user).then(function (data) {
-
-        var idx = $scope.usersResult.indexOf(modalPromise.$scope.user);
-        $scope.usersResult.splice(idx, 1);
-        data.roles = modalPromise.$scope.user.roles;
-        $scope.usersResult.push(data);
+      DocumentApi.updateDocument($scope.database.getName(), modalScope.user["@rid"], modalScope.user).then(function (data) {
+        var idx = $scope.usersResult.indexOf(user);
+        data.roles = roles;
+        $scope.usersResult.splice(idx, 1, data);
         $scope.tableParams.reload();
         Notification.push({content: 'User ' + data.name + ' has been updated.'});
 
@@ -234,9 +236,9 @@ UserModule.controller("RolesController", ['$scope', '$routeParams', '$location',
 
 
   if ($scope.strictSql) {
-    var selectAllUsers = 'select * from oRole order by name fetchPlan *:1 ';
+    var selectAllUsers = 'select *,inheritedRole:{*,@rid} from oRole order by name';
   } else {
-    var selectAllUsers = 'select * from oRole fetchPlan *:1  order by name ';
+    var selectAllUsers = 'select *,inheritedRole:{*,@rid} from oRole order by name';
   }
 
 
@@ -368,10 +370,13 @@ UserModule.controller("RolesController", ['$scope', '$routeParams', '$location',
     var modalPromise = $modal({templateUrl: 'views/database/users/newRole.html', scope: modalScope, show: false});
     modalScope.save = function () {
 
-
+      let inherited = modalPromise.$scope.user.inheritedRole;
+      if (inherited) {
+        modalPromise.$scope.user.inheritedRole = inherited["@rid"];
+      }
       DocumentApi.createDocument($scope.database.getName(), modalPromise.$scope.user["@rid"], modalPromise.$scope.user).then(function (data) {
         $scope.usersResult.push(Object.assign({}, data, {
-          inheritedRole: modalPromise.$scope.user.inheritedRole
+          inheritedRole: inherited
         }));
         Notification.push({content: 'Role ' + data.name + ' has been created.'});
       }, function error(err) {
