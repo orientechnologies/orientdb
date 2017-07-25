@@ -1668,40 +1668,96 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
 
     final List<ODocument> members;
+    ODocument dataCenters;
     synchronized (clusterConfiguration) {
       clusterConfiguration.fromStream(obj);
       clusterConfiguration.toString();
       members = clusterConfiguration.field("members");
+      dataCenters = clusterConfiguration.field("dataCenters");
     }
 
+    String dataCenter = getDataCenterOfServer(dataCenters, iConnectedURL);
+    String strategy = getClientConfiguration().getValueAsString(OGlobalConfiguration.NETWORK_SOCKET_RETRY_STRATEGY);
+    List<String> allowedServers;
+    List<String> resolvedHosts;
+    if ("same-dc".equals(strategy)) {
+      allowedServers = getServersOfDataCenter(dataCenters, dataCenter);
+      resolvedHosts = resolveHosts(members, allowedServers);
+    } else if ("auto".equals(strategy)) {
+      allowedServers = getServersOfDataCenter(dataCenters, dataCenter);
+      resolvedHosts = resolveHosts(members, allowedServers);
+      if (resolvedHosts.isEmpty()) {
+        resolvedHosts = resolveHosts(members, null);
+      }
+    } else {
+      resolvedHosts = resolveHosts(members, null);
+    }
     // UPDATE IT
     synchronized (serverURLs) {
-      if (members != null) {
-        // ADD CURRENT SERVER AS FIRST
-        if (iConnectedURL != null) {
-          addHost(iConnectedURL);
-        }
+      // ADD CURRENT SERVER AS FIRST
+      if (iConnectedURL != null) {
+        addHost(iConnectedURL);
+      }
+      for (String resolved : resolvedHosts) {
+        addHost(resolved);
+      }
+    }
 
-        for (ODocument m : members) {
-          if (m == null)
-            continue;
+  }
 
-          final String nodeStatus = m.field("status");
+  private List<String> resolveHosts(List<ODocument> members, List<String> allowedServers) {
+    List<String> hosts = new ArrayList<String>();
+    if (members != null) {
+      for (ODocument m : members) {
+        if (m == null)
+          continue;
 
-          if (m != null && !"OFFLINE".equals(nodeStatus)) {
-            final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
-            if (listeners != null)
-              for (Map<String, Object> listener : listeners) {
-                if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
-                  String url = (String) listener.get("listen");
-                  if (!serverURLs.contains(url))
-                    addHost(url);
+        final String nodeStatus = m.field("status");
+
+        if (m != null && !"OFFLINE".equals(nodeStatus)) {
+          final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
+          if (listeners != null)
+            for (Map<String, Object> listener : listeners) {
+              if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+                String url = (String) listener.get("listen");
+                if (!serverURLs.contains(url)) {
+                  if (allowedServers == null || allowedServers.contains(m.field("name"))) {
+                    hosts.add(url);
+                  }
                 }
               }
+            }
+        }
+      }
+    }
+    return hosts;
+  }
+
+  private List<String> getServersOfDataCenter(ODocument dcs, String dc) {
+    if (dcs != null && dc != null) {
+      final ODocument dcConfig = dcs.field(dc);
+      if (dcConfig != null) {
+        return dcConfig.field("servers");
+      }
+    }
+    return null;
+  }
+
+  private String getDataCenterOfServer(ODocument dcs, String server) {
+    if (dcs != null) {
+      for (String dc : dcs.fieldNames()) {
+        final ODocument dcConfig = dcs.field(dc);
+        if (dcConfig != null) {
+          final List<String> dcServers = dcConfig.field("servers");
+          if (dcServers != null && !dcServers.isEmpty()) {
+            if (dcServers.contains(server))
+              // FOUND
+              return dc;
           }
         }
       }
     }
+    return null;
   }
 
   public void removeSessions(final String url) {

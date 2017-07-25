@@ -413,6 +413,8 @@ public enum OGlobalConfiguration {
   NETWORK_REQUEST_TIMEOUT("network.requestTimeout", "Request completion timeout (in ms)", Integer.class, 3600000 /* one hour */,
       true),
 
+  NETWORK_SOCKET_RETRY_STRATEGY("network.retry.strategy", "Select the retry server selection strategy, possible values are auto,same-dc ", String.class, "auto", true),
+
   NETWORK_SOCKET_RETRY("network.retry", "Number of attempts to connect to the server on failure", Integer.class, 5, true),
 
   NETWORK_SOCKET_RETRY_DELAY("network.retryDelay",
