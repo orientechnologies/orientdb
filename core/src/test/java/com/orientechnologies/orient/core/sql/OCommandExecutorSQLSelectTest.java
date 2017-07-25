@@ -1501,10 +1501,10 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("INSERT INTO " + className + " set state = 2")).execute();
 
     List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select from " + className + " where state in [1]"));
-    Assert.assertEquals(results.size(), 2);
+    assertEquals(results.size(), 2);
 
     results = db.query(new OSQLSynchQuery<ODocument>("select from " + className + " where [1] contains state"));
-    Assert.assertEquals(results.size(), 2);
+    assertEquals(results.size(), 2);
 
   }
 
