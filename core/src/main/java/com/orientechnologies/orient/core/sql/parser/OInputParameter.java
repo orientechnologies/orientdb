@@ -143,6 +143,9 @@ public class OInputParameter extends SimpleNode {
       function.getParams().add(dateFormatExpr);
       return function;
     }
+    if(value.getClass().isEnum()){
+      return value.toString();
+    }
 
     return this;
   }

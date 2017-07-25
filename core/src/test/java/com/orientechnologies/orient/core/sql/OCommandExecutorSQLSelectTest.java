@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -1504,6 +1505,26 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 2);
 
     results = db.query(new OSQLSynchQuery<ODocument>("select from " + className + " where [1] contains state"));
+    assertEquals(results.size(), 2);
+
+  }
+
+  @Test
+  public void testEnumAsParams() {
+    //issue #7418
+    String className = "testEnumAsParams";
+    db.command(new OCommandSQL("create class " + className)).execute();
+    db.command(new OCommandSQL("INSERT INTO " + className + " set status = ?")).execute(OType.STRING);
+    db.command(new OCommandSQL("INSERT INTO " + className + " set status = ?")).execute(OType.ANY);
+    db.command(new OCommandSQL("INSERT INTO " + className + " set status = ?")).execute(OType.BYTE);
+
+    Map<String, Object> params = new HashMap<String, Object>();
+    List enums = new ArrayList();
+    enums.add(OType.STRING);
+    enums.add(OType.BYTE);
+    params.put("status", enums);
+    List<ODocument> results = db
+        .query(new OSQLSynchQuery<ODocument>("select from " + className + " where status in :status"), params);
     assertEquals(results.size(), 2);
 
   }
