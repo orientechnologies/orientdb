@@ -1667,6 +1667,24 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
+  @Test
+  public void testComparisonOfShorts() {
+    //issue #7578
+    String className = "testComparisonOfShorts";
+    db.command(new OCommandSQL("create class " + className)).execute();
+    db.command(new OCommandSQL("create property " + className + ".state Short")).execute();
+    db.command(new OCommandSQL("INSERT INTO " + className + " set state = 1")).execute();
+    db.command(new OCommandSQL("INSERT INTO " + className + " set state = 1")).execute();
+    db.command(new OCommandSQL("INSERT INTO " + className + " set state = 2")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select from " + className + " where state in [1]"));
+    Assert.assertEquals(results.size(), 2);
+
+    results = db.query(new OSQLSynchQuery<ODocument>("select from " + className + " where [1] contains state"));
+    Assert.assertEquals(results.size(), 2);
+
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {
