@@ -582,7 +582,7 @@ public enum OType {
 
   public static Number[] castComparableNumber(Number context, Number max) {
     // CHECK FOR CONVERSION
-    if (context instanceof Integer) {
+    if (context instanceof Short) {
       // SHORT
       if (max instanceof Integer)
         context = context.intValue();
