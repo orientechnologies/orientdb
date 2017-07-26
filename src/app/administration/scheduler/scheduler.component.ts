@@ -19,9 +19,9 @@ class SchedulerComponent {
   constructor(private notification: NotificationService, private agentService: AgentService) {
 
     // agent
-    this.agentService.isActive().then(() => {
-      this.init();
-    });
+    // this.agentService.isActive().then(() => {
+    //   this.init();
+    // });
 
   }
 

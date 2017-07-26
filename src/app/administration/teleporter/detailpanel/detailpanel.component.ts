@@ -15,9 +15,9 @@ import edge = require("selenium-webdriver/edge");
   styles: [
     '.propAndColumnTable {max-width: 480px; table-layout: fixed}',
     '.propAndColumnTable td, .propAndColumnTable th {overflow-x:auto; height: 40px; text-align: center; vertical-align: middle;}',
-    '.firstColumn {width: 50%;}',
+    '.firstColumn {width: 45%;}',
     '.secondColumn {width: 25%;}',
-    '.thirdColumn {width: 25%;}',
+    '.thirdColumn {width: 30%;}',
 
     '.hideOverflow {max-width: 100%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; display: inline-block}',
 

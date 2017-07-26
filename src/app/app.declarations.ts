@@ -1,10 +1,11 @@
 import {ImportExportComponent} from './dbconfiguration';
-import {TeleporterComponent, GraphModelPanelComponent, DetailPanelComponent, SchedulerComponent, NewsBoxComponent, Neo4jImporterComponent} from './administration';
+import {ImportManagerComponent, TeleporterComponent, GraphModelPanelComponent, DetailPanelComponent, SchedulerComponent, NewsBoxComponent, Neo4jImporterComponent} from './administration';
 import {DualListComponent, GraphComponent, AddEdgeModal} from './util';
 
 
 export const APP_DECLARATIONS = [
   ImportExportComponent,
+  ImportManagerComponent,
   TeleporterComponent,
   GraphModelPanelComponent,
   DetailPanelComponent,

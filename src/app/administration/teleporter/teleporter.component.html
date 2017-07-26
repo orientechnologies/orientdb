@@ -11,7 +11,7 @@
             <div class="col-md-6">
               <span>&nbsp;&nbsp;&nbsp;Step 1: Source Database connection</span>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 importer-header-right">
               <div class="btn-group">
                 <button type="button" class="btn btn-sm btn-primary disabled">Prev</button>
               </div>
@@ -122,7 +122,7 @@
             <div class="col-md-6">
               <span>&nbsp;&nbsp;&nbsp;Step 2: Target OrientDB Database</span>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 importer-header-right">
               <div class="btn-group">
                 <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('1')">Prev</button>
               </div>
@@ -225,7 +225,7 @@
               <button type="button" class="btn btn-xs btn-primary" data-toggle="popover" data-placement="top" data-html="true"
                       [attr.data-content]="hints.tableList" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 importer-header-right">
               <div class="btn-group">
                 <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('2')">Prev</button>
               </div>
@@ -257,7 +257,7 @@
             <div class="col-md-6">
               <span>&nbsp;&nbsp;&nbsp;Step 4: Model Mapping (Advanced)</span>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 importer-header-right">
               <div class="btn-group">
                 <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('3')">Prev</button>
               </div>
@@ -286,7 +286,14 @@
 
 
       <div class="running" *ngSwitchCase="'running'">
-        <h3>Migration to OrientDB</h3><br/>
+
+        <h4>
+          <div class="row">
+            <div class="col-md-6">
+              <span>&nbsp;&nbsp;&nbsp;Migration to OrientDB</span>
+            </div>
+          </div>
+        </h4><br/><br/>
 
         <div class="row ">
           <div class="col-md-10" *ngIf="job.cfg">

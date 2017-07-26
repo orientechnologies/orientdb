@@ -43,14 +43,14 @@ class Neo4jImporterComponent implements AfterViewChecked {
     this.logLevels = ["NO","DEBUG","INFO","WARNING","ERROR"];
 
     this.dbConnection = {
-      "host": "",
-      "port": ""
+      "host": "localhost",
+      "port": "7687"
     }
 
     this.defaultConfig = {
       "neo4jUrl": "",
-      "neo4jUsername": "",
-      "neo4jPassword": "",
+      "neo4jUsername": "neo4j",
+      "neo4jPassword": "admin",
       "odbProtocol": "plocal",
       "odbName": "",
       "outDbUrl": "",

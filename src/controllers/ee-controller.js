@@ -43,7 +43,7 @@ import '../views/server/stats/auditing/log.html';
 import '../views/server/stats/auditing/config.html';
 import '../views/server/stats/auditing/newClass.html';
 import '../views/database/auditing/newClass.html';
-import '../views/server/stats/teleporter.html';
+import '../views/server/stats/importersManager.html';
 import '../views/server/stats/events.html';
 import '../views/server/plugins/generic.html';
 import '../views/server/plugins/automaticBackup.html';
@@ -1228,9 +1228,8 @@ ee.controller('EEDashboardController', ["$scope", "$rootScope", "$routeParams", 
     {name: "backup", title: "Backup Management", template: 'backup', icon: 'fa-clock-o'},
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
-    {name: "teleporter", title: "Teleporter", template: 'teleporterNew', icon: 'fa-usb'},
-    // {name: "neo4jimporter", title: "Neo4j to OrientDB Importer", template: 'neo4jImporter', icon: 'fa-arrow-circle-right'},
-    {name: "alerts", title: "Alerts Management", template: 'events', icon: 'fa-bell'}
+    {name: "alerts", title: "Alerts Management", template: 'events', icon: 'fa-bell'},
+    {name: "importers", title: "Importer", template: 'importersManager', icon: 'fa-plug'},
 
   ]
 

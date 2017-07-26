@@ -30,20 +30,12 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
   $scope.isEE = false;
 
   DatabaseApi.isEE().then(function (data) {
-      $scope.isEE = data.enterprise;
-    if($scope.isEE) {
-      $scope.importHint = "login.importDbFromSQL";
-    }
+    $scope.isEE = data.enterprise;
   }).catch(function () {
     $scope.isEE = false;
   })
 
-    if($scope.isEE) {
-      $scope.importHint = "login.importDbFromSQL";
-    }
-    else {
-      $scope.importHint = "login.downloadEE";
-    }
+  $scope.importHint = "login.importers";
 
   $scope.connect = function (callback) {
     $scope.$broadcast("autofill:update");
@@ -144,8 +136,8 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
 
   }
 
-  $scope.goToTeleporter = function () {
-      $location.path("/dashboard/teleporter");
+  $scope.goToImporters = function () {
+    $location.path("/dashboard/importers");
   }
 
   $rootScope.$broadcast("request:logout");

@@ -17,7 +17,7 @@ class AgentService {
     }
   }
 
-  isActive() {
+  isActive():any {
 
     if (this.agent.active == null) {
       return this.profilerService.metadata().then((data) => {

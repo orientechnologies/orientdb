@@ -1338,6 +1338,14 @@ table.table-backup {
   text-align: center;
 }
 
+.importer-header-right {
+  padding-right: 20px;
+}
+
 teleporter .popover {
   max-width: 100%;
+}
+
+.dashboard-importersManager {
+  padding: 20px
 }

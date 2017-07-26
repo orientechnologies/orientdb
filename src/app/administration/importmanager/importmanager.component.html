@@ -1,0 +1,98 @@
+<div class="col-md-1 vertical-nav-tab" style="padding-left: 10px">
+
+  <!-- Nav tabs -->
+  <ul class="nav nav-tabs tabs-left" style="height: 639px">
+    <li [ngClass]="isActive('home')">
+      <a (click)="setTab('home')">Home</a>
+    </li>
+    <li [ngClass]="isActive('teleporter')">
+      <a (click)="setTab('teleporter')">Teleporter</a>
+    </li>
+    <li [ngClass]="isActive('neo4jImporter')">
+      <a (click)="setTab('neo4jImporter')">Neo4j Importer</a>
+    </li>
+    <li>
+      <a class="not-allowed">ETL</a>
+    </li>
+  </ul>
+</div>
+
+<div class="col-md-11">
+  <div *ngIf="currentTab === 'home'">
+    <div class="row">
+      <h3 style="margin: 50px; margin-top: 10px; margin-bottom: 20px;">Migration Tools</h3>
+
+      <p style="margin: 50px; margin-bottom: 0px; font-size:15px">
+        To begin your migration toward OrientDB choose the specific importer according to your source dataset. <br/><br/>
+      </p>
+
+      <ul>
+        <li class="importer-description">
+          <a (click)="setTab('teleporter')"><b>Teleporter</b></a>
+          <div class="row">
+            <div class="col-md-2">
+              <img src="src/img/teleporter-image3.jpg" width="100%" height="100%"/>
+            </div>
+            <div class="col-md-10">
+              <p>
+                <br/>
+                If you want to migrate your Relational database, have a look at teleporter. It's fully compatible with most RDBMS with a JDBC driver. <br/>
+                It’s been successfully tested with Oracle®, SQLServer®, MySQL®, PostgreSQL® and HyperSQL®* and manages all the necessary type conversions between different DBMSs. <br/>
+                Teleporter imports all your data as a Graph in OrientDB and leads you in a customised migration: above all it is possible to map in a visual way the source schema
+                of the RDBMS with the graph model in OrientDB. <br/><br/>
+                <span *ngIf="isEE" [innerHTML]="hints.importDbFromSQL"></span>
+                <span *ngIf="!isEE" [innerHTML]="hints.downloadEE"></span>
+                <br/><br/>
+                Reference: <a href="https://orientdb.com/docs/2.2/Studio-Teleporter.html">Documentation</a>
+              </p>
+            </div>
+          </div>
+        </li>
+
+        <li class="importer-description">
+          <a (click)="setTab('neo4jImporter')"><b>Neo4j Importer</b></a>
+          <div class="row">
+            <div class="col-md-2">
+              <img src="src/img/neo4jimporter-150x150.png" width="70%" height="70%"/>
+            </div>
+            <div class="col-md-10">
+              <p>
+                <br/>
+                If you’re coming from Neo4j and recently decided to make the switch to OrientDB, or if you would just like to try OrientDB with an existing Neo4j Database,
+                our new Neo4j to OrientDB Importer makes it easy for you to import your nodes and relationships into OrientDB.
+                <br/><br/>
+                Reference: <a href="https://orientdb.com/docs/2.2/OrientDB-Neo4j-Importer.html">Documentation</a>
+              </p>
+            </div>
+          </div>
+        </li>
+
+        <li class="importer-description">
+          <a class="not-allowed"><b>ETL</b></a>
+          <div class="row">
+            <div class="col-md-2">
+              <img src="src/img/cogs.png"/>
+            </div>
+            <div class="col-md-10">
+              <p>
+                <br/>
+                Even if you can connect OrientDB to any ETL tool that supports OrientDB natively or via the JDBC Driver, OrientDB provides its own ETL tool. <br/>
+                With OrientDB ETL all you need is a JSON configuration file to import data from an external database (through JDBC), a CSV or JSON file.
+                <br/><br/>
+                Reference: <a href="https://orientdb.com/docs/2.2/ETL-Introduction.html">Documentation</a>
+              </p>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div *ngIf="currentTab === 'teleporter'">
+    <teleporter></teleporter>
+  </div>
+
+  <div *ngIf="currentTab === 'neo4jImporter'">
+    <neo4jimporter></neo4jimporter>
+  </div>
+</div>
