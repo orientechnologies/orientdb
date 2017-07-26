@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -34,6 +35,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
+    OGlobalConfiguration.NETWORK_SOCKET_RETRY_STRATEGY.setValue("same-dc");
     final ODistributedConfiguration cfg = serverInstance.get(0).getServerInstance().getDistributedManager()
         .getDatabaseConfiguration(getDatabaseName());
 
@@ -59,7 +61,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     Assert.assertTrue(austinDc.contains("usa-1"));
     Assert.assertTrue(austinDc.contains("usa-2"));
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:localhost:2424/" + getDatabaseName());
     db.open("admin", "admin");
     try {
       db.command(new OCommandSQL("INSERT into Item (name) values ('foo')")).execute();
@@ -67,7 +69,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
       db.close();
     }
 
-    db = new ODatabaseDocumentTx("plocal:target/server1/databases/" + getDatabaseName());
+    db = new ODatabaseDocumentTx("remote:localhost:2425/" + getDatabaseName());
     db.open("admin", "admin");
     try {
       Iterable<ODocument> result = db.command(new OCommandSQL("select set(name) as names from Item")).execute();
@@ -86,7 +88,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     }
 
     // TRY AN INSERT AGAINST THE DC WITHOUT QUORUM EXPECTING TO FAIL
-    db = new ODatabaseDocumentTx("plocal:target/server2/databases/" + getDatabaseName());
+    db = new ODatabaseDocumentTx("remote:localhost:2426/" + getDatabaseName());
     db.open("admin", "admin");
     try {
       db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this")).execute();
@@ -101,7 +103,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     serverInstance.get(0).getServerInstance().shutdown();
 
     // RETRY AN INSERT AND CHECK IT FAILS (NO QUORUM)
-    db = new ODatabaseDocumentTx("plocal:target/server1/databases/" + getDatabaseName());
+    db = new ODatabaseDocumentTx("remote:localhost:2425/" + getDatabaseName());
     db.open("admin", "admin");
     try {
       db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this")).execute();
@@ -119,7 +121,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
         30000);
 
     // RETRY AN INSERT AND CHECK IT DOESN'T FAILS (QUORUM REACHED)
-    db = new ODatabaseDocumentTx("plocal:target/server1/databases/" + getDatabaseName());
+    db = new ODatabaseDocumentTx("remote:localhost:2425/" + getDatabaseName());
     db.open("admin", "admin");
     try {
       db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this")).execute();
