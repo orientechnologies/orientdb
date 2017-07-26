@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.lucene.test.BaseLuceneTest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +17,7 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
 
   @Before
   public void setUp() throws Exception {
+    OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.setValue(8);
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
     db.execute("sql", getScriptFromStream(stream));
