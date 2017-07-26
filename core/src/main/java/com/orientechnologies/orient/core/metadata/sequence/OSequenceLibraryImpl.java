@@ -82,7 +82,6 @@ public class OSequenceLibraryImpl {
 
     if (seq != null) {
       seq.bindOnLocalThread();
-      seq.checkForUpdateToLastversion();
     }
 
     return seq;

@@ -82,7 +82,12 @@ public class OSequenceOrdered extends OSequence {
 
   @Override
   public synchronized long current() {
-    return getValue();
+    return callRetry(new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        return getValue();
+      }
+    }, "current");
   }
 
   @Override

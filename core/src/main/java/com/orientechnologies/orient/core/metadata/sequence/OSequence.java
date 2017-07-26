@@ -263,14 +263,6 @@ public abstract class OSequence {
    */
   public abstract SEQUENCE_TYPE getSequenceType();
 
-  protected void checkForUpdateToLastversion() {
-    final ODocument tlDoc = tlDocument.get();
-    if (tlDoc != null) {
-      if (document.getVersion() > tlDoc.getVersion())
-        tlDocument.set(document);
-    }
-  }
-
   protected void reloadSequence() {
     tlDocument.set(tlDocument.get().reload(null, true));
   }
