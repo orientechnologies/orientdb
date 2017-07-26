@@ -66,6 +66,7 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
@@ -78,6 +79,7 @@ import javax.naming.directory.InitialDirContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1673,10 +1675,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       clusterConfiguration.fromStream(obj);
       clusterConfiguration.toString();
       members = clusterConfiguration.field("members");
-      dataCenters = clusterConfiguration.field("dataCenters");
+      dataCenters = ((ODocument) clusterConfiguration.field("database")).field("dataCenters");
     }
 
-    String dataCenter = getDataCenterOfServer(dataCenters, iConnectedURL);
+    String dataCenter = getDataCenterOfServer(dataCenters, resolveNameByIp(members, getHostIpPort()));
     String strategy = getClientConfiguration().getValueAsString(OGlobalConfiguration.NETWORK_SOCKET_RETRY_STRATEGY);
     List<String> allowedServers;
     List<String> resolvedHosts;
@@ -1703,6 +1705,48 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     }
 
+  }
+
+  private String getHostIpPort() {
+    int sepPos = url.indexOf("/");
+    String serverURL;
+    if (sepPos > -1) {
+      // REMOVE DATABASE NAME IF ANY
+      serverURL = url.substring(0, sepPos);
+    } else {
+      serverURL = url;
+    }
+    sepPos = serverURL.indexOf(":");
+    final int remotePort = Integer.parseInt(serverURL.substring(sepPos + 1));
+    final String remoteHost = serverURL.substring(0, sepPos);
+    try {
+      if (remoteHost.equals("localhost") || remoteHost.equals("127.0.0.1")) {
+        return OChannel.getLocalIpAddress(true) + ":" + remotePort;
+      }
+      return InetAddress.getByName(remoteHost).getHostAddress() + ":" + remotePort;
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  private String resolveNameByIp(List<ODocument> members, String ip) {
+    if (members != null && ip != null) {
+      for (ODocument m : members) {
+        if (m == null)
+          continue;
+
+        final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
+        if (listeners != null)
+          for (Map<String, Object> listener : listeners) {
+            if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+              String url = (String) listener.get("listen");
+              if (url.equals(ip))
+                return m.field("name");
+            }
+          }
+      }
+    }
+    return null;
   }
 
   private List<String> resolveHosts(List<ODocument> members, List<String> allowedServers) {
