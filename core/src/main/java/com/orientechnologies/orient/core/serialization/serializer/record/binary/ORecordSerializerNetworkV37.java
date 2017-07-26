@@ -358,6 +358,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       OVarIntSerializer.write(bytes, pointer.getFileId());
       OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageIndex());
       OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageOffset());
+      OVarIntSerializer.write(bytes, bag.size());
       NavigableMap<OIdentifiable, Change> changes = bag.getChanges();
       if (changes != null) {
         OVarIntSerializer.write(bytes, changes.size());
@@ -395,6 +396,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       long fileId = OVarIntSerializer.readAsLong(bytes);
       long pageIndex = OVarIntSerializer.readAsLong(bytes);
       int pageOffset = OVarIntSerializer.readAsInteger(bytes);
+      int bagSize = OVarIntSerializer.readAsInteger(bytes);
 
       Map<OIdentifiable, Change> changes = new HashMap<>();
       int size = OVarIntSerializer.readAsInteger(bytes);
