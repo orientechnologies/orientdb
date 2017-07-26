@@ -1,6 +1,7 @@
 package com.orientechnologies.security.auditing;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -78,6 +79,7 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
     server.shutdown();
 
     cleanup(TESTDB);
+    Orient.instance().startup();
   }
 
   @Test

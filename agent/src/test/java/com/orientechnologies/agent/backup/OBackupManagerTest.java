@@ -98,8 +98,10 @@ public class OBackupManagerTest {
 
   @After
   public void tearDownOrientDB() {
-    db.drop();
-    server.shutdown();
+    if (db != null)
+      db.drop();
+    if (server != null)
+      server.shutdown();
     OFileUtils.deleteRecursively(new File(BACKUP_PATH));
   }
 
