@@ -1,6 +1,9 @@
 package com.orientechnologies.orient.object.db;
 
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 
 import java.util.List;
@@ -57,7 +60,7 @@ import java.util.List;
  * <p>
  * <p>
  * <p>
- *
+ * <p>
  * Created by tglman on 13/01/17.
  */
 public class OrientDBObject implements AutoCloseable {
@@ -65,10 +68,18 @@ public class OrientDBObject implements AutoCloseable {
   private OrientDB orientDB;
 
   /**
+   * Create a new OrientDb Object instance from a given {@link OrientDB}
+   *
+   * @param orientDB the given environment.
+   */
+  public OrientDBObject(OrientDB orientDB) {
+    this.orientDB = orientDB;
+  }
+
+  /**
    * Create a new OrientDb Object instance for a specific environment
    * <p/>
-   * possible kind of urls 'embedded','remote', for the case of remote and distributed can be specified multiple nodes
-   * using comma.
+   * possible kind of urls 'embedded','remote', for the case of remote and distributed can be specified multiple nodes using comma.
    * <p>
    * Remote Example:
    * <pre>
@@ -102,8 +113,7 @@ public class OrientDBObject implements AutoCloseable {
   /**
    * Create a new OrientDB Object instance for a specific environment
    * <p/>
-   * possible kind of urls 'embedded','remote', for the case of remote and distributed can be specified multiple nodes
-   * using comma.
+   * possible kind of urls 'embedded','remote', for the case of remote and distributed can be specified multiple nodes using comma.
    * <p>
    * Remote Example:
    * <pre>
