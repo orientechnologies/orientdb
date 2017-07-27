@@ -1468,7 +1468,6 @@ public class ODocumentHelper {
           makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
             @Override
             public Object call(final ODatabaseDocumentInternal database) {
-              System.out.println("Removing "+otherRid+" from list with "+ otherBag.size()+ " items...");
               otherBagCopy.remove(otherRid);
               return null;
             }
