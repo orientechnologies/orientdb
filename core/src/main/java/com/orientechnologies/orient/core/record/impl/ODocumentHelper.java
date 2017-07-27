@@ -204,8 +204,8 @@ public class ODocumentHelper {
           // _fieldValues.put(iFieldName, newValue);
           return (RET) newValue;
         } catch (ParseException pe) {
-          final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
-              : config.dateFormat;
+          final String dateFormat =
+              ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat : config.dateFormat;
           throw OException.wrapException(
               new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat), pe);
         }
@@ -294,14 +294,14 @@ public class ODocumentHelper {
           value = ((OCommandContext) value).getVariables();
 
         if (value instanceof OIdentifiable) {
-          final ORecord record = currentRecord != null && currentRecord instanceof OIdentifiable
-              ? ((OIdentifiable) currentRecord).getRecord() : null;
+          final ORecord record =
+              currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord).getRecord() : null;
 
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
 
-          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',',
-              OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+          final List<String> indexParts = OStringSerializerHelper
+              .smartSplit(indexAsString, ',', OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
 
@@ -325,8 +325,8 @@ public class ODocumentHelper {
 
             final String[] fieldNames = doc.fieldNames();
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.length - 1)
-                : fieldNames.length - 1;
+            final int rangeTo =
+                to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.length - 1) : fieldNames.length - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
@@ -348,16 +348,16 @@ public class ODocumentHelper {
             if (conditionFieldValue != null && fieldValue != null)
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
-            if (fieldValue == null && !conditionFieldValue.equals("null")
-                || fieldValue != null && !fieldValue.equals(conditionFieldValue))
+            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null && !fieldValue
+                .equals(conditionFieldValue))
               value = null;
           }
         } else if (value instanceof Map<?, ?>) {
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
 
-          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',',
-              OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+          final List<String> indexParts = OStringSerializerHelper
+              .smartSplit(indexAsString, ',', OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
 
@@ -380,8 +380,8 @@ public class ODocumentHelper {
 
             final List<String> fieldNames = new ArrayList<String>(map.keySet());
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1)
-                : fieldNames.size() - 1;
+            final int rangeTo =
+                to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1) : fieldNames.size() - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
@@ -403,8 +403,8 @@ public class ODocumentHelper {
             if (conditionFieldValue != null && fieldValue != null)
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
-            if (fieldValue == null && !conditionFieldValue.equals("null")
-                || fieldValue != null && !fieldValue.equals(conditionFieldValue))
+            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null && !fieldValue
+                .equals(conditionFieldValue))
               value = null;
           }
 
@@ -446,8 +446,9 @@ public class ODocumentHelper {
             String to = indexRanges.get(1);
 
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), OMultiValue.getSize(value) - 1)
-                : OMultiValue.getSize(value) - 1;
+            final int rangeTo = to != null && !to.isEmpty() ?
+                Math.min(Integer.parseInt(to), OMultiValue.getSize(value) - 1) :
+                OMultiValue.getSize(value) - 1;
 
             int arraySize = rangeTo - rangeFrom + 1;
             if (arraySize < 0) {
@@ -691,9 +692,9 @@ public class ODocumentHelper {
   /**
    * Retrieves the value crossing the map with the dotted notation
    *
-   * @param iKey
-   *          Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
+   * @param iKey Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
    * @param iMap
+   *
    * @return
    */
   @SuppressWarnings("unchecked")
@@ -728,7 +729,7 @@ public class ODocumentHelper {
     if (iFieldName == null)
       return null;
 
-    if(iFieldName.length() > 0) {
+    if (iFieldName.length() > 0) {
       final char begin = iFieldName.charAt(0);
       if (begin == '@') {
         // RETURN AN ATTRIBUTE
@@ -989,9 +990,10 @@ public class ODocumentHelper {
    * Makes a deep comparison field by field to check if the passed ODocument instance is identical as identity and content to the
    * current one. Instead equals() just checks if the RID are the same.
    *
-   * @param iOther
-   *          ODocument instance
+   * @param iOther ODocument instance
+   *
    * @return true if the two document are identical, otherwise false
+   *
    * @see #equals(Object)
    */
   @SuppressWarnings("unchecked")
@@ -1004,9 +1006,10 @@ public class ODocumentHelper {
    * Makes a deep comparison field by field to check if the passed ODocument instance is identical in the content to the current
    * one. Instead equals() just checks if the RID are the same.
    *
-   * @param iOther
-   *          ODocument instance
+   * @param iOther ODocument instance
+   *
    * @return true if the two document are identical, otherwise false
+   *
    * @see #equals(Object)
    */
   @SuppressWarnings("unchecked")
@@ -1347,91 +1350,93 @@ public class ODocumentHelper {
     final ORidBag myBag = myFieldValue;
     final ORidBag otherBag = otherFieldValue;
 
-    final int mySize = makeDbCall(iMyDb, new ODbRelatedCall<Integer>() {
-      public Integer call(ODatabaseDocumentInternal database) {
-        return myBag.size();
-      }
-    });
-
-    final int otherSize = makeDbCall(iOtherDb, new ODbRelatedCall<Integer>() {
-      public Integer call(ODatabaseDocumentInternal database) {
-        return otherBag.size();
-      }
-    });
-
-    if (mySize != otherSize)
-      return false;
-
-    boolean oldMyAutoConvert;
-    boolean oldOtherAutoConvert;
-
-    oldMyAutoConvert = myBag.isAutoConvertToRecord();
-    myBag.setAutoConvertToRecord(false);
-
-    oldOtherAutoConvert = otherBag.isAutoConvertToRecord();
-    otherBag.setAutoConvertToRecord(false);
-
-    final ORidBag otherBagCopy = makeDbCall(iOtherDb, new ODbRelatedCall<ORidBag>() {
-      @Override
-      public ORidBag call(ODatabaseDocumentInternal database) {
-        final ORidBag otherRidBag = new ORidBag();
-        otherRidBag.setAutoConvertToRecord(false);
-
-        for (OIdentifiable identifiable : otherBag)
-          otherRidBag.add(identifiable);
-
-        return otherRidBag;
-      }
-    });
-
+    final ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
-      final Iterator<OIdentifiable> myIterator = makeDbCall(iMyDb, new ODbRelatedCall<Iterator<OIdentifiable>>() {
-        public Iterator<OIdentifiable> call(ODatabaseDocumentInternal database) {
-          return myBag.iterator();
+
+      final int mySize = makeDbCall(iMyDb, new ODbRelatedCall<Integer>() {
+        public Integer call(ODatabaseDocumentInternal database) {
+          return myBag.size();
         }
       });
 
-      while (makeDbCall(iMyDb, new ODbRelatedCall<Boolean>() {
-        public Boolean call(ODatabaseDocumentInternal database) {
-          return myIterator.hasNext();
+      final int otherSize = makeDbCall(iOtherDb, new ODbRelatedCall<Integer>() {
+        public Integer call(ODatabaseDocumentInternal database) {
+          return otherBag.size();
         }
-      })) {
-        final OIdentifiable myIdentifiable = makeDbCall(iMyDb, new ODbRelatedCall<OIdentifiable>() {
-          @Override
-          public OIdentifiable call(ODatabaseDocumentInternal database) {
-            return myIterator.next();
-          }
-        });
+      });
 
-        final ORID otherRid;
-        if (ridMapper != null) {
-          ORID convertedRid = ridMapper.map(myIdentifiable.getIdentity());
-          if (convertedRid != null)
-            otherRid = convertedRid;
-          else
-            otherRid = myIdentifiable.getIdentity();
-        } else
-          otherRid = myIdentifiable.getIdentity();
+      if (mySize != otherSize)
+        return false;
 
-        makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
-          @Override
-          public Object call(ODatabaseDocumentInternal database) {
-            otherBagCopy.remove(otherRid);
-            return null;
-          }
-        });
+      final boolean oldMyAutoConvert = myBag.isAutoConvertToRecord();
+      myBag.setAutoConvertToRecord(false);
 
-      }
+      final boolean oldOtherAutoConvert = otherBag.isAutoConvertToRecord();
+      otherBag.setAutoConvertToRecord(false);
 
-      return makeDbCall(iOtherDb, new ODbRelatedCall<Boolean>() {
+      final List<ORID> otherBagCopy = makeDbCall(iOtherDb, new ODbRelatedCall<List<ORID>>() {
         @Override
-        public Boolean call(ODatabaseDocumentInternal database) {
-          return otherBagCopy.isEmpty();
+        public List<ORID> call(final ODatabaseDocumentInternal database) {
+          final List<ORID> otherRidBag = new LinkedList<ORID>();
+          for (OIdentifiable identifiable : otherBag)
+            otherRidBag.add(identifiable.getIdentity());
+
+          return otherRidBag;
         }
       });
+
+      try {
+        final Iterator<OIdentifiable> myIterator = makeDbCall(iMyDb, new ODbRelatedCall<Iterator<OIdentifiable>>() {
+          public Iterator<OIdentifiable> call(final ODatabaseDocumentInternal database) {
+            return myBag.iterator();
+          }
+        });
+
+        while (makeDbCall(iMyDb, new ODbRelatedCall<Boolean>() {
+          public Boolean call(final ODatabaseDocumentInternal database) {
+            return myIterator.hasNext();
+          }
+        })) {
+          final OIdentifiable myIdentifiable = makeDbCall(iMyDb, new ODbRelatedCall<OIdentifiable>() {
+            @Override
+            public OIdentifiable call(final ODatabaseDocumentInternal database) {
+              return myIterator.next();
+            }
+          });
+
+          final ORID otherRid;
+          if (ridMapper != null) {
+            ORID convertedRid = ridMapper.map(myIdentifiable.getIdentity());
+            if (convertedRid != null)
+              otherRid = convertedRid;
+            else
+              otherRid = myIdentifiable.getIdentity();
+          } else
+            otherRid = myIdentifiable.getIdentity();
+
+          makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
+            @Override
+            public Object call(final ODatabaseDocumentInternal database) {
+              otherBagCopy.remove(otherRid);
+              return null;
+            }
+          });
+
+        }
+
+        return makeDbCall(iOtherDb, new ODbRelatedCall<Boolean>() {
+          @Override
+          public Boolean call(ODatabaseDocumentInternal database) {
+            return otherBagCopy.isEmpty();
+          }
+        });
+      } finally {
+        myBag.setAutoConvertToRecord(oldMyAutoConvert);
+        otherBag.setAutoConvertToRecord(oldOtherAutoConvert);
+      }
     } finally {
-      myBag.setAutoConvertToRecord(oldMyAutoConvert);
-      otherBag.setAutoConvertToRecord(oldOtherAutoConvert);
+      if (currentDb != null)
+        currentDb.activateOnCurrentThread();
     }
   }
 
@@ -1443,8 +1448,8 @@ public class ODocumentHelper {
     if (myValue == null)
       return true;
 
-    if (myValue.getClass().isArray() && !otherValue.getClass().isArray()
-        || !myValue.getClass().isArray() && otherValue.getClass().isArray())
+    if (myValue.getClass().isArray() && !otherValue.getClass().isArray() || !myValue.getClass().isArray() && otherValue.getClass()
+        .isArray())
       return false;
 
     if (myValue.getClass().isArray() && otherValue.getClass().isArray()) {
@@ -1510,7 +1515,7 @@ public class ODocumentHelper {
           deleteCrossRefs(iRid, (ODocument) fieldValue);
         } else if (OMultiValue.isMultiValue(fieldValue)) {
           // MULTI-VALUE (COLLECTION, ARRAY OR MAP), CHECK THE CONTENT
-          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue); it.hasNext();) {
+          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue); it.hasNext(); ) {
             final Object item = it.next();
 
             if (fieldValue.equals(iRid)) {
