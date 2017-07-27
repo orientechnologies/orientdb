@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
@@ -1287,7 +1286,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
   }
 
-  protected synchronized void openRemoteDatabase() throws IOException {
+  protected void openRemoteDatabase() throws IOException {
     final String currentURL = getNextAvailableServerURL(true, getCurrentSession());
     openRemoteDatabase(currentURL);
   }
