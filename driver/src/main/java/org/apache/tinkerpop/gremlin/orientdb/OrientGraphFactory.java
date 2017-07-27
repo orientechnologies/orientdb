@@ -93,9 +93,9 @@ public final class OrientGraphFactory implements AutoCloseable {
         final OrientGraph g;
         final Configuration config = getConfiguration(create, open, transactional);
         if (pool != null) {
-            g = new OrientGraph(this, config);
+            g = new OrientGraph(this, acquireFromPool(create, open), config, user, password);
         } else {
-            g = new OrientGraph(this, this.getDatabase(true, true), config, user, password);
+            g = new OrientGraph(this, this.getDatabase(create, true), config, user, password);
         }
         initGraph(g);
         return g;
@@ -151,6 +151,20 @@ public final class OrientGraphFactory implements AutoCloseable {
             this.factory.createIfNotExists(dbName, type.get());
         }
         return this.factory.open(dbName, user, password);
+
+    }
+
+    /**
+     * @param create if true automatically creates database if database with given
+     *               URL does not exist
+     * @param open   if true automatically opens the database
+     */
+    protected ODatabaseDocument acquireFromPool(boolean create, boolean open) {
+
+        if (create && type.isPresent()) {
+            this.factory.createIfNotExists(dbName, type.get());
+        }
+        return this.pool.acquire();
 
     }
 

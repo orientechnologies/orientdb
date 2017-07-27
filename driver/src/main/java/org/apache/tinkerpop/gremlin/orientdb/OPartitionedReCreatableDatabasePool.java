@@ -1,7 +1,9 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 
 public class OPartitionedReCreatableDatabasePool {
@@ -24,7 +26,9 @@ public class OPartitionedReCreatableDatabasePool {
 
     public void reCreatePool() {
         close();
-        this.pool = new ODatabasePool(this.orientdb, this.dbName, this.userName, this.password);
+        OrientDBConfig config = OrientDBConfig.defaultConfig();
+        config.getConfigurations().setValue(OGlobalConfiguration.DB_POOL_MAX,this.maxSize);
+        this.pool = new ODatabasePool(this.orientdb, this.dbName, this.userName, this.password,config);
     }
 
     public void close() {
