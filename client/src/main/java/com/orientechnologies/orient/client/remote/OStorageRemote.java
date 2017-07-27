@@ -1716,6 +1716,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } else {
       serverURL = url;
     }
+    String[] split = serverURL.split(ADDRESS_SEPARATOR);
+    if (split.length == 0 || split[0].length() == 0)
+      throw new OStorageException("Error on multiple part url parsing");
+    serverURL = split[0];
     sepPos = serverURL.indexOf(":");
     final int remotePort = Integer.parseInt(serverURL.substring(sepPos + 1));
     final String remoteHost = serverURL.substring(0, sepPos);
