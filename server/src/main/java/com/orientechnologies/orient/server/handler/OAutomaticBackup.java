@@ -40,6 +40,8 @@ import com.orientechnologies.orient.server.plugin.OServerPluginConfigurable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -346,7 +348,9 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
   protected void fullBackupDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {
     OLogManager.instance().info(this, "AutomaticBackup: executing full backup of database '%s' to %s", dbURL, iPath);
 
-    final FileOutputStream fileOutputStream = new FileOutputStream(iPath);
+    final String tempPath = iPath + ".tmp";
+
+    final FileOutputStream fileOutputStream = new FileOutputStream(tempPath);
     try {
       db.backup(fileOutputStream, null, null, new OCommandOutputListener() {
         @Override
@@ -357,6 +361,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     } finally {
       fileOutputStream.close();
     }
+
+    Files.move(Paths.get(tempPath), Paths.get(iPath));
   }
 
   protected void exportDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {

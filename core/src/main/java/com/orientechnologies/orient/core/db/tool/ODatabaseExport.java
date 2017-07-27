@@ -40,6 +40,8 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
@@ -57,6 +59,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   protected int compressionLevel  = Deflater.BEST_SPEED;
   protected int compressionBuffer = 16384;              // 16Kb
 
+  private final String tempFileName;
+
   public ODatabaseExport(final ODatabaseDocumentInternal iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
     super(iDatabase, iFileName, iListener);
@@ -69,11 +73,22 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     }
     final File f = new File(fileName);
     if (f.getParentFile() != null)
+      //noinspection ResultOfMethodCallIgnored
       f.getParentFile().mkdirs();
     if (f.exists())
+      //noinspection ResultOfMethodCallIgnored
       f.delete();
 
-    final GZIPOutputStream gzipOS = new GZIPOutputStream(new FileOutputStream(fileName), compressionBuffer) {
+    this.tempFileName = fileName + ".tmp";
+    final File tempFile = new File(tempFileName);
+    if (tempFile.getParentFile() != null)
+      //noinspection ResultOfMethodCallIgnored
+      tempFile.getParentFile().mkdirs();
+    if (tempFile.exists())
+      //noinspection ResultOfMethodCallIgnored
+      tempFile.delete();
+
+    final GZIPOutputStream gzipOS = new GZIPOutputStream(new FileOutputStream(tempFileName), compressionBuffer) {
       {
         def.setLevel(compressionLevel);
       }
@@ -86,6 +101,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   public ODatabaseExport(final ODatabaseDocumentInternal iDatabase, final OutputStream iOutputStream,
       final OCommandOutputListener iListener) throws IOException {
     super(iDatabase, "streaming", iListener);
+    this.tempFileName = null;
 
     writer = new OJSONWriter(new OutputStreamWriter(iOutputStream));
     writer.beginObject();
@@ -259,7 +275,17 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       writer.close();
       writer = null;
     } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on exporting database '%s' to: %s", e, database.getName(), fileName);
+      throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
     }
+
+    if (tempFileName != null) // may be null if writing directly to an output stream w/o file
+      try {
+        Files.move(Paths.get(tempFileName), Paths.get(fileName));
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error on exporting database '%s' to: %s", e, database.getName(), fileName);
+        throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
+      }
   }
 
   protected int getMaxClusterId() {
