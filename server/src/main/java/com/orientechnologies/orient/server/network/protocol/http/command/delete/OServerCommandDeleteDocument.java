@@ -20,12 +20,10 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.delete;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -76,10 +74,14 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
         else if (cls.isSubClassOf("E"))
           // DELETE IT AS EDGE
           db.command("DELETE EDGE ?", recordId);
-        else
+        else {
+          doc.reload(null,true);
           doc.delete();
-      } else
+        }
+      } else {
+        doc.reload(null,true);
         doc.delete();
+      }
 
       iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
 
