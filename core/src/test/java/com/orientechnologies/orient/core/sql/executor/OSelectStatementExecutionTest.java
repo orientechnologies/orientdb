@@ -3172,4 +3172,41 @@ public class OSelectStatementExecutionTest {
 
   }
 
+  @Test
+  public void testContaninsWithConversion() {
+    String className = "testContaninsWithConversion";
+    db.command("create class " + className).close();
+    OElement elem1 = db.newElement(className);
+    List<Long> coll = new ArrayList<>();
+    coll.add(1L);
+    coll.add(3L);
+    coll.add(5L);
+    elem1.setProperty("coll", coll);
+    elem1.save();
+
+    OElement elem2 = db.newElement(className);
+    coll = new ArrayList<>();
+    coll.add(2L);
+    coll.add(4L);
+    coll.add(6L);
+    elem2.setProperty("coll", coll);
+    elem2.save();
+
+    OResultSet result = db.query("select from " + className + " where coll contains 1");
+    Assert.assertTrue(result.hasNext());
+    result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+
+    result = db.query("select from " + className + " where coll contains 1L");
+    Assert.assertTrue(result.hasNext());
+    result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+
+    result = db.query("select from " + className + " where coll contains 12L");
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
 }

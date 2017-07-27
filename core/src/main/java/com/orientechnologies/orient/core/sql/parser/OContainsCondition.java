@@ -6,6 +6,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 
 import java.util.*;
 
@@ -47,7 +48,11 @@ public class OContainsCondition extends OBooleanExpression {
           }
         }
       }
-      return ((Collection) left).contains(right);
+      for (Object o : (Collection) left) {
+        if (OQueryOperatorEquals.equals(o, right))
+          return true;
+      }
+      return false;
     }
     if (left instanceof Iterable) {
       left = ((Iterable) left).iterator();
@@ -79,7 +84,8 @@ public class OContainsCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     Object leftValue = left.execute(currentRecord, ctx);
     if (right != null) {
       Object rightValue = right.execute(currentRecord, ctx);
@@ -101,7 +107,8 @@ public class OContainsCondition extends OBooleanExpression {
     }
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     Object leftValue = left.execute(currentRecord, ctx);
     if (right != null) {
       Object rightValue = right.execute(currentRecord, ctx);
@@ -135,7 +142,8 @@ public class OContainsCondition extends OBooleanExpression {
     }
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     if (!left.supportsBasicCalculation()) {
       return false;
     }
@@ -149,7 +157,8 @@ public class OContainsCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (condition != null) {
       total += condition.getNumberOfExternalCalculations();
@@ -163,7 +172,8 @@ public class OContainsCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
 
     if (condition != null) {
@@ -178,7 +188,8 @@ public class OContainsCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     if (left != null && left.needsAliases(aliases)) {
       return true;
     }
@@ -191,7 +202,8 @@ public class OContainsCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public OContainsCondition copy() {
+  @Override
+  public OContainsCondition copy() {
     OContainsCondition result = new OContainsCondition(-1);
     result.left = left == null ? null : left.copy();
     result.right = right == null ? null : right.copy();
@@ -200,7 +212,8 @@ public class OContainsCondition extends OBooleanExpression {
 
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     if (left != null) {
       left.extractSubQueries(collector);
     }
@@ -212,7 +225,8 @@ public class OContainsCondition extends OBooleanExpression {
     }
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     if (left != null && left.refersToParent()) {
       return true;
     }
@@ -225,7 +239,8 @@ public class OContainsCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -243,14 +258,16 @@ public class OContainsCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = left != null ? left.hashCode() : 0;
     result = 31 * result + (right != null ? right.hashCode() : 0);
     result = 31 * result + (condition != null ? condition.hashCode() : 0);
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
     List<String> rightX = right == null ? null : right.getMatchPatternInvolvedAliases();
     List<String> conditionX = condition == null ? null : condition.getMatchPatternInvolvedAliases();
@@ -268,7 +285,6 @@ public class OContainsCondition extends OBooleanExpression {
 
     return result.size() == 0 ? null : result;
   }
-
 
 }
 /* JavaCC - OriginalChecksum=bad1118296ea74860e88d66bfe9fa222 (do not edit this line) */
