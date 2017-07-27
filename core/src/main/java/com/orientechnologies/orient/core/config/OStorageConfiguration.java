@@ -316,8 +316,9 @@ public class OStorageConfiguration implements OSerializableStream {
 
     final ORecordConflictStrategyFactory conflictStrategyFactory = Orient.instance().getRecordConflictStrategy();
     if (version >= 12) {
-      ORecordConflictStrategy strategy = conflictStrategyFactory.getStrategy(read(values[index++]));
-      conflictStrategy = strategy == null ? conflictStrategyFactory.getDefaultStrategy() : strategy.getName();
+      String strategyName = read(values[index++]);
+      ORecordConflictStrategy strategy = conflictStrategyFactory.getStrategy(strategyName);
+      conflictStrategy = strategy == null ? strategyName : strategy.getName();
     } else
       conflictStrategy = conflictStrategyFactory.getDefaultStrategy();
 
