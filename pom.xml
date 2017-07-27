@@ -19,7 +19,7 @@
         <module>lucene-cross-class</module>
         <module>distribution</module>
         <module>distribution-spatial</module>
-        <!--<module>lucene-performance</module>-->
+        <module>distribution-community-importers</module>
     </modules>
 
 </project>
