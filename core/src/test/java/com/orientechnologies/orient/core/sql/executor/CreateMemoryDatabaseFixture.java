@@ -30,6 +30,7 @@ public class CreateMemoryDatabaseFixture {
     public static void tearDown() {
         database.close();
         factory.drop(DB_NAME);
+        factory.close();
     }
 
 }
