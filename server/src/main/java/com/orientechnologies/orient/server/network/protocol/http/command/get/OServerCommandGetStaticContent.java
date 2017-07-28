@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -28,19 +29,13 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.GZIPOutputStream;
 
 public class OServerCommandGetStaticContent extends OServerCommandConfigurableAbstract {
   private static final String[] DEF_PATTERN = { "GET|www", "GET|studio/", "GET|", "GET|*.htm", "GET|*.html", "GET|*.xml",
@@ -130,11 +125,27 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
         loadStaticContent(iRequest, iResponse, staticContent);
       }
 
-      if (staticContent.is != null)
+      if (staticContent.is != null && staticContent.contentSize < 0) {
+        ByteArrayOutputStream bytesOutput = new ByteArrayOutputStream();
+        GZIPOutputStream stream = new GZIPOutputStream(bytesOutput, 16384);
+        try {
+          OIOUtils.copyStream(staticContent.is, stream, -1);
+          stream.finish();
+          byte[] compressedBytes = bytesOutput.toByteArray();
+          iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, staticContent.type,
+              new ByteArrayInputStream(compressedBytes), compressedBytes.length, null, new HashMap<String, String>() {{
+                put("Content-Encoding", "gzip");
+              }});
+        } finally {
+          stream.close();
+          bytesOutput.close();
+        }
+      } else if (staticContent.is != null) {
         iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, staticContent.type, staticContent.is,
             staticContent.contentSize);
-      else
+      } else {
         iResponse.sendStream(404, "File not found", null, null, 0);
+      }
 
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on loading resource %s", e, iRequest.url);
