@@ -11,7 +11,7 @@ import java.util.Optional;
 /**
  * <p>
  * takes a result set made of OUpdatableRecord instances and transforms it in another result set made of normal OResultInternal
- * instances. Records that are not identifiable are discarded.
+ * instances.
  * </p>
  * <p>This is the opposite of ConvertToUpdatableResultStep</p>
  *
