@@ -13,6 +13,7 @@ import org.junit.BeforeClass;
 public class CreateMemoryDatabaseFixture {
 
     protected static ODatabase database;
+    protected static OrientDB factory;
     private static final String PATH = "memory";
     private static final String DB_NAME = "test_database";
     private static final String USER = "admin";
@@ -20,7 +21,7 @@ public class CreateMemoryDatabaseFixture {
 
     @BeforeClass
     public static void setUp() {
-        OrientDB factory = new OrientDB(PATH, OrientDBConfig.defaultConfig());
+        factory = new OrientDB(PATH, OrientDBConfig.defaultConfig());
         factory.create(DB_NAME, ODatabaseType.MEMORY);
         database = factory.open(DB_NAME, USER, PASSWORD);
     }
@@ -28,6 +29,7 @@ public class CreateMemoryDatabaseFixture {
     @AfterClass
     public static void tearDown() {
         database.close();
+        factory.drop(DB_NAME);
     }
 
 }
