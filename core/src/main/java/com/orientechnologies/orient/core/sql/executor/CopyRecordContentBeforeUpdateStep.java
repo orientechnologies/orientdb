@@ -10,7 +10,12 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Created by luigidellaquila on 08/08/16.
+ * <p>Reads an upstream result set and returns a new result set that contains copies of the original OResult instances
+ * </p>
+ * <p>This is mainly used from statements that need to copy of the original data before modifying it,
+ * eg. UPDATE ... RETURN BEFORE</p>
+ *
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
   private long cost = 0;

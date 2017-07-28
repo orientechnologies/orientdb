@@ -11,7 +11,12 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Created by luigidellaquila on 11/08/16.
+ * <p>Reads an upstream result set and returns a new result set that contains copies of the original OResult instances
+ * </p>
+ * <p>This is mainly used from statements that need to copy of the original data to save it somewhere else,
+ * eg. INSERT ... FROM SELECT</p>
+ *
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class CopyDocumentStep extends AbstractExecutionStep {
 
