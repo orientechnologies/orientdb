@@ -1812,7 +1812,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           row.field("NAME", clusterName);
           row.field("ID", clusterId);
           row.field("CLASS", className);
-          row.field("CONFLICT-STRATEGY", conflictStrategy);
+          if(!currentDatabase.getStorage().isRemote()) {
+            row.field("CONFLICT-STRATEGY", conflictStrategy);
+          }
           row.field("COUNT", count);
           if (!isRemote) {
             row.field("SPACE-USED", OFileUtils.getSizeAsString(spaceUsed));
