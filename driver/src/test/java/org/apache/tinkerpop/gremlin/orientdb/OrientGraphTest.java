@@ -22,382 +22,382 @@ import static org.junit.Assert.*;
 
 public class OrientGraphTest {
 
-  protected OrientGraphFactory graphFactory() {
-    return new OrientGraphFactory("memory:tinkerpop-" + Math.random());
-  }
+    protected OrientGraphFactory graphFactory() {
+        return new OrientGraphFactory("memory:tinkerpop-" + Math.random());
+    }
 
-  public static final String TEST_VALUE = "SomeValue";
+    public static final String TEST_VALUE = "SomeValue";
 
-  @Test
-  public void testGraphTransactions() throws Exception {
-    OrientGraphFactory graphFactory = graphFactory();
-    Object id;
-    try (Graph graph = graphFactory.getTx()) {
-      try (Transaction tx = graph.tx()) {
-        tx.onClose(COMMIT);
+    @Test
+    public void testGraphTransactions() throws Exception {
+        OrientGraphFactory graphFactory = graphFactory();
+        Object id;
+        try (Graph graph = graphFactory.getTx()) {
+            try (Transaction tx = graph.tx()) {
+                tx.onClose(COMMIT);
+                Vertex vertex = graph.addVertex();
+                id = vertex.id();
+                vertex.property("test", TEST_VALUE);
+            }
+        }
+        assertNotNull("A vertex should have been created in the first transaction", id);
+
+        // Modify property and rollback
+        try (Graph graph = graphFactory.getTx()) {
+            try (Transaction tx = graph.tx()) {
+                tx.onClose(ROLLBACK);
+                Vertex vertex = graph.vertices(id).next();
+                assertNotNull(vertex);
+                vertex.property("test", "changed");
+            }
+
+            try (Transaction tx = graph.tx()) {
+                tx.onClose(ROLLBACK);
+                Vertex vertex = graph.vertices(id).next();
+                assertNotNull(vertex);
+                vertex.property("test", "changed");
+            }
+        }
+
+        try (Graph graph = graphFactory.getTx()) {
+            Vertex vertex = graph.vertices(id).next();
+            assertEquals("The property value should not have been changed.", TEST_VALUE, vertex.value("test"));
+        }
+
+        // 1. Modify property rollback, 2. Modify property commit
+        try (Graph graph = graphFactory.getTx()) {
+            try (Transaction tx = graph.tx()) {
+                tx.onClose(ROLLBACK);
+                Vertex vertex = graph.vertices(id).next();
+                assertNotNull(vertex);
+                vertex.property("test", "changed");
+            }
+
+            try (Transaction tx = graph.tx()) {
+                tx.onClose(COMMIT);
+                Vertex vertex = graph.vertices(id).next();
+                assertNotNull(vertex);
+                vertex.property("test", "changed");
+            }
+        }
+
+        try (Graph graph = graphFactory.getTx()) {
+            Vertex vertex = graph.vertices(id).next();
+            assertEquals("The property value should not have been changed.", "changed", vertex.value("test"));
+        }
+
+    }
+
+    @Test
+    public void testGraphTransactionOnNoTrxOrientGraph() throws Exception {
+        OrientGraphFactory graphFactory = graphFactory();
+        Object id;
+        try (Graph graph = graphFactory.getTx()) {
+            try (Transaction tx = graph.tx()) {
+                tx.onClose(COMMIT);
+                Vertex vertex = graph.addVertex();
+                id = vertex.id();
+                vertex.property("test", TEST_VALUE);
+            }
+        }
+        assertNotNull("A vertex should have been created in the first transaction", id);
+
+        try (Graph graph = graphFactory.getNoTx()) {
+            try (Transaction tx = graph.tx()) {
+                tx.onClose(ROLLBACK);
+                Vertex vertex = graph.vertices(id).next();
+                assertNotNull(vertex);
+                vertex.property("test", "changed");
+            }
+        }
+
+        try (Graph graph = graphFactory.getTx()) {
+            Vertex vertex = graph.vertices(id).next();
+            assertEquals("The property value should have been changed since the graph was used in noTx mode and all actions are atomic.",
+                    "changed", vertex.value("test"));
+        }
+    }
+
+    @Test
+    public void testGraph() throws Exception {
+        Graph graph = graphFactory().getNoTx();
+        performBasicTests(graph);
+        graph.close();
+    }
+
+    @Test
+    public void testPooledGraph() throws Exception {
+        Graph graph = graphFactory().setupPool(5).getNoTx();
+        performBasicTests(graph);
+        graph.close();
+    }
+
+    @Test
+    public void testMTPooledGraph() throws Exception {
+        int THREADS = 2;
+        OrientGraphFactory factory = graphFactory().setupPool(THREADS);
+        for (int i = 0; i < THREADS; i++) {
+            factory.getTx();
+        }
+
+        boolean success = false;
+        try {
+            factory.getTx();
+        } catch (OLockException e) {
+            success = true;
+        }
+        Assert.assertTrue(success);
+    }
+
+    @Test
+    public void testTransactionalGraph() throws Exception {
+        Graph graph = graphFactory().getTx();
+        performBasicTests(graph);
+        graph.close();
+    }
+
+    @Test
+    public void testPooledTransactionalGraph() throws Exception {
+        Graph graph = graphFactory().setupPool(5).getTx();
+        performBasicTests(graph);
+        graph.close();
+    }
+
+    @Test
+    public void testUnprefixedLabelGraph() throws Exception {
+        Graph graph = graphFactory().setLabelAsClassName(true).getNoTx();
+        assertEquals(true, graph.configuration().getBoolean(OrientGraph.CONFIG_LABEL_AS_CLASSNAME));
+
+        performBasicTests(graph);
+
+        Vertex vertex = graph.addVertex("VERTEX_LABEL");
+        assertEquals("VERTEX_LABEL", vertex.label());
+
+        try {
+            graph.addVertex("EDGE_LABEL");
+            Assert.fail("must throw unable to create different super class");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().startsWith("unable to create class 'EDGE_LABEL' as subclass of 'V'"));
+        }
+
+        graph.close();
+    }
+
+    protected void performBasicTests(Graph graph) {
         Vertex vertex = graph.addVertex();
-        id = vertex.id();
+        assertNotNull(vertex);
+        assertNotNull(vertex.id());
+
         vertex.property("test", TEST_VALUE);
-      }
-    }
-    assertNotNull("A vertex should have been created in the first transaction", id);
+        assertEquals(TEST_VALUE, vertex.value("test"));
 
-    // Modify property and rollback
-    try (Graph graph = graphFactory.getTx()) {
-      try (Transaction tx = graph.tx()) {
-        tx.onClose(ROLLBACK);
-        Vertex vertex = graph.vertices(id).next();
-        assertNotNull(vertex);
-        vertex.property("test", "changed");
-      }
+        Property<String> property = vertex.property("test");
+        assertNotNull(property);
+        assertTrue(property.isPresent());
+        assertEquals(TEST_VALUE, property.value());
+        property.remove();
+        assertFalse(property.isPresent());
 
-      try (Transaction tx = graph.tx()) {
-        tx.onClose(ROLLBACK);
-        Vertex vertex = graph.vertices(id).next();
-        assertNotNull(vertex);
-        vertex.property("test", "changed");
-      }
-    }
+        // Create test vertices for edge
+        Vertex vertexA = graph.addVertex();
+        Vertex vertexB = graph.addVertex();
+        Edge edge = vertexA.addEdge("EDGE_LABEL", vertexB);
+        assertEquals("EDGE_LABEL", edge.label());
 
-    try (Graph graph = graphFactory.getTx()) {
-      Vertex vertex = graph.vertices(id).next();
-      assertEquals("The property value should not have been changed.", TEST_VALUE, vertex.value("test"));
-    }
+        // Test edge properties
+        assertNotNull(edge.property("test", TEST_VALUE));
+        Property<String> edgeProperty = edge.property("test");
+        assertNotNull(edgeProperty);
+        assertTrue(edgeProperty.isPresent());
+        assertEquals(TEST_VALUE, edgeProperty.value());
+        edgeProperty.remove();
+        assertFalse(edgeProperty.isPresent());
 
-    // 1. Modify property rollback, 2. Modify property commit
-    try (Graph graph = graphFactory.getTx()) {
-      try (Transaction tx = graph.tx()) {
-        tx.onClose(ROLLBACK);
-        Vertex vertex = graph.vertices(id).next();
-        assertNotNull(vertex);
-        vertex.property("test", "changed");
-      }
+        edge.property("test", TEST_VALUE);
+        assertEquals(TEST_VALUE, edge.value("test"));
 
-      try (Transaction tx = graph.tx()) {
-        tx.onClose(COMMIT);
-        Vertex vertex = graph.vertices(id).next();
-        assertNotNull(vertex);
-        vertex.property("test", "changed");
-      }
+        // Check vertices of edge
+        Vertex out = edge.outVertex();
+        assertNotNull(out);
+        assertEquals(vertexA.id(), out.id());
+
+        Vertex in = edge.inVertex();
+        assertNotNull(in);
+        assertEquals(vertexB.id(), in.id());
     }
 
-    try (Graph graph = graphFactory.getTx()) {
-      Vertex vertex = graph.vertices(id).next();
-      assertEquals("The property value should not have been changed.", "changed", vertex.value("test"));
+    @Test
+    public void testStaticIterator() throws Exception {
+        try (Graph graph = graphFactory().getTx()) {
+            Vertex v1 = graph.addVertex();
+
+            Iterator<Vertex> iterator = graph.vertices();
+
+            // v2 should not be returned by the Iterator
+            Vertex v2 = graph.addVertex();
+
+            assertTrue(iterator.hasNext());
+            iterator.next();
+            assertFalse(iterator.hasNext());
+
+            graph.close();
+        }
     }
 
-  }
+    @Test
+    public void testMetaProperties() throws Exception {
+        try (Graph graph = graphFactory().getTx()) {
+            Vertex v1 = graph.addVertex();
+            VertexProperty<String> prop = v1.property(single, "key", "value", "meta_key", "meta_value", "meta_key_2", "meta_value_2");
 
-  @Test
-  public void testGraphTransactionOnNoTrxOrientGraph() throws Exception {
-    OrientGraphFactory graphFactory = graphFactory();
-    Object id;
-    try (Graph graph = graphFactory.getTx()) {
-      try (Transaction tx = graph.tx()) {
-        tx.onClose(COMMIT);
-        Vertex vertex = graph.addVertex();
-        id = vertex.id();
-        vertex.property("test", TEST_VALUE);
-      }
-    }
-    assertNotNull("A vertex should have been created in the first transaction", id);
+            Map<String, String> keysValues = StreamUtils.asStream(prop.properties())
+                    .collect(toMap(p -> p.key(), p -> (String) p.value()));
+            assertThat(keysValues, hasEntry("meta_key", "meta_value"));
+            assertThat(keysValues, hasEntry("meta_key_2", "meta_value_2"));
 
-    try (Graph graph = graphFactory.getNoTx()) {
-      try (Transaction tx = graph.tx()) {
-        tx.onClose(ROLLBACK);
-        Vertex vertex = graph.vertices(id).next();
-        assertNotNull(vertex);
-        vertex.property("test", "changed");
-      }
-    }
+            Map<String, Property<?>> props = StreamUtils.asStream(prop.properties()).collect(toMap(p -> p.key(), p -> p));
 
-    try (Graph graph = graphFactory.getTx()) {
-      Vertex vertex = graph.vertices(id).next();
-      assertEquals("The property value should have been changed since the graph was used in noTx mode and all actions are atomic.",
-          "changed", vertex.value("test"));
-    }
-  }
+            props.get("meta_key_2").remove();
 
-  @Test
-  public void testGraph() throws Exception {
-    Graph graph = graphFactory().getNoTx();
-    performBasicTests(graph);
-    graph.close();
-  }
+            keysValues = StreamUtils.asStream(prop.properties()).collect(toMap(p -> p.key(), p -> (String) p.value()));
+            assertThat(keysValues, hasEntry("meta_key", "meta_value"));
+            assertThat(keysValues, not(hasEntry("meta_key_2", "meta_value_2")));
 
-  @Test
-  public void testPooledGraph() throws Exception {
-    Graph graph = graphFactory().setupPool(5).getNoTx();
-    performBasicTests(graph);
-    graph.close();
-  }
+            props.get("meta_key").remove();
 
-  @Test
-  public void testMTPooledGraph() throws Exception {
-    int THREADS = 2;
-    OrientGraphFactory factory = graphFactory().setupPool(THREADS);
-    for (int i = 0; i < THREADS; i++) {
-      factory.getTx();
+            keysValues = StreamUtils.asStream(prop.properties()).collect(toMap(p -> p.key(), p -> (String) p.value()));
+            assertThat(keysValues, not(hasEntry("meta_key", "meta_value")));
+            assertThat(keysValues, not(hasEntry("meta_key_2", "meta_value_2")));
+
+            graph.close();
+        }
     }
 
-    boolean success = false;
-    try {
-      factory.getTx();
-    } catch (OLockException e) {
-      success = true;
-    }
-    Assert.assertTrue(success);
-  }
+    @Test
+    public void removeVertex() throws Exception {
+        try (Graph graph = graphFactory().getTx()) {
+            Vertex v1 = graph.addVertex();
+            Vertex v2 = graph.addVertex();
+            v1.addEdge("label1", v2);
+            v2.addEdge("label2", v1);
 
-  @Test
-  public void testTransactionalGraph() throws Exception {
-    Graph graph = graphFactory().getTx();
-    performBasicTests(graph);
-    graph.close();
-  }
+            assertThat(newArrayList(v2.edges(Direction.IN, "label1")), hasSize(1));
+            assertThat(newArrayList(v2.edges(Direction.OUT, "label2")), hasSize(1));
 
-  @Test
-  public void testPooledTransactionalGraph() throws Exception {
-    Graph graph = graphFactory().setupPool(5).getTx();
-    performBasicTests(graph);
-    graph.close();
-  }
+            v1.remove();
 
-  @Test
-  public void testUnprefixedLabelGraph() throws Exception {
-    Graph graph = graphFactory().setLabelAsClassName(true).getNoTx();
-    assertEquals(true, graph.configuration().getBoolean(OrientGraph.CONFIG_LABEL_AS_CLASSNAME));
-
-    performBasicTests(graph);
-
-    Vertex vertex = graph.addVertex("VERTEX_LABEL");
-    assertEquals("VERTEX_LABEL", vertex.label());
-
-    try {
-      graph.addVertex("EDGE_LABEL");
-      Assert.fail("must throw unable to create different super class");
-    } catch (IllegalArgumentException e) {
-      assertTrue(e.getMessage().startsWith("unable to create class 'EDGE_LABEL' as subclass of 'V'"));
+            assertThat(newArrayList(v2.edges(Direction.IN, "label1")), hasSize(0));
+            assertThat(newArrayList(v2.edges(Direction.OUT, "label2")), hasSize(0));
+        }
     }
 
-    graph.close();
-  }
+    @Test
+    public void checkClassNameConstruction() {
+        String edgeLabel = "edge_label";
+        String vertexLabel = "vertex_label";
+        OrientGraphFactory factory = new OrientGraphFactory("memory:myGraph");
+        OrientGraph graph = factory.getNoTx();
 
-  protected void performBasicTests(Graph graph) {
-    Vertex vertex = graph.addVertex();
-    assertNotNull(vertex);
-    assertNotNull(vertex.id());
+        graph.createVertexClass(vertexLabel);
+        graph.createEdgeClass(edgeLabel);
 
-    vertex.property("test", TEST_VALUE);
-    assertEquals(TEST_VALUE, vertex.value("test"));
-
-    Property<String> property = vertex.property("test");
-    assertNotNull(property);
-    assertTrue(property.isPresent());
-    assertEquals(TEST_VALUE, property.value());
-    property.remove();
-    assertFalse(property.isPresent());
-
-    // Create test vertices for edge
-    Vertex vertexA = graph.addVertex();
-    Vertex vertexB = graph.addVertex();
-    Edge edge = vertexA.addEdge("EDGE_LABEL", vertexB);
-    assertEquals("EDGE_LABEL", edge.label());
-
-    // Test edge properties
-    assertNotNull(edge.property("test", TEST_VALUE));
-    Property<String> edgeProperty = edge.property("test");
-    assertNotNull(edgeProperty);
-    assertTrue(edgeProperty.isPresent());
-    assertEquals(TEST_VALUE, edgeProperty.value());
-    edgeProperty.remove();
-    assertFalse(edgeProperty.isPresent());
-
-    edge.property("test", TEST_VALUE);
-    assertEquals(TEST_VALUE, edge.value("test"));
-
-    // Check vertices of edge
-    Vertex out = edge.outVertex();
-    assertNotNull(out);
-    assertEquals(vertexA.id(), out.id());
-
-    Vertex in = edge.inVertex();
-    assertNotNull(in);
-    assertEquals(vertexB.id(), in.id());
-  }
-
-  @Test
-  public void testStaticIterator() throws Exception {
-    try (Graph graph = graphFactory().getTx()) {
-      Vertex v1 = graph.addVertex();
-
-      Iterator<Vertex> iterator = graph.vertices();
-
-      // v2 should not be returned by the Iterator
-      Vertex v2 = graph.addVertex();
-
-      assertTrue(iterator.hasNext());
-      iterator.next();
-      assertFalse(iterator.hasNext());
-
-      graph.close();
-    }
-  }
-
-  @Test
-  public void testMetaProperties() throws Exception {
-    try (Graph graph = graphFactory().getTx()) {
-      Vertex v1 = graph.addVertex();
-      VertexProperty<String> prop = v1.property(single, "key", "value", "meta_key", "meta_value", "meta_key_2", "meta_value_2");
-
-      Map<String, String> keysValues = StreamUtils.asStream(prop.properties())
-          .collect(toMap(p -> p.key(), p -> (String) p.value()));
-      assertThat(keysValues, hasEntry("meta_key", "meta_value"));
-      assertThat(keysValues, hasEntry("meta_key_2", "meta_value_2"));
-
-      Map<String, Property<?>> props = StreamUtils.asStream(prop.properties()).collect(toMap(p -> p.key(), p -> p));
-
-      props.get("meta_key_2").remove();
-
-      keysValues = StreamUtils.asStream(prop.properties()).collect(toMap(p -> p.key(), p -> (String) p.value()));
-      assertThat(keysValues, hasEntry("meta_key", "meta_value"));
-      assertThat(keysValues, not(hasEntry("meta_key_2", "meta_value_2")));
-
-      props.get("meta_key").remove();
-
-      keysValues = StreamUtils.asStream(prop.properties()).collect(toMap(p -> p.key(), p -> (String) p.value()));
-      assertThat(keysValues, not(hasEntry("meta_key", "meta_value")));
-      assertThat(keysValues, not(hasEntry("meta_key_2", "meta_value_2")));
-
-      graph.close();
-    }
-  }
-
-  @Test
-  public void removeVertex() throws Exception {
-    try (Graph graph = graphFactory().getTx()) {
-      Vertex v1 = graph.addVertex();
-      Vertex v2 = graph.addVertex();
-      v1.addEdge("label1", v2);
-      v2.addEdge("label2", v1);
-
-      assertThat(newArrayList(v2.edges(Direction.IN, "label1")), hasSize(1));
-      assertThat(newArrayList(v2.edges(Direction.OUT, "label2")), hasSize(1));
-
-      v1.remove();
-
-      assertThat(newArrayList(v2.edges(Direction.IN, "label1")), hasSize(0));
-      assertThat(newArrayList(v2.edges(Direction.OUT, "label2")), hasSize(0));
-    }
-  }
-
-  @Test
-  public void checkClassNameConstruction() {
-    String edgeLabel = "edge_label";
-    String vertexLabel = "vertex_label";
-    OrientGraphFactory factory = new OrientGraphFactory("memory:myGraph");
-    OrientGraph graph = factory.getNoTx();
-
-    graph.createVertexClass(vertexLabel);
-    graph.createEdgeClass(edgeLabel);
-
-    graph.database().browseClass(vertexLabel);
-    graph.database().browseClass(edgeLabel);
-  }
-
-  // is should open a memory db
-  @Test
-  public void openWithEmptyConfig() {
-    OrientGraph graph = OrientGraph.open(new BaseConfiguration());
-
-    graph.addVertex(T.label, "V", "name", "Foo");
-
-    Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
-
-    graph.drop();
-  }
-
-  // is should open a memory db
-  @Test
-  public void openWithMemoryDatabase() {
-    OrientGraph graph = OrientGraph.open();
-
-    try {
-      graph.addVertex(T.label, "V", "name", "Foo");
-
-      Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
-    } finally {
-      graph.drop();
+        graph.database().browseClass(vertexLabel);
+        graph.database().browseClass(edgeLabel);
     }
 
-  }
+    // is should open a memory db
+    @Test
+    public void openWithEmptyConfig() {
+        OrientGraph graph = OrientGraph.open(new BaseConfiguration());
 
-  // is should open a plocal db
-  @Test
-  public void openWithLocalDatabase() {
-    OrientGraph graph = OrientGraph.open("embedded:./target/databases/openWithLocalDatabase");
+        graph.addVertex(T.label, "V", "name", "Foo");
 
-    try {
-      graph.addVertex(T.label, "V", "name", "Foo");
+        Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
 
-      Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
-    } finally {
-      graph.drop();
+        graph.drop();
     }
 
-  }
+    // is should open a memory db
+    @Test
+    public void openWithMemoryDatabase() {
+        OrientGraph graph = OrientGraph.open();
 
-  @Test
-  public void openWithConfiguration() {
+        try {
+            graph.addVertex(T.label, "V", "name", "Foo");
 
-    BaseConfiguration config = new BaseConfiguration();
+            Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
+        } finally {
+            graph.drop();
+        }
 
-    config.setProperty(OrientGraph.CONFIG_URL, "embedded:./target/databases/openWithLocalDatabase");
-    config.setProperty(OrientGraph.CONFIG_TRANSACTIONAL, true);
-
-    OrientGraph graph = OrientGraph.open(config);
-
-    try {
-
-      assertEquals(true, graph.features().graph().supportsTransactions());
-      Assert.assertEquals(false, graph.tx().isOpen());
-      OrientVertex vertex = (OrientVertex) graph.addVertex(T.label, "V", "name", "Foo");
-      Assert.assertEquals(true, graph.tx().isOpen());
-      Assert.assertEquals(true, vertex.getRawElement().getIdentity().isNew());
-      graph.tx().commit();
-      Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
-    } finally {
-      graph.drop();
     }
 
-  }
+    // is should open a plocal db
+    @Test
+    public void openWithLocalDatabase() {
+        OrientGraph graph = OrientGraph.open("embedded:./target/databases/openWithLocalDatabase");
 
-  @Test
-  public void shouldOpenAFactoryInMemory() {
+        try {
+            graph.addVertex(T.label, "V", "name", "Foo");
 
-    OrientGraphFactory factory = new OrientGraphFactory();
+            Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
+        } finally {
+            graph.drop();
+        }
 
-    OrientGraph graph = factory.getNoTx();
-    graph.addVertex(T.label, "V", "name", "Foo");
+    }
 
-    Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
+    @Test
+    public void openWithConfiguration() {
 
-    factory.drop();
-  }
+        BaseConfiguration config = new BaseConfiguration();
 
-  @Test
-  public void checkMemoryDrop() {
+        config.setProperty(OrientGraph.CONFIG_URL, "embedded:./target/databases/openWithLocalDatabase");
+        config.setProperty(OrientGraph.CONFIG_TRANSACTIONAL, true);
 
-    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    OrientGraphFactory factory = new OrientGraphFactory(orientDB, "_dropDB", ODatabaseType.MEMORY, "admin", "admin");
+        OrientGraph graph = OrientGraph.open(config);
 
-    factory.getNoTx();
+        try {
 
-    Assert.assertEquals(true, orientDB.exists("_dropDB"));
+            assertEquals(true, graph.features().graph().supportsTransactions());
+            Assert.assertEquals(false, graph.tx().isOpen());
+            OrientVertex vertex = (OrientVertex) graph.addVertex(T.label, "V", "name", "Foo");
+            Assert.assertEquals(true, graph.tx().isOpen());
+            Assert.assertEquals(true, vertex.getRawElement().getIdentity().isNew());
+            graph.tx().commit();
+            Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
+        } finally {
+            graph.drop();
+        }
 
-    factory.drop();
+    }
 
-    Assert.assertEquals(false, orientDB.exists("_dropDB"));
+    @Test
+    public void shouldOpenAFactoryInMemory() {
 
-  }
+        OrientGraphFactory factory = new OrientGraphFactory();
+
+        OrientGraph graph = factory.getNoTx();
+        graph.addVertex(T.label, "V", "name", "Foo");
+
+        Assert.assertEquals(new Long(1), graph.traversal().V().count().toList().iterator().next());
+
+        factory.drop();
+    }
+
+    @Test
+    public void checkMemoryDrop() {
+
+        OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+        OrientGraphFactory factory = new OrientGraphFactory(orientDB, "_dropDB", ODatabaseType.MEMORY, "admin", "admin");
+
+        factory.getNoTx();
+
+        Assert.assertEquals(true, orientDB.exists("_dropDB"));
+
+        factory.drop();
+
+        Assert.assertEquals(false, orientDB.exists("_dropDB"));
+
+    }
 }

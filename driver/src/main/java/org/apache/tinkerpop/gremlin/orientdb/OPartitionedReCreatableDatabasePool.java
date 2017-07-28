@@ -27,8 +27,8 @@ public class OPartitionedReCreatableDatabasePool {
     public void reCreatePool() {
         close();
         OrientDBConfig config = OrientDBConfig.defaultConfig();
-        config.getConfigurations().setValue(OGlobalConfiguration.DB_POOL_MAX,this.maxSize);
-        this.pool = new ODatabasePool(this.orientdb, this.dbName, this.userName, this.password,config);
+        config.getConfigurations().setValue(OGlobalConfiguration.DB_POOL_MAX, this.maxSize);
+        this.pool = new ODatabasePool(this.orientdb, this.dbName, this.userName, this.password, config);
     }
 
     public void close() {

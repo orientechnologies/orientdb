@@ -16,6 +16,9 @@
         <fileSet>
             <directory>${project.build.directory}/orientdb-community-${project.version}</directory>
             <outputDirectory></outputDirectory>
+            <excludes>
+                <exclude>config/orientdb-server-config.xml</exclude>
+            </excludes>
         </fileSet>
 
 
@@ -50,6 +53,14 @@
                 <include>*.sh</include>
             </includes>
             <fileMode>755</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/config</directory>
+            <outputDirectory>config</outputDirectory>
+            <includes>
+                <include>*.xml</include>
+            </includes>
             <filtered>true</filtered>
         </fileSet>
 
