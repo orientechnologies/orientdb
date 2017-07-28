@@ -135,6 +135,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     if (request.contentEncoding != null && request.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
       response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
     }
+    // only for static resources
+    if (request.contentEncoding != null && request.contentEncoding.contains(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
+      response.setStaticEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
+    }
 
     final long begin = System.currentTimeMillis();
 
