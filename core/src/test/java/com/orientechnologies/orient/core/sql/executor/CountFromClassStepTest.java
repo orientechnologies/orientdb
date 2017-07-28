@@ -1,25 +1,18 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class CountFromClassStepTest {
+/**
+ * Created by olena.kolesnyk on 28/07/2017.
+ */
+public class CountFromClassStepTest extends CreateMemoryDatabaseFixture {
 
-    private static ODatabaseDocument database;
     private static final String CLASS_NAME = "TestClass";
     private static final String ALIAS = "size";
-
-    @BeforeClass
-    public static void beforeClass() {
-        database = new ODatabaseDocumentTx("memory:CountFromClassStepTest");
-        database.create();
-    }
 
     @Test
     public void shouldCountRecordsOfClass() {
@@ -38,6 +31,7 @@ public class CountFromClassStepTest {
 
         OResultSet result = step.syncPull(context, 20);
         Assert.assertEquals(20, (long) result.next().getProperty(ALIAS));
+        Assert.assertFalse(result.hasNext());
     }
 
 }

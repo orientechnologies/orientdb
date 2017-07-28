@@ -6,6 +6,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * Created by olena.kolesnyk on 28/07/2017.
+ */
 public class CountStepTest {
 
     @Test
@@ -35,6 +38,7 @@ public class CountStepTest {
         step.setPrevious(previous);
         OResultSet result = step.syncPull(context, 100);
         Assert.assertEquals(100, (long) result.next().getProperty("count"));
+        Assert.assertFalse(result.hasNext());
 
     }
 
