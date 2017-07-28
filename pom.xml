@@ -20,6 +20,7 @@
         <module>distribution</module>
         <module>distribution-spatial</module>
         <module>distribution-community-importers</module>
+        <module>distribution-community-tp2-importers</module>
     </modules>
 
 </project>
