@@ -9,7 +9,6 @@ import java.util.Map;
 
 public class OIndexIdentifier extends SimpleNode {
 
-
   public enum Type {
     INDEX, VALUES, VALUESASC, VALUESDESC
   }
@@ -75,7 +74,8 @@ public class OIndexIdentifier extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -93,7 +93,8 @@ public class OIndexIdentifier extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = type != null ? type.hashCode() : 0;
     result = 31 * result + (indexNameString != null ? indexNameString.hashCode() : 0);
     result = 31 * result + (indexName != null ? indexName.hashCode() : 0);
@@ -119,6 +120,18 @@ public class OIndexIdentifier extends SimpleNode {
       indexName = new OIndexName(-1);
       indexName.deserialize(fromResult.getProperty("indexName"));
     }
+  }
+
+  public void setType(Type type) {
+    this.type = type;
+  }
+
+  public void setIndexNameString(String indexNameString) {
+    this.indexNameString = indexNameString;
+  }
+
+  public void setIndexName(OIndexName indexName) {
+    this.indexName = indexName;
   }
 }
 /* JavaCC - OriginalChecksum=025f134fd4b27b84210738cdb6dd027c (do not edit this line) */

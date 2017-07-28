@@ -63,5 +63,9 @@ public class OIndexName extends SimpleNode {
   public void deserialize(OResult fromResult) {
     value = fromResult.getProperty("value");
   }
+
+  public void setValue(String value) {
+    this.value = value;
+  }
 }
 /* JavaCC - OriginalChecksum=06c827926e7e9ee650b76d42e31feb46 (do not edit this line) */
