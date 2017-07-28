@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
@@ -18,10 +19,15 @@ public class CreateMemoryDatabaseFixture {
     private static final String PASSWORD = "admin";
 
     @BeforeClass
-    public static void beforeClass() {
+    public static void setUp() {
         OrientDB factory = new OrientDB(PATH, OrientDBConfig.defaultConfig());
         factory.create(DB_NAME, ODatabaseType.MEMORY);
         database = factory.open(DB_NAME, USER, PASSWORD);
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        database.close();
     }
 
 }
