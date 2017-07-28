@@ -18,9 +18,9 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  public CheckRecordTypeStep(OCommandContext ctx, String c, boolean profilingEnabled) {
+  public CheckRecordTypeStep(OCommandContext ctx, String className, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
-    this.clazz = c;
+    this.clazz = className;
   }
 
   @Override

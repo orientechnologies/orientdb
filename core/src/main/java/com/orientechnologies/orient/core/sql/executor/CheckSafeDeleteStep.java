@@ -12,8 +12,14 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
+ * <p>
  * Checks if a record can be safely deleted (throws OCommandExecutionException in case).
- * A record cannot be safely deleted if it's a vertex or an edge (it requires additional operations)
+ * A record cannot be safely deleted if it's a vertex or an edge (it requires additional operations).</p>
+ * <p>
+ * The result set returned by syncPull() throws an OCommandExecutionException as soon as it finds a record
+ * that cannot be safely deleted (eg. a vertex or an edge)</p>
+ * <p>This step is used used in DELETE statement to make sure that you are not deleting vertices or edges without passing for an
+ * explicit DELETE VERTEX/EDGE</p>
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */

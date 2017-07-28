@@ -8,7 +8,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.OCluster;
 
 /**
- * Created by luigidellaquila on 05/09/16.
+ * <p> This step is used just as a gate check to verify that a cluster belongs to a class. </p> <p> It accepts two values: a target
+ * cluster (name or OCluster) and a class. If the cluster belongs to the class, then the syncPool() returns an empty result set,
+ * otherwise it throws an OCommandExecutionException </p>
+ *
+ * @author Luigi Dell'Aquila (luigi.dellaquila - at - orientdb.com)
  */
 public class CheckClusterTypeStep extends AbstractExecutionStep {
 
