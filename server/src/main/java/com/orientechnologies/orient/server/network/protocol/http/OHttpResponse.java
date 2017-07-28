@@ -54,16 +54,18 @@ public class OHttpResponse {
   public        String       characterSet;
   public        String       contentType;
   public        String       serverInfo;
-  public        String       sessionId;
-  public        String       callbackFunction;
-  public        String       contentEncoding;
+
+  public String sessionId;
+  public String callbackFunction;
+  public String contentEncoding;
+  public String staticEncoding;
   public boolean sendStarted = false;
   public String content;
   public int    code;
   public boolean keepAlive         = true;
   public boolean jsonErrorResponse = true;
-  public  OClientConnection connection;
-  private boolean           streaming;
+  public OClientConnection connection;
+  private boolean streaming = OGlobalConfiguration.NETWORK_HTTP_STREAMING.getValueAsBoolean();
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction,
@@ -458,11 +460,16 @@ public class OHttpResponse {
 
   public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize)
       throws IOException {
-    sendStream(iCode, iReason, iContentType, iContent, iSize, null);
+    sendStream(iCode, iReason, iContentType, iContent, iSize, null, null);
   }
 
   public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize,
       final String iFileName) throws IOException {
+    sendStream(iCode, iReason, iContentType, iContent, iSize, iFileName, null);
+  }
+
+  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize,
+      final String iFileName, Map<String, String> additionalHeaders) throws IOException {
     writeStatus(iCode, iReason);
     writeHeaders(iContentType);
     writeLine("Content-Transfer-Encoding: binary");
@@ -471,6 +478,11 @@ public class OHttpResponse {
       writeLine("Content-Disposition: attachment; filename=\"" + iFileName + "\"");
     }
 
+    if (additionalHeaders != null) {
+      for (Map.Entry<String, String> entry : additionalHeaders.entrySet()) {
+        writeLine(String.format("%s: %s", entry.getKey(), entry.getValue()));
+      }
+    }
     if (iSize < 0) {
       // SIZE UNKNOWN: USE A MEMORY BUFFER
       final ByteArrayOutputStream o = new ByteArrayOutputStream();
@@ -584,6 +596,10 @@ public class OHttpResponse {
 
   public void setContentEncoding(String contentEncoding) {
     this.contentEncoding = contentEncoding;
+  }
+
+  public void setStaticEncoding(String contentEncoding) {
+    this.staticEncoding = contentEncoding;
   }
 
   public void setSessionId(String sessionId) {
