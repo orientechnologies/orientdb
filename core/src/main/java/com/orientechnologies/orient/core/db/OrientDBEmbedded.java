@@ -97,7 +97,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
         embedded.init(config);
       }
       embedded.rebuildIndexes();
-      embedded.internalOpen(user, "nopwd", false);
+
+      //** THIS IS COMMENTED OUT BECAUSE WE NEED BOTH (NO PASSWORD AND NO USER AUTHORIZATION CHECK).
+      // embedded.internalOpen(user, "nopwd", false);
+      ////////////////////////////////////////////////////////////////////////////////////////////
+      
       embedded.callOnOpenListeners();
       return embedded;
     } catch (Exception e) {
