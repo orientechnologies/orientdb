@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -71,22 +72,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     if (!fileName.endsWith(".gz")) {
       fileName += ".gz";
     }
-    final File f = new File(fileName);
-    if (f.getParentFile() != null)
-      //noinspection ResultOfMethodCallIgnored
-      f.getParentFile().mkdirs();
-    if (f.exists())
-      //noinspection ResultOfMethodCallIgnored
-      f.delete();
+    OFileUtils.prepareForFileCreationOrReplacement(Paths.get(fileName), this, "exporting");
 
     this.tempFileName = fileName + ".tmp";
-    final File tempFile = new File(tempFileName);
-    if (tempFile.getParentFile() != null)
-      //noinspection ResultOfMethodCallIgnored
-      tempFile.getParentFile().mkdirs();
-    if (tempFile.exists())
-      //noinspection ResultOfMethodCallIgnored
-      tempFile.delete();
+    OFileUtils.prepareForFileCreationOrReplacement(Paths.get(tempFileName), this, "exporting");
 
     final GZIPOutputStream gzipOS = new GZIPOutputStream(new FileOutputStream(tempFileName), compressionBuffer) {
       {

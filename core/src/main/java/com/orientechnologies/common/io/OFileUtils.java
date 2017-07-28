@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.common.io;
 
+import com.orientechnologies.common.log.OLogManager;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -212,4 +214,23 @@ public class OFileUtils {
 
     return OFileUtilsJava7.delete(file);
   }
+
+  /**
+   * Prepares the path for a file creation or replacement. If the file pointed by the path already exists, it will be deleted,
+   * a warning will be emitted to the log in this case. All absent directories along the path will be created.
+   *
+   * @param path      the file path.
+   * @param requester the requester of an operation being performed to produce user-friendly log messages.
+   * @param operation the description of an operation being performed to produce user-friendly log messages. Use descriptions like
+   *                  "exporting", "backing up", etc.
+   */
+  public static void prepareForFileCreationOrReplacement(Path path, Object requester, String operation) throws IOException {
+    if (Files.deleteIfExists(path))
+      OLogManager.instance().warn(requester, "'%s' deleted while %s", path, operation);
+
+    final Path parent = path.getParent();
+    if (parent != null)
+      Files.createDirectories(parent);
+  }
+
 }
