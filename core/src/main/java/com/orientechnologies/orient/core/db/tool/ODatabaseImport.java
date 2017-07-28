@@ -27,12 +27,10 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODocumentFieldVisitor;
 import com.orientechnologies.orient.core.db.document.ODocumentFieldWalker;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.db.tool.importer.*;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -89,7 +87,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   private boolean deleteRIDMapping = true;
 
-  private OIndex<OIdentifiable> exportImportHashTable;
+  protected OIndex<OIdentifiable> exportImportHashTable;
 
   private boolean preserveClusterIDs = true;
   private boolean migrateLinks       = true;
@@ -98,258 +96,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   private Set<String>         indexesToRebuild    = new HashSet<String>();
   private Map<String, String> convertedClassNames = new HashMap<String, String>();
-
-  private interface ValuesConverter<T> {
-    T convert(T value);
-  }
-
-  private static final class ConvertersFactory {
-    public static final ORID              BROKEN_LINK = new ORecordId(-1, -42);
-    public static final ConvertersFactory INSTANCE    = new ConvertersFactory();
-
-    public ValuesConverter getConverter(Object value) {
-      if (value instanceof Map)
-        return MapConverter.INSTANCE;
-
-      if (value instanceof List)
-        return ListConverter.INSTANCE;
-
-      if (value instanceof Set)
-        return SetConverter.INSTANCE;
-
-      if (value instanceof ORidBag)
-        return RidBagConverter.INSTANCE;
-
-      if (value instanceof OIdentifiable)
-        return LinkConverter.INSTANCE;
-
-      return null;
-    }
-  }
-
-  private static final class LinksRewriter implements ODocumentFieldVisitor {
-    @Override
-    public Object visitField(OType type, OType linkedType, Object value) {
-      boolean oldAutoConvertValue = false;
-      if (value instanceof ORecordLazyMultiValue) {
-        ORecordLazyMultiValue multiValue = (ORecordLazyMultiValue) value;
-        oldAutoConvertValue = multiValue.isAutoConvertToRecord();
-        multiValue.setAutoConvertToRecord(false);
-      }
-
-      final ValuesConverter valuesConverter = ConvertersFactory.INSTANCE.getConverter(value);
-      if (valuesConverter == null)
-        return value;
-
-      final Object newValue = valuesConverter.convert(value);
-
-      if (value instanceof ORecordLazyMultiValue) {
-        ORecordLazyMultiValue multiValue = (ORecordLazyMultiValue) value;
-        multiValue.setAutoConvertToRecord(oldAutoConvertValue);
-      }
-
-      //this code intentionally uses == instead of equals, in such case we may distinguish rids which already contained in
-      //document and RID which is used to indicate broken record
-      if (newValue == ConvertersFactory.BROKEN_LINK)
-        return null;
-
-      return newValue;
-    }
-
-    @Override
-    public boolean goFurther(OType type, OType linkedType, Object value, Object newValue) {
-      return true;
-    }
-
-    @Override
-    public boolean goDeeper(OType type, OType linkedType, Object value) {
-      return true;
-    }
-
-    @Override
-    public boolean updateMode() {
-      return true;
-    }
-
-  }
-
-  private static abstract class AbstractCollectionConverter<T> implements ValuesConverter<T> {
-    interface ResultCallback {
-      void add(Object item);
-    }
-
-    protected boolean convertSingleValue(final Object item, ResultCallback result, boolean updated) {
-      if (item == null)
-        return false;
-
-      if (item instanceof OIdentifiable) {
-        final ValuesConverter<OIdentifiable> converter = (ValuesConverter<OIdentifiable>) ConvertersFactory.INSTANCE
-            .getConverter(item);
-
-        final OIdentifiable newValue = converter.convert((OIdentifiable) item);
-
-        //this code intentionally uses == instead of equals, in such case we may distinguish rids which already contained in
-        //document and RID which is used to indicate broken record
-        if (newValue != ConvertersFactory.BROKEN_LINK)
-          result.add(newValue);
-
-        if (!newValue.equals(item))
-          updated = true;
-      } else {
-        final ValuesConverter valuesConverter = ConvertersFactory.INSTANCE.getConverter(item.getClass());
-        if (valuesConverter == null)
-          result.add(item);
-        else {
-          final Object newValue = valuesConverter.convert(item);
-          if (newValue != item)
-            updated = true;
-
-          result.add(newValue);
-        }
-      }
-
-      return updated;
-    }
-  }
-
-  private static final class SetConverter extends AbstractCollectionConverter<Set> {
-    public static final SetConverter INSTANCE = new SetConverter();
-
-    @Override
-    public Set convert(Set value) {
-      boolean updated = false;
-      final Set result;
-
-      result = new HashSet();
-
-      final ResultCallback callback = new ResultCallback() {
-        @Override
-        public void add(Object item) {
-          result.add(item);
-        }
-      };
-
-      for (Object item : value)
-        updated = convertSingleValue(item, callback, updated);
-
-      if (updated)
-        return result;
-
-      return value;
-    }
-  }
-
-  private static final class ListConverter extends AbstractCollectionConverter<List> {
-    public static final ListConverter INSTANCE = new ListConverter();
-
-    @Override
-    public List convert(List value) {
-      final List result = new ArrayList();
-
-      final ResultCallback callback = new ResultCallback() {
-        @Override
-        public void add(Object item) {
-          result.add(item);
-        }
-      };
-      boolean updated = false;
-
-      for (Object item : value)
-        updated = convertSingleValue(item, callback, updated);
-
-      if (updated)
-        return result;
-
-      return value;
-    }
-  }
-
-  private static final class RidBagConverter extends AbstractCollectionConverter<ORidBag> {
-    public static final RidBagConverter INSTANCE = new RidBagConverter();
-
-    @Override
-    public ORidBag convert(ORidBag value) {
-      final ORidBag result = new ORidBag();
-      boolean updated = false;
-      final ResultCallback callback = new ResultCallback() {
-        @Override
-        public void add(Object item) {
-          result.add((OIdentifiable) item);
-        }
-      };
-
-      for (OIdentifiable identifiable : value)
-        updated = convertSingleValue(identifiable, callback, updated);
-
-      if (updated)
-        return result;
-
-      return value;
-    }
-  }
-
-  private static final class MapConverter extends AbstractCollectionConverter<Map> {
-    public static final MapConverter INSTANCE = new MapConverter();
-
-    @Override
-    public Map convert(Map value) {
-      final HashMap result = new HashMap();
-      boolean updated = false;
-      final class MapResultCallback implements ResultCallback {
-        private Object key;
-
-        @Override
-        public void add(Object item) {
-          result.put(key, item);
-        }
-
-        public void setKey(Object key) {
-          this.key = key;
-        }
-      }
-
-      final MapResultCallback callback = new MapResultCallback();
-      for (Map.Entry entry : (Iterable<Map.Entry>) value.entrySet()) {
-        callback.setKey(entry.getKey());
-        updated = convertSingleValue(entry.getValue(), callback, updated);
-      }
-      if (updated)
-        return result;
-
-      return value;
-    }
-  }
-
-  private static final class LinkConverter implements ValuesConverter<OIdentifiable> {
-    public static final LinkConverter INSTANCE = new LinkConverter();
-
-    private OIndex<OIdentifiable> exportImportHashTable;
-    private Set<ORID> brokenRids = new HashSet<ORID>();
-
-    @Override
-    public OIdentifiable convert(OIdentifiable value) {
-      final ORID rid = value.getIdentity();
-      if (!rid.isPersistent())
-        return value;
-
-      if (brokenRids.contains(rid))
-        return ConvertersFactory.BROKEN_LINK;
-
-      final OIdentifiable newRid = exportImportHashTable.get(rid);
-      if (newRid == null)
-        return value;
-
-      return newRid.getIdentity();
-    }
-
-    public void setExportImportHashTable(OIndex<OIdentifiable> exportImportHashTable) {
-      this.exportImportHashTable = exportImportHashTable;
-    }
-
-    public void setBrokenRids(Set<ORID> brokenRids) {
-      this.brokenRids = brokenRids;
-    }
-  }
 
   public ODatabaseImport(final ODatabaseDocumentInternal database, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -1678,17 +1424,16 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage(String.format("\nTotal links updated: %,d", totalDocuments));
   }
 
-  private void rewriteLinksInDocument(ODocument document, Set<ORID> brokenRids) {
+  protected void rewriteLinksInDocument(ODocument document, Set<ORID> brokenRids) {
     rewriteLinksInDocument(document, exportImportHashTable, brokenRids);
     document.save();
   }
 
-  protected static void rewriteLinksInDocument(ODocument document, OIndex<OIdentifiable> rewrite, Set<ORID> brokenRids) {
-    LinkConverter.INSTANCE.setExportImportHashTable(rewrite);
-    LinkConverter.INSTANCE.setBrokenRids(brokenRids);
-
-    final LinksRewriter rewriter = new LinksRewriter();
+  protected static void rewriteLinksInDocument(ODocument document, OIndex<OIdentifiable> exportImportHashTable,
+      Set<ORID> brokenRids) {
+    final OLinksRewriter rewriter = new OLinksRewriter(new OConverterData(exportImportHashTable, brokenRids));
     final ODocumentFieldWalker documentFieldWalker = new ODocumentFieldWalker();
     documentFieldWalker.walkDocument(document, rewriter);
   }
+
 }
