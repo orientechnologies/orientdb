@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -40,6 +41,9 @@ import com.orientechnologies.orient.server.plugin.OServerPluginConfigurable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -346,17 +350,23 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
   protected void fullBackupDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {
     OLogManager.instance().info(this, "AutomaticBackup: executing full backup of database '%s' to %s", dbURL, iPath);
 
-    final FileOutputStream fileOutputStream = new FileOutputStream(iPath);
-    try {
+    final Path filePath = Paths.get(iPath);
+    OFileUtils.prepareForFileCreationOrReplacement(filePath, this, "backing up");
+
+    final String tempFileName = iPath + ".tmp";
+    final Path tempFilePath = Paths.get(tempFileName);
+    OFileUtils.prepareForFileCreationOrReplacement(tempFilePath, this, "backing up");
+
+    try (FileOutputStream fileOutputStream = new FileOutputStream(tempFileName)) {
       db.backup(fileOutputStream, null, null, new OCommandOutputListener() {
         @Override
         public void onMessage(String iText) {
           OLogManager.instance().info(this, iText);
         }
       }, compressionLevel, bufferSize);
-    } finally {
-      fileOutputStream.close();
     }
+
+    Files.move(tempFilePath, filePath);
   }
 
   protected void exportDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {
