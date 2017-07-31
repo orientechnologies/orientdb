@@ -41,8 +41,10 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.io.*;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
@@ -268,9 +270,13 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
     }
 
-    if (tempFileName != null) // may be null if writing directly to an output stream w/o file
+    if (tempFileName != null) // may be null if writing to an output stream w/o file
       try {
-        Files.move(Paths.get(tempFileName), Paths.get(fileName));
+        try {
+          Files.move(Paths.get(tempFileName), Paths.get(fileName), StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+          Files.move(Paths.get(tempFileName), Paths.get(fileName));
+        }
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on exporting database '%s' to: %s", e, database.getName(), fileName);
         throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
