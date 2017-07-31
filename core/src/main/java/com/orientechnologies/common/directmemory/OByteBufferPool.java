@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import javax.management.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.management.BufferPoolMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -39,10 +40,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.*;
+import java.util.logging.Level;
 
 /**
  * Object of this class works at the same time as factory for <code>DirectByteBuffer</code> objects and pool for
@@ -74,6 +73,10 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   }
 
   private static final boolean TRACK = OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
+
+  private static final boolean TRACE = OGlobalConfiguration.DIRECT_MEMORY_TRACE.getValueAsBoolean();
+
+  private static final TraceAggregation TRACE_AGGREGATION = OGlobalConfiguration.DIRECT_MEMORY_TRACE_AGGREGATION.getValue();
 
   /**
    * Size of single byte buffer instance in bytes.
@@ -130,6 +133,12 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   private final Map<TrackedBufferKey, TrackedBufferReference> trackedBuffers;
   private final Map<TrackedBufferKey, Exception>              trackedReleases;
 
+  private final AtomicLongArray[] aggregatedTraceStats;
+
+  private final BufferPoolMXBean directBufferPoolMxBean;
+  private final AtomicLong       expectedDirectMemorySize;
+  private final AtomicLong       directMemoryEventCounter;
+
   /**
    * @param pageSize Size of single page (instance of <code>DirectByteBuffer</code>) returned by pool.
    */
@@ -173,6 +182,43 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
       trackedReferences = null;
       trackedBuffers = null;
       trackedReleases = null;
+    }
+
+    if (TRACE) {
+      // find the JVM direct memory buffer pool bean
+      BufferPoolMXBean foundDirectBufferPoolMxBean = null;
+      for (BufferPoolMXBean bean : ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class))
+        if ("direct".equals(bean.getName())) {
+          foundDirectBufferPoolMxBean = bean;
+          break;
+        }
+      directBufferPoolMxBean = foundDirectBufferPoolMxBean;
+      if (directBufferPoolMxBean == null)
+        OLogManager.instance()
+            .warn(this, "DIRECT-TRACE: JVM direct memory buffer pool JMX bean is not found, tracing will be less detailed.");
+
+      expectedDirectMemorySize = directBufferPoolMxBean == null ? null : new AtomicLong();
+
+      if (TRACE_AGGREGATION == TraceAggregation.None) {
+        aggregatedTraceStats = null;
+        directMemoryEventCounter = null;
+      } else {
+        final TraceEvent[] traceEvents = TraceEvent.values();
+
+        aggregatedTraceStats = new AtomicLongArray[traceEvents.length];
+        for (TraceEvent event : traceEvents)
+          if (event.aggregate)
+            // stores only deltas, so the size is the half of the full stats size plus one more element for the event counting
+            aggregatedTraceStats[event.ordinal()] = new AtomicLongArray(event.statsSize / 2 + 1);
+
+        directMemoryEventCounter = directBufferPoolMxBean == null ? null : new AtomicLong();
+      }
+    } else {
+      aggregatedTraceStats = null;
+
+      directBufferPoolMxBean = null;
+      expectedDirectMemorySize = null;
+      directMemoryEventCounter = null;
     }
   }
 
@@ -227,7 +273,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     final ByteBuffer buffer = pool.poll();
 
     if (buffer != null) {
-      poolSize.decrementAndGet();
+      final long beforeSize = poolSize.getAndDecrement();
 
       if (clear) {
         buffer.position(0);
@@ -236,7 +282,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
       buffer.position(0);
 
-      return trackBuffer(buffer);
+      return trace(track(buffer), TraceEvent.AcquiredFromPool, beforeSize, -1);
     }
 
     if (maxPagesPerSingleArea > 1) {
@@ -247,10 +293,11 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
         //if we hit the end of preallocation buffer we allocate by small chunks
         if (currentAllocationPosition >= preAllocationLimit) {
-          overflowBufferCount.incrementAndGet();
-          allocatedMemory.getAndAdd(pageSize);
+          final long beforeCount = overflowBufferCount.getAndIncrement();
+          final long beforeSize = allocatedMemory.getAndAdd(pageSize);
 
-          return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
+          return trace(track(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder())),
+              TraceEvent.OverflowBufferAllocated, beforeCount, +1, beforeSize, +pageSize);
         }
 
       } while (!nextAllocationPosition.compareAndSet(currentAllocationPosition, currentAllocationPosition + 1));
@@ -265,10 +312,11 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
       //page is going to be allocated above the preallocation limit
       if (allocationSize <= position * pageSize) {
-        overflowBufferCount.incrementAndGet();
-        allocatedMemory.getAndAdd(pageSize);
+        final long beforeCount = overflowBufferCount.getAndIncrement();
+        final long beforeSize = allocatedMemory.getAndAdd(pageSize);
 
-        return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
+        return trace(track(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder())), TraceEvent.OverflowBufferAllocated,
+            beforeCount, +1, beforeSize, +pageSize);
       }
 
       BufferHolder bfh = null;
@@ -338,7 +386,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
           }
 
           slice.position(0);
-          return trackBuffer(slice);
+          return trace(track(slice), TraceEvent.SlicedFromPreallocatedArea, rawPosition, +pageSize);
         }
       } finally {
         //we put this in final block to be sure that indication about processed memory request was for sure reflected
@@ -352,9 +400,10 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     }
 
     // this should not happen if amount of pages is needed for storage is calculated correctly
-    overflowBufferCount.incrementAndGet();
-    allocatedMemory.getAndAdd(pageSize);
-    return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
+    final long beforeCount = overflowBufferCount.getAndIncrement();
+    final long beforeSize = allocatedMemory.getAndAdd(pageSize);
+    return trace(track(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder())), TraceEvent.FallbackBufferAllocated,
+        beforeCount, +1, beforeSize, +pageSize);
   }
 
   /**
@@ -365,7 +414,9 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   private void allocateBuffer(BufferHolder bfh, int allocationSize) {
     try {
       bfh.buffer = ByteBuffer.allocateDirect(allocationSize).order(ByteOrder.nativeOrder());
-      allocatedMemory.getAndAdd(allocationSize);
+      final long beforeSize = allocatedMemory.getAndAdd(allocationSize);
+
+      trace(bfh.buffer, TraceEvent.AllocatedForPreallocatedArea, beforeSize, +allocationSize);
     } finally {
       bfh.latch.countDown();
     }
@@ -377,9 +428,10 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    * @param buffer Not used instance of buffer.
    */
   public void release(ByteBuffer buffer) {
-    pool.offer(untrackBuffer(buffer));
+    pool.offer(untrack(buffer));
 
-    poolSize.incrementAndGet();
+    final long beforeSize = poolSize.getAndIncrement();
+    trace(buffer, TraceEvent.ReturnedToPool, beforeSize, +1);
   }
 
   @Override
@@ -565,7 +617,91 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
   }
 
-  private ByteBuffer trackBuffer(ByteBuffer buffer) {
+  private ByteBuffer trace(ByteBuffer buffer, TraceEvent event, long... stats) {
+    if (TRACE) {
+      if (directBufferPoolMxBean != null) {
+        final long eventAllocatedMemory = event.allocatedMemory(stats);
+        final long allocatedMemory = eventAllocatedMemory == -1 ? getAllocatedMemory() : eventAllocatedMemory;
+        final long allocatedMemoryDelta = event.allocatedMemoryDelta(stats);
+        final long expectedDirectMemorySizeAfter = expectedDirectMemorySize.addAndGet(allocatedMemoryDelta);
+        final long actualDirectMemorySize = directBufferPoolMxBean.getMemoryUsed();
+
+        if (actualDirectMemorySize != expectedDirectMemorySizeAfter)
+          if (TRACE_AGGREGATION == TraceAggregation.None)
+            traceDirectBufferPoolSizeChanged(allocatedMemory, expectedDirectMemorySizeAfter, actualDirectMemorySize);
+          else {
+            final long aggregatedEvents = directMemoryEventCounter.getAndIncrement();
+
+            if (aggregatedEvents == 0)
+              traceDirectBufferPoolSizeChanged(allocatedMemory, expectedDirectMemorySizeAfter, actualDirectMemorySize);
+
+            if (aggregatedEvents >= TRACE_AGGREGATION.threshold - 1)
+              directMemoryEventCounter.set(0);
+          }
+      }
+
+      if (TRACE_AGGREGATION == TraceAggregation.None || !event.aggregate)
+        OLogManager.instance().log(this, event.level, "DIRECT-TRACE %s: %s, buffer = %X", null, event.tag(), event.describe(stats),
+            System.identityHashCode(buffer));
+      else {
+        // select the event's aggregated stats
+        final AtomicLongArray aggregatedStats = aggregatedTraceStats[event.ordinal()];
+
+        // select the aggregated stats of the inverse event, if any
+        final AtomicLongArray inverseAggregatedStats =
+            event.inverse() == null ? null : aggregatedTraceStats[event.inverse().ordinal()];
+
+        // aggregate the deltas
+        for (int i = 0; i < stats.length / 2; ++i)
+          aggregatedStats.getAndAdd(i, stats[i * 2 + 1]);
+
+        // count the event
+        final long eventsAggregated = aggregatedStats.incrementAndGet(event.statsSize / 2);
+
+        // log the stats if the threshold is reached
+        if (inverseAggregatedStats == null) {
+          if (eventsAggregated >= TRACE_AGGREGATION.threshold) {
+            OLogManager.instance().log(this, event.level, "DIRECT-TRACE %s x %d: %s", null, event.tag(), eventsAggregated,
+                event.describe(aggregatedStats, null, stats));
+
+            // reset the aggregated stats
+            for (int i = 0; i < aggregatedStats.length(); ++i)
+              aggregatedStats.set(i, 0);
+          }
+        } else {
+          final long inverseEventsAggregated = inverseAggregatedStats.get(event.statsSize / 2);
+
+          // log the stats if the threshold is reached
+          if (eventsAggregated + inverseEventsAggregated >= TRACE_AGGREGATION.threshold) {
+            OLogManager.instance().log(this, event.level, "DIRECT-TRACE %s/%s: %s", null, event.tag(), event.inverse().tag(),
+                event.describe(aggregatedStats, inverseAggregatedStats, stats));
+
+            // reset the aggregated stats
+            assert aggregatedStats.length() == inverseAggregatedStats.length();
+            for (int i = 0; i < aggregatedStats.length(); ++i) {
+              aggregatedStats.set(i, 0);
+              inverseAggregatedStats.set(i, 0);
+            }
+          }
+        }
+      }
+    }
+
+    return buffer;
+  }
+
+  private void traceDirectBufferPoolSizeChanged(long allocated, long expected, long actual) {
+    final long delta = actual - expected;
+    final long excess = actual - allocated;
+
+    OLogManager.instance().warn(this, "DIRECT-TRACE DirectBufferPoolSizeChanged: JVM allocated memory ~ %s (~%s) + %s ~ %s (%c%s)",
+        TraceEvent.memory(allocated), TraceEvent.percentage(allocated, actual), TraceEvent.memory(excess),
+        TraceEvent.memory(actual), TraceEvent.sign(delta), TraceEvent.memory(Math.abs(delta)));
+
+    expectedDirectMemorySize.set(actual);
+  }
+
+  private ByteBuffer track(ByteBuffer buffer) {
     if (TRACK) {
       synchronized (this) {
         final TrackedBufferReference reference = new TrackedBufferReference(buffer, trackedBuffersQueue);
@@ -580,7 +716,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-  private ByteBuffer untrackBuffer(ByteBuffer buffer) {
+  private ByteBuffer untrack(ByteBuffer buffer) {
     if (TRACK) {
       synchronized (this) {
         final TrackedBufferKey trackedBufferKey = new TrackedBufferKey(buffer);
@@ -683,6 +819,232 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
       // instance of byte buffer which should be used by all storage components
       INSTANCE = new OByteBufferPool(pageSize, memoryChunkSize, diskCacheSize);
+    }
+  }
+
+  /**
+   * Controls the aggregation level of the direct memory tracer.
+   */
+  public enum TraceAggregation {
+    /**
+     * No aggregation, events traced one-by-one.
+     */
+    None(1),
+
+    /**
+     * Low aggregation level.
+     */
+    Low(100),
+
+    /**
+     * Medium aggregation level.
+     */
+    Medium(1000),
+
+    /**
+     * High aggregation level.
+     */
+    High(10000);
+
+    private final long threshold;
+
+    TraceAggregation(long threshold) {
+      this.threshold = threshold;
+    }
+  }
+
+  private enum TraceEvent {
+    AcquiredFromPool(Level.INFO, true, 2) {
+      @Override
+      public TraceEvent inverse() {
+        return ReturnedToPool;
+      }
+
+      @Override
+      public String describe(long... stats) {
+        return formatCount("pool size", stats[0], stats[1]);
+      }
+
+      @Override
+      public String describe(AtomicLongArray aggregatedStats, AtomicLongArray inverseAggregatedStats, long... stats) {
+        return formatCount("pool size", stats[0], stats[1], aggregatedStats.get(0), inverseAggregatedStats.get(0));
+      }
+    },
+
+    OverflowBufferAllocated(Level.WARNING, true, 4) {
+      @Override
+      public long allocatedMemory(long... stats) {
+        return stats[2];
+      }
+
+      @Override
+      public long allocatedMemoryDelta(long... stats) {
+        return stats[3];
+      }
+
+      @Override
+      public String describe(long... stats) {
+        return formatCount("overflow buffer count", stats[0], stats[1]) + ", " + formatMemory("allocated memory", stats[2],
+            stats[3]);
+      }
+
+      @Override
+      public String describe(AtomicLongArray aggregatedStats, AtomicLongArray inverseAggregatedStats, long... stats) {
+        return formatCount("overflow buffer count", stats[0], stats[1], aggregatedStats.get(0)) + ", " + formatMemory(
+            "allocated memory", stats[2], stats[3], aggregatedStats.get(1));
+      }
+    },
+
+    SlicedFromPreallocatedArea(Level.INFO, true, 2) {
+      @Override
+      public String describe(long... stats) {
+        return formatMemory("sliced memory", stats[0], stats[1]);
+      }
+
+      @Override
+      public String describe(AtomicLongArray aggregatedStats, AtomicLongArray inverseAggregatedStats, long... stats) {
+        return formatMemory("sliced memory", stats[0], stats[1], aggregatedStats.get(0));
+      }
+    },
+
+    FallbackBufferAllocated(Level.WARNING, true, 4) {
+      @Override
+      public long allocatedMemory(long... stats) {
+        return stats[2];
+      }
+
+      @Override
+      public long allocatedMemoryDelta(long... stats) {
+        return stats[3];
+      }
+
+      @Override
+      public String describe(long... stats) {
+        return formatCount("overflow buffer count", stats[0], stats[1]) + ", " + formatMemory("allocated memory", stats[2],
+            stats[3]);
+      }
+
+      @Override
+      public String describe(AtomicLongArray aggregatedStats, AtomicLongArray inverseAggregatedStats, long... stats) {
+        return formatCount("overflow buffer count", stats[0], stats[1], aggregatedStats.get(0)) + ", " + formatMemory(
+            "allocated memory", stats[2], stats[3], aggregatedStats.get(1));
+      }
+    },
+
+    AllocatedForPreallocatedArea(Level.INFO, false, 2) {
+      @Override
+      public long allocatedMemory(long... stats) {
+        return stats[0];
+      }
+
+      @Override
+      public long allocatedMemoryDelta(long... stats) {
+        return stats[1];
+      }
+
+      @Override
+      public String describe(long... stats) {
+        return formatMemory("allocated memory", stats[0], stats[1]);
+      }
+
+      @Override
+      public String describe(AtomicLongArray aggregatedStats, AtomicLongArray inverseAggregatedStats, long... stats) {
+        throw new UnsupportedOperationException("aggregation is not supported");
+      }
+    },
+
+    ReturnedToPool(Level.INFO, true, 2) {
+      @Override
+      public TraceEvent inverse() {
+        return AcquiredFromPool;
+      }
+
+      @Override
+      public String describe(long... stats) {
+        return formatCount("pool size", stats[0], stats[1]);
+      }
+
+      @Override
+      public String describe(AtomicLongArray aggregatedStats, AtomicLongArray inverseAggregatedStats, long... stats) {
+        return formatCount("pool size", stats[0], stats[1], aggregatedStats.get(0), inverseAggregatedStats.get(0));
+      }
+    };
+
+    public final Level   level;
+    public final boolean aggregate;
+    public final int     statsSize;
+
+    TraceEvent(Level level, boolean aggregate, int statsSize) {
+      this.level = level;
+      this.aggregate = aggregate;
+      this.statsSize = statsSize;
+    }
+
+    public String tag() {
+      return this.name();
+    }
+
+    public TraceEvent inverse() {
+      return null;
+    }
+
+    public long allocatedMemory(long... stats) {
+      return -1;
+    }
+
+    public long allocatedMemoryDelta(long... stats) {
+      return 0;
+    }
+
+    public abstract String describe(long... stats);
+
+    public abstract String describe(AtomicLongArray aggregatedStats, AtomicLongArray inverseAggregatedStats, long... stats);
+
+    private static String formatCount(String label, long before, long delta) {
+      return String.format("%s = %d %c %d = %d", label, before, sign(delta), Math.abs(delta), before + delta);
+    }
+
+    private static String formatCount(String label, long before, long delta, long aggregatedDelta) {
+      return String.format("%s ~ %d (%c%d)", label, before + delta, sign(aggregatedDelta), Math.abs(aggregatedDelta));
+    }
+
+    private static String formatCount(String label, long before, long delta, long aggregatedDelta, long inverseAggregatedDelta) {
+      return String.format("%s ~ %d (%c%d/%c%d)", label, before + delta, sign(aggregatedDelta), Math.abs(aggregatedDelta),
+          sign(inverseAggregatedDelta), Math.abs(inverseAggregatedDelta));
+    }
+
+    private static String formatMemory(String label, long before, long delta) {
+      return String
+          .format("%s = %s %c %s = %s", label, memory(before), sign(delta), memory(Math.abs(delta)), memory(before + delta));
+    }
+
+    private static String formatMemory(String label, long before, long delta, long aggregatedDelta) {
+      return String
+          .format("%s ~ %s (%c%s)", label, memory(before + delta), sign(aggregatedDelta), memory(Math.abs(aggregatedDelta)));
+    }
+
+    private static char sign(long value) {
+      return value < 0 ? '-' : '+';
+    }
+
+    private static String memory(long value) {
+      if (value == 0)
+        return "0B";
+
+      if (value % (1024 * 1024 * 1024) == 0)
+        return Long.toString(value / (1024 * 1024 * 1024)) + "GB";
+
+      if (value % (1024 * 1024) == 0)
+        return Long.toString(value / (1024 * 1024)) + "MB";
+
+      if (value % 1024 == 0)
+        return Long.toString(value / 1024) + "KB";
+
+      return Long.toString(value) + "B";
+    }
+
+    private static String percentage(long part, long whole) {
+      return Math.floor((double) part / whole * 100.0 * 100.0) / 100.0 + "%";
     }
   }
 
