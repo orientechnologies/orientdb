@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 
 /**
  * Created by tglman on 07/07/16.
@@ -43,6 +42,9 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
 
       @Override
       public boolean reuseResource(Void iKey, Object[] iAdditionalArgs, ODatabaseDocumentInternal iValue) {
+        if(iValue.getStorage().isClosed()){
+          return false;
+        }
         iValue.reuse();
         return true;
       }
