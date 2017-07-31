@@ -153,20 +153,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       }
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public <DB extends ODatabase> DB create(String incrementalBackupPath) {
-    create();
-
-    final OStorage storage = getStorage();
-    storage.restoreFromIncrementalBackup(incrementalBackupPath);
-    loadMetadata();
-
-    return (DB) this;
-  }
-
   protected abstract void loadMetadata();
 
   public void callOnCloseListeners() {

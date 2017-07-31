@@ -520,4 +520,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     return microTransaction;
   }
 
+  public static void deInit(OAbstractPaginatedStorage storage) {
+    OSharedContext sharedContext = storage.removeResource(OSharedContext.class.getName());
+    //This storage may not have been completely opened yet
+    if (sharedContext != null)
+      sharedContext.close();
+  }
 }

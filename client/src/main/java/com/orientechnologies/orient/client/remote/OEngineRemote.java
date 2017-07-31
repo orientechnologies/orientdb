@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.Map;
@@ -42,13 +43,7 @@ public class OEngineRemote extends OEngineAbstract {
   }
 
   public OStorageRemote createStorage(final String iURL, final Map<String, String> iConfiguration) {
-    try {
-      return new OStorageRemote(iURL, "rw", getConnectionManager());
-    } catch (Exception e) {
-      final String message = "Error on opening database: " + iURL;
-      OLogManager.instance().error(this, message, e);
-      throw OException.wrapException(new ODatabaseException(message), e);
-    }
+    throw new OStorageException("deprecated");
   }
 
   @Override

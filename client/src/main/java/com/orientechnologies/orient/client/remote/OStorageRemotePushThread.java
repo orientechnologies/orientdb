@@ -63,7 +63,7 @@ public class OStorageRemotePushThread extends Thread {
           }
         }
       } catch (IOException e) {
-        pushHandler.onPushDisconnect(e);
+        pushHandler.onPushDisconnect(this.network, e);
         while (!currentThread().isInterrupted()) {
           try {
             Thread.sleep(retryDelay);
@@ -73,11 +73,6 @@ public class OStorageRemotePushThread extends Thread {
           if (!currentThread().isInterrupted()) {
             try {
               synchronized (this) {
-                try {
-                  network.close();
-                } catch (RuntimeException ignore) {
-                  //IGNORE
-                }
                 network = pushHandler.getNetwork(this.host);
               }
               pushHandler.onPushReconnect(this.host);
@@ -88,7 +83,7 @@ public class OStorageRemotePushThread extends Thread {
           }
         }
       } catch (InterruptedException e) {
-        pushHandler.onPushDisconnect(e);
+        pushHandler.onPushDisconnect(this.network,e);
         currentThread().interrupt();
       }
     }
@@ -111,6 +106,6 @@ public class OStorageRemotePushThread extends Thread {
 
   public void shutdown() {
     interrupt();
-    this.network.close();
+    pushHandler.returnSocket(this.network);
   }
 }

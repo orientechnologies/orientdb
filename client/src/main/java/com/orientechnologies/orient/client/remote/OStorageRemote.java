@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.db.document.OLiveQueryMonitorRemote;
@@ -62,6 +63,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSer
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
@@ -121,13 +123,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   private final Map<Integer, OLiveQueryClientListener> liveQueryListener = new ConcurrentHashMap<>();
   private volatile OStorageRemotePushThread pushThread;
+  private final    OrientDBRemote           context;
 
-  public OStorageRemote(final String iURL, final String iMode, ORemoteConnectionManager connectionManager) throws IOException {
-    this(iURL, iMode, connectionManager, null);
+  public OStorageRemote(final String iURL, OrientDBRemote context, final String iMode, ORemoteConnectionManager connectionManager)
+      throws IOException {
+    this(iURL, context, iMode, connectionManager, null);
   }
 
-  public OStorageRemote(final String iURL, final String iMode, ORemoteConnectionManager connectionManager, final STATUS status)
-      throws IOException {
+  public OStorageRemote(final String iURL, OrientDBRemote context, final String iMode, ORemoteConnectionManager connectionManager,
+      final STATUS status) throws IOException {
     super(iURL, iURL, iMode); // NO TIMEOUT @SINCE 1.5
     if (status != null)
       this.status = status;
@@ -142,6 +146,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     asynchExecutor = Executors.newSingleThreadScheduledExecutor();
 
     this.connectionManager = connectionManager;
+    this.context = context;
   }
 
   public <T extends OBinaryResponse> T asyncNetworkOperation(final OBinaryAsyncRequest<T> request, int mode,
@@ -476,6 +481,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
     liveQueryListener.clear();
 
+//     In backward compatible code the context is missing check if is there.
+    if (context != null) {
+      context.closeStorage(this);
+    }
+
+  }
+
+  public void shutdown() {
     stateLock.acquireWriteLock();
     try {
       if (status == STATUS.CLOSED)
@@ -488,7 +501,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       }
       sbTreeCollectionManager.close();
 
-      super.close(iForce, onDelete);
+      super.close(true, false);
       if (pushThread != null) {
         pushThread.shutdown();
         try {
@@ -1912,7 +1925,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   @Override
-  public void onPushDisconnect(Exception e) {
+  public void onPushDisconnect(OChannelBinary network, Exception e) {
+    this.connectionManager.remove((OChannelBinaryAsynchClient) network);
     if (e instanceof InterruptedException) {
       for (OLiveQueryClientListener liveListener : liveQueryListener.values()) {
         liveListener.onEnd();
@@ -1926,5 +1940,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         }
       }
     }
+  }
+
+  @Override
+  public void returnSocket(OChannelBinary network) {
+    this.connectionManager.remove((OChannelBinaryAsynchClient) network);
   }
 }

@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
 import com.orientechnologies.orient.client.remote.message.OLiveQueryPushRequest;
@@ -22,5 +21,7 @@ public interface ORemotePushHandler {
 
   void onPushReconnect(String host);
 
-  void onPushDisconnect(Exception e);
+  void onPushDisconnect(OChannelBinary network, Exception e);
+
+  void returnSocket(OChannelBinary network);
 }

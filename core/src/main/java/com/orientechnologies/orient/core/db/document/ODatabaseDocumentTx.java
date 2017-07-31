@@ -1096,13 +1096,13 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public <DB extends ODatabase> DB create() {
-    // TODO
     return create((Map<OGlobalConfiguration, Object>) null);
   }
 
   @Override
+  @Deprecated
   public <DB extends ODatabase> DB create(String incrementalBackupPath) {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
