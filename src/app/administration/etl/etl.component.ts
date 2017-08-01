@@ -1,6 +1,6 @@
 import * as $ from "jquery"
 
-import {Component, NgZone} from '@angular/core';
+import {Component, ElementRef, NgZone, OnDestroy, ViewChild} from '@angular/core';
 
 import {downgradeComponent} from "@angular/upgrade/static";
 import {EtlService} from "../../core/services";
@@ -16,7 +16,9 @@ declare const angular:any;
   styleUrls: []
 })
 
-class EtlComponent {
+class EtlComponent implements OnDestroy {
+
+  @ViewChild('stepSwitch') switchRef: ElementRef;
 
   // Prototypes
   private configPrototype;
@@ -70,6 +72,11 @@ class EtlComponent {
     /*this.agentService.isActive().then(() => {
      this.init();
      }); */ // TODO activate enterprise control
+  }
+
+  // Destroy the library when another studio tool is opened to prevent broken sort
+  ngOnDestroy() {
+    if(this.step == 2) (<any>$(this.switchRef.nativeElement.querySelector('#transformerList'))).sortable("destroy");
   }
 
   init() {
@@ -680,7 +687,7 @@ class EtlComponent {
   // Dynamic creations
 
   sourceInit() {
-    this.step = 2;
+    this.setStep(2);
 
     if (this.sourcePrototype.source.value === "jdbc") this.source = null;
 
@@ -1003,6 +1010,7 @@ class EtlComponent {
     $("#panelPlaceholder").show();
     $("#eCanvas").fadeOut(1000);
 
+    this.readyForExecution();
   }
 
   deleteTransformer() {
@@ -1024,6 +1032,8 @@ class EtlComponent {
     $("#transformerOptions").hide();
     $("#panelPlaceholder").show();
     if (this.transformers.length == 0) $("#pleaseTransformer").show();
+
+    this.readyForExecution();
   }
 
   deleteLoader() {
@@ -1036,6 +1046,8 @@ class EtlComponent {
     $("#loaderOptions").hide();
     $("#panelPlaceholder").show();
     $("#lCanvas").fadeOut(1000);
+
+    this.readyForExecution();
   }
 
   oldConfigInit(oldConfig, direct = 0) {
@@ -1251,7 +1263,9 @@ class EtlComponent {
         }
       }
       this.ready = true;
+      return;
     }
+    this.ready = false;
   }
 
   subReadyForExecution() {
@@ -1283,6 +1297,7 @@ class EtlComponent {
   }
 
   launch() {
+    (<any>$("#transformerList")).sortable("destroy");
     let etl = {};
 
     this.sortTransformers(); // Sort transformers starting from the indexes
@@ -1321,7 +1336,7 @@ class EtlComponent {
 
     this.finalJson = JSON.stringify(etl);
 
-    this.step = "3";
+    this.step = '3';
 
     /*this.etlService.launch(this.finalJson).then((data) => {
      this.step = "3";
@@ -1371,11 +1386,11 @@ class EtlComponent {
       this.loader = undefined;
       this.source = undefined;
       this.sourcePrototype.source.value = undefined;
-      this.sourcePrototype.headers =undefined;
+      this.sourcePrototype.headers = undefined;
       this.sourcePrototype.fileLock = undefined;
       this.sourcePrototype.filePath = undefined;
       this.sourcePrototype.fileURL = undefined;
-      this.sourcePrototype.URLMethod = undefined;
+      this.sourcePrototype.URLMethod.value = undefined;
       this.extractorType = undefined;
       this.loaderType = undefined;
       this.advanced = false;
@@ -1388,6 +1403,7 @@ class EtlComponent {
       this.sourcePrototype.source.types = ["jdbc", "file", "http"];
 
       this.setStep(0);
+
     }
 
     if(fromStep == 2) {
@@ -1397,10 +1413,12 @@ class EtlComponent {
       this.loader = undefined;
       this.extractorType = undefined;
       this.loaderType = undefined;
+      this.ready = false;
       this.classReady = false;
       this.indexReady = false;
       this.oldConfigJquery = false;
 
+      (<any>$("#transformerList")).sortable("destroy");
       this.setStep(1);
     }
   }
@@ -1574,43 +1592,10 @@ class EtlComponent {
   ngAfterViewChecked() {
     this.enablePopovers();
 
-    // Activate sortable and custom animations
     if(this.step === 2) {
-      console.log("entro");
-      let adjustment;
-      (<any>$("#transformerList")).sortable({
-        group: 'transformerList',
-        pullPlaceholder: true,
-        // Animation on drop
-        onDrop: function ($item, container, _super) {
-          let $clonedItem = $('<li/>').css({height: 0});
-          $item.before($clonedItem);
-          $clonedItem.animate({'height': $item.height()});
-          $item.animate($clonedItem.position(), function () {
-            $clonedItem.detach();
-            _super($item, container);
-          });
-        },
-        // Set $item relative to cursor position
-        onDragStart: function ($item, container, _super) {
-          let offset = $item.offset(),
-            pointer = container.rootGroup.pointer;
-
-          adjustment = {
-            left: pointer.left - offset.left,
-            top: pointer.top - offset.top
-          };
-          _super($item, container);
-        },
-        onDrag: function ($item, position) {
-          $item.css({
-            left: position.left - adjustment.left,
-            top: position.top - adjustment.top
-          });
-        }
-      });
-      console.log("termino");
+      this.initSortableLib();
     }
+
     // Execute the Jquery part just one time
     if(this.oldConfig && this.step == 2 && this.oldConfigJquery) {
       // Jquery
@@ -1628,6 +1613,43 @@ class EtlComponent {
       this.drawLoaderCanvas();
       this.oldConfigJquery = false;
     }
+  }
+
+  initSortableLib() {
+    // Activate sortable and custom animations
+
+    let adjustment;
+    (<any>$("#transformerList")).sortable({
+      group: 'transformerList',
+      pullPlaceholder: true,
+      // Animation on drop
+      onDrop: function ($item, container, _super) {
+        let $clonedItem = $('<li/>').css({height: 0});
+        $item.before($clonedItem);
+        $clonedItem.animate({'height': $item.height()});
+        $item.animate($clonedItem.position(), function () {
+          $clonedItem.detach();
+          _super($item, container);
+        });
+      },
+      // Set $item relative to cursor position
+      onDragStart: function ($item, container, _super) {
+        let offset = $item.offset(),
+          pointer = container.rootGroup.pointer;
+
+        adjustment = {
+          left: pointer.left - offset.left,
+          top: pointer.top - offset.top
+        };
+        _super($item, container);
+      },
+      onDrag: function ($item, position) {
+        $item.css({
+          left: position.left - adjustment.left,
+          top: position.top - adjustment.top
+        });
+      }
+    });
   }
 
   enablePopovers() {

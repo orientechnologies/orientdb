@@ -8,7 +8,7 @@
 
   <div>
     <form class="form-horizontal" id="etlForm" name="etlForm" #form="ngForm">
-      <div id="stepSwitch" [ngSwitch]="getStep()">
+      <div id="stepSwitch" #stepSwitch [ngSwitch]="getStep()">
 
         <!-- Step 0 - welcome screen and choice between new config and existing one -->
         <div class="stepZero" *ngSwitchCase="'0'">
@@ -272,7 +272,7 @@
                       <div class="col-md-12" style="overflow-y:auto; overflow-x: hidden">
                         <h5 id="pleaseTransformer" align="center"><b>Please create at least one transformer</b></h5>
                         <div id="transformerSpace" style="height: 300px">
-                          <ol id="transformerList" class="transformer-list list-unstyled">
+                          <ol id="transformerList" #transformerList class="transformer-list list-unstyled">
                           </ol>
                         </div>
                       </div>
