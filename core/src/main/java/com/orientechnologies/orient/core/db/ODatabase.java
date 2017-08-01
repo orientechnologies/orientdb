@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
@@ -38,7 +40,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.query.live.OLiveQueryListener;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -49,6 +50,7 @@ import com.orientechnologies.orient.core.util.OBackupable;
 
 import java.io.Closeable;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
@@ -1119,4 +1121,65 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param args     the live query args
    */
   OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Object... args);
+
+  /**
+   * Tries to execute a lambda in a transaction, retrying it if an ONeedRetryException is thrown.
+   * <p>
+   * If the DB does not have an active transaction, after the execution you will still be out of tx.
+   * <p>
+   * If the DB has an active transaction, then the transaction has to be empty (no operations executed yet)
+   * and after the execution you will be in a new transaction.
+   *
+   * @param nRetries the maximum number of retries (> 0)
+   * @param function a lambda containing application code to execute in a commit/retry loop
+   * @param <T>      the return type of the lambda
+   *
+   * @return The result of the execution of the lambda
+   *
+   * @throws IllegalStateException    if there are operations in the current transaction
+   * @throws ONeedRetryException      if the maximum number of retries is executed and all failed with an ONeedRetryException
+   * @throws IllegalArgumentException if nRetries is <= 0
+   * @throws UnsupportedOperationException if this type of database does not support automatic commit/retry
+   */
+  default <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
+      throws IllegalStateException, IllegalArgumentException, ONeedRetryException, UnsupportedOperationException {
+    if (nRetries < 1) {
+      throw new IllegalArgumentException("invalid number of retries: " + nRetries);
+    }
+    OTransaction tx = getTransaction();
+    boolean txActive = tx.isActive();
+    if (txActive) {
+      if (tx.getEntryCount() > 0) {
+        throw new IllegalStateException(
+            "executeWithRetry() cannot be used within a pending (dirty) transaction. Please commit or rollback before invoking it");
+      }
+    }
+    if (!txActive) {
+      begin();
+    }
+
+    T result = null;
+
+    for (int i = 0; i < nRetries; i++) {
+      try {
+        result = function.apply((ODatabaseSession) this);
+        commit();
+        break;
+      } catch (ONeedRetryException e) {
+        if (i == nRetries - 1) {
+          throw e;
+        }
+        rollback();
+        begin();
+      } catch (Exception e) {
+        throw OException.wrapException(new ODatabaseException("Error during tx retry"), e);
+      }
+    }
+
+    if (txActive) {
+      begin();
+    }
+
+    return result;
+  }
 }
