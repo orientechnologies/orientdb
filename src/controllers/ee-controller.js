@@ -1230,8 +1230,7 @@ ee.controller('EEDashboardController', ["$scope", "$rootScope", "$routeParams", 
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
     {name: "alerts", title: "Alerts Management", template: 'events', icon: 'fa-bell'},
-    {name: "importers", title: "Importer", template: 'importersManager', icon: 'fa-plug'},
-    {name: "etl", title: "Etl", template: 'etl', icon: 'fa-tasks'}
+    {name: "importers", title: "Importer", template: 'importersManager', icon: 'fa-plug'}
   ]
 
 

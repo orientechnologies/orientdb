@@ -444,7 +444,6 @@ ServerModule.controller("ServerDashboardController", ['$scope', '$routeParams', 
       wiki: "Studio-Backup-Management.html"
     },
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock', wiki: "Security-Config.html"},
-    {name: "etl", title: "Etl", template: 'etl', icon: 'fa-tasks', wiki: 'Studio-ETL.html'},
     {name: "plugins", title: "Plugins Management", template: 'plugins', icon: 'fa-plug'},
     {name: "importers", title: "Importer", template: 'importersManager', icon: 'fa-plug'},
     {
