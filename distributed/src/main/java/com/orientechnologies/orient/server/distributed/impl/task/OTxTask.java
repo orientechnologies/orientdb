@@ -148,12 +148,6 @@ public class OTxTask extends OAbstract2pcTask {
 
       database.rollback();
 
-      // KEEP THE LOCKS WAITING FOR THE FINAL MSG FROM THE COORDINATOR
-
-//      // REMOVE THE CONTEXT
-//      ddb.popTxContext(requestId);
-//      reqContext.destroy();
-
       // ALREADY ROLLED BACK (ON STORAGE), REMOVE UNDO TASKS
       reqContext.clearUndo();
 
