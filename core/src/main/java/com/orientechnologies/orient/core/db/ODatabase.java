@@ -1141,7 +1141,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @throws IllegalArgumentException if nRetries is <= 0
    * @throws UnsupportedOperationException if this type of database does not support automatic commit/retry
    */
-  default <T> T executeWithRetry(int nRetries, Function<ODatabase, T> function)
+  default <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
       throws IllegalStateException, IllegalArgumentException, ONeedRetryException, UnsupportedOperationException {
     if (nRetries < 1) {
       throw new IllegalArgumentException("invalid number of retries: " + nRetries);
@@ -1162,7 +1162,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
     for (int i = 0; i < nRetries; i++) {
       try {
-        result = function.apply(this);
+        result = function.apply((ODatabaseSession) this);
         commit();
         break;
       } catch (ONeedRetryException e) {
