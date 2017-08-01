@@ -40,7 +40,6 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -115,36 +114,31 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
     } else {
       // UPDATE IT
-      if (previousRecordVersion == version + 1 && Arrays.equals(content, previousRecordContent)) {
-        // OPERATION ALREADY EXECUTED
-        record = previousRecord;
-      } else {
-        // DON'T COPY THE RECORD TO AVOID IS CONFUSED IN TX RESULT BACK
-        final ORecord loadedRecord = previousRecord;
+      // DON'T COPY THE RECORD TO AVOID IS CONFUSED IN TX RESULT BACK
+      final ORecord loadedRecord = previousRecord;
 
-        if (loadedRecord instanceof ODocument) {
-          // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
-          final ODocument newDocument = (ODocument) getRecord();
+      if (loadedRecord instanceof ODocument) {
+        // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
+        final ODocument newDocument = (ODocument) getRecord();
 
-          final ODocument loadedDocument = (ODocument) loadedRecord;
-          loadedDocument.merge(newDocument, false, false).getVersion();
-          ORecordInternal.setVersion(loadedDocument, version);
-        } else
-          ORecordInternal.fill(loadedRecord, rid, version, content, true);
+        final ODocument loadedDocument = (ODocument) loadedRecord;
+        loadedDocument.merge(newDocument, false, false).getVersion();
+        ORecordInternal.setVersion(loadedDocument, version);
+      } else
+        ORecordInternal.fill(loadedRecord, rid, version, content, true);
 
-        loadedRecord.setDirty();
+      loadedRecord.setDirty();
 
-        record = database.save(loadedRecord);
+      record = database.save(loadedRecord);
 
-        if (record == null)
-          ODistributedServerLog
-              .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Error on updating record %s", rid);
+      if (record == null)
+        ODistributedServerLog
+            .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Error on updating record %s", rid);
 
-        if (version < 0 && ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog
-              .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Reverted %s from version %d to %d", rid,
-                  previousRecordVersion, record.getVersion());
-      }
+      if (version < 0 && ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog
+            .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Reverted %s from version %d to %d", rid,
+                previousRecordVersion, record.getVersion());
     }
 
     if (record == null)
