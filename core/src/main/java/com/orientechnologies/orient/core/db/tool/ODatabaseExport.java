@@ -272,11 +272,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
     if (tempFileName != null) // may be null if writing to an output stream w/o file
       try {
-        try {
-          Files.move(Paths.get(tempFileName), Paths.get(fileName), StandardCopyOption.ATOMIC_MOVE);
-        } catch (AtomicMoveNotSupportedException e) {
-          Files.move(Paths.get(tempFileName), Paths.get(fileName));
-        }
+        OFileUtils.atomicMoveWithFallback(Paths.get(tempFileName), Paths.get(fileName), this);
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on exporting database '%s' to: %s", e, database.getName(), fileName);
         throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);

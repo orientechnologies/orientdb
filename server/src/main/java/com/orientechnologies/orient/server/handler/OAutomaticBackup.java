@@ -364,11 +364,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
       }, compressionLevel, bufferSize);
     }
 
-    try {
-      Files.move(tempFilePath, filePath, StandardCopyOption.ATOMIC_MOVE);
-    } catch (AtomicMoveNotSupportedException e) {
-      Files.move(tempFilePath, filePath);
-    }
+    OFileUtils.atomicMoveWithFallback(tempFilePath, filePath, this);
   }
 
   protected void exportDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {
