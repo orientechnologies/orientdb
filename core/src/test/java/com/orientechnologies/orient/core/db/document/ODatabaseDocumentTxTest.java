@@ -229,7 +229,7 @@ public class ODatabaseDocumentTxTest {
     ODocument v = db.newInstance("V");
     db.save(v);
     try {
-      db.executeWithRetry(() -> null, 2);
+      db.executeWithRetry(2, (db) -> null);
       Assert.fail();
     } catch (IllegalStateException x) {
     }
@@ -239,7 +239,7 @@ public class ODatabaseDocumentTxTest {
   @Test
   public void testExecuteWithRetryWrongN() {
     try {
-      db.executeWithRetry(() -> null, -1);
+      db.executeWithRetry(-1, (db) -> null);
       Assert.fail();
     } catch (IllegalArgumentException x) {
     }
@@ -247,11 +247,11 @@ public class ODatabaseDocumentTxTest {
 
   @Test
   public void testExecuteWithRetryTxStatus() {
-    db.executeWithRetry(() -> null, 1);
+    db.executeWithRetry(1, (db) -> null);
     Assert.assertFalse(db.getTransaction().isActive());
 
     db.begin();
-    db.executeWithRetry(() -> null, 1);
+    db.executeWithRetry(1, (db) -> null);
     Assert.assertTrue(db.getTransaction().isActive());
     db.rollback();
   }
@@ -272,8 +272,8 @@ public class ODatabaseDocumentTxTest {
         public void run() {
           ODatabaseDocumentTx dbCopy = db.copy();
           dbCopy.activateOnCurrentThread();
-          dbCopy.executeWithRetry(() -> {
-            OElement vCopy = dbCopy.load(v.getIdentity());
+          dbCopy.executeWithRetry(10, (db) -> {
+            OElement vCopy = (OElement) db.load(v.getIdentity());
             try {
               Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -281,7 +281,7 @@ public class ODatabaseDocumentTxTest {
             vCopy.setProperty("count", (int) vCopy.getProperty("count") + 1);
             dbCopy.save(vCopy);
             return vCopy;
-          }, 10);
+          });
           dbCopy.close();
         }
       };
@@ -312,8 +312,8 @@ public class ODatabaseDocumentTxTest {
           ODatabaseDocumentTx dbCopy = db.copy();
           dbCopy.activateOnCurrentThread();
           dbCopy.begin();
-          dbCopy.executeWithRetry(() -> {
-            OElement vCopy = dbCopy.load(v.getIdentity());
+          dbCopy.executeWithRetry(10, (db) -> {
+            OElement vCopy = (OElement) db.load(v.getIdentity());
             try {
               Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -321,7 +321,7 @@ public class ODatabaseDocumentTxTest {
             vCopy.setProperty("count", (int) vCopy.getProperty("count") + 1);
             dbCopy.save(vCopy);
             return vCopy;
-          }, 10);
+          });
           dbCopy.commit();
           dbCopy.close();
         }

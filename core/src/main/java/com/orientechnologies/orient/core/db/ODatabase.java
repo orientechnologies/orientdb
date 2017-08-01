@@ -50,7 +50,7 @@ import com.orientechnologies.orient.core.util.OBackupable;
 
 import java.io.Closeable;
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
@@ -1125,13 +1125,13 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Tries to execute a lambda in a transaction, retrying it if an ONeedRetryException is thrown.
    * <p>
-   * If it runs out of a transaction, after the execution you will still be out of tx.
+   * If the DB does not have an active transaction, after the execution you will still be out of tx.
    * <p>
-   * If it runs in a transaction, then the transaction has to be empty (no operations executed yet)
+   * If the DB has an active transaction, then the transaction has to be empty (no operations executed yet)
    * and after the execution you will be in a new transaction.
    *
-   * @param callable a lambda containing application code to execute in a commit/retry loop
    * @param nRetries the maximum number of retries (> 0)
+   * @param function a lambda containing application code to execute in a commit/retry loop
    * @param <T>      the return type of the lambda
    *
    * @return The result of the execution of the lambda
@@ -1139,9 +1139,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @throws IllegalStateException    if there are operations in the current transaction
    * @throws ONeedRetryException      if the maximum number of retries is executed and all failed with an ONeedRetryException
    * @throws IllegalArgumentException if nRetries is <= 0
+   * @throws UnsupportedOperationException if this type of database does not support automatic commit/retry
    */
-  default <T> T executeWithRetry(Callable<T> callable, int nRetries)
-      throws IllegalStateException, IllegalArgumentException, ONeedRetryException {
+  default <T> T executeWithRetry(int nRetries, Function<ODatabase, T> function)
+      throws IllegalStateException, IllegalArgumentException, ONeedRetryException, UnsupportedOperationException {
     if (nRetries < 1) {
       throw new IllegalArgumentException("invalid number of retries: " + nRetries);
     }
@@ -1161,7 +1162,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
     for (int i = 0; i < nRetries; i++) {
       try {
-        result = callable.call();
+        result = function.apply(this);
         commit();
         break;
       } catch (ONeedRetryException e) {
