@@ -279,7 +279,7 @@ public class ODatabaseDocumentTxTest {
             } catch (InterruptedException e) {
             }
             vCopy.setProperty("count", (int) vCopy.getProperty("count") + 1);
-            dbCopy.save(vCopy);
+            db.save(vCopy);
             return vCopy;
           });
           dbCopy.close();
@@ -319,7 +319,7 @@ public class ODatabaseDocumentTxTest {
             } catch (InterruptedException e) {
             }
             vCopy.setProperty("count", (int) vCopy.getProperty("count") + 1);
-            dbCopy.save(vCopy);
+            db.save(vCopy);
             return vCopy;
           });
           dbCopy.commit();
