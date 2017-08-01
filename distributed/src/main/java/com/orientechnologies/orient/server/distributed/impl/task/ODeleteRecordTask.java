@@ -19,12 +19,17 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -45,6 +50,9 @@ import java.util.List;
  */
 public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   public static final int FACTORYID = 4;
+
+  private byte[] previousRecordContent;
+  private int    previousRecordVersion;
 
   public ODeleteRecordTask() {
   }
@@ -75,7 +83,7 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
       // ALREADY DELETED
       return true;
 
-    final ORecord loadedRecord = previousRecord.copy();
+    final ORecord loadedRecord = previousRecord;
 
     try {
       if (loadedRecord instanceof ODocument) {
@@ -128,6 +136,10 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
     if (previousRecord == null)
       return null;
 
+    // RECREATE PREVIOUS RECORD
+    previousRecord = Orient.instance().getRecordFactoryManager().newInstance(ORecordInternal.getRecordType(previousRecord));
+    ORecordInternal.fill(previousRecord, rid, previousRecordVersion, previousRecordContent, true);
+
     final OResurrectRecordTask task = ((OResurrectRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(servers)
         .createTask(OResurrectRecordTask.FACTORYID)).init(previousRecord);
     task.setLockRecords(false);
@@ -159,4 +171,23 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
     return false;
   }
 
+  @Override
+  public ORecord prepareUndoOperation() {
+    if (previousRecord == null) {
+      // READ DIRECTLY FROM THE UNDERLYING STORAGE
+      final OStorageOperationResult<ORawBuffer> loaded = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying()
+          .readRecord(rid, null, true, false, null);
+
+      if (loaded == null || loaded.getResult() == null)
+        return null;
+
+      // SAVE THE CONTENT TO COMPARE IN CASE
+      previousRecordContent = loaded.getResult().buffer;
+      previousRecordVersion = loaded.getResult().version;
+
+      previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType);
+      ORecordInternal.fill(previousRecord, rid, previousRecordVersion, loaded.getResult().getBuffer(), false);
+    }
+    return previousRecord;
+  }
 }

@@ -57,6 +57,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
   private transient ORecord record;
   private           byte[]  previousRecordContent;
+  private           int     previousRecordVersion;
 
   public OUpdateRecordTask() {
   }
@@ -113,13 +114,12 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
     } else {
       // UPDATE IT
-      final int loadedVersion = previousRecord.getVersion();
-
-      if (loadedVersion == version + 1 && Arrays.equals(content, previousRecordContent)) {
+      if (previousRecordVersion == version + 1 && Arrays.equals(content, previousRecordContent)) {
         // OPERATION ALREADY EXECUTED
         record = previousRecord;
       } else {
-        final ORecord loadedRecord = previousRecord.copy();
+        // DON'T COPY THE RECORD TO AVOID IS CONFUSED IN TX RESULT BACK
+        final ORecord loadedRecord = previousRecord;
 
         if (loadedRecord instanceof ODocument) {
           // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
@@ -142,7 +142,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
         if (version < 0 && ODistributedServerLog.isDebugEnabled())
           ODistributedServerLog
               .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Reverted %s from version %d to %d", rid,
-                  loadedVersion, record.getVersion());
+                  previousRecordVersion, record.getVersion());
       }
     }
 
@@ -190,10 +190,10 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     if (previousRecord == null)
       return null;
 
-    final int versionCopy = ORecordVersionHelper.setRollbackMode(previousRecord.getVersion());
+    final int versionCopy = ORecordVersionHelper.setRollbackMode(previousRecordVersion);
 
     final OUpdateRecordTask task = ((OFixUpdateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(servers)
-        .createTask(OFixUpdateRecordTask.FACTORYID)).init(rid, previousRecord.toStream(), versionCopy, recordType);
+        .createTask(OFixUpdateRecordTask.FACTORYID)).init(rid, previousRecordContent, versionCopy, recordType);
     task.setLockRecords(false);
     return task;
   }
@@ -249,9 +249,10 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
       // SAVE THE CONTENT TO COMPARE IN CASE
       previousRecordContent = loaded.getResult().buffer;
+      previousRecordVersion = loaded.getResult().version;
 
       previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType);
-      ORecordInternal.fill(previousRecord, rid, loaded.getResult().version, loaded.getResult().getBuffer(), false);
+      ORecordInternal.fill(previousRecord, rid, previousRecordVersion, loaded.getResult().getBuffer(), false);
     }
     return previousRecord;
   }
