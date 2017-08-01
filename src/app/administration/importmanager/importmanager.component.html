@@ -28,10 +28,10 @@
 
       <ul>
         <li class="importer-description">
-          <a (click)="setTab('teleporter')"><b>Teleporter</b></a>
+          <a class="pointer" (click)="setTab('teleporter')"><b>Teleporter</b></a>
           <div class="row">
             <div class="col-md-2">
-              <img src="src/img/teleporter-image3.jpg" width="100%" height="100%"/>
+              <img class="pointer" src="src/img/teleporter-image3.jpg" width="100%" height="100%" (click)="setTab('teleporter')"/>
             </div>
             <div class="col-md-10">
               <p>
@@ -50,10 +50,10 @@
         </li>
 
         <li class="importer-description">
-          <a (click)="setTab('neo4jImporter')"><b>Neo4j Importer</b></a>
+          <a class="pointer" (click)="setTab('neo4jImporter')"><b>Neo4j Importer</b></a>
           <div class="row">
             <div class="col-md-2">
-              <img src="src/img/neo4jimporter-150x150.png" width="70%" height="70%"/>
+              <img class="pointer" src="src/img/neo4jimporter-150x150.png" width="70%" height="70%" (click)="setTab('neo4jImporter')"/>
             </div>
             <div class="col-md-10">
               <p>
@@ -71,7 +71,7 @@
           <a class="not-allowed"><b>ETL</b></a>
           <div class="row">
             <div class="col-md-2">
-              <img src="src/img/cogs.png"/>
+              <img class="not-allowed pointer" src="src/img/cogs.png"/>
             </div>
             <div class="col-md-10">
               <p>
@@ -95,4 +95,5 @@
   <div *ngIf="currentTab === 'neo4jImporter'">
     <neo4jimporter></neo4jimporter>
   </div>
+
 </div>
