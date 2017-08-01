@@ -1721,8 +1721,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       throw new OStorageException("Error on multiple part url parsing");
     serverURL = split[0];
     sepPos = serverURL.indexOf(":");
-    final int remotePort = Integer.parseInt(serverURL.substring(sepPos + 1));
-    final String remoteHost = serverURL.substring(0, sepPos);
+
+    final int remotePort;
+    final String remoteHost;
+    if (sepPos > -1) {
+      remotePort = Integer.parseInt(serverURL.substring(sepPos + 1));
+      remoteHost = serverURL.substring(0, sepPos);
+    } else {
+      remotePort = DEFAULT_PORT;
+      remoteHost = serverURL;
+    }
+
     try {
       if (remoteHost.equals("localhost") || remoteHost.equals("127.0.0.1")) {
         return OChannel.getLocalIpAddress(true) + ":" + remotePort;
