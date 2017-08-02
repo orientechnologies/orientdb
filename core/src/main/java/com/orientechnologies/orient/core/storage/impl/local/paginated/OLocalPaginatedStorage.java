@@ -198,8 +198,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
         final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
         try {
-          return OZIPCompressionUtil
-              .compressDirectory(getStoragePath().toString(), bo, new String[] { ".wal", ".fl" }, iOutput, compressionLevel);
+          return OZIPCompressionUtil.compressDirectory(getStoragePath().toString(), bo,
+              new String[] { ".wal", ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION }, iOutput, compressionLevel);
         } finally {
           if (bufferSize > 0) {
             bo.flush();
@@ -226,6 +226,24 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         close(true, false);
 
       OZIPCompressionUtil.uncompressDirectory(in, getStoragePath().toString(), iListener);
+
+      final Path cacheStateFile = getStoragePath().resolve(O2QCache.CACHE_STATE_FILE);
+      if (Files.exists(cacheStateFile)) {
+        String message = "the cache state file (" + O2QCache.CACHE_STATE_FILE + ") is found in the backup, deleting the file";
+        OLogManager.instance().warn(this, message);
+        if (iListener != null)
+          iListener.onMessage('\n' + message);
+
+        try {
+          Files.deleteIfExists(cacheStateFile); // delete it, if it still exists
+        } catch (IOException e) {
+          message =
+              "unable to delete the backed up cache state file (" + O2QCache.CACHE_STATE_FILE + "), please delete it manually";
+          OLogManager.instance().warn(this, message, e);
+          if (iListener != null)
+            iListener.onMessage('\n' + message);
+        }
+      }
 
       if (callable != null)
         try {

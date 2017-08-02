@@ -76,7 +76,7 @@ public class O2QCache implements OReadCache {
   /**
    * File which contains stored state of disk cache after storage close.
    */
-  static final String CACHE_STATE_FILE = "cache.stt";
+  public static final String CACHE_STATE_FILE = "cache.stt";
 
   /**
    * Extension for file which contains stored state of disk cache after storage close.
