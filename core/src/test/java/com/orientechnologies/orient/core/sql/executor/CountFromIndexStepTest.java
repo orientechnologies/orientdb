@@ -20,10 +20,10 @@ import java.util.Arrays;
 @RunWith(Parameterized.class)
 public class CountFromIndexStepTest extends TestUtilsFixture {
 
-    private static final String CLASS_NAME = "TestClass";
-    private static final String PROPERTY_NAME = "testProperty";
-    private static final String INDEX_NAME = CLASS_NAME + "." + PROPERTY_NAME;
+    private static final String PROPERTY_NAME = "testPropertyName";
+    private static final String PROPERTY_VALUE = "testPropertyValue";
     private static final String ALIAS = "size";
+    private static String indexName;
 
     private OIndexIdentifier.Type identifierType;
 
@@ -43,13 +43,15 @@ public class CountFromIndexStepTest extends TestUtilsFixture {
 
     @BeforeClass
     public static void precondition() {
-        OClass clazz = database.getMetadata().getSchema().createClass(CLASS_NAME);
+        OClass clazz = createClassInstance();
         clazz.createProperty(PROPERTY_NAME, OType.STRING);
-        clazz.createIndex(INDEX_NAME, OClass.INDEX_TYPE.NOTUNIQUE, PROPERTY_NAME);
+        String className = clazz.getName();
+        indexName = className + "." + PROPERTY_NAME;
+        clazz.createIndex(indexName, OClass.INDEX_TYPE.NOTUNIQUE, PROPERTY_NAME);
 
         for (int i = 0; i < 20; i++) {
-            ODocument document = new ODocument(CLASS_NAME);
-            document.field(PROPERTY_NAME, "TestProperty");
+            ODocument document = new ODocument(className);
+            document.field(PROPERTY_NAME, PROPERTY_VALUE);
             document.save();
         }
     }
@@ -57,7 +59,7 @@ public class CountFromIndexStepTest extends TestUtilsFixture {
     @Test
     public void shouldCountRecordsOfIndex() {
         OIndexName name = new OIndexName(-1);
-        name.setValue(INDEX_NAME);
+        name.setValue(indexName);
         OIndexIdentifier identifier = new OIndexIdentifier(-1);
         identifier.setIndexName(name);
         identifier.setIndexNameString(name.getValue());

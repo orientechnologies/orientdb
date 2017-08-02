@@ -11,6 +11,10 @@ import org.junit.Test;
  */
 public class CountStepTest {
 
+    private static final String PROPERTY_NAME = "testPropertyName";
+    private static final String PROPERTY_VALUE = "testPropertyValue";
+    private static final String COUNT_PROPERTY_NAME = "count";
+
     @Test
     public void shouldCountRecords() {
         OCommandContext context = new OBasicCommandContext();
@@ -25,7 +29,7 @@ public class CountStepTest {
                 if (!done) {
                     for (int i = 0; i < 100; i++) {
                         OResultInternal item = new OResultInternal();
-                        item.setProperty("name", "testPropertyName");
+                        item.setProperty(PROPERTY_NAME, PROPERTY_VALUE);
                         result.add(item);
                     }
                     done = true;
@@ -37,7 +41,7 @@ public class CountStepTest {
 
         step.setPrevious(previous);
         OResultSet result = step.syncPull(context, 100);
-        Assert.assertEquals(100, (long) result.next().getProperty("count"));
+        Assert.assertEquals(100, (long) result.next().getProperty(COUNT_PROPERTY_NAME));
         Assert.assertFalse(result.hasNext());
 
     }

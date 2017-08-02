@@ -14,8 +14,6 @@ import org.junit.Test;
  */
 public class CheckRecordTypeStepTest extends TestUtilsFixture {
 
-    //TODO: create positive test for child classes (should be considered as one type)
-
     @Test
     public void shouldCheckRecordsOfOneType() {
         OCommandContext context = new OBasicCommandContext();
