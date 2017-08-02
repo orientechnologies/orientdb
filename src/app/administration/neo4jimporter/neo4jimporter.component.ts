@@ -43,14 +43,14 @@ class Neo4jImporterComponent implements AfterViewChecked {
     this.logLevels = ["NO","DEBUG","INFO","WARNING","ERROR"];
 
     this.dbConnection = {
-      "host": "localhost",
-      "port": "7687"
+      "host": "",
+      "port": ""
     }
 
     this.defaultConfig = {
       "neo4jUrl": "",
-      "neo4jUsername": "neo4j",
-      "neo4jPassword": "admin",
+      "neo4jUsername": "",
+      "neo4jPassword": "",
       "odbProtocol": "plocal",
       "odbName": "",
       "outDbUrl": "",
@@ -68,10 +68,10 @@ class Neo4jImporterComponent implements AfterViewChecked {
       neo4jUsername: "The username to access neo4j server.",
       neo4jPassword: "The password to access neo4j server.",
       protocol: "The protocol to use during the migration in order to connect to OrientDB:<br>" +
-      "<li><b>plocal</b>: the dabase will run locally in the same JVM of your application.</li>" +
-      "<li><b>remote</b>: the database will be accessed via TCP/IP connection.</li>",
-      outDbUrl: "The full path to a directory where the Neo4j database will be migrated. The directory will be created by the import tool. " +
-      "In case the directory exists already, the Neo4j to OrientDB Importer will behave accordingly to the checkbox below.",
+      "<li><b>plocal</b>: persistent disk-based, where the access is made in the same JVM process.</li>" +
+      "<li><b>memory</b>: all data remains in memory.</li>",
+      outDbName: "The target database name where the Neo4j database will be migrated. The database will be created by the import tool if not present. " +
+      "In case the database already exists, the Neo4j to OrientDB Importer will behave accordingly to the checkbox below.",
       overwriteOrientDB: "Overwrite OrientDB target database if it already exists.",
       createIndicesOnRelationhips: "Create indices on imported edges in OrientDB. In this way an index will be built for each Edge class on 'Neo4jRelID' property.",
       logLevel: "Level of verbosity printed to the output during the execution."

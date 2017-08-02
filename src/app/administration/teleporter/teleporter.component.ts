@@ -73,9 +73,9 @@ class TeleporterComponent implements AfterViewChecked {
     this.logLevels = ["NO","DEBUG","INFO","WARNING","ERROR"];
 
     this.dbConnection = {
-      "host": "localhost",
-      "port": "5432",
-      "dbName": "dvdrental",
+      "host": "",
+      "port": "",
+      "dbName": "",
       "sid": ""
     }
 
@@ -84,10 +84,10 @@ class TeleporterComponent implements AfterViewChecked {
     this.defaultConfig = {
       "driver": "PostgreSQL",
       "jurl": "",
-      "username": "postgres",
-      "password": "postgres",
+      "username": "",
+      "password": "",
       "protocol": "plocal",
-      "outDBName": "test",
+      "outDBName": "",
       "outDbUrl": "",
       "strategy": "naive",
       "mapper": "basicDBMapper",
