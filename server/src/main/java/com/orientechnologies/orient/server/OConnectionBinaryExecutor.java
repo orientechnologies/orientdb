@@ -404,7 +404,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         throw new ORecordNotFoundException(request.getRid());
 
       ((ODocument) currentRecord).merge((ODocument) newRecord, false, false);
-
+      if(request.isUpdateContent()){
+        ((ODocument) currentRecord).setDirty();
+      }
     } else
       currentRecord = newRecord;
 
