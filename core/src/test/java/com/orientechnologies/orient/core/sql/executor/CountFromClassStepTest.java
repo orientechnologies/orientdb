@@ -9,7 +9,7 @@ import org.junit.Test;
 /**
  * Created by olena.kolesnyk on 28/07/2017.
  */
-public class CountFromClassStepTest extends CreateMemoryDatabaseFixture {
+public class CountFromClassStepTest extends TestUtilsFixture {
 
     private static final String CLASS_NAME = "TestClass";
     private static final String ALIAS = "size";

@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OIndexName;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,7 +18,7 @@ import java.util.Arrays;
  * Created by olena.kolesnyk on 28/07/2017.
  */
 @RunWith(Parameterized.class)
-public class CountFromIndexStepTest extends CreateMemoryDatabaseFixture {
+public class CountFromIndexStepTest extends TestUtilsFixture {
 
     private static final String CLASS_NAME = "TestClass";
     private static final String PROPERTY_NAME = "testProperty";
@@ -32,7 +31,7 @@ public class CountFromIndexStepTest extends CreateMemoryDatabaseFixture {
         this.identifierType = identifierType;
     }
 
-    @Parameterized.Parameters(name = "OIndexIdentifier.Type:{0}")
+    @Parameterized.Parameters(name = "OIndexIdentifier.Type: {0}")
     public static Iterable<Object[]> types() {
         return Arrays.asList(new Object[][]{
                 {OIndexIdentifier.Type.INDEX},
