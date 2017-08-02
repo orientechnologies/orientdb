@@ -40,7 +40,7 @@ class Neo4jImporterComponent implements AfterViewChecked {
   init() {
 
     this.protocols = ["plocal", "memory"];
-    this.logLevels = ["NO","DEBUG","INFO","WARNING","ERROR"];
+    this.logLevels = ["NO","INFO","WARNING","ERROR"];
 
     this.dbConnection = {
       "host": "",
@@ -56,7 +56,7 @@ class Neo4jImporterComponent implements AfterViewChecked {
       "outDbUrl": "",
       "overwriteDB": false,
       "indexesOnRelationships": false,
-      "logLevel": 2
+      "logLevel": "1"
     }
 
     this.config = angular.copy(this.defaultConfig);
