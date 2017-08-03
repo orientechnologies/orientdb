@@ -1,0 +1,78 @@
+package com.orientechnologies.orient.server.network;
+
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.server.OServer;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.junit.Assert.assertNotNull;
+
+public class TestConcurrentCachedSequenceGenerationIT {
+  static final int THREADS = 20;
+  static final int RECORDS = 100;
+  private static final String SERVER_DIRECTORY = "./target/db";
+  private OServer  server;
+  private OrientDB orientDB;
+  @Before
+  public void before() throws Exception {
+    server = new OServer();
+    server.setServerRootDirectory(SERVER_DIRECTORY);
+    server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
+    server.activate();
+    orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    orientDB.create(TestConcurrentCachedSequenceGenerationIT.class.getSimpleName(), ODatabaseType.MEMORY);
+    ODatabaseSession databaseSession = orientDB.open(TestConcurrentCachedSequenceGenerationIT.class.getSimpleName(), "admin", "admin");
+    databaseSession.execute("sql",
+        "CREATE CLASS TestSequence EXTENDS V;\n" + " CREATE SEQUENCE TestSequenceIdSequence TYPE CACHED CACHE 100;\n"
+            + "CREATE PROPERTY TestSequence.id LONG (MANDATORY TRUE, default \"sequence('TestSequenceIdSequence').next()\");\n"
+            + "CREATE INDEX TestSequence_id_index ON TestSequence (id BY VALUE) UNIQUE;");
+    databaseSession.close();
+  }
+  @Test
+  public void test() throws InterruptedException {
+    AtomicLong failures = new AtomicLong(0);
+    ODatabasePool pool = new ODatabasePool(orientDB, TestConcurrentCachedSequenceGenerationIT.class.getSimpleName(), "admin", "admin");
+    List<Thread> threads = new ArrayList<>();
+    for (int i = 0; i < THREADS; i++) {
+      Thread thread = new Thread() {
+        @Override
+        public void run() {
+          ODatabaseSession db = pool.acquire();
+          try {
+            for (int j = 0; j < RECORDS; j++) {
+              OVertex vert = db.newVertex("TestSequence");
+              assertNotNull(vert.getProperty("id"));
+              db.save(vert);
+            }
+          } catch (Exception e) {
+            failures.incrementAndGet();
+            e.printStackTrace();
+          } finally {
+            db.close();
+          }
+        }
+      };
+      threads.add(thread);
+      thread.start();
+    }
+    for (Thread t : threads) {
+      t.join();
+    }
+    Assert.assertEquals(0, failures.get());
+  }
+  @After
+  public void after() {
+    orientDB.drop(TestConcurrentCachedSequenceGenerationIT.class.getSimpleName());
+    orientDB.close();
+    server.shutdown();
+    Orient.instance().startup();
+  }
+}
