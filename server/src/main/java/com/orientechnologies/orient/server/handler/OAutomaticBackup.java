@@ -41,7 +41,6 @@ import com.orientechnologies.orient.server.plugin.OServerPluginConfigurable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
@@ -366,7 +365,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
       }, compressionLevel, bufferSize);
     }
 
-    Files.move(tempFilePath, filePath);
+    OFileUtils.atomicMoveWithFallback(tempFilePath, filePath, this);
   }
 
   protected void exportDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {

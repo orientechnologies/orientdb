@@ -141,7 +141,10 @@ public class OSymmetricKey {
   {
     try  {
       SecureRandom secureRandom = new SecureRandom();
-      byte[] salt = secureRandom.generateSeed(saltLength);
+//** This is actually not needed and will block for a long time on many operating systems.
+//    byte[] salt = secureRandom.generateSeed(saltLength);
+      byte[] salt = new byte[saltLength];
+      secureRandom.nextBytes(salt);
 
       KeySpec keySpec = new PBEKeySpec(seedPhrase.toCharArray(), salt, iteration, keySize);
       

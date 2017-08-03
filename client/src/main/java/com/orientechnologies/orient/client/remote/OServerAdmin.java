@@ -60,9 +60,10 @@ public class OServerAdmin {
     if (!iURL.contains("/"))
       iURL += "/";
 
-    ORemoteConnectionManager connectionManager = ((OEngineRemote) Orient.instance().getRunningEngine("remote")).getConnectionManager();
+    ORemoteConnectionManager connectionManager = ((OEngineRemote) Orient.instance().getRunningEngine("remote"))
+        .getConnectionManager();
 
-    storage = new OStorageRemote(iURL, "", connectionManager, OStorage.STATUS.OPEN) {
+    storage = new OStorageRemote(iURL, null, "", connectionManager, OStorage.STATUS.OPEN) {
       @Override
       protected OStorageRemoteSession getCurrentSession() {
         return session;

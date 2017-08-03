@@ -97,7 +97,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
         embedded.init(config);
       }
       embedded.rebuildIndexes();
-      embedded.internalOpen(user, "nopwd", false);
+
+      //** THIS IS COMMENTED OUT BECAUSE WE NEED BOTH (NO PASSWORD AND NO USER AUTHORIZATION CHECK).
+      // embedded.internalOpen(user, "nopwd", false);
+      ////////////////////////////////////////////////////////////////////////////////////////////
+      
       embedded.callOnOpenListeners();
       return embedded;
     } catch (Exception e) {
@@ -282,7 +286,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
     db.close();
     synchronized (this) {
       if (exists(name, user, password)) {
-        getOrInitStorage(name).delete();
+        OAbstractPaginatedStorage storage = getOrInitStorage(name);
+        ODatabaseDocumentEmbedded.deInit(storage);
+        storage.delete();
         storages.remove(name);
       }
     }
@@ -341,10 +347,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public synchronized void internalClose() {
     if (!open)
       return;
-    final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
-    for (OStorage stg : storagesCopy) {
+    final List<OAbstractPaginatedStorage> storagesCopy = new ArrayList<>(storages.values());
+    for (OAbstractPaginatedStorage stg : storagesCopy) {
       try {
         OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
+        ODatabaseDocumentEmbedded.deInit(stg);
         stg.shutdown();
       } catch (Throwable e) {
         OLogManager.instance().warn(this, "-- error on shutdown storage", e);
@@ -413,6 +420,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public synchronized void forceDatabaseClose(String iDatabaseName) {
     OAbstractPaginatedStorage storage = storages.remove(iDatabaseName);
     if (storage != null) {
+      ODatabaseDocumentEmbedded.deInit(storage);
       storage.shutdown();
     }
   }

@@ -50,4 +50,6 @@ public interface OServerSecurity extends OSecuritySystem {
   OServerUserConfiguration getUser(final String username);
 
   ODatabase<?> openDatabase(final String dbName);
+  
+  void onAfterDynamicPlugins();
 }

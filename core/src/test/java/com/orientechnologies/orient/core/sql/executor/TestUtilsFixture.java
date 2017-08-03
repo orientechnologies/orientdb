@@ -33,6 +33,7 @@ public class TestUtilsFixture {
     public static void tearDown() {
         database.close();
         factory.drop(DB_NAME);
+        factory.close();
     }
 
     static OClass createClassInstance() {

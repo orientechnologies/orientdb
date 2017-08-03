@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -953,7 +954,13 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         } else {
           returnAlias = returnAliasIdentifier;
         }
-        doc.setProperty(returnAlias.getStringValue(), item.execute(mapDoc, ctx));
+        Object executed = item.execute(mapDoc, ctx);
+        // Force Embedded Document
+        if(executed instanceof ODocument && !((ODocument) executed).getIdentity().isValid()){
+          doc.setProperty(returnAlias.getStringValue(), executed, OType.EMBEDDED);
+        }else {
+          doc.setProperty(returnAlias.getStringValue(), executed);
+        }
         i++;
       }
       doc.setTrackingChanges(true);

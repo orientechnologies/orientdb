@@ -38,6 +38,7 @@ public class OEmbeddedDatabasePool extends ODatabaseDocumentEmbedded {
   public void close() {
     closeActiveQueries();
     super.setStatus(STATUS.CLOSED);
+    getLocalCache().clear();
     ODatabaseRecordThreadLocal.INSTANCE.remove();
     pool.release(this);
   }

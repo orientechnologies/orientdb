@@ -26,10 +26,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.Locale;
 
 public class OFileUtils {
@@ -231,6 +228,26 @@ public class OFileUtils {
     final Path parent = path.getParent();
     if (parent != null)
       Files.createDirectories(parent);
+  }
+
+  /**
+   * Tries to move a file from the source to the target atomically. If atomic move is not possible, falls back to regular move.
+   *
+   * @param source    the source to move the file from.
+   * @param target    the target to move the file to.
+   * @param requester the requester of the move being performed to produce user-friendly log messages.
+   *
+   * @see Files#move(Path, Path, CopyOption...)
+   * @see StandardCopyOption#ATOMIC_MOVE
+   */
+  public static void atomicMoveWithFallback(Path source, Path target, Object requester) throws IOException {
+    try {
+      Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+    } catch (AtomicMoveNotSupportedException e) {
+      OLogManager.instance()
+          .warn(requester, "atomic file move is not possible, falling back to regular move (moving '%s' to '%s')", source, target);
+      Files.move(source, target);
+    }
   }
 
 }

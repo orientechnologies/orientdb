@@ -9,8 +9,11 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * takes a normal result set and transforms it in another result set made of OUpdatableRecord instances.
- * Records that are not identifiable are discarded.
+ * <p>
+ * takes a result set made of OUpdatableRecord instances and transforms it in another result set made of normal OResultInternal
+ * instances.
+ * </p>
+ * <p>This is the opposite of ConvertToUpdatableResultStep</p>
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
@@ -68,7 +71,9 @@ public class ConvertToResultInternalStep extends AbstractExecutionStep {
               break;
             }
           } finally {
-            if(profilingEnabled){cost += (System.nanoTime() - begin);}
+            if (profilingEnabled) {
+              cost += (System.nanoTime() - begin);
+            }
           }
           nextItem = null;
         }

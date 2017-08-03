@@ -28,7 +28,10 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -40,8 +43,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.io.*;
-import java.nio.file.Files;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.zip.Deflater;
@@ -268,9 +273,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
     }
 
-    if (tempFileName != null) // may be null if writing directly to an output stream w/o file
+    if (tempFileName != null) // may be null if writing to an output stream w/o file
       try {
-        Files.move(Paths.get(tempFileName), Paths.get(fileName));
+        OFileUtils.atomicMoveWithFallback(Paths.get(tempFileName), Paths.get(fileName), this);
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on exporting database '%s' to: %s", e, database.getName(), fileName);
         throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);

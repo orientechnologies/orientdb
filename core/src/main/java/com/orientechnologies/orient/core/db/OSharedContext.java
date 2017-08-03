@@ -18,20 +18,20 @@ import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 /**
  * Created by tglman on 15/06/16.
  */
-public abstract class OSharedContext implements OCloseable {
+public abstract class OSharedContext {
   protected static final OProfiler PROFILER = Orient.instance().getProfiler();
 
-  protected OSchemaShared                schema;
-  protected OSecurity                    security;
-  protected OIndexManagerAbstract        indexManager;
-  protected OFunctionLibraryImpl         functionLibrary;
-  protected OSchedulerImpl               scheduler;
-  protected OSequenceLibraryImpl         sequenceLibrary;
-  protected OLiveQueryHook.OLiveQueryOps liveQueryOps;
+  protected OSchemaShared                  schema;
+  protected OSecurity                      security;
+  protected OIndexManagerAbstract          indexManager;
+  protected OFunctionLibraryImpl           functionLibrary;
+  protected OSchedulerImpl                 scheduler;
+  protected OSequenceLibraryImpl           sequenceLibrary;
+  protected OLiveQueryHook.OLiveQueryOps   liveQueryOps;
   protected OLiveQueryHookV2.OLiveQueryOps liveQueryOpsV2;
-  protected OCommandCache                commandCache;
-  protected OStatementCache              statementCache;
-  protected OQueryStats                  queryStats;
+  protected OCommandCache                  commandCache;
+  protected OStatementCache                statementCache;
+  protected OQueryStats                    queryStats;
   protected volatile boolean loaded = false;
 
   public OSchemaShared getSchema() {
@@ -81,4 +81,6 @@ public abstract class OSharedContext implements OCloseable {
   public abstract void load(ODatabaseDocumentInternal oDatabaseDocumentInternal);
 
   public abstract void reload(ODatabaseDocumentInternal database);
+
+  public abstract void close();
 }

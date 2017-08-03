@@ -40,7 +40,6 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -58,6 +57,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
   private transient ORecord record;
   private           byte[]  previousRecordContent;
+  private           int     previousRecordVersion;
 
   public OUpdateRecordTask() {
   }
@@ -114,37 +114,31 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
     } else {
       // UPDATE IT
-      final int loadedVersion = previousRecord.getVersion();
+      // DON'T COPY THE RECORD TO AVOID IS CONFUSED IN TX RESULT BACK
+      final ORecord loadedRecord = previousRecord;
 
-      if (loadedVersion == version + 1 && Arrays.equals(content, previousRecordContent)) {
-        // OPERATION ALREADY EXECUTED
-        record = previousRecord;
-      } else {
-        final ORecord loadedRecord = previousRecord.copy();
+      if (loadedRecord instanceof ODocument) {
+        // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
+        final ODocument newDocument = (ODocument) getRecord();
 
-        if (loadedRecord instanceof ODocument) {
-          // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
-          final ODocument newDocument = (ODocument) getRecord();
+        final ODocument loadedDocument = (ODocument) loadedRecord;
+        loadedDocument.merge(newDocument, false, false).getVersion();
+        ORecordInternal.setVersion(loadedDocument, version);
+      } else
+        ORecordInternal.fill(loadedRecord, rid, version, content, true);
 
-          final ODocument loadedDocument = (ODocument) loadedRecord;
-          loadedDocument.merge(newDocument, false, false).getVersion();
-          ORecordInternal.setVersion(loadedDocument, version);
-        } else
-          ORecordInternal.fill(loadedRecord, rid, version, content, true);
+      loadedRecord.setDirty();
 
-        loadedRecord.setDirty();
+      record = database.save(loadedRecord);
 
-        record = database.save(loadedRecord);
+      if (record == null)
+        ODistributedServerLog
+            .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Error on updating record %s", rid);
 
-        if (record == null)
-          ODistributedServerLog
-              .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Error on updating record %s", rid);
-
-        if (version < 0 && ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog
-              .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Reverted %s from version %d to %d", rid,
-                  loadedVersion, record.getVersion());
-      }
+      if (version < 0 && ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog
+            .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Reverted %s from version %d to %d", rid,
+                previousRecordVersion, record.getVersion());
     }
 
     if (record == null)
@@ -191,10 +185,10 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     if (previousRecord == null)
       return null;
 
-    final int versionCopy = ORecordVersionHelper.setRollbackMode(previousRecord.getVersion());
+    final int versionCopy = ORecordVersionHelper.setRollbackMode(previousRecordVersion);
 
     final OUpdateRecordTask task = ((OFixUpdateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(servers)
-        .createTask(OFixUpdateRecordTask.FACTORYID)).init(rid, previousRecord.toStream(), versionCopy, recordType);
+        .createTask(OFixUpdateRecordTask.FACTORYID)).init(rid, previousRecordContent, versionCopy, recordType);
     task.setLockRecords(false);
     return task;
   }
@@ -250,9 +244,10 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
       // SAVE THE CONTENT TO COMPARE IN CASE
       previousRecordContent = loaded.getResult().buffer;
+      previousRecordVersion = loaded.getResult().version;
 
       previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType);
-      ORecordInternal.fill(previousRecord, rid, loaded.getResult().version, loaded.getResult().getBuffer(), false);
+      ORecordInternal.fill(previousRecord, rid, previousRecordVersion, loaded.getResult().getBuffer(), false);
     }
     return previousRecord;
   }

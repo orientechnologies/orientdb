@@ -18,6 +18,8 @@ public class ORemoteDatabasePool extends ODatabaseDocumentRemote {
   @Override
   public void close() {
     super.setStatus(ODatabase.STATUS.CLOSED);
+    getLocalCache().clear();
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
     pool.release(this);
   }
 

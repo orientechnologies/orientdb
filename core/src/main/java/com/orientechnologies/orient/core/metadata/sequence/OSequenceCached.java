@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.sequence;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -30,8 +31,8 @@ import java.util.concurrent.Callable;
  */
 public class OSequenceCached extends OSequence {
   private static final String FIELD_CACHE = "cache";
-  private long cacheStart = 0L;
-  private long cacheEnd = 0L;
+  private              long   cacheStart  = 0L;
+  private              long   cacheEnd    = 0L;
 
   public OSequenceCached() {
     super();
@@ -46,7 +47,7 @@ public class OSequenceCached extends OSequence {
   }
 
   @Override
-  public boolean updateParams(OSequence.CreateParams params) {
+  public synchronized boolean updateParams(OSequence.CreateParams params) {
     boolean any = super.updateParams(params);
     if (params.cacheSize != null && this.getCacheSize() != params.cacheSize) {
       this.setCacheSize(params.cacheSize);
@@ -63,40 +64,83 @@ public class OSequenceCached extends OSequence {
 
   @Override
   public long next() {
-    return callRetry(new Callable<Long>() {
-      @Override
-      public Long call() throws Exception {
-        int increment = getIncrement();
-        if (cacheStart + increment >= cacheEnd) {
-          allocateCache(getCacheSize());
-        }
-
-        cacheStart = cacheStart + increment;
-        return cacheStart;
+    ODatabaseDocumentInternal mainDb = getDatabase();
+    boolean tx = mainDb.getTransaction().isActive();
+    try {
+      ODatabaseDocumentInternal db = mainDb;
+      if (tx) {
+        db = mainDb.copy();
+        db.activateOnCurrentThread();
       }
-    }, "next");
+      try {
+        ODatabaseDocumentInternal finalDb = db;
+        return callRetry(new Callable<Long>() {
+          @Override
+          public Long call() throws Exception {
+            synchronized (OSequenceCached.this) {
+              int increment = getIncrement();
+              if (cacheStart + increment >= cacheEnd) {
+                allocateCache(getCacheSize(), finalDb);
+              }
+
+              cacheStart = cacheStart + increment;
+              return cacheStart;
+            }
+          }
+        }, "next");
+      } finally {
+        if (tx) {
+          db.close();
+        }
+      }
+    } finally {
+      if (tx) {
+        mainDb.activateOnCurrentThread();
+      }
+    }
   }
 
   @Override
-  public long current() {
+  public synchronized long current() {
     return this.cacheStart;
   }
 
   @Override
   public long reset() {
-    return callRetry(new Callable<Long>() {
-      @Override
-      public Long call() throws Exception {
-        long newValue = getStart();
-        setValue(newValue);
-        save(getDatabase());
-
-        //
-        allocateCache(getCacheSize());
-
-        return newValue;
+    ODatabaseDocumentInternal mainDb = getDatabase();
+    boolean tx = mainDb.getTransaction().isActive();
+    try {
+      ODatabaseDocumentInternal db = mainDb;
+      if (tx) {
+        db = mainDb.copy();
+        db.activateOnCurrentThread();
       }
-    }, "reset");
+      try {
+        ODatabaseDocumentInternal finalDb = db;
+        return callRetry(new Callable<Long>() {
+          @Override
+          public Long call() throws Exception {
+            synchronized (OSequenceCached.this) {
+              long newValue = getStart();
+              setValue(newValue);
+              save(finalDb);
+
+              allocateCache(getCacheSize(), finalDb);
+
+              return newValue;
+            }
+          }
+        }, "reset");
+      } finally {
+        if (tx) {
+          db.close();
+        }
+      }
+    } finally {
+      if (tx) {
+        mainDb.activateOnCurrentThread();
+      }
+    }
   }
 
   @Override
@@ -112,11 +156,11 @@ public class OSequenceCached extends OSequence {
     getDocument().field(FIELD_CACHE, cacheSize);
   }
 
-  private void allocateCache(int cacheSize) {
+  private void allocateCache(int cacheSize, ODatabaseDocumentInternal db) {
     long value = getValue();
     long newValue = value + (getIncrement() * cacheSize);
     setValue(newValue);
-    save(getDatabase());
+    save(db);
 
     this.cacheStart = value;
     this.cacheEnd = newValue - 1;

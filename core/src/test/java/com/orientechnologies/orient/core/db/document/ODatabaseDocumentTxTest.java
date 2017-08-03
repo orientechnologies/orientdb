@@ -1,27 +1,23 @@
 package com.orientechnologies.orient.core.db.document;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -225,6 +221,119 @@ public class ODatabaseDocumentTxTest {
     db.declareIntent(new OIntentMassiveInsert());
     assertNotNull(db.getActiveIntent());
     assertTrue(db.getActiveIntent() instanceof OIntentMassiveInsert);
+  }
+
+  @Test
+  public void testExecuteWithRetryInDirtyTx() {
+    db.begin();
+    ODocument v = db.newInstance("V");
+    db.save(v);
+    try {
+      db.executeWithRetry(2, (db) -> null);
+      Assert.fail();
+    } catch (IllegalStateException x) {
+    }
+    db.rollback();
+  }
+
+  @Test
+  public void testExecuteWithRetryWrongN() {
+    try {
+      db.executeWithRetry(-1, (db) -> null);
+      Assert.fail();
+    } catch (IllegalArgumentException x) {
+    }
+  }
+
+  @Test
+  public void testExecuteWithRetryTxStatus() {
+    db.executeWithRetry(1, (db) -> null);
+    Assert.assertFalse(db.getTransaction().isActive());
+
+    db.begin();
+    db.executeWithRetry(1, (db) -> null);
+    Assert.assertTrue(db.getTransaction().isActive());
+    db.rollback();
+  }
+
+  @Test
+  public void testExecuteWithRetry() throws InterruptedException {
+    String className = "testExecuteWithRetry";
+    db.createClass(className);
+    final OElement v = db.newInstance(className);
+    v.setProperty("count", 0);
+    v.save();
+
+    int nThreads = 4;
+    List<Thread> threads = new ArrayList<>();
+    for (int i = 0; i < nThreads; i++) {
+      Thread thread = new Thread() {
+        @Override
+        public void run() {
+          ODatabaseDocumentTx dbCopy = db.copy();
+          dbCopy.activateOnCurrentThread();
+          dbCopy.executeWithRetry(10, (db) -> {
+            OElement vCopy = (OElement) db.load(v.getIdentity());
+            try {
+              Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+            vCopy.setProperty("count", (int) vCopy.getProperty("count") + 1);
+            db.save(vCopy);
+            return vCopy;
+          });
+          dbCopy.close();
+        }
+      };
+      threads.add(thread);
+      thread.start();
+    }
+    for (Thread t : threads) {
+      t.join();
+    }
+    v.reload();
+    Assert.assertEquals(nThreads, (int) v.getProperty("count"));
+  }
+
+  @Test
+  public void testExecuteWithRetryTx() throws InterruptedException {
+    String className = "testExecuteWithRetryTx";
+    db.createClass(className);
+    final OElement v = db.newInstance(className);
+    v.setProperty("count", 0);
+    v.save();
+
+    int nThreads = 4;
+    List<Thread> threads = new ArrayList<>();
+    for (int i = 0; i < nThreads; i++) {
+      Thread thread = new Thread() {
+        @Override
+        public void run() {
+          ODatabaseDocumentTx dbCopy = db.copy();
+          dbCopy.activateOnCurrentThread();
+          dbCopy.begin();
+          dbCopy.executeWithRetry(10, (db) -> {
+            OElement vCopy = (OElement) db.load(v.getIdentity());
+            try {
+              Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+            vCopy.setProperty("count", (int) vCopy.getProperty("count") + 1);
+            db.save(vCopy);
+            return vCopy;
+          });
+          dbCopy.commit();
+          dbCopy.close();
+        }
+      };
+      threads.add(thread);
+      thread.start();
+    }
+    for (Thread t : threads) {
+      t.join();
+    }
+    v.reload();
+    Assert.assertEquals(nThreads, (int) v.getProperty("count"));
   }
 
 }

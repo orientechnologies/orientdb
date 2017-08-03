@@ -40,9 +40,9 @@ import java.util.*;
 
 /**
  * SQL abstract Command Executor implementation.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
+ *
  */
 public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstract {
 
@@ -70,6 +70,8 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   public static final String METADATA_PREFIX          = "METADATA:";
   public static final String METADATA_SCHEMA          = "SCHEMA";
   public static final String METADATA_INDEXMGR        = "INDEXMANAGER";
+  public static final String METADATA_STORAGE         = "STORAGE";
+  public static final String METADATA_DATABASE        = "DATABASE";
 
   public static final String DEFAULT_PARAM_USER       = "$user";
 

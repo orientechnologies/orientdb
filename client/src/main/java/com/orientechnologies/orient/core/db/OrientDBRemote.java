@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
+import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.Orient;
@@ -77,7 +78,7 @@ public class OrientDBRemote implements OrientDBInternal {
       OStorageRemote storage;
       storage = storages.get(name);
       if (storage == null) {
-        storage = remote.createStorage(buildUrl(name), new HashMap<>());
+        storage = new OStorageRemote(buildUrl(name), this, "rw", remote.getConnectionManager());
         storages.put(name, storage);
       }
       ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
@@ -110,11 +111,21 @@ public class OrientDBRemote implements OrientDBInternal {
   public synchronized ORemoteDatabasePool poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
     OStorageRemote storage = storages.get(name);
     if (storage == null) {
-      storage = remote.createStorage(buildUrl(name), new HashMap<>());
+      try {
+        storage = new OStorageRemote(buildUrl(name), this, "rw", remote.getConnectionManager());
+      } catch (Exception e) {
+        throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
+      }
     }
     ORemoteDatabasePool db = new ORemoteDatabasePool(pool, storage);
     db.internalOpen(user, password, pool.getConfig());
     return db;
+  }
+
+  public synchronized void closeStorage(OStorageRemote remote) {
+    ODatabaseDocumentRemote.deInit(remote);
+    storages.remove(remote.getName());
+    remote.shutdown();
   }
 
   private interface Operation<T> {
@@ -187,9 +198,10 @@ public class OrientDBRemote implements OrientDBInternal {
   public synchronized void internalClose() {
     if (!open)
       return;
-    final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
-    for (OStorage stg : storagesCopy) {
+    final List<OStorageRemote> storagesCopy = new ArrayList<>(storages.values());
+    for (OStorageRemote stg : storagesCopy) {
       try {
+        ODatabaseDocumentRemote.deInit(stg);
         OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
         stg.shutdown();
       } catch (Throwable e) {

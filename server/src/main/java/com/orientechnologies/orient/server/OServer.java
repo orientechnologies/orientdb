@@ -348,7 +348,7 @@ public class OServer {
       serverSecurity = new ODefaultServerSecurity(this, serverCfg);
       Orient.instance().setSecurity(serverSecurity);
       // Checks to see if the OrientDB System Database exists and creates it if not.
-      // Make sure this happens after setSecurityFactory() is called.
+      // Make sure this happens after setSecurity() is called.
       initSystemDatabase();
 
       for (OServerLifecycleListener l : lifecycleListeners)
@@ -1062,6 +1062,8 @@ public class OServer {
     pluginManager = new OServerPluginManager();
     pluginManager.config(this);
     pluginManager.startup();
+    
+    if (serverSecurity != null) serverSecurity.onAfterDynamicPlugins();
 
     // PLUGINS CONFIGURED IN XML
     final OServerConfiguration configuration = serverCfg.getConfiguration();

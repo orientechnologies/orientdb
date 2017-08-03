@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -360,6 +361,13 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   protected OMicroTransaction beginMicroTransaction() {
     return null;
+  }
+
+  public static void deInit(OStorageRemote storage) {
+    OSharedContext sharedContext = storage.removeResource(OSharedContext.class.getName());
+    //This storage may not have been completely opened yet
+    if (sharedContext != null)
+      sharedContext.close();
   }
 
 }

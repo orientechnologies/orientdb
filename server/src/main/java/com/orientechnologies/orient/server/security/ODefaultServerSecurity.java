@@ -282,7 +282,9 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
    * filter the assigned roles. It may be null.
    */
   public OUser getSystemUser(final String username, final String dbName) {
-    if (isEnabled() && !OSystemDatabase.SYSTEM_DB_NAME.equals(dbName)) {
+    //** There are cases when we need to retrieve an OUser that is a system user.
+//  if (isEnabled() && !OSystemDatabase.SYSTEM_DB_NAME.equals(dbName)) {
+    if (isEnabled()) {
       return (OUser) server.getSystemDatabase().execute(new OCallable<Object, Object>() {
         @Override
         public Object call(Object iArgument) {
@@ -496,7 +498,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
       this.configDoc = configDoc;
 
-      onAfterActivate();
+      onAfterDynamicPlugins();
 
       log(OAuditingOperation.RELOADEDSECURITY, null, null, "The security configuration file has been reloaded");
     } else {
@@ -673,6 +675,11 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   // OServerLifecycleListener Interface
   public void onAfterActivate() {
+  	 // Does nothing now.
+  }
+
+  // OServerSecurity
+  public void onAfterDynamicPlugins() {
     if (configDoc != null) {
       loadComponents();
 
@@ -682,7 +689,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         log(OAuditingOperation.SECURITY, null, null, "The security module is now loaded");
       }
     } else {
-      OLogManager.instance().warn(this, "onAfterActivate() Configuration document is empty");
+      OLogManager.instance().warn(this, "onAfterDynamicPlugins() Configuration document is empty");
     }
   }
 
