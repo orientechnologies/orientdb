@@ -8,7 +8,9 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Created by luigidellaquila on 01/08/17.
+ * Returns an OResult containing metadata regarding the database
+ *
+ * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
  */
 public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
 

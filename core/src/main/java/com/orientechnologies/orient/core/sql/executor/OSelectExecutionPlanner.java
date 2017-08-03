@@ -1166,8 +1166,8 @@ public class OSelectExecutionPlanner {
       schemaRecordIdAsString = db.getStorage().getConfiguration().indexMgrRecordId;
       ORecordId schemaRid = new ORecordId(schemaRecordIdAsString);
       plan.chain(new FetchFromRidsStep(Collections.singleton(schemaRid), ctx, profilingEnabled));
-//    } else if (metadata.getName().equalsIgnoreCase(OCommandExecutorSQLAbstract.METADATA_STORAGE)) {
-//      plan.chain(new FetchFromStorageMetadataStep(ctx, profilingEnabled));
+    } else if (metadata.getName().equalsIgnoreCase(OCommandExecutorSQLAbstract.METADATA_STORAGE)) {
+      plan.chain(new FetchFromStorageMetadataStep(ctx, profilingEnabled));
     } else if (metadata.getName().equalsIgnoreCase(OCommandExecutorSQLAbstract.METADATA_DATABASE)) {
       plan.chain(new FetchFromDatabaseMetadataStep(ctx, profilingEnabled));
     } else {
