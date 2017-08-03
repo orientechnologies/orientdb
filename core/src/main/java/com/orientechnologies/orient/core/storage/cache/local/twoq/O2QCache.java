@@ -20,11 +20,13 @@
 
 package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
-import com.orientechnologies.common.concur.lock.*;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
+import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableBoolean;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OLoadCacheStateException;
@@ -737,6 +739,10 @@ public class O2QCache implements OReadCache {
         final long pageIndex = dataInputStream.readLong();
         try {
           final long fileId = writeCache.externalFileId(internalFileId);
+
+          if (writeCache.fileNameById(fileId) == null) // skip potentially outdated information about unknown files
+            continue;
+
           if (get(fileId, pageIndex, true) == null && !pinnedPages.containsKey(new PinnedPage(fileId, pageIndex))) {
             final OCacheEntry cacheEntry = new OCacheEntry(fileId, pageIndex, null, false);
 
@@ -801,6 +807,9 @@ public class O2QCache implements OReadCache {
         final long pageIndex = dataInputStream.readLong();
         try {
           final long fileId = writeCache.externalFileId(internalFileId);
+
+          if (writeCache.fileNameById(fileId) == null) // skip potentially outdated information about unknown files
+            continue;
 
           //we replace only pages which are not loaded yet
           if (get(fileId, pageIndex, true) == null && !pinnedPages.containsKey(new PinnedPage(fileId, pageIndex))) {

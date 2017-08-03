@@ -24,7 +24,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import sun.misc.Cleaner;
@@ -57,7 +56,7 @@ import java.util.logging.LogManager;
  *
  * @see OGlobalConfiguration#MEMORY_CHUNK_SIZE
  */
-public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownListener, OByteBufferPoolMXBean {
+public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPoolMXBean {
   /**
    * {@link OByteBufferPool}'s MBean name.
    */
@@ -176,7 +175,6 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
       trackedReleases = null;
     }
 
-    Orient.instance().registerWeakOrientStartupListener(this);
     Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
@@ -501,10 +499,6 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
         OLogManager.instance().error(this, builder.toString());
       }
     }
-  }
-
-  @Override
-  public void onStartup() {
   }
 
   @Override
