@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 31/07/2017.
  */
-public class OrientSpecBehaviours extends OrientGraphBaseTest {
+public class OrientSpecBehavioursTest extends OrientGraphBaseTest {
 
   @Test
   public void shouldNotFoundVertex() {
