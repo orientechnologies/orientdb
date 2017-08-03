@@ -9,7 +9,7 @@
           <div class="input-group">
             <input type="text" class="input-xxlarge form-control search-query" ng-model="queryy"
                    placeholder="Search role" focus="true"/>
-                        <span class="input-group-btn">
+            <span class="input-group-btn">
                         <button type="submit" class="btn" ng-click="">
                           <i class="fa fa-search"></i>
                         </button>
@@ -67,8 +67,8 @@
             <td ng-click="selectRole(result)">{{result['inheritedRole'].name}}</td>
             <td ng-click="selectRole(result)">
               <select ng-change="changeMode(result)" ng-model="result['mode']">
-                <option value="1">Allow all but</option>
-                <option value="0">Deny all but</option>
+                <option value="1" ng-selected="result['mode'] == 1">Allow all but</option>
+                <option value="0" ng-selected="result['mode'] == 0">Deny all but</option>
               </select>
             </td>
             <td>
@@ -94,6 +94,7 @@
               <th>Update</th>
               <th>Read</th>
               <th>Create</th>
+              <th></th>
             </tr>
             </thead>
             <tbody>
@@ -103,6 +104,11 @@
                 <input type="checkbox"
                        ng-change="changeRules(i,selectedRole.name,$index,selectedRole['rules'][i],calcolaBitmask(selectedRole['rules'][i]))"
                        ng-model="calcolaBitmask(selectedRole['rules'][i])[$index]">
+              </td>
+              <td>
+                <button class="btn btn-danger btn-xs" ng-click="removeRule(i)">
+                  <i class="fa fa-remove"></i>
+                </button>
               </td>
             </tr>
             </tbody>

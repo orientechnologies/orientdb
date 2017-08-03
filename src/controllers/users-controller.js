@@ -288,6 +288,25 @@ UserModule.controller("RolesController", ['$scope', '$routeParams', '$location',
     });
 
   }
+
+  $scope.removeRule = (rule) => {
+    Utilities.confirm($scope, $modal, $q, {
+      title: 'Warning!',
+      body: `You are removing resource '<b>${rule}</b>'. Are you sure?`,
+      success: function () {
+
+        let role = angular.copy($scope.selectedRole, {});
+        role.inheritedRole = $scope.selectedRole.inheritedRole["@rid"];
+        delete role.rules[rule];
+        DocumentApi.updateDocument($scope.database.getName(), role["@rid"], role).then(function (data) {
+          delete $scope.selectedRole.rules[rule];
+          $scope.rules = Object.keys($scope.selectedRole['rules']).sort();
+        }).catch((err) => {
+          Notification.push({content: err, error: true});
+        })
+      }
+    });
+  }
   $scope.getListUsers();
   $scope.selectRole = function (selectedRole) {
     $scope.selectedRole = selectedRole;
