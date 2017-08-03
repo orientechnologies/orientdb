@@ -138,7 +138,7 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
   @Override
   public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    String result = spaces + "+ FETCH DATABASE METADATA";
+    String result = spaces + "+ FETCH STORAGE METADATA";
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
     }
