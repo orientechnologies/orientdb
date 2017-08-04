@@ -207,7 +207,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     embedded.callOnCreateListeners();
   }
 
-  public void restore(String name, String path, OrientDBConfig config) {
+  public void restore(String name, String user, String password, ODatabaseType type, String path, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
     synchronized (this) {
       if (!exists(name, null, null)) {
@@ -449,4 +449,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return open;
   }
 
+  @Override
+  public boolean isEmbedded() {
+    return true;
+  }
 }

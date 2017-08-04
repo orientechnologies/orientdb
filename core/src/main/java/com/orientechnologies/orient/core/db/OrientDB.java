@@ -80,9 +80,9 @@ import java.util.List;
  */
 public class OrientDB implements AutoCloseable {
 
-  private OrientDBInternal internal;
-  private String           serverUser;
-  private String           serverPassword;
+  protected OrientDBInternal internal;
+  private   String           serverUser;
+  private   String           serverPassword;
 
   /**
    * Create a new OrientDb instance for a specific environment
@@ -114,7 +114,6 @@ public class OrientDB implements AutoCloseable {
    *
    * @param url           the url for the specific environment.
    * @param configuration configuration for the specific environment for the list of option {@see OGlobalConfiguration}.
-   *
    */
   public OrientDB(String url, OrientDBConfig configuration) {
     this(url, null, null, configuration);
@@ -154,7 +153,6 @@ public class OrientDB implements AutoCloseable {
    * @param serverUser     the server user allowed to manipulate databases.
    * @param serverPassword relative to the server user.
    * @param configuration  configuration for the specific environment for the list of option {@see OGlobalConfiguration}.
-   *
    */
   public OrientDB(String url, String serverUser, String serverPassword, OrientDBConfig configuration) {
     int pos;

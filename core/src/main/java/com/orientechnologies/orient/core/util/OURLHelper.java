@@ -62,7 +62,7 @@ public class OURLHelper {
     String type = url.substring(0, typeIndex);
     Optional<ODatabaseType> dbType = Optional.empty();
     if ("plocal".equals(type) || "memory".equals(type)) {
-      switch (type){
+      switch (type) {
       case "plocal":
         dbType = Optional.of(ODatabaseType.PLOCAL);
         break;
@@ -77,23 +77,34 @@ public class OURLHelper {
       throw new OConfigurationException("Error on opening database: the engine '" + type + "' was not found. URL was: " + url
           + ". Registered engines are: [\"embedded\",\"remote\"]");
 
-    int index = databaseReference.lastIndexOf('/');
-    String path;
     String dbName;
     String baseUrl;
-    if (index > 0) {
-      path = databaseReference.substring(0, index);
-      dbName = databaseReference.substring(index + 1);
+    if ("embedded".equals(type)) {
+      String path;
+      int index = databaseReference.lastIndexOf('/');
+      if (index > 0) {
+        path = databaseReference.substring(0, index);
+        dbName = databaseReference.substring(index + 1);
+      } else {
+        path = "";
+        dbName = databaseReference;
+      }
+      if (!path.isEmpty()) {
+        baseUrl = new File(path).getAbsolutePath();
+        dbType = Optional.of(ODatabaseType.PLOCAL);
+      } else {
+        baseUrl = path;
+      }
     } else {
-      path = "";
-      dbName = databaseReference;
+      int index = databaseReference.lastIndexOf('/');
+      if (index > 0) {
+        baseUrl = databaseReference.substring(0, index);
+        dbName = databaseReference.substring(index + 1);
+      } else {
+        baseUrl = databaseReference;
+        dbName = "";
+      }
     }
-    if ("embedded".equals(type) && !path.isEmpty()) {
-      baseUrl = new File(path).getAbsolutePath();
-      dbType = Optional.of(ODatabaseType.PLOCAL);
-    } else {
-      baseUrl = path;
-    }
-    return new OURLConnection(url, type, baseUrl, dbName,dbType);
+    return new OURLConnection(url, type, baseUrl, dbName, dbType);
   }
 }

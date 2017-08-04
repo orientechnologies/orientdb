@@ -21,6 +21,8 @@
 package com.orientechnologies.orient.graph.console;
 
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -28,6 +30,8 @@ import com.orientechnologies.orient.graph.graphml.OGraphMLReader;
 import com.orientechnologies.orient.graph.graphml.OGraphSONReader;
 import com.orientechnologies.orient.graph.graphml.OIgnoreGraphMLImportStrategy;
 import com.orientechnologies.orient.graph.graphml.ORenameGraphMLImportStrategy;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONMode;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONWriter;
@@ -35,6 +39,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.*;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -66,8 +71,7 @@ public class OGremlinConsoleTest {
     try {
       console.run();
 
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-      db.open("admin", "admin");
+      ODatabaseDocument db = console.getCurrentDatabase();
       try {
         List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from V"));
         Assert.assertFalse(result.isEmpty());
@@ -118,8 +122,7 @@ public class OGremlinConsoleTest {
     try {
       console.run();
 
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-      db.open("admin", "admin");
+      ODatabaseDocument db = console.getCurrentDatabase();
       try {
         List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from newposition"));
         Assert.assertFalse(result.isEmpty());
@@ -146,8 +149,7 @@ public class OGremlinConsoleTest {
     try {
       console.run();
 
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-      db.open("admin", "admin");
+      ODatabaseDocument db = console.getCurrentDatabase();
       try {
         long totalVertices = db.countClass("V");
         Assert.assertTrue(totalVertices > 0);
@@ -177,8 +179,7 @@ public class OGremlinConsoleTest {
     try {
       console.run();
 
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-      db.open("admin", "admin");
+      ODatabaseDocument db = console.getCurrentDatabase();
       try {
         List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from V"));
         Assert.assertFalse(result.isEmpty());
@@ -341,6 +342,83 @@ public class OGremlinConsoleTest {
     } finally {
       db.close();
     }
+  }
+
+  @Test
+  public void testSimple() {
+    String dbUrl = "memory:OConsoleDatabaseAppTest";
+    StringBuilder builder = new StringBuilder();
+    builder.append("create database " + dbUrl + ";\n");
+    builder.append("profile storage on;\n");
+    builder.append("create class foo;\n");
+    builder.append("config;\n");
+    builder.append("list classes;\n");
+    builder.append("list properties;\n");
+    builder.append("list clusters;\n");
+    builder.append("list indexes;\n");
+    builder.append("info class OUser;\n");
+    builder.append("info property OUser.name;\n");
+
+    builder.append("begin;\n");
+    builder.append("insert into foo set name = 'foo';\n");
+    builder.append("insert into foo set name = 'bla';\n");
+    builder.append("update foo set surname = 'bar' where name = 'foo';\n");
+    builder.append("commit;\n");
+    builder.append("select from foo;\n");
+
+    builder.append("create class bar;\n");
+    builder.append("create property bar.name STRING;\n");
+    builder.append("create index bar_name on bar (name) NOTUNIQUE;\n");
+
+    builder.append("insert into bar set name = 'foo';\n");
+    builder.append("delete from bar;\n");
+    builder.append("begin;\n");
+    builder.append("insert into bar set name = 'foo';\n");
+    builder.append("rollback;\n");
+
+    builder.append("create vertex V set name = 'foo';\n");
+    builder.append("create vertex V set name = 'bar';\n");
+
+    builder.append("traverse out() from V;\n");
+
+    builder.append("create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
+
+    builder.append("traverse out() from V;\n");
+
+//    builder.append("create user TestUser identified by password ROLE ['reader','writer'];\n");
+
+    builder.append("drop user TestUser;\n");
+
+    builder.append("profile storage off;\n");
+
+    builder.append("repair database -v;\n");
+    TestOGremlinConsole console = new TestOGremlinConsole(new String[] { builder.toString() });
+
+    try {
+      console.run();
+
+      ODatabaseDocument db = console.getCurrentDatabase();
+      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
+      Assert.assertEquals(1, result.size());
+      ODocument doc = result.get(0);
+      Assert.assertEquals("bar", doc.field("surname"));
+
+      result = db.query(new OSQLSynchQuery<ODocument>("select from bar"));
+      Assert.assertEquals(0, result.size());
+
+      OrientGraph graph = new OrientGraph((ODatabaseDocumentInternal) db);
+      Iterable<Vertex> result1 = graph
+          .command(new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
+      Iterator<Vertex> iterator = result1.iterator();
+      Assert.assertTrue(iterator.hasNext());
+      Vertex next = iterator.next();
+      Assert.assertEquals("bar", next.getProperty("name"));
+      Assert.assertFalse(iterator.hasNext());
+
+    } finally {
+      console.close();
+    }
+
   }
 
 }

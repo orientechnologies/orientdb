@@ -68,4 +68,23 @@ public class OURLHelperTest {
     OURLHelper.parseNew("/embd/path/test/to");
   }
 
+  @Test()
+  public void testRemoteNoDatabase() {
+    OURLConnection parsed = OURLHelper.parseNew("remote:localhost");
+    assertEquals(parsed.getType(), "remote");
+    assertEquals(parsed.getPath(), "localhost");
+    assertEquals(parsed.getDbName(), "");
+
+    parsed = OURLHelper.parseNew("remote:localhost:2424");
+    assertEquals(parsed.getType(), "remote");
+    assertEquals(parsed.getPath(), "localhost:2424");
+    assertEquals(parsed.getDbName(), "");
+
+    parsed = OURLHelper.parseNew("remote:localhost:2424/db1");
+    assertEquals(parsed.getType(), "remote");
+    assertEquals(parsed.getPath(), "localhost:2424");
+    assertEquals(parsed.getDbName(), "db1");
+
+  }
+
 }

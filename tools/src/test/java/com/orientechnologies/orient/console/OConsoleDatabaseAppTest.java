@@ -1,44 +1,27 @@
-/*
- *
- *  *  Copyright 2015 OrientDB LTD (info(at)orientdb.com)
- *  *
- *  *  Licensed under the Apache License, Version 2.0 (the "License");
- *  *  you may not use this file except in compliance with the License.
- *  *  You may obtain a copy of the License at
- *  *
- *  *       http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  *  Unless required by applicable law or agreed to in writing, software
- *  *  distributed under the License is distributed on an "AS IS" BASIS,
- *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  See the License for the specific language governing permissions and
- *  *  limitations under the License.
- *  *
- *  * For more information: http://www.orientdb.com
- *
- */
-
-package com.orientechnologies.orient.graph.console;
+package com.orientechnologies.orient.console;
 
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.text.Format;
 import java.util.Iterator;
 import java.util.List;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 /**
- * Test cases against OrientDB console.
- * 
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
+ * Created by tglman on 14/03/16.
  */
 public class OConsoleDatabaseAppTest {
 
@@ -48,12 +31,24 @@ public class OConsoleDatabaseAppTest {
     PrintStream           stream;
 
     ConsoleTest() {
-      console = new OConsoleDatabaseApp(null);
+      console = new OConsoleDatabaseApp(null) {
+        @Override
+        protected void onException(Throwable e) {
+          super.onException(e);
+          fail(e.getMessage());
+        }
+      };
       resetOutput();
     }
 
-    ConsoleTest(String [] args) {
-      console = new OConsoleDatabaseApp(args);
+    ConsoleTest(String[] args) {
+      console = new OConsoleDatabaseApp(args) {
+        @Override
+        protected void onException(Throwable e) {
+          super.onException(e);
+          fail(e.getMessage());
+        }
+      };
       resetOutput();
     }
 
@@ -94,86 +89,25 @@ public class OConsoleDatabaseAppTest {
   }
 
   @Test
-  public void testSimple() {
-    String dbUrl = "memory:OConsoleDatabaseAppTest";
-    StringBuilder builder = new StringBuilder();
-    builder.append("create database " + dbUrl + ";\n");
-    builder.append("profile storage on;\n");
-    builder.append("create class foo;\n");
-    builder.append("config;\n");
-    builder.append("list classes;\n");
-    builder.append("list properties;\n");
-    builder.append("list clusters;\n");
-    builder.append("list indexes;\n");
-    builder.append("info class OUser;\n");
-    builder.append("info property OUser.name;\n");
+  public void testSelectBinaryDoc() throws IOException {
+    final StringBuilder builder = new StringBuilder();
 
-    builder.append("begin;\n");
-    builder.append("insert into foo set name = 'foo';\n");
-    builder.append("insert into foo set name = 'bla';\n");
-    builder.append("update foo set surname = 'bar' where name = 'foo';\n");
-    builder.append("commit;\n");
-    builder.append("select from foo;\n");
-
-    builder.append("create class bar;\n");
-    builder.append("create property bar.name STRING;\n");
-    builder.append("create index bar_name on bar (name) NOTUNIQUE;\n");
-
-    builder.append("insert into bar set name = 'foo';\n");
-    builder.append("delete from bar;\n");
-    builder.append("begin;\n");
-    builder.append("insert into bar set name = 'foo';\n");
-    builder.append("rollback;\n");
-
-    builder.append("create vertex V set name = 'foo';\n");
-    builder.append("create vertex V set name = 'bar';\n");
-
-    builder.append("traverse out() from V;\n");
-
-    builder.append("create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
-
-    builder.append("traverse out() from V;\n");
-
-//    builder.append("create user TestUser identified by password ROLE ['reader','writer'];\n");
-
-    builder.append("drop user TestUser;\n");
-
-    builder.append("profile storage off;\n");
-
-    builder.append("repair database -v;\n");
-    ConsoleTest c = new ConsoleTest(new String[] { builder.toString() });
-    OConsoleDatabaseApp console = c.console();
-
+    OConsoleDatabaseApp app = new OConsoleDatabaseApp(new String[] {}) {
+      @Override
+      public void message(String iMessage, Object... iArgs) {
+        builder.append(String.format(iMessage, iArgs)).append("\n");
+      }
+    };
     try {
-      console.run();
-
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-      db.open("admin", "admin");
-      try {
-        List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
-        Assert.assertEquals(1, result.size());
-        ODocument doc = result.get(0);
-        Assert.assertEquals("bar", doc.field("surname"));
-
-        result = db.query(new OSQLSynchQuery<ODocument>("select from bar"));
-        Assert.assertEquals(0, result.size());
-      } finally {
-        db.close();
-      }
-      OrientGraph graph = new OrientGraph(dbUrl);
-      try {
-        Iterable<Vertex> result = graph.command(
-            new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
-        Iterator<Vertex> iterator = result.iterator();
-        Assert.assertTrue(iterator.hasNext());
-        Vertex next = iterator.next();
-        Assert.assertEquals("bar", next.getProperty("name"));
-        Assert.assertFalse(iterator.hasNext());
-      } finally {
-        graph.shutdown();
-      }
+      app.createDatabase("memory:test", null, null, "memory", null, null);
+      ODatabaseDocument db = app.getCurrentDatabase();
+      db.addBlobCluster("blobTest");
+      ORecord record = db.save(new ORecordBytes("blobContent".getBytes()), "blobTest");
+      builder.setLength(0);
+      app.select(" from " + record.getIdentity() + " limit -1 ");
+      assertTrue(builder.toString().contains("<binary>"));
     } finally {
-      console.close();
+      app.dropDatabase("memory");
     }
 
   }
@@ -195,8 +129,7 @@ public class OConsoleDatabaseAppTest {
     try {
       console.run();
 
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-      db.open("admin", "admin");
+      ODatabaseDocument db = console.getCurrentDatabase();
       try {
         List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
         Assert.assertEquals(1, result.size());
@@ -244,7 +177,7 @@ public class OConsoleDatabaseAppTest {
       resultString = new String(result);
 
       Assert.assertTrue(resultString.contains("Raw record content."));
-      if ("ORecordSerializerBinary".equals(((ODatabaseDocumentTx) console.getCurrentDatabase()).getSerializer().toString())) {
+      if ("ORecordSerializerBinary".equals(((ODatabaseDocumentInternal) console.getCurrentDatabase()).getSerializer().toString())) {
         Assert.assertTrue(resultString.contains("class name: foo"));
         Assert.assertTrue(resultString.contains("property value: barbar"));
       }
@@ -323,7 +256,7 @@ public class OConsoleDatabaseAppTest {
       try {
         c.console().declareIntent("foobar");
         Assert.fail();
-      }catch(Exception e){
+      } catch (Exception e) {
 
       }
 
@@ -345,4 +278,70 @@ public class OConsoleDatabaseAppTest {
       c.shutdown();
     }
   }
+
+  @Test
+  public void testSimple() {
+    String dbUrl = "memory:OConsoleDatabaseAppTest";
+    StringBuilder builder = new StringBuilder();
+    builder.append("create database " + dbUrl + ";\n");
+    builder.append("profile storage on;\n");
+    builder.append("create class foo;\n");
+    builder.append("config;\n");
+    builder.append("list classes;\n");
+    builder.append("list properties;\n");
+    builder.append("list clusters;\n");
+    builder.append("list indexes;\n");
+    builder.append("info class OUser;\n");
+    builder.append("info property OUser.name;\n");
+
+    builder.append("begin;\n");
+    builder.append("insert into foo set name = 'foo';\n");
+    builder.append("insert into foo set name = 'bla';\n");
+    builder.append("update foo set surname = 'bar' where name = 'foo';\n");
+    builder.append("commit;\n");
+    builder.append("select from foo;\n");
+
+    builder.append("create class bar;\n");
+    builder.append("create property bar.name STRING;\n");
+    builder.append("create index bar_name on bar (name) NOTUNIQUE;\n");
+
+    builder.append("insert into bar set name = 'foo';\n");
+    builder.append("delete from bar;\n");
+    builder.append("begin;\n");
+    builder.append("insert into bar set name = 'foo';\n");
+    builder.append("rollback;\n");
+
+    builder.append("create vertex V set name = 'foo';\n");
+    builder.append("create vertex V set name = 'bar';\n");
+
+    builder.append("traverse out() from V;\n");
+
+    builder.append("create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
+
+    builder.append("traverse out() from V;\n");
+
+    builder.append("profile storage off;\n");
+
+    builder.append("repair database -v;\n");
+    ConsoleTest c = new ConsoleTest(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = c.console();
+
+    try {
+      console.run();
+
+      ODatabaseDocument db = console.getCurrentDatabase();
+      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
+      Assert.assertEquals(1, result.size());
+      ODocument doc = result.get(0);
+      Assert.assertEquals("bar", doc.field("surname"));
+
+      result = db.query(new OSQLSynchQuery<ODocument>("select from bar"));
+      Assert.assertEquals(0, result.size());
+
+    } finally {
+      console.close();
+    }
+
+  }
+
 }

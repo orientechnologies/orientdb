@@ -22,9 +22,7 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.record.ORecord;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -208,6 +206,8 @@ public interface OrientDBInternal extends AutoCloseable {
    */
   ODatabaseDocumentInternal poolOpen(String name, String user, String password, ODatabasePoolInternal pool);
 
+  void restore(String name, String user, String password, ODatabaseType type, String path, OrientDBConfig config);
+
   /**
    * Close the factory with all related databases and pools.
    */
@@ -215,7 +215,6 @@ public interface OrientDBInternal extends AutoCloseable {
 
   /**
    * Should be called only by shutdown listeners
-   *
    */
   void internalClose();
 
@@ -232,4 +231,10 @@ public interface OrientDBInternal extends AutoCloseable {
    * @return
    */
   boolean isOpen();
+
+  boolean isEmbedded();
+
+  static OrientDBInternal extract(OrientDB orientDB) {
+    return orientDB.internal;
+  }
 }

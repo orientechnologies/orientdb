@@ -23,14 +23,13 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.IOException;
 import java.util.*;
@@ -128,6 +127,37 @@ public class OrientDBRemote implements OrientDBInternal {
     remote.shutdown();
   }
 
+  public ODocument getServerInfo(String username, String password) {
+    return connectEndExecute(null, username, password, (admin) -> {
+      return admin.getServerInfo();
+    });
+  }
+
+  public ODocument getClusterStatus(String username, String password) {
+    return connectEndExecute(null, username, password, (admin) -> {
+      return admin.clusterStatus();
+    });
+  }
+
+  public String getGlobalConfiguration(String username, String password, OGlobalConfiguration config) {
+    return connectEndExecute(null, username, password, (admin) -> {
+      return admin.getGlobalConfiguration(config);
+    });
+  }
+
+  public void setGlobalConfiguration(String username, String password, OGlobalConfiguration config, String iConfigValue) {
+    connectEndExecute(null, username, password, (admin) -> {
+      admin.setGlobalConfiguration(config, iConfigValue);
+      return null;
+    });
+  }
+
+  public Map<String, String> getGlobalConfigurations(String username, String password) {
+    return connectEndExecute(null, username, password, (admin) -> {
+      return admin.getGlobalConfigurations();
+    });
+  }
+
   private interface Operation<T> {
     T execute(OServerAdmin admin) throws IOException;
   }
@@ -169,6 +199,15 @@ public class OrientDBRemote implements OrientDBInternal {
       // TODO: check for memory cases
       return admin.listDatabases().keySet();
     });
+  }
+
+  @Override
+  public void restore(String name, String user, String password, ODatabaseType type, String path, OrientDBConfig config) {
+    connectEndExecute(name, user, password, admin -> {
+      admin.createDatabase(name, "", type.name().toLowerCase(), path).close();
+      return null;
+    });
+
   }
 
   public ODatabasePoolInternal openPool(String name, String user, String password) {
@@ -234,5 +273,10 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public boolean isOpen() {
     return open;
+  }
+
+  @Override
+  public boolean isEmbedded() {
+    return false;
   }
 }

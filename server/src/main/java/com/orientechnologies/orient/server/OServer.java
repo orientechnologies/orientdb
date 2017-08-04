@@ -1167,6 +1167,6 @@ public class OServer {
   }
 
   public void restore(String name, String path) {
-    databases.restore(name, path, OrientDBConfig.defaultConfig());
+    databases.restore(name, null, null, null, path, OrientDBConfig.defaultConfig());
   }
 }

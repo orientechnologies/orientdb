@@ -41,9 +41,8 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -85,6 +84,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
+import com.orientechnologies.orient.core.util.OURLConnection;
+import com.orientechnologies.orient.core.util.OURLHelper;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 
@@ -102,7 +103,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected int                       currentRecordIdx;
   protected List<OIdentifiable>       currentResultSet;
   protected Object                    currentResult;
-  protected OServerAdmin              serverAdmin;
+  protected OURLConnection            urlConnection;
+  protected OrientDB                  orientDB;
   private   int                       lastPercentStep;
   private   String                    currentDatabaseUserName;
   private   String                    currentDatabaseUserPassword;
@@ -213,23 +215,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     currentDatabaseUserName = iUserName;
     currentDatabaseUserPassword = iUserPassword;
+    urlConnection = OURLHelper.parseNew(iURL);
+    orientDB = new OrientDB(urlConnection.getType() + ":" + urlConnection.getPath(), iUserName, iUserPassword,
+        OrientDBConfig.defaultConfig());
 
-    if (iURL.contains("/")) {
+    if (!"".equals(urlConnection.getDbName())) {
       // OPEN DB
       message("\nConnecting to database [" + iURL + "] with user '" + iUserName + "'...");
-
-      currentDatabase = new ODatabaseDocumentTx(iURL);
-
-      currentDatabase.registerListener(new OConsoleDatabaseListener(this));
-      currentDatabase.open(iUserName, iUserPassword);
+      currentDatabase = (ODatabaseDocumentInternal) orientDB.open(urlConnection.getDbName(), iUserName, iUserPassword);
       currentDatabaseName = currentDatabase.getName();
-    } else {
-      // CONNECT TO REMOTE SERVER
-      message("\nConnecting to remote Server instance [" + iURL + "] with user '" + iUserName + "'...");
-
-      serverAdmin = new OServerAdmin(iURL).connect(iUserName, iUserPassword);
-      currentDatabase = null;
-      currentDatabaseName = null;
     }
 
     message("OK");
@@ -242,13 +236,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(aliases = {
       "close database" }, description = "Disconnect from the current database", onlineHelp = "Console-Command-Disconnect")
   public void disconnect() {
-    if (serverAdmin != null) {
-      message("\nDisconnecting from remote server [" + serverAdmin.getURL() + "]...");
-      serverAdmin.close(true);
-      serverAdmin = null;
-      message("\nOK");
-    }
-
     if (currentDatabase != null) {
       message("\nDisconnecting from the database [" + currentDatabaseName + "]...");
 
@@ -267,6 +254,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       currentRecord = null;
 
       message("OK");
+      out.println();
+    }
+    urlConnection = null;
+    if (orientDB != null) {
+      orientDB.close();
     }
   }
 
@@ -280,63 +272,51 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "[options]", optional = true, description = "Additional options, example: -encryption=aes -compression=snappy") final String options)
       throws IOException {
 
+    disconnect();
+
     if (userName == null)
       userName = OUser.ADMIN;
     if (userPassword == null)
       userPassword = OUser.ADMIN;
-    if (storageType == null) {
-      if (databaseURL.startsWith(OEngineRemote.NAME + ":"))
-        throw new IllegalArgumentException("Missing storage type for remote database");
-
-      int pos = databaseURL.indexOf(":");
-      if (pos == -1)
-        throw new IllegalArgumentException("Invalid URL");
-      storageType = databaseURL.substring(0, pos);
-    }
-    if (databaseType == null)
-      databaseType = "graph";
-
-    message("\nCreating database [" + databaseURL + "] using the storage type [" + storageType + "]...");
 
     currentDatabaseUserName = userName;
     currentDatabaseUserPassword = userPassword;
-
     final Map<String, String> omap = parseCommandOptions(options);
+
+    urlConnection = OURLHelper.parseNew(databaseURL);
+    OrientDBConfigBuilder config = OrientDBConfig.builder();
+
+    for (Map.Entry<String, String> oentry : omap.entrySet()) {
+      if ("-encryption".equalsIgnoreCase(oentry.getKey()))
+        config.addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, oentry.getValue());
+      else if ("-compression".equalsIgnoreCase(oentry.getKey()))
+        config.addConfig(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, oentry.getValue());
+    }
+
+    ODatabaseType type;
+    if (storageType != null) {
+      type = ODatabaseType.valueOf(storageType.toUpperCase());
+    } else {
+      type = urlConnection.getDbType().orElse(ODatabaseType.PLOCAL);
+    }
+
+    message("\nCreating database [" + databaseURL + "] using the storage type [" + type + "]...");
+
+    orientDB = new OrientDB(urlConnection.getType() + ":" + urlConnection.getPath(), currentDatabaseUserName,
+        currentDatabaseUserPassword, config.build());
+
 
     final String backupPath = omap.remove("-restore");
 
-    if (databaseURL.startsWith(OEngineRemote.NAME)) {
-      // REMOTE CONNECTION
-      final String dbURL = databaseURL.substring(OEngineRemote.NAME.length() + 1);
-      OServerAdmin serverAdmin = new OServerAdmin(dbURL).connect(userName, userPassword);
-      serverAdmin.createDatabase(serverAdmin.getStorageName(), databaseType, storageType, backupPath).close();
-      connect(databaseURL, userName, userPassword);
+    if (backupPath != null) {
+      OrientDBInternal internal = OrientDBInternal.extract(orientDB);
+      internal.restore(urlConnection.getDbName(), currentDatabaseUserName, currentDatabaseUserPassword, type, backupPath,
+          config.build());
     } else {
-      // LOCAL CONNECTION
-      if (storageType != null) {
-        // CHECK STORAGE TYPE
-        if (!databaseURL.toLowerCase(Locale.ENGLISH).startsWith(storageType.toLowerCase(Locale.ENGLISH)))
-          throw new IllegalArgumentException("Storage type '" + storageType + "' is different by storage type in URL");
-      }
-
-      currentDatabase = new ODatabaseDocumentTx(databaseURL);
-
-      for (Map.Entry<String, String> oentry : omap.entrySet()) {
-        if ("-encryption".equalsIgnoreCase(oentry.getKey()))
-          currentDatabase.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey(), oentry.getValue());
-        else if ("-compression".equalsIgnoreCase(oentry.getKey()))
-          currentDatabase.setProperty(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey(), oentry.getValue());
-        else
-          currentDatabase.setProperty(oentry.getKey(), oentry.getValue());
-      }
-
-      if (backupPath == null)
-        currentDatabase.create();
-      else
-        currentDatabase.create(backupPath);
-
-      currentDatabaseName = currentDatabase.getName();
+      orientDB.create(urlConnection.getDbName(), type);
     }
+    currentDatabase = (ODatabaseDocumentInternal) orientDB.open(urlConnection.getDbName(), userName, userPassword);
+    currentDatabaseName = currentDatabase.getName();
 
     message("\nDatabase created successfully.");
     message("\n\nCurrent database is: " + databaseURL);
@@ -360,11 +340,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "List all the databases available on the connected server", onlineHelp = "Console-Command-List-Databases")
   public void listDatabases() throws IOException {
-    if (serverAdmin != null) {
-      final Map<String, String> databases = serverAdmin.listDatabases();
+    if (orientDB != null) {
+      final List<String> databases = orientDB.list();
       message("\nFound %d databases:\n", databases.size());
-      for (Entry<String, String> database : databases.entrySet()) {
-        message("\n* %s (%s)", database.getKey(), database.getValue().substring(0, database.getValue().indexOf(":")));
+      for (String database : databases) {
+        message("\n* %s ", database);
       }
     } else {
       message(
@@ -375,42 +355,39 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "List all the active connections to the server", onlineHelp = "Console-Command-List-Connections")
   public void listConnections() throws IOException {
-    if (serverAdmin != null) {
-      final ODocument serverInfo = serverAdmin.getServerInfo();
+    checkForRemoteServer();
+    OrientDBRemote remote = (OrientDBRemote) OrientDBInternal.extract(orientDB);
+    final ODocument serverInfo = remote.getServerInfo(currentDatabaseUserName, currentDatabaseUserPassword);
 
-      final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
+    final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
 
-      final List<Map<String, Object>> connections = serverInfo.field("connections");
-      for (Map<String, Object> conn : connections) {
-        final ODocument row = new ODocument();
+    final List<Map<String, Object>> connections = serverInfo.field("connections");
+    for (Map<String, Object> conn : connections) {
+      final ODocument row = new ODocument();
 
-        String commandDetail = (String) conn.get("commandInfo");
+      String commandDetail = (String) conn.get("commandInfo");
 
-        if (commandDetail != null && ((String) conn.get("commandDetail")).length() > 1)
-          commandDetail += " (" + conn.get("commandDetail") + ")";
+      if (commandDetail != null && ((String) conn.get("commandDetail")).length() > 1)
+        commandDetail += " (" + conn.get("commandDetail") + ")";
 
-        row.fields("ID", conn.get("connectionId"), "REMOTE_ADDRESS", conn.get("remoteAddress"), "PROTOC", conn.get("protocol"),
-            "LAST_OPERATION_ON", conn.get("lastCommandOn"), "DATABASE", conn.get("db"), "USER", conn.get("user"), "COMMAND",
-            commandDetail, "TOT_REQS", conn.get("totalRequests"));
-        resultSet.add(row);
-      }
-
-      Collections.sort(resultSet, new Comparator<OIdentifiable>() {
-        @Override
-        public int compare(final OIdentifiable o1, final OIdentifiable o2) {
-          final String o1s = ((ODocument) o1).field("LAST_OPERATION_ON");
-          final String o2s = ((ODocument) o2).field("LAST_OPERATION_ON");
-          return o2s.compareTo(o1s);
-        }
-      });
-
-      final OTableFormatter formatter = new OTableFormatter(this);
-      formatter.writeRecords(resultSet, -1);
-
-    } else {
-      message(
-          "\nNot connected to the Server instance. You've to connect to the Server using server's credentials (look at orientdb-*server-config.xml file)");
+      row.fields("ID", conn.get("connectionId"), "REMOTE_ADDRESS", conn.get("remoteAddress"), "PROTOC", conn.get("protocol"),
+          "LAST_OPERATION_ON", conn.get("lastCommandOn"), "DATABASE", conn.get("db"), "USER", conn.get("user"), "COMMAND",
+          commandDetail, "TOT_REQS", conn.get("totalRequests"));
+      resultSet.add(row);
     }
+
+    Collections.sort(resultSet, new Comparator<OIdentifiable>() {
+      @Override
+      public int compare(final OIdentifiable o1, final OIdentifiable o2) {
+        final String o1s = ((ODocument) o1).field("LAST_OPERATION_ON");
+        final String o2s = ((ODocument) o2).field("LAST_OPERATION_ON");
+        return o2s.compareTo(o1s);
+      }
+    });
+
+    final OTableFormatter formatter = new OTableFormatter(this);
+    formatter.writeRecords(resultSet, -1);
+
     out.println();
   }
 
@@ -1183,26 +1160,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
-
-    if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
-      if (serverAdmin == null) {
-        message("\n\nCannot drop a remote database without connecting to the server with a valid server's user");
-        return;
-      }
-
-      if (storageType == null)
-        storageType = "plocal";
-
-      // REMOTE CONNECTION
-      final String dbURL = currentDatabase.getURL().substring(OEngineRemote.NAME.length() + 1);
-      new OServerAdmin(dbURL).connect(currentDatabaseUserName, currentDatabaseUserPassword).dropDatabase(storageType);
-    } else {
-      // LOCAL CONNECTION
-      currentDatabase.drop();
-      currentDatabase = null;
-      currentDatabaseName = null;
-    }
-
+    currentDatabase.close();
+    orientDB.drop(dbName);
+    currentDatabase = null;
+    currentDatabaseName = null;
     message("\n\nDatabase '" + dbName + "' deleted successfully");
   }
 
@@ -1214,30 +1175,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
       throws IOException {
 
-    if (iDatabaseURL.startsWith(OEngineRemote.NAME)) {
-      // REMOTE CONNECTION
-      final String dbURL = iDatabaseURL.substring(OEngineRemote.NAME.length() + 1);
-
-      if (serverAdmin != null)
-        serverAdmin.close();
-
-      serverAdmin = new OServerAdmin(dbURL).connect(iUserName, iUserPassword);
-      serverAdmin.dropDatabase(storageType);
-      disconnect();
-    } else {
-      // LOCAL CONNECTION
-      currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
-      if (currentDatabase.exists()) {
-        currentDatabase.open(iUserName, iUserPassword);
-        currentDatabase.drop();
-      } else
-        message("\n\nCannot drop database '" + iDatabaseURL + "' because was not found");
-    }
-
-    currentDatabase = null;
-    currentDatabaseName = null;
-
-    message("\n\nDatabase '" + iDatabaseURL + "' deleted successfully");
+    connect(iDatabaseURL, iUserName, iUserPassword);
+    dropDatabase(null);
   }
 
   @ConsoleCommand(splitInWords = false, description = "Remove an index", onlineHelp = "SQL-Drop-Index")
@@ -2060,14 +1999,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "Displays the status of the cluster nodes")
   public void clusterStatus() throws IOException {
-    if (serverAdmin == null)
-      throw new IllegalStateException("You must be connected to a remote server to get the cluster status");
-
     checkForRemoteServer();
     try {
 
       message("\nCluster status:");
-      out.println(serverAdmin.clusterStatus().toJSON("attribSameRow,alwaysFetchEmbedded,fetchPlan:*:0"));
+      ODocument clusterStatus = ((OrientDBRemote) OrientDBInternal.extract(orientDB))
+          .getClusterStatus(currentDatabaseUserName, currentDatabaseUserPassword);
+      out.println(clusterStatus.toJSON("attribSameRow,alwaysFetchEmbedded,fetchPlan:*:0"));
 
     } catch (Exception e) {
       printError(e);
@@ -2447,8 +2385,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throw new IllegalArgumentException("Configuration variable '" + iConfigName + "' wasn't found");
 
     final String value;
-    if (serverAdmin != null) {
-      value = serverAdmin.getGlobalConfiguration(config);
+    if (!OrientDBInternal.extract(orientDB).isEmbedded()) {
+      value = ((OrientDBRemote) OrientDBInternal.extract(orientDB))
+          .getGlobalConfiguration(currentDatabaseUserName, currentDatabaseUserPassword, config);
       message("\nRemote configuration: ");
     } else {
       value = config.getValueAsString();
@@ -2473,8 +2412,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (config == null)
       throw new IllegalArgumentException("Configuration variable '" + iConfigName + "' not found");
 
-    if (serverAdmin != null) {
-      serverAdmin.setGlobalConfiguration(config, iConfigValue);
+    if (!OrientDBInternal.extract(orientDB).isEmbedded()) {
+      ((OrientDBRemote) OrientDBInternal.extract(orientDB))
+          .setGlobalConfiguration(currentDatabaseUserName, currentDatabaseUserPassword, config, iConfigValue);
       message("\nRemote configuration value changed correctly");
     } else {
       config.setValue(iConfigValue);
@@ -2485,9 +2425,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "Return all the configuration values")
   public void config() throws IOException {
-    if (serverAdmin != null) {
-      // REMOTE STORAGE
-      final Map<String, String> values = serverAdmin.getGlobalConfigurations();
+    if (!OrientDBInternal.extract(orientDB).isEmbedded()) {
+      final Map<String, String> values = ((OrientDBRemote) OrientDBInternal.extract(orientDB))
+          .getGlobalConfigurations(currentDatabaseUserName, currentDatabaseUserPassword);
 
       message("\nREMOTE SERVER CONFIGURATION");
 
@@ -2606,8 +2546,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
    * Should be used only by console commands
    */
   protected void checkForRemoteServer() {
-    if (serverAdmin == null && (currentDatabase == null || !(currentDatabase.getStorage() instanceof OStorageProxy)
-        || currentDatabase.isClosed()))
+    if (orientDB == null || OrientDBInternal.extract(orientDB).isEmbedded())
       throw new OSystemException(
           "Remote server is not connected. Use 'connect remote:<host>[:<port>][/<database-name>]' to connect");
   }
@@ -2704,12 +2643,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       currentDatabase.close();
       currentDatabase = null;
     }
-
-    if (serverAdmin != null) {
-      serverAdmin.close(true);
-      serverAdmin = null;
+    if (orientDB != null) {
+      orientDB.close();
     }
-
     currentResultSet = null;
     currentRecord = null;
     currentResult = null;
@@ -2821,9 +2757,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         buffer.append(currentDatabase.getTransaction().getEntryCount());
         buffer.append(" entries]");
       }
-    } else if (serverAdmin != null) {
+    } else if (urlConnection != null) {
       buffer.append(" {server=");
-      buffer.append(serverAdmin.getURL());
+      buffer.append(urlConnection.getUrl());
     }
 
     final String promptDateFormat = properties.get("promptDateFormat");

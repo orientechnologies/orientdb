@@ -48,8 +48,8 @@ public class RemoteTransactionSupportTest {
     server.activate();
 
     orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    orientDB.create(ORemoteImportTest.class.getSimpleName(), ODatabaseType.MEMORY);
-    database = orientDB.open(ORemoteImportTest.class.getSimpleName(), "admin", "admin");
+    orientDB.create(RemoteTransactionSupportTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    database = orientDB.open(RemoteTransactionSupportTest.class.getSimpleName(), "admin", "admin");
     database.createClass("SomeTx");
     database.createClass("SomeTx2");
 
