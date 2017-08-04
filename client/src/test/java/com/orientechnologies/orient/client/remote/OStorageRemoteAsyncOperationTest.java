@@ -64,7 +64,7 @@ public class OStorageRemoteAsyncOperationTest {
   @Test
   public void testSyncCall() {
     final CallStatus status = new CallStatus();
-    storage.asyncNetworkOperation(new OBinaryAsyncRequest<OBinaryResponse>() {
+    storage.asyncNetworkOperationNoRetry(new OBinaryAsyncRequest<OBinaryResponse>() {
       @Override
       public byte getCommand() {
         return 0;
@@ -123,7 +123,7 @@ public class OStorageRemoteAsyncOperationTest {
   @Test
   public void testNoReadCall() {
     final CallStatus status = new CallStatus();
-    storage.asyncNetworkOperation(new OBinaryAsyncRequest<OBinaryResponse>() {
+    storage.asyncNetworkOperationNoRetry(new OBinaryAsyncRequest<OBinaryResponse>() {
       @Override
       public byte getCommand() {
         // TODO Auto-generated method stub
@@ -186,7 +186,7 @@ public class OStorageRemoteAsyncOperationTest {
     final CountDownLatch callBackWait = new CountDownLatch(1);
     final CountDownLatch readDone = new CountDownLatch(1);
     final CountDownLatch callBackDone = new CountDownLatch(1);
-    storage.asyncNetworkOperation(new OBinaryAsyncRequest<OBinaryResponse>() {
+    storage.asyncNetworkOperationNoRetry(new OBinaryAsyncRequest<OBinaryResponse>() {
       @Override
       public byte getCommand() {
         // TODO Auto-generated method stub

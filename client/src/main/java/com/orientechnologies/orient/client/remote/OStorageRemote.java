@@ -149,8 +149,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     this.context = context;
   }
 
-  public <T extends OBinaryResponse> T asyncNetworkOperation(final OBinaryAsyncRequest<T> request, int mode,
+  public <T extends OBinaryResponse> T asyncNetworkOperationNoRetry(final OBinaryAsyncRequest<T> request, int mode,
       final ORecordId recordId, final ORecordCallback<T> callback, final String errorMessage) {
+    return asyncNetworkOperationRetry(request, mode, recordId, callback, errorMessage, 0);
+  }
+
+  public <T extends OBinaryResponse> T asyncNetworkOperationRetry(final OBinaryAsyncRequest<T> request, int mode,
+      final ORecordId recordId, final ORecordCallback<T> callback, final String errorMessage, int retry) {
     final int pMode;
     if (mode == 1 && callback == null)
       // ASYNCHRONOUS MODE NO ANSWER
@@ -206,7 +211,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         }
         return ret;
       }
-    }, errorMessage, connectionRetry);
+    }, errorMessage, retry);
   }
 
   public <T extends OBinaryResponse> T networkOperationRetryTimeout(final OBinaryRequest<T> request, final String errorMessage,
@@ -236,6 +241,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         return response;
       }
     }, errorMessage, retry);
+  }
+
+  public <T extends OBinaryResponse> T networkOperationNoRetry(final OBinaryRequest<T> request, final String errorMessage) {
+    return networkOperationRetryTimeout(request, errorMessage, 0, 0);
   }
 
   public <T extends OBinaryResponse> T networkOperation(final OBinaryRequest<T> request, final String errorMessage) {
@@ -577,7 +586,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     // The Upper layer require to return this also if it not really received response from the network
     final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
     final OCreateRecordRequest request = new OCreateRecordRequest(iContent, iRid, iRecordType);
-    final OCreateRecordResponse response = asyncNetworkOperation(request, iMode, iRid, realCallback,
+    final OCreateRecordResponse response = asyncNetworkOperationNoRetry(request, iMode, iRid, realCallback,
         "Error on create record in cluster " + iRid.getClusterId());
     if (response != null) {
       ppos.clusterPosition = response.getIdentity().getClusterPosition();
@@ -643,7 +652,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   @Override
   public String incrementalBackup(final String backupDirectory) {
     OIncrementalBackupRequest request = new OIncrementalBackupRequest(backupDirectory);
-    OIncrementalBackupResponse response = networkOperation(request, "Error on incremental backup");
+    OIncrementalBackupResponse response = networkOperationNoRetry(request, "Error on incremental backup");
     return response.getFileName();
   }
 
@@ -666,7 +675,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
 
     OUpdateRecordRequest request = new OUpdateRecordRequest(iRid, iContent, iVersion, updateContent, iRecordType);
-    OUpdateRecordResponse response = asyncNetworkOperation(request, iMode, iRid, realCallback, "Error on update record " + iRid);
+    OUpdateRecordResponse response = asyncNetworkOperationNoRetry(request, iMode, iRid, realCallback, "Error on update record " + iRid);
 
     Integer resVersion = null;
     if (response != null) {
@@ -689,7 +698,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       realCallback = (iRID, response) -> iCallback.call(iRID, response.getResult());
 
     final ODeleteRecordRequest request = new ODeleteRecordRequest(iRid, iVersion);
-    final ODeleteRecordResponse response = asyncNetworkOperation(request, iMode, iRid, realCallback,
+    final ODeleteRecordResponse response = asyncNetworkOperationNoRetry(request, iMode, iRid, realCallback,
         "Error on delete record " + iRid);
     Boolean resDelete = null;
     if (response != null)
@@ -706,7 +715,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       realCallback = (iRID, response) -> callback.call(iRID, response.getResult());
 
     final OHideRecordRequest request = new OHideRecordRequest(recordId);
-    final OHideRecordResponse response = asyncNetworkOperation(request, mode, recordId, realCallback,
+    final OHideRecordResponse response = asyncNetworkOperationNoRetry(request, mode, recordId, realCallback,
         "Error on hide record " + recordId);
     Boolean resHide = null;
     if (response != null)
@@ -723,7 +732,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       realCallback = (iRID, response) -> callback.call(iRID, response.getResult());
 
     final OCleanOutRecordRequest request = new OCleanOutRecordRequest(recordVersion, recordId);
-    final OCleanOutRecordResponse response = asyncNetworkOperation(request, iMode, recordId, realCallback,
+    final OCleanOutRecordResponse response = asyncNetworkOperationNoRetry(request, iMode, recordId, realCallback,
         "Error on delete record " + recordId);
     Boolean result = null;
     if (response != null)
@@ -860,7 +869,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public ORemoteQueryResult command(ODatabaseDocumentRemote db, String language, String query, Object[] args) {
     OQueryRequest request = new OQueryRequest(language, query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
-    OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
+    OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
 
@@ -870,7 +879,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public ORemoteQueryResult command(ODatabaseDocumentRemote db, String language, String query, Map args) {
     OQueryRequest request = new OQueryRequest(language, query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
-    OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
+    OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
 
@@ -899,7 +908,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       request = new OCommit37Request(iTx.getId(), false, iTx.isUsingLog(), null, null);
     }
 
-    OCommit37Response response = networkOperation(request, "Error on commit");
+    OCommit37Response response = networkOperationNoRetry(request, "Error on commit");
     for (OCommit37Response.OCreatedRecordResponse created : response.getCreated()) {
       iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
       ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
@@ -972,7 +981,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public int addCluster(final String iClusterName, final int iRequestedId, final boolean forceListBased,
       final Object... iParameters) {
     OAddClusterRequest request = new OAddClusterRequest(iRequestedId, iClusterName);
-    OAddClusterResponse response = networkOperation(request, "Error on add new cluster");
+    OAddClusterResponse response = networkOperationNoRetry(request, "Error on add new cluster");
     addNewClusterToConfiguration(response.getClusterId(), iClusterName);
     return response.getClusterId();
   }
@@ -981,7 +990,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     ODropClusterRequest request = new ODropClusterRequest(iClusterId);
 
-    ODropClusterResponse response = networkOperation(request, "Error on removing of cluster");
+    ODropClusterResponse response = networkOperationNoRetry(request, "Error on removing of cluster");
     if (response.getResult())
       removeClusterFromConfiguration(iClusterId);
     return response.getResult();
@@ -1807,7 +1816,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void beginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
     OBeginTransactionRequest request = new OBeginTransactionRequest(transaction.getId(), true, transaction.isUsingLog(),
         transaction.getAllRecordEntries(), transaction.getIndexEntries());
-    OBeginTransactionResponse response = networkOperation(request, "Error on remote treansaction begin");
+    OBeginTransactionResponse response = networkOperationNoRetry(request, "Error on remote treansaction begin");
     for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
       transaction.updateIdentityAfterCommit(entry.getKey(), entry.getValue());
     }
@@ -1816,7 +1825,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void reBeginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
     ORebeginTransactionRequest request = new ORebeginTransactionRequest(transaction.getId(), transaction.isUsingLog(),
         transaction.getAllRecordEntries(), transaction.getIndexEntries());
-    OBeginTransactionResponse response = networkOperation(request, "Error on remote treansaction begin");
+    OBeginTransactionResponse response = networkOperationNoRetry(request, "Error on remote treansaction begin");
     for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
       transaction.updateIdentityAfterCommit(entry.getKey(), entry.getValue());
     }
