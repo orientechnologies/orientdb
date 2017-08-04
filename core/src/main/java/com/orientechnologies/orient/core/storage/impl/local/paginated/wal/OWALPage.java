@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.sql.parser.OInteger;
 
 import java.nio.ByteBuffer;
 
@@ -30,10 +31,29 @@ public class OWALPage {
   public static final int  PAGE_SIZE       = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
   public static final int  MIN_RECORD_SIZE = OIntegerSerializer.INT_SIZE + 3;
 
-  public static final  int CRC_OFFSET          = 0;
-  public static final  int MAGIC_NUMBER_OFFSET = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final int CRC_OFFSET          = 0;
+  public static final int MAGIC_NUMBER_OFFSET = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
   public static final int FREE_SPACE_OFFSET   = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
-  public static final  int RECORDS_OFFSET      = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
+
+  /**
+   * Information about position of LSN of last record which end is stored on this page. If only begging of the record is stored on
+   * this page its position is not stored.
+   *
+   * @see OLogSegment.FlushTask#commitLog()
+   * @see OLogSegment#init(ByteBuffer)
+   */
+  public static final int LAST_STORED_LSN = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
+
+  /**
+   * End of the last record stored in page. This value is used in case of end of the WAL is broken and we want to truncate it to
+   * read only valid values
+   *
+   * @see OLogSegment.FlushTask#commitLog()
+   * @see OLogSegment#init(ByteBuffer)
+   */
+  public static final int END_LAST_RECORD = LAST_STORED_LSN + OLongSerializer.LONG_SIZE;
+
+  public static final int RECORDS_OFFSET = END_LAST_RECORD + OIntegerSerializer.INT_SIZE;
 
   public static final int MAX_ENTRY_SIZE = PAGE_SIZE - RECORDS_OFFSET;
 
@@ -47,6 +67,9 @@ public class OWALPage {
 
       buffer.putLong(MAGIC_NUMBER);
       buffer.putInt(MAX_ENTRY_SIZE);
+
+      buffer.putLong(-1);// -1 means that we do not store any log record on this page
+      buffer.putInt(-1);// -1 means that we do not store any log record on this page
     }
   }
 

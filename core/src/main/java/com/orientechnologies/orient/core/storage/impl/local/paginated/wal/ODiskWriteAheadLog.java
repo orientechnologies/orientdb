@@ -78,6 +78,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final OPerformanceStatisticManager performanceStatisticManager;
 
   private boolean useFirstMasterRecord = true;
+
   private volatile long               logSize;
   private          File               masterRecordFile;
   private          OLogSequenceNumber firstMasterRecord;
@@ -248,7 +249,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         Collections.sort(logSegments);
 
         logSegments.get(logSegments.size() - 1).startFlush();
-        flushedLsn = readFlushedLSN();
+        flushedLsn = findFlushedLSN();
       }
 
       masterRecordFile = new File(walLocation, this.storage.getName() + MASTER_RECORD_EXTENSION);
@@ -975,11 +976,12 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     masterRecordLSNHolder.write(record);
   }
 
-  private OLogSequenceNumber readFlushedLSN() throws IOException {
+  private OLogSequenceNumber findFlushedLSN() throws IOException {
     int segment = logSegments.size() - 1;
     while (segment >= 0) {
-      OLogSegment logSegment = logSegments.get(segment);
-      OLogSequenceNumber flushedLSN = logSegment.readFlushedLSN();
+      final OLogSegment logSegment = logSegments.get(segment);
+      final OLogSequenceNumber flushedLSN = logSegment.end();
+
       if (flushedLSN == null)
         segment--;
       else
@@ -996,7 +998,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   public void setFlushedLsn(OLogSequenceNumber flushedLsn) {
     this.flushedLsn = flushedLsn;
   }
-
 
   public void checkFreeSpace() {
     final long freeSpace = walLocation.getFreeSpace();
