@@ -180,7 +180,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     if (metadata.containsField("closeAfterInterval")) {
       closeAfterInterval = Integer.valueOf(metadata.<Integer>field("closeAfterInterval")).longValue();
     } else {
-      closeAfterInterval = 20000l;
+      closeAfterInterval = 120000l;
     }
 
     if (metadata.containsField("firstFlushAfter")) {
@@ -203,12 +203,10 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       public void run() {
 
         if (System.currentTimeMillis() - lastAccess.get() > closeAfterInterval) {
-
 //          OLogManager.instance().info(this, " Closing index:: " + indexName());
           close();
         }
         if (!closed.get()) {
-
 //          OLogManager.instance().info(this, " Flushing index:: " + indexName());
           flush();
         }
