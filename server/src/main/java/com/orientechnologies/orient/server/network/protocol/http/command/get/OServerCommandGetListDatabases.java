@@ -19,14 +19,18 @@
   */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedServerAbstract {
   private static final String[] NAMES = { "GET|listDatabases" };
@@ -52,12 +56,21 @@ public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedS
     java.util.Set<String> storageNames = new java.util.LinkedHashSet(server.getAvailableStorageNames().keySet());
 
     // This just adds the system database if the guest user has the specified permission (server.listDatabases.system).
-    if (server.getSecurity() != null
-        && server.getSecurity().isAuthorized(OServerConfiguration.GUEST_USER, "server.listDatabases.system")) {
+    if (server.getSecurity() != null && server.getSecurity()
+        .isAuthorized(OServerConfiguration.GUEST_USER, "server.listDatabases.system")) {
       storageNames.add(OSystemDatabase.SYSTEM_DB_NAME);
     }
 
-    result.field("databases", storageNames);
+    // ORDER DATABASE NAMES (CASE INSENSITIVE)
+    final List<String> orderedStorages = new ArrayList<String>(storageNames);
+    Collections.sort(orderedStorages, new Comparator<String>() {
+      @Override
+      public int compare(final String o1, final String o2) {
+        return o1.toLowerCase().compareTo(o2.toLowerCase());
+      }
+    });
+
+    result.field("databases", orderedStorages);
     iResponse.writeRecord(result);
 
     return false;
@@ -67,5 +80,4 @@ public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedS
   public String[] getNames() {
     return NAMES;
   }
-
 }
