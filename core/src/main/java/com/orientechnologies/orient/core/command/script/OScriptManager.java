@@ -123,6 +123,7 @@ public class OScriptManager {
    *
    * @param db        Current database instance
    * @param iLanguage Language as filter
+   *
    * @return String containing all the functions
    */
   public String getLibrary(final ODatabase<?> db, final String iLanguage) {
@@ -179,7 +180,9 @@ public class OScriptManager {
    *
    * @param databaseName Database name
    * @param language     Script language
+   *
    * @return ScriptEngine instance with the function library already parsed
+   *
    * @see #releaseDatabaseEngine(String, String, OPartitionedObjectPool.PoolEntry)
    */
   public OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireDatabaseEngine(final String databaseName, final String language) {
@@ -205,6 +208,7 @@ public class OScriptManager {
    * @param iLanguage     Script language
    * @param iDatabaseName Database name
    * @param poolEntry     Pool entry to free
+   *
    * @see #acquireDatabaseEngine(String, String)
    */
   public void releaseDatabaseEngine(final String iLanguage, final String iDatabaseName,
@@ -243,6 +247,8 @@ public class OScriptManager {
 
     bindLegacyDatabaseAndUtil(binding, db);
 
+    bindDatabase(binding, db);
+
     bindInjectors(scriptEngine, binding, db);
 
     bindContext(binding, iContext);
@@ -270,10 +276,16 @@ public class OScriptManager {
   private void bindLegacyDatabaseAndUtil(Bindings binding, ODatabaseDocumentInternal db) {
     if (db != null) {
       // BIND FIXED VARIABLES
-      binding.put("db", new OScriptDocumentDatabaseWrapper(db));
+//      binding.put("db", new OScriptDocumentDatabaseWrapper(db));
       binding.put("orient", new OScriptOrientWrapper(db));
     }
     binding.put("util", new OFunctionUtilWrapper());
+  }
+
+  private void bindDatabase(Bindings binding, ODatabaseDocumentInternal db) {
+    if (db != null) {
+      binding.put("db", new OScriptDatabaseWrapper(db));
+    }
   }
 
   private void bindParameters(Bindings binding, Map<Object, Object> iArgs) {

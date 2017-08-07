@@ -20,6 +20,11 @@
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Map;
@@ -59,6 +64,42 @@ public class OScriptDatabaseWrapper {
 
   public OResultSet execute(String language, final String script, Map<String, Object> iParameters) {
     return this.database.execute(language, script, iParameters);
+  }
+
+  public OElement newInstance() {
+    return this.database.newInstance();
+  }
+
+  public OElement newInstance(String className) {
+    return this.database.newInstance(className);
+  }
+
+  public OVertex newVertex() {
+    return this.database.newVertex();
+  }
+
+  public OVertex newVertex(String className) {
+    return this.database.newVertex(className);
+  }
+
+  public OEdge newEdge(OVertex from, OVertex to) {
+    return this.database.newEdge(from, to);
+  }
+
+  public OEdge newEdge(OVertex from, OVertex to, String edgeClassName) {
+    return this.database.newEdge(from, to, edgeClassName);
+  }
+
+  public ORecord save(ORecord element) {
+    return this.database.save(element);
+  }
+
+  public void delete(ORecord record) {
+    this.database.delete(record);
+  }
+
+  public OBlob newBlob() {
+    return this.database.newBlob();
   }
 
 }
