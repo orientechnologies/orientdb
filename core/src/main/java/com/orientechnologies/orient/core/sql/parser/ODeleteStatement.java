@@ -9,6 +9,7 @@ public class ODeleteStatement extends OStatement {
   public OFromClause  fromClause;
   protected OWhereClause whereClause;
   protected boolean      returnBefore = false;
+  protected boolean      returnCount = false;
   protected OLimit       limit        = null;
   protected boolean      unsafe       = false;
 
@@ -27,6 +28,10 @@ public class ODeleteStatement extends OStatement {
     if (returnBefore) {
       builder.append(" RETURN BEFORE");
     }
+    if (returnCount) {
+      builder.append(" RETURN COUNT");
+    }
+
     if (whereClause != null) {
       builder.append(" WHERE ");
       whereClause.toString(params, builder);
