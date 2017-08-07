@@ -58,7 +58,11 @@ public class ODeleteEdgeExecutionPlanner {
     } else if (whereClause != null) {
       OFromClause fromClause = new OFromClause(-1);
       OFromItem item = new OFromItem(-1);
-      item.setIdentifier(className);
+      if (className == null) {
+        item.setIdentifier(new OIdentifier("E"));
+      } else {
+        item.setIdentifier(className);
+      }
       fromClause.setItem(item);
       handleTarget(result, ctx, fromClause, this.whereClause, enableProfiling);
     } else {
