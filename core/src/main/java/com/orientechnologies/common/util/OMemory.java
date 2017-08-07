@@ -42,8 +42,8 @@ public class OMemory {
   /**
    * @param unlimitedCap the upper limit on reported memory, if JVM reports unlimited memory.
    *
-   * @return same as {@link Runtime#maxMemory()} except that {@code unlimitedCap} limit is applied if JVM reports
-   * {@link Long#MAX_VALUE unlimited memory}.
+   * @return same as {@link Runtime#maxMemory()} except that {@code unlimitedCap} limit is applied if JVM reports {@link
+   * Long#MAX_VALUE unlimited memory}.
    */
   public static long getCappedRuntimeMaxMemory(long unlimitedCap) {
     final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
@@ -51,9 +51,8 @@ public class OMemory {
   }
 
   /**
-   * Obtains the total size in bytes of the installed physical memory on this machine.
-   * Note that on some VMs it's impossible to obtain the physical memory size, in this
-   * case the return value will {@code -1}.
+   * Obtains the total size in bytes of the installed physical memory on this machine. Note that on some VMs it's impossible to
+   * obtain the physical memory size, in this case the return value will {@code -1}.
    *
    * @return the total physical memory size in bytes or {@code -1} if the size can't be obtained.
    */
@@ -165,8 +164,8 @@ public class OMemory {
   }
 
   /**
-   * Checks the {@link com.orientechnologies.common.directmemory.OByteBufferPool} configuration and emits a warning
-   * if configuration is invalid.
+   * Checks the {@link com.orientechnologies.common.directmemory.OByteBufferPool} configuration and emits a warning if configuration
+   * is invalid.
    */
   public static void checkByteBufferPoolConfiguration() {
     final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
@@ -189,18 +188,16 @@ public class OMemory {
   }
 
   /**
-   * Tries to fix some common cache/memory configuration problems:
-   * <ul>
-   * <li>Cache size is larger than direct memory size.</li>
-   * <li>Memory chunk size is larger than cache size.</li>
-   * <ul/>
+   * Tries to fix some common cache/memory configuration problems: <ul> <li>Cache size is larger than direct memory size.</li>
+   * <li>Memory chunk size is larger than cache size.</li> <ul/>
    */
   public static void fixCommonConfigurationProblems() {
     final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
     long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
 
     if (maxDirectMemory != -1) {
-      final long maxDiskCacheSize = Math.min(maxDirectMemory / 1024 / 1024, Integer.MAX_VALUE);
+      //subtract 2MB because Java also uses direct byte buffers
+      final long maxDiskCacheSize = Math.min(maxDirectMemory / 1024 / 1024, Integer.MAX_VALUE) - 2;
 
       if (diskCacheSize > maxDiskCacheSize) {
         OLogManager.instance()
@@ -241,9 +238,8 @@ public class OMemory {
   }
 
   /**
-   * Parses the size specifier formatted in the JVM style, like 1024k or 4g.
-   * Following units are supported: k or K – kilobytes, m or M – megabytes, g or G – gigabytes.
-   * If no unit provided, it is bytes.
+   * Parses the size specifier formatted in the JVM style, like 1024k or 4g. Following units are supported: k or K – kilobytes, m or
+   * M – megabytes, g or G – gigabytes. If no unit provided, it is bytes.
    *
    * @param text the text to parse.
    *

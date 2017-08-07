@@ -212,7 +212,8 @@ public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPool
 
   /**
    * Acquires direct memory buffer. If there is free (already released) direct memory buffer we reuse it, otherwise either new
-   * memory chunk is allocated from direct memory or slice of already preallocated memory chunk is used as new byte buffer instance.
+   * memory chunk is allocated from direct memory or slice of already preallocated memory chunk is used as new byte buffer
+   * instance.
    * <p>
    * If we reached maximum amount of preallocated memory chunks then small portion of direct memory equals to page size is
    * allocated. Byte order of returned direct memory buffer equals to native byte order.
@@ -262,7 +263,15 @@ public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPool
 
       //allocation size should be the same for all buffers from chuck with the same index
       final int allocationSize = (int) Math
-          .min(maxPagesPerSingleArea * pageSize, (preAllocationLimit - bufferIndex * maxPagesPerSingleArea) * pageSize);
+          .min(maxPagesPerSingleArea * pageSize, preAllocationLimit - (bufferIndex * maxPagesPerSingleArea * pageSize));
+
+      //page is going to be allocated above the preallocation limit
+      if (allocationSize <= position * pageSize) {
+        overflowBufferCount.incrementAndGet();
+        allocatedMemory.getAndAdd(pageSize);
+
+        return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
+      }
 
       // we cannot free chunk of allocated memory so we set place holder first
       // if operation successful we allocate part of direct memory.
