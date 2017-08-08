@@ -715,9 +715,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    * Initializes all the available server's databases as distributed.
    */
   protected void loadLocalDatabases() {
-    for (Map.Entry<String, String> storageEntry : serverInstance.getAvailableStorageNames().entrySet()) {
-      final String databaseName = storageEntry.getKey();
+    final List<String> dbs = new ArrayList<String>(serverInstance.getAvailableStorageNames().keySet());
+    Collections.sort(dbs);
 
+    for (final String databaseName : dbs) {
       if (messageService.getDatabase(databaseName) == null) {
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Opening database '%s'...", databaseName);
 
@@ -1317,9 +1318,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       return;
     }
 
-    for (Map.Entry<String, Object> entry : configurationMap.entrySet()) {
-      if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
-        final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
+    final List<String> dbs = new ArrayList<String>(configurationMap.keySet());
+    Collections.sort(dbs);
+
+    for (String key : dbs) {
+      if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
+        final String databaseName = key.substring(CONFIG_DATABASE_PREFIX.length());
 
         final Set<String> availableServers = getAvailableNodeNames(databaseName);
         if (availableServers.isEmpty())
