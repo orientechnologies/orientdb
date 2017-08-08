@@ -134,7 +134,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Drops a database.
    *
    * @throws ODatabaseException if database is closed.
+   * @Deprecated use instead {@link OrientDB#drop}
    */
+  @Deprecated
   void drop();
 
   /**
