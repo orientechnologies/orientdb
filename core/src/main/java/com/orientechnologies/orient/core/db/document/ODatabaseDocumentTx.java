@@ -489,7 +489,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     } catch (Exception e) {
       // REMOVE THE (PARTIAL) DATABASE
       try {
-        drop();
+        internalDrop();
       } catch (Exception ex) {
         // IGNORE IT
       }
@@ -523,6 +523,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     callOnDropListeners();
 
+    internalDrop();
+  }
+
+  private void internalDrop() {
     if (metadata != null) {
       metadata.close();
       metadata = null;
