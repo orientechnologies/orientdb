@@ -210,7 +210,8 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
   /**
    * Acquires direct memory buffer. If there is free (already released) direct memory buffer we reuse it, otherwise either new
-   * memory chunk is allocated from direct memory or slice of already preallocated memory chunk is used as new byte buffer instance.
+   * memory chunk is allocated from direct memory or slice of already preallocated memory chunk is used as new byte buffer
+   * instance.
    * <p>
    * If we reached maximum amount of preallocated memory chunks then small portion of direct memory equals to page size is
    * allocated. Byte order of returned direct memory buffer equals to native byte order.
@@ -260,7 +261,15 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
       //allocation size should be the same for all buffers from chuck with the same index
       final int allocationSize = (int) Math
-          .min(maxPagesPerSingleArea * pageSize, (preAllocationLimit - bufferIndex * maxPagesPerSingleArea) * pageSize);
+          .min(maxPagesPerSingleArea * pageSize, preAllocationLimit - (bufferIndex * maxPagesPerSingleArea * pageSize));
+
+      //page is going to be allocated above the preallocation limit
+      if (allocationSize <= position * pageSize) {
+        overflowBufferCount.incrementAndGet();
+        allocatedMemory.getAndAdd(pageSize);
+
+        return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
+      }
 
       BufferHolder bfh = null;
       try {
@@ -526,30 +535,26 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     private final CountDownLatch filled = new CountDownLatch(1);
 
     /**
-     * Amount of pages which were requested from this buffer.
-     * But not buffer size or index of last page in buffer.
+     * Amount of pages which were requested from this buffer. But not buffer size or index of last page in buffer.
      * <p>
-     * This parameter is used to be sure that if we are going to allocate new buffer
-     * this buffer is served all page requests
+     * This parameter is used to be sure that if we are going to allocate new buffer this buffer is served all page requests
      */
     private final AtomicInteger requested = new AtomicInteger();
 
     /**
      * Logical index of buffer.
      * <p>
-     * Each buffer may contain only limited number of pages . Amount of pages is specified in
-     * {@link #maxPagesPerSingleArea} parameter.
+     * Each buffer may contain only limited number of pages . Amount of pages is specified in {@link #maxPagesPerSingleArea}
+     * parameter.
      * <p>
-     * Current field is allocation number of this buffer.
-     * Let say we requested 5-th page but buffer may contain only 4 pages.
-     * So first buffer will be created with index 0 and buffer which is needed for 5-th page will be created
-     * with index 1.
+     * Current field is allocation number of this buffer. Let say we requested 5-th page but buffer may contain only 4 pages. So
+     * first buffer will be created with index 0 and buffer which is needed for 5-th page will be created with index 1.
      * <p>
-     * In general index of buffer is result of dividing of page index on number of pages which may be contained by
-     * buffer without reminder.
+     * In general index of buffer is result of dividing of page index on number of pages which may be contained by buffer without
+     * reminder.
      * <p>
-     * This index is used to check that buffer which is currently used to serve memory requests is one which should be used
-     * for page with given index.
+     * This index is used to check that buffer which is currently used to serve memory requests is one which should be used for page
+     * with given index.
      */
 
     private final int index;
