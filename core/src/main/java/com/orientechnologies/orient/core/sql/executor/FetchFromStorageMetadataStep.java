@@ -129,6 +129,10 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
         item.setProperty("conflictStrategy",
             cluster.getRecordConflictStrategy() == null ? null : cluster.getRecordConflictStrategy().getName());
         item.setProperty("tombstonesCount", cluster.getTombstonesCount());
+        try {
+          item.setProperty("encryption", cluster.encryption());
+        } catch (Exception e) {
+        }
         result.add(item);
       }
     }
