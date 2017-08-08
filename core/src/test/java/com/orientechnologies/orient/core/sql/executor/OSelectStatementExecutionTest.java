@@ -3209,4 +3209,27 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test
+  public void testFromIndexWithoutNullValues() {
+    // issue #7624
+    String className = "testFromIndexWithoutNullValues";
+    db.command("create class " + className).close();
+    db.command("create property " + className+".name STRING").close();
+    db.command("create index " + className+".name on "+ className+"(name) NOTUNIQUE METADATA {ignoreNullValues:true}").close();
+
+    OElement elem1 = db.newElement(className);
+    elem1.setProperty("name", "foo");
+    elem1.save();
+
+    OElement elem2 = db.newElement(className);
+    elem2.setProperty("name", null);
+    elem2.save();
+
+    OResultSet result = db.query("select from index: " + className + ".name ");
+    Assert.assertTrue(result.hasNext());
+    result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
 }

@@ -281,6 +281,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private void fetchNullKeys() {
+    if (index.getDefinition().isNullValuesIgnored()) {
+      nullKeyIterator = Collections.emptyIterator();
+      return;
+    }
     Object nullIter = index.get(null);
     if (nullIter instanceof OIdentifiable) {
       nullKeyIterator = Collections.singleton(nullIter).iterator();
