@@ -834,10 +834,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         // we iterate till the last record is contained in wal at the moment when we call this method
         final OLogSequenceNumber endLsn = writeAheadLog.end();
 
-        if (endLsn == null || lsn.compareTo(endLsn) >= 0) {
+        if (endLsn == null || lsn.compareTo(endLsn) > 0) {
           OLogManager.instance()
               .warn(this, "Cannot find requested LSN=%s for database sync operation. Last available LSN is %s", lsn, endLsn);
           return null;
+        }
+
+        if (lsn.equals(endLsn)) {
+          // nothing has changed
+          return endLsn;
         }
 
         // container of rids of changed records
