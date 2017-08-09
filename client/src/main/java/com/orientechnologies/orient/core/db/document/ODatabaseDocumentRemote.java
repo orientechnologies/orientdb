@@ -370,4 +370,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       sharedContext.close();
   }
 
+
+
 }

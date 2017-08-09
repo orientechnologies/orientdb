@@ -26,13 +26,17 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * Created by tglman on 08/04/16.
@@ -230,7 +234,7 @@ public class OrientDBRemote implements OrientDBInternal {
   public synchronized void close() {
     if (!open)
       return;
-    Runtime.getRuntime().removeShutdownHook(shutdownThread);
+    removeShutdownHook();
     internalClose();
   }
 
@@ -278,5 +282,51 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public boolean isEmbedded() {
     return false;
+  }
+
+  @Override
+  public void removeShutdownHook() {
+    Runtime.getRuntime().removeShutdownHook(shutdownThread);
+  }
+
+  @Override
+  public void loadAllDatabases() {
+    //In remote does nothing
+  }
+
+  @Override
+  public ODatabaseDocumentInternal openNoAuthenticate(String iDbUrl, String user) {
+    throw new UnsupportedOperationException("Open with no authentication is not supported in remote");
+  }
+
+  @Override
+  public void initCustomStorage(String name, String baseUrl, String userName, String userPassword) {
+    throw new UnsupportedOperationException("Custom storage is not supported in remote");
+  }
+
+  @Override
+  public Collection<OStorage> getStorages() {
+    throw new UnsupportedOperationException("List storage is not supported in remote");
+  }
+
+  @Override
+  public void replaceFactory(OEmbeddedDatabaseInstanceFactory instanceFactory) {
+    throw new UnsupportedOperationException("instance factory is not supported in remote");
+  }
+
+  @Override
+  public void forceDatabaseClose(String databaseName) {
+    throw new UnsupportedOperationException("force close is not supported in remote");
+  }
+
+  @Override
+  public OEmbeddedDatabaseInstanceFactory getFactory() {
+    throw new UnsupportedOperationException("instance factory is not supported in remote");
+  }
+
+  @Override
+  public void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
+      OCommandOutputListener iListener) {
+    throw new UnsupportedOperationException("raw restore is not supported in remote");
   }
 }

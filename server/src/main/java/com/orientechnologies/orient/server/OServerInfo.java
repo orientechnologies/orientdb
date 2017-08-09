@@ -30,6 +30,7 @@ import java.util.List;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
@@ -154,8 +155,8 @@ public class OServerInfo {
 
   public static void getStorages(final OServer server, final OJSONWriter json) throws IOException {
     json.beginCollection(1, true, "storages");
-    Collection<OAbstractPaginatedStorage> storages = server.getDatabases().getStorages();
-    for (OAbstractPaginatedStorage s : storages) {
+    Collection<OStorage> storages = server.getDatabases().getStorages();
+    for (OStorage s : storages) {
       json.beginObject(2);
       writeField(json, 2, "name", s.getName());
       writeField(json, 2, "type", s.getClass().getSimpleName());

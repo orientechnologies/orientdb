@@ -22,11 +22,18 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Created by tglman on 27/03/16.
@@ -69,7 +76,14 @@ public interface OrientDBInternal extends AutoCloseable {
     OrientDBInternal factory;
 
     try {
-      Class<?> kass = Class.forName("com.orientechnologies.orient.core.db.OrientDBRemote");
+      String className = "com.orientechnologies.orient.core.db.OrientDBRemote";
+      ClassLoader loader;
+      if (configuration != null) {
+        loader = configuration.getClassLoader();
+      } else {
+        loader = OrientDBInternal.class.getClassLoader();
+      }
+      Class<?> kass = loader.loadClass(className);
       Constructor<?> constructor = kass.getConstructor(String[].class, OrientDBConfig.class, Orient.class);
       factory = (OrientDBInternal) constructor.newInstance(hosts, configuration, Orient.instance());
     } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
@@ -92,6 +106,28 @@ public interface OrientDBInternal extends AutoCloseable {
     return new OrientDBEmbedded(directoryPath, config, Orient.instance());
   }
 
+  static OrientDBInternal distributed(String directoryPath, OrientDBConfig configuration) {
+    OrientDBInternal factory;
+
+    try {
+      String className = "com.orientechnologies.orient.core.db.OrientDBDistributed";
+      ClassLoader loader;
+      if (configuration != null) {
+        loader = configuration.getClassLoader();
+      } else {
+        loader = OrientDBInternal.class.getClassLoader();
+      }
+      Class<?> kass = loader.loadClass(className);
+      Constructor<?> constructor = kass.getConstructor(String.class, OrientDBConfig.class, Orient.class);
+      factory = (OrientDBInternal) constructor.newInstance(directoryPath, configuration, Orient.instance());
+    } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
+      throw new ODatabaseException("OrientDB client API missing");
+    } catch (InvocationTargetException e) {
+      throw OException.wrapException(new ODatabaseException("Error creating OrientDB remote factory"), e.getTargetException());
+    }
+    return factory;
+  }
+
   /**
    * Open a database specified by name using the username and password if needed
    *
@@ -101,7 +137,7 @@ public interface OrientDBInternal extends AutoCloseable {
    *
    * @return the opened database
    */
-  ODatabaseSession open(String name, String user, String password);
+  ODatabaseDocumentInternal open(String name, String user, String password);
 
   /**
    * Open a database specified by name using the username and password if needed, with specific configuration
@@ -113,7 +149,7 @@ public interface OrientDBInternal extends AutoCloseable {
    *
    * @return the opened database
    */
-  ODatabaseSession open(String name, String user, String password, OrientDBConfig config);
+  ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config);
 
   /**
    * Create a new database
@@ -208,6 +244,9 @@ public interface OrientDBInternal extends AutoCloseable {
 
   void restore(String name, String user, String password, ODatabaseType type, String path, OrientDBConfig config);
 
+  void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
+      OCommandOutputListener iListener);
+
   /**
    * Close the factory with all related databases and pools.
    */
@@ -237,4 +276,20 @@ public interface OrientDBInternal extends AutoCloseable {
   static OrientDBInternal extract(OrientDB orientDB) {
     return orientDB.internal;
   }
+
+  ODatabaseDocumentInternal openNoAuthenticate(String iDbUrl, String user);
+
+  void initCustomStorage(String name, String baseUrl, String userName, String userPassword);
+
+  void loadAllDatabases();
+
+  void removeShutdownHook();
+
+  Collection<OStorage> getStorages();
+
+  void forceDatabaseClose(String databaseName);
+
+  void replaceFactory(OEmbeddedDatabaseInstanceFactory instanceFactory);
+
+  OEmbeddedDatabaseInstanceFactory getFactory();
 }
