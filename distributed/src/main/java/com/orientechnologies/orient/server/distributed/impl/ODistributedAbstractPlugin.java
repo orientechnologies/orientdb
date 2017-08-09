@@ -1245,9 +1245,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     throw new ODistributedException("No response received from remote nodes for auto-deploy of database '" + databaseName + "'");
   }
 
-  private void replaceStorageInSessions(OStorage storage) {
+  private void replaceStorageInSessions(final OStorage storage) {
     for (OClientConnection conn : serverInstance.getClientConnectionManager().getConnections()) {
-      ODatabaseDocumentInternal connDb = conn.getDatabase();
+      final ODatabaseDocumentInternal connDb = conn.getDatabase();
       if (connDb != null && connDb.getName().equals(storage.getName())) {
         conn.acquire();
         try {

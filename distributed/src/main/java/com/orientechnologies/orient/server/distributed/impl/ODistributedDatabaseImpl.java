@@ -60,7 +60,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Distributed database implementation. There is one instance per database. Each node creates own instance to talk with each others.
+ * Distributed database implementation. There is one instance per database. Each node creates own instance to talk with each
+ * others.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
@@ -1218,6 +1219,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void suspend() {
     if (this.parsing.get()) {
       // RESET THE DATABASE
+      if (lockThread != null)
+        lockThread.reset();
       if (unlockThread != null)
         unlockThread.reset();
       for (ODistributedWorker w : workerThreads) {
