@@ -878,6 +878,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         new OCallable<Boolean, OModifiableDistributedConfiguration>() {
           @Override
           public Boolean call(OModifiableDistributedConfiguration cfg) {
+
             distrDatabase.checkNodeInConfiguration(cfg, nodeName);
 
             // GET ALL THE OTHER SERVERS
@@ -893,8 +894,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 .info(this, nodeName, null, DIRECTION.NONE, "Current node is a %s for database '%s'", cfg.getServerRole(nodeName),
                     databaseName);
 
-            final Set<String> configuredDatabases = serverInstance.getAvailableStorageNames().keySet();
-            if (!iStartup && configuredDatabases.contains(databaseName))
+            if (!forceDeployment && getDatabaseStatus(getLocalNodeName(), databaseName) == DB_STATUS.ONLINE)
               return false;
 
             // INIT STORAGE + UPDATE LOCAL FILE ONLY
