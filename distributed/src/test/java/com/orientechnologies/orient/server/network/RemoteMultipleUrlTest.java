@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.network;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -8,6 +9,8 @@ import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
 
 /**
  * Created by tglman on 27/07/17.
@@ -42,6 +45,7 @@ public class RemoteMultipleUrlTest {
   public void after() {
     server.shutdown();
     Orient.instance().startup();
+    OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
   }
 
 }

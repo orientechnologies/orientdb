@@ -202,12 +202,14 @@ public class ServerRun {
   public void terminateServer() {
     if (server != null) {
       try {
-        HazelcastInstance hz = ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance();
-        final Node node = getHazelcastNode(hz);
-        node.getConnectionManager().shutdown();
-        node.shutdown(true);
-        hz.getLifecycleService().terminate();
-
+        final OHazelcastPlugin dm = (OHazelcastPlugin) server.getDistributedManager();
+        if (dm != null) {
+          HazelcastInstance hz = dm.getHazelcastInstance();
+          final Node node = getHazelcastNode(hz);
+          node.getConnectionManager().shutdown();
+          node.shutdown(true);
+          hz.getLifecycleService().terminate();
+        }
       } catch (Exception e) {
         // IGNORE IT
       }

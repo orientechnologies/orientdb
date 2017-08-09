@@ -164,79 +164,25 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
-   * Builds a OrientGraph instance passing a configuration. Supported configuration settings are:
-   * <table>
-   * <tr>
-   * <td><b>Name</b></td>
-   * <td><b>Description</b></td>
-   * <td><b>Default value</b></td>
-   * </tr>
-   * <tr>
-   * <td>blueprints.orientdb.url</td>
-   * <td>Database URL</td>
-   * <td>-</td>
-   * </tr>
-   * <tr>
-   * <td>blueprints.orientdb.username</td>
-   * <td>User name</td>
-   * <td>admin</td>
-   * </tr>
-   * <tr>
-   * <td>blueprints.orientdb.password</td>
-   * <td>User password</td>
-   * <td>admin</td>
-   * </tr>
-   * <tr>
-   * <td>blueprints.orientdb.saveOriginalIds</td>
-   * <td>Saves the original element IDs by using the property origId. This could be useful on import of graph to preserve original
-   * ids</td>
-   * <td>false</td>
-   * </tr>
-   * <tr>
-   * <td>blueprints.orientdb.keepInMemoryReferences</td>
-   * <td>Avoid to keep records in memory but only RIDs</td>
-   * <td>false</td>
-   * </tr>
-   * <tr>
-   * <td>blueprints.orientdb.useCustomClassesForEdges</td>
-   * <td>Use Edge's label as OrientDB class. If doesn't exist create it under the hood</td>
-   * <td>true</td>
-   * </tr>
-   * <tr>
-   * <td>blueprints.orientdb.useCustomClassesForVertex</td>
-   * <td>Use Vertex's label as OrientDB class. If doesn't exist create it under the hood</td>
-   * <td>true</td>
-   * </tr>
-   * <tr>
-   * <td>blueprints.orientdb.useVertexFieldsForEdgeLabels</td>
-   * <td>Store the edge relationships in vertex by using the Edge's class. This allow to use multiple fields and make faster
-   * traversal by edge's label (class)</td>
-   * <td>true</td>
-   * </tr>
-   * <tr>
-   * <td>blueprints.orientdb.lightweightEdges</td>
-   * <td>Uses lightweight edges. This avoid to create a physical document per edge. Documents are created only when they have
-   * properties</td>
-   * <td>true</td>
-   * </tr>
-   * <tr>
-   * <td>blueprints.orientdb.autoScaleEdgeType</td>
-   * <td>Set auto scale of edge type. True means one edge is managed as LINK, 2 or more are managed with a LINKBAG</td>
-   * <td>false</td>
-   * </tr>
-   * <tr>
-   * <td>blueprints.orientdb.edgeContainerEmbedded2TreeThreshold</td>
+   * Builds a OrientGraph instance passing a configuration. Supported configuration settings are: <table> <tr> <td><b>Name</b></td>
+   * <td><b>Description</b></td> <td><b>Default value</b></td> </tr> <tr> <td>blueprints.orientdb.url</td> <td>Database URL</td>
+   * <td>-</td> </tr> <tr> <td>blueprints.orientdb.username</td> <td>User name</td> <td>admin</td> </tr> <tr>
+   * <td>blueprints.orientdb.password</td> <td>User password</td> <td>admin</td> </tr> <tr>
+   * <td>blueprints.orientdb.saveOriginalIds</td> <td>Saves the original element IDs by using the property origId. This could be
+   * useful on import of graph to preserve original ids</td> <td>false</td> </tr> <tr> <td>blueprints.orientdb.keepInMemoryReferences</td>
+   * <td>Avoid to keep records in memory but only RIDs</td> <td>false</td> </tr> <tr> <td>blueprints.orientdb.useCustomClassesForEdges</td>
+   * <td>Use Edge's label as OrientDB class. If doesn't exist create it under the hood</td> <td>true</td> </tr> <tr>
+   * <td>blueprints.orientdb.useCustomClassesForVertex</td> <td>Use Vertex's label as OrientDB class. If doesn't exist create it
+   * under the hood</td> <td>true</td> </tr> <tr> <td>blueprints.orientdb.useVertexFieldsForEdgeLabels</td> <td>Store the edge
+   * relationships in vertex by using the Edge's class. This allow to use multiple fields and make faster traversal by edge's label
+   * (class)</td> <td>true</td> </tr> <tr> <td>blueprints.orientdb.lightweightEdges</td> <td>Uses lightweight edges. This avoid to
+   * create a physical document per edge. Documents are created only when they have properties</td> <td>true</td> </tr> <tr>
+   * <td>blueprints.orientdb.autoScaleEdgeType</td> <td>Set auto scale of edge type. True means one edge is managed as LINK, 2 or
+   * more are managed with a LINKBAG</td> <td>false</td> </tr> <tr> <td>blueprints.orientdb.edgeContainerEmbedded2TreeThreshold</td>
    * <td>Changes the minimum number of edges for edge containers to transform the underlying structure from embedded to tree. Use -1
-   * to disable transformation</td>
-   * <td>-1</td>
-   * </tr>
-   * <tr>
-   * <td>blueprints.orientdb.edgeContainerTree2EmbeddedThreshold</td>
+   * to disable transformation</td> <td>-1</td> </tr> <tr> <td>blueprints.orientdb.edgeContainerTree2EmbeddedThreshold</td>
    * <td>Changes the minimum number of edges for edge containers to transform the underlying structure from tree to embedded. Use -1
-   * to disable transformation</td>
-   * <td>-1</td>
-   * </tr>
-   * </table>
+   * to disable transformation</td> <td>-1</td> </tr> </table>
    *
    * @param configuration of graph
    */
@@ -788,9 +734,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
-   * Get all the Vertices in Graph filtering by field name and value. Example:<code>
-   * Iterable<Vertex> resultset = getVertices("name", "Jay");
-   * </code>
+   * Get all the Vertices in Graph filtering by field name and value. Example:<code> Iterable<Vertex> resultset =
+   * getVertices("name", "Jay"); </code>
    *
    * @param iKey   Field name
    * @param iValue Field value
@@ -845,11 +790,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
-   * Lookup for a vertex by id using an index.<br>
-   * This API relies on Unique index (SBTREE/HASH) but is deprecated.<br>
-   * Example:<code>
-   * Vertex v = getVertexByKey("V.name", "name", "Jay");
-   * </code>
+   * Lookup for a vertex by id using an index.<br> This API relies on Unique index (SBTREE/HASH) but is deprecated.<br>
+   * Example:<code> Vertex v = getVertexByKey("V.name", "name", "Jay"); </code>
    *
    * @param iKey   Name of the indexed property
    * @param iValue Field value
@@ -881,9 +823,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
-   * Get all the Vertices in Graph filtering by field name and value. Example:<code>
-   * Iterable<Vertex> resultset = getVertices("Person",new String[] {"name","surname"},new Object[] { "Sherlock" ,"Holmes"});
-   * </code>
+   * Get all the Vertices in Graph filtering by field name and value. Example:<code> Iterable<Vertex> resultset =
+   * getVertices("Person",new String[] {"name","surname"},new Object[] { "Sherlock" ,"Holmes"}); </code>
    *
    * @param iKey   Fields name
    * @param iValue Fields value
@@ -992,9 +933,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
-   * Get all the Edges in Graph filtering by field name and value. Example:<code>
-   * Iterable<Edges> resultset = getEdges("name", "Jay");
-   * </code>
+   * Get all the Edges in Graph filtering by field name and value. Example:<code> Iterable<Edges> resultset = getEdges("name",
+   * "Jay"); </code>
    *
    * @param iKey   Field name
    * @param iValue Field value
@@ -2057,7 +1997,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final ORidBag bag = (ORidBag) fieldValue;
 
       if (iVertexToRemove != null) {
-        if (!iAlsoInverse && ODocumentInternal.getImmutableSchemaClass((ODocument) iVertexToRemove.getRecord()).isEdgeType()) {
+        final OClass cls = graph.getDatabase().getMetadata().getImmutableSchemaSnapshot()
+            .getClassByClusterId(iVertexToRemove.getIdentity().getClusterId());
+        if (!iAlsoInverse && cls.isEdgeType()) {
           bag.remove(iVertexToRemove);
         } else {
           // SEARCH SEQUENTIALLY (SLOWER)

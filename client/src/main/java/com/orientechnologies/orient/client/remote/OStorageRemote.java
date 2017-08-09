@@ -1670,12 +1670,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
 
     final List<ODocument> members;
-    ODocument dataCenters;
+    ODocument dataCenters = null;
     synchronized (clusterConfiguration) {
       clusterConfiguration.fromStream(obj);
       clusterConfiguration.toString();
       members = clusterConfiguration.field("members");
-      dataCenters = ((ODocument) clusterConfiguration.field("database")).field("dataCenters");
+      final ODocument db = ((ODocument) clusterConfiguration.field("database"));
+      if (db != null)
+        dataCenters = db.field("dataCenters");
     }
 
     String dataCenter = getDataCenterOfServer(dataCenters, resolveNameByIp(members, getHostIpPort()));
