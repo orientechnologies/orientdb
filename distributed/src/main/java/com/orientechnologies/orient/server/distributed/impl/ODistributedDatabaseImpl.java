@@ -1162,6 +1162,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
                     "Distributed transaction %s on database '%s' is expired after %dms", ctx.getReqId(), databaseName, elapsed);
 
+                if (database != null)
+                  database.activateOnCurrentThread();
+
                 try {
                   ctx.cancel(manager, database);
 
@@ -1202,8 +1205,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
               "Error on checking for expired distributed transaction on database '%s'", databaseName);
         } finally {
-          if (database != null)
+          if (database != null) {
+            database.activateOnCurrentThread();
             database.close();
+          }
         }
       }
     };
