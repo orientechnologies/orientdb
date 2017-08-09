@@ -22,7 +22,7 @@ public class CopyDocumentStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  public CopyDocumentStep(OInsertExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
+  public CopyDocumentStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
 

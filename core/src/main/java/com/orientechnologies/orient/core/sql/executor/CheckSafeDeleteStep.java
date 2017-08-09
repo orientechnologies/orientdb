@@ -52,7 +52,7 @@ public class CheckSafeDeleteStep extends AbstractExecutionStep {
               OClass clazz = doc.getSchemaClass();
               if (clazz != null) {
                 if (clazz.getName().equalsIgnoreCase("V") || clazz.isSubClassOf("V")) {
-                  throw new OCommandExecutionException("Cannot safelly delete a vertex, please use DELETE VERTEX or UNSAFE");
+                  throw new OCommandExecutionException("Cannot safely delete a vertex, please use DELETE VERTEX or UNSAFE");
                 }
                 if (clazz.getName().equalsIgnoreCase("E") || clazz.isSubClassOf("E")) {
                   throw new OCommandExecutionException("Cannot safely delete an edge, please use DELETE EDGE or UNSAFE");
