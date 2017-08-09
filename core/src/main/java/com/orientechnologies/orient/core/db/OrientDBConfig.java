@@ -33,16 +33,18 @@ public class OrientDBConfig {
   private final OContextConfiguration   configurations;
   private final Map<ATTRIBUTES, Object> attributes;
   private final Set<ODatabaseListener>  listeners;
+  private final ClassLoader             classLoader;
 
   protected OrientDBConfig() {
     configurations = new OContextConfiguration();
     attributes = new HashMap<>();
     parent = null;
     listeners = new HashSet<>();
+    classLoader = this.getClass().getClassLoader();
   }
 
   protected OrientDBConfig(OContextConfiguration configurations, Map<ATTRIBUTES, Object> attributes,
-      Set<ODatabaseListener> listeners) {
+      Set<ODatabaseListener> listeners, ClassLoader classLoader) {
     this.configurations = configurations;
     this.attributes = attributes;
     parent = null;
@@ -50,6 +52,10 @@ public class OrientDBConfig {
       this.listeners = listeners;
     else
       this.listeners = Collections.emptySet();
+    if (classLoader != null) {
+      this.classLoader = classLoader;
+    } else
+      this.classLoader = this.getClass().getClassLoader();
   }
 
   public static OrientDBConfig defaultConfig() {
@@ -70,6 +76,10 @@ public class OrientDBConfig {
 
   public Map<ATTRIBUTES, Object> getAttributes() {
     return attributes;
+  }
+
+  public ClassLoader getClassLoader() {
+    return classLoader;
   }
 
   protected void setParent(OrientDBConfig parent) {

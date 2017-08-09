@@ -99,7 +99,7 @@ public class OServer {
   private OTokenHandler            tokenHandler;
   private OSystemDatabase          systemDatabase;
   private OrientDB                 context;
-  private OrientDBEmbedded         databases;
+  private OrientDBInternal         databases;
 
   public OServer()
       throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
@@ -1062,8 +1062,9 @@ public class OServer {
     pluginManager = new OServerPluginManager();
     pluginManager.config(this);
     pluginManager.startup();
-    
-    if (serverSecurity != null) serverSecurity.onAfterDynamicPlugins();
+
+    if (serverSecurity != null)
+      serverSecurity.onAfterDynamicPlugins();
 
     // PLUGINS CONFIGURED IN XML
     final OServerConfiguration configuration = serverCfg.getConfiguration();
@@ -1136,7 +1137,7 @@ public class OServer {
     systemDatabase = new OSystemDatabase(this);
   }
 
-  public OrientDBEmbedded getDatabases() {
+  public OrientDBInternal getDatabases() {
     return databases;
   }
 

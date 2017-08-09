@@ -139,7 +139,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     synchronized (embedded) {
       factory = (OrientDBEmbedded) embedded.get(baseUrl);
       if (factory == null || !factory.isOpen()) {
-        factory = (OrientDBEmbedded) OrientDBInternal.fromUrl("embedded:" + baseUrl, config);
+        factory = (OrientDBEmbedded) OrientDBInternal.embedded(baseUrl, config);
         embedded.put(baseUrl, factory);
       }
     }

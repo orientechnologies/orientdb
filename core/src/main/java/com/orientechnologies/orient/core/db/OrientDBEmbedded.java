@@ -41,6 +41,7 @@ import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  * Created by tglman on 08/04/16.
@@ -101,7 +102,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       //** THIS IS COMMENTED OUT BECAUSE WE NEED BOTH (NO PASSWORD AND NO USER AUTHORIZATION CHECK).
       // embedded.internalOpen(user, "nopwd", false);
       ////////////////////////////////////////////////////////////////////////////////////////////
-      
+
       embedded.callOnOpenListeners();
       return embedded;
     } catch (Exception e) {
@@ -413,8 +414,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  public Collection<OAbstractPaginatedStorage> getStorages() {
-    return storages.values();
+  public synchronized Collection<OStorage> getStorages() {
+    return storages.values().stream().map((x) -> (OStorage) x).collect(Collectors.toSet());
   }
 
   public synchronized void forceDatabaseClose(String iDatabaseName) {
