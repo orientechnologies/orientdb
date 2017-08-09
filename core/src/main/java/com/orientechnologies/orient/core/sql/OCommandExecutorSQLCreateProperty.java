@@ -167,7 +167,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
         }
 
         // UNSAFE
-        if (m.group(3) != null) {
+        if (m.group(1) != null && m.group(1).equalsIgnoreCase("UNSAFE")) {
           this.unsafe = true;
         }
       } else {
