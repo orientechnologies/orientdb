@@ -11,12 +11,27 @@ import java.util.NoSuchElementException;
 public class OrientProperty<V> implements Property<V> {
     protected String key;
     protected V value;
+    protected Object wrappedValue;
     protected OrientElement element;
 
     public OrientProperty(String key, V value, OrientElement element) {
         this.key = key;
         this.value = value;
         this.element = element;
+        this.wrappedValue = wrapIntoGraphElement(value);
+
+    }
+
+    private Object wrapIntoGraphElement(V value) {
+        Object result = value;
+        if (result instanceof OElement) {
+            if (((OElement) result).isVertex()) {
+                result = new OrientVertex(element.getGraph(), ((OElement) result).asVertex().get());
+            } else if (((OElement) value).isEdge()) {
+                result = new OrientEdge(element.getGraph(), ((OElement) result).asEdge().get());
+            }
+        }
+        return result;
     }
 
     @Override
@@ -26,7 +41,7 @@ public class OrientProperty<V> implements Property<V> {
 
     @Override
     public V value() throws NoSuchElementException {
-        return value;
+        return (V) wrappedValue;
     }
 
     @Override
@@ -45,6 +60,7 @@ public class OrientProperty<V> implements Property<V> {
         doc.removeProperty(key);
         doc.save();
         this.value = null;
+        wrappedValue = null;
     }
 
     @Override
