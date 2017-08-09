@@ -10,25 +10,25 @@ import org.junit.Test;
  */
 public class OrientGraphLinkTest extends OrientGraphBaseTest {
 
-  @Test
-  public void testLinks() {
+    @Test
+    public void testLinks() {
 
-    OrientGraph db = factory.getNoTx();
+        OrientGraph db = factory.getNoTx();
 
-    Vertex vertex = db.addVertex(T.label, getClass().getSimpleName(), "name", "John");
-    Vertex vertex1 = db.addVertex(T.label, getClass().getSimpleName(), "name", "Luke");
-    vertex.property("friend", vertex1);
+        Vertex vertex = db.addVertex(T.label, getClass().getSimpleName(), "name", "John");
+        Vertex vertex1 = db.addVertex(T.label, getClass().getSimpleName(), "name", "Luke");
+        vertex.property("friend", vertex1);
 
-    db.close();
+        db.close();
 
-    Object rid = vertex.id();
-    db = factory.getNoTx();
+        Object rid = vertex.id();
+        db = factory.getNoTx();
 
-    Vertex v = db.vertices(rid).next();
-    Object val = v.value("friend");
-    Assert.assertTrue(val instanceof OrientVertex);
-    Assert.assertEquals("Luke", ((OrientVertex) val).value("name"));
-    db.close();
-  }
+        Vertex v = db.vertices(rid).next();
+        Object val = v.value("friend");
+        Assert.assertTrue(val instanceof OrientVertex);
+        Assert.assertEquals("Luke", ((OrientVertex) val).value("name"));
+        db.close();
+    }
 
 }

@@ -2,6 +2,7 @@ package org.apache.tinkerpop.gremlin.orientdb.gremlintest.suite;
 
 import org.apache.tinkerpop.gremlin.AbstractGremlinSuite;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalEngine;
+import org.apache.tinkerpop.gremlin.structure.GraphTest;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.RunnerBuilder;
 
@@ -11,7 +12,7 @@ import org.junit.runners.model.RunnerBuilder;
 public class OrientDBDebugSuite extends AbstractGremlinSuite {
 
     private static final Class<?>[] allTests = new Class<?>[] {
-            //        GraphTest.class,
+            GraphTest.class,
             //            TransactionTest.class
     };
 

@@ -29,6 +29,4 @@ public class OrientSampleTest {
         //        subclasses.forEach(c -> System.out.println(c));
     }
 
-
-
 }

@@ -1,0 +1,149 @@
+package org.apache.tinkerpop.gremlin.orientdb;
+
+import org.apache.tinkerpop.gremlin.process.traversal.Compare;
+import org.apache.tinkerpop.gremlin.process.traversal.Contains;
+import org.apache.tinkerpop.gremlin.process.traversal.P;
+import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
+import org.apache.tinkerpop.gremlin.structure.T;
+
+import java.util.*;
+
+/**
+ * Created by Enrico Risa on 08/08/2017.
+ */
+public class OrientGraphQueryBuilder {
+
+    private List<String> classes = new ArrayList<>();
+
+    private Map<String, P<?>> params = new LinkedHashMap<>();
+
+    public OrientGraphQueryBuilder addCondition(HasContainer condition) {
+
+        if (isLabelKey(condition.getKey())) {
+            Object value = condition.getValue();
+            if (value instanceof List) {
+                ((List) value).forEach(label -> classes.add((String) label));
+            } else {
+                classes.add((String) value);
+            }
+        } else {
+            params.put(condition.getKey(), condition.getPredicate());
+        }
+        return this;
+    }
+
+    public Optional<OrientGraphQuery> build() {
+        if (classes.size() == 0) {
+            return Optional.empty();
+        } else {
+            StringBuilder builder = new StringBuilder();
+            builder.append("SELECT expand($union) ");
+            Map<String, Object> parameters = new HashMap<>();
+            String whereCondition = fillParameters(parameters);
+            String lets = classes.stream().map((s) -> buildLetStatement(buildSingleQuery(s, whereCondition), classes.indexOf(s)))
+                    .reduce("", (a, b) -> a.isEmpty() ? b : a + " , " + b);
+            builder.append(String.format("%s , $union = UNIONALL(%s)", lets, buildVariables(classes.size())));
+            return Optional.of(new OrientGraphQuery(builder.toString(), parameters));
+        }
+    }
+
+    private String fillParameters(Map<String, Object> parameters) {
+        StringBuilder whereBuilder = new StringBuilder();
+
+        if (params.size() > 0) {
+            whereBuilder.append(" WHERE ");
+            boolean first[] = { true };
+            params.entrySet().forEach((e) -> {
+                String cond = formatCondition(e.getKey(), e.getValue());
+                if (first[0]) {
+                    whereBuilder.append(" " + cond);
+                    first[0] = false;
+                } else {
+                    whereBuilder.append(" AND " + cond);
+                }
+                parameters.put(e.getKey(), e.getValue().getValue());
+            });
+        }
+        return whereBuilder.toString();
+    }
+
+    private String buildVariables(int size) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < classes.size(); i++) {
+            builder.append(String.format("$q%d", i));
+            if (i < classes.size() - 1) {
+                builder.append(String.format(",", i));
+            }
+        }
+        return builder.toString();
+    }
+
+    protected String buildLetStatement(String query, int idx) {
+        StringBuilder builder = new StringBuilder();
+        if (idx == 0) {
+            builder.append("LET ");
+        }
+        builder.append(String.format("$q%d = (%s)", idx, query));
+        return builder.toString();
+    }
+
+    protected String buildSingleQuery(String clazz, String whereCondition) {
+        return String.format("SELECT FROM `%s` %s", clazz, whereCondition);
+    }
+
+    private String formatCondition(String field, P<?> predicate) {
+        return String.format(" `%s` %s :%s", field, formatPredicate(predicate), field);
+    }
+
+    private String formatPredicate(P<?> cond) {
+
+        if (cond.getBiPredicate() instanceof Compare) {
+            Compare compare = (Compare) cond.getBiPredicate();
+
+            String condition = null;
+            switch (compare) {
+            case eq:
+                condition = "=";
+                break;
+            case gt:
+                condition = ">";
+                break;
+            case gte:
+                condition = ">=";
+                break;
+            case lt:
+                condition = "<";
+                break;
+            case lte:
+                condition = "<=";
+                break;
+            case neq:
+                condition = "<>";
+                break;
+            }
+            return condition;
+        } else if (cond.getBiPredicate() instanceof Contains) {
+            Contains contains = (Contains) cond.getBiPredicate();
+            String condition = null;
+            switch (contains) {
+            case within:
+                condition = "IN";
+                break;
+            case without:
+                condition = "NOT IN";
+                break;
+            }
+            return condition;
+        }
+
+        throw new UnsupportedOperationException(String.format("Predicate %s not supported!", cond.toString()));
+    }
+
+    private boolean isLabelKey(String key) {
+        try {
+            return T.fromString(key) == T.label;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+}
