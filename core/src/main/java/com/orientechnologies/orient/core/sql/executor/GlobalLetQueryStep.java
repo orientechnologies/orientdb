@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,6 +46,8 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
     executed = true;
   }
 
+
+
   private List<OResult> toList(OLocalResultSet oLocalResultSet) {
     List<OResult> result = new ArrayList<>();
     while (oLocalResultSet.hasNext()) {
@@ -58,6 +61,11 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     return spaces + "+ LET (once)\n" +
         spaces + "  " + varName + " = \n" + box(spaces+"    ", this.subExecutionPlan.prettyPrint(0, indent));
+  }
+
+  @Override
+  public List<OExecutionPlan> getSubExecutionPlans() {
+    return Collections.singletonList(this.subExecutionPlan);
   }
 
   private String box(String spaces, String s) {
