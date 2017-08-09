@@ -1488,7 +1488,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       }
 
       try {
-        rebalanceClusterOwnership(nodeName, db, cfg, false);
+        try {
+          rebalanceClusterOwnership(nodeName, db, cfg, false);
+        } catch (Exception e) {
+          // HANDLE IT AS WARNING
+          ODistributedServerLog
+              .warn(this, nodeName, null, DIRECTION.NONE, "Error on re-balancing the cluster for database '%s'", e, databaseName);
+          // NOT CRITICAL, CONTINUE
+        }
         distrDatabase.setOnline();
       } finally {
         db.activateOnCurrentThread();

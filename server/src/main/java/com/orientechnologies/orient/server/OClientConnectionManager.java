@@ -37,23 +37,24 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.net.ssl.SSLSocket;
 
 public class OClientConnectionManager {
-  private static final long                                  TIMEOUT_PUSH     = 3000;
+  private static final long TIMEOUT_PUSH = 3000;
 
   protected final ConcurrentMap<Integer, OClientConnection>  connections      = new ConcurrentHashMap<Integer, OClientConnection>();
-  protected AtomicInteger                                    connectionSerial = new AtomicInteger(0);
+  protected       AtomicInteger                              connectionSerial = new AtomicInteger(0);
   protected final ConcurrentMap<OHashToken, OClientSessions> sessions         = new ConcurrentHashMap<OHashToken, OClientSessions>();
-  protected final TimerTask                                  timerTask;
-  private OServer                                            server;
+  protected final TimerTask timerTask;
+  private         OServer   server;
 
   public OClientConnectionManager(OServer server) {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
@@ -71,12 +72,13 @@ public class OClientConnectionManager {
 
     Orient.instance().scheduleTask(timerTask, delay, delay);
 
-    Orient.instance().getProfiler().registerHookValue("server.connections.actives", "Number of active network connections",
-        METRIC_TYPE.COUNTER, new OProfilerHookValue() {
-          public Object getValue() {
-            return (long) connections.size();
-          }
-        });
+    Orient.instance().getProfiler()
+        .registerHookValue("server.connections.actives", "Number of active network connections", METRIC_TYPE.COUNTER,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return (long) connections.size();
+              }
+            });
     this.server = server;
   }
 
@@ -92,8 +94,8 @@ public class OClientConnectionManager {
         socket = entry.getValue().getProtocol().getChannel().socket;
 
       if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-        OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
-            entry.getKey(), socket);
+        OLogManager.instance()
+            .debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)", entry.getKey(), socket);
         try {
           OCommandRequestText command = entry.getValue().getData().command;
           if (command != null && command.isIdempotent()) {
@@ -106,8 +108,9 @@ public class OClientConnectionManager {
           OLogManager.instance().error(this, "Error during close of connection for close channel", e);
         }
         iterator.remove();
-      } else if(Boolean.TRUE.equals(entry.getValue().getTokenBased())){
-        if (entry.getValue().getToken() != null && !entry.getValue().getToken().isNowValid() && !entry.getValue().getToken().getIsValid() ) {
+      } else if (Boolean.TRUE.equals(entry.getValue().getTokenBased())) {
+        if (entry.getValue().getToken() != null && !entry.getValue().getToken().isNowValid() && !entry.getValue().getToken()
+            .getIsValid()) {
           // Close the current session but not the network because can be used by another session.
           entry.getValue().close();
           iterator.remove();
@@ -119,9 +122,10 @@ public class OClientConnectionManager {
   /**
    * Create a connection.
    *
-   * @param iProtocol
-   *          protocol which will be used by connection
+   * @param iProtocol protocol which will be used by connection
+   *
    * @return new connection
+   *
    * @throws IOException
    */
   public OClientConnection connect(final ONetworkProtocol iProtocol) throws IOException {
@@ -139,9 +143,10 @@ public class OClientConnectionManager {
   /**
    * Create a connection.
    *
-   * @param iProtocol
-   *          protocol which will be used by connection
+   * @param iProtocol protocol which will be used by connection
+   *
    * @return new connection
+   *
    * @throws IOException
    */
   public OClientConnection connect(final ONetworkProtocol iProtocol, final OClientConnection connection, final byte[] tokenBytes,
@@ -195,8 +200,8 @@ public class OClientConnectionManager {
   /**
    * Retrieves the connection by id.
    *
-   * @param iChannelId
-   *          id of connection
+   * @param iChannelId id of connection
+   *
    * @return The connection if any, otherwise null
    */
   public OClientConnection getConnection(final int iChannelId, ONetworkProtocol protocol) {
@@ -211,8 +216,8 @@ public class OClientConnectionManager {
   /**
    * Retrieves the connection by address/port.
    *
-   * @param iAddress
-   *          The address as string in the format address as format <ip>:<port>
+   * @param iAddress The address as string in the format address as format <ip>:<port>
+   *
    * @return The connection if any, otherwise null
    */
   public OClientConnection getConnection(final String iAddress) {
@@ -226,8 +231,7 @@ public class OClientConnectionManager {
   /**
    * Disconnects and kill the associated network manager.
    *
-   * @param iChannelId
-   *          id of connection
+   * @param iChannelId id of connection
    */
   public void kill(final int iChannelId) {
     kill(connections.get(iChannelId));
@@ -236,8 +240,7 @@ public class OClientConnectionManager {
   /**
    * Disconnects and kill the associated network manager.
    *
-   * @param connection
-   *          connection to kill
+   * @param connection connection to kill
    */
   public void kill(final OClientConnection connection) {
     if (connection != null) {
@@ -264,8 +267,7 @@ public class OClientConnectionManager {
   /**
    * Interrupt the associated network manager.
    *
-   * @param iChannelId
-   *          id of connection
+   * @param iChannelId id of connection
    */
   public void interrupt(final int iChannelId) {
     final OClientConnection connection = connections.get(iChannelId);
@@ -280,8 +282,8 @@ public class OClientConnectionManager {
   /**
    * Disconnects a client connections
    *
-   * @param iChannelId
-   *          id of connection
+   * @param iChannelId id of connection
+   *
    * @return true if was last one, otherwise false
    */
   public boolean disconnect(final int iChannelId) {
@@ -296,8 +298,8 @@ public class OClientConnectionManager {
       // CHECK IF THERE ARE OTHER CONNECTIONS
       for (Entry<Integer, OClientConnection> entry : connections.entrySet()) {
         if (entry.getValue().getProtocol().equals(connection.getProtocol())) {
-          OLogManager.instance().debug(this, "Disconnected connection with id=%d but are present other active channels",
-              iChannelId);
+          OLogManager.instance()
+              .debug(this, "Disconnected connection with id=%d but are present other active channels", iChannelId);
           return false;
         }
       }
@@ -405,11 +407,14 @@ public class OClientConnectionManager {
             channel.releaseWriteLock();
           }
         } else {
-          OLogManager.instance().info(this, "Timeout on sending updated cluster configuration to the remote client %s",
-              c.getRemoteAddress());
+          OLogManager.instance()
+              .info(this, "Timeout on sending updated cluster configuration to the remote client %s", c.getRemoteAddress());
         }
       } catch (Exception e) {
-        OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
+        if (e instanceof SocketException)
+          OLogManager.instance().debug(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
+        else
+          OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
       }
     }
   }
@@ -448,11 +453,11 @@ public class OClientConnectionManager {
         if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
           try {
             OLogManager.instance().debug(this, "Closing input socket of thread %s", protocol);
-            if(!(socket instanceof SSLSocket)) // An SSLSocket will throw an UnsupportedOperationException.
+            if (!(socket instanceof SSLSocket)) // An SSLSocket will throw an UnsupportedOperationException.
               socket.shutdownInput();
           } catch (IOException e) {
-            OLogManager.instance().debug(this, "Error on closing connection of %s client during shutdown", e,
-                entry.getValue().getRemoteAddress());
+            OLogManager.instance()
+                .debug(this, "Error on closing connection of %s client during shutdown", e, entry.getValue().getRemoteAddress());
           }
         }
         if (protocol.isAlive()) {
@@ -495,7 +500,7 @@ public class OClientConnectionManager {
           socket = protocol.getChannel().socket;
 
         if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
-          if(!(socket instanceof SSLSocket)) // An SSLSocket will throw an UnsupportedOperationException.
+          if (!(socket instanceof SSLSocket)) // An SSLSocket will throw an UnsupportedOperationException.
             socket.shutdownInput();
         }
 
