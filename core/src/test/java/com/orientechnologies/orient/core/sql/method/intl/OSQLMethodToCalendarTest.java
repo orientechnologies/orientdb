@@ -1,15 +1,11 @@
 package com.orientechnologies.orient.core.sql.method.intl;
 
 
-import com.ibm.icu.util.ULocale;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
@@ -27,7 +23,7 @@ public class OSQLMethodToCalendarTest {
 
 
   @Before
-  public void setup() {
+  public void setUp() {
     function = new OSQLMethodToCalendar();
   }
 
@@ -92,7 +88,7 @@ public class OSQLMethodToCalendarTest {
   public void testADatePersianCalendar() {
     // The expected behavior is to return the list itself.
     Date aDate = new Date(1485533898220L); // 27-01-2017
-    OCalendar expected = new OCalendar(aDate); // 8-11-1395  friday in persian calendar
+    // OCalendar expected = new OCalendar(aDate); // 8-11-1395  friday in persian calendar
     Object[] args = new Object[]{"persian"};
 
     OCalendar actual = (OCalendar) function.execute(null, null, null, aDate, args);

@@ -17,14 +17,7 @@
 package com.orientechnologies.orient.core.sql.method.intl;
 
 import com.ibm.icu.util.*;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.time.Year;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -33,39 +26,39 @@ import java.util.TimeZone;
  */
 public class OCalendar {
 
-    static final String CAL_SATURDAY = "saturday";
-    static final String CAL_SUNDAY = "sunday";
-    static final String CAL_MONDAY = "monday";
-    static final String CAL_TUESDAY = "tuesday";
-    static final String CAL_WEDNESDAY = "wednesday";
-    static final String CAL_THURSDAY = "thursday";
-    static final String CAL_FRIDAY = "friday";
+    public static final String CAL_SATURDAY = "saturday";
+    public static final String CAL_SUNDAY = "sunday";
+    public static final String CAL_MONDAY = "monday";
+    public static final String CAL_TUESDAY = "tuesday";
+    public static final String CAL_WEDNESDAY = "wednesday";
+    public static final String CAL_THURSDAY = "thursday";
+    public static final String CAL_FRIDAY = "friday";
 
-    static final String YEAR = "year";
-    static final String QYEAR = "qyear";// shortcut 90 days
-    static final String HYEAR = "hyear";// shortcut 180 days
-    static final String MONTH = "month";
-    static final String DAY = "day";
-    static final String WEEK = "week"; // shortcut 7 days
-    static final String HOUR = "hour";
-    static final String MINUTE = "minute";
-    static final String SECOND = "second";
+    public static final String YEAR = "year";
+    public static final String QYEAR = "qyear";// shortcut 90 days
+    public static final String HYEAR = "hyear";// shortcut 180 days
+    public static final String MONTH = "month";
+    public static final String DAY = "day";
+    public static final String WEEK = "week"; // shortcut 7 days
+    public static final String HOUR = "hour";
+    public static final String MINUTE = "minute";
+    public static final String SECOND = "second";
 
-    static final String CAL_GREGORIAN = "gregorian";
-    static final String CAL_BUDDHIST = "buddhist";
-    static final String CAL_CHINESE = "chinese";
-    static final String CAL_COPTIC = "coptic";
-    static final String CAL_HEBREW = "hebrew";
-    static final String CAL_INDIAN = "indian";
-    static final String CAL_ISLAMIC = "islamic";
-    static final String CAL_JAPANESE = "japanese";
-    static final String CAL_TAIWAN = "taiwan";
-    static final String CAL_PERSIAN = "persian";
-    static final String CAL_DANGI = "dangi";
+    public static final String CAL_GREGORIAN = "gregorian";
+    public static final String CAL_BUDDHIST = "buddhist";
+    public static final String CAL_CHINESE = "chinese";
+    public static final String CAL_COPTIC = "coptic";
+    public static final String CAL_HEBREW = "hebrew";
+    public static final String CAL_INDIAN = "indian";
+    public static final String CAL_ISLAMIC = "islamic";
+    public static final String CAL_JAPANESE = "japanese";
+    public static final String CAL_TAIWAN = "taiwan";
+    public static final String CAL_PERSIAN = "persian";
+    public static final String CAL_DANGI = "dangi";
 
     private String[] fromNowMessagDefault = new String[]{"remains", "ago",
             "year(s)", "month(s)", "day(s)", "hour(s)", "minute(s)", "second(s)", "milisecond(s)"};
-    private com.ibm.icu.util.Calendar calendar;
+    private Calendar calendar;
 
     public OCalendar(Date date) {
         this(date, CAL_GREGORIAN);
@@ -92,11 +85,16 @@ public class OCalendar {
                      String[] weekWorkingDays, // we extend this feature in next release
                      short[] yearHolidays // we extend this feature in next release
     ) {
+        String cname = "gregorian";
+
+        String[] cWeekWorkingDays = weekWorkingDays;
+        short[] cYearHolidays = yearHolidays;
+
         if (name == null) {
-            name = "gregorian";
+            cname = "gregorian";
         }
-        name = name.toLowerCase();
-        switch (name) {
+        cname = name.toLowerCase();
+        switch (cname) {
             case CAL_BUDDHIST:
                 this.calendar = new BuddhistCalendar(date);
                 break;
@@ -296,8 +294,10 @@ public class OCalendar {
                 return CAL_FRIDAY;
             case 7:
                 return CAL_SATURDAY;
+            default:
+                return CAL_MONDAY;
         }
-        return "";
+       // return "";
     }
 
     public OCalendar add(Integer amount, String field) {
@@ -470,9 +470,8 @@ public class OCalendar {
 
     public OCalendar startOf(String field) {
         try {
-            field = field.toLowerCase();
-            field = field.toLowerCase();
-            switch (field) {
+            String mfield = field.toLowerCase();
+            switch (mfield) {
                 case YEAR:
                     this.calendar.set(this.calendar.get(Calendar.YEAR), this.getMinMonth(), this.getMinDayOfYear());
                     break;
@@ -480,6 +479,8 @@ public class OCalendar {
                     this.calendar.set(this.getYear(), this.getMonth(), this.getMinDayOfMonth());
                     break;
                 case WEEK:
+                    break;
+                default:
                     break;
                 // TODO : we extend other combination in next release .
 
@@ -492,14 +493,16 @@ public class OCalendar {
 
     public OCalendar endOf(String field) {
         try {
-            field = field.toLowerCase();
-            switch (field) {
+            String mfield = field.toLowerCase();
+            switch (mfield) {
                 case YEAR:
                     this.calendar.set(this.calendar.get(Calendar.YEAR), this.getMaxMonth(), 1);
                     this.calendar.set(this.calendar.get(Calendar.YEAR), this.getMonth(), this.getMaxDayOfMonth());
                 case MONTH:
                     this.calendar.set(this.calendar.get(Calendar.YEAR), this.getMonth(), this.getMaxDayOfMonth());
                 case WEEK:
+                    break;
+                default:
                     break;
                 // TODO : we extend other combination in next release .
             }
@@ -566,7 +569,7 @@ public class OCalendar {
         try {
             OTimeSpan timeSpan = new OTimeSpan(ODateHelper.now(), this.calendar.getTime());
             String postfix_literal = messages[0];
-            if (timeSpan.isStartGreater() == true) {
+            if (timeSpan.isStartGreater()) {
                 postfix_literal = messages[1];
             }
             long days = Math.abs(timeSpan.getDays());

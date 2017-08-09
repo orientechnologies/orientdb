@@ -22,10 +22,7 @@ import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.TimeZone;
 
 /**
  * @author Saeed Tabrizi (saeed a_t nowcando.com)
@@ -64,7 +61,7 @@ public class OSQLMethodToCalendar extends OAbstractSQLMethod {
     @Override
     public Object execute(final Object iThis, final OIdentifiable iRecord, final OCommandContext iContext, Object ioResult,
                           final Object[] iParams) {
-
+        Object mioResult = ioResult;
         try {
 
             if (iParams == null) {
@@ -109,7 +106,7 @@ public class OSQLMethodToCalendar extends OAbstractSQLMethod {
                 }
 
                 if (dt != null) {
-                    ioResult = new OCalendar(dt, calendarName, startOfWeek, weekWorkingDays, yearHolidays);
+                    mioResult = new OCalendar(dt, calendarName, startOfWeek, weekWorkingDays, yearHolidays);
                 }
 
 
@@ -119,6 +116,6 @@ public class OSQLMethodToCalendar extends OAbstractSQLMethod {
         }
 
 
-        return ioResult;
+        return mioResult;
     }
 }

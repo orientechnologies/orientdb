@@ -23,7 +23,7 @@ import java.util.Date;
 
 /**
  *
- * @author Saeed Tabrizi (saeed a_t  nowcando.com)
+ * @author Saeed Tabrizi (saeed a_t nowcando.com)
  */
 public class OTimeSpan {
 

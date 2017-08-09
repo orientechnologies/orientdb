@@ -246,11 +246,11 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.ibm.icu/icu4j 58 -->
+        <!-- https://mvnrepository.com/artifact/com.ibm.icu/icu4j 59.1 -->
         <dependency>
             <groupId>com.ibm.icu</groupId>
             <artifactId>icu4j</artifactId>
-            <version>58.2</version>
+            <version>59.1</version>
         </dependency>
     </dependencies>
 
