@@ -34,11 +34,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class OLuceneIndexCrashRestoreIT {
 
   private AtomicLong idGen;
-//  private ODatabaseDocumentTx testDocumentTx;
 
   private ExecutorService executorService;
   private Process         serverProcess;
   private List<String>    names;
+  private List<String>    surnames;
   private OrientDB        orientdb;
   private ODatabasePool   databasePool;
 
@@ -54,6 +54,7 @@ public class OLuceneIndexCrashRestoreIT {
 
     //names to be used for person to be indexed
     names = Arrays.asList("John", "Robert", "Jane", "andrew", "Scott", "luke", "Enriquez", "Luis", "Gabriel", "Sara");
+    surnames = Arrays.asList("Smith", "Done", "Doe", "pig", "mole", "Jones", "Candito", "Simmons", "Angel", "Low");
 
   }
 
@@ -111,36 +112,46 @@ public class OLuceneIndexCrashRestoreIT {
     OFileUtils.deleteRecursively(buildDir);
     Assert.assertFalse(buildDir.exists());
 
-//    databasePool.close();
-
     orientdb.close();
   }
 
   @Test
-//  @Ignore
   public void testEntriesAddition() throws Exception {
     createSchema(databasePool);
 
-    //first round
-    System.out.println("Start data propagation 1");
+    List<DataPropagationTask> futures = new ArrayList<>();
+    ODatabaseSession db;
+    OResultSet res;
+    for (int i = 0; i < 1; i++) {
+      //first round
+      System.out.println("Start data propagation ::" + 1);
 
-    List<DataPropagationTask> futures = startLoaders();
+      futures = startLoaders();
 
-    System.out.println("Wait for 1 minutes");
-    TimeUnit.MINUTES.sleep(1);
+      System.out.println("Wait for 1 minutes");
+      TimeUnit.MINUTES.sleep(1);
+      System.out.println("Stop loaders");
+      stopLoaders(futures);
 
-    ODatabaseSession db = databasePool.acquire();
-    //wildcard will not work
-    OResultSet res = db.query("select from Person where name lucene 'Rob*' ");
-    assertThat(res).hasSize(0);
-    res.close();
+      System.out.println("Wait for 30 seconds");
+      TimeUnit.SECONDS.sleep(30);
 
-    //plain name fetch docs
-    res = db.query("select from Person where name lucene 'Robert' LIMIT 20");
-    assertThat(res).hasSize(20);
-    res.close();
-    db.close();
+      db = databasePool.acquire();
+      //wildcard will not work
+      res = db.query("select from Person where name lucene 'Rob*' ");
+      assertThat(res).hasSize(0);
+      res.close();
+
+      //plain name fetch docs
+      res = db.query("select from Person where name lucene 'Robert' LIMIT 20");
+      assertThat(res).hasSize(20);
+      res.close();
+      db.close();
+      System.out.println("END data propagation ::" + 1);
+
+    }
     //crash the server
+
     serverProcess.destroyForcibly();
 
     serverProcess.waitFor();
@@ -223,8 +234,11 @@ public class OLuceneIndexCrashRestoreIT {
     System.out.println("create index for db:: " + db.getURL());
     db.command("Create class Person");
     db.command("Create property Person.name STRING");
+    db.command("Create property Person.surname STRING");
     db.command(
         "Create index Person.name on Person(name) FULLTEXT ENGINE LUCENE METADATA {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer', 'unknownKey':'unknownValue'}");
+    db.command(
+        "Create index Person.surname on Person(surname) FULLTEXT ENGINE LUCENE METADATA {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer', 'unknownKey':'unknownValue'}");
     db.getMetadata().getIndexManager().reload();
 
     System.out.println(db.getMetadata().getIndexManager().getIndex("Person.name").getConfiguration().toJSON());
@@ -233,19 +247,20 @@ public class OLuceneIndexCrashRestoreIT {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-      System.out.println("prepare server");
+//      System.out.println("prepare server");
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
       OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(100000000);
 
-      System.out.println("create server instance");
+//      System.out.println("create server instance");
       OServer server = OServerMain.create();
       InputStream conf = RemoteDBRunner.class.getResourceAsStream("index-crash-config.xml");
 
+      OLogManager.instance().installCustomFormatter();
       server.startup(conf);
       server.activate();
 
       final String mutexFile = System.getProperty("mutexFile");
-      System.out.println("mutexFile = " + mutexFile);
+//      System.out.println("mutexFile = " + mutexFile);
 
       final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
       mutex.seek(0);
@@ -291,8 +306,16 @@ public class OLuceneIndexCrashRestoreIT {
           int nameIdx = (int) (id % names.size());
 
           for (int i = 0; i < 10; i++) {
-            String insert = "insert into person (name) values ('" + names.get(nameIdx) + "')";
-            testDB.command(insert).close();
+            if (id % 1000 == 0) {
+              String insert =
+                  "insert into person (name) values ('" + names.get(nameIdx) + "')";
+              testDB.command(insert).close();
+            } else {
+              String insert =
+                  "insert into person (name,surname) values ('" + names.get(nameIdx) + "','" + surnames.get(nameIdx) + "')";
+              testDB.command(insert).close();
+            }
+
           }
 
         }
