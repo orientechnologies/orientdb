@@ -276,27 +276,6 @@ public class OrientGraphIndexTest {
         });
     }
 
-    //TODO: fix
-    @Test
-    public void indexCollation() {
-        OrientGraph graph = newGraph();
-
-        String label = "VC1";
-        String key = "name";
-        String value = "bob";
-
-        Configuration config = new BaseConfiguration();
-        config.setProperty("type", "UNIQUE");
-        config.setProperty("keytype", OType.STRING);
-        config.setProperty("collate", "ci");
-        graph.createVertexIndex(key, label, config);
-
-        graph.addVertex(label, label, key, value);
-        // TODO: test with a "has" traversal, if/when that supports a case insensitive match predicate
-        //        OrientIndexQuery indexRef = new OrientIndexQuery(true, Optional.of(label), key, value.toUpperCase());
-        //        Iterator<OrientVertex> result = graph.getIndexedVertices(indexRef).iterator();
-        //        Assert.assertEquals(result.hasNext(), true);
-    }
 
     private Set<OrientIndexQuery> findUsedIndex(GraphTraversal<?, ?> traversal) {
         OrientGraphStepStrategy.instance().apply(traversal.asAdmin());
