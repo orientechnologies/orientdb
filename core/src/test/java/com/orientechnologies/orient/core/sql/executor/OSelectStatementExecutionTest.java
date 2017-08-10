@@ -3214,8 +3214,8 @@ public class OSelectStatementExecutionTest {
     // issue #7624
     String className = "testFromIndexWithoutNullValues";
     db.command("create class " + className).close();
-    db.command("create property " + className+".name STRING").close();
-    db.command("create index " + className+".name on "+ className+"(name) NOTUNIQUE METADATA {ignoreNullValues:true}").close();
+    db.command("create property " + className + ".name STRING").close();
+    db.command("create index " + className + ".name on " + className + "(name) NOTUNIQUE METADATA {ignoreNullValues:true}").close();
 
     OElement elem1 = db.newElement(className);
     elem1.setProperty("name", "foo");
@@ -3226,6 +3226,23 @@ public class OSelectStatementExecutionTest {
     elem2.save();
 
     OResultSet result = db.query("select from index: " + className + ".name ");
+    Assert.assertTrue(result.hasNext());
+    result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testIndexPrefixUsage() {
+    // issue #7636
+    String className = "testIndexPrefixUsage";
+    db.command("create class " + className).close();
+    db.command("create property " + className + ".id LONG").close();
+    db.command("create property " + className + ".name STRING").close();
+    db.command("create index " + className + ".id_name on " + className + "(id, name) UNIQUE").close();
+    db.command("insert into " + className + " set id = 1 , name = 'Bar'").close();
+
+    OResultSet result = db.query("select from " + className + " where name = 'Bar'");
     Assert.assertTrue(result.hasNext());
     result.next();
     Assert.assertFalse(result.hasNext());

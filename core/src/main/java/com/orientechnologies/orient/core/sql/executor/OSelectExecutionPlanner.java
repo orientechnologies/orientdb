@@ -1794,6 +1794,7 @@ public class OSelectExecutionPlanner {
     for (String indexField : indexFields) {
       blockIterator = blockCopy.getSubBlocks().iterator();
       boolean breakHere = false;
+      boolean indexFieldFound = false;
       while (blockIterator.hasNext()) {
         OBooleanExpression singleExp = blockIterator.next();
         if (singleExp instanceof OBinaryCondition) {
@@ -1807,6 +1808,7 @@ public class OSelectExecutionPlanner {
               }
               if (operator instanceof OEqualsCompareOperator) {
                 found = true;
+                indexFieldFound = true;
                 OBinaryCondition condition = new OBinaryCondition(-1);
                 condition.setLeft(left);
                 condition.setOperator(operator);
@@ -1816,6 +1818,7 @@ public class OSelectExecutionPlanner {
                 break;
               } else if (allowsRange && operator.isRangeOperator()) {
                 found = true;
+                indexFieldFound = true;
                 breakHere = true;//this is last element, no other fields can be added to the key because this is a range condition
                 OBinaryCondition condition = new OBinaryCondition(-1);
                 condition.setLeft(left);
@@ -1838,7 +1841,7 @@ public class OSelectExecutionPlanner {
           }
         }
       }
-      if (breakHere) {
+      if (breakHere || !indexFieldFound) {
         break;
       }
     }
