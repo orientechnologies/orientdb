@@ -17,10 +17,7 @@ import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OCreateIndexStatement extends ODDLStatement {
@@ -56,7 +53,7 @@ public class OCreateIndexStatement extends ODDLStatement {
     final ODatabase database = ctx.getDatabase();
     final OIndex<?> idx;
     List<OCollate> collatesList = calculateCollates(ctx);
-    String engine = this.engine == null ? null : this.engine.getStringValue();
+    String engine = this.engine == null ? null : this.engine.getStringValue().toUpperCase(Locale.ENGLISH);
     ODocument metadataDoc = calculateMetadata(ctx);
 
     if (propertyList == null || propertyList.size() == 0) {
