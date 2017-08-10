@@ -28,7 +28,7 @@ public abstract class OIntegrationTestTemplate {
 
     if (firstTime) {
       System.out.println("Waiting for OrientDB to startup");
-      TimeUnit.SECONDS.sleep(10);
+      TimeUnit.SECONDS.sleep(1);
       firstTime = false;
     }
 
@@ -41,10 +41,11 @@ public abstract class OIntegrationTestTemplate {
   }
 
   @After
-  public void tearDown() throws Exception {
-    db.activateOnCurrentThread();
-    db.close();
-    pool.close();
-    orientDB.close();
+  public void tearDown() {
+      db.activateOnCurrentThread();
+      db.close();
+      pool.close();
+      orientDB.close();
   }
+
 }
