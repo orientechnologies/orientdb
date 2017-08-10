@@ -59,6 +59,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
@@ -92,6 +94,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   private          long          closeAfterInterval;
   private          long          firstFlushAfter;
 
+  private Lock openCloseLock;
+
   public OLuceneIndexEngineAbstract(OStorage storage, String name) {
     super(true, 0, true);
 
@@ -101,6 +105,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     lastAccess = new AtomicLong(System.currentTimeMillis());
 
     closed = new AtomicBoolean(true);
+
+    openCloseLock = new ReentrantLock();
   }
 
   protected void updateLastAccess() {
@@ -135,10 +141,10 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
         .orElse(10000).longValue();
 
     closeAfterInterval = Optional.ofNullable(metadata.<Integer>getProperty("closeAfterInterval"))
-        .orElse(20000).longValue();
+        .orElse(120000).longValue();
 
     firstFlushAfter = Optional.ofNullable(metadata.<Integer>getProperty("firstFlushAfter"))
-        .orElse(20000).longValue();
+        .orElse(10000).longValue();
   }
 
   private void scheduleCommitTask() {
@@ -153,19 +159,19 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       public void run() {
 
         if (System.currentTimeMillis() - lastAccess.get() > closeAfterInterval) {
-
-//          OLogManager.instance().info(this, " Closing index:: " + indexName());
+          OLogManager.instance().info(this, " Closing index:: " + indexName());
           close();
         }
         if (!closed.get()) {
 
-//          OLogManager.instance().info(this, " Flushing index:: " + indexName());
+          OLogManager.instance().info(this, " Flushing index:: " + indexName());
           flush();
         }
       }
     };
 
     Orient.instance().scheduleTask(commitTask, firstFlushAfter, flushIndexInterval);
+
   }
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
@@ -198,27 +204,34 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-  private synchronized void open() throws IOException {
+  private void open() throws IOException {
 
     if (!closed.get())
       return;
 
-    OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
+    openCloseLock.lock();
 
-    directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
+    try {
+      OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
 
-    indexWriter = createIndexWriter(directory);
-    searcherManager = new SearcherManager(indexWriter, true, true, null);
+      directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
 
-    reopenToken = 0;
+      indexWriter = createIndexWriter(directory);
+      searcherManager = new SearcherManager(indexWriter, true, true, null);
 
-    startNRT();
+      reopenToken = 0;
 
-    closed.set(false);
+      startNRT();
 
-    flush();
+      closed.set(false);
 
-    scheduleCommitTask();
+      flush();
+
+      scheduleCommitTask();
+    } finally {
+
+      openCloseLock.unlock();
+    }
 
   }
 
@@ -458,22 +471,28 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   @Override
-  public synchronized void close() {
+  public void close() {
     if (closed.get())
       return;
-    try {
-//      OLogManager.instance().debug(this, "Closing Lucene index '" + this.name + "'...");
 
-      closeNRT();
+    openCloseLock.lock();
+    try {
+      OLogManager.instance().debug(this, "Closing Lucene index '" + this.name + "'...");
 
       cancelCommitTask();
+
+      closeNRT();
 
       closeSearchManager();
 
       commitAndCloseWriter();
 
+      OLogManager.instance().info(this, "Closed Lucene index '" + this.name);
+
     } catch (Throwable e) {
       OLogManager.instance().error(this, "Error on closing Lucene index", e);
+    } finally {
+      openCloseLock.unlock();
     }
   }
 
