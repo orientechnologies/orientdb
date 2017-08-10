@@ -106,6 +106,20 @@ filterModule.filter('formatArray', function () {
     }
   }
 })
+filterModule.filter('formatClusters', function () {
+  return function (input) {
+    if (input instanceof Array) {
+      var output = "";
+      input.forEach(function (e, idx, arr) {
+        output += (idx > 0 ? ", " : " ") + e;
+      });
+      output = '[' + output + ']';
+      return output;
+    } else {
+      return input;
+    }
+  }
+})
 filterModule.filter('formatDate', function () {
   return function (input) {
     return moment(input).format('D/M/YY - H:mm:ss');

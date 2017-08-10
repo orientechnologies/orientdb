@@ -87,7 +87,17 @@
             <input type="checkbox" ng-model="result['abstract']" ng-disabled="true">
           </td>
 
-          <td ng-click="$ctrl.openClass(result)">{{result['clusters']}}</td>
+          <td id="target" ng-click="$ctrl.openClass(result)" style="width: 200px;" bs-popover
+              data-placement="top"
+              data-trigger="hover"
+              data-container="body"
+              data-content="{{result['clusters'] | formatClusters}}">
+            <div style="width: 200px;">
+            <span class="hideOverflow" style="max-width: 100%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; display: inline-block">
+              {{result['clusters'] | formatClusters}}
+            </span>
+            </div>
+          </td>
           <td ng-click="$ctrl.openClass(result)">{{result['defaultCluster']}}</td>
           <td>
             <select type="text" ng-options="opt for opt in $ctrl.clusterStrategies"
