@@ -62,6 +62,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
@@ -96,6 +98,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   private   long                closeAfterInterval;
   private   long                firstFlushAfter;
 
+  private Lock openCloseLock;
+
   public OLuceneIndexEngineAbstract(OStorage storage, String indexName) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
         OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
@@ -107,6 +111,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
     closed = new AtomicBoolean(true);
 
+    openCloseLock = new ReentrantLock();
   }
 
   // TODO: move to utility class
@@ -250,23 +255,30 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     if (!closed.get())
       return;
 
-    OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
+    openCloseLock.lock();
 
-    directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
+    try {
+      OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
 
-    final IndexWriter indexWriter = createIndexWriter(directory);
-    mgrWriter = new TrackingIndexWriter(indexWriter);
-    searcherManager = new SearcherManager(indexWriter, true, null);
+      directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
 
-    reopenToken = 0;
+      final IndexWriter indexWriter = createIndexWriter(directory);
+      mgrWriter = new TrackingIndexWriter(indexWriter);
+      searcherManager = new SearcherManager(indexWriter, true, null);
 
-    startNRT();
+      reopenToken = 0;
 
-    closed.set(false);
+      startNRT();
 
-    flush();
+      closed.set(false);
 
-    scheduleCommitTask();
+      flush();
+
+      scheduleCommitTask();
+    } finally {
+
+      openCloseLock.unlock();
+    }
 
   }
 
@@ -519,6 +531,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     if (closed.get())
       return;
 
+    openCloseLock.lock();
     try {
 //      OLogManager.instance().info(this, "Closing Lucene index '" + this.name + "'...");
 
@@ -533,6 +546,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
     } catch (Throwable e) {
       OLogManager.instance().error(this, "Error on closing Lucene index", e);
+    } finally {
+      openCloseLock.unlock();
     }
   }
 

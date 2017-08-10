@@ -11,10 +11,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.InputStream;
@@ -163,8 +160,8 @@ public class OLuceneIndexCrashRestoreIT {
 
     //crash the server
     // this works only on java8
-//    serverProcess.destroyForcibly();
-    serverProcess.destroy();
+    serverProcess.destroyForcibly();
+//    serverProcess.destroy();
 
     serverProcess.waitFor();
 
