@@ -47,10 +47,10 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
     db.command(new OCommandSQL(
-        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
+        "create index Song.title on Song (title) fulltext ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
             .getName() + "\"}")).execute();
     db.command(new OCommandSQL(
-        "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
+        "create index Song.author on Song (author) FULLTEXT ENGINE lucene METADATA {\"analyzer\":\"" + StandardAnalyzer.class
             .getName() + "\"}")).execute();
 
     OVertex doc = db.newVertex("Song");
