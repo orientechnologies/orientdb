@@ -209,10 +209,11 @@ public class OMemory {
 
     final int max32BitCacheSize = 512;
     if (getJavaBitWidth() == 32 && diskCacheSize > max32BitCacheSize) {
-      OLogManager.instance()
-          .info(OGlobalConfiguration.class, "32 bit JVM is detected. Lowering disk cache size from %,dMB to %,dMB.", diskCacheSize,
-              max32BitCacheSize);
+      OLogManager.instance().info(OGlobalConfiguration.class,
+          "32 bit JVM is detected. Lowering disk cache size from %,dMB to %,dMB. Memory chunk size is set to -1", diskCacheSize,
+          max32BitCacheSize);
       OGlobalConfiguration.DISK_CACHE_SIZE.setValue(max32BitCacheSize);
+      OGlobalConfiguration.MEMORY_CHUNK_SIZE.setValue(-1);
     }
 
     if (OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsLong()
