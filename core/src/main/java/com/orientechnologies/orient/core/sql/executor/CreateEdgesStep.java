@@ -136,6 +136,11 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     }
 
     fromIter = (Iterator) fromValues;
+    if(fromIter instanceof OResultSet){
+      try{
+        ((OResultSet) fromIter).reset();
+      }catch (Exception e){}
+    }
 
     Iterator toIter = (Iterator) toValues;
 
@@ -144,6 +149,11 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     }
 
     toIterator = toList.iterator();
+    if(toIter instanceof OResultSet){
+      try{
+        ((OResultSet) toIter).reset();
+      }catch (Exception e){}
+    }
 
     currentFrom = fromIter != null && fromIter.hasNext() ? asVertex(fromIter.next()) : null;
 

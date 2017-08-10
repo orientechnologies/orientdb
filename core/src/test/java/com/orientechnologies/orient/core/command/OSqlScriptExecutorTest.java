@@ -105,4 +105,31 @@ public class OSqlScriptExecutorTest {
     factory.drop(dbName);
     factory.close();
   }
+
+  @Test
+  public void testMultipleCreateEdgeOnTheSameLet() {
+    // issue #7635
+    OrientDB factory = new OrientDB("embedded:./", "root", "root", OrientDBConfig.defaultConfig());
+    String dbName = getClass().getSimpleName() + "testMultipleCreateEdgeOnTheSameLet";
+    factory.create(dbName, ODatabaseType.MEMORY);
+    ODatabaseDocument db = factory.open(dbName, "admin", "admin");
+
+    String script = "begin;";
+    script += "let $v1 = create vertex v set name = 'Foo';";
+    script += "let $v2 = create vertex v set name = 'Bar';";
+    script += "create edge from $v1 to $v2;";
+    script += "let $v3 = create vertex v set name = 'Baz';";
+    script += "create edge from $v1 to $v3;";
+    script += "commit;";
+
+    OResultSet result = db.execute("sql", script);
+    result.close();
+
+    result = db.query("SELECT expand(out()) FROM V WHERE name ='Foo'");
+    Assert.assertEquals(2, result.stream().count());
+    result.close();
+    db.close();
+    factory.drop(dbName);
+    factory.close();
+  }
 }
