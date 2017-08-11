@@ -258,6 +258,23 @@ public final class OrientGraph implements Graph {
         });
     }
 
+    public OGremlinResultSet querySql(String sql, Object... params) {
+        this.tx().readWrite();
+        return executeWithConnectionCheck(() -> {
+            makeActive();
+            OResultSet resultSet = database.query(sql, params);
+            return new OGremlinResultSet(this, resultSet);
+        });
+    }
+
+    public OGremlinResultSet querySql(String sql, Map params) {
+        return executeWithConnectionCheck(() -> {
+            makeActive();
+            OResultSet resultSet = database.command(sql, params);
+            return new OGremlinResultSet(this, resultSet);
+        });
+    }
+
     public OGremlinResultSet execute(String language, String script, Map params) {
 
         return executeWithConnectionCheck(() -> {

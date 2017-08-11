@@ -42,7 +42,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
         this.setIteratorSupplier(() -> (Iterator<E>) (isVertexStep() ? this.vertices() : this.edges()));
     }
 
-    private boolean isVertexStep() {
+    public boolean isVertexStep() {
         return Vertex.class.isAssignableFrom(this.returnClass);
     }
 
@@ -77,26 +77,6 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
             /** Got some element IDs, so just get the elements using those */
             return this.iteratorList(getElementsByIds.apply(graph, this.ids));
         } else {
-            //            /** Have no element IDs. See if there's an indexed property to use */
-            //            Set<OrientIndexQuery> indexQueryOptions = findIndex();
-            //
-            //            if (!indexQueryOptions.isEmpty()) {
-            //                List<ElementType> elements = new ArrayList<>();
-            //
-            //                indexQueryOptions.forEach(indexQuery -> {
-            //                    OLogManager.instance().debug(this, "using " + indexQuery);
-            //                    Stream<? extends ElementType> indexedElements = getElementsByIndex.apply(graph, indexQuery.index,
-            //                            indexQuery.values);
-            //                    elements.addAll(indexedElements.filter(element -> HasContainer.testAll(element, this.hasContainers))
-            //                            .collect(Collectors.<ElementType> toList()));
-            //                });
-            //
-            //                return elements.iterator();
-            //            } else {
-            //                OLogManager.instance().debug(this, "scanning through all elements without using an index for Traversal " + getTraversal());
-            //                return this.iteratorList(getAllElements.apply(graph));
-            //            }
-
             Optional<? extends Iterator<? extends ElementType>> streamIterator = buildQuery().map(
                     (query) -> query.execute(getGraph()).stream().map(getElement::apply)
                             .filter(element -> HasContainer.testAll(element, this.hasContainers)))
@@ -146,7 +126,8 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
     }
 
     public Optional<OrientGraphQuery> buildQuery() {
-        OrientGraphQueryBuilder builder = new OrientGraphQueryBuilder();
+
+        OrientGraphQueryBuilder builder = new OrientGraphQueryBuilder(isVertexStep());
         this.hasContainers.forEach(builder::addCondition);
         return builder.build();
     }

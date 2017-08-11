@@ -1,53 +1,65 @@
 package org.apache.tinkerpop.gremlin.orientdb.traversal.step.map;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.Step;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
-import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.AbstractStep;
 import org.apache.tinkerpop.gremlin.process.traversal.util.FastNoSuchElementException;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
- *
  * @author Enrico Risa
  */
 public class OrientClassCountStep<S> extends AbstractStep<S, Long> {
 
-    private String klass;
+  private final boolean      vertexStep;
+  private       List<String> klasses;
 
-    protected boolean done = false;
+  protected boolean done = false;
 
-    public OrientClassCountStep(Traversal.Admin traversal, GraphStep prev) {
-        this(traversal, "");
-        klass = baseClass(prev);
+  public OrientClassCountStep(Traversal.Admin traversal, List<String> klasses, boolean vertexStep) {
+    super(traversal);
+    this.klasses = klasses;
+    this.vertexStep = vertexStep;
+  }
+
+  @Override
+  protected Traverser.Admin<Long> processNextStart() throws NoSuchElementException {
+    if (!done) {
+      done = true;
+      ODatabaseDocument db = getDatabase();
+      Long v = klasses.stream().filter(this::filterClass).mapToLong((klass) -> db.countClass(klass)).reduce(0, (a, b) -> a + b);
+      return this.traversal.getTraverserGenerator().generate(v, (Step) this, 1L);
+    } else {
+      throw FastNoSuchElementException.instance();
     }
+  }
 
-    public OrientClassCountStep(Traversal.Admin traversal, String klass) {
-        super(traversal);
-        this.klass = klass;
-    }
+  private ODatabaseDocument getDatabase() {
+    OrientGraph graph = (OrientGraph) this.traversal.getGraph().get();
+    return graph.getRawDatabase();
+  }
 
-    protected String baseClass(GraphStep step) {
-        return Vertex.class.isAssignableFrom(step.getReturnClass()) ? "V" : "E";
-    }
+  private boolean filterClass(String klass) {
 
-    @Override
-    protected Traverser.Admin<Long> processNextStart() throws NoSuchElementException {
-        if (!done) {
-            done = true;
-            OrientGraph graph = (OrientGraph) this.traversal.getGraph().get();
-            Long v = graph.getRawDatabase().countClass(this.klass);
-            return this.traversal.getTraverserGenerator().generate(v, (Step) this, 1L);
-        } else {
-            throw FastNoSuchElementException.instance();
-        }
-    }
+    ODatabaseDocument database = getDatabase();
+    OSchema schema = database.getMetadata().getSchema();
+    OClass schemaClass = schema.getClass(klass);
 
-    public String getKlass() {
-        return klass;
+    if (vertexStep) {
+      return schemaClass.isSubClassOf("V");
+    } else {
+      return schemaClass.isSubClassOf("E");
     }
+  }
+
+  public List<String> getKlasses() {
+    return klasses;
+  }
 }

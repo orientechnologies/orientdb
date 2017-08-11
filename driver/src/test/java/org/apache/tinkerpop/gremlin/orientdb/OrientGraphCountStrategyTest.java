@@ -10,6 +10,8 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collections;
+
 import static org.junit.Assert.assertEquals;
 
 public class OrientGraphCountStrategyTest {
@@ -30,7 +32,7 @@ public class OrientGraphCountStrategyTest {
             assertEquals(OrientClassCountStep.class, admin.getEndStep().getClass());
 
             OrientClassCountStep countStep = (OrientClassCountStep) startStep;
-            assertEquals("V", countStep.getKlass());
+            assertEquals(Collections.singletonList("V"), countStep.getKlasses());
 
         } finally {
             graph.close();
@@ -90,7 +92,7 @@ public class OrientGraphCountStrategyTest {
             assertEquals(OrientClassCountStep.class, admin.getEndStep().getClass());
 
             OrientClassCountStep countStep = (OrientClassCountStep) startStep;
-            assertEquals("E", countStep.getKlass());
+            assertEquals(Collections.singletonList("E"), countStep.getKlasses());
 
         } finally {
             graph.close();
@@ -135,7 +137,7 @@ public class OrientGraphCountStrategyTest {
             assertEquals(OrientClassCountStep.class, admin.getEndStep().getClass());
 
             OrientClassCountStep countStep = (OrientClassCountStep) startStep;
-            assertEquals("Person", countStep.getKlass());
+            assertEquals(Collections.singletonList("Person"), countStep.getKlasses());
 
         } finally {
             graph.close();
