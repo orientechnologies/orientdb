@@ -90,16 +90,16 @@ public class LuceneTransactionEmbeddedQueryTest {
       String query = "select from C1 where p1 lucene \"abc\" ";
       List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-      Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(1, vertices.size());
 
-      Assert.assertEquals(index.getSize(), 1);
+      Assert.assertEquals(2, index.getSize());
       db.commit();
 
       query = "select from C1 where p1 lucene \"abc\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-      Assert.assertEquals(vertices.size(), 1);
-      Assert.assertEquals(index.getSize(), 1);
+      Assert.assertEquals(1, vertices.size());
+      Assert.assertEquals(2, index.getSize());
 
       db.begin();
 
@@ -119,17 +119,17 @@ public class LuceneTransactionEmbeddedQueryTest {
         iterator.next();
         i++;
       }
-      Assert.assertEquals(i, 0);
-      Assert.assertEquals(index.getSize(), 0);
+      Assert.assertEquals(0, i);
+      Assert.assertEquals(1, index.getSize());
 
       db.rollback();
 
       query = "select from C1 where p1 lucene \"abc\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-      Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(1, vertices.size());
 
-      Assert.assertEquals(index.getSize(), 1);
+      Assert.assertEquals(2, index.getSize());
     } finally {
       db.drop();
     }
@@ -145,7 +145,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
 
-      Assert.assertEquals(index.getSize(), 0);
+      Assert.assertEquals(1, index.getSize());
 
       db.begin();
 
@@ -159,7 +159,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Assert.assertEquals(vertices.size(), 1);
 
-      Assert.assertEquals(index.getSize(), 2);
+      Assert.assertEquals(3, index.getSize());
 
       db.commit();
 
@@ -168,9 +168,9 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       Collection coll = (Collection) index.get("update");
 
-      Assert.assertEquals(vertices.size(), 1);
-      Assert.assertEquals(coll.size(), 2);
-      Assert.assertEquals(index.getSize(), 2);
+      Assert.assertEquals(1, vertices.size());
+      Assert.assertEquals(2, coll.size());
+      Assert.assertEquals(3, index.getSize());
 
       db.begin();
 
@@ -195,7 +195,7 @@ public class LuceneTransactionEmbeddedQueryTest {
       }
       Assert.assertEquals(i, 1);
 
-      Assert.assertEquals(index.getSize(), 1);
+      Assert.assertEquals(2, index.getSize());
 
       query = "select from C1 where p1 lucene \"update\"";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -210,9 +210,9 @@ public class LuceneTransactionEmbeddedQueryTest {
       query = "select from C1 where p1 lucene \"update\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-      Assert.assertEquals(vertices.size(), 1);
+      Assert.assertEquals(1, vertices.size());
 
-      Assert.assertEquals(index.getSize(), 2);
+      Assert.assertEquals(3, index.getSize());
     } finally {
       db.drop();
     }
@@ -228,7 +228,7 @@ public class LuceneTransactionEmbeddedQueryTest {
     try {
       OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
 
-      Assert.assertEquals(index.getSize(), 0);
+      Assert.assertEquals(1, index.getSize());
 
       db.begin();
 
@@ -252,8 +252,8 @@ public class LuceneTransactionEmbeddedQueryTest {
       List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
       Collection coll = (Collection) index.get("abc");
 
-      Assert.assertEquals(vertices.size(), 1);
-      Assert.assertEquals(coll.size(), 1);
+      Assert.assertEquals(1, vertices.size());
+      Assert.assertEquals(1, coll.size());
 
       Iterator iterator = coll.iterator();
       int i = 0;
@@ -263,25 +263,25 @@ public class LuceneTransactionEmbeddedQueryTest {
         i++;
       }
 
-      Assert.assertEquals(i, 1);
+      Assert.assertEquals(1, i);
       Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
-      Assert.assertEquals(index.getSize(), 2);
+      Assert.assertEquals(3, index.getSize());
 
       query = "select from C1 where p1 lucene \"removed\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
       coll = (Collection) index.get("removed");
 
-      Assert.assertEquals(vertices.size(), 1);
-      Assert.assertEquals(coll.size(), 1);
+      Assert.assertEquals(1, vertices.size());
+      Assert.assertEquals(1, coll.size());
 
       db.rollback();
 
       query = "select from C1 where p1 lucene \"abc\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-      Assert.assertEquals(vertices.size(), 2);
+      Assert.assertEquals(2, vertices.size());
 
-      Assert.assertEquals(index.getSize(), 2);
+      Assert.assertEquals(3, index.getSize());
     } finally {
       db.drop();
     }

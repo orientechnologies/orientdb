@@ -103,7 +103,7 @@ public class OLuceneInsertMultiThreadTest {
 
 //    Assert.assertEquals(, THREADS * CYCLE);
 
-    Assertions.assertThat(idx.getSize()).isEqualTo(THREADS * CYCLE);
+    Assertions.assertThat(idx.getSize()).isEqualTo(THREADS * CYCLE +1);
     databaseDocumentTx.drop();
   }
 

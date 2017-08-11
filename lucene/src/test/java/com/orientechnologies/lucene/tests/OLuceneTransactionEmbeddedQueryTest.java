@@ -84,13 +84,13 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getSize(), 2);
     db.commit();
 
     vertices = db.command(query);
 
     assertThat(vertices).hasSize(1);
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getSize(), 2);
 
     db.begin();
 
@@ -110,7 +110,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
       i++;
     }
     Assert.assertEquals(i, 0);
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getSize(), 1);
 
     db.rollback();
 
@@ -118,7 +118,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(index.getSize(), 2);
   }
 
   @Test
@@ -190,7 +190,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     OIndex<?> index = db.getMetadata().getIndexManager().getIndex("C1.p1");
 
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(index.getSize(), 1);
 
     db.begin();
 
@@ -227,7 +227,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     Assert.assertEquals(i, 1);
     Assert.assertEquals(doc1.getIdentity().toString(), rid.getIdentity().toString());
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getSize(), 3);
 
     query = "select from C1 where p1 lucene \"removed\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
@@ -243,7 +243,7 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     Assert.assertEquals(vertices.size(), 2);
 
-    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getSize(), 3);
 
   }
 

@@ -80,7 +80,7 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
 
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
 
-    Assert.assertEquals(idx.getSize(), THREADS * CYCLE);
+    Assert.assertEquals(idx.getSize(), THREADS * CYCLE +1);
   }
 
   public class LuceneInsertThread implements Runnable {

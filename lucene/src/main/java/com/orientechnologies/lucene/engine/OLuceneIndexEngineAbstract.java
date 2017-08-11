@@ -47,8 +47,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
@@ -228,11 +230,41 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       flush();
 
       scheduleCommitTask();
+
+      addMetadataDocumentIfNotPresent();
     } finally {
 
       openCloseLock.unlock();
     }
 
+  }
+
+  private void addMetadataDocumentIfNotPresent() {
+
+    final IndexSearcher searcher = searcher();
+
+    try {
+      final TopDocs topDocs = searcher.search(new TermQuery(new Term("_CLASS", "JSON_METADATA")), 1);
+      if (topDocs.totalHits == 0) {
+        String metaAsJson = metadata.toJSON();
+        Document metaDoc = new Document();
+        metaDoc.add(new StringField("_JSON", metaAsJson, Field.Store.YES));
+        metaDoc.add(new StringField("_CLASS", "JSON_METADATA", Field.Store.YES));
+        OLogManager.instance().info(this, "Storing index metadata :: " + metaDoc);
+        addDocument(metaDoc);
+      }
+
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error while retrieving index metadata", e);
+    } finally {
+      release(searcher);
+    }
+
+    //for check
+
+    final ODocument metadata = OLuceneIndexEngineUtils.getMetadataFromIndex(indexWriter);
+
+    OLogManager.instance().info(this, "metdata retrieved:: " + metadata.toJSON());
   }
 
   private void startNRT() {

@@ -76,6 +76,6 @@ public class LuceneInsertUpdateSingleDocumentTransactionTest extends BaseLuceneT
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
     Collection<?> coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(coll.size(), 2);
-    Assert.assertEquals(idx.getSize(), 2);
+    Assert.assertEquals(3, idx.getSize());
   }
 }
