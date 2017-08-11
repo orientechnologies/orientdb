@@ -317,7 +317,11 @@ public class OServer {
     if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY)) {
       databases = ODatabaseDocumentTxInternal.getOrCreateEmbeddedFactory(this.databaseDirectory, config);
     } else {
-      databases = (OrientDBEmbedded) OrientDBInternal.embedded(this.databaseDirectory, config);
+      try {
+        databases = OrientDBInternal.distributed(this.databaseDirectory, config);
+      } catch (ODatabaseException ex) {
+        databases = OrientDBInternal.embedded(this.databaseDirectory, config);
+      }
     }
     databases.removeShutdownHook();
     context = databases.newOrientDB();

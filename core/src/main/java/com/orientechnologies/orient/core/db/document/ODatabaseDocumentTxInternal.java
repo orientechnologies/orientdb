@@ -23,7 +23,7 @@ public class ODatabaseDocumentTxInternal {
     return new ODatabaseDocumentTx(database, null);
   }
 
-  public static OrientDBEmbedded getOrCreateEmbeddedFactory(String databaseDirectory, OrientDBConfig config) {
+  public static OrientDBInternal getOrCreateEmbeddedFactory(String databaseDirectory, OrientDBConfig config) {
     return ODatabaseDocumentTx.getOrCreateEmbeddedFactory(databaseDirectory, config);
   }
 
