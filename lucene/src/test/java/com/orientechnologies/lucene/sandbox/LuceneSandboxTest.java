@@ -3,15 +3,13 @@ package com.orientechnologies.lucene.sandbox;
 import com.orientechnologies.lucene.tests.OLuceneBaseTest;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.codecs.simpletext.SimpleTextCodec;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.StringReader;
 
 /**
  * Created by frank on 02/01/2017.
@@ -86,12 +84,23 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
 
     db.command("CREATE INDEX Father.text ON Father(text) FULLTEXT ENGINE LUCENE ");
 
-
     db.command("CREATE Class Son EXTENDS Father");
     db.command("CREATE PROPERTY Son.textOfSon STRING");
 
     db.command("CREATE INDEX Son.textOfSon ON Son(textOfSon) FULLTEXT ENGINE LUCENE ");
     OClass father = db.getMetadata().getSchema().getClass("Father");
+
+  }
+
+  @Test
+  public void documentSertest() throws Exception {
+
+    Document doc = new Document();
+    doc.add(new StringField("text", "yabba dabba", Field.Store.YES));
+
+    SimpleTextCodec codec = new SimpleTextCodec();
+
+
 
 
 

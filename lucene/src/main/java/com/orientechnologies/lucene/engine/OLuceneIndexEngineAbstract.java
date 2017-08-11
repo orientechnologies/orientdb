@@ -160,9 +160,21 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       @Override
       public void run() {
 
-        if (System.currentTimeMillis() - lastAccess.get() > closeAfterInterval) {
-          OLogManager.instance().info(this, " Closing index:: " + indexName());
-          close();
+        if (shouldClose()) {
+//          OLogManager.instance().info(this, " Closing index:: " + indexName());
+
+          openCloseLock.lock();
+
+          //while on lock the index was opened
+          if (!shouldClose())
+            return;
+          try {
+
+            close();
+          } finally {
+            openCloseLock.unlock();
+          }
+
         }
         if (!closed.get()) {
 
@@ -173,7 +185,10 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     };
 
     Orient.instance().scheduleTask(commitTask, firstFlushAfter, flushIndexInterval);
+  }
 
+  private boolean shouldClose() {
+    return System.currentTimeMillis() - lastAccess.get() > closeAfterInterval;
   }
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
@@ -306,7 +321,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   public void flush() {
 
     try {
-      if (indexWriter != null && indexWriter.isOpen())
+      if (!closed.get() && indexWriter != null && indexWriter.isOpen())
         indexWriter.commit();
     } catch (Throwable e) {
       OLogManager.instance().error(this, "Error on flushing Lucene index", e);
@@ -438,6 +453,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public long sizeInTx(OLuceneTxChanges changes) {
+    updateLastAccess();
+    openIfClosed();
     IndexSearcher searcher = searcher();
     try {
       IndexReader reader = searcher.getIndexReader();
@@ -507,7 +524,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     if (closed.get())
       return;
 
-    openCloseLock.lock();
     try {
       OLogManager.instance().debug(this, "Closing Lucene index '" + this.name + "'...");
 
@@ -523,8 +539,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
     } catch (Throwable e) {
       OLogManager.instance().error(this, "Error on closing Lucene index", e);
-    } finally {
-      openCloseLock.unlock();
     }
   }
 
