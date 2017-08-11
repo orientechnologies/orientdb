@@ -52,6 +52,7 @@ public class OAtomicOperation {
   private Map<String, Long>      newFileNamesId       = new HashMap<String, Long>();
   private Set<Long>              deletedFiles         = new HashSet<Long>();
   private Map<String, Long>      deletedFileNameIdMap = new HashMap<String, Long>();
+  private List<OWALRecord>       externalLogs         = new ArrayList<OWALRecord>();
 
   private OReadCache  readCache;
   private OWriteCache writeCache;
@@ -133,7 +134,6 @@ public class OAtomicOperation {
    * be overwritten.
    *
    * @param metadata Metadata to add.
-   *
    * @see OAtomicOperationMetadata
    */
   public void addMetadata(OAtomicOperationMetadata<?> metadata) {
@@ -142,7 +142,6 @@ public class OAtomicOperation {
 
   /**
    * @param key Key of metadata which is looking for.
-   *
    * @return Metadata by associated key or <code>null</code> if such metadata is absent.
    */
   public OAtomicOperationMetadata<?> getMetadata(String key) {
@@ -167,6 +166,14 @@ public class OAtomicOperation {
     assert pageChangesContainer != null;
 
     pageChangesContainer.pinPage = true;
+  }
+
+  /**
+   * Add External WalRecord to the atomic operation
+   * @param record
+   */
+  public void addExternalLog(OWALRecord record) {
+    this.externalLogs.add(record);
   }
 
   public OCacheEntry addPage(long fileId) throws IOException {
@@ -380,7 +387,9 @@ public class OAtomicOperation {
           }
         }
       }
-
+      for (OWALRecord externalLog : externalLogs) {
+        writeAheadLog.log(externalLog);
+      }
       for (long deletedFileId : deletedFiles) {
         readCache.deleteFile(deletedFileId, writeCache);
       }

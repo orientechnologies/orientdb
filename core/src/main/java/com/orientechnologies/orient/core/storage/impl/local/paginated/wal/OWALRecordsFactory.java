@@ -21,7 +21,10 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+
+import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -31,7 +34,16 @@ public class OWALRecordsFactory {
   private Map<Byte, Class>               idToTypeMap = new HashMap<Byte, Class>();
   private Map<Class, Byte>               typeToIdMap = new HashMap<Class, Byte>();
 
-  public static final OWALRecordsFactory INSTANCE    = new OWALRecordsFactory();
+  public static final OWALRecordsFactory INSTANCE;
+  static {
+
+    INSTANCE  = new OWALRecordsFactory();
+    final Iterator<OWALRecordsFactoryExternal> iterator = lookupProviderWithOrientClassLoader(OWALRecordsFactoryExternal.class, OWALRecordsFactory.class.getClassLoader());
+
+    while (iterator.hasNext()){
+      iterator.next().init(INSTANCE);
+    }
+  }
 
   public byte[] toStream(OWALRecord walRecord) {
     int contentSize = walRecord.serializedSize() + 1;
