@@ -101,6 +101,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     internalClasses.add("otrigger");
     internalClasses.add("oschedule");
     internalClasses.add("orids");
+    internalClasses.add("_studio");
   }
 
   private static final class ClusterIdsAreEmptyException extends Exception {
