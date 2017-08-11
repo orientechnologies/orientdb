@@ -111,9 +111,13 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
             } catch (OTransactionException e) {
               if (e.getCause() instanceof ORecordDuplicatedException)
                 // IGNORE IT AND RETRY
-                ;
-              else
+                System.out.println(
+                    "ORecordDuplicatedException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
+              else {
+                System.out.println(
+                    e.getCause().getClass() + " Exception caught on writer thread " + threadId + " (db=" + database.getURL());
                 throw e;
+              }
             } catch (ONeedRetryException e) {
               // System.out.println("ONeedRetryException Exception caught on writer thread " + threadId + " (db=" +
               // database.getURL());

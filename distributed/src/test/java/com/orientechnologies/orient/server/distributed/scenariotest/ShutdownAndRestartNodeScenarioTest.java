@@ -37,19 +37,10 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.*;
 
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 server (quorum=2)
- * - network fault on server3
- * - 5 threads for each running server write 100 records
- * - writes on server1 and server2 succeeds, writes on server3 are redirected
- * - restart server3
- * - check consistency
- * - changing quorum (quorum=3)
- * - network fault on server3
- * - writes on server1 and server2 don't succeed
- * - restart server3
- * - 5 threads for each running server write 100 records
- * - check consistency
+ * It checks the consistency in the cluster with the following scenario: - 3 server (quorum=2) - network fault on server3 - 5
+ * threads for each running server write 100 records - writes on server1 and server2 succeeds, writes on server3 are redirected -
+ * restart server3 - check consistency - changing quorum (quorum=3) - network fault on server3 - writes on server1 and server2 don't
+ * succeed - restart server3 - 5 threads for each running server write 100 records - check consistency
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
@@ -156,7 +147,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         // writes on server1 and server2
         ODatabaseRecordThreadLocal.INSTANCE.set(null);
         this.executeWritesOnServers.remove(2);
-        executeMultipleWrites(this.executeWritesOnServers, "plocal");
+        executeMultipleWrites(this.executeWritesOnServers, "plocal", executeWritesOnServers);
 
         // restarting server3
         serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
@@ -281,15 +272,12 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         System.out.println("Server 3 database is online.");
 
         // WAIT A LITTLE THE SERVER IS SYNCHRONIZED
-        Thread.sleep(10000);
+        Thread.sleep(15000);
 
         System.out.println("Starting new tests...");
 
         // writes on server1, server2 and server3
-        executeMultipleWrites(this.executeWritesOnServers, "plocal");
-
-        // WAIT A LITTLE THE SERVER IS SYNCHRONIZED
-        Thread.sleep(10000);
+        executeMultipleWrites(this.executeWritesOnServers, "plocal", this.executeWritesOnServers);
 
         System.out.println("Checking consistency...");
 

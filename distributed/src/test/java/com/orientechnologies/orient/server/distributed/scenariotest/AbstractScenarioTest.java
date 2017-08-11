@@ -64,7 +64,12 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType)
       throws InterruptedException, ExecutionException {
-    executeMultipleWrites(executeOnServers, storageType, null);
+    executeMultipleWrites(executeOnServers, storageType, null, serverInstance);
+  }
+
+  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType, List<ServerRun> checkOnServers)
+      throws InterruptedException, ExecutionException {
+    executeMultipleWrites(executeOnServers, storageType, null, checkOnServers);
   }
 
   /*
@@ -73,7 +78,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
    * it. Tha target db is passed as parameter, otherwise is kept the default one on servers.
    */
 
-  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType, String dbURL)
+  protected void executeMultipleWrites(final List<ServerRun> executeOnServers, final String storageType, final String dbURL,
+      final List<ServerRun> checkOnServers)
       throws InterruptedException, ExecutionException {
 
     ODatabaseDocumentTx database;
@@ -159,8 +165,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     onBeforeChecks();
 
-    checkInsertedEntries();
-    checkIndexedEntries();
+    checkInsertedEntries(checkOnServers);
+    checkIndexedEntries(executeTestsOnServers);
   }
 
   // checks the consistency in the cluster after the writes in a simple distributed scenario

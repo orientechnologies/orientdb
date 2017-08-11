@@ -54,7 +54,7 @@ public class HATxTest extends AbstractHARemoveNode {
     Thread.sleep(1000);
 
     checkInsertedEntries();
-    checkIndexedEntries();
+    checkIndexedEntries(executeTestsOnServers);
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
 

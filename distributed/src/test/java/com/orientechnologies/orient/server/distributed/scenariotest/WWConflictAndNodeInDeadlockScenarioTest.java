@@ -155,12 +155,12 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
       System.out.println("Exception was thrown!");
     }
     // wait for propagation
-    Thread.sleep(500);
+    Thread.sleep(5000);
 
     // end of deadlock on server3 and sync
     try {
       this.server3inDeadlock.set(false);
-      Thread.sleep(500); // waiting for sync of server3
+      Thread.sleep(5000); // waiting for sync of server3
     } catch (Exception e) {
       e.printStackTrace();
       fail("Exception was thrown!");

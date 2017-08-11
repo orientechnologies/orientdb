@@ -29,7 +29,7 @@ public class RemoteMultipleUrlTest {
 
     OServerAdmin server = new OServerAdmin("remote:localhost");
     server.connect("root", "test");
-    server.createDatabase(RemoteMultipleUrlTest.class.getSimpleName(), "graph", "memory");
+    server.createDatabase(RemoteMultipleUrlTest.class.getSimpleName(), "graph", "plocal");
 
   }
 

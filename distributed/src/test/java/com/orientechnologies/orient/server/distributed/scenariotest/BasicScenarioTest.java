@@ -69,7 +69,7 @@ public class BasicScenarioTest extends AbstractScenarioTest {
       database.close();
     }
 
-    executeMultipleWrites(super.executeTestsOnServers, "plocal");
+    executeMultipleWrites(super.executeTestsOnServers, "plocal", super.executeTestsOnServers);
     super.checkWritesAboveCluster(serverInstance, executeTestsOnServers);
   }
 
