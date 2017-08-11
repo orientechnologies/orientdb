@@ -98,6 +98,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret,
       final ScoreDoc score) {
+    updateLastAccess();
+    openIfClosed();
     recordId.setContext(new HashMap<String, Object>() {
       {
         put("score", score.score);

@@ -185,7 +185,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     if (metadata.containsField("closeAfterInterval")) {
       closeAfterInterval = Integer.valueOf(metadata.<Integer>field("closeAfterInterval")).longValue();
     } else {
-      closeAfterInterval = 120000l;
+      closeAfterInterval = 600000l;
     }
 
     if (metadata.containsField("firstFlushAfter")) {
@@ -207,9 +207,21 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       @Override
       public void run() {
 
-        if (System.currentTimeMillis() - lastAccess.get() > closeAfterInterval) {
+        if (shouldClose()) {
 //          OLogManager.instance().info(this, " Closing index:: " + indexName());
-          close();
+
+          openCloseLock.lock();
+
+          //while on lock the index was opened
+          if (!shouldClose())
+            return;
+          try {
+
+            close();
+          } finally {
+            openCloseLock.unlock();
+          }
+
         }
         if (!closed.get()) {
 //          OLogManager.instance().info(this, " Flushing index:: " + indexName());
@@ -219,6 +231,10 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     };
 
     Orient.instance().scheduleTask(commitTask, firstFlushAfter, flushIndexInterval);
+  }
+
+  private boolean shouldClose() {
+    return System.currentTimeMillis() - lastAccess.get() > closeAfterInterval;
   }
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
@@ -428,7 +444,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   protected void openIfClosed() {
     if (closed.get()) {
-//      OLogManager.instance().info(this, "open closed index:: " + indexName());
+      OLogManager.instance().info(this, "open closed index:: " + indexName());
 
       try {
         reOpen();
@@ -461,6 +477,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public long sizeInTx(OLuceneTxChanges changes) {
+    updateLastAccess();
+    openIfClosed();
     IndexSearcher searcher = searcher();
     try {
       IndexReader reader = searcher.getIndexReader();
@@ -531,7 +549,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     if (closed.get())
       return;
 
-    openCloseLock.lock();
     try {
 //      OLogManager.instance().info(this, "Closing Lucene index '" + this.name + "'...");
 
@@ -546,8 +563,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
     } catch (Throwable e) {
       OLogManager.instance().error(this, "Error on closing Lucene index", e);
-    } finally {
-      openCloseLock.unlock();
     }
   }
 
