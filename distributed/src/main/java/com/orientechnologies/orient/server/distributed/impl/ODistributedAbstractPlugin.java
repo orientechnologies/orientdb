@@ -348,6 +348,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     final ODistributedMessageService msgService = getMessageService();
     if (msgService != null) {
+      try {
+        setDatabaseStatus(getLocalNodeName(), iDatabase.getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      } catch (Throwable t) {
+        // IGNORE IT
+      }
+
       msgService.unregisterDatabase(iDatabase.getName());
     }
   }
@@ -1053,8 +1059,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           .info(this, nodeName, targetNode, DIRECTION.OUT, "Requesting database delta sync for '%s' LSN=%s...", databaseName, lsn);
 
       try {
-        final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
-            getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null).getPayload();
+        final ODistributedResponse response = sendRequest(databaseName, null, targetNodes, deployTask, getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+
+        if (response == null)
+          throw new ODistributedDatabaseDeltaSyncException(lsn);
+
+        final Map<String, Object> results = (Map<String, Object>) response.getPayload();
 
         ODistributedServerLog
             .debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Database delta sync returned: %s", results);
@@ -1123,6 +1134,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       } catch (ODatabaseIsOldException e) {
         // FORWARD IT
         throw (ODatabaseIsOldException) e;
+      } catch (ODistributedDatabaseDeltaSyncException e) {
+        // RE-THROW IT
+        throw e;
       } catch (Exception e) {
         ODistributedServerLog
             .error(this, nodeName, targetNode, DIRECTION.OUT, "Error on asking delta backup of database '%s' (err=%s)",
@@ -1573,7 +1587,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
 
             final List<String> cluster2Create = clusterAssignmentStrategy
-                .assignClusterOwnershipOfClass(iDatabase, lastCfg, iClass, availableNodes);
+                .assignClusterOwnershipOfClass(iDatabase, lastCfg, iClass, availableNodes, true);
 
             final Map<OClass, List<String>> cluster2CreateMap = new HashMap<OClass, List<String>>(1);
             cluster2CreateMap.put(iClass, cluster2Create);
@@ -1612,7 +1626,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               public Object call() throws Exception {
                 try {
                   clazz.addCluster(newClusterName);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                   if (!iDatabase.getClusterNames().contains(newClusterName)) {
                     // NOT CREATED
                     ODistributedServerLog.error(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
@@ -1741,7 +1755,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final Map<OClass, List<String>> cluster2CreateMap = new HashMap<OClass, List<String>>(1);
     for (final OClass clazz : schema.getClasses()) {
       final List<String> cluster2Create = clusterAssignmentStrategy
-          .assignClusterOwnershipOfClass(iDatabase, cfg, clazz, availableNodes);
+          .assignClusterOwnershipOfClass(iDatabase, cfg, clazz, availableNodes, canCreateNewClusters);
 
       cluster2CreateMap.put(clazz, cluster2Create);
     }

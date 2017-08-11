@@ -150,12 +150,6 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
-    try {
-      manager.setDatabaseStatus(manager.getLocalNodeName(), iDatabaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
-    } catch (Throwable t) {
-      // IGNORE IT
-    }
-
     final ODistributedDatabaseImpl db = databases.remove(iDatabaseName);
     if (db != null) {
       db.shutdown();

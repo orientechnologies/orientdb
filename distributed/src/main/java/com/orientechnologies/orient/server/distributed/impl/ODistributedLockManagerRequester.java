@@ -46,6 +46,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
 
   @Override
   public void acquireExclusiveLock(final String resource, final String nodeSource, final long timeout) {
+    int foundNoLockManager = 0;
     while (true) {
       if (server == null || server.equals(manager.getLocalNodeName())) {
         // NO MASTERS, USE LOCAL SERVER
@@ -61,9 +62,9 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
 
         Object result;
         try {
-          final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
-              new ODistributedLockTask(server, resource, timeout, true), manager.getNextMessageIdCounter(),
-              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+          final ODistributedResponse dResponse = manager
+              .sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers, new ODistributedLockTask(server, resource, timeout, true),
+                  manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
           if (dResponse == null) {
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
@@ -95,6 +96,12 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
                 "Lock Manager server '%s' went down during the request of locking resource '%s'. Waiting for the election of a new Lock Manager...",
                 server, resource);
+            foundNoLockManager++;
+
+            if (foundNoLockManager > 10) {
+              manager.electNewLockManager();
+              break;
+            }
 
             try {
               Thread.sleep(1000);
@@ -137,9 +144,9 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
 
         Object result;
         try {
-          final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
-              new ODistributedLockTask(server, resource, 20000, false), manager.getNextMessageIdCounter(),
-              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+          final ODistributedResponse dResponse = manager
+              .sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers, new ODistributedLockTask(server, resource, 20000, false),
+                  manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
           if (dResponse == null)
             throw new OLockException("Cannot release exclusive lock on resource '" + resource + "'");

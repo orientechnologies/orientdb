@@ -836,7 +836,7 @@ public class ODistributedResponseManager {
     if (task.isIdempotent()) {
       // NO UNDO IS NECESSARY
       ODistributedServerLog
-          .warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, "No undo because the task (%s) is idempotent", task);
+          .debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, "No undo because the task (%s) is idempotent", task);
       return false;
     }
 

@@ -167,7 +167,7 @@ public class ODistributedWorker extends Thread {
       if (database == null) {
         ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
             "Database '%s' not present, shutting down database manager", databaseName);
-        distributed.shutdown();
+        msgService.unregisterDatabase(databaseName);
         throw new ODistributedException("Cannot open database '" + databaseName + "'");
       }
 
@@ -260,7 +260,7 @@ public class ODistributedWorker extends Thread {
 
   protected ODistributedRequest nextMessage() throws InterruptedException {
     waitingForNextRequest.set(true);
-    final ODistributedRequest req = localQueue.poll(2000, TimeUnit.MILLISECONDS);
+    final ODistributedRequest req = localQueue.poll(1000, TimeUnit.MILLISECONDS);
     waitingForNextRequest.set(false);
     processedRequests.incrementAndGet();
     return req;

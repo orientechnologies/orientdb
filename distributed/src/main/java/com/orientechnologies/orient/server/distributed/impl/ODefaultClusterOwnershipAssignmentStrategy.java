@@ -45,7 +45,8 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
 
   @Override
   public List<String> assignClusterOwnershipOfClass(final ODatabaseInternal iDatabase,
-      final OModifiableDistributedConfiguration cfg, final OClass iClass, final Set<String> availableNodes) {
+      final OModifiableDistributedConfiguration cfg, final OClass iClass, final Set<String> availableNodes,
+      final boolean canCreateNewClusters) {
 
     // FILTER OUT NON MASTER SERVER
     for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
@@ -87,21 +88,23 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
     Collection<String> allClusterNames = iDatabase.getClusterNames();
 
     final List<String> serversToCreateANewCluster = new ArrayList<String>();
-    for (String server : availableNodes) {
-      final List<String> ownedClusters = cfg.getOwnedClustersByServer(clusterNames, server);
-      if (ownedClusters.isEmpty()) {
-        // CREATE A NEW CLUSTER WHERE THE LOCAL NODE IS THE MASTER
-        String newClusterName;
-        for (int i = 0; ; ++i) {
-          newClusterName = iClass.getName().toLowerCase(Locale.ENGLISH) + "_" + i;
-          if (!allClusterNames.contains(newClusterName) && !serversToCreateANewCluster.contains(newClusterName))
-            break;
-        }
 
-        serversToCreateANewCluster.add(newClusterName);
-        assignClusterOwnership(iDatabase, cfg, iClass, newClusterName, server);
+    if (canCreateNewClusters)
+      for (String server : availableNodes) {
+        final List<String> ownedClusters = cfg.getOwnedClustersByServer(clusterNames, server);
+        if (ownedClusters.isEmpty()) {
+          // CREATE A NEW CLUSTER WHERE THE LOCAL NODE IS THE MASTER
+          String newClusterName;
+          for (int i = 0; ; ++i) {
+            newClusterName = iClass.getName().toLowerCase(Locale.ENGLISH) + "_" + i;
+            if (!allClusterNames.contains(newClusterName) && !serversToCreateANewCluster.contains(newClusterName))
+              break;
+          }
+
+          serversToCreateANewCluster.add(newClusterName);
+          assignClusterOwnership(iDatabase, cfg, iClass, newClusterName, server);
+        }
       }
-    }
     return serversToCreateANewCluster;
   }
 

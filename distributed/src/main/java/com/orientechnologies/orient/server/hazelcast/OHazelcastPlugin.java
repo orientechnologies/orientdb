@@ -387,8 +387,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final String mName = node.field("name");
         final Integer mId = node.field("id");
 
-        if (nodeName.equals(mName))
+        if (mId == null) {
+          ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Found server '%s' with a NULL id", mName);
+          continue;
+        } else if (mId < 0) {
+          ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Found server '%s' with an invalid id %d", mName, mId);
+          continue;
+        }
+
+        if (nodeName.equals(mName)) {
           nodeId = mId;
+        }
 
         if (mId >= registeredNodeById.size()) {
           // CREATE EMPTY ENTRIES IF NEEDED
@@ -1046,6 +1055,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       ODistributedServerLog
           .info(this, nodeName, null, DIRECTION.NONE, "Added new node id=%s name=%s", iEvent.getMember(), addedNodeName);
 
+      registerNode(iEvent.getMember(), addedNodeName);
+
       // REMOVE THE NODE FROM AUTO REMOVAL
       autoRemovalOfServers.remove(addedNodeName);
 
@@ -1062,9 +1073,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (state == LifecycleEvent.LifecycleState.MERGING)
       setNodeStatus(NODE_STATUS.MERGING);
     else if (state == LifecycleEvent.LifecycleState.MERGED) {
-      ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Server merged the existent cluster, merging databases...");
-
       getLockManagerRequester().setServer((String) configurationMap.getHazelcastMap().get(CONFIG_LOCKMANAGER));
+
+      ODistributedServerLog
+          .info(this, nodeName, null, DIRECTION.NONE, "Server merged the existent cluster, lockManager=%s, merging databases...",
+              getLockManagerServer());
 
       configurationMap.clearLocalCache();
 
@@ -1073,8 +1086,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         @Override
         public void run() {
           try {
-            // WAIT THE LOCK MANAGER IS ONLINE
-            while (!getActiveServers().contains(getLockManagerServer())) {
+            // WAIT (MAX 10 SECS) THE LOCK MANAGER IS ONLINE
+            ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+                "Merging networks, waiting for the lockManager %s to be reachable...", getLockManagerServer());
+
+            for (int retry = 0; !getActiveServers().contains(getLockManagerServer()) && retry < 10; ++retry) {
               try {
                 Thread.sleep(1000);
               } catch (InterruptedException e) {
@@ -1542,7 +1558,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   /**
    * Elects a new server as Lock Manager. The election browse the ordered server list.
    */
-  private void electNewLockManager() {
+  @Override
+  public void electNewLockManager() {
     // TRY ALL THE SERVERS IN ORDER (ALL THE SERVERS HAVE THE SAME LIST)
     final List<String> sortedServers = new ArrayList<String>(getActiveServers());
     Collections.sort(sortedServers);

@@ -552,14 +552,6 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       this.useTransaction = useTransaction;
     }
 
-    protected RecordUpdater(final String dbServerUrl, final String rid, final Map<String, Object> fields,
-        final boolean useTransaction) {
-      this.dbServerUrl = dbServerUrl;
-      this.useTransaction = useTransaction;
-      this.recordToUpdate = retrieveRecord(dbServerUrl, rid);
-      this.fields = fields;
-    }
-
     @Override
     public Void call() throws Exception {
 

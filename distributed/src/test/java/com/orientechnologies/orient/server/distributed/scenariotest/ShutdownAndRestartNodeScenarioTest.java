@@ -281,7 +281,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         System.out.println("Server 3 database is online.");
 
         // WAIT A LITTLE THE SERVER IS SYNCHRONIZED
-        Thread.sleep(5000);
+        Thread.sleep(10000);
 
         System.out.println("Starting new tests...");
 
@@ -289,7 +289,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         executeMultipleWrites(this.executeWritesOnServers, "plocal");
 
         // WAIT A LITTLE THE SERVER IS SYNCHRONIZED
-        Thread.sleep(5000);
+        Thread.sleep(10000);
 
         System.out.println("Checking consistency...");
 

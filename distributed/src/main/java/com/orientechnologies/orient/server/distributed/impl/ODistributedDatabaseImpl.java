@@ -1253,28 +1253,35 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     buffer.append("\n- MESSAGES IN QUEUES:");
 
-    buffer.append("\n - QUEUE LOCK EXECUTING: " + lockThread.getProcessing());
-    int i = 0;
-    for (ODistributedRequest m : lockThread.localQueue) {
-      if (m != null)
-        buffer.append("\n  - " + i + " = " + m.toString());
-    }
-
-    buffer.append("\n - QUEUE UNLOCK EXECUTING: " + unlockThread.getProcessing());
-    i = 0;
-    for (ODistributedRequest m : unlockThread.localQueue) {
-      if (m != null)
-        buffer.append("\n  - " + i + " = " + m.toString());
-    }
-
-    for (ODistributedWorker t : workerThreads) {
-      buffer.append("\n - QUEUE " + t.id + " EXECUTING: " + t.getProcessing());
-      i = 0;
-      for (ODistributedRequest m : t.localQueue) {
+    if (lockThread != null) {
+      buffer.append("\n - QUEUE LOCK EXECUTING: " + lockThread.getProcessing());
+      int i = 0;
+      for (ODistributedRequest m : lockThread.localQueue) {
         if (m != null)
-          buffer.append("\n  - " + (i++) + " = " + m.toString());
+          buffer.append("\n  - " + i + " = " + m.toString());
       }
     }
+
+    if (unlockThread != null) {
+      buffer.append("\n - QUEUE UNLOCK EXECUTING: " + unlockThread.getProcessing());
+      int i = 0;
+      for (ODistributedRequest m : unlockThread.localQueue) {
+        if (m != null)
+          buffer.append("\n  - " + i + " = " + m.toString());
+      }
+    }
+
+    if (workerThreads != null) {
+      for (ODistributedWorker t : workerThreads) {
+        buffer.append("\n - QUEUE " + t.id + " EXECUTING: " + t.getProcessing());
+        int i = 0;
+        for (ODistributedRequest m : t.localQueue) {
+          if (m != null)
+            buffer.append("\n  - " + (i++) + " = " + m.toString());
+        }
+      }
+    }
+
     return buffer.toString();
   }
 }
