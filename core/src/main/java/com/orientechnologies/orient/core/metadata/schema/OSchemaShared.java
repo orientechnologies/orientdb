@@ -743,7 +743,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
         if (superClassNames == null)
           superClassNames = new ArrayList<String>();
         else
-          superClassNames = new HashSet<String>(superClassNames);
+          superClassNames = new LinkedHashSet<String>(superClassNames);
 
         if (legacySuperClassName != null && !superClassNames.contains(legacySuperClassName))
           superClassNames.add(legacySuperClassName);
