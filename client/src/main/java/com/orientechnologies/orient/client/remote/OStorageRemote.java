@@ -163,83 +163,74 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     else
       pMode = mode;
     request.setMode((byte) pMode);
-    return baseNetworkOperation(new OStorageRemoteOperation<T>() {
-      @Override
-      public T execute(final OChannelBinaryAsynchClient network, final OStorageRemoteSession session) throws IOException {
-        // Send The request
-        try {
-          network.beginRequest(request.getCommand(), session);
-          request.write(network, session);
-        } finally {
-          network.endRequest();
-        }
-        final T response = request.createResponse();
-        T ret = null;
-        if (pMode == 0) {
-          // SYNC
-          try {
-            beginResponse(network, session);
-            response.read(network, session);
-          } finally {
-            endResponse(network);
-          }
-          ret = response;
-          connectionManager.release(network);
-        } else if (pMode == 1) {
-          // ASYNC
-          OStorageRemote.this.asynchExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                try {
-                  beginResponse(network, session);
-                  response.read(network, session);
-                } finally {
-                  endResponse(network);
-                }
-                callback.call(recordId, response);
-                connectionManager.release(network);
-              } catch (Throwable e) {
-                connectionManager.remove(network);
-                OLogManager.instance().error(this, "Exception on async query", e);
-              }
-            }
-          });
-        } else {
-          // NO RESPONSE
-          connectionManager.release(network);
-        }
-        return ret;
+    return baseNetworkOperation((network, session) -> {
+      // Send The request
+      try {
+        network.beginRequest(request.getCommand(), session);
+        request.write(network, session);
+      } finally {
+        network.endRequest();
       }
+      final T response = request.createResponse();
+      T ret = null;
+      if (pMode == 0) {
+        // SYNC
+        try {
+          beginResponse(network, session);
+          response.read(network, session);
+        } finally {
+          endResponse(network);
+        }
+        ret = response;
+        connectionManager.release(network);
+      } else if (pMode == 1) {
+        // ASYNC
+        asynchExecutor.submit(() -> {
+          try {
+            try {
+              beginResponse(network, session);
+              response.read(network, session);
+            } finally {
+              endResponse(network);
+            }
+            callback.call(recordId, response);
+            connectionManager.release(network);
+          } catch (Throwable e) {
+            connectionManager.remove(network);
+            OLogManager.instance().error(this, "Exception on async query", e);
+          }
+        });
+      } else {
+        // NO RESPONSE
+        connectionManager.release(network);
+      }
+      return ret;
     }, errorMessage, retry);
   }
 
   public <T extends OBinaryResponse> T networkOperationRetryTimeout(final OBinaryRequest<T> request, final String errorMessage,
       int retry, int timeout) {
-    return baseNetworkOperation(new OStorageRemoteOperation<T>() {
-      @Override
-      public T execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        try {
-          network.beginRequest(request.getCommand(), session);
-          request.write(network, session);
-        } finally {
-          network.endRequest();
-        }
-        int prev = network.getSocketTimeout();
-        T response = request.createResponse();
-        try {
-          if (timeout > 0)
-            network.setSocketTimeout(timeout);
-          beginResponse(network, session);
-          response.read(network, session);
-        } finally {
-          endResponse(network);
-          if (timeout > 0)
-            network.setSocketTimeout(prev);
-        }
-        connectionManager.release(network);
-        return response;
+    return baseNetworkOperation((network, session) -> {
+      try {
+        network.beginRequest(request.getCommand(), session);
+        request.write(network, session);
+      } finally {
+        network.endRequest();
       }
+      int prev = network.getSocketTimeout();
+      T response = request.createResponse();
+      try {
+        if (timeout > 0)
+          network.setSocketTimeout(timeout);
+        beginResponse(network, session);
+        response.read(network, session);
+      } finally {
+        endResponse(network);
+        if (timeout > 0)
+          network.setSocketTimeout(prev);
+      }
+      connectionManager.release(network);
+      return response;
     }, errorMessage, retry);
   }
 
@@ -297,13 +288,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         connectionManager.release(network);
         handleDBFreeze();
         serverUrl = null;
-      } catch (OTokenException e) {
-        connectionManager.release(network);
-        session.removeServerSession(network.getServerURL());
-        if (--retry <= 0)
-          throw OException.wrapException(new OStorageException(errorMessage), e);
-        serverUrl = null;
-      } catch (OTokenSecurityException e) {
+      } catch (OTokenException | OTokenSecurityException e) {
         connectionManager.release(network);
         session.removeServerSession(network.getServerURL());
         if (--retry <= 0)
@@ -320,11 +305,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           activeSession.removeServerSession(serverUrl);
         }
         serverUrl = null;
-      } catch (IOException e) {
-        connectionManager.release(network);
-        retry = handleIOException(retry, network, e);
-        serverUrl = null;
-      } catch (OIOException e) {
+      } catch (IOException | OIOException e) {
         connectionManager.release(network);
         retry = handleIOException(retry, network, e);
         serverUrl = null;
@@ -389,8 +370,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           ci.intercept(getURL(), iUserName, iUserPassword);
           session.connectionUserName = ci.getUsername();
           session.connectionUserPassword = ci.getPassword();
-        } else // Do Nothing
-        {
+        } else {
+          // Do Nothing
           session.connectionUserName = iUserName;
           session.connectionUserPassword = iUserPassword;
         }
@@ -675,7 +656,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
 
     OUpdateRecordRequest request = new OUpdateRecordRequest(iRid, iContent, iVersion, updateContent, iRecordType);
-    OUpdateRecordResponse response = asyncNetworkOperationNoRetry(request, iMode, iRid, realCallback, "Error on update record " + iRid);
+    OUpdateRecordResponse response = asyncNetworkOperationNoRetry(request, iMode, iRid, realCallback,
+        "Error on update record " + iRid);
 
     Integer resVersion = null;
     if (response != null) {
