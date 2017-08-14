@@ -17,126 +17,188 @@ import static org.junit.Assert.assertEquals;
  */
 public class ODemoDbMetadataConsistencyIT extends OIntegrationTestTemplate {
 
-  private int customerNumber     = 400;
-  private int hotelNumbers       = 1154;
-  private int restaurantsNumbers = 1951;
-  private int casteNumbers       = 127;
-  private int archSiteNumbers    = 55;
-  private int monumentNumbers    = 137;
-  private int theatreNumbers     = 117;
+  private int vCount              = 7275;
+  private int locationsCount      = 3541;
+  private int attractionsCount    = 436;
+  private int archSitesCount      = 55;
+  private int castlesCount        = 127;
+  private int monumentsCount      = 137;
+  private int theatresCount       = 117;
+  private int ServicesCount       = 3105;
+  private int hotelsCount         = 1154;
+  private int restaurantsCount    = 1951;
+  private int profilesCount       = 1000;
+  private int customersCount      = 400;
+  private int countriesCount      = 249;
+  private int ordersCount         = 812;
+  private int reviewsCount        = 1273;
+
+  private int eCount              = 15013;
+  private int hasCustomerCount    = 812;
+  private int hasEatenCount       = 2484;
+  private int hasFriendCount      = 1617;
+  private int hasProfileCount     = 400;
+  private int hasReviewCount      = 1273;
+  private int hasStayedCount      = 1650;
+  private int hasUsedServiceCount = 4134;
+  private int hasVisitedCount     = 5104;
+  private int isFromCountryCount  = 400;
+  private int madeReviewCount  = 1273;
 
   @Test
   public void testMetadata() throws Exception {
 
     OSchema schema = db.getMetadata().getSchema();
 
-    // vertex class existence    
+    //todo: properties & indices
+
+    // vertices
     assertThat(schema.getClass("V")).isNotNull();
     assertThat(schema.getClass("V").getSubclasses()).hasSize(14);
-    //assertThat(schema.getClass("V").count()).isEqualTo();
+    assertThat(schema.getClass("V").count()).isEqualTo(vCount);
 
     assertThat(schema.getClass("Locations")).isNotNull();
-    assertThat(schema.getClass("Locations").count()).isEqualTo(3541);
+    assertEquals("V", schema.getClass("Locations").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("Locations").getSubclasses()).hasSize(2);
+    assertThat(schema.getClass("Locations").count()).isEqualTo(locationsCount);
 
     assertThat(schema.getClass("Attractions")).isNotNull();
-    assertThat(schema.getClass("Attractions").count()).isEqualTo(436);
-
-    assertThat(schema.getClass("Castles")).isNotNull();
-    assertThat(schema.getClass("Castles").count()).isEqualTo(casteNumbers);
-
-    assertThat(schema.getClass("Theatres")).isNotNull();
-    assertThat(schema.getClass("Theatres").count()).isEqualTo(theatreNumbers);
-
-    assertThat(schema.getClass("Monuments")).isNotNull();
-    assertThat(schema.getClass("Monuments").count()).isEqualTo(monumentNumbers);
+    assertEquals("V", schema.getClass("Attractions").getSuperClassesNames().get(0));
+    assertEquals("Locations", schema.getClass("Attractions").getSuperClassesNames().get(1));
+    assertThat(schema.getClass("Attractions").getSubclasses()).hasSize(4);
+    assertThat(schema.getClass("Attractions").count()).isEqualTo(attractionsCount);
 
     assertThat(schema.getClass("ArchaeologicalSites")).isNotNull();
-    assertThat(schema.getClass("ArchaeologicalSites").count()).isEqualTo(archSiteNumbers);
+    assertEquals("V", schema.getClass("ArchaeologicalSites").getSuperClassesNames().get(0));
+    assertEquals("Attractions", schema.getClass("ArchaeologicalSites").getSuperClassesNames().get(1));
+    assertThat(schema.getClass("ArchaeologicalSites").count()).isEqualTo(archSitesCount);
+
+    assertThat(schema.getClass("Castles")).isNotNull();
+    assertEquals("V", schema.getClass("Castles").getSuperClassesNames().get(0));
+    assertEquals("Attractions", schema.getClass("Castles").getSuperClassesNames().get(1));
+    assertThat(schema.getClass("Castles").count()).isEqualTo(castlesCount);
+
+    assertThat(schema.getClass("Monuments")).isNotNull();
+    assertEquals("V", schema.getClass("Monuments").getSuperClassesNames().get(0));
+    assertEquals("Attractions", schema.getClass("Monuments").getSuperClassesNames().get(1));
+    assertThat(schema.getClass("Monuments").count()).isEqualTo(monumentsCount);
+
+    assertThat(schema.getClass("Theatres")).isNotNull();
+    assertEquals("V", schema.getClass("Theatres").getSuperClassesNames().get(0));
+    assertEquals("Attractions", schema.getClass("Theatres").getSuperClassesNames().get(1));
+    assertThat(schema.getClass("Theatres").count()).isEqualTo(theatresCount);
 
     assertThat(schema.getClass("Services")).isNotNull();
-    assertThat(schema.getClass("Services").count()).isEqualTo(3105);
+    assertEquals("V", schema.getClass("Services").getSuperClassesNames().get(0));
+    assertEquals("Locations", schema.getClass("Services").getSuperClassesNames().get(1));
+    assertThat(schema.getClass("Services").getSubclasses()).hasSize(2);
+    assertThat(schema.getClass("Services").count()).isEqualTo(ServicesCount);
 
     assertThat(schema.getClass("Hotels")).isNotNull();
-    assertThat(schema.getClass("Hotels").count()).isEqualTo(hotelNumbers);
+    assertEquals("V", schema.getClass("Hotels").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("Hotels").count()).isEqualTo(hotelsCount);
 
     assertThat(schema.getClass("Restaurants")).isNotNull();
-    assertThat(schema.getClass("Restaurants").count()).isEqualTo(restaurantsNumbers);
+    assertEquals("V", schema.getClass("Restaurants").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("Restaurants").count()).isEqualTo(restaurantsCount);
 
     assertThat(schema.getClass("Profiles")).isNotNull();
-    //assertEquals(0, db.getMetadata().getSchema().getClass("Profiles").count());
+    assertEquals("V", schema.getClass("Profiles").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("Profiles").count()).isEqualTo(profilesCount);
 
     assertThat(schema.getClass("Customers")).isNotNull();
-    assertThat(schema.getClass("Customers").count()).isEqualTo(customerNumber);
-
-    assertThat(schema.getClass("Orders")).isNotNull();
-    //assertEquals(0, db.getMetadata().getSchema().getClass("Orders").count());
+    assertEquals("V", schema.getClass("Customers").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("Customers").count()).isEqualTo(customersCount);
 
     assertThat(schema.getClass("Countries")).isNotNull();
-    assertThat(schema.getClass("Countries").count()).isEqualTo(249);
+    assertEquals("V", schema.getClass("Countries").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("Countries").count()).isEqualTo(countriesCount);
+
+    assertThat(schema.getClass("Orders")).isNotNull();
+    assertEquals("V", schema.getClass("Orders").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("Orders").count()).isEqualTo(ordersCount);
 
     assertThat(schema.getClass("Reviews")).isNotNull();
-    //assertEquals(0, db.getMetadata().getSchema().getClass("Reviews").count());
+    assertEquals("V", schema.getClass("Reviews").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("Reviews").count()).isEqualTo(reviewsCount);
+    //
 
-    // edge class existence
+    // edges
     assertThat(schema.getClass("E")).isNotNull();
     assertThat(schema.getClass("E").getSubclasses()).hasSize(10);
-    //assertThat(schema.getClass("E").count()).isEqualTo();
+    assertThat(schema.getClass("E").count()).isEqualTo(eCount);
 
     assertThat(schema.getClass("HasCustomer")).isNotNull();
-    assertThat(schema.getClass("HasVisited")).isNotNull();
-    assertThat(schema.getClass("IsFromCountry")).isNotNull();
-    assertThat(schema.getClass("HasStayed")).isNotNull();
-    assertThat(schema.getClass("MadeReview")).isNotNull();
-    assertThat(schema.getClass("HasReview")).isNotNull();
+    assertEquals("E", schema.getClass("HasCustomer").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("HasCustomer").count()).isEqualTo(hasCustomerCount);
+
     assertThat(schema.getClass("HasEaten")).isNotNull();
-    assertThat(schema.getClass("HasProfile")).isNotNull();
-    assertThat(schema.getClass("HasFriend")).isNotNull();
-    assertThat(schema.getClass("HasUsedService")).isNotNull();
-
-    // Vertex inheritance
-    // to do
-
-    // Edge inheritance
-    // method 1
     assertEquals("E", schema.getClass("HasEaten").getSuperClassesNames().get(0));
     assertEquals("HasUsedService", schema.getClass("HasEaten").getSuperClassesNames().get(1));
+    assertThat(schema.getClass("HasEaten").count()).isEqualTo(hasEatenCount);
+
+    assertThat(schema.getClass("HasFriend")).isNotNull();
+    assertEquals("E", schema.getClass("HasFriend").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("HasFriend").count()).isEqualTo(hasFriendCount);
+
+    assertThat(schema.getClass("HasProfile")).isNotNull();
+    assertEquals("E", schema.getClass("HasProfile").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("HasProfile").count()).isEqualTo(hasProfileCount);
+
+    assertThat(schema.getClass("HasReview")).isNotNull();
+    assertEquals("E", schema.getClass("HasReview").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("HasReview").count()).isEqualTo(hasReviewCount);
+
+    assertThat(schema.getClass("HasStayed")).isNotNull();
     assertEquals("E", schema.getClass("HasStayed").getSuperClassesNames().get(0));
     assertEquals("HasUsedService", schema.getClass("HasStayed").getSuperClassesNames().get(1));
+    assertThat(schema.getClass("HasStayed").count()).isEqualTo(hasStayedCount);
 
-    //method 2
+    assertThat(schema.getClass("HasUsedService")).isNotNull();
+    assertEquals("E", schema.getClass("HasUsedService").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("HasUsedService").getSubclasses()).hasSize(2);
+    assertThat(schema.getClass("HasUsedService").count()).isEqualTo(hasUsedServiceCount);
 
-    List<OResult> results = db.query("SELECT DISTINCT(@class) AS className from `HasUsedService` ORDER BY className ASC").stream()
-        .collect(Collectors.toList());
-    assertEquals(2, results.size());
-    assertEquals("HasEaten", results.get(0).getProperty("className"));
-    assertEquals("HasStayed", results.get(1).getProperty("className"));
+      //other way to check inheritance
+      List<OResult> results = db.query("SELECT DISTINCT(@class) AS className from `HasUsedService` ORDER BY className ASC").stream()
+          .collect(Collectors.toList());
+      assertEquals(2, results.size());
+      assertEquals("HasEaten", results.get(0).getProperty("className"));
+      assertEquals("HasStayed", results.get(1).getProperty("className"));
+      //
 
-    //method 3 - fails, to ask Luigi why
-    //sqlQuery = "SELECT COUNT(*) as edgeCount, DISTINCT(@class) AS edgeClassName from `HasUsedService` GROUP BY edgeClassName ORDER BY edgeClassName ASC";
-    //qResult = db.command(new OCommandSQL(sqlQuery)).execute();
-    //assertEquals(2,qResult.size());
-    //assertEquals( "HasEaten", qResult.get(0).field("className"));
-    //assertEquals( "HasStayed", qResult.get(1).field("className"));
+    assertThat(schema.getClass("HasVisited")).isNotNull();
+    assertEquals("E", schema.getClass("HasVisited").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("HasVisited").count()).isEqualTo(hasVisitedCount);
+
+    assertThat(schema.getClass("IsFromCountry")).isNotNull();
+    assertEquals("E", schema.getClass("IsFromCountry").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("IsFromCountry").count()).isEqualTo(isFromCountryCount);
+
+    assertThat(schema.getClass("MadeReview")).isNotNull();
+    assertEquals("E", schema.getClass("MadeReview").getSuperClassesNames().get(0));
+    assertThat(schema.getClass("MadeReview").count()).isEqualTo(madeReviewCount);
+    //
 
   }
 
   @Test
-  public void testMatchQueries() throws Exception {
+  public void testDataModel() throws Exception {
 
     // all customers have a country
     OResultSet resultSet = db
         .query("MATCH {class: Customers, as: customer}-IsFromCountry->{class: Countries, as: country} RETURN  customer");
-    assertThat(resultSet).hasSize(customerNumber);
+    assertThat(resultSet).hasSize(customersCount);
     resultSet.close();
 
     // all customers have a profile
     resultSet = db.query("MATCH {class: Customers, as: customer}-HasProfile->{class: Profiles, as: profile} RETURN customer");
-    assertThat(resultSet).hasSize(customerNumber);
+    assertThat(resultSet).hasSize(customersCount);
     resultSet.close();
 
     // all customers have at least 1 order
     resultSet = db.query("MATCH {class: Orders, as: order}-HasCustomer->{class: Customers, as:customer} RETURN order");
-    assertThat(resultSet.stream().count()).isGreaterThan(customerNumber);
+    assertThat(resultSet.stream().count()).isGreaterThan(customersCount);
     resultSet.close();
 
   }
