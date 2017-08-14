@@ -14,6 +14,6 @@ public class ODefaultEmbeddedDatabaseInstanceFactory implements OEmbeddedDatabas
 
   @Override
   public ODatabaseDocumentEmbedded newPoolInstance(ODatabasePoolInternal pool, OStorage storage) {
-    return new OEmbeddedDatabasePool(pool, storage);
+    return new ODatabaseDocumentEmbeddedPooled(pool, storage);
   }
 }

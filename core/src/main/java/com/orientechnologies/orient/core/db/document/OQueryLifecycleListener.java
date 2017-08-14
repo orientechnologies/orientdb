@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 
 /**
@@ -7,8 +8,8 @@ import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDeco
  */
 public interface OQueryLifecycleListener {
 
-  public void queryStarted(OLocalResultSetLifecycleDecorator rs);
+  void queryStarted(String id, OResultSet resultSet);
 
-  public void queryClosed(OLocalResultSetLifecycleDecorator rs);
+  void queryClosed(String id);
 
 }

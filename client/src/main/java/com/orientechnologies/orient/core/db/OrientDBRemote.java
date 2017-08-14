@@ -111,7 +111,7 @@ public class OrientDBRemote implements OrientDBInternal {
     });
   }
 
-  public synchronized ORemoteDatabasePool poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
+  public synchronized ODatabaseDocumentRemotePooled poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
     OStorageRemote storage = storages.get(name);
     if (storage == null) {
       try {
@@ -120,7 +120,7 @@ public class OrientDBRemote implements OrientDBInternal {
         throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
       }
     }
-    ORemoteDatabasePool db = new ORemoteDatabasePool(pool, storage);
+    ODatabaseDocumentRemotePooled db = new ODatabaseDocumentRemotePooled(pool, storage);
     db.internalOpen(user, password, pool.getConfig());
     return db;
   }

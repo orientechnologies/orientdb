@@ -67,6 +67,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
@@ -117,6 +119,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   private boolean prefetchRecords;
 
   protected OMicroTransaction microTransaction = null;
+
+  protected Map<String, OResultSet> activeQueries = new HashMap<>();
 
   protected ODatabaseDocumentAbstract() {
     // DO NOTHING IS FOR EXTENDED OBJECTS
@@ -787,6 +791,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     checkIfActive();
 
     try {
+      closeActiveQueries();
+
       localCache.shutdown();
 
       if (isClosed()) {
@@ -3099,6 +3105,24 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       if (!microTransaction.isActive())
         microTransaction = null;
     }
+  }
+
+  public void queryStarted(String id , OResultSet rs) {
+    this.activeQueries.put(id, rs);
+  }
+
+  public void queryClosed(String id) {
+    this.activeQueries.remove(id);
+  }
+
+  protected void closeActiveQueries() {
+    while (activeQueries.size() > 0) {
+      this.activeQueries.values().iterator().next().close();//the query automatically unregisters itself
+    }
+  }
+
+  public OResultSet getActiveQuery(String id) {
+    return activeQueries.get(id);
   }
 
 }

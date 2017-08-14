@@ -119,7 +119,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   void rawBegin(OTransaction transaction);
 
-  default OLocalResultSetLifecycleDecorator getActiveQuery(String id) {
+  default OResultSet getActiveQuery(String id) {
     throw new UnsupportedOperationException();
   }
 

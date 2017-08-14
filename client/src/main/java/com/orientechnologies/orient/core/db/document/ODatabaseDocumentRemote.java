@@ -337,6 +337,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   public void closeQuery(String queryId) {
+    super.queryClosed(queryId);
     storage.closeQuery(this, queryId);
   }
 
@@ -369,7 +370,5 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     if (sharedContext != null)
       sharedContext.close();
   }
-
-
 
 }

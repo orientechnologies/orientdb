@@ -30,6 +30,7 @@ public class ORemoteResultSet implements OResultSet {
     this.executionPlan = executionPlan;
     this.queryStats = queryStats;
     this.hasNextPage = hasNextPage;
+    db.queryStarted(queryId, this);
   }
 
   @Override

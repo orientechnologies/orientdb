@@ -2,7 +2,7 @@ package com.orientechnologies.orient.server.hazelcast;
 
 import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
 import com.orientechnologies.orient.core.db.OEmbeddedDatabaseInstanceFactory;
-import com.orientechnologies.orient.core.db.OEmbeddedDatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentEmbeddedPooled;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -32,7 +32,7 @@ class ODistributedEmbeddedDatabaseInstanceFactory implements OEmbeddedDatabaseIn
   @Override
   public ODatabaseDocumentEmbedded newPoolInstance(ODatabasePoolInternal pool, OStorage storage) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
-      return new OEmbeddedDatabasePool(pool, storage);
+      return new ODatabaseDocumentEmbeddedPooled(pool, storage);
     }
     plugin.registerNewDatabaseIfNeeded(storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
     return new ODatabaseDocumentDistributedPooled(pool, plugin.getStorage(storage.getName(), (OAbstractPaginatedStorage) storage),

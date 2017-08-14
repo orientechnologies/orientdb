@@ -25,11 +25,11 @@ import com.orientechnologies.orient.core.storage.OStorage;
 /**
  * Created by tglman on 07/07/16.
  */
-public class OEmbeddedDatabasePool extends ODatabaseDocumentEmbedded {
+public class ODatabaseDocumentEmbeddedPooled extends ODatabaseDocumentEmbedded {
 
   private ODatabasePoolInternal pool;
 
-  public OEmbeddedDatabasePool(ODatabasePoolInternal pool, OStorage storage) {
+  public ODatabaseDocumentEmbeddedPooled(ODatabasePoolInternal pool, OStorage storage) {
     super(storage);
     this.pool = pool;
   }

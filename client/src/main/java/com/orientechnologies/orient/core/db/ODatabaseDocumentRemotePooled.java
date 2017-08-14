@@ -6,17 +6,18 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 /**
  * Created by tglman on 07/07/16.
  */
-public class ORemoteDatabasePool extends ODatabaseDocumentRemote {
+public class ODatabaseDocumentRemotePooled extends ODatabaseDocumentRemote {
 
   private ODatabasePoolInternal pool;
 
-  public ORemoteDatabasePool(ODatabasePoolInternal pool, OStorageRemote storage) {
+  public ODatabaseDocumentRemotePooled(ODatabasePoolInternal pool, OStorageRemote storage) {
     super(storage);
     this.pool = pool;
   }
 
   @Override
   public void close() {
+    closeActiveQueries();
     super.setStatus(ODatabase.STATUS.CLOSED);
     getLocalCache().clear();
     ODatabaseRecordThreadLocal.INSTANCE.remove();

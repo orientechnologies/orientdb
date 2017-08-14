@@ -75,9 +75,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   private OrientDBConfig config;
   private OStorage       storage;
 
-  AtomicLong nextRunningQuery = new AtomicLong(0);
-  private Map<String, OLocalResultSetLifecycleDecorator> activeQueries = new HashMap<>();
-
   public ODatabaseDocumentEmbedded(final OStorage storage) {
     activateOnCurrentThread();
 
@@ -314,51 +311,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   }
 
   @Override
-  public void close() {
-    checkIfActive();
-
-    closeActiveQueries();
-
-    localCache.shutdown();
-
-    if (isClosed()) {
-      status = STATUS.CLOSED;
-      return;
-    }
-
-    try {
-      rollback(true);
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Exception during commit of active transaction", e);
-    }
-
-    if (status != STATUS.OPEN)
-      return;
-
-    callOnCloseListeners();
-
-    if (currentIntent != null) {
-      currentIntent.end(this);
-      currentIntent = null;
-    }
-    sharedContext = null;
-    status = STATUS.CLOSED;
-
-    localCache.clear();
-
-    if (storage != null)
-      storage.close();
-
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
-  }
-
-  protected void closeActiveQueries() {
-    while (activeQueries.size() > 0) {
-      this.activeQueries.values().iterator().next().close();//the query automatically unregisters itself
-    }
-  }
-
-  @Override
   public boolean isClosed() {
     return status == STATUS.CLOSED || storage.isClosed();
   }
@@ -392,14 +344,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     storage = iNewStorage;
   }
 
-  public void queryStarted(OLocalResultSetLifecycleDecorator rs) {
-    this.activeQueries.put(rs.getQueryId(), rs);
-  }
-
-  public void queryClosed(OLocalResultSetLifecycleDecorator rs) {
-    this.activeQueries.remove(rs.getQueryId());
-  }
-
   @Override
   public OResultSet query(String query, Object[] args) {
     OStatement statement = OSQLEngine.parse(query, this);
@@ -408,7 +352,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     }
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result);
+    this.queryStarted(result.getQueryId(),result);
     result.addLifecycleListener(this);
     return result;
   }
@@ -421,7 +365,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     }
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result);
+    this.queryStarted(result.getQueryId(),result);
     result.addLifecycleListener(this);
     return result;
   }
@@ -431,7 +375,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OStatement statement = OSQLEngine.parse(query, this);
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result);
+    this.queryStarted(result.getQueryId(),result);
     result.addLifecycleListener(this);
     return result;
   }
@@ -441,7 +385,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OStatement statement = OSQLEngine.parse(query, this);
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result);
+    this.queryStarted(result.getQueryId(),result);
     result.addLifecycleListener(this);
     return result;
   }
@@ -451,7 +395,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
     OResultSet original = executor.execute(this, script, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result);
+    this.queryStarted(result.getQueryId(),result);
     result.addLifecycleListener(this);
     return result;
   }
@@ -461,7 +405,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
     OResultSet original = executor.execute(this, script, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result);
+    this.queryStarted(result.getQueryId(),result);
     result.addLifecycleListener(this);
     return result;
   }
@@ -473,14 +417,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     OLocalResultSet result = new OLocalResultSet((OInternalExecutionPlan) plan);
     OLocalResultSetLifecycleDecorator decorator = new OLocalResultSetLifecycleDecorator(result);
-    this.queryStarted(decorator);
+    this.queryStarted(decorator.getQueryId(),decorator);
     decorator.addLifecycleListener(this);
 
     return decorator;
-  }
-
-  public OLocalResultSetLifecycleDecorator getActiveQuery(String id) {
-    return activeQueries.get(id);
   }
 
   public OrientDBConfig getConfig() {
@@ -526,4 +466,5 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     if (sharedContext != null)
       sharedContext.close();
   }
+
 }
