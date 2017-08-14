@@ -55,9 +55,9 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
       resultMessages.add(document.<String> field("message"));
     }
 
-    //issue #1787, works fine locally, not on CI
-//    Assert.assertEqualsNoOrder(messages.toArray(), resultMessages.toArray(),
-//    "arrays are different: "+toString(messages)+" - "+toString(resultMessages) );
+//    issue #1787, works fine locally, not on CI
+    Assert.assertEqualsNoOrder(messages.toArray(), resultMessages.toArray(),
+    "arrays are different: "+toString(messages)+" - "+toString(resultMessages) );
   }
 
   private String toString(List<String> resultMessages) {
