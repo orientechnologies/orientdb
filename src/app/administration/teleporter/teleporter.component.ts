@@ -109,7 +109,8 @@ class TeleporterComponent implements AfterViewChecked {
       this.updateJurl();
     });
 
-    this.job = {};
+    // initialising job info
+    this.initJobInfo();
     this.jobRunning = false;
 
     this.hints = {
@@ -162,6 +163,10 @@ class TeleporterComponent implements AfterViewChecked {
       placement: 'right',
       trigger: 'focus'
     });
+  }
+
+  initJobInfo() {
+    this.job = {cfg: undefined, status: undefined, log: ""};
   }
 
   getStep() {
@@ -303,6 +308,8 @@ class TeleporterComponent implements AfterViewChecked {
       this.graphPanel.invalidateMigrationConfig();
     }
 
+    this.initJobInfo();
+
     this.step = "running";
     this.jobRunning = true;
     this.teleporterService.launch(this.config).then(() => {
@@ -367,7 +374,11 @@ class TeleporterComponent implements AfterViewChecked {
     if(this.jobRunning) {
       this.teleporterService.status().then((data) => {
         if (data.jobs.length > 0) {
-          this.job = data.jobs[0];
+          var currentJobInfo = data.jobs[0];
+          this.job.cfg = currentJobInfo.cfg;
+          this.job.status = currentJobInfo.status;
+          this.job.log += currentJobInfo.log;
+
           this.scrollLogAreaDown();
         }
         else {
