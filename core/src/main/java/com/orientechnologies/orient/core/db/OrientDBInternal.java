@@ -121,7 +121,7 @@ public interface OrientDBInternal extends AutoCloseable {
       Constructor<?> constructor = kass.getConstructor(String.class, OrientDBConfig.class, Orient.class);
       factory = (OrientDBInternal) constructor.newInstance(directoryPath, configuration, Orient.instance());
     } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
-      throw new ODatabaseException("OrientDB client API missing");
+      throw new ODatabaseException("OrientDB distributed API missing");
     } catch (InvocationTargetException e) {
       throw OException.wrapException(new ODatabaseException("Error creating OrientDB remote factory"), e.getTargetException());
     }

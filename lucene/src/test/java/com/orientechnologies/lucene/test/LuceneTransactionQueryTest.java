@@ -81,16 +81,16 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
     String query = "select from C1 where p1 lucene \"abc\" ";
     List<ODocument> vertices = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-    Assert.assertEquals(vertices.size(), 1);
+    Assert.assertEquals(1, vertices.size());
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(2, index.getSize());
     db.commit();
 
     query = "select from C1 where p1 lucene \"abc\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-    Assert.assertEquals(vertices.size(), 1);
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(1, vertices.size());
+    Assert.assertEquals(2, index.getSize());
 
     db.begin();
 
@@ -113,17 +113,17 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
       iterator.next();
       i++;
     }
-    Assert.assertEquals(i, 0);
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(0, i);
+    Assert.assertEquals(1, index.getSize());
 
     db.rollback();
 
     query = "select from C1 where p1 lucene \"abc\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-    Assert.assertEquals(vertices.size(), 1);
+    Assert.assertEquals(1, vertices.size());
 
-    Assert.assertEquals(index.getSize(), 1);
+    Assert.assertEquals(2, index.getSize());
 
   }
 

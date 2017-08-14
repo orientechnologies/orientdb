@@ -69,33 +69,6 @@ public class AlterSuperclassTest {
     classChild.addSuperClass(classA);
   }
 
-  /**
-   * This tests fixes a problem created in 2.1.9. Issue #5591.
-   */
-  @Test
-  public void testBrokenDbWithMultipleSameSuperClass() {
-    OSchema schema = db.getMetadata().getSchema();
-    OClass classA = schema.createClass("ParentClass");
-    OClass classChild = schema.createClass("ChildClass1", classA);
-    assertEquals(classChild.getSuperClasses(), Arrays.asList(classA));
-
-    OSchemaShared schemaShared = db.getSharedContext().getSchema();
-
-    final ODocument doc = schemaShared.toStream();
-    final Collection<ODocument> classes = doc.field("classes");
-
-    for (ODocument d : classes) {
-      if ("ChildClass1".equals(d.field("name"))) {
-        List<String> superClasses = d.field("superClasses");
-        assertTrue(superClasses.contains("ParentClass"));
-
-        superClasses.add("ParentClass");
-      }
-    }
-
-    schemaShared.fromStream(doc);
-  }
-
   @Test(expected = OSchemaException.class)
   public void testSetDuplicateSuperclasses() {
     OSchema schema = db.getMetadata().getSchema();

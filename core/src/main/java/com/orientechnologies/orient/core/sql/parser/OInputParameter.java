@@ -18,8 +18,7 @@ import java.util.Map;
 
 public class OInputParameter extends SimpleNode {
 
-  protected String     dateFormatString = "yyyy-MM-dd HH:mm:ss.SSS";
-  protected DateFormat dateFormat       = new SimpleDateFormat(dateFormatString);
+  protected static final String dateFormatString = "yyyy-MM-dd HH:mm:ss.SSS";
 
   public OInputParameter(int id) {
     super(id);
@@ -133,6 +132,7 @@ public class OInputParameter extends SimpleNode {
       OExpression dateExpr = new OExpression(-1);
       dateExpr.singleQuotes = true;
       dateExpr.doubleQuotes = false;
+      SimpleDateFormat dateFormat = new SimpleDateFormat(dateFormatString);
       dateExpr.value = dateFormat.format(value);
       function.getParams().add(dateExpr);
 
@@ -143,7 +143,7 @@ public class OInputParameter extends SimpleNode {
       function.getParams().add(dateFormatExpr);
       return function;
     }
-    if(value.getClass().isEnum()){
+    if (value.getClass().isEnum()) {
       return value.toString();
     }
 

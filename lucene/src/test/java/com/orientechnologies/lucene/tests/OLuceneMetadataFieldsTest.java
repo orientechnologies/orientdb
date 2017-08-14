@@ -28,7 +28,7 @@ public class OLuceneMetadataFieldsTest extends OLuceneBaseTest {
   public void shouldFetchOnlyFromACluster() throws Exception {
 
 
-    assertThat(db.getMetadata().getIndexManager().getIndex("Song.title").getSize()).isEqualTo(585);
+    assertThat(db.getMetadata().getIndexManager().getIndex("Song.title").getSize()).isEqualTo(586);
 
     int cluster = db.getMetadata().getSchema().getClass("Song").getClusterIds()[1];
     db.commit();

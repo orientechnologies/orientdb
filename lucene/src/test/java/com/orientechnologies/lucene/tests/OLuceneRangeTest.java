@@ -47,7 +47,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
 
     db.command("create index Person.age on Person(age) FULLTEXT ENGINE LUCENE");
 
-    assertThat(db.getMetadata().getIndexManager().getIndex("Person.age").getSize()).isEqualTo(10);
+    assertThat(db.getMetadata().getIndexManager().getIndex("Person.age").getSize()).isEqualTo(11);
 
     //range
     OResultSet results = db.command("SELECT FROM Person WHERE search_class('age:[5 TO 6]') = true");
@@ -67,7 +67,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     db.command(new OCommandSQL("create index Person.date on Person(date) FULLTEXT ENGINE LUCENE")).execute();
     db.commit();
 
-    assertThat(db.getMetadata().getIndexManager().getIndex("Person.date").getSize()).isEqualTo(10);
+    assertThat(db.getMetadata().getIndexManager().getIndex("Person.date").getSize()).isEqualTo(11);
 
     String today = DateTools.timeToString(System.currentTimeMillis(), DateTools.Resolution.MINUTE);
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
@@ -85,7 +85,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
 
     db.command(new OCommandSQL("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE")).execute();
 
-    assertThat(db.getMetadata().getIndexManager().getIndex("Person.composite").getSize()).isEqualTo(10);
+    assertThat(db.getMetadata().getIndexManager().getIndex("Person.composite").getSize()).isEqualTo(11);
 
     db.commit();
 
@@ -117,7 +117,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
   public void shouldUseRangeQueryMultipleFieldWithDirectIndexAccess() throws Exception {
     db.command("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE");
 
-    assertThat(db.getMetadata().getIndexManager().getIndex("Person.composite").getSize()).isEqualTo(10);
+    assertThat(db.getMetadata().getIndexManager().getIndex("Person.composite").getSize()).isEqualTo(11);
 
     db.commit();
 
@@ -144,7 +144,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     results = db
         .query("SELECT FROM index:Person.composite where key = '*:*'");
 
-    assertThat(results).hasSize(10);
+    assertThat(results).hasSize(11);
 
   }
 

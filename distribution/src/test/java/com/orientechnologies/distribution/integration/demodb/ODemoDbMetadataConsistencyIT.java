@@ -1,5 +1,6 @@
-package com.orientechnologies.distribution.integration;
+package com.orientechnologies.distribution.integration.demodb;
 
+import com.orientechnologies.distribution.integration.OIntegrationTestTemplate;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -14,7 +15,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by frank on 15/03/2017.
  */
-public class ODemoDbConsistencyIT extends OIntegrationTestTemplate {
+public class ODemoDbMetadataConsistencyIT extends OIntegrationTestTemplate {
 
   private int customerNumber     = 400;
   private int hotelNumbers       = 1154;

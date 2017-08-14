@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -19,9 +18,9 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * This integration test keeps track of issues to avoid regressions.
- * It creates a database called ad the class name that it is dropped at the end of the work.
- *
+ * This integration test keeps track of issues to avoid regressions. It creates a database called ad the class name that it is
+ * dropped at the end of the work.
+ * <p>
  * Created by santo-it on 03/22/2017.
  */
 public class OGitHubIssuesIT extends OIntegrationTestTemplate {
@@ -50,12 +49,11 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
 
   @Override
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     dropTestDatabase();
     super.tearDown();
   }
 
-  @Ignore
   @Test
   public void Issue7264() throws Exception {
 

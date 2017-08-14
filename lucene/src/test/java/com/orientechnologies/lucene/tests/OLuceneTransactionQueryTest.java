@@ -87,7 +87,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
     OResultSet vertices = db.command(query);
 
     assertThat(vertices).hasSize(1);
-    assertThat(index.getSize()).isEqualTo(1);
+    assertThat(index.getSize()).isEqualTo(2);
 
     db.commit();
 
@@ -95,7 +95,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
 
     List<OResult> results = vertices.stream().collect(Collectors.toList());
     assertThat(results).hasSize(1);
-    assertThat(index.getSize()).isEqualTo(1);
+    assertThat(index.getSize()).isEqualTo(2);
 
     db.begin();
 
@@ -118,7 +118,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
       i++;
     }
     Assert.assertEquals(i, 0);
-    assertThat(index.getSize()).isEqualTo(0);
+    assertThat(index.getSize()).isEqualTo(1);
 
     db.rollback();
 
@@ -127,7 +127,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
     vertices = db.command(query);
 
     assertThat(vertices).hasSize(1);
-    assertThat(index.getSize()).isEqualTo(1);
+    assertThat(index.getSize()).isEqualTo(2);
 
   }
 

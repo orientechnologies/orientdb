@@ -495,8 +495,8 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
         legacySuperClassName = c.field("superClass");
         if (superClassNames == null)
           superClassNames = new ArrayList<String>();
-        else
-          superClassNames = new HashSet<String>(superClassNames);
+//        else
+//          superClassNames = new HashSet<String>(superClassNames);
 
         if (legacySuperClassName != null && !superClassNames.contains(legacySuperClassName))
           superClassNames.add(legacySuperClassName);

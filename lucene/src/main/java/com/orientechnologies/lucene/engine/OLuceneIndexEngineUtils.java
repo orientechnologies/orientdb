@@ -1,8 +1,19 @@
 package com.orientechnologies.lucene.engine;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 /**
@@ -41,5 +52,36 @@ public class OLuceneIndexEngineUtils {
         }
       });
     }
+  }
+
+  public static ODocument getMetadataFromIndex(IndexWriter writer) {
+
+    IndexReader reader = null;
+    IndexSearcher searcher = null;
+    try {
+      reader = DirectoryReader.open(writer);
+
+      searcher = new IndexSearcher(reader);
+
+      final TopDocs topDocs = searcher.search(new TermQuery(new Term("_CLASS", "JSON_METADATA")), 1);
+
+      final Document metaDoc = searcher.doc(topDocs.scoreDocs[0].doc);
+
+      return new ODocument().fromJSON(metaDoc.get("_JSON"));
+    } catch (IOException e) {
+      OLogManager.instance().error(OLuceneIndexEngineAbstract.class, "Error while retrieving index metadata", e);
+    } finally {
+      if (reader != null)
+        try {
+          reader.close();
+        } catch (IOException e) {
+          OLogManager.instance().error(OLuceneIndexEngineAbstract.class, "Error while retrieving index metadata", e);
+
+        }
+
+    }
+
+    return OLuceneQueryBuilder.EMPTY_METADATA;
+
   }
 }

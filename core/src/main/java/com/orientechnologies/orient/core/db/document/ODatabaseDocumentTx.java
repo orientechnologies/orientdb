@@ -132,14 +132,18 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return factory;
   }
 
-  protected static OrientDBEmbedded getOrCreateEmbeddedFactory(String baseUrl, OrientDBConfig config) {
+  protected static OrientDBInternal getOrCreateEmbeddedFactory(String baseUrl, OrientDBConfig config) {
     if (!baseUrl.endsWith("/"))
       baseUrl += "/";
-    OrientDBEmbedded factory;
+    OrientDBInternal factory;
     synchronized (embedded) {
       factory = (OrientDBEmbedded) embedded.get(baseUrl);
       if (factory == null || !factory.isOpen()) {
-        factory = (OrientDBEmbedded) OrientDBInternal.embedded(baseUrl, config);
+        try {
+          factory= OrientDBInternal.distributed(baseUrl, config);
+        } catch (ODatabaseException ex) {
+          factory = (OrientDBEmbedded) OrientDBInternal.embedded(baseUrl, config);
+        }
         embedded.put(baseUrl, factory);
       }
     }
