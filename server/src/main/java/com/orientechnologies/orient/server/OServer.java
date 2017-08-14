@@ -323,6 +323,9 @@ public class OServer {
         databases = OrientDBInternal.embedded(this.databaseDirectory, config);
       }
     }
+    if (databases instanceof OServerAware) {
+      ((OServerAware) databases).init(this);
+    }
     databases.removeShutdownHook();
     context = databases.newOrientDB();
 
