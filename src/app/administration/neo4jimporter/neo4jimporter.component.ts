@@ -78,7 +78,11 @@ class Neo4jImporterComponent implements AfterViewChecked {
     }
 
     // prepare neo4jUrl
-    this.updateNeo4jUrl()
+    this.updateNeo4jUrl();
+
+    // initialising job info
+    this.initJobInfo();
+    this.jobRunning = false;
 
   }
 
@@ -92,6 +96,10 @@ class Neo4jImporterComponent implements AfterViewChecked {
       placement: 'right',
       trigger: 'focus'
     });
+  }
+
+  initJobInfo() {
+    this.job = {cfg: undefined, status: undefined, log: ""};
   }
 
   getStep() {
@@ -120,6 +128,8 @@ class Neo4jImporterComponent implements AfterViewChecked {
 
   launch() {
 
+    this.initJobInfo();
+
     this.neo4jImorterService.launch(this.config).then((data) => {
       this.step = "running";
       this.jobRunning = true;
@@ -134,7 +144,11 @@ class Neo4jImporterComponent implements AfterViewChecked {
     if(this.jobRunning) {
       this.neo4jImorterService.status().then((data) => {
         if (data.jobs.length > 0) {
-          this.job = data.jobs[0];
+          var currentJobInfo = data.jobs[0];
+          this.job.cfg = currentJobInfo.cfg;
+          this.job.status = currentJobInfo.status;
+          this.job.log += currentJobInfo.log;
+
           this.scrollLogAreaDown();
         }
         else {
