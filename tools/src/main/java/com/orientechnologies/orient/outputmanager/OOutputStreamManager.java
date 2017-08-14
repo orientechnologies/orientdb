@@ -59,64 +59,64 @@ public class OOutputStreamManager {
     return outputStream;
   }
 
-  public int getLevel() {
+  public synchronized int getLevel() {
     return level;
   }
 
-  public void setLevel(int level) {
+  public synchronized void setLevel(int level) {
     this.level = level;
   }
 
-  public void debug(String message) {
+  public synchronized void debug(String message) {
     if (!(this.level == BLANK_LEVEL) && message != null) {
       if (this.level <= DEBUG_LEVEL)
         this.outputStream.print(message);
     }
   }
 
-  public void debug(String format, Object... args) {
+  public synchronized void debug(String format, Object... args) {
     if (!(this.level == BLANK_LEVEL) && format != null) {
       if (this.level <= DEBUG_LEVEL)
         this.outputStream.printf(format, args);
     }
   }
 
-  public void info(String message) {
+  public synchronized void info(String message) {
     if (!(this.level == BLANK_LEVEL) && message != null) {
       if (this.level <= INFO_LEVEL)
         this.outputStream.print(message);
     }
   }
 
-  public void info(String format, Object... args) {
+  public synchronized void info(String format, Object... args) {
     if (!(this.level == BLANK_LEVEL) && format != null) {
       if (this.level <= INFO_LEVEL)
         this.outputStream.printf(format, args);
     }
   }
 
-  public void warn(String message) {
+  public synchronized void warn(String message) {
     if (!(this.level == BLANK_LEVEL) && message != null) {
       if (this.level <= WARNING_LEVEL)
         this.outputStream.print(message);
     }
   }
 
-  public void warn(String format, Object... args) {
+  public synchronized void warn(String format, Object... args) {
     if (!(this.level == BLANK_LEVEL) && format != null) {
       if (this.level <= WARNING_LEVEL)
         this.outputStream.printf(format, args);
     }
   }
 
-  public void error(String message) {
+  public synchronized void error(String message) {
     if (!(this.level == BLANK_LEVEL) && message != null) {
       if (this.level <= ERROR_LEVEL)
         this.outputStream.print("\nERROR: " + message);
     }
   }
 
-  public void error(String format, Object... args) {
+  public synchronized void error(String format, Object... args) {
     if (!(this.level == BLANK_LEVEL) && format != null) {
       if (this.level <= ERROR_LEVEL)
         this.outputStream.printf(format, "\nERROR: ", args);
