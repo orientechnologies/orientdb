@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
@@ -13,9 +14,9 @@ import java.util.List;
  */
 public class DepthFirstTraverseStep extends AbstractTraverseStep {
 
-  public DepthFirstTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OCommandContext ctx,
-      boolean profilingEnabled) {
-    super(projections, whileClause, ctx, profilingEnabled);
+  public DepthFirstTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OInteger maxDepth,
+      OCommandContext ctx, boolean profilingEnabled) {
+    super(projections, whileClause, maxDepth, ctx, profilingEnabled);
   }
 
   @Override
@@ -63,7 +64,9 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       this.results.add(item);
       for (OTraverseProjectionItem proj : projections) {
         Object nextStep = proj.execute(item, ctx);
-        addNextEntryPoints(nextStep, item.depth + 1, ctx);
+        if (this.maxDepth == null || this.maxDepth.getValue().intValue() > item.depth) {
+          addNextEntryPoints(nextStep, item.depth + 1, ctx);
+        }
       }
     }
   }

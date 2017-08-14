@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 public abstract class AbstractTraverseStep extends AbstractExecutionStep {
   protected final OWhereClause                  whileClause;
   protected final List<OTraverseProjectionItem> projections;
+  protected final   OInteger                      maxDepth;
 
   protected List<OResult> entryPoints = null;
   protected List<OResult> results     = new ArrayList<>();
@@ -22,9 +24,11 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
 
   Set<ORID> traversed = new ORidSet();
 
-  public AbstractTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OCommandContext ctx, boolean profilingEnabled) {
+  public AbstractTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OInteger maxDepth,
+      OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.whileClause = whileClause;
+    this.maxDepth = maxDepth;
     this.projections = projections.stream().map(x -> x.copy()).collect(Collectors.toList());
   }
 

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
@@ -13,11 +14,13 @@ import java.util.List;
  */
 public class BreadthFirstTraverseStep extends AbstractTraverseStep {
 
-  public BreadthFirstTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OCommandContext ctx, boolean profilingEnabled) {
-    super(projections, whileClause, ctx, profilingEnabled);
+  public BreadthFirstTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OInteger maxDepth,
+      OCommandContext ctx, boolean profilingEnabled) {
+    super(projections, whileClause, maxDepth, ctx, profilingEnabled);
   }
 
-  @Override protected void fetchNextEntryPoints(OCommandContext ctx, int nRecords) {
+  @Override
+  protected void fetchNextEntryPoints(OCommandContext ctx, int nRecords) {
     OResultSet nextN = getPrev().get().syncPull(ctx, nRecords);
     while (nextN.hasNext()) {
       while (nextN.hasNext()) {
@@ -47,13 +50,16 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     return res;
   }
 
-  @Override protected void fetchNextResults(OCommandContext ctx, int nRecords) {
+  @Override
+  protected void fetchNextResults(OCommandContext ctx, int nRecords) {
     if (!this.entryPoints.isEmpty()) {
       OTraverseResult item = (OTraverseResult) this.entryPoints.remove(0);
       this.results.add(item);
       for (OTraverseProjectionItem proj : projections) {
         Object nextStep = proj.execute(item, ctx);
-        addNextEntryPoints(nextStep, item.depth + 1, ctx);
+        if (this.maxDepth == null || this.maxDepth.getValue().intValue() > item.depth) {
+          addNextEntryPoints(nextStep, item.depth + 1, ctx);
+        }
       }
     }
   }

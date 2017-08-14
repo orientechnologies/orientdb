@@ -70,10 +70,10 @@ public class OTraverseExecutionPlanner {
   private void handleTraversal(OSelectExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
     switch (strategy) {
     case BREADTH_FIRST:
-      result.chain(new BreadthFirstTraverseStep(this.projections, this.whileClause, ctx, profilingEnabled));
+      result.chain(new BreadthFirstTraverseStep(this.projections, this.whileClause, maxDepth, ctx, profilingEnabled));
       break;
     case DEPTH_FIRST:
-      result.chain(new DepthFirstTraverseStep(this.projections, this.whileClause, ctx, profilingEnabled));
+      result.chain(new DepthFirstTraverseStep(this.projections, this.whileClause, maxDepth, ctx, profilingEnabled));
       break;
     }
     //TODO
