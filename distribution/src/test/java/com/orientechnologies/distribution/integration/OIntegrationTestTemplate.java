@@ -28,7 +28,7 @@ public abstract class OIntegrationTestTemplate {
 
     if (firstTime) {
       System.out.println("Waiting for OrientDB to startup");
-      TimeUnit.SECONDS.sleep(1);
+      TimeUnit.SECONDS.sleep(5);
       firstTime = false;
     }
 
