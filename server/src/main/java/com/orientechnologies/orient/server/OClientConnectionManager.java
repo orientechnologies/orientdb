@@ -41,6 +41,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.Socket;
 import java.util.*;
 import java.util.Map.Entry;
@@ -51,11 +52,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class OClientConnectionManager {
   private static final long TIMEOUT_PUSH = 3000;
 
-  protected final ConcurrentMap<Integer, OClientConnection>  connections          = new ConcurrentHashMap<Integer, OClientConnection>();
-  protected       AtomicInteger                              connectionSerial     = new AtomicInteger(0);
-  protected final ConcurrentMap<OHashToken, OClientSessions> sessions             = new ConcurrentHashMap<OHashToken, OClientSessions>();
-  protected final Set<ONetworkProtocolBinary>                distributeConfigPush = Collections
-      .newSetFromMap(new ConcurrentHashMap<ONetworkProtocolBinary, Boolean>());
+  protected final ConcurrentMap<Integer, OClientConnection>  connections           = new ConcurrentHashMap<Integer, OClientConnection>();
+  protected       AtomicInteger                              connectionSerial      = new AtomicInteger(0);
+  protected final ConcurrentMap<OHashToken, OClientSessions> sessions              = new ConcurrentHashMap<OHashToken, OClientSessions>();
+  protected final Set<WeakReference<ONetworkProtocolBinary>> distributedConfigPush = Collections
+      .newSetFromMap(new ConcurrentHashMap<WeakReference<ONetworkProtocolBinary>, Boolean>());
   protected final TimerTask timerTask;
   private         OServer   server;
 
@@ -120,6 +121,7 @@ public class OClientConnectionManager {
         }
       }
     }
+    clearPushSockets();
   }
 
   /**
@@ -516,22 +518,36 @@ public class OClientConnectionManager {
     }
   }
 
+  public void clearPushSockets() {
+    Iterator<WeakReference<ONetworkProtocolBinary>> iter = distributedConfigPush.iterator();
+    while (iter.hasNext()) {
+      if (iter.next().get() == null) {
+        iter.remove();
+      }
+    }
+  }
+
   public void pushDistributedConfig(String database, List<String> hosts) {
-    Iterator<ONetworkProtocolBinary> iter = distributeConfigPush.iterator();
-    while(iter.hasNext()){
-      ONetworkProtocolBinary protocolBinary = iter.next();
-      //TODO Filter by database, push just list of active server for a specific database
-      OPushDistributedConfigurationRequest request = new OPushDistributedConfigurationRequest(hosts);
-      try {
-        OBinaryPushResponse response = protocolBinary.push(request);
-      } catch (IOException e) {
+    Iterator<WeakReference<ONetworkProtocolBinary>> iter = distributedConfigPush.iterator();
+    while (iter.hasNext()) {
+      WeakReference<ONetworkProtocolBinary> ref = iter.next();
+      ONetworkProtocolBinary protocolBinary = ref.get();
+      if (protocolBinary != null) {
+        //TODO Filter by database, push just list of active server for a specific database
+        OPushDistributedConfigurationRequest request = new OPushDistributedConfigurationRequest(hosts);
+        try {
+          OBinaryPushResponse response = protocolBinary.push(request);
+        } catch (IOException e) {
+          iter.remove();
+        }
+      } else {
         iter.remove();
       }
     }
   }
 
   public void subscribeDistributeConfig(ONetworkProtocolBinary channel) {
-    distributeConfigPush.add(channel);
+    distributedConfigPush.add(new WeakReference<ONetworkProtocolBinary>(channel));
   }
 
 }
