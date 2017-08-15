@@ -244,7 +244,6 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
           new ODocument("Person").fields("id", "L-001", "name", "John", "surname", "Black").save();
           fail("Error: record inserted with 2 server running and writeWuorum=3.");
         } catch (Exception e) {
-          e.printStackTrace();
           assertTrue("Record not inserted because there are 2 servers running and writeQuorum=3.", true);
         }
         System.out.println("Done.\n");

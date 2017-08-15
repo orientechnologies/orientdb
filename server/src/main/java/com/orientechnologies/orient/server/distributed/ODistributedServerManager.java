@@ -256,7 +256,7 @@ public interface ODistributedServerManager {
   /**
    * Elects a new Lock Manager.
    */
-  void electNewLockManager();
+  String electNewLockManager();
 
   Set<String> getActiveServers();
 

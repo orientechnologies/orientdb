@@ -60,7 +60,7 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
+  public Object execute(final ODistributedRequestId msgId, final OServer iServer, final ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
 
     if (acquire)
@@ -71,8 +71,14 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
     return true;
   }
 
+  public void undo(final ODistributedServerManager iManager) {
+    if (acquire)
+      iManager.getLockManagerExecutor().releaseExclusiveLock(resource, getNodeSource());
+  }
+
   @Override
-  public ORemoteTask getUndoTask(ODistributedServerManager dManager, final ODistributedRequestId reqId, List<String> servers) {
+  public ORemoteTask getUndoTask(final ODistributedServerManager dManager, final ODistributedRequestId reqId,
+      final List<String> servers) {
     if (acquire)
       // RELEASE
       return new ODistributedLockTask(lockManagerServer, resource, timeout, false);
@@ -124,7 +130,8 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   public void checkIsValid(final ODistributedServerManager dManager) {
     // CHECKS THE LOCK MANAGER SERVER IS STILL AVAILABLE
     if (!dManager.isNodeAvailable(dManager.getLockManagerServer()))
-      throw new ODistributedOperationException("Lock Manager server changed during lock " + (acquire ? "acquire" : "release"));
+      throw new ODistributedOperationException(
+          "lockManager server '" + dManager.getLockManagerServer() + "' changed during lock " + (acquire ? "acquire" : "release"));
   }
 
   @Override

@@ -356,7 +356,8 @@ public class OMajorityDistributedConflictResolverTest {
     }
 
     @Override
-    public void electNewLockManager() {
+    public String electNewLockManager() {
+      return null;
     }
 
     @Override

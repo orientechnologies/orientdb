@@ -94,7 +94,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
           if (!manager.getActiveServers().contains(server)) {
             // THE LOCK MANAGER SERVER WENT DOWN DURING THE REQUEST, RETRY WITH ANOTHER LOCK MANAGER SERVER
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-                "Lock Manager server '%s' went down during the request of locking resource '%s'. Waiting for the election of a new Lock Manager...",
+                "lockManager '%s' went down during the request of locking resource '%s'. Waiting for the election of a new lockManager...",
                 server, resource);
             foundNoLockManager++;
 
@@ -174,7 +174,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
           if (!manager.getActiveServers().contains(server)) {
             // THE LOCK MANAGER SERVER WENT DOWN DURING THE REQUEST, RETRY WITH ANOTHER LOCK MANAGER SERVER
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-                "Lock Manager server '%s' went down during the request of releasing resource '%s'. Assigning new Lock Manager (error: %s)...",
+                "lockManager '%s' went down during the request of releasing resource '%s'. Assigning new lockManager (error: %s)...",
                 server, resource, result);
 
             try {
@@ -223,11 +223,11 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
 
         // LOCKED
         ODistributedServerLog.info(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-            "Re-acquired %d locks against the new Lock Manager server '%s'", acquiredResources.size(), server);
+            "Re-acquired %d locks against the new lockManager '%s'", acquiredResources.size(), server);
 
       } catch (OLockException e) {
         ODistributedServerLog.error(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-            "Error on re-acquiring %d locks against the new Lock Manager '%s'", acquiredResources.size(), server);
+            "Error on re-acquiring %d locks against the new lockManager '%s'", acquiredResources.size(), server);
         throw e;
       }
   }

@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.hazelcast.cluster.impl.ClusterServiceImpl;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.instance.HazelcastInstanceImpl;
 import com.hazelcast.instance.HazelcastInstanceProxy;
 import com.hazelcast.instance.Node;
+import com.hazelcast.internal.cluster.impl.ClusterServiceImpl;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
@@ -101,8 +101,8 @@ public class ServerRun {
 
       final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
 
-      currentNode.clusterService.removeAddress(otherNode.address);
-      otherNode.clusterService.removeAddress(currentNode.address);
+      currentNode.clusterService.removeAddress(otherNode.address, "test");
+      otherNode.clusterService.removeAddress(currentNode.address, "test");
     }
   }
 

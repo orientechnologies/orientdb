@@ -90,7 +90,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
     if (lastDeployment != null && lastDeployment.longValue() == random) {
       // SKIP IT
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-          "Skip deploying delta database '%s' because already executed", databaseName);
+          "Skip deploying of delta database '%s' because already executed", databaseName);
       return Boolean.FALSE;
     }
 

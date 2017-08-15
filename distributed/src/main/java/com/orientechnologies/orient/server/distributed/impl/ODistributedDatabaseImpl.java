@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OWaitForTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -52,6 +53,7 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -1105,14 +1107,20 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (totalWorkers < 1)
       throw new ODistributedException("Cannot create configured distributed workers (" + totalWorkers + ")");
 
-    lockThread = new ODistributedWorker(this, databaseName, -3);
+    lockThread = new ODistributedWorker(this, databaseName, -3, false) {
+      protected void handleError(final ODistributedRequest iRequest, final Object responsePayload) {
+        // CANNOT SEND MSG BACK, UNLOCK IT
+        final ODistributedLockTask task = (ODistributedLockTask) iRequest.getTask();
+        task.undo(manager);
+      }
+    };
     lockThread.start();
 
-    unlockThread = new ODistributedWorker(this, databaseName, -4);
+    unlockThread = new ODistributedWorker(this, databaseName, -4, false);
     unlockThread.start();
 
     for (int i = 0; i < totalWorkers; ++i) {
-      final ODistributedWorker workerThread = new ODistributedWorker(this, databaseName, i);
+      final ODistributedWorker workerThread = new ODistributedWorker(this, databaseName, i, true);
       workerThreads.add(workerThread);
       workerThread.start();
 
@@ -1247,37 +1255,51 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     buffer.append("\n\nDATABASE '" + databaseName + "' ON SERVER '" + manager.getLocalNodeName() + "'");
 
-    buffer.append("\n- " + manager.getLockManagerExecutor().dumpLocks());
-
     buffer.append("\n- " + ODistributedOutput.formatRecordLocks(manager, databaseName));
 
-    buffer.append("\n- MESSAGES IN QUEUES:");
+    buffer.append("\n- MESSAGES IN QUEUES");
+    buffer.append(" (" + (workerThreads != null ? workerThreads.size() : 0) + " WORKERS):");
 
     if (lockThread != null) {
-      buffer.append("\n - QUEUE LOCK EXECUTING: " + lockThread.getProcessing());
-      int i = 0;
-      for (ODistributedRequest m : lockThread.localQueue) {
-        if (m != null)
-          buffer.append("\n  - " + i + " = " + m.toString());
+      final ODistributedRequest processing = lockThread.getProcessing();
+      final ArrayBlockingQueue<ODistributedRequest> queue = lockThread.localQueue;
+
+      if (processing != null || !queue.isEmpty()) {
+        buffer.append("\n - QUEUE LOCK EXECUTING: " + processing);
+        int i = 0;
+        for (ODistributedRequest m : queue) {
+          if (m != null)
+            buffer.append("\n  - " + i + " = " + m.toString());
+        }
       }
     }
 
     if (unlockThread != null) {
-      buffer.append("\n - QUEUE UNLOCK EXECUTING: " + unlockThread.getProcessing());
-      int i = 0;
-      for (ODistributedRequest m : unlockThread.localQueue) {
-        if (m != null)
-          buffer.append("\n  - " + i + " = " + m.toString());
+      final ODistributedRequest processing = unlockThread.getProcessing();
+      final ArrayBlockingQueue<ODistributedRequest> queue = unlockThread.localQueue;
+
+      if (processing != null || !queue.isEmpty()) {
+        buffer.append("\n - QUEUE UNLOCK EXECUTING: " + processing);
+        int i = 0;
+        for (ODistributedRequest m : queue) {
+          if (m != null)
+            buffer.append("\n  - " + i + " = " + m.toString());
+        }
       }
     }
 
     if (workerThreads != null) {
       for (ODistributedWorker t : workerThreads) {
-        buffer.append("\n - QUEUE " + t.id + " EXECUTING: " + t.getProcessing());
-        int i = 0;
-        for (ODistributedRequest m : t.localQueue) {
-          if (m != null)
-            buffer.append("\n  - " + (i++) + " = " + m.toString());
+        final ODistributedRequest processing = t.getProcessing();
+        final ArrayBlockingQueue<ODistributedRequest> queue = t.localQueue;
+
+        if (processing != null || !queue.isEmpty()) {
+          buffer.append("\n  - QUEUE " + t.id + " EXECUTING: " + processing);
+          int i = 0;
+          for (ODistributedRequest m : queue) {
+            if (m != null)
+              buffer.append("\n   - " + (i++) + " = " + m.toString());
+          }
         }
       }
     }

@@ -64,7 +64,7 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
 
     if (!localNodeName.equals(manager.getLockManagerServer()))
       throw new ODistributedLockException(
-          "Cannot lock resource '" + resource + "' because current server '" + localNodeName + "' is not the Lock Manager");
+          "Cannot lock resource '" + resource + "' because current server '" + localNodeName + "' is not the lockManager");
 
     final ODistributedLock lock = new ODistributedLock(nodeSource);
 
@@ -72,6 +72,9 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
     if (currentLock != null) {
       if (currentLock.server.equals(nodeSource)) {
         // SAME RESOURCE/SERVER, ALREADY LOCKED
+        ODistributedServerLog
+            .debug(this, localNodeName, null, DIRECTION.NONE, "Resource '%s' already locked by server '%s'", resource,
+                currentLock.server);
         currentLock = null;
       } else {
         // TRY TO RE-LOCK IT UNTIL TIMEOUT IS EXPIRED
@@ -124,8 +127,8 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
 
     if (currentLock != null)
       throw new ODistributedLockException(
-          "Cannot lock resource '" + resource + "' owned by server '" + nodeSource + "' (timeout=" + timeout + " threadId=" + Thread
-              .currentThread().getId() + ")");
+          "Cannot lock resource '" + resource + "' owned by server '" + currentLock.server + "' (timeout=" + timeout + " threadId="
+              + Thread.currentThread().getId() + ")");
   }
 
   public void releaseExclusiveLock(final String resource, final String nodeSource) {

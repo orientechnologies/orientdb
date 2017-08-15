@@ -2084,7 +2084,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       lastServerDump = compactStatus;
 
       ODistributedServerLog
-          .info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status (*=current @=lockmgr[%s]):\n%s",
+          .info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status (*=current @=lockManager[%s]):\n%s",
               getLockManagerServer(), ODistributedOutput.formatServerStatus(this, cfg));
     }
   }
