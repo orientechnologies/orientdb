@@ -444,7 +444,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   protected void openIfClosed() {
     if (closed.get()) {
-      OLogManager.instance().info(this, "open closed index:: " + indexName());
+//      OLogManager.instance().info(this, "open closed index:: " + indexName());
 
       try {
         reOpen();
