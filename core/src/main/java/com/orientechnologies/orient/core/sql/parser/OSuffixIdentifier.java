@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -72,12 +71,12 @@ public class OSuffixIdentifier extends SimpleNode {
             return meta.get(varName);
           }
         }
-        return ((ODocument) iCurrentRecord.getRecord()).field(varName);
+        return ((OElement) iCurrentRecord.getRecord()).getProperty(varName);
       }
       return null;
     }
     if (recordAttribute != null) {
-      return ((ODocument) iCurrentRecord.getRecord()).field(recordAttribute.name);
+      return ((OElement) iCurrentRecord.getRecord()).getProperty(recordAttribute.name);
     }
     return null;
   }
@@ -321,13 +320,13 @@ public class OSuffixIdentifier extends SimpleNode {
     if (target == null) {
       return;
     }
-    ODocument doc = null;
-    if (target instanceof ODocument) {
-      doc = (ODocument) target;
+    OElement doc = null;
+    if (target instanceof OElement) {
+      doc = (OElement) target;
     } else {
       ORecord rec = target.getRecord();
-      if (rec instanceof ODocument) {
-        doc = (ODocument) rec;
+      if (rec instanceof OElement) {
+        doc = (OElement) rec;
       }
     }
     if (doc != null) {
