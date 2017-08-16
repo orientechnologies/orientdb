@@ -788,11 +788,15 @@ public class OSelectExecutionPlanner {
         throw new OCommandExecutionException("Cannot group by an aggregate function");
       }
       boolean found = false;
-      for (String alias : info.preAggregateProjection.getAllAliases()) {
-        if (alias.equals(exp.getDefaultAlias().getStringValue())) {
-          found = true;
-          newGroupBy.getItems().add(exp);
-          break;
+      if (info.preAggregateProjection != null) {
+        for (String alias : info.preAggregateProjection.getAllAliases()) {
+          //if it's a simple identifier and it's the same as one of the projections in the query,
+          //then the projection itself is used for GROUP BY without recalculating; in all the other cases, it is evaluated separately
+          if (alias.equals(exp.getDefaultAlias().getStringValue()) && exp.isBaseIdentifier()) {
+            found = true;
+            newGroupBy.getItems().add(exp);
+            break;
+          }
         }
       }
       if (!found) {
@@ -801,6 +805,12 @@ public class OSelectExecutionPlanner {
         OIdentifier groupByAlias = new OIdentifier(-1);
         groupByAlias.setStringValue("_$$$GROUP_BY_ALIAS$$$_" + i);
         newItem.setAlias(groupByAlias);
+        if (info.preAggregateProjection == null) {
+          info.preAggregateProjection = new OProjection(-1);
+        }
+        if (info.preAggregateProjection.getItems() == null) {
+          info.preAggregateProjection.setItems(new ArrayList<>());
+        }
         info.preAggregateProjection.getItems().add(newItem);
         newGroupBy.getItems().add(new OExpression(groupByAlias));
       }
@@ -1173,7 +1183,6 @@ public class OSelectExecutionPlanner {
     } else {
       throw new UnsupportedOperationException("Invalid metadata: " + metadata.getName());
     }
-
 
   }
 
