@@ -42,8 +42,10 @@ import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -811,7 +813,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       try {
         Thread.sleep(100);
       } catch (InterruptedException e) {
-        Thread.interrupted();
+        Thread.currentThread().interrupt();
         throw new OOfflineNodeException("Message Service is not available");
       }
     return messageService;
@@ -866,6 +868,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         new OCallable<Boolean, OModifiableDistributedConfiguration>() {
           @Override
           public Boolean call(OModifiableDistributedConfiguration cfg) {
+
             distrDatabase.checkNodeInConfiguration(cfg, nodeName);
 
             // GET ALL THE OTHER SERVERS
@@ -881,8 +884,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 .info(this, nodeName, null, DIRECTION.NONE, "Current node is a %s for database '%s'", cfg.getServerRole(nodeName),
                     databaseName);
 
-            final Set<String> configuredDatabases = serverInstance.getAvailableStorageNames().keySet();
-            if (!iStartup && configuredDatabases.contains(databaseName))
+            if (!forceDeployment && getDatabaseStatus(getLocalNodeName(), databaseName) == DB_STATUS.ONLINE)
               return false;
 
             // INIT STORAGE + UPDATE LOCAL FILE ONLY
@@ -1039,8 +1041,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           .info(this, nodeName, targetNode, DIRECTION.OUT, "Requesting database delta sync for '%s' LSN=%s...", databaseName, lsn);
 
       try {
-        final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
-            getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null).getPayload();
+        final ODistributedResponse response = sendRequest(databaseName, null, targetNodes, deployTask, getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+
+        if (response == null)
+          throw new ODistributedDatabaseDeltaSyncException(lsn);
+
+        final Map<String, Object> results = (Map<String, Object>) response.getPayload();
 
         ODistributedServerLog
             .debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Database delta sync returned: %s", results);
@@ -1109,6 +1116,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       } catch (ODatabaseIsOldException e) {
         // FORWARD IT
         throw (ODatabaseIsOldException) e;
+      } catch (ODistributedDatabaseDeltaSyncException e) {
+        // RE-THROW IT
+        throw e;
       } catch (Exception e) {
         ODistributedServerLog
             .error(this, nodeName, targetNode, DIRECTION.OUT, "Error on asking delta backup of database '%s' (err=%s)",
@@ -1233,9 +1243,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     throw new ODistributedException("No response received from remote nodes for auto-deploy of database '" + databaseName + "'");
   }
 
-  private void replaceStorageInSessions(OStorage storage) {
+  private void replaceStorageInSessions(final OStorage storage) {
     for (OClientConnection conn : serverInstance.getClientConnectionManager().getConnections()) {
-      ODatabaseDocumentInternal connDb = conn.getDatabase();
+      final ODatabaseDocumentInternal connDb = conn.getDatabase();
       if (connDb != null && connDb.getName().equals(storage.getName())) {
         conn.acquire();
         try {
@@ -1478,7 +1488,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       }
 
       try {
-        rebalanceClusterOwnership(nodeName, db, cfg, false);
+        try {
+          rebalanceClusterOwnership(nodeName, db, cfg, false);
+        } catch (Exception e) {
+          // HANDLE IT AS WARNING
+          ODistributedServerLog
+              .warn(this, nodeName, null, DIRECTION.NONE, "Error on re-balancing the cluster for database '%s'", e, databaseName);
+          // NOT CRITICAL, CONTINUE
+        }
         distrDatabase.setOnline();
       } finally {
         db.activateOnCurrentThread();

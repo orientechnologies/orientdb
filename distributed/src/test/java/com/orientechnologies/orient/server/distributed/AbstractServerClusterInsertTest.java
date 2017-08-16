@@ -32,10 +32,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
-import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import org.junit.Assert;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -145,23 +143,25 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       checkClusterStrategy(database);
 
       final String uniqueId = serverId + "-" + threadId + "-" + i;
-      ODocument person = new ODocument("Person")
-          .fields("id", uid, "name", "Billy" + uniqueId, "surname", "Mayes" + uniqueId, "birthday", new Date(), "children",
-              uniqueId);
 
-      for (int retry = 0; retry < 5; ++retry) {
+      ODocument person = null;
+      for (int retry = 0; retry < 10; ++retry) {
+        person = new ODocument("Person")
+            .fields("id", uid, "name", "Billy" + uniqueId, "surname", "Mayes" + uniqueId, "birthday", new Date(), "children",
+                uniqueId);
         try {
           database.save(person);
           break;
         } catch (ONeedRetryException e) {
           // RETRY
           System.out.println("EXCEPTION " + e.getCause() + " RETRY " + retry + " ON CREATE RECORD");
-          Thread.sleep(1000);
+          Thread.sleep(200);
+
         } catch (OException e) {
           if (e.getCause() instanceof ONeedRetryException) {
             // RETRY
-            System.out.println("EXCEPTION " + e.getCause() + " RETRY " + retry + " ON CREATE RECORD");
-            Thread.sleep(1000);
+            System.out.println("EXCEPTION " + e.getCause().getCause() + " RETRY " + retry + " ON CREATE RECORD");
+            Thread.sleep(200);
           } else
             throw e;
         }
@@ -368,8 +368,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     onBeforeChecks();
 
-    checkInsertedEntries();
-    checkIndexedEntries();
+    checkInsertedEntries(executeTestsOnServers);
+    checkIndexedEntries(executeTestsOnServers);
   }
 
   protected void computeExpected(final int servers) {
@@ -425,86 +425,93 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected void dropIndexNode1() {
-    ODatabaseDocument database = getDatabase(0);
-    try {
-      Object result = database.command(new OCommandSQL("drop index Person.name")).execute();
-      System.out.println("dropIndexNode1: Node1 drop index: " + result);
-    } finally {
-      database.close();
-    }
-
-    // CHECK ON NODE 2
-    database = getDatabase(1);
-    try {
-      database.getMetadata().getIndexManager().reload();
-      Assert.assertNull(database.getMetadata().getIndexManager().getIndex("Person.name"));
-      System.out.println("dropIndexNode1: Node2 doesn't have the index either, ok");
-    } finally {
-      database.close();
-    }
+    // DISABLED WAITING FOR THE RESOLUTION OF ISSUE https://github.com/orientechnologies/orientdb/issues/7335 REPRODUCIBLE WITH TEST OneNodeBackupTest.java
+//    ServerRun server = serverInstance.get(0);
+//    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
+//    try {
+//      Object result = database.command(new OCommandSQL("drop index Person.name")).execute();
+//      System.out.println("dropIndexNode1: Node1 drop index: " + result);
+//    } finally {
+//      database.close();
+//    }
+//
+//    // CHECK ON NODE 1
+//    server = serverInstance.get(1);
+//    database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
+//    try {
+//      database.getMetadata().getIndexManager().reload();
+//      Assert.assertNull(database.getMetadata().getIndexManager().getIndex("Person.name"));
+//      System.out.println("dropIndexNode1: Node2 hasn't the index too, ok");
+//    } finally {
+//      database.close();
+//    }
   }
 
   protected void recreateIndexNode2() {
-    // RE-CREATE INDEX ON NODE 2
-    ODatabaseDocument database = getDatabase(1);
-    try {
-      Object result = database.command(new OCommandSQL("create index Person.name on Person (name) unique")).execute();
-      System.out.println("recreateIndexNode2: Node2 created index: " + result);
-      Assert.assertEquals(expected, ((Number) result).intValue());
-    } catch (ODistributedOperationException t) {
+    // DISABLED WAITING FOR THE RESOLUTION OF ISSUE https://github.com/orientechnologies/orientdb/issues/7335 REPRODUCIBLE WITH TEST OneNodeBackupTest.java
 
-      for (ServerRun s : serverInstance) {
-        final ODatabaseDocument db = getDatabase(s);
-
-        try {
-          List<ODocument> result = db.command(new OCommandSQL("select count(*) as count from Person where name is not null"))
-              .execute();
-          Assert.assertEquals(expected, ((Number) result.get(0).field("count")).longValue());
-
-          final OClass person = db.getMetadata().getSchema().getClass("Person");
-          final int[] clIds = person.getPolymorphicClusterIds();
-
-          long tot = 0;
-          for (int clId : clIds) {
-            long count = db.countClusterElements(clId);
-            System.out.println("Cluster " + clId + " record: " + count);
-
-            tot += count;
-          }
-
-          Assert.assertEquals(expected, tot);
-
-        } finally {
-          db.close();
-        }
-      }
-
-      database.activateOnCurrentThread();
-
-      throw t;
-    } finally {
-      database.close();
-    }
-
-    // CHECK ON NODE 1
-    database = getDatabase(0);
-    try {
-      final long indexSize = database.getMetadata().getIndexManager().getIndex("Person.name").getSize();
-      Assert.assertEquals(expected, indexSize);
-      System.out.println("recreateIndexNode2: Node1 has the index too, ok");
-    } finally {
-      database.close();
-    }
+//    // RE-CREATE INDEX ON NODE 1
+//    ServerRun server = serverInstance.get(1);
+//    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
+//    try {
+//      Object result = database.command(new OCommandSQL("create index Person.name on Person (name) unique")).execute();
+//      System.out.println("recreateIndexNode2: Node2 created index: " + result);
+//      Assert.assertEquals(expected, ((Number) result).intValue());
+//    } catch (ODistributedOperationException t) {
+//
+//      for (ServerRun s : serverInstance) {
+//        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(s)).open("admin", "admin");
+//
+//        try {
+//          List<ODocument> result = db.command(new OCommandSQL("select count(*) as count from Person where name is not null"))
+//              .execute();
+//          Assert.assertEquals(expected, ((Number) result.get(0).field("count")).longValue());
+//
+//          final OClass person = db.getMetadata().getSchema().getClass("Person");
+//          final int[] clIds = person.getPolymorphicClusterIds();
+//
+//          long tot = 0;
+//          for (int clId : clIds) {
+//            long count = db.countClusterElements(clId);
+//            System.out.println("Cluster " + clId + " record: " + count);
+//
+//            tot += count;
+//          }
+//
+//          Assert.assertEquals(expected, tot);
+//
+//        } finally {
+//          db.close();
+//        }
+//      }
+//
+//      database.activateOnCurrentThread();
+//
+//      throw t;
+//    } finally {
+//      database.close();
+//    }
+//
+//    // CHECK ON NODE 1
+//    server = serverInstance.get(0);
+//    database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
+//    try {
+//      final long indexSize = database.getMetadata().getIndexManager().getIndex("Person.name").getSize();
+//      Assert.assertEquals(expected, indexSize);
+//      System.out.println("recreateIndexNode2: Node1 has the index too, ok");
+//    } finally {
+//      database.close();
+//    }
 
   }
 
-  protected void checkIndexedEntries() {
+  protected void checkIndexedEntries(final List<ServerRun> checkOnServers) {
     if (indexName == null)
       return;
 
     final Map<String, Long> result = new HashMap<String, Long>();
 
-    for (ServerRun server : serverInstance) {
+    for (ServerRun server : checkOnServers) {
       if (server.isActive()) {
         final ODatabaseDocument database = getDatabase(server);
 
@@ -578,46 +585,81 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected void checkInsertedEntries() {
-    for (ServerRun server : serverInstance) {
-      if (server.isActive())
-        checkInsertedEntriesOnServer(server);
-    }
+    checkInsertedEntries(serverInstance);
   }
 
-  protected void checkInsertedEntriesOnServer(final ServerRun server) {
-    final ODatabaseDocument database = getDatabase(server);
-    try {
-      final int total = (int) database.countClass(className);
+  protected void checkInsertedEntries(final List<ServerRun> checkOnServers) {
+    final Map<OIdentifiable, StringBuilder> records = new LinkedHashMap<OIdentifiable, StringBuilder>((int) expected);
 
-      if (total != expected) {
-        // ERROR: CHECK WHAT'S MISSING
-        int missingRecords = 0;
-        for (int s = 0; s < executeTestsOnServers.size(); ++s) {
-          ServerRun srv = executeTestsOnServers.get(s);
-          final int srvId = Integer.parseInt(srv.serverId);
+    int activeServers = 0;
+    for (int s = 0; s < checkOnServers.size(); ++s) {
+      ServerRun server = checkOnServers.get(s);
+      if (!server.isActive())
+        continue;
 
-          for (int threadId = srvId * writerCount; threadId < (srvId + 1) * writerCount; ++threadId) {
+      activeServers++;
 
-            for (int i = 0; i < count; ++i) {
-              final String key = "Billy" + srvId + "-" + threadId + "-" + i;
-
-              final List<?> qResult = database
-                  .query(new OSQLSynchQuery<OIdentifiable>("select from " + className + " where name='" + key + "'"));
-
-              if (qResult.isEmpty()) {
-                missingRecords++;
-                System.out.println("Missing record with key: " + key + " on server: " + server);
-              }
-            }
-          }
+      final ODatabaseDocument database = getDatabase(server);
+      try {
+        for (ODocument rec : database.browseClass(className)) {
+          StringBuilder servers = records.get(rec);
+          if (servers == null) {
+            servers = new StringBuilder(server.getServerInstance().getDistributedManager().getLocalNodeName());
+            records.put(rec, servers);
+          } else
+            servers.append("," + server.getServerInstance().getDistributedManager().getLocalNodeName());
         }
-        System.out.println("Total missing records " + missingRecords + " on server: " + server);
+
+      } finally {
+        database.close();
       }
+    }
 
-      Assert.assertEquals("Server " + server.getServerId() + " count is not what was expected", expected, total);
+    for (Map.Entry<OIdentifiable, StringBuilder> entry : records.entrySet()) {
+      if (entry.getValue().toString().split(",").length != activeServers) {
+        System.out.println(
+            "Record " + ((ODocument) entry.getKey().getRecord()).field("name") + " found only on servers " + entry.getValue());
+      }
+    }
 
-    } finally {
-      database.close();
+    for (int s = 0; s < checkOnServers.size(); ++s) {
+      ServerRun server = checkOnServers.get(s);
+      if (!server.isActive())
+        continue;
+
+      final ODatabaseDocument database = getDatabase(server);
+      try {
+        final long total = database.countClass(className);
+
+//        if (expected != total) {
+//          System.out.println("Server " + server.getServerInstance().getDistributedManager().getLocalNodeName());
+//
+//          long totalClusters = 0;
+//          final OClass cls = database.getMetadata().getSchema().getClass(className);
+//          for (int clId : cls.getPolymorphicClusterIds()) {
+//            System.out.println("- cluster " + database.getClusterNameById(clId) + ": " + database.countClusterElements(clId));
+//            totalClusters += database.countClusterElements(clId);
+//          }
+//          System.out.println("Total from clusters: " + totalClusters);
+//
+//          final List<String> orderedNames = new ArrayList<String>();
+//          for (Map.Entry<OIdentifiable, StringBuilder> entry : records.entrySet()) {
+//            orderedNames.add(
+//                (String) ((ODocument) entry.getKey().getRecord()).field("name") + ": " + ((ODocument) entry.getKey().getRecord())
+//                    .getIdentity());
+//          }
+//
+//          Collections.sort(orderedNames);
+//          for (String entry : orderedNames) {
+//            System.out.println("- record " + entry);
+//          }
+//        }
+
+        Assert.assertEquals("Server " + server.getServerId() + " count is not what was expected", expected, total);
+
+      } finally {
+        database.close();
+      }
     }
   }
 

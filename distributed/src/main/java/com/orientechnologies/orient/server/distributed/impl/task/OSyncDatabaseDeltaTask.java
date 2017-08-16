@@ -90,7 +90,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
     if (lastDeployment != null && lastDeployment.longValue() == random) {
       // SKIP IT
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-          "Skip deploying delta database '%s' because already executed", databaseName);
+          "Skip deploying of delta database '%s' because already executed", databaseName);
       return Boolean.FALSE;
     }
 
@@ -105,7 +105,9 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
             databaseName);
 
     // CREATE A BACKUP OF DATABASE
-    final File backupFile = new File(Orient.getTempPath() + "/backup_" + getNodeSource() + "_" + database.getName() + ".zip");
+    final File backupFile = new File(
+        Orient.getTempPath() + "/backup_" + getNodeSource() + "_" + database.getName() + "_server" + iManager.getLocalNodeId()
+            + ".zip");
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
         "Creating delta backup of database '%s' (startLSN=%s) in directory: %s...", databaseName, startLSN,

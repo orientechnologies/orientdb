@@ -183,8 +183,8 @@ public class ODistributedTransactionManager {
             if (lastResult == null)
               throw new OTransactionException("No response received from distributed servers");
 
-            processCommitResult(localNodeName, iTx, txTask, involvedClusters, uResult, nodes, lastResult.getRequestId(), lastResult,
-                ctx);
+            processCommitResult(localNodeName, iTx, txTask, involvedClusters, uResult, nodes, lastResult.getRequestId(),
+                lastResult);
 
             ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
                 "Distributed transaction succeeded. Tasks: %s", txTask.getTasks());
@@ -524,13 +524,12 @@ public class ODistributedTransactionManager {
       recordsToLock.add((ORecordId) op.record.getIdentity());
     }
 
-    acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, recordsToLock, eventListener, reqContext, -1);
+    acquireMultipleRecordLocks(this, dManager, recordsToLock, eventListener, reqContext, -1);
   }
 
   public static void acquireMultipleRecordLocks(final Object iThis, final ODistributedServerManager dManager,
-      final ODistributedDatabase localDistributedDatabase, final List<ORecordId> recordsToLock,
-      final ODistributedStorageEventListener eventListener, final ODistributedTxContext reqContext, final long timeout)
-      throws InterruptedException {
+      final List<ORecordId> recordsToLock, final ODistributedStorageEventListener eventListener,
+      final ODistributedTxContext reqContext, final long timeout) throws InterruptedException {
 
     // CREATE A SORTED LIST OF RID TO AVOID DEADLOCKS
     Collections.sort(recordsToLock);
@@ -675,8 +674,7 @@ public class ODistributedTransactionManager {
 
   protected void processCommitResult(final String localNodeName, final OTransaction iTx, final OTxTask txTask,
       final Set<String> involvedClusters, final Iterable<ORecordOperation> tmpEntries, final Collection<String> nodes,
-      final ODistributedRequestId reqId, final ODistributedResponse dResponse, final ODistributedTxContext ctx)
-      throws InterruptedException {
+      final ODistributedRequestId reqId, final ODistributedResponse dResponse) throws InterruptedException {
     final Object result = dResponse.getPayload();
 
     if (result instanceof OTxTaskResult) {
@@ -846,7 +844,13 @@ public class ODistributedTransactionManager {
                   .getFactoryByServerNames(serversToFollowup).createTask(OCompleted2pcTask.FACTORYID);
               twopcTask.init(resp.getMessageId(), true, txTask.getPartitionKey());
 
-              sendTxCompleted(localNodeName, involvedClusters, OMultiValue.getSingletonList(s), twopcTask);
+              try {
+                sendTxCompleted(localNodeName, involvedClusters, OMultiValue.getSingletonList(s), twopcTask);
+              } catch (Exception e) {
+                // SWALLOW THE EXCEPTION AND CONTINUE
+                ODistributedServerLog.debug(this, localNodeName, s, ODistributedServerLog.DIRECTION.OUT,
+                    "Error on sending 2pc message for distributed transaction (reqId=%s)", e, resp.getMessageId());
+              }
 
             } else {
               // TRY TO FIX REMOTE NODE

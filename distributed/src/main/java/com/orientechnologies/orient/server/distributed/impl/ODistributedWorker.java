@@ -57,6 +57,7 @@ public class ODistributedWorker extends Thread {
   protected final String                                  databaseName;
   protected final ArrayBlockingQueue<ODistributedRequest> localQueue;
   protected final int                                     id;
+  private final   boolean                                 acceptsWhileNotOnline;
 
   protected volatile ODatabaseDocumentInternal database;
   protected volatile OUser               lastUser;
@@ -68,7 +69,8 @@ public class ODistributedWorker extends Thread {
   private static final long MAX_SHUTDOWN_TIMEOUT = 5000l;
   private volatile ODistributedRequest currentExecuting;
 
-  public ODistributedWorker(final ODistributedDatabaseImpl iDistributed, final String iDatabaseName, final int i) {
+  public ODistributedWorker(final ODistributedDatabaseImpl iDistributed, final String iDatabaseName, final int i,
+      final boolean acceptsWhileNotOnline) {
     id = i;
     setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
@@ -77,9 +79,16 @@ public class ODistributedWorker extends Thread {
     manager = distributed.getManager();
     msgService = distributed.msgService;
     localNodeName = manager.getLocalNodeName();
+    this.acceptsWhileNotOnline = acceptsWhileNotOnline;
   }
 
   public void processRequest(final ODistributedRequest request) {
+    if (!acceptsWhileNotOnline && manager.isOffline()) {
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+          "Discard request '%s' for database '%s' because the server is not online", request, this.databaseName);
+      return;
+    }
+
     if (!localQueue.offer(request)) {
 //    throw new ODistributedException(
 //        "Local queue for database '" + this.databaseName + "' is full, cannot process further requests");
@@ -260,7 +269,7 @@ public class ODistributedWorker extends Thread {
 
   protected ODistributedRequest nextMessage() throws InterruptedException {
     waitingForNextRequest.set(true);
-    final ODistributedRequest req = localQueue.poll(2000, TimeUnit.MILLISECONDS);
+    final ODistributedRequest req = localQueue.poll(1000, TimeUnit.MILLISECONDS);
     waitingForNextRequest.set(false);
     processedRequests.incrementAndGet();
     return req;
@@ -373,23 +382,29 @@ public class ODistributedWorker extends Thread {
       }
     }
 
-    if (task.hasResponse())
-      sendResponseBack(iRequest, responsePayload);
+    if (task.hasResponse()) {
+      if (!sendResponseBack(iRequest, responsePayload)) {
+        handleError(iRequest, responsePayload);
+      }
+    }
+  }
+
+  protected void handleError(final ODistributedRequest iRequest, final Object responsePayload) {
   }
 
   protected String getLocalNodeName() {
     return localNodeName;
   }
 
-  private void sendResponseBack(final ODistributedRequest iRequest, Object responsePayload) {
-    sendResponseBack(this, manager, iRequest, responsePayload);
+  private boolean sendResponseBack(final ODistributedRequest iRequest, final Object responsePayload) {
+    return sendResponseBack(this, manager, iRequest, responsePayload);
   }
 
-  static void sendResponseBack(final Object current, final ODistributedServerManager manager, final ODistributedRequest iRequest,
+  static boolean sendResponseBack(final Object current, final ODistributedServerManager manager, final ODistributedRequest iRequest,
       Object responsePayload) {
     if (iRequest.getId().getMessageId() < 0)
       // INTERNAL MSG
-      return;
+      return true;
 
     final String localNodeName = manager.getLocalNodeName();
 
@@ -413,7 +428,10 @@ public class ODistributedWorker extends Thread {
     } catch (Exception e) {
       ODistributedServerLog.debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Error on sending response '%s' back (reqId=%s err=%s)", response, iRequest.getId(), e.toString());
+      return false;
     }
+
+    return true;
   }
 
   private void waitNodeIsOnline() throws OTimeoutException {

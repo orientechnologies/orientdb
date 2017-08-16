@@ -15,21 +15,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.hazelcast.cluster.impl.ClusterServiceImpl;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.instance.HazelcastInstanceImpl;
 import com.hazelcast.instance.HazelcastInstanceProxy;
 import com.hazelcast.instance.Node;
+import com.hazelcast.internal.cluster.impl.ClusterServiceImpl;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -79,6 +73,7 @@ public class ServerRun {
   }
 
   public void deleteNode() {
+    System.out.println("Deleting directory " + getServerHome() + "...");
     OFileUtils.deleteRecursively(new File(getServerHome()));
   }
 
@@ -97,9 +92,13 @@ public class ServerRun {
   public void disconnectFrom(final ServerRun... serverIds) {
     final Node currentNode = getHazelcastNode(((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
     for (ServerRun s : serverIds) {
+      ((OHazelcastPlugin) server.getDistributedManager()).closeRemoteServer(s.server.getDistributedManager().getLocalNodeName());
+      ((OHazelcastPlugin) s.server.getDistributedManager()).closeRemoteServer(server.getDistributedManager().getLocalNodeName());
+
       final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
-      currentNode.clusterService.removeAddress(otherNode.address);
-      otherNode.clusterService.removeAddress(currentNode.address);
+
+      currentNode.clusterService.removeAddress(otherNode.address, "test");
+      otherNode.clusterService.removeAddress(currentNode.address, "test");
     }
   }
 
@@ -194,12 +193,14 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
   public void terminateServer() {
     if (server != null) {
       try {
-        HazelcastInstance hz = ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance();
-        final Node node = getHazelcastNode(hz);
-        node.getConnectionManager().shutdown();
-        node.shutdown(true);
-        hz.getLifecycleService().terminate();
-
+        final OHazelcastPlugin dm = (OHazelcastPlugin) server.getDistributedManager();
+        if (dm != null) {
+          HazelcastInstance hz = dm.getHazelcastInstance();
+          final Node node = getHazelcastNode(hz);
+          node.getConnectionManager().shutdown();
+          node.shutdown(true);
+          hz.getLifecycleService().terminate();
+        }
       } catch (Exception e) {
         // IGNORE IT
       }

@@ -42,12 +42,12 @@ import static org.junit.Assert.*;
 
 public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTest {
 
-  protected final static int       SERVERS                               = 3;
-  protected final static ODocument MISSING_DOCUMENT                      = new ODocument();
+  protected final static int       SERVERS          = 3;
+  protected final static ODocument MISSING_DOCUMENT = new ODocument();
 
   // FIXME: these should be parameters read from configuration file (or, if missing, defaulted to some values)
-  private final long               PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT = 15000;
-  protected final long             DOCUMENT_WRITE_TIMEOUT                = 10000;
+  private final   long PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT = 15000;
+  protected final long DOCUMENT_WRITE_TIMEOUT                = 10000;
 
   protected ODocument loadRecord(ODatabaseDocument database, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
@@ -64,7 +64,12 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType)
       throws InterruptedException, ExecutionException {
-    executeMultipleWrites(executeOnServers, storageType, null);
+    executeMultipleWrites(executeOnServers, storageType, null, serverInstance);
+  }
+
+  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType, List<ServerRun> checkOnServers)
+      throws InterruptedException, ExecutionException {
+    executeMultipleWrites(executeOnServers, storageType, null, checkOnServers);
   }
 
   /*
@@ -73,21 +78,22 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
    * it. Tha target db is passed as parameter, otherwise is kept the default one on servers.
    */
 
-  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType, ServerRun serverRun)
-      throws InterruptedException, ExecutionException {
+  protected void executeMultipleWrites(final List<ServerRun> executeOnServers, final String storageType, final String dbURL,
+      final List<ServerRun> checkOnServers) throws InterruptedException, ExecutionException {
 
     ODatabaseDocument database;
-    if (serverRun == null) {
+    if (checkOnServers == null || checkOnServers.isEmpty()) {
       database = getDatabase();
     } else {
-      database = getDatabase(serverRun);
+      database = getDatabase(checkOnServers.get(0));
     }
 
     try {
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
       baseCount = ((Number) result.get(0).field("count")).intValue();
     } finally {
-      if(database != null) database.close();
+      if (database != null)
+        database.close();
     }
 
     System.out.println("Creating Writers and Readers threads...");
@@ -159,8 +165,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     onBeforeChecks();
 
-    checkInsertedEntries();
-    checkIndexedEntries();
+    checkInsertedEntries(checkOnServers);
+    checkIndexedEntries(executeTestsOnServers);
   }
 
   // checks the consistency in the cluster after the writes in a simple distributed scenario
@@ -205,8 +211,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     List<ODocument> docsToCompare = new LinkedList<ODocument>();
 
-    super.banner("Checking consistency among servers...\nChecking on servers {" + checkOnServer
-        + "} that all the records written on {" + writtenServer + "} are consistent.");
+    super.banner(
+        "Checking consistency among servers...\nChecking on servers {" + checkOnServer + "} that all the records written on {"
+            + writtenServer + "} are consistent.");
 
     try {
 
@@ -343,15 +350,16 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
           ODocument document = retrieveRecordOrReturnMissing(server, recordId);
           final String storedValue = document.field(fieldName);
 
-          OLogManager.instance().debug(this, "Read record [%s] from server%s - %s: %s ", recordId, server.getServerId(), fieldName,
-              storedValue);
+          OLogManager.instance()
+              .debug(this, "Read record [%s] from server%s - %s: %s ", recordId, server.getServerId(), fieldName, storedValue);
 
           if (document == MISSING_DOCUMENT) {
             return false;
           }
 
-          OLogManager.instance().info(this, "Waiting for updated document propagation on record %s. Found %s=%s, expected %s",
-              recordId, fieldName, storedValue, expectedFieldValue);
+          OLogManager.instance()
+              .info(this, "Waiting for updated document propagation on record %s. Found %s=%s, expected %s", recordId, fieldName,
+                  storedValue, expectedFieldValue);
 
           if (storedValue != null && !storedValue.equals(expectedFieldValue) || storedValue == null && expectedFieldValue != null)
             return false;
@@ -392,7 +400,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
       return doc;
     } finally {
-    	dbServer.close();
+      dbServer.close();
 //      ODatabaseRecordThreadLocal.INSTANCE.set(null);
     }
   }
@@ -407,7 +415,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
-    	dbServer.close();
+      dbServer.close();
 //      ODatabaseRecordThreadLocal.INSTANCE.set(null);
     }
 
@@ -518,7 +526,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
 //        ODatabaseRecordThreadLocal.INSTANCE.set(db);
 //        db.close();
- //       ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        //       ODatabaseRecordThreadLocal.INSTANCE.set(null);
       }
     }
   }
@@ -567,19 +575,20 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         if (useTransaction) {
           dbServer.begin();
         }
-  
+
         for (String fieldName : fields.keySet()) {
           this.recordToUpdate.field(fieldName, fields.get(fieldName));
         }
         this.recordToUpdate.save();
-  
+
         if (useTransaction) {
           dbServer.commit();
         }
       } finally {
-        if(dbServer != null) dbServer.close();
+        if (dbServer != null)
+          dbServer.close();
       }
-  
+
       return null;
     }
   }
@@ -614,17 +623,18 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         if (useTransaction) {
           dbServer.begin();
         }
-  
+
         this.recordToDelete.delete();
         this.recordToDelete.save();
-  
+
         if (useTransaction) {
           dbServer.commit();
         }
       } finally {
-        if(dbServer != null) dbServer.close();
+        if (dbServer != null)
+          dbServer.close();
       }
-      
+
       return null;
     }
   }
@@ -637,23 +647,24 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     public AfterRecordLockDelayer(String serverName, long delay) {
       this.serverName = serverName;
       this.delay = delay;
-      OLogManager.instance().info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName,
-          Thread.currentThread().getId());
+      OLogManager.instance()
+          .info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName, Thread.currentThread().getId());
     }
 
     public AfterRecordLockDelayer(String serverName) {
       this.serverName = serverName;
       this.delay = DOCUMENT_WRITE_TIMEOUT;
-      OLogManager.instance().info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName,
-          Thread.currentThread().getId());
+      OLogManager.instance()
+          .info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName, Thread.currentThread().getId());
     }
 
     @Override
     public void onAfterRecordLock(ORecordId rid) {
       if (delay > 0)
         try {
-          OLogManager.instance().info(this, "Thread [%s-%d] waiting for %dms with locked record [%s]", serverName,
-              Thread.currentThread().getId(), delay, rid.toString());
+          OLogManager.instance()
+              .info(this, "Thread [%s-%d] waiting for %dms with locked record [%s]", serverName, Thread.currentThread().getId(),
+                  delay, rid.toString());
           Thread.sleep(delay);
 
           OLogManager.instance().info(this, "Thread [%s-%d] finished waiting for %dms with locked record [%s]", serverName,

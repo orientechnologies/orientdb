@@ -42,8 +42,8 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
 
     banner("SIMULATE ISOLATION OF SERVER " + (SERVERS - 1) + "...");
 
-    checkInsertedEntries();
-    checkIndexedEntries();
+    checkInsertedEntries(executeTestsOnServers);
+    checkIndexedEntries(executeTestsOnServers);
 
     serverInstance.get(1).disconnectFrom(serverInstance.get(0));
 
@@ -64,8 +64,8 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
 
     banner("RUN TEST WITHOUT THE OFFLINE SERVER " + (SERVERS - 1) + "...");
 
-    checkInsertedEntries();
-    checkIndexedEntries();
+    checkInsertedEntries(executeTestsOnServers);
+    checkIndexedEntries(executeTestsOnServers);
 
     count = 10;
 
@@ -111,9 +111,9 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
 
 //    poolFactory.reset();
 
-    checkInsertedEntries();
-    checkIndexedEntries();
-
+    checkInsertedEntries(executeTestsOnServers);
+    checkIndexedEntries(executeTestsOnServers);
+    
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " CONNECTED...");
 
     count = 10;

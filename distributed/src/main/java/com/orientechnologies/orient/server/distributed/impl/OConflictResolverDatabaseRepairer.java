@@ -134,7 +134,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
   }
 
   @Override
-  public void enqueueRepairRecords(final List<ORecordId> rids) {
+  public void enqueueRepairRecords(final Collection<ORecordId> rids) {
     for (ORecordId rid : rids)
       enqueueRepairRecord(rid);
   }
@@ -272,7 +272,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
       rids.add(new ORecordId(clusterId, -1));
 
       // ACQUIRE LOCKS ON LOCAL SERVER FIRST
-      ODistributedTransactionManager.acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, rids, null, ctx, -1);
+      ODistributedTransactionManager.acquireMultipleRecordLocks(this, dManager, rids, null, ctx, -1);
 
       final List<String> clusterNames = new ArrayList<String>();
       clusterNames.add(clusterName);
@@ -399,7 +399,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
   }
 
   @Override
-  public void repairRecords(final List<ORecordId> rids) {
+  public void repairRecords(final Collection<ORecordId> rids) {
     repairRecords(getDatabase(), rids);
   }
 
@@ -410,7 +410,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     repairRecords(getDatabase(), rids);
   }
 
-  private boolean repairRecords(final ODatabaseDocumentInternal db, final List<ORecordId> rids) {
+  private boolean repairRecords(final ODatabaseDocumentInternal db, final Collection<ORecordId> ridSet) {
+    final List<ORecordId> rids = new ArrayList<ORecordId>(ridSet);
+
     final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);
 
     final ODistributedRequestId requestId = new ODistributedRequestId(dManager.getLocalNodeId(),
@@ -422,7 +424,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     try {
 
       // ACQUIRE LOCKS WITH A LARGER TIMEOUT
-      ODistributedTransactionManager.acquireMultipleRecordLocks(this, dManager, localDistributedDatabase, rids, null, ctx, -1);
+      ODistributedTransactionManager.acquireMultipleRecordLocks(this, dManager, rids, null, ctx, -1);
 
       final Set<String> clusterNames = new HashSet();
       for (ORecordId rid : rids)
