@@ -667,7 +667,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return remoteServer;
   }
 
-  private Member getClusterMemberByName(String rNodeName) {
+  private Member getClusterMemberByName(final String rNodeName) {
     Member member = activeNodes.get(rNodeName);
     if (member == null) {
       // SYNC PROBLEMS? TRY TO RETRIEVE THE SERVER INFORMATION FROM THE CLUSTER MAP

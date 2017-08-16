@@ -70,7 +70,7 @@ public class Quorum1ScenarioTest extends AbstractScenarioTest {
 
     banner("Test with quorum = 1");
 
-    System.out.print("\nChanging configuration (writeQuorum=1, autoDeploy=false)...");
+    System.out.print("\nChanging configuration (writeQuorum=1)...");
 
     ODocument cfg = null;
     ServerRun server = serverInstance.get(0);

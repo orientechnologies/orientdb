@@ -40,7 +40,6 @@ import org.junit.Assert;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Insert records concurrently against the cluster
@@ -57,7 +56,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   protected List<ServerRun> executeTestsOnServers = null;
   protected String          className             = "Person";
   protected String          indexName             = "Person.name";
-  protected AtomicLong      counter               = new AtomicLong();
 
   protected class BaseWriter implements Callable<Void> {
     protected final String databaseUrl;
@@ -147,7 +145,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     protected ODocument createRecord(ODatabaseDocumentTx database, int i, final String uid) throws InterruptedException {
       checkClusterStrategy(database);
 
-      final String uniqueId = "" + counter.getAndIncrement();
+      final String uniqueId = serverId + "-" + threadId + "-" + i;
 
       ODocument person = null;
       for (int retry = 0; retry < 10; ++retry) {

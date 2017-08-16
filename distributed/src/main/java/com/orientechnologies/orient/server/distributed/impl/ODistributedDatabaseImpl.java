@@ -761,6 +761,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void unlockResourcesOfServer(final ODatabaseDocumentInternal database, final String serverName) {
     final int nodeLeftId = manager.getNodeIdByName(serverName);
 
+    final Set<ORecordId> rids2Repair = new HashSet<ORecordId>();
+
     int rollbacks = 0;
     final Iterator<ODistributedTxContext> pendingReqIterator = activeTxContexts.values().iterator();
     while (pendingReqIterator.hasNext()) {
@@ -771,7 +773,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             "Distributed transaction: rolling back transaction (req=%s)", pReq.getReqId());
 
         try {
-          pReq.rollback(database);
+          rids2Repair.addAll(pReq.rollback(database));
           rollbacks++;
         } catch (Throwable t) {
           // IGNORE IT
@@ -795,6 +797,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
         "Distributed transaction: rolled back %d transactions and %d single locks in database '%s' owned by server '%s'", rollbacks,
         recordLocks, databaseName, serverName);
+
+    // REPAIR RECORDS OF TRANSACTION.
+    getDatabaseRepairer().enqueueRepairRecords(rids2Repair);
   }
 
   @Override
@@ -1152,6 +1157,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           final long now = System.currentTimeMillis();
           final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
 
+          final Set<ORecordId> rids2Repair = new HashSet<ORecordId>();
+
           for (final Iterator<ODistributedTxContext> it = activeTxContexts.values().iterator(); it.hasNext(); ) {
             if (!isRunning())
               break;
@@ -1174,7 +1181,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                   database.activateOnCurrentThread();
 
                 try {
-                  ctx.cancel(manager, database);
+                  rids2Repair.addAll(ctx.cancel(manager, database));
 
                   if (ctx.getReqId().getNodeId() == manager.getLocalNodeId())
                     // REQUEST WAS ORIGINATED FROM CURRENT SERVER
@@ -1207,6 +1214,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
               }
             }
           }
+
+          getDatabaseRepairer().enqueueRepairRecords(rids2Repair);
 
         } catch (Throwable t) {
           // CATCH EVERYTHING TO AVOID THE TIMER IS CANCELED
