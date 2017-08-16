@@ -58,12 +58,18 @@ public class OMathExpression extends SimpleNode {
     }, SLASH(10) {
       @Override
       public Number apply(Integer left, Integer right) {
-        return left / right;
+        if (left % right == 0) {
+          return left / right;
+        }
+        return ((double) left) / right;
       }
 
       @Override
       public Number apply(Long left, Long right) {
-        return left / right;
+        if (left % right == 0) {
+          return left / right;
+        }
+        return ((double) left) / right;
       }
 
       @Override

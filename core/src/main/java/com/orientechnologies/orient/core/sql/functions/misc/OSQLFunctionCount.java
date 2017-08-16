@@ -28,14 +28,13 @@ import java.util.List;
 /**
  * Count the record that contains a field. Use * to indicate the record instead of the field. Uses the context to save the counter
  * number. When different Number class are used, take the class with most precision.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
-  public static final String NAME  = "count";
+  public static final String NAME = "count";
 
-  private long               total = 0;
+  private long total = 0;
 
   public OSQLFunctionCount() {
     super(NAME, 1, 1);
@@ -43,7 +42,7 @@ public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
 
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    if (iParams[0] != null)
+    if (iParams.length == 0 || iParams[0] != null)
       total++;
 
     return total;
