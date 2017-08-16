@@ -135,11 +135,6 @@
             <artifactId>hazelcast</artifactId>
             <version>${hz.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.hazelcast</groupId>
-            <artifactId>hazelcast-cloud</artifactId>
-            <version>${hz.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
