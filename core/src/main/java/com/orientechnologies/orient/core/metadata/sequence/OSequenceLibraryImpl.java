@@ -92,7 +92,6 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
     if (seq != null) {
       seq.bindOnLocalThread();
-      seq.checkForUpdateToLastversion();
     }
 
     return seq;

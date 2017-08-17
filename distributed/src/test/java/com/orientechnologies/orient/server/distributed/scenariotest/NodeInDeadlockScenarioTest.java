@@ -36,17 +36,13 @@ import java.util.concurrent.Callable;
 import static org.junit.Assert.fail;
 
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 server (quorum=2)
- * - 5 threads write 100 records on server1 and server2
- * - meanwhile after 1/3 of to-write records server3 goes in deadlock (backup), and after 2/3 of to-write records goes up.
- * - check that changes are propagated on server2
- * - deadlock-ending on server3
- * - after a while check that last
+ * It checks the consistency in the cluster with the following scenario: - 3 server (quorum=2) - 5 threads write 100 records on
+ * server1 and server2 - meanwhile after 1/3 of to-write records server3 goes in deadlock (backup), and after 2/3 of to-write
+ * records goes up. - check that changes are propagated on server2 - deadlock-ending on server3 - after a while check that last
  * changes are propagated on server3.
  *
  * @author Gabriele Ponzi
- * @email  <gabriele.ponzi--at--gmail.com>
+ * @email <gabriele.ponzi--at--gmail.com>
  */
 
 public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
@@ -87,7 +83,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
 
       // writes on server1 and server2
       ODatabaseRecordThreadLocal.INSTANCE.set(null);
-      executeMultipleWrites(this.executeTestsOnServers, "remote");
+      executeMultipleWrites(this.executeTestsOnServers, "remote", this.executeTestsOnServers);
 
       // check consistency on server1 and server2
       checkWritesAboveCluster(executeTestsOnServers, executeTestsOnServers);
@@ -128,62 +124,62 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
           try {
             // CRASH LAST SERVER try {
             executeWhen(new Callable<Boolean>() {
-              // CONDITION
-              @Override
-              public Boolean call() throws Exception {
-                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
-                    .acquire();
-                try {
-                  long recordCount = database.countClass("Person");
-                  boolean condition = recordCount > (count * writerCount * (SERVERS - 1) + baseCount) * 1 / 3;
-                  return condition;
-                } finally {
-                  database.close();
-                }
-              }
-            }, // ACTION
+                          // CONDITION
+                          @Override
+                          public Boolean call() throws Exception {
+                            final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
+                                .acquire();
+                            try {
+                              long recordCount = database.countClass("Person");
+                              boolean condition = recordCount > (count * writerCount * (SERVERS - 1) + baseCount) * 1 / 3;
+                              return condition;
+                            } finally {
+                              database.close();
+                            }
+                          }
+                        }, // ACTION
                 new Callable() {
-              @Override
-              public Object call() throws Exception {
-                Assert.assertTrue("Insert was too fast", inserting);
+                  @Override
+                  public Object call() throws Exception {
+                    Assert.assertTrue("Insert was too fast", inserting);
 
-                banner("STARTING BACKUP SERVER " + (SERVERS - 1));
+                    banner("STARTING BACKUP SERVER " + (SERVERS - 1));
 
-                OrientGraphFactory factory = new OrientGraphFactory(
-                    "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
-                OrientGraphNoTx g = factory.getNoTx();
+                    OrientGraphFactory factory = new OrientGraphFactory(
+                        "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
+                    OrientGraphNoTx g = factory.getNoTx();
 
-                backupInProgress = true;
-                File file = null;
-                try {
-                  file = File.createTempFile("orientdb_test_backup", ".zip");
-                  if (file.exists())
-                    Assert.assertTrue(file.delete());
+                    backupInProgress = true;
+                    File file = null;
+                    try {
+                      file = File.createTempFile("orientdb_test_backup", ".zip");
+                      if (file.exists())
+                        Assert.assertTrue(file.delete());
 
-                  g.getRawGraph().backup(new FileOutputStream(file), null, new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
+                      g.getRawGraph().backup(new FileOutputStream(file), null, new Callable<Object>() {
+                        @Override
+                        public Object call() throws Exception {
 
-                      Thread.sleep(5000);
+                          Thread.sleep(5000);
 
-                      return null;
+                          return null;
+                        }
+                      }, null, 9, 1000000);
+
+                    } catch (IOException e) {
+                      e.printStackTrace();
+                    } finally {
+                      banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
+                      backupInProgress = false;
+
+                      g.shutdown();
+
+                      if (file != null)
+                        file.delete();
                     }
-                  }, null, 9, 1000000);
-
-                } catch (IOException e) {
-                  e.printStackTrace();
-                } finally {
-                  banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
-                  backupInProgress = false;
-
-                  g.shutdown();
-
-                  if (file != null)
-                    file.delete();
-                }
-                return null;
-              }
-            });
+                    return null;
+                  }
+                });
 
           } catch (Exception e) {
             e.printStackTrace();
@@ -202,8 +198,9 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
       public Boolean call(ODatabaseDocumentTx db) {
         final boolean ok = db.countClass("Person") >= count * writerCount * (SERVERS - 1) + baseCount;
         if (!ok)
-          System.out.println("FOUND " + db.countClass("Person") + " people instead of expected "
-              + (count * writerCount * (SERVERS - 1) + baseCount));
+          System.out.println(
+              "FOUND " + db.countClass("Person") + " people instead of expected " + (count * writerCount * (SERVERS - 1)
+                  + baseCount));
         return ok;
       }
     }, 10000);

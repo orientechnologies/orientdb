@@ -11,10 +11,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.InputStream;
@@ -74,15 +71,10 @@ public class OLuceneIndexCrashRestoreIT {
     String javaExec = System.getProperty("java.home") + "/bin/java";
     javaExec = new File(javaExec).getCanonicalPath();
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec,
-        "-Xmx2048m",
-        "-XX:MaxDirectMemorySize=512g",
-        "-classpath",
-        System.getProperty("java.class.path"),
-        "-DmutexFile=" + mutexFile.getAbsolutePath(),
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getAbsolutePath(),
 //        "-Djava.util.logging.config.file=" + new File("../server/config/orientdb-server-log.properties").getAbsolutePath(),
-        "-DORIENTDB_HOME=" + buildDirectory,
-        RemoteDBRunner.class.getName());
+        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
 
 //    processBuilder.inheritIO();
 
@@ -163,7 +155,7 @@ public class OLuceneIndexCrashRestoreIT {
 
     //crash the server
     // this works only on java8
-//    serverProcess.destroyForcibly();
+    //serverProcess.destroyForcibly();
     serverProcess.destroy();
 
     serverProcess.waitFor();
@@ -202,10 +194,8 @@ public class OLuceneIndexCrashRestoreIT {
     assertThat((Iterable<? extends Map.Entry<String, Object>>) index.getMetadata()).isNotNull();
 
     assertThat(index.getMetadata().<String>field("default")).isNotNull();
-    assertThat(index.getMetadata().<String>field("default"))
-        .isEqualTo("org.apache.lucene.analysis.core.KeywordAnalyzer");
-    assertThat(index.getMetadata().<String>field("unknownKey"))
-        .isEqualTo("unknownValue");
+    assertThat(index.getMetadata().<String>field("default")).isEqualTo("org.apache.lucene.analysis.core.KeywordAnalyzer");
+    assertThat(index.getMetadata().<String>field("unknownKey")).isEqualTo("unknownValue");
 
     //sometimes it is not null, and all works fine
     res = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from Person where name lucene 'Rob*' "));

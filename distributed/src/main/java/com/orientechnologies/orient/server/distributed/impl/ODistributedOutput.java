@@ -688,7 +688,6 @@ public class ODistributedOutput {
     }
 
     table.writeRecords(rows, -1);
-    buffer.append("\n");
     return buffer.toString();
   }
 }

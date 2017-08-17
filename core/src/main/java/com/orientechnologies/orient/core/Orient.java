@@ -511,7 +511,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       } else
         dbPath = iURL;
 
-      if (registerDatabaseByPath) {
+      if (registerDatabaseByPath && !engine.getName().equals("remote")) {
         try {
           dbPath = new File(dbPath).getCanonicalPath();
         } catch (IOException e) {

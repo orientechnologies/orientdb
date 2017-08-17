@@ -54,7 +54,6 @@ public class HaSyncClusterTest extends AbstractServerClusterTest {
   }
 
   @Test
-  @Ignore
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
@@ -72,25 +71,27 @@ public class HaSyncClusterTest extends AbstractServerClusterTest {
     db.open("admin", "admin");
 
     final OClass person = db.getMetadata().getSchema().getClass("Person");
-    person.createProperty("name", OType.STRING);
-    person.createIndex("testAutoSharding", OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null,
-        "AUTOSHARDING", new String[] { "name" });
+    person.createProperty("other", OType.INTEGER).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+//    person.createIndex("testAutoSharding", OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null,
+//        "AUTOSHARDING", new String[] { "name" });
 
     try {
-      Future<Long> future = invokeSyncCluster(localNodeName, serverInstance.get(1));
-
       for (int i = 0; i < NUM_RECORDS; i++) {
 
         ODocument doc = new ODocument("Person");
         doc.field("name", "person" + i);
+        doc.field("other", i);
         db.save(doc);
       }
-      List<ODocument> query = db.query(new OSQLSynchQuery("select count(*) from Person"));
 
-      Long result0 = query.iterator().next().field("count");
+      Future<Long> future = invokeSyncCluster(localNodeName, serverInstance.get(1));
       Long result1 = future.get();
 
+      List<ODocument> query = db.query(new OSQLSynchQuery("select count(*) from Person"));
+      Long result0 = query.iterator().next().field("count");
+
       Assert.assertEquals(result1, result0);
+
 
     } finally {
       db.close();

@@ -100,7 +100,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
                 && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 1 / 4) {
 
               // SLOW DOWN A LITTLE BIT
-              sleep = 5;
+              sleep = 1;
 
               // SHUTDOWN LASt SERVER AT 1/3 OF PROGRESS
               banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));

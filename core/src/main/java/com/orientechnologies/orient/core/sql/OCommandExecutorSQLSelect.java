@@ -58,10 +58,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -697,19 +694,27 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         serialTempRID.getAndIncrement();
   }
 
-  protected void checkForSystemClusters(final ODatabaseDocumentInternal iDatabase, final int[] iClusterIds) {
-    for (int clId : iClusterIds) {
-      if (clId < 0) {
-        continue;
-      }
-      final com.orientechnologies.orient.core.storage.OCluster cl = iDatabase.getStorage().getClusterById(clId);
-      if (cl != null && cl.isSystemCluster()) {
-        final OSecurityUser dbUser = iDatabase.getUser();
-        if (dbUser == null || dbUser.allow(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_READ) != null)
-          // AUTHORIZED
-          break;
-      }
+  protected void checkForSystemClusters(final ODatabaseDocumentInternal iDatabase, final ORID rid) {
+    if (rid.getClusterId() < 0) {
+      return;
     }
+    final com.orientechnologies.orient.core.storage.OCluster cl = iDatabase.getStorage().getClusterById(rid.getClusterId());
+    if (cl != null && cl.isSystemCluster()) {
+      final OSecurityUser dbUser = iDatabase.getUser();
+      if (dbUser == null) {
+        return;
+      }
+      if (rid.equals(dbUser.getDocument().getIdentity())) {
+        return;
+      }
+      for (OSecurityRole role : dbUser.getRoles()) {
+        if (rid.equals(role.getDocument().getIdentity())) {
+          return;
+        }
+      }
+      dbUser.allow(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_READ);
+    }
+    // AUTHORIZED
   }
 
   protected boolean addResult(OIdentifiable iRecord, final OCommandContext iContext) {
@@ -717,7 +722,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (iRecord == null)
       return true;
 
-    checkForSystemClusters(getDatabase(), new int[] { iRecord.getIdentity().getClusterId() });
+    checkForSystemClusters(getDatabase(), iRecord.getIdentity());
     if (projections != null || groupByFields != null && !groupByFields.isEmpty()) {
       if (!aggregate) {
         // APPLY PROJECTIONS IN LINE

@@ -19,17 +19,18 @@
  */
 package com.orientechnologies.orient.core.metadata.sequence;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.concurrent.Callable;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
- * @since 2/28/2015
- *
- * A sequence with sequential guarantees. Even when a transaction is rolled back,
- * there will still be no holes. However, as a result, it is slower.
  * @see OSequenceCached
+ * @since 2/28/2015
+ * <p>
+ * A sequence with sequential guarantees. Even when a transaction is rolled back, there will still be no holes. However, as a
+ * result, it is slower.
  */
 public class OSequenceOrdered extends OSequence {
   public OSequenceOrdered() {
@@ -46,32 +47,58 @@ public class OSequenceOrdered extends OSequence {
 
   @Override
   public synchronized long next() {
-    return callRetry(new Callable<Long>() {
-      @Override
-      public Long call() throws Exception {
-        long newValue = getValue() + getIncrement();
-        setValue(newValue);
-
-        save();
-
-        return newValue;
+    ODatabaseDocumentInternal mainDb = getDatabase();
+    boolean tx = mainDb.getTransaction().isActive();
+    try {
+      ODatabaseDocumentInternal db = mainDb;
+      if (tx) {
+        db = mainDb.copy();
+        db.activateOnCurrentThread();
       }
-    }, "next");
+      try {
+        final ODatabaseDocumentInternal finalDb = db;
+        return callRetry(new Callable<Long>() {
+          @Override
+          public Long call() throws Exception {
+            long newValue = getValue() + getIncrement();
+            setValue(newValue);
+
+            save(finalDb);
+
+            return newValue;
+          }
+        }, "next");
+      } finally {
+        if (tx) {
+          db.close();
+        }
+      }
+    } finally {
+      if (tx) {
+        mainDb.activateOnCurrentThread();
+      }
+    }
   }
 
   @Override
   public synchronized long current() {
-    return getValue();
+    return callRetry(new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        return getValue();
+      }
+    }, "current");
   }
 
   @Override
   public synchronized long reset() {
+    final ODatabaseDocumentInternal db = getDatabase();
     return callRetry(new Callable<Long>() {
       @Override
       public Long call() throws Exception {
         long newValue = getStart();
         setValue(newValue);
-        save();
+        save(db);
 
         return newValue;
       }

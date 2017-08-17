@@ -1401,91 +1401,93 @@ public class ODocumentHelper {
     final ORidBag myBag = myFieldValue;
     final ORidBag otherBag = otherFieldValue;
 
-    final int mySize = makeDbCall(iMyDb, new ODbRelatedCall<Integer>() {
-      public Integer call(ODatabaseDocumentInternal database) {
-        return myBag.size();
-      }
-    });
-
-    final int otherSize = makeDbCall(iOtherDb, new ODbRelatedCall<Integer>() {
-      public Integer call(ODatabaseDocumentInternal database) {
-        return otherBag.size();
-      }
-    });
-
-    if (mySize != otherSize)
-      return false;
-
-    boolean oldMyAutoConvert;
-    boolean oldOtherAutoConvert;
-
-    oldMyAutoConvert = myBag.isAutoConvertToRecord();
-    myBag.setAutoConvertToRecord(false);
-
-    oldOtherAutoConvert = otherBag.isAutoConvertToRecord();
-    otherBag.setAutoConvertToRecord(false);
-
-    final ORidBag otherBagCopy = makeDbCall(iOtherDb, new ODbRelatedCall<ORidBag>() {
-      @Override
-      public ORidBag call(ODatabaseDocumentInternal database) {
-        final ORidBag otherRidBag = new ORidBag();
-        otherRidBag.setAutoConvertToRecord(false);
-
-        for (OIdentifiable identifiable : otherBag)
-          otherRidBag.add(identifiable);
-
-        return otherRidBag;
-      }
-    });
-
+    final ODatabaseDocumentInternal originalDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
-      final Iterator<OIdentifiable> myIterator = makeDbCall(iMyDb, new ODbRelatedCall<Iterator<OIdentifiable>>() {
-        public Iterator<OIdentifiable> call(ODatabaseDocumentInternal database) {
-          return myBag.iterator();
+
+      final int mySize = makeDbCall(iMyDb, new ODbRelatedCall<Integer>() {
+        public Integer call(ODatabaseDocumentInternal database) {
+          return myBag.size();
         }
       });
 
-      while (makeDbCall(iMyDb, new ODbRelatedCall<Boolean>() {
-        public Boolean call(ODatabaseDocumentInternal database) {
-          return myIterator.hasNext();
+      final int otherSize = makeDbCall(iOtherDb, new ODbRelatedCall<Integer>() {
+        public Integer call(ODatabaseDocumentInternal database) {
+          return otherBag.size();
         }
-      })) {
-        final OIdentifiable myIdentifiable = makeDbCall(iMyDb, new ODbRelatedCall<OIdentifiable>() {
-          @Override
-          public OIdentifiable call(ODatabaseDocumentInternal database) {
-            return myIterator.next();
+      });
+
+      if (mySize != otherSize)
+        return false;
+
+      final boolean oldMyAutoConvert = myBag.isAutoConvertToRecord();
+      myBag.setAutoConvertToRecord(false);
+
+      final boolean oldOtherAutoConvert = otherBag.isAutoConvertToRecord();
+      otherBag.setAutoConvertToRecord(false);
+
+      final List<ORID> otherBagCopy = makeDbCall(iOtherDb, new ODbRelatedCall<List<ORID>>() {
+        @Override
+        public List<ORID> call(final ODatabaseDocumentInternal database) {
+          final List<ORID> otherRidBag = new LinkedList<ORID>();
+          for (OIdentifiable identifiable : otherBag)
+            otherRidBag.add(identifiable.getIdentity());
+
+          return otherRidBag;
+        }
+      });
+
+      try {
+        final Iterator<OIdentifiable> myIterator = makeDbCall(iMyDb, new ODbRelatedCall<Iterator<OIdentifiable>>() {
+          public Iterator<OIdentifiable> call(final ODatabaseDocumentInternal database) {
+            return myBag.iterator();
           }
         });
 
-        final ORID otherRid;
-        if (ridMapper != null) {
-          ORID convertedRid = ridMapper.map(myIdentifiable.getIdentity());
-          if (convertedRid != null)
-            otherRid = convertedRid;
-          else
+        while (makeDbCall(iMyDb, new ODbRelatedCall<Boolean>() {
+          public Boolean call(final ODatabaseDocumentInternal database) {
+            return myIterator.hasNext();
+          }
+        })) {
+          final OIdentifiable myIdentifiable = makeDbCall(iMyDb, new ODbRelatedCall<OIdentifiable>() {
+            @Override
+            public OIdentifiable call(final ODatabaseDocumentInternal database) {
+              return myIterator.next();
+            }
+          });
+
+          final ORID otherRid;
+          if (ridMapper != null) {
+            ORID convertedRid = ridMapper.map(myIdentifiable.getIdentity());
+            if (convertedRid != null)
+              otherRid = convertedRid;
+            else
+              otherRid = myIdentifiable.getIdentity();
+          } else
             otherRid = myIdentifiable.getIdentity();
-        } else
-          otherRid = myIdentifiable.getIdentity();
 
-        makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
+          makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
+            @Override
+            public Object call(final ODatabaseDocumentInternal database) {
+              otherBagCopy.remove(otherRid);
+              return null;
+            }
+          });
+        }
+
+        return makeDbCall(iOtherDb, new ODbRelatedCall<Boolean>() {
           @Override
-          public Object call(ODatabaseDocumentInternal database) {
-            otherBagCopy.remove(otherRid);
-            return null;
+          public Boolean call(final ODatabaseDocumentInternal database) {
+            return otherBagCopy.isEmpty();
           }
         });
-
+      } finally {
+        myBag.setAutoConvertToRecord(oldMyAutoConvert);
+        otherBag.setAutoConvertToRecord(oldOtherAutoConvert);
       }
 
-      return makeDbCall(iOtherDb, new ODbRelatedCall<Boolean>() {
-        @Override
-        public Boolean call(ODatabaseDocumentInternal database) {
-          return otherBagCopy.isEmpty();
-        }
-      });
     } finally {
-      myBag.setAutoConvertToRecord(oldMyAutoConvert);
-      otherBag.setAutoConvertToRecord(oldOtherAutoConvert);
+      if (originalDb != null)
+        originalDb.activateOnCurrentThread();
     }
   }
 

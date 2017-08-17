@@ -155,12 +155,12 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
       System.out.println("Exception was thrown!");
     }
     // wait for propagation
-    Thread.sleep(500);
+    Thread.sleep(5000);
 
     // end of deadlock on server3 and sync
     try {
       this.server3inDeadlock.set(false);
-      Thread.sleep(500); // waiting for sync of server3
+      Thread.sleep(5000); // waiting for sync of server3
     } catch (Exception e) {
       e.printStackTrace();
       fail("Exception was thrown!");
@@ -312,40 +312,4 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
   public String getDatabaseName() {
     return "distributed-wwconflict-deadlock";
   }
-
-  //
-  // /*
-  // * A task representing a client that updates the value of the record with a specific id.
-  // */
-  //
-  // protected class RecordWriter implements Callable<Void> {
-  //
-  // private String dbServerUrl;
-  // private ODocument recordToUpdate;
-  // private String firstName;
-  // private String lastName;
-  //
-  // protected RecordWriter(String dbServerUrl, ODocument recordToUpdate, String firstName, String lastName) {
-  // this.dbServerUrl = dbServerUrl;
-  // this.recordToUpdate = recordToUpdate;
-  // this.firstName = firstName;
-  // this.lastName = lastName;
-  // }
-  //
-  // @Override
-  // public Void call() throws Exception {
-  //
-  // // open server1 db
-  // ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
-  //
-  // // updating the record
-  // ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
-  // this.recordToUpdate.field("firstName",this.firstName);
-  // this.recordToUpdate.field("lastName",this.lastName);
-  // this.recordToUpdate.save();
-  //
-  // return null;
-  // }
-  // }
-
 }

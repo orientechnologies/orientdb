@@ -356,6 +356,11 @@ public class OMajorityDistributedConflictResolverTest {
     }
 
     @Override
+    public String electNewLockManager() {
+      return null;
+    }
+
+    @Override
     public Set<String> getActiveServers() {
       return null;
     }

@@ -37,7 +37,7 @@ public abstract class AbstractHARemoveNode extends AbstractServerClusterTxTest {
           System.out.println("Server 0: FOUND " + db.countClass("Person") + " people instead of expected " + expected);
         return ok;
       }
-    }, 10000);
+    }, 7000);
 
     waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {
       @Override
@@ -49,6 +49,6 @@ public abstract class AbstractHARemoveNode extends AbstractServerClusterTxTest {
           System.out.println("Server 2: FOUND " + db.countClass("Person") + " people instead of expected " + node2Expected);
         return ok;
       }
-    }, 10000);
+    }, 7000);
   }
 }

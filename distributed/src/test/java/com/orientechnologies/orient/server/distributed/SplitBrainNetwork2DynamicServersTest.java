@@ -44,8 +44,8 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
 
     banner("SIMULATE ISOLATION OF SERVER " + (SERVERS - 1) + "...");
 
-    checkInsertedEntries();
-    checkIndexedEntries();
+    checkInsertedEntries(executeTestsOnServers);
+    checkIndexedEntries(executeTestsOnServers);
 
     serverInstance.get(1).disconnectFrom(serverInstance.get(0));
 
@@ -66,8 +66,8 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
 
     banner("RUN TEST WITHOUT THE OFFLINE SERVER " + (SERVERS - 1) + "...");
 
-    checkInsertedEntries();
-    checkIndexedEntries();
+    checkInsertedEntries(executeTestsOnServers);
+    checkIndexedEntries(executeTestsOnServers);
 
     count = 10;
 
@@ -120,14 +120,18 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
     waitFor(1, new OCallable<Boolean, ODatabaseDocumentTx>() {
       @Override
       public Boolean call(final ODatabaseDocumentTx db) {
-        return db.countClass("Person") == expected;
+        final long total = db.countClass("Person");
+        if (total != expected)
+          System.out.println("Waiting for record count reaching " + expected + ", now it's " + total);
+
+        return total == expected;
       }
-    }, 60000);
+    }, 30000);
 
     poolFactory.reset();
 
-    checkInsertedEntries();
-    checkIndexedEntries();
+    checkInsertedEntries(executeTestsOnServers);
+    checkIndexedEntries(executeTestsOnServers);
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " CONNECTED...");
 

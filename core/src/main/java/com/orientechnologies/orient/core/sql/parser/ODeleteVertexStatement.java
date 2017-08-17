@@ -10,6 +10,7 @@ public class ODeleteVertexStatement extends OStatement {
   protected OFromClause  fromClause;
   protected OWhereClause whereClause;
   protected boolean      returnBefore = false;
+  protected boolean      returnCount = false;
   protected OLimit       limit        = null;
   protected OBatch       batch        = null;
 
@@ -29,6 +30,9 @@ public class ODeleteVertexStatement extends OStatement {
     fromClause.toString(params, builder);
     if (returnBefore) {
       builder.append(" RETURN BEFORE");
+    }
+    if (returnCount) {
+      builder.append(" RETURN COUNT");
     }
     if (whereClause != null) {
       builder.append(" WHERE ");

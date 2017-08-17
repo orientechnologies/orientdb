@@ -2,7 +2,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Base interface for the distributed database repairer.
@@ -10,11 +10,11 @@ import java.util.List;
  * @author Luca Garulli
  */
 public interface ODistributedDatabaseRepairer {
-  void repairRecords(List<ORecordId> rids);
+  void repairRecords(Collection<ORecordId> rids);
 
   void repairRecord(ORecordId rid);
 
-  void enqueueRepairRecords(List<ORecordId> involvedRecords);
+  void enqueueRepairRecords(Collection<ORecordId> involvedRecords);
 
   void enqueueRepairRecord(ORecordId rid);
 

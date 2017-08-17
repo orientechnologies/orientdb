@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -28,7 +27,8 @@ import java.util.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-@Test public abstract class ORidBagTest extends DocumentDBBaseTest {
+@Test
+public abstract class ORidBagTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
   public ORidBagTest(@org.testng.annotations.Optional String url) {
@@ -1512,7 +1512,7 @@ import static org.testng.Assert.assertTrue;
     iterator.remove();
 
     documentCopy.<ORidBag>field("ridBag").add(docToAdd.getIdentity());
-    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
+    Assert.assertFalse(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
 
     documentCopy.reload("*:-1", true);
     embeddedList = documentCopy.field("embeddedList");
@@ -1528,6 +1528,65 @@ import static org.testng.Assert.assertTrue;
     doc.<ORidBag>field("ridBag").add(remvedItem);
 
     Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
+  }
+
+  @Test
+  public void testSuperNodeCompare() {
+    long time = System.currentTimeMillis();
+
+    database.begin();
+    ODocument document = new ODocument();
+
+    ORidBag highLevelRidBag = new ORidBag();
+    for (int i = 0; i < 1000; i++) {
+      ODocument docToAdd = new ODocument();
+      highLevelRidBag.add(docToAdd);
+    }
+
+    document.field("ridBag", highLevelRidBag);
+    document.save();
+    database.commit();
+
+    System.out.println("Insert done in " + (System.currentTimeMillis() - time) + "ms. Reloading...");
+    System.out.flush();
+    time = System.currentTimeMillis();
+
+    document.reload();
+
+    System.out.println("Reload done in " + (System.currentTimeMillis() - time) + "ms. Replacing 1 entry...");
+    System.out.flush();
+
+    ODocument documentCopy = database.load(document.getIdentity(), "*:-1", true);
+    Assert.assertNotSame(document, documentCopy);
+    Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
+
+    time = System.currentTimeMillis();
+
+    Iterator<OIdentifiable> iterator = documentCopy.<ORidBag>field("ridBag").iterator();
+    iterator.next();
+    iterator.remove();
+
+    Assert.assertFalse(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
+
+    documentCopy.reload("*:-1", true);
+    ODocument docToAdd = new ODocument();
+    docToAdd.save();
+
+    iterator = documentCopy.<ORidBag>field("ridBag").iterator();
+    iterator.next();
+    iterator.remove();
+
+    documentCopy.<ORidBag>field("ridBag").add(docToAdd.getIdentity());
+
+    System.out.println("Replacing done in " + (System.currentTimeMillis() - time) + "ms. Starting comparing...");
+    System.out.flush();
+
+    time = System.currentTimeMillis();
+
+    Assert.assertFalse(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
+
+    System.out.println("Total: " + (System.currentTimeMillis() - time) + "ms");
+    System.out.flush();
   }
 
   public void testAddNewItemsAndRemoveThem() {

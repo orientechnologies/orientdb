@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
@@ -38,6 +40,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.parser.OHaSyncClusterStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
@@ -219,11 +222,20 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
 
           cluster.replaceFile(tempClusterFile);
 
+          final File tempCmpFile = new File(tempDirectoryPath + "/" + clusterName + OClusterPositionMap.DEF_EXTENSION);
+
+          cluster.replaceClusterMapFile(tempCmpFile);
+
         } finally {
           stg.release();
         }
 
         db.getLocalCache().invalidate();
+        int clusterId = db.getClusterIdByName(clusterName);
+        OClass klass = db.getMetadata().getSchema().getClassByClusterId(clusterId);
+        for (OIndex index : klass.getIndexes()) {
+          index.rebuild();
+        }
 
       } finally {
         if (openDatabaseHere)

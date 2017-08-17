@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.hazelcast.cluster.impl.ClusterServiceImpl;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.instance.HazelcastInstanceImpl;
 import com.hazelcast.instance.HazelcastInstanceProxy;
 import com.hazelcast.instance.Node;
+import com.hazelcast.internal.cluster.impl.ClusterServiceImpl;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
@@ -101,8 +101,8 @@ public class ServerRun {
 
       final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
 
-      currentNode.clusterService.removeAddress(otherNode.address);
-      otherNode.clusterService.removeAddress(currentNode.address);
+      currentNode.clusterService.removeAddress(otherNode.address, "test");
+      otherNode.clusterService.removeAddress(currentNode.address, "test");
     }
   }
 
@@ -202,12 +202,14 @@ public class ServerRun {
   public void terminateServer() {
     if (server != null) {
       try {
-        HazelcastInstance hz = ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance();
-        final Node node = getHazelcastNode(hz);
-        node.getConnectionManager().shutdown();
-        node.shutdown(true);
-        hz.getLifecycleService().terminate();
-
+        final OHazelcastPlugin dm = (OHazelcastPlugin) server.getDistributedManager();
+        if (dm != null) {
+          HazelcastInstance hz = dm.getHazelcastInstance();
+          final Node node = getHazelcastNode(hz);
+          node.getConnectionManager().shutdown();
+          node.shutdown(true);
+          hz.getLifecycleService().terminate();
+        }
       } catch (Exception e) {
         // IGNORE IT
       }

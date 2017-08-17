@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.sequence;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -84,12 +85,13 @@ public class OSequenceCached extends OSequence {
 
   @Override
   public long reset() {
+    final ODatabaseDocumentInternal db = getDatabase();
     return callRetry(new Callable<Long>() {
       @Override
       public Long call() throws Exception {
         long newValue = getStart();
         setValue(newValue);
-        save();
+        save(db);
 
         //
         allocateCache(getCacheSize());
@@ -116,7 +118,7 @@ public class OSequenceCached extends OSequence {
     long value = getValue();
     long newValue = value + (getIncrement() * cacheSize);
     setValue(newValue);
-    save();
+    save(getDatabase());
 
     this.cacheStart = value;
     this.cacheEnd = newValue - 1;

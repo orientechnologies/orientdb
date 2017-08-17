@@ -836,7 +836,7 @@ public class ODistributedResponseManager {
     if (task.isIdempotent()) {
       // NO UNDO IS NECESSARY
       ODistributedServerLog
-          .warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, "No undo because the task (%s) is idempotent", task);
+          .debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, "No undo because the task (%s) is idempotent", task);
       return false;
     }
 
@@ -1000,7 +1000,7 @@ public class ODistributedResponseManager {
 
         if (!serversToFollowup.isEmpty()) {
           ODistributedServerLog.debug(this, localNodeName, serversToFollowup.toString(), ODistributedServerLog.DIRECTION.OUT,
-              "Distributed transaction (reqId=%s quorum=%d result=%s), checking for any fix needed...", request.getId(), quorum,
+              "Distributed response (reqId=%s quorum=%d result=%s), checking for any fix needed...", request.getId(), quorum,
               quorumResponse);
 
           for (String s : serversToFollowup) {

@@ -90,7 +90,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
     if (lastDeployment != null && lastDeployment.longValue() == random) {
       // SKIP IT
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-          "Skip deploying delta database '%s' because already executed", databaseName);
+          "Skip deploying of delta database '%s' because already executed", databaseName);
       return Boolean.FALSE;
     }
 
@@ -152,6 +152,9 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
       if (endLSN.get() == null) {
         // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
         exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
+      } else if (endLSN.get().equals(startLSN)) {
+        // nothing has changed
+        return Boolean.FALSE;
       } else
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
             "Delta backup of database '%s' completed. range=%s-%s", databaseName, startLSN, endLSN.get());

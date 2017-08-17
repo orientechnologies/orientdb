@@ -133,7 +133,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
   }
 
   @Override
-  public void enqueueRepairRecords(final List<ORecordId> rids) {
+  public void enqueueRepairRecords(final Collection<ORecordId> rids) {
     for (ORecordId rid : rids)
       enqueueRepairRecord(rid);
   }
@@ -398,7 +398,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
   }
 
   @Override
-  public void repairRecords(final List<ORecordId> rids) {
+  public void repairRecords(final Collection<ORecordId> rids) {
     repairRecords(getDatabase(), rids);
   }
 
@@ -409,7 +409,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     repairRecords(getDatabase(), rids);
   }
 
-  private boolean repairRecords(final ODatabaseDocumentInternal db, final List<ORecordId> rids) {
+  private boolean repairRecords(final ODatabaseDocumentInternal db, final Collection<ORecordId> ridSet) {
+    final List<ORecordId> rids = new ArrayList<ORecordId>(ridSet);
+
     final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);
 
     final ODistributedRequestId requestId = new ODistributedRequestId(dManager.getLocalNodeId(),

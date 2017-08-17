@@ -794,4 +794,12 @@ public class OClusterPositionMap extends ODurableComponent {
       completeOperation();
     }
   }
+
+  public long getFileId() {
+    return fileId;
+  }
+
+  public void replaceFileId(long newFileId) {
+    this.fileId = newFileId;
+  }
 }

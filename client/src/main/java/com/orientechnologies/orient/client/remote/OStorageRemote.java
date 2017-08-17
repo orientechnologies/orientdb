@@ -66,6 +66,7 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
@@ -78,6 +79,7 @@ import javax.naming.directory.InitialDirContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1668,40 +1670,153 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
 
     final List<ODocument> members;
+    ODocument dataCenters = null;
     synchronized (clusterConfiguration) {
       clusterConfiguration.fromStream(obj);
       clusterConfiguration.toString();
       members = clusterConfiguration.field("members");
+      final ODocument db = ((ODocument) clusterConfiguration.field("database"));
+      if (db != null)
+        dataCenters = db.field("dataCenters");
     }
 
+    String dataCenter = getDataCenterOfServer(dataCenters, resolveNameByIp(members, getHostIpPort()));
+    String strategy = getClientConfiguration().getValueAsString(OGlobalConfiguration.NETWORK_SOCKET_RETRY_STRATEGY);
+    List<String> allowedServers;
+    List<String> resolvedHosts;
+    if ("same-dc".equals(strategy)) {
+      allowedServers = getServersOfDataCenter(dataCenters, dataCenter);
+      resolvedHosts = resolveHosts(members, allowedServers);
+    } else if ("auto".equals(strategy)) {
+      allowedServers = getServersOfDataCenter(dataCenters, dataCenter);
+      resolvedHosts = resolveHosts(members, allowedServers);
+      if (resolvedHosts.isEmpty()) {
+        resolvedHosts = resolveHosts(members, null);
+      }
+    } else {
+      resolvedHosts = resolveHosts(members, null);
+    }
     // UPDATE IT
     synchronized (serverURLs) {
-      if (members != null) {
-        // ADD CURRENT SERVER AS FIRST
-        if (iConnectedURL != null) {
-          addHost(iConnectedURL);
-        }
+      // ADD CURRENT SERVER AS FIRST
+      if (iConnectedURL != null) {
+        addHost(iConnectedURL);
+      }
+      for (String resolved : resolvedHosts) {
+        addHost(resolved);
+      }
+    }
 
-        for (ODocument m : members) {
-          if (m == null)
-            continue;
+  }
 
-          final String nodeStatus = m.field("status");
+  private String getHostIpPort() {
+    int sepPos = url.indexOf("/");
+    String serverURL;
+    if (sepPos > -1) {
+      // REMOVE DATABASE NAME IF ANY
+      serverURL = url.substring(0, sepPos);
+    } else {
+      serverURL = url;
+    }
+    String[] split = serverURL.split(ADDRESS_SEPARATOR);
+    if (split.length == 0 || split[0].length() == 0)
+      throw new OStorageException("Error on multiple part url parsing");
+    serverURL = split[0];
+    sepPos = serverURL.indexOf(":");
 
-          if (m != null && !"OFFLINE".equals(nodeStatus)) {
-            final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
-            if (listeners != null)
-              for (Map<String, Object> listener : listeners) {
-                if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
-                  String url = (String) listener.get("listen");
-                  if (!serverURLs.contains(url))
-                    addHost(url);
+    final int remotePort;
+    final String remoteHost;
+    if (sepPos > -1) {
+      remotePort = Integer.parseInt(serverURL.substring(sepPos + 1));
+      remoteHost = serverURL.substring(0, sepPos);
+    } else {
+      remotePort = DEFAULT_PORT;
+      remoteHost = serverURL;
+    }
+
+    try {
+      if (remoteHost.equals("localhost") || remoteHost.equals("127.0.0.1")) {
+        return OChannel.getLocalIpAddress(true) + ":" + remotePort;
+      }
+      return InetAddress.getByName(remoteHost).getHostAddress() + ":" + remotePort;
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  private String resolveNameByIp(List<ODocument> members, String ip) {
+    if (members != null && ip != null) {
+      for (ODocument m : members) {
+        if (m == null)
+          continue;
+
+        final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
+        if (listeners != null)
+          for (Map<String, Object> listener : listeners) {
+            if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+              String url = (String) listener.get("listen");
+              if (url.equals(ip))
+                return m.field("name");
+            }
+          }
+      }
+    }
+    return null;
+  }
+
+  private List<String> resolveHosts(List<ODocument> members, List<String> allowedServers) {
+    List<String> hosts = new ArrayList<String>();
+    if (members != null) {
+      for (ODocument m : members) {
+        if (m == null)
+          continue;
+
+        final String nodeStatus = m.field("status");
+
+        if (m != null && !"OFFLINE".equals(nodeStatus)) {
+          final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
+          if (listeners != null)
+            for (Map<String, Object> listener : listeners) {
+              if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+                String url = (String) listener.get("listen");
+                if (!serverURLs.contains(url)) {
+                  if (allowedServers == null || allowedServers.contains(m.field("name"))) {
+                    hosts.add(url);
+                  }
                 }
               }
+            }
+        }
+      }
+    }
+    return hosts;
+  }
+
+  private List<String> getServersOfDataCenter(ODocument dcs, String dc) {
+    if (dcs != null && dc != null) {
+      final ODocument dcConfig = dcs.field(dc);
+      if (dcConfig != null) {
+        return dcConfig.field("servers");
+      }
+    }
+    return null;
+  }
+
+  private String getDataCenterOfServer(ODocument dcs, String server) {
+    if (dcs != null) {
+      for (String dc : dcs.fieldNames()) {
+        final ODocument dcConfig = dcs.field(dc);
+        if (dcConfig != null) {
+          final List<String> dcServers = dcConfig.field("servers");
+          if (dcServers != null && !dcServers.isEmpty()) {
+            if (dcServers.contains(server))
+              // FOUND
+              return dc;
           }
         }
       }
     }
+    return null;
   }
 
   public void removeSessions(final String url) {

@@ -24,7 +24,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import sun.misc.Cleaner;
@@ -57,7 +56,7 @@ import java.util.logging.LogManager;
  *
  * @see OGlobalConfiguration#MEMORY_CHUNK_SIZE
  */
-public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownListener, OByteBufferPoolMXBean {
+public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPoolMXBean {
   /**
    * {@link OByteBufferPool}'s MBean name.
    */
@@ -176,7 +175,6 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
       trackedReleases = null;
     }
 
-    Orient.instance().registerWeakOrientStartupListener(this);
     Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
@@ -214,7 +212,8 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
 
   /**
    * Acquires direct memory buffer. If there is free (already released) direct memory buffer we reuse it, otherwise either new
-   * memory chunk is allocated from direct memory or slice of already preallocated memory chunk is used as new byte buffer instance.
+   * memory chunk is allocated from direct memory or slice of already preallocated memory chunk is used as new byte buffer
+   * instance.
    * <p>
    * If we reached maximum amount of preallocated memory chunks then small portion of direct memory equals to page size is
    * allocated. Byte order of returned direct memory buffer equals to native byte order.
@@ -264,7 +263,15 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
 
       //allocation size should be the same for all buffers from chuck with the same index
       final int allocationSize = (int) Math
-          .min(maxPagesPerSingleArea * pageSize, (preAllocationLimit - bufferIndex * maxPagesPerSingleArea) * pageSize);
+          .min(maxPagesPerSingleArea * pageSize, preAllocationLimit - (bufferIndex * maxPagesPerSingleArea * pageSize));
+
+      //page is going to be allocated above the preallocation limit
+      if (allocationSize <= position * pageSize) {
+        overflowBufferCount.incrementAndGet();
+        allocatedMemory.getAndAdd(pageSize);
+
+        return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
+      }
 
       // we cannot free chunk of allocated memory so we set place holder first
       // if operation successful we allocate part of direct memory.
@@ -501,10 +508,6 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
         OLogManager.instance().error(this, builder.toString());
       }
     }
-  }
-
-  @Override
-  public void onStartup() {
   }
 
   @Override

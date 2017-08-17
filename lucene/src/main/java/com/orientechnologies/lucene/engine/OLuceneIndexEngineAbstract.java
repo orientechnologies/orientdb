@@ -62,6 +62,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
@@ -96,6 +98,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   private   long                closeAfterInterval;
   private   long                firstFlushAfter;
 
+  private Lock openCloseLock;
+
   public OLuceneIndexEngineAbstract(OStorage storage, String indexName) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
         OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
@@ -107,6 +111,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
     closed = new AtomicBoolean(true);
 
+    openCloseLock = new ReentrantLock();
   }
 
   // TODO: move to utility class
@@ -180,7 +185,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     if (metadata.containsField("closeAfterInterval")) {
       closeAfterInterval = Integer.valueOf(metadata.<Integer>field("closeAfterInterval")).longValue();
     } else {
-      closeAfterInterval = 20000l;
+      closeAfterInterval = 600000l;
     }
 
     if (metadata.containsField("firstFlushAfter")) {
@@ -202,13 +207,23 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       @Override
       public void run() {
 
-        if (System.currentTimeMillis() - lastAccess.get() > closeAfterInterval) {
-
+        if (shouldClose()) {
 //          OLogManager.instance().info(this, " Closing index:: " + indexName());
-          close();
+
+          openCloseLock.lock();
+
+          //while on lock the index was opened
+          if (!shouldClose())
+            return;
+          try {
+
+            close();
+          } finally {
+            openCloseLock.unlock();
+          }
+
         }
         if (!closed.get()) {
-
 //          OLogManager.instance().info(this, " Flushing index:: " + indexName());
           flush();
         }
@@ -216,6 +231,10 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     };
 
     Orient.instance().scheduleTask(commitTask, firstFlushAfter, flushIndexInterval);
+  }
+
+  private boolean shouldClose() {
+    return System.currentTimeMillis() - lastAccess.get() > closeAfterInterval;
   }
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
@@ -252,23 +271,30 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     if (!closed.get())
       return;
 
-    OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
+    openCloseLock.lock();
 
-    directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
+    try {
+      OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
 
-    final IndexWriter indexWriter = createIndexWriter(directory);
-    mgrWriter = new TrackingIndexWriter(indexWriter);
-    searcherManager = new SearcherManager(indexWriter, true, null);
+      directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
 
-    reopenToken = 0;
+      final IndexWriter indexWriter = createIndexWriter(directory);
+      mgrWriter = new TrackingIndexWriter(indexWriter);
+      searcherManager = new SearcherManager(indexWriter, true, null);
 
-    startNRT();
+      reopenToken = 0;
 
-    closed.set(false);
+      startNRT();
 
-    flush();
+      closed.set(false);
 
-    scheduleCommitTask();
+      flush();
+
+      scheduleCommitTask();
+    } finally {
+
+      openCloseLock.unlock();
+    }
 
   }
 
@@ -451,6 +477,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public long sizeInTx(OLuceneTxChanges changes) {
+    updateLastAccess();
+    openIfClosed();
     IndexSearcher searcher = searcher();
     try {
       IndexReader reader = searcher.getIndexReader();

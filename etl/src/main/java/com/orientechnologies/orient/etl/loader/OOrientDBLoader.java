@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -493,9 +494,13 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         if (idxType == null)
           throw new OConfigurationException("Index 'type' missed in OrientDB Loader for index '" + idxName + "'");
 
+        final String algorithm = idx.field("algorithm");
+
         final List<String> idxFields = idx.field("fields");
         if (idxFields == null)
           throw new OConfigurationException("Index 'fields' missed in OrientDB Loader");
+
+
 
         String[] fields = new String[idxFields.size()];
         for (int f = 0; f < fields.length; ++f) {
@@ -534,7 +539,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           // ALREADY EXISTS
           continue;
 
-        index = cls.createIndex(idxName, idxType, null, metadata, fields);
+        index = cls.createIndex(idxName, idxType, null, metadata, algorithm, fields);
         log(DEBUG, "- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s", idxName, idxType, idxClass,
             idxFields);
       }

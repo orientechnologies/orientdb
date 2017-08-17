@@ -55,7 +55,7 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void cancel(final ODistributedServerManager dManager, final ODatabaseDocumentInternal database) {
+  public Set<ORecordId> cancel(final ODistributedServerManager dManager, final ODatabaseDocumentInternal database) {
     canceled.set(true);
 
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
@@ -66,8 +66,11 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     if (respMgr != null)
       respMgr.cancel();
 
-    rollback(database);
+    final Set<ORecordId> ridsInvolved = rollback(database);
+
     destroy();
+
+    return ridsInvolved;
   }
 
   @Override
@@ -109,23 +112,30 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     executeFix(this, this, database, fixTasks, reqId, db);
   }
 
-  public synchronized int rollback(final ODatabaseDocumentInternal database) {
+  public synchronized Set<ORecordId> rollback(final ODatabaseDocumentInternal database) {
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
         "Distributed transaction %s: rolling back transaction on database '%s' (undo=%d tx=%s)", reqId,
         database != null ? database.getName() : "?", undoTasks.size(), database.getTransaction().isActive());
 
+    final Set<ORecordId> rids = new HashSet<ORecordId>();
+
     for (ORemoteTask task : undoTasks) {
       try {
 
-        if (task != null)
+        if (task != null) {
           db.getManager().executeOnLocalNode(reqId, task, database);
+
+          if (task instanceof OAbstractRecordReplicatedTask)
+            rids.add(((OAbstractRecordReplicatedTask) task).getRid());
+        }
 
       } catch (Exception e) {
         ODistributedServerLog.error(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
             "Error on rolling back transaction %s task %s", e, reqId, task);
       }
     }
-    return undoTasks.size();
+
+    return rids;
   }
 
   public boolean isCanceled() {

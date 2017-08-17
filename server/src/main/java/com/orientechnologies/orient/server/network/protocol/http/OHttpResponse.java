@@ -42,27 +42,28 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli
  */
 public class OHttpResponse {
-  public static final String   JSON_FORMAT       = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
-  public static final char[]   URL_SEPARATOR     = { '/' };
-  private static final Charset utf8              = Charset.forName("utf8");
-  
-  public final String          httpVersion;
-  private final OutputStream   out;
-  public String                headers;
-  public String[]              additionalHeaders;
-  public String                characterSet;
-  public String                contentType;
-  public String                serverInfo;
+  public static final  String  JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
+  public static final  char[]  URL_SEPARATOR = { '/' };
+  private static final Charset utf8          = Charset.forName("utf8");
 
-  public String                sessionId;
-  public String                callbackFunction;
-  public String                contentEncoding;
-  public boolean               sendStarted       = false;
-  public String                content;
-  public int                   code;
-  public boolean               keepAlive         = true;
-  public boolean               jsonErrorResponse = true;
-  public OClientConnection     connection;
+  public final  String       httpVersion;
+  private final OutputStream out;
+  public        String       headers;
+  public        String[]     additionalHeaders;
+  public        String       characterSet;
+  public        String       contentType;
+  public        String       serverInfo;
+
+  public String sessionId;
+  public String callbackFunction;
+  public String contentEncoding;
+  public String staticEncoding;
+  public boolean sendStarted = false;
+  public String content;
+  public int    code;
+  public boolean keepAlive         = true;
+  public boolean jsonErrorResponse = true;
+  public OClientConnection connection;
   private boolean streaming = OGlobalConfiguration.NETWORK_HTTP_STREAMING.getValueAsBoolean();
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
@@ -147,7 +148,7 @@ public class OHttpResponse {
     if (headers != null) {
       writeLine(headers);
     }
-    
+
     // Set up a date formatter that prints the date in the Http-date format as
     // per RFC 7231, section 7.1.1.1
     SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
@@ -209,8 +210,8 @@ public class OHttpResponse {
           doc.field(key, entry.getValue());
         }
         newResult = Collections.singleton(doc).iterator();
-      } else if (OMultiValue.isMultiValue(iResult)
-          && (OMultiValue.getSize(iResult) > 0 && !(OMultiValue.getFirstValue(iResult) instanceof OIdentifiable))) {
+      } else if (OMultiValue.isMultiValue(iResult) && (OMultiValue.getSize(iResult) > 0 && !(OMultiValue
+          .getFirstValue(iResult) instanceof OIdentifiable))) {
         newResult = Collections.singleton(new ODocument().field("value", iResult)).iterator();
       } else if (iResult instanceof OIdentifiable) {
         // CONVERT SINGLE VALUE IN A COLLECTION
@@ -330,7 +331,7 @@ public class OHttpResponse {
         iFormat = JSON_FORMAT + "," + iFormat;
 
       final String sendFormat = iFormat;
-      if (streaming ) {
+      if (streaming) {
         sendStream(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, new OCallable<Void, OChunkedResponse>() {
           @Override
           public Void call(OChunkedResponse iArgument) {
@@ -352,8 +353,8 @@ public class OHttpResponse {
     }
   }
 
-  private void writeRecordsOnStream(String iFetchPlan, String iFormat, Map<String, Object> iAdditionalProperties, Iterator<Object> it,
-      Writer buffer) throws IOException {
+  private void writeRecordsOnStream(String iFetchPlan, String iFormat, Map<String, Object> iAdditionalProperties,
+      Iterator<Object> it, Writer buffer) throws IOException {
     final OJSONWriter json = new OJSONWriter(buffer, iFormat);
     json.beginObject();
 
@@ -450,11 +451,15 @@ public class OHttpResponse {
 
   public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize)
       throws IOException {
-    sendStream(iCode, iReason, iContentType, iContent, iSize, null);
+    sendStream(iCode, iReason, iContentType, iContent, iSize, null, null);
+  }
+  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize,final String iFileName)
+      throws IOException {
+    sendStream(iCode, iReason, iContentType, iContent, iSize, iFileName, null);
   }
 
   public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize,
-      final String iFileName) throws IOException {
+      final String iFileName, Map<String, String> additionalHeaders) throws IOException {
     writeStatus(iCode, iReason);
     writeHeaders(iContentType);
     writeLine("Content-Transfer-Encoding: binary");
@@ -463,6 +468,11 @@ public class OHttpResponse {
       writeLine("Content-Disposition: attachment; filename=\"" + iFileName + "\"");
     }
 
+    if (additionalHeaders != null) {
+      for (Map.Entry<String, String> entry : additionalHeaders.entrySet()) {
+        writeLine(String.format("%s: %s", entry.getKey(), entry.getValue()));
+      }
+    }
     if (iSize < 0) {
       // SIZE UNKNOWN: USE A MEMORY BUFFER
       final ByteArrayOutputStream o = new ByteArrayOutputStream();
@@ -578,6 +588,10 @@ public class OHttpResponse {
     this.contentEncoding = contentEncoding;
   }
 
+  public void setStaticEncoding(String contentEncoding) {
+    this.staticEncoding = contentEncoding;
+  }
+
   public void setSessionId(String sessionId) {
     this.sessionId = sessionId;
   }
@@ -612,5 +626,5 @@ public class OHttpResponse {
   public void setStreaming(boolean streaming) {
     this.streaming = streaming;
   }
-  
+
 }

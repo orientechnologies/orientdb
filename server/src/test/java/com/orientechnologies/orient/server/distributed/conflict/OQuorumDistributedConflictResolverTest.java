@@ -339,6 +339,11 @@ public class OQuorumDistributedConflictResolverTest {
     }
 
     @Override
+    public String electNewLockManager() {
+      return null;
+    }
+
+    @Override
     public Set<String> getActiveServers() {
       return null;
     }

@@ -121,6 +121,11 @@ import static org.testng.Assert.fail;
     }
   }
 
+  public void testReturnCount(){
+    checkRightSyntax("DELETE FROM X RETURN BEFORE");
+    checkRightSyntax("DELETE FROM X RETURN COUNT");
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

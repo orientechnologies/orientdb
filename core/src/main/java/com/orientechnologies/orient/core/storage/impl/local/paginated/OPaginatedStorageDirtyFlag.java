@@ -93,7 +93,7 @@ public class OPaginatedStorageDirtyFlag {
     }
 
     if (fileLock == null)
-      throw new OStorageException("Can not open storage it is acquired by other process");
+      throw new OStorageException("Cannot open storage it is acquired by other process");
   }
 
   public boolean exists() {

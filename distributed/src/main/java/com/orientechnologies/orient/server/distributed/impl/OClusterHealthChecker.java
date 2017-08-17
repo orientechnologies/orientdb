@@ -39,32 +39,42 @@ import java.util.*;
  */
 public class OClusterHealthChecker extends TimerTask {
   private final ODistributedServerManager manager;
+  private final long                      healthCheckerEveryMs;
+  private long lastExecution = 0;
 
-  public OClusterHealthChecker(final ODistributedServerManager manager) {
+  public OClusterHealthChecker(final ODistributedServerManager manager, final long healthCheckerEveryMs) {
     this.manager = manager;
+    this.healthCheckerEveryMs = healthCheckerEveryMs;
   }
 
   public synchronized void run() {
-    // CHECK CURRENT STATUS OF DBS
     OLogManager.instance().debug(this, "Checking cluster health...");
-    try {
 
-      checkServerConfig();
-      checkServerStatus();
-      checkServerInStall();
-      checkServerList();
+    final long now = System.currentTimeMillis();
 
-    } catch (HazelcastInstanceNotActiveException e) {
-      // IGNORE IT
-    } catch (Throwable t) {
-      if (manager.getServerInstance().isActive())
-        OLogManager.instance().error(this, "Error on checking cluster health", t);
-      else
-        // SHUTDOWN IN PROGRESS
-        OLogManager.instance().debug(this, "Error on checking cluster health", t);
-    } finally {
-      OLogManager.instance().debug(this, "Cluster health checking completed");
-    }
+    if (now - lastExecution > (healthCheckerEveryMs / 3)) {
+      // CHECK CURRENT STATUS OF DBS
+      try {
+        checkServerConfig();
+        checkServerStatus();
+        checkServerInStall();
+        checkServerList();
+
+      } catch (HazelcastInstanceNotActiveException e) {
+        // IGNORE IT
+      } catch (Throwable t) {
+        if (manager.getServerInstance().isActive())
+          OLogManager.instance().error(this, "Error on checking cluster health", t);
+        else
+          // SHUTDOWN IN PROGRESS
+          OLogManager.instance().debug(this, "Error on checking cluster health", t);
+      } finally {
+        OLogManager.instance().debug(this, "Cluster health checking completed");
+      }
+    } else
+      OLogManager.instance().debug(this, "Cluster health finished recently (%dms ago), skip this execution", now - lastExecution);
+
+    lastExecution = now;
   }
 
   private void checkServerConfig() {
@@ -236,16 +246,21 @@ public class OClusterHealthChecker extends TimerTask {
             for (Map.Entry<String, Object> r : responses.entrySet()) {
               if (!lockManagerServer.equals(r.getValue().toString())) {
                 ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                    "Server '%s' is using server '%s' as lock manager, while current server is using '%s'", r.getKey(),
-                    r.getValue(), lockManagerServer);
+                    "Server '%s' is using server '%s' as lockManager, while current server is using '%s'", r.getKey(), r.getValue(),
+                    lockManagerServer);
               }
             }
 
           servers.removeAll(responses.keySet());
         }
-
+      } catch (ODistributedException e) {
+        // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Error on sending request for cluster health check", e);
       } catch (ODistributedOperationException e) {
         // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Error on sending request for cluster health check", e);
       }
 
       for (String server : servers) {

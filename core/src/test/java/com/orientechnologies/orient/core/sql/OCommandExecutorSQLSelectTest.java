@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -1664,6 +1665,44 @@ public class OCommandExecutorSQLSelectTest {
     results = db.query(new OSQLSynchQuery<ODocument>(
         " select * from " + className + " where  ( (1=1) or (1 in (select 1 from " + className + ")) ) and 1=2 "));
     Assert.assertEquals(results.size(), 0);
+
+  }
+
+  @Test
+  public void testComparisonOfShorts() {
+    //issue #7578
+    String className = "testComparisonOfShorts";
+    db.command(new OCommandSQL("create class " + className)).execute();
+    db.command(new OCommandSQL("create property " + className + ".state Short")).execute();
+    db.command(new OCommandSQL("INSERT INTO " + className + " set state = 1")).execute();
+    db.command(new OCommandSQL("INSERT INTO " + className + " set state = 1")).execute();
+    db.command(new OCommandSQL("INSERT INTO " + className + " set state = 2")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select from " + className + " where state in [1]"));
+    Assert.assertEquals(results.size(), 2);
+
+    results = db.query(new OSQLSynchQuery<ODocument>("select from " + className + " where [1] contains state"));
+    Assert.assertEquals(results.size(), 2);
+
+  }
+
+  @Test
+  public void testEnumAsParams() {
+    //issue #7418
+    String className = "testEnumAsParams";
+    db.command(new OCommandSQL("create class " + className)).execute();
+    db.command(new OCommandSQL("INSERT INTO " + className + " set status = ?")).execute(OType.STRING);
+    db.command(new OCommandSQL("INSERT INTO " + className + " set status = ?")).execute(OType.ANY);
+    db.command(new OCommandSQL("INSERT INTO " + className + " set status = ?")).execute(OType.BYTE);
+
+    Map<String, Object> params = new HashMap<String, Object>();
+    List enums = new ArrayList();
+    enums.add(OType.STRING);
+    enums.add(OType.BYTE);
+    params.put("status", enums);
+    List<ODocument> results = db
+        .query(new OSQLSynchQuery<ODocument>("select from " + className + " where status in :status"), params);
+    Assert.assertEquals(results.size(), 2);
 
   }
 

@@ -25,12 +25,12 @@ node("master") {
                             .inside("${env.VOLUMES}") {
                         try {
                             //skip integration test for now
-                            sh "${mvnHome}/bin/mvn -V  -fae clean install   -Dsurefire.useFile=false -DskipITs"
+                            sh "${mvnHome}/bin/mvn -V  -fae clean   install   -Dsurefire.useFile=false -DskipITs"
                             sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
                             sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests -DskipITs"
                         } finally {
                             junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
-
+                            
                         }
                     }
                 }
