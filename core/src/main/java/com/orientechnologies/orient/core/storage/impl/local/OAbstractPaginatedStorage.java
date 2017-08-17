@@ -1420,6 +1420,93 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  public void preallocateRids(final OTransaction clientTx) {
+
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+
+      final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
+
+      databaseRecord.getMetadata().makeThreadLocalSchemaSnapshot();
+
+      @SuppressWarnings("unchecked")
+      final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
+      final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<>();
+      final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<>();
+
+      final Set<ORecordOperation> newRecords = new TreeSet<>(COMMIT_RECORD_OPERATION_COMPARATOR);
+
+      for (ORecordOperation txEntry : entries) {
+
+        if (txEntry.type == ORecordOperation.CREATED) {
+          newRecords.add(txEntry);
+
+          final ORecord record = txEntry.getRecord();
+          final ORID rid = record.getIdentity();
+
+          int clusterId = rid.getClusterId();
+
+          clustersToLock.put(clusterId, getClusterById(clusterId));
+        }
+      }
+
+      final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
+      stateLock.acquireReadLock();
+      try {
+        try {
+          try {
+
+            checkOpenness();
+
+            makeStorageDirty();
+
+            lockClusters(clustersToLock);
+
+            Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
+            for (ORecordOperation txEntry : newRecords) {
+              ORecord rec = txEntry.getRecord();
+
+              if (rec.isDirty()) {
+                ORecordId rid = (ORecordId) rec.getIdentity().copy();
+                ORecordId oldRID = rid.copy();
+
+                final Integer clusterOverride = clusterOverrides.get(txEntry);
+                final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
+
+                final OCluster cluster = getClusterById(clusterId);
+                OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+                rid.setClusterId(cluster.getId());
+
+                positions.put(txEntry, ppos);
+
+                rid.setClusterPosition(ppos.clusterPosition);
+
+                clientTx.updateIdentityAfterCommit(oldRID, rid);
+              }
+            }
+
+          } catch (IOException | RuntimeException ioe) {
+            throw OException.wrapException(new OStorageException("Could not preallocate RIDs"), ioe);
+          } finally {
+
+          }
+        } finally {
+          databaseRecord.getMetadata().clearThreadLocalSchemaSnapshot();
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
+
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
   @Override
   public List<ORecordOperation> commit(final OTransaction clientTx, Runnable callback) {
     // XXX: At this moment, there are two implementations of the commit method. One for regular client transactions and one for

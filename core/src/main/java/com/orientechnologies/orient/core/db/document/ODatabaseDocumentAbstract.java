@@ -3082,7 +3082,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return result;
   }
 
-  private boolean supportsMicroTransactions(ORecord record) {
+  protected boolean supportsMicroTransactions(ORecord record) {
     return true;
   }
 

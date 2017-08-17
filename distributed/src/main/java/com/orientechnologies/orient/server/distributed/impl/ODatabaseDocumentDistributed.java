@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.metadata.OSchemaDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
@@ -494,4 +493,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return super.beginMicroTransaction();
   }
 
+  @Override
+  protected boolean supportsMicroTransactions(ORecord record) {
+    return OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
+  }
 }
