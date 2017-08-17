@@ -358,10 +358,22 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       checkForClose();
 
       OLogSegment first = logSegments.get(0);
-      if (first.filledUpTo() == 0)
-        return null;
 
-      return first.begin();
+      if (first.filledUpTo() > 0)
+        return first.begin();
+
+      int index = 1;
+
+      while (index < logSegments.size()) {
+        first = logSegments.get(index);
+
+        if (first.filledUpTo() > 0)
+          return first.begin();
+
+        index++;
+      }
+
+      return null;
 
     } finally {
       syncObject.unlock();
@@ -806,14 +818,15 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       OLogSegment logSegment = logSegments.get(index);
       OLogSequenceNumber nextLSN = logSegment.getNextLSN(lsn, fileDataBuffer);
 
-      if (nextLSN == null) {
+      while (nextLSN == null) {
         index++;
+
         if (index >= logSegments.size())
           return null;
 
         OLogSegment nextSegment = logSegments.get(index);
         if (nextSegment.filledUpTo() == 0)
-          return null;
+          continue;
 
         nextLSN = nextSegment.begin();
       }

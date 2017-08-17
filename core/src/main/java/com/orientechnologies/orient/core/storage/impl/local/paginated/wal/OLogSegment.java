@@ -450,6 +450,13 @@ final class OLogSegment implements Comparable<OLogSegment> {
           last = null;
           filledUpTo = 0;
 
+          OLogManager.instance()
+              .error(this, "%d pages in WAL segment %s are broken and will be truncated, some data will be lost after restore.",
+                  pages, file.getName());
+
+          channel.truncate(0);
+          channel.force(true);
+
           return;
         }
 
@@ -473,6 +480,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
                 pages - currentPage - 1, file.getName());
 
         channel.truncate((currentPage + 1) * OWALPage.PAGE_SIZE);
+        channel.force(true);
       }
 
       final int lastRecordEnd = buffer.getInt(OWALPage.END_LAST_RECORD);

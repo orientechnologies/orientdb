@@ -125,7 +125,7 @@ public class WriteAheadLogConcurrencyTest {
         while (writeAheadLog.size() < 3072L * 1024 * 1024) {
           int recordSize = random.nextInt(OWALPage.PAGE_SIZE / 2 - 128) + 128;
           WriteAheadLogTest.TestRecord testRecord = new WriteAheadLogTest.TestRecord(-1, SEGMENT_SIZE, recordSize,
-              random.nextBoolean());
+              random.nextBoolean(), true);
 
           OLogSequenceNumber lsn = writeAheadLog.log(testRecord);
           if (testRecord.isUpdateMasterRecord()) {

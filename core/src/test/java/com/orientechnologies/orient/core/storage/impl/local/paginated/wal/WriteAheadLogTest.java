@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.collection.OLRUCache;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.*;
 
-import static org.mockito.Matchers.longThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -101,7 +99,7 @@ public class WriteAheadLogTest {
   public void testWriteSingleRecord() throws Exception {
     Assert.assertNull(writeAheadLog.end());
 
-    TestRecord writtenRecord = new TestRecord(-1, SEGMENT_SIZE, 58, false);
+    TestRecord writtenRecord = new TestRecord(-1, SEGMENT_SIZE, 30, false, true);
     writeAheadLog.log(writtenRecord);
 
     OWALRecord walRecord = writeAheadLog.read(writeAheadLog.begin());
@@ -126,7 +124,7 @@ public class WriteAheadLogTest {
   }
 
   public void testFirstMasterRecordUpdate() throws Exception {
-    TestRecord writtenRecord = new TestRecord(-1, SEGMENT_SIZE, 58, false);
+    TestRecord writtenRecord = new TestRecord(-1, SEGMENT_SIZE, 30, false, true);
 
     writeAheadLog.log(writtenRecord);
     OLogSequenceNumber masterLSN = writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
@@ -144,12 +142,12 @@ public class WriteAheadLogTest {
   }
 
   public void testSecondMasterRecordUpdate() throws Exception {
-    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 58, false));
+    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 30, false, true));
 
     writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFuzzyCheckPointEnd();
 
-    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 58, false));
+    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 30, false, true));
 
     OLogSequenceNumber checkpointLSN = writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.logFuzzyCheckPointEnd();
@@ -165,17 +163,17 @@ public class WriteAheadLogTest {
   }
 
   public void testThirdMasterRecordUpdate() throws Exception {
-    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 58, false));
+    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 30, false, true));
 
     writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFuzzyCheckPointEnd();
 
-    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 58, false));
+    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 30, false, true));
 
     writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFuzzyCheckPointEnd();
 
-    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 58, false));
+    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 30, false, true));
 
     OLogSequenceNumber checkpointLSN = writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.logFuzzyCheckPointEnd();
@@ -201,9 +199,9 @@ public class WriteAheadLogTest {
     long nextStart = 0;
     long lastPosition = 0;
 
-    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, recordDistance, false);
+    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, recordDistance, false, false);
     lsn = writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
     nextStart += recordDistance;
 
@@ -211,9 +209,9 @@ public class WriteAheadLogTest {
     Assert.assertEquals(writeAheadLog.size(), nextStart);
 
     recordDistance = ONE_KB;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, false);
     lsn = writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     nextStart += recordDistance;
 
     Assert.assertEquals(writeAheadLog.end(), lsn);
@@ -222,9 +220,9 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     recordDistance = OWALPage.PAGE_SIZE - 2 * ONE_KB;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, false);
     lsn = writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     nextStart += recordDistance;
 
     Assert.assertEquals(writeAheadLog.end(), lsn);
@@ -235,9 +233,9 @@ public class WriteAheadLogTest {
 
     // second page
     recordDistance = ONE_KB;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, false);
     lsn = writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     nextStart += ONE_KB;
 
     Assert.assertEquals(writeAheadLog.end(), lsn);
@@ -246,9 +244,9 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     recordDistance = ONE_KB;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, false);
     lsn = writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     nextStart += ONE_KB;
 
     Assert.assertEquals(writeAheadLog.end(), lsn);
@@ -257,10 +255,10 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     recordDistance = OWALPage.PAGE_SIZE - 2 * ONE_KB;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, false);
     lsn = writeAheadLog.log(walRecord);
     nextStart += recordDistance;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertEquals(writeAheadLog.end(), lsn);
     Assert.assertEquals(writeAheadLog.size(), nextStart);
@@ -271,10 +269,10 @@ public class WriteAheadLogTest {
 
     // third page
     recordDistance = ONE_KB;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, false);
     lsn = writeAheadLog.log(walRecord);
     nextStart += recordDistance;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertEquals(writeAheadLog.end(), lsn);
     Assert.assertEquals(writeAheadLog.size(), nextStart);
@@ -282,10 +280,10 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     recordDistance = ONE_KB;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, false);
     lsn = writeAheadLog.log(walRecord);
     nextStart += recordDistance;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertEquals(writeAheadLog.end(), lsn);
     Assert.assertEquals(writeAheadLog.size(), nextStart);
@@ -293,10 +291,10 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     recordDistance = OWALPage.PAGE_SIZE - 2 * ONE_KB;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, false);
     lsn = writeAheadLog.log(walRecord);
     nextStart += recordDistance;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertEquals(writeAheadLog.end(), lsn);
     Assert.assertEquals(writeAheadLog.size(), nextStart);
@@ -306,10 +304,10 @@ public class WriteAheadLogTest {
 
     // fourth page
     recordDistance = ONE_KB;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, false);
     lsn = writeAheadLog.log(walRecord);
     nextStart += recordDistance;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertEquals(writeAheadLog.end(), lsn);
     Assert.assertEquals(writeAheadLog.size(), nextStart);
@@ -317,10 +315,10 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     recordDistance = ONE_KB;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, false);
     lsn = writeAheadLog.log(walRecord);
     nextStart += recordDistance;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertEquals(writeAheadLog.end(), lsn);
     Assert.assertEquals(writeAheadLog.size(), nextStart);
@@ -328,10 +326,10 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     recordDistance = OWALPage.PAGE_SIZE - 2 * ONE_KB;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, false);
     lsn = writeAheadLog.log(walRecord);
     nextStart += recordDistance;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertEquals(writeAheadLog.end(), lsn);
     Assert.assertEquals(writeAheadLog.size(), nextStart);
@@ -340,7 +338,7 @@ public class WriteAheadLogTest {
 
     // fifth page
     recordDistance = ONE_KB;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     nextStart += recordDistance;
 
@@ -367,15 +365,15 @@ public class WriteAheadLogTest {
     long lastPosition;
 
     // first page
-    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, ONE_KB, false);
+    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart = ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     nextStart += ONE_KB;
     writtenRecords.add(walRecord);
 
@@ -392,11 +390,13 @@ public class WriteAheadLogTest {
 
     for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE; ) {
       int recordDistance = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 15;
-      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, true);
 
       end = writeAheadLog.log(walRecord);
+      recordDistance = walRecord.distance;
+
       nextStart += recordDistance;
-      lastPosition = walRecord.recordEnd;
+      lastPosition = walRecord.nextStart;
       writtenRecords.add(walRecord);
 
       writtenSize += recordDistance;
@@ -429,24 +429,24 @@ public class WriteAheadLogTest {
     long lastPosition;
 
     // first page
-    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, ONE_KB, false);
+    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart = ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
     Assert.assertEquals(writeAheadLog.size(), nextStart);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
     Assert.assertEquals(writeAheadLog.size(), nextStart);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE - 2 * ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertEquals(writeAheadLog.size(), nextStart);
 
@@ -466,11 +466,13 @@ public class WriteAheadLogTest {
     OLogSequenceNumber end = lsn;
     for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE; ) {
       int recordDistance = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 15;
-      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, true);
 
       end = writeAheadLog.log(walRecord);
+      recordDistance = walRecord.distance;
+
       nextStart += recordDistance;
-      lastPosition = walRecord.recordEnd;
+      lastPosition = walRecord.nextStart;
       writtenRecords.add(walRecord);
 
       Assert.assertEquals(writeAheadLog.size(), nextStart);
@@ -499,22 +501,22 @@ public class WriteAheadLogTest {
     long lastPosition;
 
     // first page
-    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, ONE_KB, false);
+    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart = ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE - 2 * ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
     assertLogContent(writeAheadLog, writtenRecords);
@@ -530,11 +532,13 @@ public class WriteAheadLogTest {
 
     for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE; ) {
       int recordDistance = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 15;
-      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, true);
 
       end = writeAheadLog.log(walRecord);
+
+      recordDistance = walRecord.distance;
       nextStart += recordDistance;
-      lastPosition = walRecord.recordEnd;
+      lastPosition = walRecord.nextStart;
       writtenRecords.add(walRecord);
 
       writtenSize += recordDistance;
@@ -562,21 +566,21 @@ public class WriteAheadLogTest {
     long lastPosition;
 
     // first page
-    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, ONE_KB, false);
+    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart = ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     nextStart += OWALPage.PAGE_SIZE - 2 * ONE_KB;
 
     writtenRecords.add(walRecord);
@@ -593,11 +597,12 @@ public class WriteAheadLogTest {
     OLogSequenceNumber end = lsn;
     for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE; ) {
       int recordDistance = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 65;
-      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, true);
 
       end = writeAheadLog.log(walRecord);
+      recordDistance = walRecord.distance;
       nextStart += recordDistance;
-      lastPosition = walRecord.recordEnd;
+      lastPosition = walRecord.nextStart;
       writtenRecords.add(walRecord);
 
       writtenSize += recordDistance;
@@ -632,10 +637,11 @@ public class WriteAheadLogTest {
     for (int writtenSize = 0; writtenSize < 16 * OWALPage.PAGE_SIZE; ) {
       int recordDistance = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + OWALPage.RECORDS_OFFSET + 10;
 
-      TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+      TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, true);
 
       lsn = writeAheadLog.log(walRecord);
-      lastPosition = walRecord.recordEnd;
+      lastPosition = walRecord.nextStart;
+      recordDistance = walRecord.distance;
 
       nextStart += recordDistance;
       Assert.assertEquals(writeAheadLog.size(), nextStart);
@@ -656,11 +662,12 @@ public class WriteAheadLogTest {
     for (int writtenSize = 0; writtenSize < 16 * OWALPage.PAGE_SIZE; ) {
       int recordDistance = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 2 * OIntegerSerializer.INT_SIZE + 5;
 
-      TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false);
+      TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, true);
 
       end = writeAheadLog.log(walRecord);
-      lastPosition = walRecord.recordEnd;
+      lastPosition = walRecord.nextStart;
 
+      recordDistance = walRecord.distance;
       nextStart += recordDistance;
       Assert.assertEquals(writeAheadLog.size(), nextStart);
       writtenRecords.add(walRecord);
@@ -688,15 +695,15 @@ public class WriteAheadLogTest {
     long nextStart;
     long lastPosition = 0;
 
-    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart = ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertNull(writeAheadLog.getFlushedLsn());
 
@@ -716,7 +723,7 @@ public class WriteAheadLogTest {
     Assert.assertEquals(writeAheadLog.getFlushedLsn(), end);
     Assert.assertEquals(writeAheadLog.size(), nextStart);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
 
@@ -730,20 +737,20 @@ public class WriteAheadLogTest {
     long nextStart;
     long lastPosition;
 
-    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, ONE_KB, false);
+    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart = ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE - 2 * ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertNull(writeAheadLog.getFlushedLsn());
 
@@ -762,7 +769,7 @@ public class WriteAheadLogTest {
 
     final OLogSequenceNumber flushedLSN = walRecord.getLsn();
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
 
@@ -777,20 +784,20 @@ public class WriteAheadLogTest {
     long nextStart;
     long lastPosition;
 
-    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, ONE_KB, false);
+    TestRecord walRecord = new TestRecord(-1, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart = ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE - 2 * ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertNull(writeAheadLog.getFlushedLsn());
 
@@ -812,7 +819,7 @@ public class WriteAheadLogTest {
 
     OLogSequenceNumber flushedLSN = walRecord.getLsn();
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
 
@@ -827,20 +834,20 @@ public class WriteAheadLogTest {
     long nextStart;
     long lastPosition = 0;
 
-    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     lsn = writeAheadLog.log(walRecord);
     nextStart = ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     lsn = writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE - 2 * ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertNull(writeAheadLog.getFlushedLsn());
 
@@ -861,7 +868,7 @@ public class WriteAheadLogTest {
     OLogSequenceNumber flushedLSN = walRecord.getLsn();
     end = writeAheadLog.end();
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     lsn = writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
 
@@ -877,20 +884,20 @@ public class WriteAheadLogTest {
 
     TestRecord walRecord = null;
     for (int i = 0; i < 2; i++) {
-      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
       writeAheadLog.log(walRecord);
       nextStart += ONE_KB;
-      lastPosition = walRecord.recordEnd;
+      lastPosition = walRecord.nextStart;
 
-      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
       writeAheadLog.log(walRecord);
       nextStart += ONE_KB;
-      lastPosition = walRecord.recordEnd;
+      lastPosition = walRecord.nextStart;
 
-      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false);
+      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false, false);
       writeAheadLog.log(walRecord);
       nextStart += OWALPage.PAGE_SIZE - 2 * ONE_KB;
-      lastPosition = walRecord.recordEnd;
+      lastPosition = walRecord.nextStart;
     }
 
     Assert.assertNull(writeAheadLog.getFlushedLsn());
@@ -899,20 +906,20 @@ public class WriteAheadLogTest {
 
     OLogSequenceNumber end = null;
     for (int i = 0; i < 2; i++) {
-      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
       writeAheadLog.log(walRecord);
       nextStart += ONE_KB;
-      lastPosition = walRecord.recordEnd;
+      lastPosition = walRecord.nextStart;
 
-      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
       writeAheadLog.log(walRecord);
       nextStart += ONE_KB;
-      lastPosition = walRecord.recordEnd;
+      lastPosition = walRecord.nextStart;
 
-      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false);
+      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false, false);
       end = writeAheadLog.log(walRecord);
       nextStart += OWALPage.PAGE_SIZE - 2 * ONE_KB;
-      lastPosition = walRecord.recordEnd;
+      lastPosition = walRecord.nextStart;
     }
 
     writeAheadLog.flush();
@@ -928,7 +935,7 @@ public class WriteAheadLogTest {
 
     end = writeAheadLog.end();
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
 
@@ -943,25 +950,25 @@ public class WriteAheadLogTest {
     long nextStart;
     long lastPosition = 0;
 
-    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart = ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 2 * ONE_KB, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE - 2 * ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     Assert.assertNull(writeAheadLog.getFlushedLsn());
 
@@ -981,7 +988,7 @@ public class WriteAheadLogTest {
     OLogSequenceNumber flushedLSN = walRecord.getLsn();
     end = writeAheadLog.end();
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
 
@@ -1002,21 +1009,25 @@ public class WriteAheadLogTest {
     long lastPosition = 0;
 
     while (writtenContent <= 4 * OWALPage.PAGE_SIZE) {
-      int recordDuration = random.nextInt(OWALPage.PAGE_SIZE - 1) + 15;
+      int recordDistance = random.nextInt(OWALPage.PAGE_SIZE - 1) + 15;
 
-      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDuration, false);
+      walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, true);
       writeAheadLog.log(walRecord);
-      nextStart += recordDuration;
-      lastPosition = walRecord.recordEnd;
 
-      writtenContent += recordDuration;
+      recordDistance = walRecord.distance;
+      nextStart += recordDistance;
+      lastPosition = walRecord.nextStart;
+
+      writtenContent += recordDistance;
     }
 
-    int recordDuration = random.nextInt(OWALPage.PAGE_SIZE - 1) + 15;
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDuration, false);
+    int recordDistance = random.nextInt(OWALPage.PAGE_SIZE - 1) + 15;
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, recordDistance, false, true);
+    recordDistance = walRecord.distance;
+
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
-    nextStart += recordDuration;
-    lastPosition = walRecord.recordEnd;
+    nextStart += recordDistance;
+    lastPosition = walRecord.nextStart;
 
     writeAheadLog.flush();
 
@@ -1035,7 +1046,7 @@ public class WriteAheadLogTest {
     end = writeAheadLog.end();
     OLogSequenceNumber flushedLSN = walRecord.getLsn();
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
     nextStart += ONE_KB;
 
@@ -1047,7 +1058,7 @@ public class WriteAheadLogTest {
   }
 
   public void testFirstMasterRecordIsBrokenSingleRecord() throws Exception {
-    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 58, false));
+    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 30, false, true));
 
     writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.logFuzzyCheckPointEnd();
@@ -1069,12 +1080,12 @@ public class WriteAheadLogTest {
   }
 
   public void testSecondMasterRecordIsBroken() throws Exception {
-    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 58, false));
+    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 30, false, true));
 
     OLogSequenceNumber checkPointLSN = writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFuzzyCheckPointEnd();
 
-    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false));
+    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, true));
 
     writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.logFuzzyCheckPointEnd();
@@ -1096,17 +1107,17 @@ public class WriteAheadLogTest {
   }
 
   public void testFirstMasterRecordIsBrokenThreeCheckpoints() throws Exception {
-    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 58, false));
+    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, 30, false, true));
 
     writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFuzzyCheckPointEnd();
 
-    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false));
+    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, true));
 
     OLogSequenceNumber checkPointLSN = writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFuzzyCheckPointEnd();
 
-    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false));
+    writeAheadLog.log(new TestRecord(-1, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, true));
 
     writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.logFuzzyCheckPointEnd();
@@ -1134,11 +1145,11 @@ public class WriteAheadLogTest {
     long lastPosition = 0;
 
     for (int i = 0; i < recordsToWrite; i++) {
-      TestRecord setPageDataRecord = new TestRecord(lastPosition, SEGMENT_SIZE, 65, false);
+      TestRecord setPageDataRecord = new TestRecord(lastPosition, SEGMENT_SIZE, 30, false, true);
       writtenRecords.add(setPageDataRecord);
 
       end = writeAheadLog.log(setPageDataRecord);
-      lastPosition = setPageDataRecord.recordEnd;
+      lastPosition = setPageDataRecord.nextStart;
     }
 
     assertLogContent(writeAheadLog, writtenRecords);
@@ -1159,17 +1170,17 @@ public class WriteAheadLogTest {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
     OLogSequenceNumber end = null;
+    long distance = 0;
     long nextStart = 0;
-    long lastPosition = 0;
 
     final int recordsToWrite = 1;
     for (int i = 0; i < recordsToWrite; i++) {
-      TestRecord testRecord = new TestRecord(lastPosition, SEGMENT_SIZE, 65, false);
+      TestRecord testRecord = new TestRecord(nextStart, SEGMENT_SIZE, 65, false, true);
       writtenRecords.add(testRecord);
 
       end = writeAheadLog.log(testRecord);
-      nextStart += 65;
-      lastPosition = testRecord.recordEnd;
+      distance += testRecord.distance;
+      nextStart = testRecord.nextStart;
     }
 
     Assert.assertEquals(writeAheadLog.end(), end);
@@ -1178,15 +1189,15 @@ public class WriteAheadLogTest {
 
     Assert.assertEquals(writeAheadLog.end(), end);
     Assert.assertEquals(writeAheadLog.getFlushedLsn(), end);
-    Assert.assertEquals(writeAheadLog.size(), nextStart);
+    Assert.assertEquals(writeAheadLog.size(), distance);
 
     for (int i = 0; i < recordsToWrite; i++) {
-      TestRecord testRecord = new TestRecord(lastPosition, SEGMENT_SIZE, 65, false);
+      TestRecord testRecord = new TestRecord(nextStart, SEGMENT_SIZE, 65, false, true);
       writtenRecords.add(testRecord);
 
       end = writeAheadLog.log(testRecord);
-      nextStart += 65;
-      lastPosition = testRecord.recordEnd;
+      distance += testRecord.distance;
+      nextStart = testRecord.nextStart;
     }
 
     assertLogContent(writeAheadLog, writtenRecords);
@@ -1198,7 +1209,7 @@ public class WriteAheadLogTest {
     writeAheadLog = createWAL();
     Assert.assertEquals(writeAheadLog.end(), end);
     Assert.assertEquals(writeAheadLog.getFlushedLsn(), end);
-    Assert.assertEquals(writeAheadLog.size(), nextStart);
+    Assert.assertEquals(writeAheadLog.size(), distance);
 
     assertLogContent(writeAheadLog, writtenRecords);
     assertLogContent(writeAheadLog, writtenRecords.subList(writtenRecords.size() / 2, writtenRecords.size()));
@@ -1209,18 +1220,18 @@ public class WriteAheadLogTest {
 
     long lastPosition = 0;
 
-    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1248,17 +1259,17 @@ public class WriteAheadLogTest {
 
     long lastPosition = 0;
 
-    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, 2 * OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, 2 * OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, ONE_KB, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1286,12 +1297,12 @@ public class WriteAheadLogTest {
 
     long lastPosition = 0;
 
-    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, 3 * OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, 3 * OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1320,12 +1331,12 @@ public class WriteAheadLogTest {
 
     long latestPosition = 0;
 
-    TestRecord walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, 100, false);
+    TestRecord walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, 100, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
-    latestPosition = walRecord.recordEnd;
+    latestPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1352,12 +1363,12 @@ public class WriteAheadLogTest {
 
     long latestPosition = 0;
 
-    TestRecord walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, 100, false);
+    TestRecord walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, 100, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
-    latestPosition = walRecord.recordEnd;
+    latestPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, 2 * OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, 2 * OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1384,12 +1395,12 @@ public class WriteAheadLogTest {
 
     long latestPosition = 0;
 
-    TestRecord walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, 100, false);
+    TestRecord walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, 100, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
-    latestPosition = walRecord.recordEnd;
+    latestPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, 2 * OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, 2 * OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1415,28 +1426,28 @@ public class WriteAheadLogTest {
   }
 
   public void testFirstPageInFlushWasBroken() throws Exception {
-    long latestPosition = 0;
+    long nextStart = 0;
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
     // first flush
-    TestRecord walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    TestRecord walRecord = new TestRecord(nextStart, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    latestPosition = walRecord.recordEnd;
+    nextStart = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(nextStart, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    latestPosition = walRecord.recordEnd;
+    nextStart = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
     // second flush
-    walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(nextStart, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    latestPosition = walRecord.recordEnd;
+    nextStart = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(nextStart, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1464,26 +1475,26 @@ public class WriteAheadLogTest {
   public void testFirstInCompletePageInFlushWasBroken() throws Exception {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     OLogSequenceNumber lsn;
-    long latestPosition = 0;
+    long nextStart = 0;
 
     // first flush
-    TestRecord walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    TestRecord walRecord = new TestRecord(nextStart, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     lsn = writeAheadLog.log(walRecord);
-    latestPosition = walRecord.recordEnd;
+    nextStart = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE + 100, false);
+    walRecord = new TestRecord(nextStart, SEGMENT_SIZE, OWALPage.PAGE_SIZE + 100, false, false);
     lsn = writeAheadLog.log(walRecord);
-    latestPosition = walRecord.recordEnd;
+    nextStart = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
     // second flush
-    walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 100, false);
+    walRecord = new TestRecord(nextStart, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 100, false, false);
     lsn = writeAheadLog.log(walRecord);
-    latestPosition = walRecord.recordEnd;
+    nextStart = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(latestPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(nextStart, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
 
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
@@ -1522,33 +1533,33 @@ public class WriteAheadLogTest {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
     // first flush
-    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
     writeAheadLog.flush();
 
     // second flush
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
     writtenRecords.add(walRecord);
@@ -1584,38 +1595,38 @@ public class WriteAheadLogTest {
     long lastPosition = 0;
 
     // first flush
-    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE + 100, false);
+    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE + 100, false, false);
     writeAheadLog.log(walRecord);
     nextStart = OWALPage.PAGE_SIZE + 100;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
     Assert.assertEquals(writeAheadLog.size(), nextStart);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     Assert.assertEquals(writeAheadLog.size(), nextStart);
 
     writtenRecords.add(walRecord);
     writeAheadLog.flush();
 
     // second flush
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
     Assert.assertEquals(writeAheadLog.size(), nextStart);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 100, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 100, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE - 100;
     writtenRecords.add(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     Assert.assertEquals(writeAheadLog.size(), nextStart);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
     writtenRecords.add(walRecord);
@@ -1653,16 +1664,16 @@ public class WriteAheadLogTest {
     long lastPosition = 0;
 
     // first flush
-    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     nextStart = OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE + 100, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE + 100, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE + 100;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
     writeAheadLog.flush();
 
@@ -1673,19 +1684,19 @@ public class WriteAheadLogTest {
     rndFile.close();
 
     // second flush
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 100, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 100, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE - 100;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
     writtenRecords.add(walRecord);
@@ -1720,10 +1731,10 @@ public class WriteAheadLogTest {
     long nextStart = 0;
 
     // first flush
-    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 100, false);
+    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 100, false, false);
     writeAheadLog.log(walRecord);
     nextStart = OWALPage.PAGE_SIZE - 100;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
     writeAheadLog.flush();
@@ -1735,19 +1746,19 @@ public class WriteAheadLogTest {
     rndFile.close();
 
     // second flush
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE + 100, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE + 100, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE + 100;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 100, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 100, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE - 100;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
     writtenRecords.add(walRecord);
@@ -1771,6 +1782,194 @@ public class WriteAheadLogTest {
     }
   }
 
+  public void testAddRecordsBreakPagesAndAddNewOne() throws Exception {
+    final long seed = System.currentTimeMillis();
+
+    System.out.println("testAddRecordsBreakPagesAndAddNewOne : " + seed);
+    final Random random = new Random(seed);
+
+    final List<TestRecord> writtenRecords = new ArrayList<TestRecord>();
+    List<Integer> pagesPerSegment = new ArrayList<Integer>();
+
+    int currentSize = 0;
+    int pagesWrittenInPreviousSegments = 0;
+    int pagesWrittenInCurrentSegment = 0;
+    long nextStart = 0;
+
+    for (int n = 0; n < 5; n++) {
+      int pagesToWrite = random.nextInt(6) + 2;
+      int maxDistance = Math
+          .min((pagesToWrite - pagesWrittenInPreviousSegments - pagesWrittenInCurrentSegment) * OWALPage.PAGE_SIZE,
+              3 * OWALPage.PAGE_SIZE);
+
+      while (maxDistance > 0) {
+        final int distance = random.nextInt(maxDistance - 1) + 1;
+
+        final TestRecord walRecord = new TestRecord(nextStart, SEGMENT_SIZE, distance, false, true);
+
+        writeAheadLog.log(walRecord);
+        writtenRecords.add(walRecord);
+
+        nextStart = walRecord.nextStart;
+        currentSize += walRecord.distance;
+
+        Assert.assertEquals(walRecord.lsn.getSegment(), pagesPerSegment.size());
+
+        pagesWrittenInCurrentSegment = (currentSize + OWALPage.PAGE_SIZE - 1) / OWALPage.PAGE_SIZE;
+
+        if (nextStart / SEGMENT_SIZE > 0) {
+          pagesPerSegment.add(pagesWrittenInCurrentSegment);
+          pagesWrittenInPreviousSegments += pagesWrittenInCurrentSegment;
+
+          currentSize = 0;
+          nextStart = 0;
+          pagesWrittenInCurrentSegment = 0;
+        }
+
+        maxDistance = Math.min((pagesToWrite - pagesWrittenInPreviousSegments - pagesWrittenInCurrentSegment) * OWALPage.PAGE_SIZE,
+            3 * OWALPage.PAGE_SIZE);
+      }
+
+      assertLogContent(writeAheadLog, writtenRecords);
+      Assert.assertEquals(writeAheadLog.end(), writtenRecords.get(writtenRecords.size() - 1).lsn);
+
+      int logSize = 0;
+      for (TestRecord record : writtenRecords) {
+        logSize += record.distance;
+      }
+
+      Assert.assertEquals(writeAheadLog.size(), logSize);
+
+      writeAheadLog.close();
+
+      final int pagesToBreak = random.nextInt(pagesToWrite - 1) + 1;
+
+      for (int pageIndexFromEnd = 1; pageIndexFromEnd <= pagesToBreak; pageIndexFromEnd++) {
+        int segmentNumber;
+
+        segmentNumber = pagesPerSegment.size();
+
+        int prevSegmentPageIndex = pageIndexFromEnd - pagesWrittenInCurrentSegment;
+        int pagesSkipped = 0;
+
+        while (prevSegmentPageIndex > 0) {
+          if (segmentNumber == pagesPerSegment.size()) {
+            pagesSkipped += pagesWrittenInCurrentSegment;
+          } else {
+            pagesSkipped += pagesPerSegment.get(segmentNumber);
+          }
+
+          segmentNumber--;
+          prevSegmentPageIndex -= pagesPerSegment.get(segmentNumber);
+        }
+
+        int segmentSize;
+        if (segmentNumber == pagesPerSegment.size()) {
+          segmentSize = pagesWrittenInCurrentSegment;
+        } else {
+          segmentSize = pagesPerSegment.get(segmentNumber);
+        }
+
+        int pageIndex = segmentSize - (pageIndexFromEnd - pagesSkipped);
+
+        RandomAccessFile rndFile = new RandomAccessFile(
+            new File(writeAheadLog.getWalLocation(), "WriteAheadLogTest." + segmentNumber + ".wal"), "rw");
+
+        Assert.assertEquals(rndFile.length(), segmentSize * OWALPage.PAGE_SIZE);
+
+        rndFile.seek(pageIndex * OWALPage.PAGE_SIZE);
+
+        final int bt = rndFile.read();
+        rndFile.seek(pageIndex * OWALPage.PAGE_SIZE);
+        rndFile.write(bt + 1);
+        rndFile.close();
+
+        final ListIterator<TestRecord> recordIterator = writtenRecords.listIterator(writtenRecords.size());
+        while (recordIterator.hasPrevious()) {
+          final TestRecord record = recordIterator.previous();
+
+          final long recordSegment = record.lsn.getSegment();
+          final long recordPosition = record.lsn.getPosition();
+
+          final int recordPageStart = (int) (recordPosition / OWALPage.PAGE_SIZE);
+          final int recordPageEnd = (int) (record.nextStart - 1) / OWALPage.PAGE_SIZE;
+
+          if (recordSegment == segmentNumber && recordPageStart <= pageIndex && pageIndex <= recordPageEnd) {
+            recordIterator.remove();
+          } else {
+            break;
+          }
+        }
+      }
+
+      writeAheadLog = createWAL();
+
+      if (!writtenRecords.isEmpty()) {
+        assertLogContent(writeAheadLog, writtenRecords);
+        Assert.assertEquals(writeAheadLog.begin(), writtenRecords.get(0).lsn);
+        Assert.assertEquals(writeAheadLog.end(), writtenRecords.get(writtenRecords.size() - 1).lsn);
+        Assert.assertEquals(writeAheadLog.getFlushedLsn(), writtenRecords.get(writtenRecords.size() - 1).lsn);
+
+        logSize = 0;
+        for (TestRecord record : writtenRecords) {
+          logSize += record.distance;
+        }
+
+        Assert.assertEquals(writeAheadLog.size(), logSize);
+
+        final TestRecord lastRecord = writtenRecords.get(writtenRecords.size() - 1);
+
+        if (lastRecord.lsn.getSegment() == pagesPerSegment.size())
+          nextStart = lastRecord.nextStart;
+        else
+          nextStart = 0;
+
+      } else {
+        Assert.assertEquals(writeAheadLog.begin(), null);
+        Assert.assertEquals(writeAheadLog.end(), null);
+        Assert.assertEquals(writeAheadLog.getFlushedLsn(), null);
+
+        Assert.assertEquals(writeAheadLog.size(), 0);
+
+        nextStart = 0;
+      }
+
+      ArrayList<Integer> newPagesPerSegment = new ArrayList<Integer>(pagesPerSegment.size());
+
+      for (int i = 0; i < pagesPerSegment.size(); i++) {
+        newPagesPerSegment.add(0);
+      }
+
+      pagesWrittenInCurrentSegment = 0;
+      pagesWrittenInPreviousSegments = 0;
+
+      currentSize = 0;
+
+      for (TestRecord record : writtenRecords) {
+        final int recordSegment = (int) record.lsn.getSegment();
+
+        final int recordIndexEnd = (int) ((record.nextStart - 1) / OWALPage.PAGE_SIZE);
+        if (recordSegment == newPagesPerSegment.size()) {
+          if (pagesWrittenInCurrentSegment < recordIndexEnd + 1)
+            pagesWrittenInCurrentSegment = recordIndexEnd + 1;
+
+          currentSize += record.distance;
+        } else {
+          if (newPagesPerSegment.get(recordSegment) < recordIndexEnd + 1) {
+            newPagesPerSegment.set(recordSegment, recordIndexEnd + 1);
+          }
+        }
+
+      }
+
+      for (int count : newPagesPerSegment) {
+        pagesWrittenInPreviousSegments += count;
+      }
+
+      pagesPerSegment = newPagesPerSegment;
+    }
+  }
+
   public void testPageWasNotFullyWritten() throws Exception {
     writeAheadLog.close();
     writeAheadLog = createWAL(3, 6 * OWALPage.PAGE_SIZE);
@@ -1781,33 +1980,33 @@ public class WriteAheadLogTest {
     long lastPosition = 0;
 
     // first flush
-    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
     writeAheadLog.flush();
 
     // second flush
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1834,33 +2033,33 @@ public class WriteAheadLogTest {
     long lastPosition = 0;
 
     // first flush
-    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    TestRecord walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     nextStart = OWALPage.PAGE_SIZE;
     writtenRecords.add(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     writtenRecords.add(walRecord);
     writeAheadLog.flush();
 
     // second flush
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     nextStart += OWALPage.PAGE_SIZE;
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE + 100, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE + 100, false, false);
     writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
     writtenRecords.add(walRecord);
 
-    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 200, false);
+    walRecord = new TestRecord(lastPosition, SEGMENT_SIZE, OWALPage.PAGE_SIZE - 200, false, false);
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1886,18 +2085,18 @@ public class WriteAheadLogTest {
     OLogSequenceNumber lsn;
     long lastPosition = 0;
 
-    TestRecord walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false);
+    TestRecord walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
 
-    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, segmentSize, 2 * OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, segmentSize, 2 * OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE / 2, false);
+    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE / 2, false, false);
     lsn = writeAheadLog.log(walRecord);
 
     writeAheadLog.cutTill(lsn);
@@ -1916,33 +2115,33 @@ public class WriteAheadLogTest {
 
     long lastPosition = 0;
 
-    TestRecord walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false);
+    TestRecord walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, segmentSize, 2 * OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, segmentSize, 2 * OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     // second segment
-    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
-    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false);
+    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE, false, false);
     writeAheadLog.log(walRecord);
-    lastPosition = walRecord.recordEnd;
+    lastPosition = walRecord.nextStart;
 
     // last segment
-    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE / 2, false);
+    walRecord = new TestRecord(lastPosition, segmentSize, OWALPage.PAGE_SIZE / 2, false, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
 
     writeAheadLog.cutTill(lsn);
@@ -1983,74 +2182,141 @@ public class WriteAheadLogTest {
     private byte[]  data;
     private boolean updateMasterRecord;
     /**
-     * End position of current record in WAL segment.
+     * Start position of next record in WAL segment.
      */
-    private long    recordEnd;
+    private long    nextStart;
+
+    /**
+     * Distance of generated record
+     */
+    private int distance;
 
     public TestRecord() {
     }
 
     /**
-     * @param recordPositionEnd  Position in the file the end of the last record written in WAL segment, so position of the end of
-     *                           the record which is written in the WAL just before this record
-     * @param segmentSize        Maximum size of the single WAL segment
-     * @param distance           Required distance in WAL file between the begging of current record and its end. In other word we
-     *                           express how many space we can cover in WAL file by writing this record.
-     * @param updateMasterRecord Flag which indicates whether LSN of this record should be stored in WAL master records registry
+     * @param startPosition       Position of start of current record in the file
+     * @param segmentSize         Maximum size of the single WAL segment
+     * @param distance            Required distance in WAL file between the begging of current record and its end. In other word we
+     *                            express how many space we can cover in WAL file by writing this record.
+     * @param updateMasterRecord  Flag which indicates whether LSN of this record should be stored in WAL master records registry
+     * @param approximateDistance Record distance can be increased if record with required distance can not be generated
      */
-    public TestRecord(long recordPositionEnd, long segmentSize, int distance, boolean updateMasterRecord) {
+    public TestRecord(long startPosition, long segmentSize, int distance, boolean updateMasterRecord, boolean approximateDistance) {
       Random random = new Random();
 
-      //if end of the last record cross boundary new record will start
-      //at the start of the next segment
-      if (recordPositionEnd < 0 || recordPositionEnd / segmentSize > 0) {
-        recordPositionEnd = 0;
-      }
-
-      this.recordEnd = recordPositionEnd + distance;
-
-      //if we add record to a new page, some of the required space will be covered by
-      //system information
-      if (recordPositionEnd % OWALPage.PAGE_SIZE == 0) {
-        recordPositionEnd += OWALPage.RECORDS_OFFSET;
-        distance -= OWALPage.RECORDS_OFFSET;
-      }
-
-      if (distance <= 0) {
-        throw new IllegalArgumentException("Data size for distance " + distance + " can not be calculated");
-      }
-
       int finalSize;
+      int originalDistance = distance;
+      long originalRecordPositionEnd = startPosition;
 
-      //free space in the page equals top position of end of last record minus page size
-      int freeFirstPageSpace = OWALPage.PAGE_SIZE - (int) (recordPositionEnd % OWALPage.PAGE_SIZE);
-
-      if (distance <= freeFirstPageSpace) {
-        //take in account that despite user data some service data are added in each wal record
-        finalSize = OWALPage.calculateRecordSize(distance);
-      } else {
-        distance -= freeFirstPageSpace;
-        finalSize = OWALPage.calculateRecordSize(freeFirstPageSpace);
-
-        final int amountOfFullPieces = distance / OWALPage.PAGE_SIZE;
-        distance -= amountOfFullPieces * OWALPage.PAGE_SIZE;
-
-        finalSize += amountOfFullPieces * OWALPage.calculateRecordSize(OWALPage.MAX_ENTRY_SIZE);
-
-        if (distance > 0) {
-          if (distance < OWALPage.RECORDS_OFFSET)
-            throw new IllegalArgumentException("Data size for distance " + distance + " can not be calculated");
-
-          distance -= OWALPage.RECORDS_OFFSET;
-          finalSize += OWALPage.calculateRecordSize(distance);
+      while (true) {
+        //if end of the last record cross boundary new record will start
+        //at the start of the next segment
+        if (startPosition < 0) {
+          startPosition = 0;
         }
+
+        if (startPosition / segmentSize > 0) {
+          startPosition = 0;
+        }
+
+        this.nextStart = startPosition + distance;
+
+        //if we add record to a new page, some of the required space will be covered by
+        //system information
+        if (startPosition % OWALPage.PAGE_SIZE == 0) {
+          startPosition += OWALPage.RECORDS_OFFSET;
+          distance -= OWALPage.RECORDS_OFFSET;
+        }
+
+        if (distance <= 0) {
+          if (!approximateDistance) {
+            throw new IllegalArgumentException("Data size for distance " + distance + " can not be calculated");
+          } else {
+            originalDistance++;
+            distance = originalDistance;
+            startPosition = originalRecordPositionEnd;
+            continue;
+          }
+        }
+
+        //free space in the page equals top position of end of last record minus page size
+        int freeFirstPageSpace = OWALPage.PAGE_SIZE - (int) (startPosition % OWALPage.PAGE_SIZE);
+
+        if (distance <= freeFirstPageSpace) {
+          //take in account that despite user data some service data are added in each wal record
+          finalSize = OWALPage.calculateRecordSize(distance);
+
+          if (finalSize <= 0) {
+            if (!approximateDistance) {
+              throw new IllegalArgumentException("Data size for distance " + distance + " can not be calculated");
+            } else {
+              originalDistance++;
+              distance = originalDistance;
+              startPosition = originalRecordPositionEnd;
+              continue;
+            }
+          }
+        } else {
+          distance -= freeFirstPageSpace;
+
+          if (freeFirstPageSpace < OWALPage.MIN_RECORD_SIZE) {
+            finalSize = 0;
+          } else {
+            finalSize = OWALPage.calculateRecordSize(freeFirstPageSpace);
+          }
+
+          final int amountOfFullPieces = distance / OWALPage.PAGE_SIZE;
+          distance -= amountOfFullPieces * OWALPage.PAGE_SIZE;
+
+          finalSize += amountOfFullPieces * OWALPage.calculateRecordSize(OWALPage.MAX_ENTRY_SIZE);
+
+          if (distance > 0) {
+            if (distance <= OWALPage.RECORDS_OFFSET) {
+              if (!approximateDistance) {
+                throw new IllegalArgumentException("Data size for distance " + distance + " can not be calculated");
+              } else {
+                originalDistance++;
+                distance = originalDistance;
+                startPosition = originalRecordPositionEnd;
+                continue;
+              }
+            }
+
+            distance -= OWALPage.RECORDS_OFFSET;
+            final int delta = OWALPage.calculateRecordSize(distance);
+
+            if (delta <= 0) {
+              if (!approximateDistance) {
+                throw new IllegalArgumentException("Data size for distance " + distance + " can not be calculated");
+              } else {
+                originalDistance++;
+                distance = originalDistance;
+                startPosition = originalRecordPositionEnd;
+                continue;
+              }
+            }
+
+            finalSize += OWALPage.calculateRecordSize(distance);
+          }
+        }
+
+        //we need to subtract serialization overhead (content length), boolean type, wal record type itself
+        if (finalSize - OIntegerSerializer.INT_SIZE - 1 - 1 < 1) {
+          if (!approximateDistance) {
+            throw new IllegalArgumentException("Can not create record with distance " + distance);
+          } else {
+            originalDistance++;
+            distance = originalDistance;
+            startPosition = originalRecordPositionEnd;
+            continue;
+          }
+        }
+
+        break;
       }
 
-      //we need to subtract serialization overhead (content length), boolean type, wal record type itself
-      if (finalSize - OIntegerSerializer.INT_SIZE - 1 - 1 < 1) {
-        throw new IllegalArgumentException("Can not create record with distance " + distance);
-      }
-
+      this.distance = originalDistance;
       data = new byte[finalSize - OIntegerSerializer.INT_SIZE - 1 - 1];
       random.nextBytes(data);
       this.updateMasterRecord = updateMasterRecord;

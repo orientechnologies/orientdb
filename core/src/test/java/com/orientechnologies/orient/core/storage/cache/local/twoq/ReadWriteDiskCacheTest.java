@@ -1151,7 +1151,7 @@ public class ReadWriteDiskCacheTest {
 
       dataPointer.acquireExclusiveLock();
 
-      OLogSequenceNumber pageLSN = writeAheadLog.log(new WriteAheadLogTest.TestRecord(-1, SEGMENT_SIZE, 58, false));
+      OLogSequenceNumber pageLSN = writeAheadLog.log(new WriteAheadLogTest.TestRecord(-1, SEGMENT_SIZE, 58, false, true));
 
       setLsn(dataPointer.getSharedBuffer(), pageLSN);
 
