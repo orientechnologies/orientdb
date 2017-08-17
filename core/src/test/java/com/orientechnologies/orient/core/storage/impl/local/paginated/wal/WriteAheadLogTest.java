@@ -1787,25 +1787,40 @@ public class WriteAheadLogTest {
     }
   }
 
+  /**
+   * We fill several pages in WAL by data, then damage data on few last pages and then repeat process.
+   */
   public void testAddRecordsBreakPagesAndAddNewOne() throws Exception {
     final long seed = System.currentTimeMillis();
 
     System.out.println("testAddRecordsBreakPagesAndAddNewOne : " + seed);
     final Random random = new Random(seed);
 
+    //records are contained in WAL
     final List<TestRecord> writtenRecords = new ArrayList<TestRecord>();
+
+    //Number of pages for each segment in WAL except of currently active one
+    //so size of this list is index of currently active WAL segment
     List<Integer> pagesPerSegment = new ArrayList<Integer>();
 
+    //size of currently active segment in bytes
     int currentSize = 0;
+
+    //amount of pages written in all segments except currently active one
     int pagesWrittenInPreviousSegments = 0;
+
+    //amount of pages written in currently active segment
     int pagesWrittenInCurrentSegment = 0;
+
+    //position of next record in currently active segment
     long nextStart = 0;
 
     for (int n = 0; n < 5; n++) {
       int pagesToWrite = random.nextInt(6) + 2;
+
+      //we limit max size of record to be no more than size of 3 WAL pages
       int maxDistance = Math
-          .min((pagesToWrite - pagesWrittenInPreviousSegments - pagesWrittenInCurrentSegment) * OWALPage.PAGE_SIZE,
-              3 * OWALPage.PAGE_SIZE);
+          .min((pagesToWrite - pagesWrittenInPreviousSegments - pagesWrittenInCurrentSegment) * OWALPage.PAGE_SIZE, 3 * OWALPage.PAGE_SIZE);
 
       while (maxDistance > 0) {
         final int distance = random.nextInt(maxDistance - 1) + 1;
@@ -1820,8 +1835,10 @@ public class WriteAheadLogTest {
 
         Assert.assertEquals(walRecord.lsn.getSegment(), pagesPerSegment.size());
 
+        //we count not only full but also partially written pages
         pagesWrittenInCurrentSegment = (currentSize + OWALPage.PAGE_SIZE - 1) / OWALPage.PAGE_SIZE;
 
+        //next record will be written in new segment
         if (nextStart / SEGMENT_SIZE > 0) {
           pagesPerSegment.add(pagesWrittenInCurrentSegment);
           pagesWrittenInPreviousSegments += pagesWrittenInCurrentSegment;
@@ -1849,12 +1866,19 @@ public class WriteAheadLogTest {
 
       final int pagesToBreak = random.nextInt(pagesToWrite - 1) + 1;
 
+      //damage WAL pages since the last one
       for (int pageIndexFromEnd = 1; pageIndexFromEnd <= pagesToBreak; pageIndexFromEnd++) {
         int segmentNumber;
 
+        //number of segment which contains data are going to be broken
         segmentNumber = pagesPerSegment.size();
 
+        //check whether page data of which should be broken are placed inside of current segment
+        //or we need to jump few segments toward WAL start
         int prevSegmentPageIndex = pageIndexFromEnd - pagesWrittenInCurrentSegment;
+
+        //amount of pages in all segments which lies after segment which contains page data of which should be broken
+        //not including amount of pages in segment which contains page with data which are going to be broken
         int pagesSkipped = 0;
 
         while (prevSegmentPageIndex > 0) {
@@ -1889,6 +1913,7 @@ public class WriteAheadLogTest {
         rndFile.write(bt + 1);
         rndFile.close();
 
+        //remove all records which at least partially are contained in page data of which was broken
         final ListIterator<TestRecord> recordIterator = writtenRecords.listIterator(writtenRecords.size());
         while (recordIterator.hasPrevious()) {
           final TestRecord record = recordIterator.previous();
@@ -1945,6 +1970,9 @@ public class WriteAheadLogTest {
         newPagesPerSegment.add(0);
       }
 
+      //even if we break single page, record which it contains
+      //may be also contained in other pages so not only damaged page will be removed from the log
+      //but several neighbors too, as result we need to recalculate amount of pages in all WAL segments
       pagesWrittenInCurrentSegment = 0;
       pagesWrittenInPreviousSegments = 0;
 
@@ -2200,6 +2228,7 @@ public class WriteAheadLogTest {
     /**
      * Used for log record deserialization.
      */
+    @SuppressWarnings("unused")
     public TestRecord() {
     }
 
