@@ -210,19 +210,18 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     setTraceEnabled(OGlobalConfiguration.DIRECT_MEMORY_TRACE.getValueAsBoolean());
   }
 
-  /**
-   * Sets trace aggregation level.
-   *
-   * @param traceAggregation the new trace aggregation level.
-   *
-   * @see TraceAggregation
-   */
+  @Override
   public void setTraceAggregation(TraceAggregation traceAggregation) {
     if (this.traceAggregation == traceAggregation)
       return;
 
     this.traceAggregation = traceAggregation;
     resetTracing();
+  }
+
+  @Override
+  public TraceAggregation getTraceAggregation() {
+    return traceAggregation;
   }
 
   /**
@@ -498,6 +497,16 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   @Override
   public int getPoolSize() {
     return poolSize.get();
+  }
+
+  @Override
+  public void startTracing() {
+    setTraceEnabled(true);
+  }
+
+  @Override
+  public void stopTracing() {
+    setTraceEnabled(false);
   }
 
   /**
