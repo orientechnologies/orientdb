@@ -305,7 +305,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     orientDB = new OrientDB(urlConnection.getType() + ":" + urlConnection.getPath(), currentDatabaseUserName,
         currentDatabaseUserPassword, config.build());
 
-
     final String backupPath = omap.remove("-restore");
 
     if (backupPath != null) {
@@ -893,17 +892,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final long start = System.currentTimeMillis();
     List<OIdentifiable> result = new ArrayList<>();
-    OResultSet rs = currentDatabase.query(iQueryText);
-    int count = 0;
-    while (rs.hasNext() && (queryLimit < 0 || count < queryLimit)) {
-      OResult item = rs.next();
-      if (item.isBlob()) {
-        result.add(item.getBlob().get());
-      } else {
-        result.add(item.toElement());
+    try (OResultSet rs = currentDatabase.query(iQueryText)) {
+      int count = 0;
+      while (rs.hasNext() && (queryLimit < 0 || count < queryLimit)) {
+        OResult item = rs.next();
+        if (item.isBlob()) {
+          result.add(item.getBlob().get());
+        } else {
+          result.add(item.toElement());
+        }
       }
     }
-    rs.close();
     setResultset(result);
 
     float elapsedSeconds = getElapsedSecs(start);
@@ -2956,9 +2955,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final long start = System.currentTimeMillis();
 
-    OResultSet rs = currentDatabase.command(iReceivedCommand);
-    final Object result = rs.stream().map(x -> x.toElement()).collect(Collectors.toList());
-    rs.close();
+    final Object result;
+    try (OResultSet rs = currentDatabase.command(iReceivedCommand)) {
+      result = rs.stream().map(x -> x.toElement()).collect(Collectors.toList());
+    }
     float elapsedSeconds = getElapsedSecs(start);
 
     if (iIncludeResult)
