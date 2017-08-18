@@ -231,13 +231,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
   }
 
   private File getConfigFile(String iDatabaseName) {
-    String storagePath = server.getDatabases().getDatabasePath(iDatabaseName);
-
-    if (storagePath != null) {
-      return new File(storagePath + File.separator + FILE_AUDITING_DB_CONFIG);
-    }
-
-    return null;
+    return new File(server.getDatabaseDirectory() + iDatabaseName + File.separator + FILE_AUDITING_DB_CONFIG);
   }
 
   @Override
