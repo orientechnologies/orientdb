@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -298,7 +297,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public OResultSet command(String query, Object[] args) {
     checkOpenness();
     checkAndSendTransaction();
-    ORemoteQueryResult result = storage.command(this, "sql", query, args);
+    ORemoteQueryResult result = storage.command(this, query, args);
     if (result.isTransactionUpdated())
       fetchTransacion();
     return result.getResult();
@@ -308,7 +307,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public OResultSet command(String query, Map args) {
     checkOpenness();
     checkAndSendTransaction();
-    ORemoteQueryResult result = storage.command(this, "sql", query, args);
+    ORemoteQueryResult result = storage.command(this, query, args);
     if (result.isTransactionUpdated())
       fetchTransacion();
     return result.getResult();
@@ -319,7 +318,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       throws OCommandExecutionException, OCommandScriptException {
     checkOpenness();
     checkAndSendTransaction();
-    ORemoteQueryResult result = storage.command(this, language, script, args);
+    ORemoteQueryResult result = storage.execute(this, language, script, args);
     if (result.isTransactionUpdated())
       fetchTransacion();
     return result.getResult();
@@ -330,7 +329,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       throws OCommandExecutionException, OCommandScriptException {
     checkOpenness();
     checkAndSendTransaction();
-    ORemoteQueryResult result = storage.command(this, language, script, args);
+    ORemoteQueryResult result = storage.execute(this, language, script, args);
     if (result.isTransactionUpdated())
       fetchTransacion();
     return result.getResult();

@@ -404,7 +404,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         throw new ORecordNotFoundException(request.getRid());
 
       ((ODocument) currentRecord).merge((ODocument) newRecord, false, false);
-      if(request.isUpdateContent()){
+      if (request.isUpdateContent()) {
         ((ODocument) currentRecord).setDirty();
       }
     } else
@@ -1139,12 +1139,18 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       ((OTransactionOptimistic) database.getTransaction()).resetChangesTracking();
     }
     OResultSet rs;
-    if (request.isIdempotent()) {
+    if (OQueryRequest.QUERY == request.getOperationType()) {
       //TODO Assert is sql.
       if (request.isNamedParams()) {
         rs = database.query(request.getStatement(), request.getNamedParameters());
       } else {
         rs = database.query(request.getStatement(), request.getPositionalParameters());
+      }
+    } else if (OQueryRequest.COMMAND == request.getOperationType()) {
+      if (request.isNamedParams()) {
+        rs = database.command(request.getStatement(), request.getNamedParameters());
+      } else {
+        rs = database.command(request.getStatement(), request.getPositionalParameters());
       }
     } else {
       if (request.isNamedParams()) {

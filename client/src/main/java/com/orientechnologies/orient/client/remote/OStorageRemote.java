@@ -830,43 +830,52 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Object[] args) {
-    OQueryRequest request = new OQueryRequest("sql", query, args, true, db.getSerializer(), 100);
+    OQueryRequest request = new OQueryRequest("sql", query, args, OQueryRequest.QUERY, db.getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
-
     return new ORemoteQueryResult(rs, response.isTxChanges());
   }
 
   public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Map args) {
-    OQueryRequest request = new OQueryRequest("sql", query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
+    OQueryRequest request = new OQueryRequest("sql", query, args, OQueryRequest.QUERY, db.getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
 
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
-
     return new ORemoteQueryResult(rs, response.isTxChanges());
-
   }
 
-  public ORemoteQueryResult command(ODatabaseDocumentRemote db, String language, String query, Object[] args) {
-    OQueryRequest request = new OQueryRequest(language, query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
+  public ORemoteQueryResult command(ODatabaseDocumentRemote db, String query, Object[] args) {
+    OQueryRequest request = new OQueryRequest("sql", query, args, OQueryRequest.COMMAND, db.getSerializer(), 100);
     OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
-
     return new ORemoteQueryResult(rs, response.isTxChanges());
-
   }
 
-  public ORemoteQueryResult command(ODatabaseDocumentRemote db, String language, String query, Map args) {
-    OQueryRequest request = new OQueryRequest(language, query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
+  public ORemoteQueryResult command(ODatabaseDocumentRemote db, String query, Map args) {
+    OQueryRequest request = new OQueryRequest("sql", query, args, OQueryRequest.COMMAND, db.getSerializer(), 100);
     OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
-
     return new ORemoteQueryResult(rs, response.isTxChanges());
+  }
 
+  public ORemoteQueryResult execute(ODatabaseDocumentRemote db, String language, String query, Object[] args) {
+    OQueryRequest request = new OQueryRequest(language, query, args, OQueryRequest.EXECUTE, db.getSerializer(), 100);
+    OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
+    ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
+        response.getQueryStats(), response.isHasNextPage());
+    return new ORemoteQueryResult(rs, response.isTxChanges());
+  }
+
+  public ORemoteQueryResult execute(ODatabaseDocumentRemote db, String language, String query, Map args) {
+    OQueryRequest request = new OQueryRequest(language, query, args, OQueryRequest.EXECUTE, db.getSerializer(), 100);
+    OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
+    ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
+        response.getQueryStats(), response.isHasNextPage());
+    return new ORemoteQueryResult(rs, response.isTxChanges());
   }
 
   public void closeQuery(ODatabaseDocumentRemote database, String queryId) {

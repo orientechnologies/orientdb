@@ -217,7 +217,7 @@ public class OConnectionExecutorTransactionTest {
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
 
-    OQueryRequest query = new OQueryRequest("sql", "update test set name='bla'", new HashMap<>(), true,
+    OQueryRequest query = new OQueryRequest("sql", "update test set name='bla'", new HashMap<>(), OQueryRequest.COMMAND,
         ORecordSerializerNetworkFactory.INSTANCE.current(), 20);
     OQueryResponse queryResponse = (OQueryResponse) query.execute(executor);
 
@@ -241,7 +241,7 @@ public class OConnectionExecutorTransactionTest {
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
 
-    OQueryRequest query = new OQueryRequest("sql", "update test set name='bla'", new HashMap<>(), true,
+    OQueryRequest query = new OQueryRequest("sql", "update test set name='bla'", new HashMap<>(), OQueryRequest.COMMAND,
         ORecordSerializerNetworkFactory.INSTANCE.current(), 20);
     OQueryResponse queryResponse = (OQueryResponse) query.execute(executor);
 
