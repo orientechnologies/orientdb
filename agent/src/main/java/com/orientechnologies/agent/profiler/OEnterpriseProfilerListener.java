@@ -18,8 +18,6 @@
 
 package com.orientechnologies.agent.profiler;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 /**
  *
  * @author Enrico Risa
@@ -27,5 +25,5 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public interface OEnterpriseProfilerListener {
 
-  void onStatsPublished(ODocument stats);
+  void onStatsPublished(String statsAsJson);
 }

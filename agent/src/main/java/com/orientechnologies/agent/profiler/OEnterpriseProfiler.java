@@ -18,14 +18,11 @@
 
 package com.orientechnologies.agent.profiler;
 
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.profiler.OProfilerListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
@@ -67,7 +64,6 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
   protected              int                            elapsedToCreateSnapshot = 0;
   protected TimerTask archiverTask;
   protected TimerTask autoPause;
-  protected TimerTask autoPublish;
   protected OServer   server;
   protected AtomicBoolean paused    = new AtomicBoolean(false);
   protected AtomicLong    timestamp = new AtomicLong(System.currentTimeMillis());
@@ -92,7 +88,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
     final String[] parts = iConfiguration.split(",");
     elapsedToCreateSnapshot = Integer.parseInt(parts[0].trim());
-    
+
     if (isRecording())
       stopRecording();
 
@@ -101,7 +97,6 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
   public void shutdown() {
     autoPause.cancel();
-    autoPublish.cancel();
 
     super.shutdown();
     hooks.clear();
@@ -562,66 +557,24 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
       }
     };
     timer.schedule(autoPause, KEEP_ALIVE, KEEP_ALIVE);
-
-    autoPublish = new TimerTask() {
-      @Override
-      public void run() {
-        broadcastStats();
-      }
-
-    };
-    timer.schedule(autoPublish, 2000, 2000);
   }
 
-  private void broadcastStats() {
-    try {
-      if (!Boolean.TRUE.equals(paused.get())) {
+  @Override
+  public String getStatsAsJson() {
+    String json = null;
 
-        updateStats();
-        ODistributedServerManager distributedManager = server.getDistributedManager();
+    updateStats();
 
-        if (distributedManager != null) {
-          String localNodeName = distributedManager.getLocalNodeName();
-          if (distributedManager != null && distributedManager.isEnabled()) {
-            Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
-            if (configurationMap != null) {
-              ODocument doc = (ODocument) configurationMap.get("clusterStats");
+    json = toJSON("realtime", null);
 
-              if (doc == null) {
-                doc = new ODocument();
-                doc.setTrackingChanges(false);
-              }
-              try {
-                ODocument entries = new ODocument().fromJSON(toJSON("realtime", null));
-                doc.field(localNodeName, entries.toMap());
-                configurationMap.put("clusterStats", doc);
-
-                ODocument stats = doc.copy();
-
-                try {
-                  for (OEnterpriseProfilerListener profilerListener : profilerListeners) {
-
-                    profilerListener.onStatsPublished(stats);
-
-                  }
-                } catch (Exception e) {
-                  OLogManager.instance().debug(this, "Error on listener call", e, localNodeName);
-                }
-
-              } catch (Exception e) {
-                OLogManager.instance().debug(this, "Cannot publish realtime stats for node %s", e, localNodeName);
-              }
-            }
-          }
-        }
-      }
-    } catch (HazelcastInstanceNotActiveException e) {
-      // IGNORE IT
+    for (OEnterpriseProfilerListener profilerListener : profilerListeners) {
+      profilerListener.onStatsPublished(json);
     }
+
+    return json;
   }
 
   private void updateStats() {
-
     double cpuUsage = cpuUsage();
     updateStat(getProcessMetric("runtime.cpu"), "Total cpu used by the process", (long) (cpuUsage * 100));
     updateStat(getProcessMetric("runtime.availableMemory"), "Available memory for the process", Runtime.getRuntime().freeMemory());
@@ -684,21 +637,10 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
   @Override
   public void onNodeJoined(String iNode) {
-
   }
 
   @Override
   public void onNodeLeft(final String iNode) {
-    if (server.getDistributedManager() != null) {
-      final ODistributedServerManager distributedManager = server.getDistributedManager();
-      Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
-      ODocument doc = (ODocument) configurationMap.get("clusterStats");
-      if (doc != null) {
-        doc.removeField(iNode);
-        ODocumentInternal.clearTrackData(doc);
-        configurationMap.put("clusterStats", doc);
-      }
-    }
   }
 
   @Override

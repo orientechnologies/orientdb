@@ -16,7 +16,7 @@ import java.util.concurrent.CountDownLatch;
 
 /**
  * Tests Enterprise Profiler Stats
- * 
+ *
  * @author Enrico Risa
  */
 public class EnterpriseProfilerTest extends AbstractServerClusterTest {
@@ -71,7 +71,7 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
 
       OEnterpriseProfilerListener listener = new OEnterpriseProfilerListener() {
         @Override
-        public void onStatsPublished(ODocument stats) {
+        public void onStatsPublished(String statsAsJson) {
           latch.countDown();
           agent.unregisterListener(this);
         }
@@ -107,8 +107,8 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
     }
 
     for (String node : nodes) {
-      Assert.assertNull(String.format("Stats for server [%s] should't be in stats", node),
-          clusterStats.eval("clusterStats." + node));
+      Assert
+          .assertNull(String.format("Stats for server [%s] should't be in stats", node), clusterStats.eval("clusterStats." + node));
     }
 
   }
