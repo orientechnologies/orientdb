@@ -83,13 +83,17 @@ public enum OGlobalConfiguration {
 
   DIRECT_MEMORY_TRACE("memory.directMemory.trace",
       "Activates [direct memory tracing](Direct-Memory-Tracing.md). The tracing causes a large overhead and should be used for"
-          + "debugging purposes only. False by default.", Boolean.class, false),
+          + "debugging purposes only. False by default.", Boolean.class, false, (iCurrentValue, iNewValue) -> {
+    OByteBufferPool.instance().setTraceEnabled((Boolean) iNewValue);
+  }),
 
   DIRECT_MEMORY_TRACE_AGGREGATION("memory.directMemory.trace.aggregation",
       "Controls the aggregation level of the direct memory tracing. Possible values: 'none' – for no aggregation, events are "
           + "traced one-by-one; 'low' – for low aggregation which provides more details; 'medium' (default) – provides medium "
           + "level of details; 'high' – provides low level of details.", OByteBufferPool.TraceAggregation.class,
-      OByteBufferPool.TraceAggregation.Medium),
+      OByteBufferPool.TraceAggregation.Medium, (iCurrentValue, iNewValue) -> {
+    OByteBufferPool.instance().setTraceAggregation((OByteBufferPool.TraceAggregation) iNewValue);
+  }),
 
   DIRECT_MEMORY_ONLY_ALIGNED_ACCESS("memory.directMemory.onlyAlignedMemoryAccess",
       "Some architectures do not allow unaligned memory access or may suffer from speed degradation. For such platforms, this flag should be set to true",

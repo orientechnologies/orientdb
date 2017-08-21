@@ -78,4 +78,28 @@ public interface OByteBufferPoolMXBean {
    * @return Size of the pool which contains records which were allocated but now were fried to the pool by database.
    */
   int getPoolSize();
+
+  /**
+   * Starts the tracing.
+   */
+  void startTracing();
+
+  /**
+   * Stops the tracing.
+   */
+  void stopTracing();
+
+  /**
+   * @return the active trace aggregation level.
+   */
+  OByteBufferPool.TraceAggregation getTraceAggregation();
+
+  /**
+   * Sets trace aggregation level.
+   *
+   * @param traceAggregation the new trace aggregation level.
+   *
+   * @see OByteBufferPool.TraceAggregation
+   */
+  void setTraceAggregation(OByteBufferPool.TraceAggregation traceAggregation);
 }

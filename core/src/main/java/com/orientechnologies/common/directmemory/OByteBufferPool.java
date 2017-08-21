@@ -74,10 +74,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
   private static final boolean TRACK = OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
 
-  private static final boolean TRACE = OGlobalConfiguration.DIRECT_MEMORY_TRACE.getValueAsBoolean();
-
-  private static final TraceAggregation TRACE_AGGREGATION = OGlobalConfiguration.DIRECT_MEMORY_TRACE_AGGREGATION.getValue();
-
   /**
    * Size of single byte buffer instance in bytes.
    */
@@ -133,11 +129,13 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   private final Map<TrackedBufferKey, TrackedBufferReference> trackedBuffers;
   private final Map<TrackedBufferKey, Exception>              trackedReleases;
 
-  private final AtomicLongArray[] aggregatedTraceStats;
+  private volatile boolean          traceEnabled     = false;
+  private volatile TraceAggregation traceAggregation = TraceAggregation.Medium;
 
-  private final BufferPoolMXBean directBufferPoolMxBean;
-  private final AtomicLong       expectedDirectMemorySize;
-  private final AtomicLong       directMemoryEventCounter;
+  private final AtomicLongArray[] aggregatedTraceStats;
+  private final BufferPoolMXBean  directBufferPoolMxBean;
+  private final AtomicLong        expectedDirectMemorySize;
+  private final AtomicLong        directMemoryEventCounter;
 
   /**
    * @param pageSize Size of single page (instance of <code>DirectByteBuffer</code>) returned by pool.
@@ -184,42 +182,59 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
       trackedReleases = null;
     }
 
-    if (TRACE) {
-      // find the JVM direct memory buffer pool bean
-      BufferPoolMXBean foundDirectBufferPoolMxBean = null;
-      for (BufferPoolMXBean bean : ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class))
-        if ("direct".equals(bean.getName())) {
-          foundDirectBufferPoolMxBean = bean;
-          break;
-        }
-      directBufferPoolMxBean = foundDirectBufferPoolMxBean;
-      if (directBufferPoolMxBean == null)
-        OLogManager.instance()
-            .warn(this, "DIRECT-TRACE: JVM direct memory buffer pool JMX bean is not found, tracing will be less detailed.");
+    // Initialize tracing, we have to do it here once to avoid concurrency issues while turning the tracing on or off.
 
-      expectedDirectMemorySize = directBufferPoolMxBean == null ? null : new AtomicLong();
+    final TraceEvent[] traceEvents = TraceEvent.values();
+    aggregatedTraceStats = new AtomicLongArray[traceEvents.length];
+    for (TraceEvent event : traceEvents)
+      if (event.aggregate)
+        // stores only deltas, so the size is the half of the full stats size plus one more element for the event counting
+        aggregatedTraceStats[event.ordinal()] = new AtomicLongArray(event.statsSize / 2 + 1);
 
-      if (TRACE_AGGREGATION == TraceAggregation.None) {
-        aggregatedTraceStats = null;
-        directMemoryEventCounter = null;
-      } else {
-        final TraceEvent[] traceEvents = TraceEvent.values();
-
-        aggregatedTraceStats = new AtomicLongArray[traceEvents.length];
-        for (TraceEvent event : traceEvents)
-          if (event.aggregate)
-            // stores only deltas, so the size is the half of the full stats size plus one more element for the event counting
-            aggregatedTraceStats[event.ordinal()] = new AtomicLongArray(event.statsSize / 2 + 1);
-
-        directMemoryEventCounter = directBufferPoolMxBean == null ? null : new AtomicLong();
+    // find the JVM direct memory buffer pool bean
+    BufferPoolMXBean foundDirectBufferPoolMxBean = null;
+    for (BufferPoolMXBean bean : ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class))
+      if ("direct".equals(bean.getName())) {
+        foundDirectBufferPoolMxBean = bean;
+        break;
       }
-    } else {
-      aggregatedTraceStats = null;
+    directBufferPoolMxBean = foundDirectBufferPoolMxBean;
+    if (directBufferPoolMxBean == null)
+      OLogManager.instance()
+          .warn(this, "DIRECT-TRACE: JVM direct memory buffer pool JMX bean is not found, tracing will be less detailed.");
 
-      directBufferPoolMxBean = null;
-      expectedDirectMemorySize = null;
-      directMemoryEventCounter = null;
-    }
+    expectedDirectMemorySize = directBufferPoolMxBean == null ? null : new AtomicLong();
+    directMemoryEventCounter = directBufferPoolMxBean == null ? null : new AtomicLong();
+
+    setTraceAggregation(OGlobalConfiguration.DIRECT_MEMORY_TRACE_AGGREGATION.getValue());
+    setTraceEnabled(OGlobalConfiguration.DIRECT_MEMORY_TRACE.getValueAsBoolean());
+  }
+
+  @Override
+  public void setTraceAggregation(TraceAggregation traceAggregation) {
+    if (this.traceAggregation == traceAggregation)
+      return;
+
+    this.traceAggregation = traceAggregation;
+    resetTracing();
+  }
+
+  @Override
+  public TraceAggregation getTraceAggregation() {
+    return traceAggregation;
+  }
+
+  /**
+   * Enables/disables the tracing.
+   *
+   * @param traceEnabled {@code true} to enable the tracing, {@code false} to disable it.
+   */
+  public void setTraceEnabled(boolean traceEnabled) {
+    if (this.traceEnabled == traceEnabled)
+      return;
+
+    this.traceEnabled = traceEnabled;
+    resetTracing();
   }
 
   /**
@@ -484,6 +499,16 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     return poolSize.get();
   }
 
+  @Override
+  public void startTracing() {
+    setTraceEnabled(true);
+  }
+
+  @Override
+  public void stopTracing() {
+    setTraceEnabled(false);
+  }
+
   /**
    * Registers the MBean for this byte buffer pool.
    *
@@ -618,7 +643,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   }
 
   private ByteBuffer trace(ByteBuffer buffer, TraceEvent event, long... stats) {
-    if (TRACE) {
+    if (traceEnabled) {
       if (directBufferPoolMxBean != null) {
         final long eventAllocatedMemory = event.allocatedMemory(stats);
         final long allocatedMemory = eventAllocatedMemory == -1 ? getAllocatedMemory() : eventAllocatedMemory;
@@ -627,7 +652,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
         final long actualDirectMemorySize = directBufferPoolMxBean.getMemoryUsed();
 
         if (actualDirectMemorySize != expectedDirectMemorySizeAfter)
-          if (TRACE_AGGREGATION == TraceAggregation.None)
+          if (traceAggregation == TraceAggregation.None)
             traceDirectBufferPoolSizeChanged(allocatedMemory, expectedDirectMemorySizeAfter, actualDirectMemorySize);
           else {
             final long aggregatedEvents = directMemoryEventCounter.getAndIncrement();
@@ -635,12 +660,12 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
             if (aggregatedEvents == 0)
               traceDirectBufferPoolSizeChanged(allocatedMemory, expectedDirectMemorySizeAfter, actualDirectMemorySize);
 
-            if (aggregatedEvents >= TRACE_AGGREGATION.threshold - 1)
+            if (aggregatedEvents >= traceAggregation.threshold - 1)
               directMemoryEventCounter.set(0);
           }
       }
 
-      if (TRACE_AGGREGATION == TraceAggregation.None || !event.aggregate)
+      if (traceAggregation == TraceAggregation.None || !event.aggregate)
         OLogManager.instance().log(this, event.level, "DIRECT-TRACE %s: %s, buffer = %X", null, event.tag(), event.describe(stats),
             System.identityHashCode(buffer));
       else {
@@ -660,7 +685,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
         // log the stats if the threshold is reached
         if (inverseAggregatedStats == null) {
-          if (eventsAggregated >= TRACE_AGGREGATION.threshold) {
+          if (eventsAggregated >= traceAggregation.threshold) {
             OLogManager.instance().log(this, event.level, "DIRECT-TRACE %s x %d: %s", null, event.tag(), eventsAggregated,
                 event.describe(aggregatedStats, null, stats));
 
@@ -672,7 +697,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
           final long inverseEventsAggregated = inverseAggregatedStats.get(event.statsSize / 2);
 
           // log the stats if the threshold is reached
-          if (eventsAggregated + inverseEventsAggregated >= TRACE_AGGREGATION.threshold) {
+          if (eventsAggregated + inverseEventsAggregated >= traceAggregation.threshold) {
             OLogManager.instance().log(this, event.level, "DIRECT-TRACE %s/%s: %s", null, event.tag(), event.inverse().tag(),
                 event.describe(aggregatedStats, inverseAggregatedStats, stats));
 
@@ -699,6 +724,16 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
         TraceEvent.memory(actual), TraceEvent.sign(delta), TraceEvent.memory(Math.abs(delta)));
 
     expectedDirectMemorySize.set(actual);
+  }
+
+  private void resetTracing() {
+    for (AtomicLongArray stats : aggregatedTraceStats)
+      if (stats != null) // stats maybe absent if an event type doesn't support aggregation
+        for (int i = 0; i < stats.length(); ++i)
+          stats.set(i, 0);
+
+    expectedDirectMemorySize.set(getAllocatedMemory());
+    directMemoryEventCounter.set(0);
   }
 
   private ByteBuffer track(ByteBuffer buffer) {
