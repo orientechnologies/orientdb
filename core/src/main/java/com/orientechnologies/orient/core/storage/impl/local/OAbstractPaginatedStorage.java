@@ -1426,14 +1426,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
 
-      final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
-
-      databaseRecord.getMetadata().makeThreadLocalSchemaSnapshot();
-
       @SuppressWarnings("unchecked")
       final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
       final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<>();
-      final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<>();
 
       final Set<ORecordOperation> newRecords = new TreeSet<>(COMMIT_RECORD_OPERATION_COMPARATOR);
 
@@ -1441,59 +1436,42 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         if (txEntry.type == ORecordOperation.CREATED) {
           newRecords.add(txEntry);
-
-          final ORecord record = txEntry.getRecord();
-          final ORID rid = record.getIdentity();
-
-          int clusterId = rid.getClusterId();
-
+          int clusterId = txEntry.getRID().getClusterId();
           clustersToLock.put(clusterId, getClusterById(clusterId));
         }
       }
-
-      final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
       stateLock.acquireReadLock();
       try {
+
+        checkOpenness();
+
+        makeStorageDirty();
+        atomicOperationsManager.startAtomicOperation((String) null, true);
         try {
-          try {
+          lockClusters(clustersToLock);
 
-            checkOpenness();
+          Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
+          for (ORecordOperation txEntry : newRecords) {
+            ORecord rec = txEntry.getRecord();
 
-            makeStorageDirty();
-
-            lockClusters(clustersToLock);
-
-            Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
-            for (ORecordOperation txEntry : newRecords) {
-              ORecord rec = txEntry.getRecord();
-
-              if (rec.isDirty()) {
-                ORecordId rid = (ORecordId) rec.getIdentity().copy();
-                ORecordId oldRID = rid.copy();
-
-                final Integer clusterOverride = clusterOverrides.get(txEntry);
-                final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
-
-                final OCluster cluster = getClusterById(clusterId);
-                OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
-                rid.setClusterId(cluster.getId());
-
-                positions.put(txEntry, ppos);
-
-                rid.setClusterPosition(ppos.clusterPosition);
-
-                clientTx.updateIdentityAfterCommit(oldRID, rid);
-              }
+            if (rec.isDirty()) {
+              ORecordId rid = (ORecordId) rec.getIdentity().copy();
+              ORecordId oldRID = rid.copy();
+              final OCluster cluster = getClusterById(rid.getClusterId());
+              OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+              rid.setClusterId(cluster.getId());
+              positions.put(txEntry, ppos);
+              rid.setClusterPosition(ppos.clusterPosition);
+              clientTx.updateIdentityAfterCommit(oldRID, rid);
             }
-
-          } catch (IOException | RuntimeException ioe) {
-            throw OException.wrapException(new OStorageException("Could not preallocate RIDs"), ioe);
-          } finally {
-
           }
-        } finally {
-          databaseRecord.getMetadata().clearThreadLocalSchemaSnapshot();
+          atomicOperationsManager.endAtomicOperation(false, null);
+        } catch (Exception e) {
+          atomicOperationsManager.endAtomicOperation(true, e);
         }
+
+      } catch (IOException | RuntimeException ioe) {
+        throw OException.wrapException(new OStorageException("Could not preallocate RIDs"), ioe);
       } finally {
         stateLock.releaseReadLock();
       }
