@@ -18,22 +18,44 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.sql.parser.OInteger;
 
 import java.nio.ByteBuffer;
 
 /**
+ * WAL page is organized using following format:
+ * <p>
+ * <ol>
+ * <li>CRC32 code of page content, it is used to check whether data are broken on disk. 4 bytes</li>
+ * <li>Magic number, randomly generated number which is used to check whether page is broken on disk. 8 bytes</li>
+ * <li>Amount of free space left on page, which can be used to add new records, 4 bytes</li>
+ * <li>Position of LSN of last record which end is stored on this page, 8 bytes</li>
+ * <li>End of the last record stored in page, 4 bytes</li>
+ * <li>WAL records</li>
+ * </ol>
+ * <p>
+ * Each WAL record is stored using following format:
+ * <ol>
+ * <li>Flag which indicates that record should be merged with record which is stored on next page. That is needed if
+ * record can not be stored on one page and is split by two pages. 1 byte</li>
+ * <li>Flag which indicates that this record is actually tail of long record parts of which are stored on other pages, 1 byte</li>
+ * <li>Length of serialized content of WAL record. 4 bytes</li>
+ * <li>Serialized content of the WAL record. Variable size.</li>
+ * </ol>
+ * <p>
+ *
+ * Every time new record is added. Value of free space left on page is updated.
+ *
  * @author Andrey Lomakin
  * @since 5/8/13
  */
 public class OWALPage {
-  public static final long MAGIC_NUMBER    = 0xFACB03FEL;
+  static final        long MAGIC_NUMBER    = 0xFACB03FEL;
   public static final int  PAGE_SIZE       = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
-  public static final int  MIN_RECORD_SIZE = OIntegerSerializer.INT_SIZE + 3;
+  static final        int  MIN_RECORD_SIZE = OIntegerSerializer.INT_SIZE + 3;
 
-  public static final int CRC_OFFSET          = 0;
-  public static final int MAGIC_NUMBER_OFFSET = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
-  public static final int FREE_SPACE_OFFSET   = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int CRC_OFFSET          = 0;
+  static final         int MAGIC_NUMBER_OFFSET = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
+  static final         int FREE_SPACE_OFFSET   = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
   /**
    * Information about position of LSN of last record which end is stored on this page. If only begging of the record is stored on
@@ -42,7 +64,7 @@ public class OWALPage {
    * @see OLogSegment.FlushTask#commitLog()
    * @see OLogSegment#init(ByteBuffer)
    */
-  public static final int LAST_STORED_LSN = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
+  static final int LAST_STORED_LSN = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   /**
    * End of the last record stored in page. This value is used in case of end of the WAL is broken and we want to truncate it to
@@ -51,15 +73,15 @@ public class OWALPage {
    * @see OLogSegment.FlushTask#commitLog()
    * @see OLogSegment#init(ByteBuffer)
    */
-  public static final int END_LAST_RECORD = LAST_STORED_LSN + OLongSerializer.LONG_SIZE;
+  static final int END_LAST_RECORD = LAST_STORED_LSN + OLongSerializer.LONG_SIZE;
 
-  public static final int RECORDS_OFFSET = END_LAST_RECORD + OIntegerSerializer.INT_SIZE;
+  static final int RECORDS_OFFSET = END_LAST_RECORD + OIntegerSerializer.INT_SIZE;
 
-  public static final int MAX_ENTRY_SIZE = PAGE_SIZE - RECORDS_OFFSET;
+  static final int MAX_ENTRY_SIZE = PAGE_SIZE - RECORDS_OFFSET;
 
   private final ByteBuffer buffer;
 
-  public OWALPage(ByteBuffer buffer, boolean isNew) {
+  OWALPage(ByteBuffer buffer, boolean isNew) {
     this.buffer = buffer;
 
     if (isNew) {
@@ -73,28 +95,6 @@ public class OWALPage {
     }
   }
 
-  public ByteBuffer getByteBuffer() {
-    return buffer;
-  }
-
-  public int appendRecord(byte[] content, boolean mergeWithNextPage, boolean recordTail) {
-    int freeSpace = getFreeSpace();
-    int freePosition = PAGE_SIZE - freeSpace;
-
-    buffer.position(freePosition);
-    buffer.put(mergeWithNextPage ? (byte) 1 : 0);
-
-    buffer.put(recordTail ? (byte) 1 : 0);
-    buffer.putInt(content.length);
-
-    buffer.put(content);
-
-    buffer.position(FREE_SPACE_OFFSET);
-    buffer.putInt(FREE_SPACE_OFFSET, freeSpace - 2 - OIntegerSerializer.INT_SIZE - content.length);
-
-    return freePosition;
-  }
-
   public byte[] getRecord(int position) {
     buffer.position(position + 2);
     final int recordSize = buffer.getInt();
@@ -103,32 +103,19 @@ public class OWALPage {
     return record;
   }
 
-  public int getSerializedRecordSize(int position) {
-    final int recordSize = buffer.getInt(position + 2);
-    return recordSize + OIntegerSerializer.INT_SIZE + 2;
-  }
-
-  public boolean mergeWithNextPage(int position) {
+  boolean mergeWithNextPage(int position) {
     return buffer.get(position) > 0;
   }
 
-  public boolean isEmpty() {
-    return getFreeSpace() == MAX_ENTRY_SIZE;
-  }
-
-  public int getFreeSpace() {
+  int getFreeSpace() {
     return buffer.getInt(FREE_SPACE_OFFSET);
   }
 
-  public int getFilledUpTo() {
-    return OWALPage.PAGE_SIZE - getFreeSpace();
-  }
-
-  public static int calculateSerializedSize(int recordSize) {
+  static int calculateSerializedSize(int recordSize) {
     return recordSize + OIntegerSerializer.INT_SIZE + 2;
   }
 
-  public static int calculateRecordSize(int serializedSize) {
+  static int calculateRecordSize(int serializedSize) {
     return serializedSize - OIntegerSerializer.INT_SIZE - 2;
   }
 }

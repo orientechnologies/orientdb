@@ -1,12 +1,9 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -14,7 +11,6 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerforman
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -35,8 +31,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 
+import static com.orientechnologies.common.io.OIOUtils.readByteBuffer;
+import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
+
 final class OLogSegment implements Comparable<OLogSegment> {
-  private ODiskWriteAheadLog writeAheadLog;
+  private final ODiskWriteAheadLog writeAheadLog;
 
   /**
    * File which contains WAL segment data. It is <code>null</code> by default and initialized on request.
@@ -97,7 +96,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
   private final long                         order;
   private final int                          maxPagesCacheSize;
   private final OPerformanceStatisticManager performanceStatisticManager;
-  protected final  Lock             cacheLock = new ReentrantLock();
+  private final    Lock             cacheLock = new ReentrantLock();
   private volatile List<OLogRecord> logCache  = new ArrayList<OLogRecord>();
 
   private final ScheduledExecutorService commitExecutor;
@@ -336,7 +335,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
 
   OLogSegment(ODiskWriteAheadLog writeAheadLog, File file, int fileTTL, int maxPagesCacheSize,
       OPerformanceStatisticManager performanceStatisticManager, ScheduledExecutorService closer,
-      ScheduledExecutorService commitExecutor) throws IOException {
+      ScheduledExecutorService commitExecutor) {
     this.writeAheadLog = writeAheadLog;
     this.file = file;
     this.fileTTL = fileTTL;
@@ -349,7 +348,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
     closed = false;
   }
 
-  public void startFlush() {
+  void startFlush() {
     if (writeAheadLog.getCommitDelay() > 0) {
       commitExecutor.scheduleAtFixedRate(new FlushTask(), writeAheadLog.getCommitDelay(), writeAheadLog.getCommitDelay(),
           TimeUnit.MILLISECONDS);
@@ -359,7 +358,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
     }
   }
 
-  public void stopFlush(boolean flush) {
+  void stopFlush(boolean flush) {
     if (flush)
       flush();
 
@@ -416,7 +415,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
     long currentPage;
 
     //position of LSN of last record which is fully written to the WAL
-    long lastPosition = -1;
+    long lastPosition;
 
     fileLock.lock();
     try {
@@ -463,7 +462,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
         buffer.position(0);
         readByteBuffer(buffer, channel, currentPage * OWALPage.PAGE_SIZE, false);
 
-        if (!checkPageIntegrity(buffer)) {
+        if (pageIsBroken(buffer)) {
           OLogManager.instance()
               .warn(this, "Page %d is broken in WAL segment %d and will be truncated", currentPage, currentPage, order);
         } else {
@@ -510,7 +509,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
   }
 
   @Override
-  public int compareTo(OLogSegment other) {
+  public int compareTo(@SuppressWarnings("NullableProblems") OLogSegment other) {
     final long otherOrder = other.order;
 
     if (order > otherOrder)
@@ -584,19 +583,19 @@ final class OLogSegment implements Comparable<OLogSegment> {
     return file.getAbsolutePath();
   }
 
-  public static class OLogRecord {
-    public final byte[] record;
-    public final long   writeFrom;
-    public final long   writeTo;
+  static class OLogRecord {
+    final byte[] record;
+    final long   writeFrom;
+    final long   writeTo;
 
-    public OLogRecord(byte[] record, long writeFrom, long writeTo) {
+    OLogRecord(byte[] record, long writeFrom, long writeTo) {
       this.record = record;
       this.writeFrom = writeFrom;
       this.writeTo = writeTo;
     }
   }
 
-  public static OLogRecord generateLogRecord(final long starting, final byte[] record) {
+  static OLogRecord generateLogRecord(final long starting, final byte[] record) {
     long from = starting;
     long length = record.length;
     long resultSize;
@@ -635,7 +634,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
     }
   }
 
-  public OLogSequenceNumber logRecord(byte[] record) throws IOException {
+  OLogSequenceNumber logRecord(byte[] record) {
     flushNewData = true;
 
     OLogRecord rec = generateLogRecord(filledUpTo, record);
@@ -693,7 +692,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
         fileLock.unlock();
       }
 
-      if (!checkPageIntegrity(byteBuffer))
+      if (pageIsBroken(byteBuffer))
         throw new OWALPageBrokenException("WAL page with index " + pageIndex + " is broken");
 
       OWALPage page = new OWALPage(byteBuffer, false);
@@ -726,7 +725,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
     return record;
   }
 
-  public OLogSequenceNumber getNextLSN(OLogSequenceNumber lsn, ByteBuffer buffer) throws IOException {
+  OLogSequenceNumber getNextLSN(OLogSequenceNumber lsn, ByteBuffer buffer) throws IOException {
     final byte[] record = readRecord(lsn, buffer);
     if (record == null)
       return null;
@@ -822,10 +821,10 @@ final class OLogSegment implements Comparable<OLogSegment> {
     }
   }
 
-  private boolean checkPageIntegrity(ByteBuffer content) {
+  private boolean pageIsBroken(ByteBuffer content) {
     final long magicNumber = content.getLong(OWALPage.MAGIC_NUMBER_OFFSET);
     if (magicNumber != OWALPage.MAGIC_NUMBER)
-      return false;
+      return true;
 
     byte[] data = new byte[OWALPage.PAGE_SIZE - OIntegerSerializer.INT_SIZE];
     content.position(OWALPage.MAGIC_NUMBER_OFFSET);
@@ -834,26 +833,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
     final CRC32 crc32 = new CRC32();
     crc32.update(data);
 
-    return ((int) crc32.getValue()) == content.getInt(0);
-  }
-
-  private void selfCheck() throws IOException {
-    if (!logCache.isEmpty())
-      throw new IllegalStateException("WAL cache is not empty, we cannot verify WAL after it was started to be used");
-
-    fileLock.lock();
-    try {
-      final RandomAccessFile rndFile = getRndFile();
-      long pagesCount = rndFile.length() / OWALPage.PAGE_SIZE;
-
-      if (rndFile.length() % OWALPage.PAGE_SIZE > 0) {
-        OLogManager.instance().error(this, "Last WAL page was written partially, auto fix");
-
-        rndFile.setLength(OWALPage.PAGE_SIZE * pagesCount);
-      }
-    } finally {
-      fileLock.unlock();
-    }
+    return ((int) crc32.getValue()) != content.getInt(0);
   }
 
   public long getFilledUpTo() {
@@ -909,36 +889,4 @@ final class OLogSegment implements Comparable<OLogSegment> {
       }
     }
   }
-
-  private static void readByteBuffer(ByteBuffer buffer, FileChannel channel, long position, boolean throwOnEof) throws IOException {
-    int bytesToRead = buffer.limit();
-
-    int read = 0;
-    while (read < bytesToRead) {
-      buffer.position(read);
-
-      final int r = channel.read(buffer, position + read);
-      if (r < 0)
-        if (throwOnEof)
-          throw new EOFException("End of file is reached");
-        else {
-          buffer.put(new byte[buffer.remaining()]);
-          return;
-        }
-
-      read += r;
-    }
-  }
-
-  private static void writeByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
-    int bytesToWrite = buffer.limit();
-
-    int written = 0;
-    while (written < bytesToWrite) {
-      buffer.position(written);
-
-      written += channel.write(buffer, position + written);
-    }
-  }
-
 }
