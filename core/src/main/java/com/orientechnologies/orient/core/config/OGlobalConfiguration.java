@@ -769,7 +769,7 @@ public enum OGlobalConfiguration {
    * @Since 2.2.0
    */
   @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads",
-      "Number of parallel worker threads per database that process distributed messages", Integer.class, 8),
+      "Number of parallel worker threads per database that process distributed messages. Use 0 for automatic", Integer.class, 0),
 
   /**
    * @Since 2.1.3, Deprecated in 2.2.0
