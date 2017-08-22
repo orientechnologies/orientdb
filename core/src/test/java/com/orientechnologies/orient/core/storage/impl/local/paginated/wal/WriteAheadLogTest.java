@@ -635,7 +635,7 @@ public class WriteAheadLogTest {
     long nextStart = 0;
 
     for (int writtenSize = 0; writtenSize < 16 * OWALPage.PAGE_SIZE; ) {
-      int recordDistance = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + OWALPage.RECORDS_OFFSET + 10;
+      int recordDistance = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + OWALPageV2.RECORDS_OFFSET + 10;
 
       TestRecord walRecord = new TestRecord(nextStart, SEGMENT_SIZE, recordDistance, false, true);
 
@@ -2263,8 +2263,8 @@ public class WriteAheadLogTest {
         //if we add record to a new page, some of the required space will be covered by
         //system information
         if (startPosition % OWALPage.PAGE_SIZE == 0) {
-          startPosition += OWALPage.RECORDS_OFFSET;
-          distance -= OWALPage.RECORDS_OFFSET;
+          startPosition += OWALPageV2.RECORDS_OFFSET;
+          distance -= OWALPageV2.RECORDS_OFFSET;
         }
 
         if (distance <= 0) {
@@ -2283,7 +2283,7 @@ public class WriteAheadLogTest {
 
         if (distance <= freeFirstPageSpace) {
           //take in account that despite user data some service data are added in each wal record
-          finalSize = OWALPage.calculateRecordSize(distance);
+          finalSize = OWALPageV2.calculateRecordSize(distance);
 
           if (finalSize <= 0) {
             if (!approximateDistance) {
@@ -2301,16 +2301,16 @@ public class WriteAheadLogTest {
           if (freeFirstPageSpace < OWALPage.MIN_RECORD_SIZE) {
             finalSize = 0;
           } else {
-            finalSize = OWALPage.calculateRecordSize(freeFirstPageSpace);
+            finalSize = OWALPageV2.calculateRecordSize(freeFirstPageSpace);
           }
 
           final int amountOfFullPieces = distance / OWALPage.PAGE_SIZE;
           distance -= amountOfFullPieces * OWALPage.PAGE_SIZE;
 
-          finalSize += amountOfFullPieces * OWALPage.calculateRecordSize(OWALPage.MAX_ENTRY_SIZE);
+          finalSize += amountOfFullPieces * OWALPageV2.calculateRecordSize(OWALPageV2.MAX_ENTRY_SIZE);
 
           if (distance > 0) {
-            if (distance <= OWALPage.RECORDS_OFFSET) {
+            if (distance <= OWALPageV2.RECORDS_OFFSET) {
               if (!approximateDistance) {
                 throw new IllegalArgumentException("Data size for distance " + distance + " can not be calculated");
               } else {
@@ -2321,8 +2321,8 @@ public class WriteAheadLogTest {
               }
             }
 
-            distance -= OWALPage.RECORDS_OFFSET;
-            final int delta = OWALPage.calculateRecordSize(distance);
+            distance -= OWALPageV2.RECORDS_OFFSET;
+            final int delta = OWALPageV2.calculateRecordSize(distance);
 
             if (delta <= 0) {
               if (!approximateDistance) {
@@ -2335,7 +2335,7 @@ public class WriteAheadLogTest {
               }
             }
 
-            finalSize += OWALPage.calculateRecordSize(distance);
+            finalSize += OWALPageV2.calculateRecordSize(distance);
           }
         }
 

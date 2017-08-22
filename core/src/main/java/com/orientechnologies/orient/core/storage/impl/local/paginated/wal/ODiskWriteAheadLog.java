@@ -70,7 +70,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final RandomAccessFile masterRecordLSNHolder;
 
   /**
-   * If file of {@link OLogSegment} will not be accessed inside of this interval (in seconds) it will be closed by timer.
+   * If file of {@link OLogSegmentV2} will not be accessed inside of this interval (in seconds) it will be closed by timer.
    */
   private final int fileTTL;
 
@@ -100,17 +100,15 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final ByteBuffer fileDataBuffer = ByteBuffer.allocateDirect(OWALPage.PAGE_SIZE).order(ByteOrder.nativeOrder());
 
   private static class SimpleFileNameFilter implements java.io.FilenameFilter {
-    private final String storageName;
     private final Locale locale;
 
-    public SimpleFileNameFilter(OLocalPaginatedStorage storage) {
-      this.storageName = storage.getName();
+    SimpleFileNameFilter(OLocalPaginatedStorage storage) {
       this.locale = storage.getConfiguration().getLocaleInstance();
     }
 
     @Override
     public boolean accept(File dir, String name) {
-      return validateSimpleName(name, storageName, locale);
+      return validateSimpleName(name, locale);
     }
   }
 
@@ -172,8 +170,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         itemsToRemove.add(ref);
     }
 
-    for (WeakReference<OLowDiskSpaceListener> ref : itemsToRemove)
-      lowDiskSpaceListeners.remove(ref);
+    lowDiskSpaceListeners.removeAll(itemsToRemove);
   }
 
   public void addFullCheckpointListener(OFullCheckpointRequestListener listener) {
@@ -190,12 +187,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         itemsToRemove.add(ref);
     }
 
-    for (WeakReference<OFullCheckpointRequestListener> ref : itemsToRemove)
-      fullCheckpointListeners.remove(ref);
+    fullCheckpointListeners.removeAll(itemsToRemove);
   }
 
   /**
-   * @param fileTTL If file of {@link OLogSegment} will not be accessed inside of this interval (in seconds) it will be closed by
+   * @param fileTTL If file of {@link OLogSegmentV2} will not be accessed inside of this interval (in seconds) it will be closed by
    *                timer.
    */
   public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, final String walPath,
@@ -222,10 +218,10 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
             "Location passed in WAL does not exist, or IO error was happened. DB cannot work in durable mode in such case");
 
       if (walFiles.length == 0) {
-        OLogSegment logSegment = new OLogSegment(this, new File(this.walLocation, getSegmentName(0)), fileTTL, maxPagesCacheSize,
+
+        OLogSegment logSegment = new OLogSegmentV2(this, new File(this.walLocation, getSegmentName(0)), fileTTL, maxPagesCacheSize,
             performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
             new SubScheduledExecutorService(commitExecutor));
-
         logSegment.init(fileDataBuffer);
         logSegment.startFlush();
         logSegments.add(logSegment);
@@ -238,8 +234,32 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         logSize = 0;
 
         for (File walFile : walFiles) {
-          OLogSegment logSegment = new OLogSegment(this, walFile, fileTTL, maxPagesCacheSize, performanceStatisticManager,
-              new SubScheduledExecutorService(autoFileCloser), new SubScheduledExecutorService(commitExecutor));
+          final RandomAccessFile st = new RandomAccessFile(walFile, "r");
+          OLogSegment logSegment;
+
+          //if WAL segment is broken always use latest version
+          if (st.length() / OWALPage.PAGE_SIZE < 1) {
+            st.close();
+
+            logSegment = new OLogSegmentV2(this, walFile, fileTTL, maxPagesCacheSize, performanceStatisticManager,
+                new SubScheduledExecutorService(autoFileCloser), new SubScheduledExecutorService(commitExecutor));
+          } else {
+
+            //magic number is used not only to check data integrity but also
+            //to check version of binary format is used for log segment.
+            st.seek(OWALPage.MAGIC_NUMBER_OFFSET);
+            final long magicNumber = st.readLong();
+            st.close();
+
+            if (magicNumber == OWALPageV1.MAGIC_NUMBER) {
+              logSegment = new OLogSegmentV1(this, walFile, fileTTL, maxPagesCacheSize, performanceStatisticManager,
+                  new SubScheduledExecutorService(autoFileCloser), new SubScheduledExecutorService(commitExecutor));
+            } else {
+              logSegment = new OLogSegmentV2(this, walFile, fileTTL, maxPagesCacheSize, performanceStatisticManager,
+                  new SubScheduledExecutorService(autoFileCloser), new SubScheduledExecutorService(commitExecutor));
+            }
+          }
+
           logSegment.init(fileDataBuffer);
 
           logSegments.add(logSegment);
@@ -248,7 +268,23 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
         Collections.sort(logSegments);
 
-        logSegments.get(logSegments.size() - 1).startFlush();
+        OLogSegment last = logSegments.get(logSegments.size() - 1);
+
+        //if last segment is created under older version, create new one
+        if (last instanceof OLogSegmentV1) {
+          OLogManager.instance()
+              .info(this, "Out of dated binary format for WAL segment `%s` in storage `%s` is detected, new segment will be added ",
+                  last.getPath(), storage.getName());
+
+          last = new OLogSegmentV2(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
+              performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
+              new SubScheduledExecutorService(commitExecutor));
+          last.init(fileDataBuffer);
+          logSegments.add(last);
+        }
+
+        last.startFlush();
+
         flushedLsn = findFlushedLSN();
       }
 
@@ -285,7 +321,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
-  public void incrementCacheOverflowCount() {
+  void incrementCacheOverflowCount() {
     cacheOverflowCount++;
   }
 
@@ -304,7 +340,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return storage.getName() + "." + order + WAL_SEGMENT_EXTENSION;
   }
 
-  static boolean validateName(String name, String storageName, Locale locale) {
+  private static boolean validateName(String name, String storageName, Locale locale) {
     if (!name.toLowerCase(locale).endsWith(".wal"))
       return false;
 
@@ -320,6 +356,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
     String walOrder = name.substring(walOrderStartIndex + 1, walOrderEndIndex);
     try {
+      //noinspection ResultOfMethodCallIgnored
       Integer.parseInt(walOrder);
     } catch (NumberFormatException e) {
       return false;
@@ -328,7 +365,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return true;
   }
 
-  static boolean validateSimpleName(String name, String storageName, Locale locale) {
+  private static boolean validateSimpleName(String name, Locale locale) {
     if (!name.toLowerCase(locale).endsWith(".wal"))
       return false;
 
@@ -340,6 +377,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
     String walOrder = name.substring(walOrderStartIndex + 1, walOrderEndIndex);
     try {
+      //noinspection ResultOfMethodCallIgnored
       Integer.parseInt(walOrder);
     } catch (NumberFormatException e) {
       return false;
@@ -348,7 +386,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return true;
   }
 
-  public File getWalLocation() {
+  File getWalLocation() {
     return walLocation;
   }
 
@@ -388,7 +426,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       int lastIndex = logSegments.size() - 1;
       OLogSegment last = logSegments.get(lastIndex);
 
-      while (last.getFilledUpTo() == 0) {
+      while (last.filledUpTo() == 0) {
         lastIndex--;
         if (lastIndex >= 0)
           last = logSegments.get(lastIndex);
@@ -483,14 +521,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   /**
-   * it log a record getting the serialized content as paramenter.
-   *
-   * @param record
-   * @param recordContent
-   *
-   * @return
-   *
-   * @throws IOException
+   * it log a record getting the serialized content as parameter.
    */
   private OLogSequenceNumber internalLog(OWALRecord record, byte[] recordContent) throws IOException {
     syncObject.lock();
@@ -537,7 +568,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
             && activeOperations.isEmpty())) {
           last.stopFlush(true);
 
-          last = new OLogSegment(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
+          last = new OLogSegmentV2(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
               performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
               new SubScheduledExecutorService(commitExecutor));
           last.init(fileDataBuffer);
@@ -586,7 +617,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         logSegments.remove(logSegments.size() - 1);
       }
 
-      last = new OLogSegment(this, new File(walLocation, getSegmentName(lsn.getSegment() + 1)), fileTTL, maxPagesCacheSize,
+      last = new OLogSegmentV2(this, new File(walLocation, getSegmentName(lsn.getSegment() + 1)), fileTTL, maxPagesCacheSize,
           performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
           new SubScheduledExecutorService(commitExecutor));
       last.init(fileDataBuffer);
@@ -613,7 +644,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       last.stopFlush(true);
 
-      last = new OLogSegment(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
+      last = new OLogSegmentV2(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
           performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
           new SubScheduledExecutorService(commitExecutor));
       last.init(fileDataBuffer);
@@ -894,7 +925,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return logSegments.remove(0);
   }
 
-  private void recalculateLogSize() throws IOException {
+  private void recalculateLogSize() {
     logSize = 0;
 
     for (OLogSegment segment : logSegments)
@@ -989,7 +1020,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     masterRecordLSNHolder.write(record);
   }
 
-  private OLogSequenceNumber findFlushedLSN() throws IOException {
+  private OLogSequenceNumber findFlushedLSN() {
     int segment = logSegments.size() - 1;
     while (segment >= 0) {
       final OLogSegment logSegment = logSegments.get(segment);
@@ -1004,11 +1035,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return null;
   }
 
-  public OLocalPaginatedStorage getStorage() {
+  private OLocalPaginatedStorage getStorage() {
     return storage;
   }
 
-  public void setFlushedLsn(OLogSequenceNumber flushedLsn) {
+  void setFlushedLsn(OLogSequenceNumber flushedLsn) {
     this.flushedLsn = flushedLsn;
   }
 
@@ -1028,7 +1059,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
-  public int getCommitDelay() {
+  int getCommitDelay() {
     return commitDelay;
   }
 
