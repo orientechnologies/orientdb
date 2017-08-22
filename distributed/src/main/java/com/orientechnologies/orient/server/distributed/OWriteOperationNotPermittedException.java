@@ -16,9 +16,7 @@
  *  
  */
 
-package com.orientechnologies.orient.server.distributed.impl;
-
-import com.orientechnologies.orient.server.distributed.ODistributedException;
+package com.orientechnologies.orient.server.distributed;
 
 /**
  * A non idempotent operation has been executed against a read only server (REPLICA).
