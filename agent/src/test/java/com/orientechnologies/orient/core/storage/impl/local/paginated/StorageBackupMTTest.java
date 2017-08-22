@@ -88,7 +88,7 @@ public class StorageBackupMTTest {
     System.out.println("create and restore");
 
     OrientDBEmbedded embedded = (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, OrientDBConfig.defaultConfig());
-    embedded.restore(backupDbName, backupDir.getAbsolutePath(), OrientDBConfig.defaultConfig());
+    embedded.restore(backupDbName, null, null, null, backupDir.getAbsolutePath(), OrientDBConfig.defaultConfig());
     embedded.close();
 
     final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",

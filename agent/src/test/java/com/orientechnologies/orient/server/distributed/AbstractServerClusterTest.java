@@ -17,7 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.instance.GroupProperties;
+import com.hazelcast.spi.properties.GroupProperty;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -97,7 +97,7 @@ public abstract class AbstractServerClusterTest {
   public void init(final int servers) {
     ODatabaseDocumentTx.closeAll();
 
-    System.setProperty(GroupProperties.PROP_WAIT_SECONDS_BEFORE_JOIN, "1");
+    GroupProperty.WAIT_SECONDS_BEFORE_JOIN.setSystemProperty("1");
 
     Orient.setRegisterDatabaseByPath(true);
     for (int i = 0; i < servers; ++i)
