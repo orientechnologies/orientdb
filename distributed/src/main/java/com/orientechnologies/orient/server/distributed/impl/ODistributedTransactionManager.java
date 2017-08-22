@@ -190,7 +190,7 @@ public class ODistributedTransactionManager {
                 "Distributed transaction succeeded. Tasks: %s", txTask.getTasks());
 
             // OK, DISTRIBUTED COMMIT SUCCEED
-            return null;
+            return uResult;
 
           } else {
             // ASYNC, MANAGE REPLICATION CALLBACK

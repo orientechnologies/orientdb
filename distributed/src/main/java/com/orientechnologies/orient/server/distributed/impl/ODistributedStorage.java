@@ -1466,7 +1466,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
           try {
 
-            return txManager.commit(ODatabaseRecordThreadLocal.INSTANCE.get(), iTx, callback, eventListener);
+            final List<ORecordOperation> result = txManager.commit(ODatabaseRecordThreadLocal.INSTANCE.get(), iTx, callback, eventListener);
+
+            if (result != null) {
+              for (ORecordOperation r : result) {
+                // UPDATE LOCAL CONTENT IN LOCKS TO ASSURE READ MY WRITES IF THE REQUEST IS STILL RUNNING
+                localDistributedDatabase.replaceRecordContentIfLocked(r.getRID(), r.getRecord().toStream());
+              }
+            }
+
+            return result;
 
           } catch (Throwable e) {
             lastException = e;
@@ -1781,7 +1790,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   public ODistributedConfiguration getDistributedConfiguration() {
     if (distributedConfiguration == null) {
-      ODocument doc = (ODocument) dManager.getConfigurationMap().get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getName());
+      final Map<String, Object> map = dManager.getConfigurationMap();
+      if (map == null)
+        return null;
+
+      ODocument doc = (ODocument) map.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getName());
       if (doc != null) {
         // DISTRIBUTED CFG AVAILABLE: COPY IT TO THE LOCAL DIRECTORY
         ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,

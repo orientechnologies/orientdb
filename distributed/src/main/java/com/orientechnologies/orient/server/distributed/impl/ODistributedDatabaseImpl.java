@@ -580,6 +580,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
+  public void replaceRecordContentIfLocked(final ORID rid, final byte[] bytes) {
+    final ODistributedLock currentLock = lockManager.get(rid);
+    if (currentLock != null && currentLock.record != null)
+      currentLock.record.buffer = bytes;
+  }
+
+  @Override
   public boolean lockRecord(final ORID rid, final ODistributedRequestId requestId, final long timeout) {
     final ODistributedLock lock = new ODistributedLock(requestId);
 

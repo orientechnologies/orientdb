@@ -55,6 +55,14 @@ public interface ODistributedDatabase {
   ORawBuffer getRecordIfLocked(ORID iRecord);
 
   /**
+   * Replace the record content if it is locked.
+   *
+   * @param rid   Record ID of the record to find
+   * @param bytes Content as byte[] of the record to replace
+   */
+  void replaceRecordContentIfLocked(ORID rid, byte[] bytes);
+
+  /**
    * Locks the record to be sure distributed transactions never work concurrently against the same records in the meanwhile the
    * transaction is executed and the OCompleteTxTask is not arrived.
    *
