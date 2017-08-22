@@ -47,7 +47,6 @@ public class OrientDBRemote implements OrientDBInternal {
   private final String[]       hosts;
   private final OEngineRemote  remote;
   private final OrientDBConfig configurations;
-  private final Thread         shutdownThread;
   private final Orient         orient;
   private volatile boolean open = true;
 
@@ -58,12 +57,7 @@ public class OrientDBRemote implements OrientDBInternal {
     remote = (OEngineRemote) orient.getRunningEngine("remote");
 
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
-
-    shutdownThread = new Thread(() -> {
-      OrientDBRemote.this.internalClose();
-    });
-
-    Runtime.getRuntime().addShutdownHook(shutdownThread);
+    orient.addOrientDB(this);
   }
 
   private String buildUrl(String name) {
@@ -111,7 +105,8 @@ public class OrientDBRemote implements OrientDBInternal {
     });
   }
 
-  public synchronized ODatabaseDocumentRemotePooled poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
+  public synchronized ODatabaseDocumentRemotePooled poolOpen(String name, String user, String password,
+      ODatabasePoolInternal pool) {
     OStorageRemote storage = storages.get(name);
     if (storage == null) {
       try {
@@ -286,7 +281,7 @@ public class OrientDBRemote implements OrientDBInternal {
 
   @Override
   public void removeShutdownHook() {
-    Runtime.getRuntime().removeShutdownHook(shutdownThread);
+    orient.removeOrientDB(this);
   }
 
   @Override

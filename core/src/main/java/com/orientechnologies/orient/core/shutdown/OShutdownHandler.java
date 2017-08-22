@@ -19,7 +19,7 @@ public interface OShutdownHandler {
   int SHUTDOWN_WORKERS_PRIORITY = 1000;
 
   /**
-   * Priority of {@link com.orientechnologies.orient.core.Orient.OShutdownEnginesHandler} handler.
+   * Priority of {@link Orient.OShutdownOrientDBInstancesHandler} handler.
    */
   int SHUTDOWN_ENGINES_PRIORITY = 1100;
 

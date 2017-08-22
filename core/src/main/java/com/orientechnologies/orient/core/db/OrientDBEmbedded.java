@@ -49,12 +49,11 @@ import java.util.stream.Collectors;
 public class OrientDBEmbedded implements OrientDBInternal {
   protected final Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
   protected final Set<ODatabasePoolInternal>             pools    = new HashSet<>();
-  protected final    OrientDBConfig configurations;
-  protected final    String         basePath;
-  protected final    OEngine        memory;
-  protected final    OEngine        disk;
-  protected volatile Thread         shutdownThread;
-  protected final    Orient         orient;
+  protected final OrientDBConfig configurations;
+  protected final String         basePath;
+  protected final OEngine        memory;
+  protected final OEngine        disk;
+  protected final Orient         orient;
   private volatile boolean                          open    = true;
   private volatile OEmbeddedDatabaseInstanceFactory factory = new ODefaultEmbeddedDatabaseInstanceFactory();
 
@@ -73,12 +72,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
 
-    shutdownThread = new Thread(() -> {
-      OrientDBEmbedded.this.internalClose();
-    });
-
-    Runtime.getRuntime().addShutdownHook(shutdownThread);
-
+    orient.addOrientDB(this);
   }
 
   @Override
@@ -281,7 +275,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       checkOpen();
     }
     ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); ) {
+    for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners(); it.hasNext(); ) {
       it.next().onDrop(db);
     }
     db.close();
@@ -408,10 +402,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   public synchronized void removeShutdownHook() {
-    if (shutdownThread != null) {
-      Runtime.getRuntime().removeShutdownHook(shutdownThread);
-      shutdownThread = null;
-    }
+    orient.removeOrientDB(this);
   }
 
   public synchronized Collection<OStorage> getStorages() {
