@@ -216,8 +216,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   /**
-   * Loads files already registered in storage.
-   * Has to be called before usage of this cache
+   * Loads files already registered in storage. Has to be called before usage of this cache
    */
   public void loadRegisteredFiles() throws IOException {
     filesLock.acquireWriteLock();
@@ -352,7 +351,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
               listener.lowDiskSpace(information);
             } catch (Exception e) {
               OLogManager.instance()
-                  .error(this, "Error during notification of low disk space for storage " + storageLocal.getName(), e);
+                  .error(this, "Error during notification of low disk space for storage '" + storageLocal.getName()+"'", e);
             }
         }
       }
@@ -409,16 +408,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         if (fileClassic != null)
           return externalId;
         else
-          throw new OStorageException("File with given name " + fileName + " only partially registered in storage");
+          throw new OStorageException("File with given name '" + fileName + "' only partially registered in storage");
       }
 
       fileClassic = createFileInstance(fileName);
       if (!fileClassic.exists())
-        throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
+        throw new OStorageException("File with name '" + fileName + "' does not exist in storage '" + storageLocal.getName() + "'");
       else {
         // REGISTER THE FILE
         OLogManager.instance().debug(this,
-            "File '" + fileName + "' is not registered in 'file name - id' map, but exists in file system. Registering it");
+            "File '" + fileName + "' is not registered in 'file name - id' map, but exists in file system. Registering it...");
 
         if (fileId == null) {
           ++fileCounter;
@@ -456,7 +455,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       OFileClassic fileClassic;
 
       if (fileId != null && fileId >= 0)
-        throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
+        throw new OStorageException("File with name '" + fileName + "' already exists in storage '" + storageLocal.getName()+"'");
 
       if (fileId == null) {
         ++fileCounter;
@@ -513,7 +512,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       if (existingFileId != null && existingFileId >= 0) {
         if (existingFileId == intId)
           throw new OStorageException(
-              "File with name '" + fileName + "'' already exists in storage '" + storageLocal.getName() + "'");
+              "File with name '" + fileName + "' already exists in storage '" + storageLocal.getName() + "'");
         else
           throw new OStorageException(
               "File with given name already exists but has different id " + existingFileId + " vs. proposed " + fileId);
@@ -525,7 +524,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       if (fileClassic != null) {
         if (!fileClassic.getName().equals(fileName))
           throw new OStorageException(
-              "File with given id exists but has different name " + fileClassic.getName() + " vs. proposed " + fileName);
+              "File with given id exists but has different name '" + fileClassic.getName() + "' vs. proposed '" + fileName+"'");
       } else {
         if (fileCounter < intId)
           fileCounter = intId;
@@ -566,7 +565,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         future.get();
       } catch (Exception e) {
         throw OException
-            .wrapException(new OStorageException("Error during fuzzy checkpoint execution for storage " + storageLocal.getName()),
+            .wrapException(new OStorageException("Error during fuzzy checkpoint execution for storage '" + storageLocal.getName()+"'"),
                 e);
       }
     }
@@ -1066,12 +1065,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final OFileClassic fileClassic = entry.get();
         try {
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Flashing file " + fileClassic.getName() + "... ");
+            commandOutputListener.onMessage("Flushing file '" + fileClassic.getName() + "'... ");
 
           flush(intId);
 
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Start verification of content of " + fileClassic.getName() + "file ...");
+            commandOutputListener.onMessage("Start verification of content of '" + fileClassic.getName() + "' file...");
 
           long time = System.currentTimeMillis();
 
@@ -1092,8 +1091,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
               magicNumberIncorrect = true;
               if (commandOutputListener != null)
                 commandOutputListener.onMessage(
-                    "Error: Magic number for page " + (pos / pageSize) + " in file " + fileClassic.getName()
-                        + " does not match !!!");
+                    "Error: Magic number for page " + (pos / pageSize) + " in file '" + fileClassic.getName()
+                        + "' does not match. It could be corrupted");
               fileIsCorrect = false;
             }
 
@@ -1105,7 +1104,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
                 checkSumIncorrect = true;
                 if (commandOutputListener != null)
                   commandOutputListener.onMessage(
-                      "Error: Checksum for page " + (pos / pageSize) + " in file " + fileClassic.getName() + " is incorrect !!!");
+                      "Error: Checksum for page " + (pos / pageSize) + " in file '" + fileClassic.getName() + "' is incorrect. It could be corrupted");
                 fileIsCorrect = false;
               }
             }
@@ -1116,13 +1115,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
             if (commandOutputListener != null && System.currentTimeMillis() - time > notificationTimeOut) {
               time = notificationTimeOut;
-              commandOutputListener.onMessage((pos / pageSize) + " pages were processed ...");
+              commandOutputListener.onMessage((pos / pageSize) + " pages were processed...");
             }
           }
         } catch (IOException ioe) {
           if (commandOutputListener != null)
             commandOutputListener
-                .onMessage("Error: Error during processing of file " + fileClassic.getName() + ". " + ioe.getMessage());
+                .onMessage("Error: Error during processing of file '" + fileClassic.getName() + "': " + ioe.getMessage());
 
           fileIsCorrect = false;
         } finally {
@@ -1131,10 +1130,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         if (!fileIsCorrect) {
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Verification of file " + fileClassic.getName() + " is finished with errors.");
+            commandOutputListener.onMessage("Verification of file '" + fileClassic.getName() + "' is finished with errors.");
         } else {
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Verification of file " + fileClassic.getName() + " is successfully finished.");
+            commandOutputListener.onMessage("Verification of file '" + fileClassic.getName() + "' is successfully finished.");
         }
       }
 
@@ -1523,7 +1522,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     final long magicNumber = OLongSerializer.INSTANCE.deserializeFromByteBufferObject(buffer);
     if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM) {
       if (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
-        final String message = "Magic number verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
+        final String message = "Magic number verification failed for page '" + pageIndex + "' of '" + fileNameById(fileId) + "'.";
         OLogManager.instance().error(this, "%s", message);
         if (checksumMode == OChecksumMode.StoreAndThrow) {
 
@@ -1569,7 +1568,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     final int computedChecksum = (int) crc32.getValue();
 
     if (computedChecksum != storedChecksum) {
-      final String message = "Checksum verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
+      final String message = "Checksum verification failed for page '" + pageIndex + "' of '" + fileNameById(fileId) + "'.";
       OLogManager.instance().error(this, "%s", message);
       if (checksumMode == OChecksumMode.StoreAndThrow) {
 

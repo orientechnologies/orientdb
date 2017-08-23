@@ -467,7 +467,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // INSERT MEMBERS
     final List<ODocument> members = new ArrayList<ODocument>();
     cluster.field("members", members, OType.EMBEDDEDLIST);
-    // members.add(getLocalNodeConfiguration());
     for (Member member : activeNodes.values()) {
       members.add(getNodeConfigurationByUuid(member.getUuid(), true));
     }

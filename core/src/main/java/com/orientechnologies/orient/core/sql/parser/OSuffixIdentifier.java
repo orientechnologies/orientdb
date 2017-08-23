@@ -16,7 +16,7 @@ public class OSuffixIdentifier extends SimpleNode {
 
   protected OIdentifier      identifier;
   protected ORecordAttribute recordAttribute;
-  protected boolean          star = false;
+  protected boolean star = false;
 
   public OSuffixIdentifier(int id) {
     super(id);
@@ -26,7 +26,9 @@ public class OSuffixIdentifier extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -47,15 +49,15 @@ public class OSuffixIdentifier extends SimpleNode {
     }
     if (identifier != null) {
       String varName = identifier.getStringValue();
-      if (ctx!=null && ctx.getVariable(varName) != null) {
+      if (ctx != null && ctx.getVariable(varName) != null) {
         return ctx.getVariable(varName);
       }
-      if(iCurrentRecord != null) {
+      if (iCurrentRecord != null) {
         return ((ODocument) iCurrentRecord.getRecord()).field(varName);
       }
       return null;
     }
-    if (recordAttribute != null) {
+    if (recordAttribute != null && iCurrentRecord != null) {
       return ((ODocument) iCurrentRecord.getRecord()).field(recordAttribute.name);
     }
     return null;
@@ -79,10 +81,10 @@ public class OSuffixIdentifier extends SimpleNode {
       if (currentValue instanceof Map) {
         return ((Map) currentValue).get(varName);
       }
-      if(OMultiValue.isMultiValue(currentValue)){
+      if (OMultiValue.isMultiValue(currentValue)) {
         Iterator<Object> iterator = OMultiValue.getMultiValueIterator(currentValue);
         List<Object> result = new ArrayList<Object>();
-        while(iterator.hasNext()){
+        while (iterator.hasNext()) {
           result.add(execute(iterator.next(), ctx));
         }
         return result;
@@ -97,10 +99,10 @@ public class OSuffixIdentifier extends SimpleNode {
       if (currentValue instanceof Map) {
         return ((Map) currentValue).get(recordAttribute.name);
       }
-      if(OMultiValue.isMultiValue(currentValue)){
+      if (OMultiValue.isMultiValue(currentValue)) {
         Iterator<Object> iterator = OMultiValue.getMultiValueIterator(currentValue);
         List<Object> result = new ArrayList<Object>();
-        while(iterator.hasNext()){
+        while (iterator.hasNext()) {
           result.add(execute(iterator.next(), ctx));
         }
         return result;

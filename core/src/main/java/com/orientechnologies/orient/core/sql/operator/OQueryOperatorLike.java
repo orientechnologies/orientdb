@@ -28,29 +28,39 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
  * LIKE operator.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OQueryOperatorLike extends OQueryOperatorEqualityNotNulls {
 
-	public OQueryOperatorLike() {
-		super("LIKE", 5, false);
-	}
+  public OQueryOperatorLike() {
+    super("LIKE", 5, false);
+  }
 
-	@Override
-	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight, OCommandContext iContext) {
-		if (OMultiValue.isMultiValue(iLeft) || OMultiValue.isMultiValue(iRight))
-			return false;
+  @Override
+  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
 
-		return OQueryHelper.like(iLeft.toString(), iRight.toString());
-	}
+    Object left = iLeft;
+    if (left == null) {
+      return false;
+    }
+    if (OMultiValue.isMultiValue(left)) {
+      if (OMultiValue.getSize(left) != 1) {
+        return false;
+      }
+      left = OMultiValue.getFirstValue(left);
+    }
+    if (OMultiValue.isMultiValue(iRight))
+      return false;
 
-	@Override
-	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-		return OIndexReuseType.NO_INDEX;
-	}
+    return OQueryHelper.like(left.toString(), iRight.toString());
+  }
+
+  @Override
+  public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+    return OIndexReuseType.NO_INDEX;
+  }
 
   @Override
   public ORID getBeginRidRange(Object iLeft, Object iRight) {

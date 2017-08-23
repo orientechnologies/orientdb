@@ -81,7 +81,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       64);
   protected final List<ODistributedWorker>                                        workerThreads    = new ArrayList<ODistributedWorker>();
   protected ODistributedWorker lockThread;
-  protected ODistributedWorker unlockThread;
+  protected ODistributedWorker nowaitThread;
 
   private          AtomicLong                            totalSentRequests     = new AtomicLong();
   private          AtomicLong                            totalReceivedRequests = new AtomicLong();
@@ -364,7 +364,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
           "Request %s on database '%s' dispatched to the nowait worker", request, databaseName);
 
-      unlockThread.processRequest(request);
+      nowaitThread.processRequest(request);
 
     } else {
       processRequest(partitionKeys[0], request);
@@ -579,6 +579,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (currentLock != null)
       return currentLock.record;
     return null;
+  }
+
+  @Override
+  public void replaceRecordContentIfLocked(final ORID rid, final byte[] bytes) {
+    final ODistributedLock currentLock = lockManager.get(rid);
+    if (currentLock != null && currentLock.record != null)
+      currentLock.record.buffer = bytes;
   }
 
   @Override
@@ -896,8 +903,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (lockThread != null)
       total += lockThread.getProcessedRequests();
 
-    if (unlockThread != null)
-      total += unlockThread.getProcessedRequests();
+    if (nowaitThread != null)
+      total += nowaitThread.getProcessedRequests();
 
     for (ODistributedWorker workerThread : workerThreads) {
       if (workerThread != null)
@@ -920,8 +927,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       // SEND THE SHUTDOWN TO ALL THE WORKER THREADS
       if (lockThread != null)
         lockThread.sendShutdown();
-      if (unlockThread != null)
-        unlockThread.sendShutdown();
+      if (nowaitThread != null)
+        nowaitThread.sendShutdown();
       for (ODistributedWorker workerThread : workerThreads) {
         if (workerThread != null)
           workerThread.sendShutdown();
@@ -934,9 +941,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         } catch (InterruptedException e) {
         }
 
-      if (unlockThread != null)
+      if (nowaitThread != null)
         try {
-          unlockThread.join(2000);
+          nowaitThread.join(2000);
         } catch (InterruptedException e) {
         }
 
@@ -949,7 +956,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         }
       }
       lockThread = null;
-      unlockThread = null;
+      nowaitThread = null;
       workerThreads.clear();
 
       // SAVE SYNC CONFIGURATION
@@ -1108,9 +1115,21 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   private void startAcceptingRequests() {
     // START ALL THE WORKER THREADS (CONFIGURABLE)
-    final int totalWorkers = OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.getValueAsInteger();
-    if (totalWorkers < 1)
+    int totalWorkers = OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.getValueAsInteger();
+    if (totalWorkers < 0)
       throw new ODistributedException("Cannot create configured distributed workers (" + totalWorkers + ")");
+    else if (totalWorkers == 0) {
+      // AUTOMATIC
+      final int totalDatabases = manager.getManagedDatabases().size() + 1;
+
+      final int cpus = Runtime.getRuntime().availableProcessors();
+
+      if (cpus > 1)
+        totalWorkers = cpus / totalDatabases;
+
+      if (totalWorkers == 0)
+        totalWorkers = 1;
+    }
 
     lockThread = new ODistributedWorker(this, databaseName, -3, false) {
       protected void handleError(final ODistributedRequest iRequest, final Object responsePayload) {
@@ -1121,8 +1140,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     };
     lockThread.start();
 
-    unlockThread = new ODistributedWorker(this, databaseName, -4, false);
-    unlockThread.start();
+    nowaitThread = new ODistributedWorker(this, databaseName, -4, true);
+    nowaitThread.start();
 
     for (int i = 0; i < totalWorkers; ++i) {
       final ODistributedWorker workerThread = new ODistributedWorker(this, databaseName, i, true);
@@ -1243,8 +1262,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       // RESET THE DATABASE
       if (lockThread != null)
         lockThread.reset();
-      if (unlockThread != null)
-        unlockThread.reset();
+      if (nowaitThread != null)
+        nowaitThread.reset();
       for (ODistributedWorker w : workerThreads) {
         if (w != null)
           w.reset();
@@ -1283,9 +1302,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       }
     }
 
-    if (unlockThread != null) {
-      final ODistributedRequest processing = unlockThread.getProcessing();
-      final ArrayBlockingQueue<ODistributedRequest> queue = unlockThread.localQueue;
+    if (nowaitThread != null) {
+      final ODistributedRequest processing = nowaitThread.getProcessing();
+      final ArrayBlockingQueue<ODistributedRequest> queue = nowaitThread.localQueue;
 
       if (processing != null || !queue.isEmpty()) {
         buffer.append("\n - QUEUE UNLOCK EXECUTING: " + processing);
