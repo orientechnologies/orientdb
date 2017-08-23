@@ -2129,7 +2129,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             if (doc != null) {
               final String ownerServerIPAddress = ODistributedAbstractPlugin.getListeningBinaryAddress(doc);
 
-              OLogManager.instance().info(this,
+              OLogManager.instance().debug(this,
                   "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerServer
                       + "'). Sending a redirect to the client to connect it directly to the owner server");
 
