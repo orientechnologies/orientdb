@@ -1341,7 +1341,7 @@ ee.controller('ClusterSingleDBController', ["$scope", "$rootScope", "$modal", "$
     "configuration": Database.getOWikiFor("Distributed-Configuration.html#default-distributed-db-configjson")
   }
 
-  $scope.roles = ["master", "replica"];
+  $scope.roles = ["MASTER", "REPLICA"];
 
 
   $scope.constantQuorum = ['majority', 'all'];
@@ -1423,14 +1423,16 @@ ee.controller('ClusterSingleDBController', ["$scope", "$rootScope", "$modal", "$
 
 
       $scope.calculatedRoles = {};
+
       if ($scope.config.servers) {
+
         Object.keys($scope.config.servers).forEach(function (k) {
           if (k === "*") {
             servers.forEach(function (s) {
-              $scope.calculatedRoles[s.name] = $scope.config.servers[k];
+              $scope.calculatedRoles[s.name] = $scope.config.servers[k].toUpperCase();
             });
           } else {
-            $scope.calculatedRoles[k] = $scope.config.servers[k];
+            $scope.calculatedRoles[k] = $scope.config.servers[k].toUpperCase();
           }
         })
       }
