@@ -323,7 +323,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
       //allocation size should be the same for all buffers from chuck with the same index
       final int allocationSize = (int) Math
-          .min(maxPagesPerSingleArea * pageSize, preAllocationLimit - (bufferIndex * maxPagesPerSingleArea * pageSize));
+          .min(maxPagesPerSingleArea * pageSize, preAllocationLimit - ((long) bufferIndex * maxPagesPerSingleArea * pageSize));
 
       //page is going to be allocated above the preallocation limit
       if (allocationSize <= position * pageSize) {
