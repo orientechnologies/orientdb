@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.concur.executors.SubScheduledExecutorService;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -36,11 +37,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
+import sun.misc.IOUtils;
 
 import java.io.*;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -235,10 +238,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
         for (File walFile : walFiles) {
           final RandomAccessFile st = new RandomAccessFile(walFile, "r");
+          final FileChannel channel = st.getChannel();
+
           OLogSegment logSegment;
 
           //if WAL segment is broken always use latest version
-          if (st.length() / OWALPage.PAGE_SIZE < 1) {
+          if (channel.size() / OWALPage.PAGE_SIZE < 1) {
+            channel.close();
             st.close();
 
             logSegment = new OLogSegmentV2(this, walFile, fileTTL, maxPagesCacheSize, performanceStatisticManager,
@@ -247,9 +253,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
             //magic number is used not only to check data integrity but also
             //to check version of binary format is used for log segment.
-            st.seek(OWALPage.MAGIC_NUMBER_OFFSET);
-            final long magicNumber = st.readLong();
+            final ByteBuffer buffer = ByteBuffer.allocate(OLongSerializer.LONG_SIZE).order(ByteOrder.nativeOrder());
+            OIOUtils.readByteBuffer(buffer, channel, OWALPage.MAGIC_NUMBER_OFFSET, false);
+
+            channel.close();
             st.close();
+
+            final long magicNumber = buffer.getLong(0);
 
             if (magicNumber == OWALPageV1.MAGIC_NUMBER) {
               logSegment = new OLogSegmentV1(this, walFile, fileTTL, maxPagesCacheSize, performanceStatisticManager,
@@ -341,7 +351,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   private static boolean validateName(String name, String storageName, Locale locale) {
-    if (!name.toLowerCase(locale).endsWith(".wal"))
+    name = name.toLowerCase(locale);
+
+    if (!name.endsWith(".wal"))
       return false;
 
     int walOrderStartIndex = name.indexOf('.');
@@ -366,7 +378,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   private static boolean validateSimpleName(String name, Locale locale) {
-    if (!name.toLowerCase(locale).endsWith(".wal"))
+    name = name.toLowerCase(locale);
+    if (!name.endsWith(".wal"))
       return false;
 
     int walOrderStartIndex = name.indexOf('.');
