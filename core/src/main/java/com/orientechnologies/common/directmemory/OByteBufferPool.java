@@ -23,6 +23,7 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 import javax.management.*;
@@ -844,6 +845,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     private static final OByteBufferPool INSTANCE;
 
     static {
+      OMemory.fixCommonConfigurationProblems();
       // page size in bytes
       final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
