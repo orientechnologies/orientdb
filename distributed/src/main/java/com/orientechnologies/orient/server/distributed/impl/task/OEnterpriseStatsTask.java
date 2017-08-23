@@ -71,8 +71,6 @@ public class OEnterpriseStatsTask extends OAbstractRemoteTask {
 
   /**
    * Computes the timeout according to the transaction size.
-   *
-   * @return
    */
   @Override
   public long getDistributedTimeout() {
