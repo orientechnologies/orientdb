@@ -74,7 +74,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,8 +84,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedStorage implements OStorage, OFreezableStorageComponent, OAutoshardedStorage {
-  private volatile CountDownLatch configurationSemaphore = new CountDownLatch(0);
-
   private final String                    name;
   private final OServer                   serverInstance;
   private final ODistributedServerManager dManager;
@@ -102,7 +99,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   private volatile ODistributedConfiguration distributedConfiguration;
   private volatile boolean       running              = true;
   private volatile File          lastValidBackup      = null;
-  private          AtomicInteger configurationUpdated = new AtomicInteger(0);
 
   public ODistributedStorage(final OServer iServer, final String dbName) {
     this.serverInstance = iServer;
@@ -594,8 +590,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // ALREADY DISTRIBUTED
       return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
     }
-
-    checkClusterRebalanceIsNotRunning();
 
     final String localNodeName = dManager.getLocalNodeName();
 
@@ -1235,36 +1229,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     }
   }
 
-  public void checkClusterRebalanceIsNotRunning() {
-    // WAIT FOR NO CFG SYNCHRONIZATION PENDING
-    try {
-      if (configurationSemaphore.getCount() > 0)
-        ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Create operations are suspended, waiting for the resume");
-
-      configurationSemaphore.await();
-    } catch (InterruptedException e) {
-      throw new ODistributedOperationException("Cannot assign cluster id because the operation has been interrupted");
-    }
-  }
-
   public int getConfigurationUpdated() {
-    return configurationUpdated.get();
-  }
-
-  public void suspendCreateOperations() {
-    ODistributedServerLog
-        .info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE, "Suspending create operations");
-
-    configurationSemaphore = new CountDownLatch(1);
-    configurationUpdated.incrementAndGet();
-  }
-
-  public void resumeCreateOperations() {
-    ODistributedServerLog
-        .info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE, "Resuming create operations");
-
-    configurationSemaphore.countDown();
+    return distributedConfiguration.getVersion();
   }
 
   @Override
@@ -1402,8 +1368,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     final String localNodeName = dManager.getLocalNodeName();
 
     checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
-
-    checkClusterRebalanceIsNotRunning();
 
     try {
       if (!dbCfg.isReplicationActive(null, localNodeName)) {
