@@ -657,7 +657,14 @@ public class O2QCache implements OReadCache {
           final BufferedInputStream bufferedInputStream = new BufferedInputStream(stream, 64 * 1024);
           final DataInputStream dataInputStream = new DataInputStream(bufferedInputStream);
           try {
-            final long maxCacheSize = dataInputStream.readLong();
+            final long maxCacheSize;
+
+            try {
+              maxCacheSize = dataInputStream.readLong();
+            } catch (IOException ioe) {
+              throw OException.wrapException(new OLoadCacheStateException("Can not restore state of cache from file"), ioe);
+            }
+
             final long currentMaxCacheSize = memoryDataContainer.get().maxSize;
 
             if (maxCacheSize > currentMaxCacheSize) {
