@@ -33,7 +33,7 @@ public class ODemoDbMetadataConsistencyIT extends OIntegrationTestTemplate {
   private int ordersCount         = 812;
   private int reviewsCount        = 1273;
 
-  private int eCount              = 15013;
+  private int eCount              = 14872;
   private int hasCustomerCount    = 812;
   private int hasEatenCount       = 2484;
   private int hasFriendCount      = 1617;

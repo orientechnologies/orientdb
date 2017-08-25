@@ -36,7 +36,7 @@ public class ODemoDbFromDocumentationTraversesIT extends OIntegrationTestTemplat
         + ") MAXDEPTH 3");
 
     assertThat(resultSet)
-        .hasSize(136);
+        .hasSize(135);
 
     resultSet.close();
     db.close();
