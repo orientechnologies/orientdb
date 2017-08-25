@@ -48,6 +48,11 @@ import java.nio.ByteBuffer;
  * @since 5/8/13
  */
 public class OWALPageV2 implements OWALPage {
+  /**
+   * Value of magic number for v2 version of binary format
+   *
+   * @see OWALPage#MAGIC_NUMBER_OFFSET
+   */
   static final long MAGIC_NUMBER = 0xEF30BCAFL;
 
   /**
@@ -55,7 +60,7 @@ public class OWALPageV2 implements OWALPage {
    * this page its position is not stored.
    *
    * @see OLogSegmentV2.FlushTask#commitLog()
-   * @see OLogSegmentV2#init(ByteBuffer)
+   * @see OLogSegment#init()
    */
   static final int LAST_STORED_LSN = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
 
@@ -64,12 +69,21 @@ public class OWALPageV2 implements OWALPage {
    * read only valid values
    *
    * @see OLogSegmentV2.FlushTask#commitLog()
-   * @see OLogSegmentV2#init(ByteBuffer)
+   * @see OLogSegment#init()
    */
   static final int END_LAST_RECORD = LAST_STORED_LSN + OLongSerializer.LONG_SIZE;
 
+  /**
+   * Offset inside of the page starting from which we will store new records till the end of the page.
+   */
   static final int RECORDS_OFFSET = END_LAST_RECORD + OIntegerSerializer.INT_SIZE;
 
+  /**
+   * Maximum size of the records which can be stored inside of the page
+   *
+   * @see #calculateRecordSize(int)
+   * @see #calculateSerializedSize(int)
+   */
   static final int MAX_ENTRY_SIZE = PAGE_SIZE - RECORDS_OFFSET;
 
   private final ByteBuffer buffer;
@@ -88,6 +102,10 @@ public class OWALPageV2 implements OWALPage {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public byte[] getRecord(int position) {
     buffer.position(position + 2);
     final int recordSize = buffer.getInt();
@@ -96,18 +114,35 @@ public class OWALPageV2 implements OWALPage {
     return record;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public boolean mergeWithNextPage(int position) {
     return buffer.get(position) > 0;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public int getFreeSpace() {
     return buffer.getInt(FREE_SPACE_OFFSET);
   }
 
+  /**
+   * Calculates how much space record will consume once it will be stored inside of page.
+   * Sizes are different because once record is stored inside of the page, it is wrapped by additional system information.
+   */
   static int calculateSerializedSize(int recordSize) {
     return recordSize + OIntegerSerializer.INT_SIZE + 2;
   }
 
+  /**
+   * Calculates how much space record stored inside of page will consume once it will be read from page.
+   * In other words it calculates initial size of the record before it was stored inside of the page.
+   * Sizes are different because once record is stored inside of the page, it is wrapped by additional system information.
+   */
   static int calculateRecordSize(int serializedSize) {
     return serializedSize - OIntegerSerializer.INT_SIZE - 2;
   }

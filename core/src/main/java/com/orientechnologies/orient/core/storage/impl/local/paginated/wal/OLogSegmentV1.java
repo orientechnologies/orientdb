@@ -31,7 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 
-public class OLogSegmentV1 implements OLogSegment {
+final class OLogSegmentV1 implements OLogSegment {
   private final ODiskWriteAheadLog writeAheadLog;
 
   /**
@@ -303,7 +303,11 @@ public class OLogSegmentV1 implements OLogSegment {
     closed = false;
   }
 
-  public void startFlush() {
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void startBackgroundWrite() {
     if (writeAheadLog.getCommitDelay() > 0) {
       commitExecutor.scheduleAtFixedRate(new FlushTask(), writeAheadLog.getCommitDelay(), writeAheadLog.getCommitDelay(),
           TimeUnit.MILLISECONDS);
@@ -313,7 +317,11 @@ public class OLogSegmentV1 implements OLogSegment {
     }
   }
 
-  public void stopFlush(boolean flush) {
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void stopBackgroundWrite(boolean flush) {
     if (flush)
       flush();
 
@@ -363,18 +371,27 @@ public class OLogSegmentV1 implements OLogSegment {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public long getOrder() {
     return order;
   }
 
-  public void init(ByteBuffer buffer) throws IOException {
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void init() throws IOException {
     selfCheck();
 
-    initPageCache(buffer);
+    initPageCache();
 
     last = new OLogSequenceNumber(order, filledUpTo - 1);
   }
 
+  @SuppressWarnings("NullableProblems")
   @Override
   public int compareTo(OLogSegment other) {
     final long otherOrder = ((OLogSegmentV1) other).order;
@@ -405,10 +422,18 @@ public class OLogSegmentV1 implements OLogSegment {
     return (int) (order ^ (order >>> 32));
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public long filledUpTo() {
     return filledUpTo;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public OLogSequenceNumber begin() throws IOException {
     if (!logCache.isEmpty())
       return new OLogSequenceNumber(order, OWALPageV1.RECORDS_OFFSET);
@@ -427,12 +452,20 @@ public class OLogSegmentV1 implements OLogSegment {
     return null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public OLogSequenceNumber end() {
     return last;
   }
 
-  public void delete(boolean flush) throws IOException {
-    close(flush);
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void delete() throws IOException {
+    close(false);
 
     boolean deleted = OFileUtils.delete(file);
     int retryCount = 0;
@@ -446,11 +479,15 @@ public class OLogSegmentV1 implements OLogSegment {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public String getPath() {
     return file.getAbsolutePath();
   }
 
-  public static class OLogRecord {
+  static class OLogRecord {
     final byte[] record;
     final long   writeFrom;
     final long   writeTo;
@@ -501,6 +538,10 @@ public class OLogSegmentV1 implements OLogSegment {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public OLogSequenceNumber logRecord(byte[] record) {
     flushNewData = true;
 
@@ -527,8 +568,12 @@ public class OLogSegmentV1 implements OLogSegment {
     return last;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
-  public byte[] readRecord(OLogSequenceNumber lsn, ByteBuffer byteBuffer) throws IOException {
+  public byte[] readRecord(OLogSequenceNumber lsn) throws IOException {
     final OPair<OLogSequenceNumber, byte[]> lastRecord = lastReadRecord.get();
     if (lastRecord != null && lastRecord.getKey().equals(lsn))
       return lastRecord.getValue();
@@ -547,22 +592,23 @@ public class OLogSegmentV1 implements OLogSegment {
 
     long pageCount = (filledUpTo + OWALPage.PAGE_SIZE - 1) / OWALPage.PAGE_SIZE;
 
+    final ByteBuffer buffer = ByteBuffer.allocate(OWALPage.PAGE_SIZE).order(ByteOrder.nativeOrder());
     while (pageIndex < pageCount) {
       fileLock.lock();
       try {
         final RandomAccessFile rndFile = getRndFile();
         final FileChannel channel = rndFile.getChannel();
 
-        byteBuffer.position(0);
-        channel.read(byteBuffer, pageIndex * OWALPage.PAGE_SIZE);
+        buffer.position(0);
+        channel.read(buffer, pageIndex * OWALPage.PAGE_SIZE);
       } finally {
         fileLock.unlock();
       }
 
-      if (!checkPageIntegrity(byteBuffer))
+      if (!checkPageIntegrity(buffer))
         throw new OWALPageBrokenException("WAL page with index " + pageIndex + " is broken");
 
-      OWALPage page = new OWALPageV1(byteBuffer, false);
+      OWALPage page = new OWALPageV1(buffer, false);
 
       byte[] content = page.getRecord(pageOffset);
       if (record == null)
@@ -592,8 +638,12 @@ public class OLogSegmentV1 implements OLogSegment {
     return record;
   }
 
-  public OLogSequenceNumber getNextLSN(OLogSequenceNumber lsn, ByteBuffer buffer) throws IOException {
-    final byte[] record = readRecord(lsn, buffer);
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OLogSequenceNumber getNextLSN(OLogSequenceNumber lsn) throws IOException {
+    final byte[] record = readRecord(lsn);
     if (record == null)
       return null;
 
@@ -628,11 +678,15 @@ public class OLogSegmentV1 implements OLogSegment {
     return new OLogSequenceNumber(order, pos);
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public void close(boolean flush) throws IOException {
     if (!closed) {
       lastReadRecord.clear();
 
-      stopFlush(flush);
+      stopBackgroundWrite(flush);
 
       if (!closer.isShutdown()) {
         closer.shutdown();
@@ -659,6 +713,10 @@ public class OLogSegmentV1 implements OLogSegment {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public void flush() {
     if (!commitExecutor.isShutdown()) {
       try {
@@ -673,13 +731,15 @@ public class OLogSegmentV1 implements OLogSegment {
     }
   }
 
-  private void initPageCache(ByteBuffer buffer) throws IOException {
+  private void initPageCache() throws IOException {
     fileLock.lock();
     try {
       final RandomAccessFile rndFile = getRndFile();
       long pagesCount = rndFile.length() / OWALPage.PAGE_SIZE;
       if (pagesCount == 0)
         return;
+
+      final ByteBuffer buffer = ByteBuffer.allocate(OWALPage.PAGE_SIZE).order(ByteOrder.nativeOrder());
 
       FileChannel channel = rndFile.getChannel();
       buffer.position(0);

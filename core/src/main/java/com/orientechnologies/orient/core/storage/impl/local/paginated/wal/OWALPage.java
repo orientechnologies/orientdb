@@ -14,16 +14,47 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  */
 
 public interface OWALPage {
-  int PAGE_SIZE       = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  /**
+   * Size of the current instance of page in direct memory.
+   */
+  int PAGE_SIZE = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+
+  /**
+   * Size of the record which will be stored inside of page even if payload of record equals to 0.
+   * That happens because when we store record inside of page we add additional system metadata are used
+   * when we read record back from WAL.
+   */
   int MIN_RECORD_SIZE = OIntegerSerializer.INT_SIZE + 3;
 
-  int CRC_OFFSET          = 0;
-  int MAGIC_NUMBER_OFFSET = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
-  int FREE_SPACE_OFFSET   = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+  /**
+   * Offset of position which stores CRC32 value of content stored on this page.
+   */
+  int CRC_OFFSET = 0;
 
+  /**
+   * Offset of magic number value. Randomly generated constant which is used to identify whether page is broken on disk and
+   * version of binary format is used to store page.
+   */
+  int MAGIC_NUMBER_OFFSET = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
+
+  /**
+   * Offset of value which contains amount of space which is available to store new records.
+   */
+  int FREE_SPACE_OFFSET = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+
+  /**
+   * Returns content of record which is stored inside of specified position of page.
+   */
   byte[] getRecord(int position);
 
+  /**
+   * Indicates whether page stored inside of passed in position is stored only partially inside of given page,
+   * so next part of the record should be read from next page of WAL segment.
+   */
   boolean mergeWithNextPage(int position);
 
+  /**
+   * @return Amount of free space available to store new records inside of page.
+   */
   int getFreeSpace();
 }

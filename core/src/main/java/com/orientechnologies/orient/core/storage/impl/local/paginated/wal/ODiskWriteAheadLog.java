@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
-import sun.misc.IOUtils;
 
 import java.io.*;
 import java.lang.ref.WeakReference;
@@ -100,8 +99,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final List<WeakReference<OLowDiskSpaceListener>>          lowDiskSpaceListeners   = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
   private final List<WeakReference<OFullCheckpointRequestListener>> fullCheckpointListeners = new CopyOnWriteArrayList<WeakReference<OFullCheckpointRequestListener>>();
 
-  private final ByteBuffer fileDataBuffer = ByteBuffer.allocateDirect(OWALPage.PAGE_SIZE).order(ByteOrder.nativeOrder());
-
   private static class SimpleFileNameFilter implements java.io.FilenameFilter {
     private final Locale locale;
 
@@ -159,10 +156,12 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         OGlobalConfiguration.WAL_FILE_AUTOCLOSE_INTERVAL.getValueAsInteger());
   }
 
+  @Override
   public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
     lowDiskSpaceListeners.add(new WeakReference<OLowDiskSpaceListener>(listener));
   }
 
+  @Override
   public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
     List<WeakReference<OLowDiskSpaceListener>> itemsToRemove = new ArrayList<WeakReference<OLowDiskSpaceListener>>();
 
@@ -176,10 +175,12 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     lowDiskSpaceListeners.removeAll(itemsToRemove);
   }
 
+  @Override
   public void addFullCheckpointListener(OFullCheckpointRequestListener listener) {
     fullCheckpointListeners.add(new WeakReference<OFullCheckpointRequestListener>(listener));
   }
 
+  @Override
   public void removeFullCheckpointListener(OFullCheckpointRequestListener listener) {
     List<WeakReference<OFullCheckpointRequestListener>> itemsToRemove = new ArrayList<WeakReference<OFullCheckpointRequestListener>>();
 
@@ -225,8 +226,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         OLogSegment logSegment = new OLogSegmentV2(this, new File(this.walLocation, getSegmentName(0)), fileTTL, maxPagesCacheSize,
             performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
             new SubScheduledExecutorService(commitExecutor));
-        logSegment.init(fileDataBuffer);
-        logSegment.startFlush();
+        logSegment.init();
+        logSegment.startBackgroundWrite();
         logSegments.add(logSegment);
 
         logSize = 0;
@@ -270,7 +271,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
             }
           }
 
-          logSegment.init(fileDataBuffer);
+          logSegment.init();
 
           logSegments.add(logSegment);
           logSize += logSegment.filledUpTo();
@@ -289,11 +290,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
           last = new OLogSegmentV2(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
               performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
               new SubScheduledExecutorService(commitExecutor));
-          last.init(fileDataBuffer);
+          last.init();
           logSegments.add(last);
         }
 
-        last.startFlush();
+        last.startBackgroundWrite();
 
         flushedLsn = findFlushedLSN();
       }
@@ -403,6 +404,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return walLocation;
   }
 
+  @Override
   public OLogSequenceNumber begin() throws IOException {
     syncObject.lock();
     try {
@@ -431,6 +433,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
+  @Override
   public OLogSequenceNumber end() {
     syncObject.lock();
     try {
@@ -453,6 +456,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
+  @Override
   public void flush() {
     OLogSegment last;
 
@@ -520,6 +524,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
+  @Override
   public OLogSequenceNumber log(OWALRecord record) throws IOException {
     OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     if (statistic != null)
@@ -579,13 +584,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
         if (record instanceof OAtomicUnitEndRecord && activeOperations.size() == 1 || (!(record instanceof OOperationUnitRecord)
             && activeOperations.isEmpty())) {
-          last.stopFlush(true);
+          last.stopBackgroundWrite(true);
 
           last = new OLogSegmentV2(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
               performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
               new SubScheduledExecutorService(commitExecutor));
-          last.init(fileDataBuffer);
-          last.startFlush();
+          last.init();
+          last.startBackgroundWrite();
 
           logSegments.add(last);
 
@@ -623,18 +628,18 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         return;
 
       OLogSegment last = logSegments.get(logSegments.size() - 1);
-      last.stopFlush(true);
+      last.stopBackgroundWrite(true);
 
       if (last.filledUpTo() == 0) {
-        last.delete(false);
+        last.delete();
         logSegments.remove(logSegments.size() - 1);
       }
 
       last = new OLogSegmentV2(this, new File(walLocation, getSegmentName(lsn.getSegment() + 1)), fileTTL, maxPagesCacheSize,
           performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
           new SubScheduledExecutorService(commitExecutor));
-      last.init(fileDataBuffer);
-      last.startFlush();
+      last.init();
+      last.startBackgroundWrite();
 
       logSegments.add(last);
 
@@ -655,13 +660,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         return;
       }
 
-      last.stopFlush(true);
+      last.stopBackgroundWrite(true);
 
       last = new OLogSegmentV2(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
           performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
           new SubScheduledExecutorService(commitExecutor));
-      last.init(fileDataBuffer);
-      last.startFlush();
+      last.init();
+      last.startBackgroundWrite();
 
       logSegments.add(last);
     } finally {
@@ -731,6 +736,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
+  @Override
   public void truncate() throws IOException {
     syncObject.lock();
     try {
@@ -740,7 +746,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       ListIterator<OLogSegment> iterator = logSegments.listIterator(logSegments.size() - 1);
       while (iterator.hasPrevious()) {
         final OLogSegment logSegment = iterator.previous();
-        logSegment.delete(false);
+        logSegment.delete();
         iterator.remove();
       }
 
@@ -750,10 +756,12 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
+  @Override
   public void close() throws IOException {
     close(true);
   }
 
+  @Override
   public void close(boolean flush) throws IOException {
     syncObject.lock();
     try {
@@ -768,8 +776,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       if (!commitExecutor.isShutdown()) {
         commitExecutor.shutdown();
         try {
-          if (!commitExecutor
-              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+          if (!commitExecutor.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
             throw new OStorageException("WAL flush task for '" + getStorage().getName() + "' storage cannot be stopped");
 
         } catch (InterruptedException e) {
@@ -780,8 +787,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       if (!autoFileCloser.isShutdown()) {
         autoFileCloser.shutdown();
         try {
-          if (!autoFileCloser
-              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+          if (!autoFileCloser.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
             throw new OStorageException("WAL file auto close tasks '" + getStorage().getName() + "' storage cannot be stopped");
 
         } catch (InterruptedException e) {
@@ -795,17 +801,19 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
+  @Override
   public void delete() throws IOException {
     delete(false);
   }
 
+  @Override
   public void delete(boolean flush) throws IOException {
     syncObject.lock();
     try {
       close(flush);
 
       for (OLogSegment logSegment : logSegments)
-        logSegment.delete(false);
+        logSegment.delete();
 
       boolean deleted = OFileUtils.delete(masterRecordFile);
       int retryCount = 0;
@@ -822,6 +830,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
+  @Override
   public OWALRecord read(OLogSequenceNumber lsn) throws IOException {
     syncObject.lock();
     try {
@@ -834,7 +843,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         return null;
 
       OLogSegment logSegment = logSegments.get(index);
-      byte[] recordEntry = logSegment.readRecord(lsn, fileDataBuffer);
+      byte[] recordEntry = logSegment.readRecord(lsn);
       if (recordEntry == null)
         return null;
 
@@ -848,6 +857,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
+  @Override
   public OLogSequenceNumber next(OLogSequenceNumber lsn) throws IOException {
     syncObject.lock();
     try {
@@ -860,7 +870,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         return null;
 
       OLogSegment logSegment = logSegments.get(index);
-      OLogSequenceNumber nextLSN = logSegment.getNextLSN(lsn, fileDataBuffer);
+      OLogSequenceNumber nextLSN = logSegment.getNextLSN(lsn);
 
       while (nextLSN == null) {
         index++;
@@ -881,10 +891,12 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
+  @Override
   public OLogSequenceNumber getFlushedLsn() {
     return flushedLsn;
   }
 
+  @Override
   public void cutTill(OLogSequenceNumber lsn) throws IOException {
     syncObject.lock();
     try {
@@ -911,7 +923,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       for (int i = 0; i <= lastTruncateIndex; i++) {
         final OLogSegment logSegment = removeHeadSegmentFromList();
         if (logSegment != null)
-          logSegment.delete(false);
+          logSegment.delete();
       }
 
       recalculateLogSize();
