@@ -6,7 +6,9 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.Vertex;
@@ -136,6 +138,9 @@ public class OGraphSONReader {
           graphson.vertexFromJson(node);
           importedVertices++;
           printStatus(jp, importedVertices, importedEdges);
+
+          if (importedVertices % 1000 == 0)
+            ODatabaseRecordThreadLocal.INSTANCE.get().getLocalCache().invalidate();
         }
       } else if (fieldname.equals(GraphSONTokens.EDGES)) {
         jp.nextToken();
@@ -146,6 +151,9 @@ public class OGraphSONReader {
           graphson.edgeFromJson(node, outV, inV);
           importedEdges++;
           printStatus(jp, importedVertices, importedEdges);
+
+          if (importedEdges % 1000 == 0)
+            ODatabaseRecordThreadLocal.INSTANCE.get().getLocalCache().invalidate();
         }
       }
     }
