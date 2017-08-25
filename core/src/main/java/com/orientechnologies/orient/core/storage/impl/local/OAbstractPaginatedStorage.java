@@ -944,17 +944,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * <p>
    * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
    * <p>
-   * Data format:
-   * <ol>
-   * <li>Amount of records (single entry) - 8 bytes</li>
-   * <li>Record's cluster id - 4 bytes</li>
-   * <li>Record's cluster position - 8 bytes</li>
-   * <li>Delete flag, 1 if record is deleted - 1 byte</li>
-   * <li>Record version , only if record is not deleted - 4 bytes</li>
-   * <li>Record type, only if record is not deleted - 1 byte</li>
-   * <li>Length of binary presentation of record, only if record is not deleted - 4 bytes</li>
-   * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
-   * </ol>
+   * Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li> <li>Record's
+   * cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only if record is
+   * not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary presentation of
+   * record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is not deleted -
+   * length of content is provided in above entity</li> </ol>
    *
    * @param lsn                LSN from which we should find changed records
    * @param stream             Stream which will contain found records
@@ -1000,7 +994,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         final OLogSequenceNumber startLsn = writeAheadLog.next(lsn);
         if (startLsn == null) {
-          OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation", lsn);
+          OLogManager.instance()
+              .info(this, "Cannot find requested LSN=%s for database sync operation (last available LSN is %s)", lsn, endLsn);
           return null;
         }
 
@@ -1009,7 +1004,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           // start record is absent there is nothing that we can do
           OWALRecord walRecord = writeAheadLog.read(startLsn);
           if (walRecord == null) {
-            OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation", lsn);
+            OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation (record in WAL is absent)", lsn);
             return null;
           }
 
@@ -1022,8 +1017,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             if (walRecord instanceof OFileCreatedWALRecord)
               throw new ODatabaseException(
-                  "Cannot execute delta-sync because a new file has been added. Filename: " + ((OFileCreatedWALRecord) walRecord)
-                      .getFileName() + "(id=" + ((OFileCreatedWALRecord) walRecord).getFileId() + ")");
+                  "Cannot execute delta-sync because a new file has been added. Filename: '" + ((OFileCreatedWALRecord) walRecord)
+                      .getFileName() + "' (id=" + ((OFileCreatedWALRecord) walRecord).getFileId() + ")");
 
             if (walRecord instanceof OFileDeletedWALRecord)
               throw new ODatabaseException(
@@ -1471,8 +1466,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   /**
-   * Completes gathering performance characteristics for current thread initiated by call of
-   * {@link #startGatheringPerformanceStatisticForCurrentThread()}
+   * Completes gathering performance characteristics for current thread initiated by call of {@link
+   * #startGatheringPerformanceStatisticForCurrentThread()}
    *
    * @return Performance statistic gathered after call of {@link #startGatheringPerformanceStatisticForCurrentThread()} or
    * <code>null</code> if profiling of storage was not started.

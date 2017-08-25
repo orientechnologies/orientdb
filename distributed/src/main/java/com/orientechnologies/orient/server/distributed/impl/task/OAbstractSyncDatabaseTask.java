@@ -90,34 +90,32 @@ public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask 
   }
 
   protected ODistributedDatabase checkIfCurrentDatabaseIsNotOlder(final ODistributedServerManager iManager,
-      final String databaseName, final OLogSequenceNumber startLSN) {
+      final String databaseName) {
     final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
 
-    if (startLSN != null) {
+    if (lastLSN != null) {
       final OLogSequenceNumber currentLSN = dDatabase.getSyncConfiguration().getLastLSN(iManager.getLocalNodeName());
-      if (startLSN.equals(currentLSN))
-        // REQUESTING LSN IS THE LAST ONE, FINE
-        return dDatabase;
-    }
-
-    // CHECK THE DATE OF LAST OPERATION
-    if (dDatabase.getSyncConfiguration().getLastOperationTimestamp() < lastOperationTimestamp) {
-      final OLogSequenceNumber currentLSN = dDatabase.getSyncConfiguration().getLastLSN(getNodeSource());
-      if (currentLSN == null)
-        return dDatabase;
-
-      if (lastLSN != null) {
-        // USE THE LSN TO COMPARE DATABASES
-        if (lastLSN.equals(currentLSN))
+      if (currentLSN != null) {
+        // LOCAL AND REMOTE LSN PRESENT
+        if (lastLSN.compareTo(currentLSN) <= 0)
+          // REQUESTED LSN IS <= LOCAL LSN
           return dDatabase;
+        else
+          databaseIsOld(iManager, databaseName, dDatabase);
       }
-      databaseIsOld(iManager, databaseName, dDatabase);
-    }
+    } else if (lastOperationTimestamp > -1) {
+      if (lastOperationTimestamp <= dDatabase.getSyncConfiguration().getLastOperationTimestamp())
+        // NO LSN, BUT LOCAL DATABASE HAS BEEN WRITTEN AFTER THE REQUESTER, STILL OK
+        return dDatabase;
+    } else
+      // NO LSN, NO TIMESTAMP, C'MON, CAN'T BE NEWER THAN THIS
+      return dDatabase;
 
-    return dDatabase;
+    return databaseIsOld(iManager, databaseName, dDatabase);
   }
 
-  private void databaseIsOld(ODistributedServerManager iManager, String databaseName, ODistributedDatabase dDatabase) {
+  private ODistributedDatabase databaseIsOld(ODistributedServerManager iManager, String databaseName,
+      ODistributedDatabase dDatabase) {
     final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
     final String msg = String.format(
