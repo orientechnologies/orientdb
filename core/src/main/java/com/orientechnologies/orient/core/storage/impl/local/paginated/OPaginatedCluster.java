@@ -66,8 +66,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     NOT_EXISTENT, PRESENT, ALLOCATED, REMOVED
   }
 
-  private final boolean addRidMetadata = OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean();
-
   public static final  String DEF_EXTENSION            = ".pcl";
   private static final int    DISK_PAGE_SIZE           = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
   private static final int    LOWEST_FREELIST_BOUNDARY = PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
@@ -638,8 +636,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     return recordCreationResult;
   }
 
-  private void addAtomicOperationMetadata(ORID rid, OAtomicOperation atomicOperation) {
-    if (!addRidMetadata)
+  private void addAtomicOperationMetadata(final ORID rid, final OAtomicOperation atomicOperation) {
+    if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
       return;
 
     if (atomicOperation == null)
@@ -656,7 +654,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     recordOperationMetadata.addRid(rid);
   }
 
-  private static int getEntryContentLength(int grownContentSize) {
+  private static int getEntryContentLength(final int grownContentSize) {
     return grownContentSize + 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
   }
 

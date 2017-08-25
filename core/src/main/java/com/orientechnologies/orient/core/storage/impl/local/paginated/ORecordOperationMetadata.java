@@ -33,7 +33,7 @@ import java.util.Set;
  * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
  */
 public class ORecordOperationMetadata implements OAtomicOperationMetadata<Set<ORID>> {
-  public static final String RID_METADATA_KEY = "cluster.record.rid";
+  public static final String RID_METADATA_KEY = "rid";
 
   private final Set<ORID> rids = new HashSet<ORID>();
 
