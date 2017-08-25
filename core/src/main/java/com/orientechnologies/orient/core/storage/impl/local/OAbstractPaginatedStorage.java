@@ -846,7 +846,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         final OLogSequenceNumber startLsn = writeAheadLog.next(lsn);
         if (startLsn == null) {
-          OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation", lsn);
+          OLogManager.instance()
+              .info(this, "Cannot find requested LSN=%s for database sync operation (last available LSN is %s)", lsn, endLsn);
           return null;
         }
 
@@ -855,8 +856,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           // start record is absent there is nothing that we can do
           OWALRecord walRecord = writeAheadLog.read(startLsn);
           if (walRecord == null) {
-            OLogManager.instance()
-                .info(this, "Cannot find requested LSN=%s for database sync operation (record in WAL is absent)", lsn);
+            OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation (record in WAL is absent)", lsn);
+            return null;
           }
 
           OLogSequenceNumber currentLsn = startLsn;
@@ -868,8 +869,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             if (walRecord instanceof OFileCreatedWALRecord)
               throw new ODatabaseException(
-                  "Cannot execute delta-sync because a new file has been added. Filename: " + ((OFileCreatedWALRecord) walRecord)
-                      .getFileName() + "(id=" + ((OFileCreatedWALRecord) walRecord).getFileId() + ")");
+                  "Cannot execute delta-sync because a new file has been added. Filename: '" + ((OFileCreatedWALRecord) walRecord)
+                      .getFileName() + "' (id=" + ((OFileCreatedWALRecord) walRecord).getFileId() + ")");
 
             if (walRecord instanceof OFileDeletedWALRecord)
               throw new ODatabaseException(

@@ -924,11 +924,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                     databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName, cfg);
 
                   } catch (ODistributedDatabaseDeltaSyncException e) {
-
                     if (deploy == null || !deploy) {
                       // NO AUTO DEPLOY
                       ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
-                          "Skipping download of database '%s' from the cluster because autoDeploy=false", databaseName);
+                          "Skipping download of the entire database '%s' from the cluster because autoDeploy=false", databaseName);
 
                       setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
                       distrDatabase.resume();
@@ -985,6 +984,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   protected boolean requestFullDatabase(final ODistributedDatabaseImpl distrDatabase, final String databaseName,
       final boolean backupDatabase, final OModifiableDistributedConfiguration cfg) {
+    ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Requesting full sync for database '%s'...", databaseName);
+
     for (int retry = 0; retry < DEPLOY_DB_MAX_RETRIES; ++retry) {
       // ASK DATABASE TO THE FIRST NODE, THE FIRST ATTEMPT, OTHERWISE ASK TO EVERYONE
       if (requestDatabaseFullSync(distrDatabase, backupDatabase, databaseName, retry > 0, cfg))
@@ -1070,11 +1071,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                   .warn(this, nodeName, server, DIRECTION.IN, "Error on installing database delta for '%s' (err=%s)", databaseName,
                       exc.getMessage());
 
-              ODistributedServerLog
-                  .warn(this, nodeName, server, DIRECTION.IN, "Requesting full database '%s' sync...", databaseName);
-
               // RESTORE STATUS TO ONLINE
-              setDatabaseStatus(server, databaseName, DB_STATUS.ONLINE);
+              setDatabaseStatus(server, databaseName, DB_STATUS.NOT_AVAILABLE);
 
               throw (ODistributedDatabaseDeltaSyncException) value;
 
@@ -1203,7 +1201,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       } else if (value instanceof Throwable) {
         ODistributedServerLog
-            .error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database '%s' in %s", (Exception) value,
+            .error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database '%s' in %s", (Throwable) value,
                 databaseName, dbPath);
 
         setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);

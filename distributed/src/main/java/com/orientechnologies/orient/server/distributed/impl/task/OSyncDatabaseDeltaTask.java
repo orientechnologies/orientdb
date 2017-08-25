@@ -47,7 +47,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
   public static final int FACTORYID = 13;
 
-  protected OLogSequenceNumber startLSN;
   protected Set<String> excludedClusterNames = new HashSet<String>();
 
   public OSyncDatabaseDeltaTask() {
@@ -55,7 +54,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
 
   public OSyncDatabaseDeltaTask(final OLogSequenceNumber iFirstLSN, final long lastOperationTimestamp) {
     super(lastOperationTimestamp);
-    this.startLSN = iFirstLSN;
+    this.lastLSN = iFirstLSN;
   }
 
   @Override
@@ -96,7 +95,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
 
     iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
 
-    final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName, startLSN);
+    final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName);
 
     iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
@@ -110,7 +109,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
             + ".zip");
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-        "Creating delta backup of database '%s' (startLSN=%s) in directory: %s...", databaseName, startLSN,
+        "Creating delta backup of database '%s' (startLSN=%s) in directory: %s...", databaseName, lastLSN,
         backupFile.getAbsolutePath());
 
     if (backupFile.exists())
@@ -136,7 +135,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
     try {
       final AtomicLong counter = new AtomicLong(0);
       endLSN.set(((OAbstractPaginatedStorage) storage)
-          .recordsChangedAfterLSN(startLSN, fileOutputStream, excludedClusterNames, new OCommandOutputListener() {
+          .recordsChangedAfterLSN(lastLSN, fileOutputStream, excludedClusterNames, new OCommandOutputListener() {
             @Override
             public void onMessage(final String iText) {
               if (iText.startsWith("read")) {
@@ -151,17 +150,17 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
 
       if (endLSN.get() == null) {
         // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
-        exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
-      } else if (endLSN.get().equals(startLSN)) {
+        exception.set(new ODistributedDatabaseDeltaSyncException(lastLSN));
+      } else if (endLSN.get().equals(lastLSN)) {
         // nothing has changed
         return Boolean.FALSE;
       } else
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-            "Delta backup of database '%s' completed. range=%s-%s", databaseName, startLSN, endLSN.get());
+            "Delta backup of database '%s' completed. range=%s-%s", databaseName, lastLSN, endLSN.get());
 
     } catch (Exception e) {
       // UNKNOWN ERROR, DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
-      exception.set(new ODistributedDatabaseDeltaSyncException(startLSN, e.getMessage()));
+      exception.set(new ODistributedDatabaseDeltaSyncException(lastLSN, e.getMessage()));
 
     } finally {
       // try {
@@ -212,7 +211,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
 
   @Override
   public void toStream(final DataOutput out) throws IOException {
-    startLSN.toStream(out);
+    lastLSN.toStream(out);
     out.writeLong(lastOperationTimestamp);
     out.writeLong(random);
     out.writeInt(excludedClusterNames.size());
@@ -223,7 +222,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
-    startLSN = new OLogSequenceNumber(in);
+    lastLSN = new OLogSequenceNumber(in);
     lastOperationTimestamp = in.readLong();
     random = in.readLong();
     excludedClusterNames.clear();
