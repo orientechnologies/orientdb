@@ -41,7 +41,7 @@ public class ODemoDbMetadataConsistencyIT extends OIntegrationTestTemplate {
   private int hasReviewCount      = 1273;
   private int hasStayedCount      = 1650;
   private int hasUsedServiceCount = 4134;
-  private int hasVisitedCount     = 5104;
+  private int hasVisitedCount     = 4973;
   private int isFromCountryCount  = 400;
   private int madeReviewCount  = 1273;
 
