@@ -353,6 +353,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   private static boolean validateName(String name, String storageName, Locale locale) {
     name = name.toLowerCase(locale);
+    storageName = storageName.toLowerCase(locale);
 
     if (!name.endsWith(".wal"))
       return false;
@@ -776,7 +777,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       if (!commitExecutor.isShutdown()) {
         commitExecutor.shutdown();
         try {
-          if (!commitExecutor.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+          if (!commitExecutor
+              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
             throw new OStorageException("WAL flush task for '" + getStorage().getName() + "' storage cannot be stopped");
 
         } catch (InterruptedException e) {
@@ -787,7 +789,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       if (!autoFileCloser.isShutdown()) {
         autoFileCloser.shutdown();
         try {
-          if (!autoFileCloser.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+          if (!autoFileCloser
+              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
             throw new OStorageException("WAL file auto close tasks '" + getStorage().getName() + "' storage cannot be stopped");
 
         } catch (InterruptedException e) {
