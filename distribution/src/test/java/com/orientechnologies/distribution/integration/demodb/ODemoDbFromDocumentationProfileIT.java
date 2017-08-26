@@ -1,10 +1,15 @@
 package com.orientechnologies.distribution.integration.demodb;
 
 import com.orientechnologies.distribution.integration.OIntegrationTestTemplate;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import org.assertj.core.api.IntegerAssert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,8 +29,15 @@ public class ODemoDbFromDocumentationProfileIT extends OIntegrationTestTemplate 
         + "GROUP BY YearOfBirth \n"
         + "ORDER BY NumberOfProfiles DESC");
 
-    assertThat(resultSet)
+
+    final List<OResult> results = resultSet.stream().collect(Collectors.toList());
+    assertThat(results)
         .hasSize(51);
+
+    final OResult result = results.iterator().next();
+
+    assertThat(result.<Long>getProperty("NumberOfProfiles")).isEqualTo(34);
+    assertThat(result.<String>getProperty("YearOfBirth")).isEqualTo("1997");
 
     resultSet.close();
     db.close();
@@ -35,12 +47,19 @@ public class ODemoDbFromDocumentationProfileIT extends OIntegrationTestTemplate 
   public void test_Profile_Example_2() throws Exception {
 
     OResultSet resultSet = db.query(
-        "SELECT  @rid as Profile_RID, Name, Surname, (out('HasFriend').size() + in('HasFriend').size()) AS FriendsNumber "
+        "SELECT  @rid as Profile_RID, Name, Surname, (both('HasFriend').size()) AS FriendsNumber "
             + "FROM `Profiles` "
             + "ORDER BY FriendsNumber DESC LIMIT 3");
 
-    assertThat(resultSet)
+    final List<OResult> results = resultSet.stream().collect(Collectors.toList());
+    assertThat(results)
         .hasSize(3);
+
+    final OResult result = results.iterator().next();
+
+    assertThat(result.<String>getProperty("Name")).isEqualTo("Jeremiah");
+    assertThat(result.<String>getProperty("Surname")).isEqualTo("Schneider");
+    assertThat(result.<Integer>getProperty("FriendsNumber")).isEqualTo(12);
 
     resultSet.close();
     db.close();
