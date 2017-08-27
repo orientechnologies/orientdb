@@ -269,9 +269,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         openClusters();
         openIndexes();
 
-        if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN.getValueAsBoolean())
-          makeFullCheckpoint();
-
         writeCache.startFuzzyCheckpoints();
 
         status = STATUS.OPEN;

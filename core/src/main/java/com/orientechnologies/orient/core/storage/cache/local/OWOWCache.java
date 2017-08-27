@@ -351,7 +351,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
               listener.lowDiskSpace(information);
             } catch (Exception e) {
               OLogManager.instance()
-                  .error(this, "Error during notification of low disk space for storage '" + storageLocal.getName()+"'", e);
+                  .error(this, "Error during notification of low disk space for storage '" + storageLocal.getName() + "'", e);
             }
         }
       }
@@ -455,7 +455,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       OFileClassic fileClassic;
 
       if (fileId != null && fileId >= 0)
-        throw new OStorageException("File with name '" + fileName + "' already exists in storage '" + storageLocal.getName()+"'");
+        throw new OStorageException("File with name '" + fileName + "' already exists in storage '" + storageLocal.getName() + "'");
 
       if (fileId == null) {
         ++fileCounter;
@@ -524,7 +524,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       if (fileClassic != null) {
         if (!fileClassic.getName().equals(fileName))
           throw new OStorageException(
-              "File with given id exists but has different name '" + fileClassic.getName() + "' vs. proposed '" + fileName+"'");
+              "File with given id exists but has different name '" + fileClassic.getName() + "' vs. proposed '" + fileName + "'");
       } else {
         if (fileCounter < intId)
           fileCounter = intId;
@@ -564,8 +564,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       try {
         future.get();
       } catch (Exception e) {
-        throw OException
-            .wrapException(new OStorageException("Error during fuzzy checkpoint execution for storage '" + storageLocal.getName()+"'"),
+        throw OException.wrapException(
+            new OStorageException("Error during fuzzy checkpoint execution for storage '" + storageLocal.getName() + "'"),
                 e);
       }
     }
@@ -1104,7 +1104,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
                 checkSumIncorrect = true;
                 if (commandOutputListener != null)
                   commandOutputListener.onMessage(
-                      "Error: Checksum for page " + (pos / pageSize) + " in file '" + fileClassic.getName() + "' is incorrect. It could be corrupted");
+                      "Error: Checksum for page " + (pos / pageSize) + " in file '" + fileClassic.getName()
+                          + "' is incorrect. It could be corrupted");
                 fileIsCorrect = false;
               }
             }

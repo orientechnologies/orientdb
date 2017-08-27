@@ -22,6 +22,8 @@ package com.orientechnologies.common.io;
 import com.orientechnologies.common.util.OPatternConst;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
@@ -337,6 +339,143 @@ public class OIOUtils {
       }
       off += n;
       len -= n;
+    }
+  }
+
+  /**
+   * Reads data from {@link FileChannel} to {@link ByteBuffer} starting from passed in position in {@link FileChannel}.
+   * Data will be read to {@link ByteBuffer} starting from current position till buffer limit.
+   * <p>
+   * This method is thread safe in sense that several threads can read from the same {@link FileChannel}.
+   *
+   * @param throwOnEof If parameter set to <code>true</code> then EOF exception will be thrown if end of file will be reached
+   *                   otherwise buffer will be filled with 0 bytes.
+   */
+  public static void readByteBuffer(ByteBuffer buffer, FileChannel channel, long position, boolean throwOnEof) throws IOException {
+    int bytesToRead = buffer.limit();
+
+    int read = 0;
+    while (read < bytesToRead) {
+      buffer.position(read);
+
+      final int r = channel.read(buffer, position + read);
+      if (r < 0)
+        if (throwOnEof)
+          throw new EOFException("End of file is reached");
+        else {
+          buffer.put(new byte[buffer.remaining()]);
+          return;
+        }
+
+      read += r;
+    }
+  }
+
+  /**
+   * Reads data from {@link FileChannel} to {@link ByteBuffer} starting from current position in {@link FileChannel}.
+   * Data will be read to {@link ByteBuffer} since the start of the buffer till buffer limit.
+   * <p>
+   * This method is not thread safe, several threads can not read from the same channel.
+   */
+  public static void readByteBuffer(ByteBuffer buffer, FileChannel channel) throws IOException {
+    buffer.position(0);
+
+    int bytesToRead = buffer.limit();
+
+    int read = 0;
+
+    while (read < bytesToRead) {
+      buffer.position(read);
+      final int r = channel.read(buffer);
+
+      if (r < 0)
+        throw new EOFException("End of file is reached");
+
+      read += r;
+    }
+  }
+
+  /**
+   * Writes data from {@link ByteBuffer} to {@link FileChannel} starting from passed in {@link FileChannel} position.
+   * Data will be written since the start of the buffer till buffer limit.
+   * <p>
+   * This method is thread safe in the sense that several threads can write to  single {@link FileChannel}.
+   */
+  public static void writeByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
+    buffer.position(0);
+    int bytesToWrite = buffer.limit();
+
+    int written = 0;
+    while (written < bytesToWrite) {
+      buffer.position(written);
+
+      written += channel.write(buffer, position + written);
+    }
+  }
+
+  /**
+   * Writes content of passed in buffers into {@link FileChannel} since current channels position till at least
+   * passed in limit of bytes.
+   * <p>
+   * All buffers content will be written starting from their zero position.
+   * <p>
+   * This method is not thread safe, many threads can not write into single channel.
+   *
+   * @param bytesToWrite Minimum amount of bytes which should be written to channel
+   */
+  public static void writeByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToWrite) throws IOException {
+    long written = 0;
+
+    for (ByteBuffer buffer : buffers) {
+      buffer.position(0);
+    }
+
+    final int bufferLimit = buffers[0].limit();
+
+    while (written < bytesToWrite) {
+      final int bufferIndex = (int) written / bufferLimit;
+
+      written += channel.write(buffers, bufferIndex, buffers.length - bufferIndex);
+    }
+  }
+
+  /**
+   * Reads from {@link FileChannel} current position to array of {@link ByteBuffer}s continues chunk of data till at least provided
+   * limit of bytes will be written.
+   * <p>
+   * Data will be loaded into buffers since zero position.
+   * <p>
+   * This methods is not thread safe, several threads can not read from the same channel.
+   *
+   * @param bytesToRead Minimum amount of bytes which should be read from channel.
+   * @param throwOnEof  if flag is set to <code>true</code> EOF exception will be thrown, otherwise end of buffers will be filled by
+   *                    zeros.
+   */
+  public static void readByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToRead, boolean throwOnEof)
+      throws IOException {
+    long read = 0;
+
+    for (ByteBuffer buffer : buffers) {
+      buffer.position(0);
+    }
+
+    final int bufferLimit = buffers[0].limit();
+
+    while (read < bytesToRead) {
+      final int bufferIndex = (int) read / bufferLimit;
+
+      final long r = channel.read(buffers, bufferIndex, buffers.length - bufferIndex);
+
+      if (r < 0)
+        if (throwOnEof)
+          throw new EOFException("End of file is reached");
+        else {
+          for (int i = bufferIndex; i < buffers.length; ++i)
+            buffers[i].put(new byte[buffers[i].remaining()]);
+          return;
+        }
+
+      read += r;
     }
   }
 }

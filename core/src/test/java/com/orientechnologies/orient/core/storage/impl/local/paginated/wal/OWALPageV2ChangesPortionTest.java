@@ -13,7 +13,7 @@ import java.util.Random;
  * @since 8/19/2015
  */
 @Test
-public class OWALPageChangesPortionTest {
+public class OWALPageV2ChangesPortionTest {
 
   @BeforeMethod
   public void before() {

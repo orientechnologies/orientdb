@@ -40,6 +40,7 @@ public class ReadWriteDiskCacheTest {
   public static final  int READ_CACHE_MAX_MEMORY   = 4 * PAGE_SIZE;
   public static final  int writeCacheAmountOfPages = 15000;
   public static final  int WRITE_CACHE_MAX_SIZE    = writeCacheAmountOfPages * PAGE_SIZE;
+  public static final  int SEGMENT_SIZE            = 10 * 1024;
 
   private O2QCache  readBuffer;
   private OWOWCache writeBuffer;
@@ -1126,7 +1127,7 @@ public class ReadWriteDiskCacheTest {
     if (!file.exists())
       file.mkdir();
 
-    writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, null, true, storageLocal, 10);
+    writeAheadLog = new ODiskWriteAheadLog(1024, -1, SEGMENT_SIZE, null, true, storageLocal, 10);
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
         "readWriteDiskCacheTest.tst", 0);
@@ -1150,7 +1151,7 @@ public class ReadWriteDiskCacheTest {
 
       dataPointer.acquireExclusiveLock();
 
-      OLogSequenceNumber pageLSN = writeAheadLog.log(new WriteAheadLogTest.TestRecord(30, false));
+      OLogSequenceNumber pageLSN = writeAheadLog.log(new WriteAheadLogTest.TestRecord(-1, SEGMENT_SIZE, 58, false, true));
 
       setLsn(dataPointer.getSharedBuffer(), pageLSN);
 

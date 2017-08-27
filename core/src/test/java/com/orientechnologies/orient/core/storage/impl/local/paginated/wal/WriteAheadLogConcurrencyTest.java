@@ -29,11 +29,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  */
 @Test(enabled = false)
 public class WriteAheadLogConcurrencyTest {
+  public static final int SEGMENT_SIZE = OWALPage.PAGE_SIZE * 800;
   private ODiskWriteAheadLog writeAheadLog;
-  private File                                                           testDir;
+  private File               testDir;
   private NavigableMap<OLogSequenceNumber, WriteAheadLogTest.TestRecord> recordConcurrentMap = new ConcurrentSkipListMap<OLogSequenceNumber, WriteAheadLogTest.TestRecord>();
-  private ExecutorService                                                writerExecutor;
-  private AtomicReference<OLogSequenceNumber>                            lastCheckpoint      = new AtomicReference<OLogSequenceNumber>();
+  private ExecutorService writerExecutor;
+  private AtomicReference<OLogSequenceNumber> lastCheckpoint = new AtomicReference<OLogSequenceNumber>();
 
   @BeforeClass(enabled = false)
   public void beforeClass() throws Exception {
@@ -51,7 +52,7 @@ public class WriteAheadLogConcurrencyTest {
     when(localPaginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
     when(localPaginatedStorage.getName()).thenReturn("WriteAheadLogConcurrencyTest");
 
-    writeAheadLog = new ODiskWriteAheadLog(200, 500, OWALPage.PAGE_SIZE * 800, null, true, localPaginatedStorage, 10);
+    writeAheadLog = new ODiskWriteAheadLog(200, 500, SEGMENT_SIZE, null, true, localPaginatedStorage, 10);
 
     writerExecutor = Executors.newCachedThreadPool();
   }
@@ -70,8 +71,8 @@ public class WriteAheadLogConcurrencyTest {
       System.out.println(seed);
 
     for (int i = 0; i < 8; i++)
-      futures.add(writerExecutor.submit(new ConcurrentWriter(seeds.get(i), startLatch, writeAheadLog, recordConcurrentMap,
-          lastCheckpoint)));
+      futures.add(writerExecutor
+          .submit(new ConcurrentWriter(seeds.get(i), startLatch, writeAheadLog, recordConcurrentMap, lastCheckpoint)));
 
     startLatch.countDown();
 
@@ -101,7 +102,7 @@ public class WriteAheadLogConcurrencyTest {
 
   private static final class ConcurrentWriter implements Callable<Void> {
     private final CountDownLatch                                                 startLatch;
-    private final ODiskWriteAheadLog writeAheadLog;
+    private final ODiskWriteAheadLog                                             writeAheadLog;
     private final NavigableMap<OLogSequenceNumber, WriteAheadLogTest.TestRecord> recordConcurrentMap;
     private final Random                                                         random;
     private final AtomicReference<OLogSequenceNumber>                            lastCheckpoint;
@@ -123,7 +124,8 @@ public class WriteAheadLogConcurrencyTest {
       try {
         while (writeAheadLog.size() < 3072L * 1024 * 1024) {
           int recordSize = random.nextInt(OWALPage.PAGE_SIZE / 2 - 128) + 128;
-          WriteAheadLogTest.TestRecord testRecord = new WriteAheadLogTest.TestRecord(recordSize, random.nextBoolean());
+          WriteAheadLogTest.TestRecord testRecord = new WriteAheadLogTest.TestRecord(-1, SEGMENT_SIZE, recordSize,
+              random.nextBoolean(), true);
 
           OLogSequenceNumber lsn = writeAheadLog.log(testRecord);
           if (testRecord.isUpdateMasterRecord()) {

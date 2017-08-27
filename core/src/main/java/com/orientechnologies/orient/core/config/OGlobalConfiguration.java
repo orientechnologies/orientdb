@@ -178,9 +178,14 @@ public enum OGlobalConfiguration {
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
       "Indicates whether a full checkpoint should be performed, if storage was created", Boolean.class, false),
 
-  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN("storage.makeFullCheckpointAfterOpen",
+  /**
+   * @deprecated because it was used as workaround for the case when storage is already opened but there are no checkpoints and as
+   * result data restore after crash may work incorrectly, this bug is fixed under https://github.com/orientechnologies/orientdb/issues/7562
+   * in so this functionality is not needed any more.
+   */
+  @Deprecated STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN("storage.makeFullCheckpointAfterOpen",
       "Indicates whether a full checkpoint should be performed, if storage was opened. It is needed so fuzzy checkpoints can work properly",
-      Boolean.class, true),
+      Boolean.class, false),
 
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
       "Indicates whether a full checkpoint should be performed, if storage was opened", Boolean.class, true),
@@ -589,10 +594,11 @@ public enum OGlobalConfiguration {
 
   QUERY_LIVE_SUPPORT("query.live.support", "Enable/Disable the support of live query. (Use false to disable)", Boolean.class, true),
 
-  QUERY_TIMEOUT_DEFAULT_STRATEGY("query.timeout.defaultStrategy", "Default timeout strategy for queries (can be RETURN or EXCEPTION)", String.class, "EXCEPTION"),
+  QUERY_TIMEOUT_DEFAULT_STRATEGY("query.timeout.defaultStrategy",
+      "Default timeout strategy for queries (can be RETURN or EXCEPTION)", String.class, "EXCEPTION"),
 
-  LUCENE_QUERY_PAGE_SIZE("lucene.query.pageSize",
-      "Size of the page when fetching data from a lucene index", Long.class, 10000,true),
+  LUCENE_QUERY_PAGE_SIZE("lucene.query.pageSize", "Size of the page when fetching data from a lucene index", Long.class, 10000,
+      true),
 
   STATEMENT_CACHE_SIZE("statement.cacheSize", "Number of parsed SQL statements kept in cache", Integer.class, 100),
 
@@ -762,52 +768,52 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2.0
    */
-  @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_LOCAL_QUEUESIZE("distributed.localQueueSize",
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_LOCAL_QUEUESIZE("distributed.localQueueSize",
       "Size of the intra-thread queue for distributed messages", Integer.class, 10000),
 
   /**
    * @Since 2.2.0
    */
-  @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads",
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads",
       "Number of parallel worker threads per database that process distributed messages. Use 0 for automatic", Integer.class, 0),
 
   /**
    * @Since 2.1.3, Deprecated in 2.2.0
    */
-  @Deprecated @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize",
+  @Deprecated @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize",
       "Maximum queue size to mark a node as stalled. If the number of messages in queue are more than this values, the node is restarted with a remote command (0 = no maximum, which means up to 2^31-1 entries)",
       Integer.class, 10000),
 
   /**
    * @Since 2.1.3
    */
-  @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_BACKUP_DIRECTORY("distributed.backupDirectory",
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_BACKUP_DIRECTORY("distributed.backupDirectory",
       "Directory where the copy of an existent database is saved, before it is downloaded from the cluster. Leave it empty to avoid the backup.",
       String.class, "../backup/databases"),
 
   /**
    * @Since 2.2.15
    */
-  @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST("distributed.backupTryIncrementalFirst",
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST("distributed.backupTryIncrementalFirst",
       "Try to execute an incremental backup first.", Boolean.class, true),
 
   /**
    * @Since 2.1
    */
-  @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY("distributed.concurrentTxMaxAutoRetry",
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY("distributed.concurrentTxMaxAutoRetry",
       "Maximum attempts the transaction coordinator should execute a transaction automatically, if records are locked. (Minimum is 1 = no attempts)",
       Integer.class, 10, true),
 
   /**
    * @Since 2.2.7
    */
-  @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_ATOMIC_LOCK_TIMEOUT("distributed.atomicLockTimeout",
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_ATOMIC_LOCK_TIMEOUT("distributed.atomicLockTimeout",
       "Timeout (in ms) to acquire a distributed lock on a record. (0=infinite)", Integer.class, 50, true),
 
   /**
    * @Since 2.1
    */
-  @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY("distributed.concurrentTxAutoRetryDelay",
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY("distributed.concurrentTxAutoRetryDelay",
       "Delay (in ms) between attempts on executing a distributed transaction, which had failed because of locked records. (0=no delay)",
       Integer.class, 10, true),
 
@@ -817,49 +823,49 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_KRB5_CONFIG("client.krb5.config", "Location of the Kerberos configuration file",
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_KRB5_CONFIG("client.krb5.config", "Location of the Kerberos configuration file",
       String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_KRB5_CCNAME("client.krb5.ccname", "Location of the Kerberos client ticketcache",
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_KRB5_CCNAME("client.krb5.ccname", "Location of the Kerberos client ticketcache",
       String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_KRB5_KTNAME("client.krb5.ktname", "Location of the Kerberos client keytab",
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_KRB5_KTNAME("client.krb5.ktname", "Location of the Kerberos client keytab",
       String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CREDENTIAL_INTERCEPTOR("client.credentialinterceptor",
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_CREDENTIAL_INTERCEPTOR("client.credentialinterceptor",
       "The name of the CredentialInterceptor class", String.class, null),
 
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CI_KEYALGORITHM("client.ci.keyalgorithm",
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_CI_KEYALGORITHM("client.ci.keyalgorithm",
       "The key algorithm used by the symmetric key credential interceptor", String.class, "AES"),
 
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CI_CIPHERTRANSFORM("client.ci.ciphertransform",
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_CI_CIPHERTRANSFORM("client.ci.ciphertransform",
       "The cipher transformation used by the symmetric key credential interceptor", String.class, "AES/CBC/PKCS5Padding"),
 
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CI_KEYSTORE_FILE("client.ci.keystore.file",
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_CI_KEYSTORE_FILE("client.ci.keystore.file",
       "The file path of the keystore used by the symmetric key credential interceptor", String.class, null),
 
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CI_KEYSTORE_PASSWORD("client.ci.keystore.password",
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_CI_KEYSTORE_PASSWORD("client.ci.keystore.password",
       "The password of the keystore used by the symmetric key credential interceptor", String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)CREATE_DEFAULT_USERS("security.createDefaultUsers",
+  @OApi(maturity = OApi.MATURITY.NEW) CREATE_DEFAULT_USERS("security.createDefaultUsers",
       "Indicates whether default database users should be created", Boolean.class, true),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)SERVER_SECURITY_FILE("server.security.file",
+  @OApi(maturity = OApi.MATURITY.NEW) SERVER_SECURITY_FILE("server.security.file",
       "Location of the OrientDB security.json configuration file", String.class, null),
 
   /**
