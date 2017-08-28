@@ -114,13 +114,14 @@ public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask 
     return databaseIsOld(iManager, databaseName, dDatabase);
   }
 
-  private ODistributedDatabase databaseIsOld(ODistributedServerManager iManager, String databaseName,
-      ODistributedDatabase dDatabase) {
+  private ODistributedDatabase databaseIsOld(final ODistributedServerManager iManager, final String databaseName,
+      final ODistributedDatabase dDatabase) {
     final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
     final String msg = String.format(
-        "Skip deploying delta database '%s' because the requesting server has a most recent database (requester LastOperationOn=%s current LastOperationOn=%s)",
-        databaseName, df.format(new Date(lastOperationTimestamp)),
+        "Skip deploying delta database '%s' because the requesting server has a most recent database (requester lsn=%s LastOperationOn=%s - current lsn %s LastOperationOn=%s)",
+        databaseName, lastLSN, df.format(new Date(lastOperationTimestamp)),
+        dDatabase.getSyncConfiguration().getLastLSN(iManager.getLocalNodeName()),
         df.format(new Date(dDatabase.getSyncConfiguration().getLastOperationTimestamp())));
     ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE, msg);
 
