@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Created by santo-it on 27/08/2017.
+ * Created by santo-it on 2017-08-27.
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ODemoDbFromDocumentationCustomersIT extends OIntegrationTestTemplate {
@@ -120,7 +120,6 @@ public class ODemoDbFromDocumentationCustomersIT extends OIntegrationTestTemplat
     db.close();
   }
 
-
   @Test
   public void test_Customers_Example_8() throws Exception {
 
@@ -191,6 +190,5 @@ public class ODemoDbFromDocumentationCustomersIT extends OIntegrationTestTemplat
     resultSet.close();
     db.close();
   }
-
 
 }

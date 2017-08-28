@@ -86,7 +86,6 @@ public class ODemoDbFromDocumentationReviewsIT extends OIntegrationTestTemplate 
     db.close();
   }
 
-
   @Test
   public void test_Reviews_Example_5() throws Exception {
 
@@ -103,6 +102,27 @@ public class ODemoDbFromDocumentationReviewsIT extends OIntegrationTestTemplate 
     assertThat(result.<String>getProperty("Restaurants_Name")).isEqualTo("Pizzeria Il Pirata");
     assertThat(result.<String>getProperty("Restaurants_Type")).isEqualTo("restaurant");
     assertThat(result.<Integer>getProperty("ReviewNumbers")).isEqualTo(4);
+
+    resultSet.close();
+    db.close();
+  }
+
+  @Test
+  public void test_Reviews_Example_5_bis() throws Exception {
+
+    OResultSet resultSet = db.query("SELECT \n" + "  @rid as Service_RID,\n" + "  Name as Service_Name,\n"
+        + "  Type as Service_Type,\n" + "  out(\"HasReview\").size() AS ReviewNumbers \n" + "FROM `Services` \n"
+        + "ORDER BY ReviewNumbers DESC \n" + "LIMIT 3");
+
+    final List<OResult> results = resultSet.stream().collect(Collectors.toList());
+    assertThat(results)
+        .hasSize(3);
+
+    final OResult result = results.iterator().next();
+
+    assertThat(result.<String>getProperty("Service_Name")).isEqualTo("Hotel Felicyta");
+    assertThat(result.<String>getProperty("Service_Type")).isEqualTo("hotel");
+    assertThat(result.<Integer>getProperty("ReviewNumbers")).isEqualTo(5);
 
     resultSet.close();
     db.close();

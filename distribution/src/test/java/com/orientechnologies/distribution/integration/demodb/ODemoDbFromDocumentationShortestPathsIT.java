@@ -9,7 +9,7 @@ import org.junit.runners.MethodSorters;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Created by santo-it on 14/08/2017.
+ * Created by santo-it on 2017-08-14.
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ODemoDbFromDocumentationShortestPathsIT extends OIntegrationTestTemplate {
@@ -17,12 +17,9 @@ public class ODemoDbFromDocumentationShortestPathsIT extends OIntegrationTestTem
   @Test
   public void test_ShortestPaths_Example_1() throws Exception {
 
-    OResultSet resultSet = db.query("SELECT expand(path) FROM ("
-        + "  SELECT shortestPath($from, $to) AS path"
-        + "  LET"
-        + "    $from = (SELECT FROM Profiles WHERE Name='Santo' and Surname='OrientDB'),"
-        + "    $to = (SELECT FROM Countries WHERE Name='United States')"
-        + "  UNWIND path" + ")");
+    OResultSet resultSet = db.query("SELECT expand(path) FROM (\n" + "  SELECT shortestPath($from, $to) AS path \n" + "  LET \n"
+        + "    $from = (SELECT FROM Profiles WHERE Name='Santo' and Surname='OrientDB'), \n"
+        + "    $to = (SELECT FROM Countries WHERE Name='United States') \n" + "  UNWIND path\n" + ")");
 
     assertThat(resultSet)
         .hasSize(4);
@@ -34,13 +31,9 @@ public class ODemoDbFromDocumentationShortestPathsIT extends OIntegrationTestTem
   @Test
   public void test_ShortestPaths_Example_2() throws Exception {
 
-    OResultSet resultSet = db.query("SELECT expand(path) FROM ("
-        + "  SELECT shortestPath($from, $to) AS path"
-        + "  LET"
-        + "    $from = (SELECT FROM Profiles WHERE Name='Santo' and Surname='OrientDB'),"
-        + "    $to = (SELECT FROM Restaurants WHERE Name='Malga Granezza')"
-        + "  UNWIND path"
-        + ")");
+    OResultSet resultSet = db.query("SELECT expand(path) FROM (\n" + "  SELECT shortestPath($from, $to) AS path \n" + "  LET \n"
+        + "    $from = (SELECT FROM Profiles WHERE Name='Santo' and Surname='OrientDB'), \n"
+        + "    $to = (SELECT FROM Restaurants WHERE Name='Malga Granezza') \n" + "  UNWIND path\n" + ")");
 
     assertThat(resultSet)
         .hasSize(4);

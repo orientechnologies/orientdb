@@ -9,7 +9,7 @@ import org.junit.runners.MethodSorters;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Created by santo-it on 14/08/2017.
+ * Created by santo-it on 2017-08-14.
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ODemoDbFromDocumentationTraversesIT extends OIntegrationTestTemplate {
@@ -17,9 +17,8 @@ public class ODemoDbFromDocumentationTraversesIT extends OIntegrationTestTemplat
   @Test
   public void test_Traverses_Example_1() throws Exception {
 
-    OResultSet resultSet = db.query("TRAVERSE * FROM ("
-                                        + "SELECT FROM Profiles WHERE Name='Santo' and Surname='OrientDB'"
-                                        + ") MAXDEPTH 3");
+    OResultSet resultSet = db.query("TRAVERSE * FROM (\n" + "  SELECT FROM Profiles WHERE Name='Santo' and Surname='OrientDB'\n"
+        + ") MAXDEPTH 3");
 
     assertThat(resultSet)
         .hasSize(85);
@@ -31,9 +30,7 @@ public class ODemoDbFromDocumentationTraversesIT extends OIntegrationTestTemplat
   @Test
   public void test_Traverses_Example_2() throws Exception {
 
-    OResultSet resultSet = db.query("TRAVERSE * FROM ("
-        + "SELECT FROM Countries WHERE Name='Italy'"
-        + ") MAXDEPTH 3");
+    OResultSet resultSet = db.query("TRAVERSE * FROM (\n" + "  SELECT FROM Countries WHERE Name='Italy'\n" + ") MAXDEPTH 3\n");
 
     assertThat(resultSet)
         .hasSize(135);

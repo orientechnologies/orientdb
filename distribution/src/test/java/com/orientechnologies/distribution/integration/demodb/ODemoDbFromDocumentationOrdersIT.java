@@ -63,7 +63,6 @@ public class ODemoDbFromDocumentationOrdersIT extends OIntegrationTestTemplate {
 
   // example 3 is handled already in another file
 
-
   @Test
   public void test_Orders_Example_4() throws Exception {
 

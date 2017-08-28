@@ -9,7 +9,7 @@ import org.junit.runners.MethodSorters;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Created by santo-it on 24/05/2017.
+ * Created by santo-it on 2017-05-24.
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ODemoDbFromDocumentationPolymorphismIT extends OIntegrationTestTemplate {
@@ -29,23 +29,6 @@ public class ODemoDbFromDocumentationPolymorphismIT extends OIntegrationTestTemp
 
   }
 
-  @Test
-  public void test_Polymorphism_Example_2() throws Exception {
+  // example 2 is handled already in other files
 
-    OResultSet resultSet = db.query("SELECT \n"
-        + "  @rid as Service_RID,\n"
-        + "  Name as Service_Name,\n"
-        + "  Type as Service_Type,\n"
-        + "  out('HasReview').size() AS ReviewNumbers \n"
-        + "FROM `Services` \n"
-        + "ORDER BY ReviewNumbers DESC \n"
-        + "LIMIT 3");
-
-    assertThat(resultSet)
-        .hasSize(3);
-
-    resultSet.close();
-    db.close();
-
-  }
 }

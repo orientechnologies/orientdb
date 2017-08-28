@@ -134,7 +134,6 @@ public class ODemoDbFromDocumentationFriendshipIT extends OIntegrationTestTempla
 
   }
 
-
   @Test
   public void test_Friendship_Example_7() throws Exception {
 

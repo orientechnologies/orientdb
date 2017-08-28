@@ -18,10 +18,9 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * This integration test keeps track of issues to avoid regressions. It creates a database called ad the class name that it is
+ * This integration test keeps track of issues to avoid regressions. It creates a database called as the class name, which is
  * dropped at the end of the work.
- * <p>
- * Created by santo-it on 03/22/2017.
+ * Created by santo-it on 2017-03-22.
  */
 public class OGitHubIssuesIT extends OIntegrationTestTemplate {
 
