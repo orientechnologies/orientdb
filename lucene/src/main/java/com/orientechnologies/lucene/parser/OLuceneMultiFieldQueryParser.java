@@ -4,6 +4,7 @@ import com.orientechnologies.lucene.builder.OLuceneDateTools;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.DoublePoint;
+import org.apache.lucene.document.FloatPoint;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
@@ -72,6 +73,9 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
       case INTEGER:
         return Optional.of(IntPoint
             .newRangeQuery(field, Math.addExact(Integer.parseInt(part1), start), Math.addExact(Integer.parseInt(part2), end)));
+      case FLOAT:
+        return Optional.of(FloatPoint
+            .newRangeQuery(field, Float.parseFloat(part1) - start, Float.parseFloat(part2) + end));
       case DOUBLE:
         return Optional.of(DoublePoint
             .newRangeQuery(field, Double.parseDouble(part1) - start, Double.parseDouble(part2) + end));

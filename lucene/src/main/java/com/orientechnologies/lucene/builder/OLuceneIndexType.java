@@ -36,12 +36,13 @@ public class OLuceneIndexType {
 
     if (value instanceof Number) {
       Number number = (Number) value;
-      if (value instanceof Long)
+      if (value instanceof Long) {
         return new LongPoint(fieldName, number.longValue());
-      else if (value instanceof Float)
+      } else if (value instanceof Float) {
         return new FloatPoint(fieldName, number.floatValue());
-      else if (value instanceof Double)
+      } else if (value instanceof Double) {
         return new DoublePoint(fieldName, number.doubleValue());
+      }
       return new IntPoint(fieldName, number.intValue());
 
     } else if (value instanceof Date) {

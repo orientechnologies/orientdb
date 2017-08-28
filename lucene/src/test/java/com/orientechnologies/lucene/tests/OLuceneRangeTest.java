@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.lucene.document.DateTools;
 import org.junit.Before;
@@ -29,6 +28,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     cls.createProperty("surname", OType.STRING);
     cls.createProperty("date", OType.DATETIME);
     cls.createProperty("age", OType.INTEGER);
+    cls.createProperty("weight", OType.FLOAT);
 
     List<String> names = Arrays.asList("John", "Robert", "Jane", "andrew", "Scott", "luke", "Enriquez", "Luis", "Gabriel", "Sara");
     for (int i = 0; i < 10; i++) {
@@ -37,13 +37,33 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
           .field("surname", "Reese")
           //from today back one day a time
           .field("date", System.currentTimeMillis() - (i * 3600 * 24 * 1000))
-          .field("age", i));
-    }
+          .field("age", i)
+          .field("weight", i + 0.1f));
 
+    }
   }
 
   @Test
   public void shouldUseRangeQueryOnSingleIntegerField() throws Exception {
+
+    db.command("create index Person.weight on Person(weight) FULLTEXT ENGINE LUCENE");
+
+    assertThat(db.getMetadata().getIndexManager().getIndex("Person.weight").getSize()).isEqualTo(11);
+
+    //range
+    OResultSet results = db.command("SELECT FROM Person WHERE search_class('weight:[0 TO 1.1]') = true");
+
+    assertThat(results).hasSize(2);
+
+    //single value
+    results = db.command("SELECT FROM Person WHERE search_class('weight:7.1') = true");
+
+    assertThat(results).hasSize(1);
+
+  }
+
+  @Test
+  public void shouldUseRangeQueryOnSingleFloatField() throws Exception {
 
     db.command("create index Person.age on Person(age) FULLTEXT ENGINE LUCENE");
 
@@ -64,7 +84,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
   public void shouldUseRangeQueryOnSingleDateField() throws Exception {
 
     db.commit();
-    db.command(new OCommandSQL("create index Person.date on Person(date) FULLTEXT ENGINE LUCENE")).execute();
+    db.command("create index Person.date on Person(date) FULLTEXT ENGINE LUCENE");
     db.commit();
 
     assertThat(db.getMetadata().getIndexManager().getIndex("Person.date").getSize()).isEqualTo(11);
@@ -83,7 +103,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
   @Test
   public void shouldUseRangeQueryMultipleField() throws Exception {
 
-    db.command(new OCommandSQL("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE")).execute();
+    db.command("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE");
 
     assertThat(db.getMetadata().getIndexManager().getIndex("Person.composite").getSize()).isEqualTo(11);
 
@@ -113,7 +133,6 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
   }
 
   @Test
-//  @Ignore
   public void shouldUseRangeQueryMultipleFieldWithDirectIndexAccess() throws Exception {
     db.command("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE");
 
@@ -147,6 +166,5 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     assertThat(results).hasSize(11);
 
   }
-
 
 }
