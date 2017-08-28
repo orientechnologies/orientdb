@@ -112,6 +112,9 @@ public class ODistributedWorker extends Thread {
       try {
         message = readRequest();
 
+        if( !running )
+          break;
+
         currentExecuting = message;
 
         if (message != null) {
@@ -247,7 +250,7 @@ public class ODistributedWorker extends Thread {
   protected ODistributedRequest readRequest() throws InterruptedException {
     // GET FROM DISTRIBUTED QUEUE. IF EMPTY WAIT FOR A MESSAGE
     ODistributedRequest req = nextMessage();
-    if (req == null)
+    if (req == null || !running)
       return null;
 
     if (manager.isOffline())

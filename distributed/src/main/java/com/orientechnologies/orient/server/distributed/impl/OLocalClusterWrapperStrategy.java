@@ -94,7 +94,7 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
         // DISTRIBUTED CFG IS CHANGED: GET BEST CLUSTER AGAIN
         readConfiguration();
 
-        ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
             "New cluster list for class '%s': %s (dCfgVersion=%d)", cls.getName(), Arrays.toString(localScopedClass.bestClusterIds),
             lastVersion);
       }

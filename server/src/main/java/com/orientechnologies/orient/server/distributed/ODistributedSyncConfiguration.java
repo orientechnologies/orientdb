@@ -67,6 +67,9 @@ public class ODistributedSyncConfiguration {
 
   public void setLastLSN(final String server, final OLogSequenceNumber lsn, final boolean updateLastOperationTimestamp)
       throws IOException {
+    if (lsn == null)
+      return;
+
     lastLSN.put(server, lsn);
 
     if (updateLastOperationTimestamp) {

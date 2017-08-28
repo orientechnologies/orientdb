@@ -395,6 +395,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     } catch (IOException e) {
       OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
       sendShutdown();
+    } catch (OInterruptedException e) {
+      OLogManager.instance().debug(this, "An underlying task has been interrupted clientId=%d reqType=%d", clientTxId, requestType, e);
+      sendShutdown();
     } catch (OException e) {
       sendErrorOrDropConnection(connection, clientTxId, e);
     } catch (RuntimeException e) {

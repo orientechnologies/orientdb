@@ -183,7 +183,9 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
   public String dumpLocks() {
     final StringBuilder buffer = new StringBuilder();
 
-    buffer.append("HA RESOURCE LOCKS FOR SERVER '" + localNodeName + "'");
+    buffer.append("HA RESOURCE LOCKS FOR SERVER '" + localNodeName + "' (lockManager=");
+    buffer.append(manager.getLocalNodeName().equals(manager.getLockManagerServer()));
+    buffer.append(")");
 
     final long now = System.currentTimeMillis();
     for (Map.Entry<String, ODistributedLock> entry : lockManager.entrySet()) {

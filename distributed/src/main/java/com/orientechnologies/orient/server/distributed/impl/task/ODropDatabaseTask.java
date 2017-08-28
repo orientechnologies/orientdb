@@ -33,7 +33,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODropDatabaseTask extends OAbstractRemoteTask {
-  private static final long serialVersionUID = 1L;
   public static final  int  FACTORYID        = 23;
 
   public ODropDatabaseTask() {
