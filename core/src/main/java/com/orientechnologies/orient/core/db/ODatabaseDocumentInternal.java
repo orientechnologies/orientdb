@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDeco
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 import java.util.Map;
 
@@ -187,9 +188,9 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   /**
    * sends an execution plan to a remote node for a remote query execution
    *
-   * @param nodeName                the node name
-   * @param executionPlan           the execution plan
-   * @param inputParameters         the input parameters for execution
+   * @param nodeName        the node name
+   * @param executionPlan   the execution plan
+   * @param inputParameters the input parameters for execution
    *
    * @return an OResultSet to fetch the results of the query execution
    */
@@ -197,4 +198,5 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     throw new UnsupportedOperationException();
   }
 
+  void internalCommit(OTransactionOptimistic transaction);
 }

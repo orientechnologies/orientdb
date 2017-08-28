@@ -3125,4 +3125,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return activeQueries.get(id);
   }
 
+  @Override
+  public void internalCommit(OTransactionOptimistic transaction) {
+    this.getStorage().commit(transaction, null);
+  }
 }
