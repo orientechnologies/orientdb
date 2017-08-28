@@ -34,12 +34,9 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PROF
 public class OProfilerStub extends OAbstractProfiler {
 
 
-  protected ConcurrentMap<String, Long>                    counters      = new ConcurrentLinkedHashMap.Builder()
-      .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
-  private   ConcurrentLinkedHashMap<String, AtomicInteger> tips          = new ConcurrentLinkedHashMap.Builder()
-      .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
-  private   ConcurrentLinkedHashMap<String, Long>          tipsTimestamp = new ConcurrentLinkedHashMap.Builder()
-      .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
+  protected ConcurrentMap<String, Long>                    counters;
+  private   ConcurrentLinkedHashMap<String, AtomicInteger> tips;
+  private   ConcurrentLinkedHashMap<String, Long>          tipsTimestamp;
 
   public OProfilerStub() {
   }
@@ -58,15 +55,9 @@ public class OProfilerStub extends OAbstractProfiler {
 
   @Override
   public void shutdown() {
-    if (counters != null) {
-      counters.clear();
-    }
-    if (tips != null) {
-      tips.clear();
-    }
-    if (tipsTimestamp != null) {
-      tipsTimestamp.clear();
-    }
+    counters.clear();
+    tips.clear();
+    tipsTimestamp.clear();
     super.shutdown();
   }
 
@@ -228,12 +219,14 @@ public class OProfilerStub extends OAbstractProfiler {
 
   @Override
   public String[] getCountersAsString() {
-    return null;
+    final List<String> keys = new ArrayList<String>(counters.keySet());
+    final String[] result = new String[keys.size()];
+    return keys.toArray(result);
   }
 
   @Override
-  public String[] getChronosAsString() {
-    return null;
+  public List<String> getChronos() {
+    return Collections.emptyList();
   }
 
   @Override
@@ -243,6 +236,11 @@ public class OProfilerStub extends OAbstractProfiler {
 
   @Override
   public String metadataToJSON() {
+    return null;
+  }
+
+  @Override
+  public Object getHookValue(final String iName) {
     return null;
   }
 
