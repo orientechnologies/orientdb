@@ -1561,7 +1561,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             for (ORecordOperation txEntry : newRecords) {
               ORecord rec = txEntry.getRecord();
 
-              if (rec.isDirty()) {
+              if(rec.getIdentity().isPersistent()){
+                positions.put(txEntry, new OPhysicalPosition(rec.getIdentity().getClusterPosition()));
+              }else  if (rec.isDirty()) {
                 ORecordId rid = (ORecordId) rec.getIdentity().copy();
                 ORecordId oldRID = rid.copy();
 
