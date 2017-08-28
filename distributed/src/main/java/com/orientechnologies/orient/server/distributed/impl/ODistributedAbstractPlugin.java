@@ -1081,9 +1081,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                   .warn(this, nodeName, server, DIRECTION.IN, "Error on installing database delta for '%s' (err=%s)", databaseName,
                       exc.getMessage());
 
-              // RESTORE STATUS TO ONLINE
-              setDatabaseStatus(server, databaseName, DB_STATUS.NOT_AVAILABLE);
-
               throw (ODistributedDatabaseDeltaSyncException) value;
 
             } else if (value instanceof ODatabaseIsOldException) {
