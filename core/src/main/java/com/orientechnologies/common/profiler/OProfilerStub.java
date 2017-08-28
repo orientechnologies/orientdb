@@ -25,7 +25,6 @@ import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,18 +33,31 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PROF
 
 public class OProfilerStub extends OAbstractProfiler {
 
-  protected  ConcurrentMap<String, Long>                    counters      = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(
-      PROFILER_MAXVALUES.getValueAsInteger()).build();
-  private    ConcurrentLinkedHashMap<String, AtomicInteger> tips          = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(
-      PROFILER_MAXVALUES.getValueAsInteger()).build();
-  private    ConcurrentLinkedHashMap<String, Long>          tipsTimestamp = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(
-      PROFILER_MAXVALUES.getValueAsInteger()).build();
+  protected ConcurrentMap<String, Long>                    counters;
+  private   ConcurrentLinkedHashMap<String, AtomicInteger> tips;
+  private   ConcurrentLinkedHashMap<String, Long>          tipsTimestamp;
 
   public OProfilerStub() {
   }
 
   public OProfilerStub(final OAbstractProfiler profiler) {
     super(profiler);
+  }
+
+  @Override
+  public void startup() {
+    counters = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
+    tips = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
+    tipsTimestamp = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
+    super.startup();
+  }
+
+  @Override
+  public void shutdown() {
+    counters.clear();
+    tips.clear();
+    tipsTimestamp.clear();
+    super.shutdown();
   }
 
   @Override
@@ -75,12 +87,9 @@ public class OProfilerStub extends OAbstractProfiler {
   }
 
   public boolean startRecording() {
-    counters = new ConcurrentLinkedHashMap.Builder()
-        .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
-    tips = new ConcurrentLinkedHashMap.Builder()
-        .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
-    tipsTimestamp = new ConcurrentLinkedHashMap.Builder()
-        .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
+    counters = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
+    tips = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
+    tipsTimestamp = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
 
     if (super.startRecording()) {
       counters.clear();
