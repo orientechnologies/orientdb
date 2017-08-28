@@ -545,16 +545,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   private long adjustTimeoutWithLatency(final Collection<String> iNodes, final long timeout,
       final ODistributedRequestId requestId) {
-    int delta = 0;
+    long delta = 0;
     if (iNodes != null)
-      for (String n : iNodes)
+      for (String n : iNodes) {
         // UPDATE THE TIMEOUT WITH THE CURRENT SERVER LATENCY
-        delta += msgService.getCurrentLatency(n);
+        final long l = msgService.getCurrentLatency(n);
+        delta = Math.max(delta, l);
+      }
 
-    if (delta > 1000)
+    if (delta > 500)
       ODistributedServerLog.debug(this, localNodeName, iNodes.toString(), DIRECTION.OUT,
-          "Adjusted timeouts by adding +%dms because the average latency recorded against servers %s (reqId=%s)", delta, iNodes,
-          requestId);
+          "Adjusted timeouts by adding +%dms because this is the maximum latency recorded against servers %s (reqId=%s)", delta,
+          iNodes, requestId);
 
     return timeout + delta;
   }
