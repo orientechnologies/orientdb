@@ -27,6 +27,7 @@ import javax.annotation.CheckReturnValue;
 import javax.annotation.meta.When;
 import java.io.PrintStream;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 public interface OProfiler extends OService {
@@ -45,11 +46,15 @@ public interface OProfiler extends OService {
 
   String dump();
 
+  String dump(String type);
+
   String dumpCounters();
 
   OProfilerEntry getChrono(String string);
 
   long startChrono();
+
+  List<String> getChronos();
 
   @CheckReturnValue(when = When.NEVER)
   long stopChrono(String iName, String iDescription, long iStartTime);
@@ -66,8 +71,6 @@ public interface OProfiler extends OService {
   String dumpChronos();
 
   String[] getCountersAsString();
-
-  String[] getChronosAsString();
 
   Date getLastReset();
 
@@ -86,6 +89,10 @@ public interface OProfiler extends OService {
   String metadataToJSON();
 
   Map<String, OPair<String, METRIC_TYPE>> getMetadata();
+
+  String[] getHookAsString();
+
+  Object getHookValue(String iName);
 
   void registerHookValue(String iName, String iDescription, METRIC_TYPE iType, OProfilerHookValue iHookValue);
 

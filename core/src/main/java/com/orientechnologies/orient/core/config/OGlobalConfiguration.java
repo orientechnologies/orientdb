@@ -418,7 +418,8 @@ public enum OGlobalConfiguration {
   NETWORK_REQUEST_TIMEOUT("network.requestTimeout", "Request completion timeout (in ms)", Integer.class, 3600000 /* one hour */,
       true),
 
-  NETWORK_SOCKET_RETRY_STRATEGY("network.retry.strategy", "Select the retry server selection strategy, possible values are auto,same-dc ", String.class, "auto", true),
+  NETWORK_SOCKET_RETRY_STRATEGY("network.retry.strategy",
+      "Select the retry server selection strategy, possible values are auto,same-dc ", String.class, "auto", true),
 
   NETWORK_SOCKET_RETRY("network.retry", "Number of attempts to connect to the server on failure", Integer.class, 5, true),
 
@@ -504,6 +505,11 @@ public enum OGlobalConfiguration {
       Orient.instance().getProfiler().setAutoDump((Integer) iNewValue);
     }
   }),
+
+  /**
+   * @Since 2.2.27
+   */
+  PROFILER_AUTODUMP_TYPE("profiler.autoDump.type", "Type of profiler dump between 'full' or 'performance'", String.class, "full"),
 
   PROFILER_MAXVALUES("profiler.maxValues", "Maximum values to store. Values are managed in a LRU", Integer.class, 200),
 
@@ -653,7 +659,6 @@ public enum OGlobalConfiguration {
       "Dumps the full stack trace of the exception sent to the client", Boolean.class, Boolean.FALSE, true),
 
   // DISTRIBUTED
-
   /**
    * @Since 2.2.18
    */

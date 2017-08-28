@@ -21,14 +21,13 @@ package com.orientechnologies.common.util;
 
 /**
  * Generic Service interface.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public interface OService {
-  public String getName();
+  String getName();
 
-  public void startup();
+  void startup();
 
-  public void shutdown();
+  void shutdown();
 }

@@ -54,6 +54,15 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
   protected TimerTask autoDumpTask;
   protected List<OProfilerListener> listeners = new ArrayList<OProfilerListener>();
 
+  private static long statsCreateRecords = 0;
+  private static long statsReadRecords   = 0;
+  private static long statsUpdateRecords = 0;
+  private static long statsDeleteRecords = 0;
+  private static long statsCommands      = 0;
+  private static long statsTxCommit      = 0;
+  private static long statsTxRollback    = 0;
+  private static long statsLastAutoDump  = 0;
+
   public interface OProfilerHookValue {
     Object getValue();
   }
@@ -138,7 +147,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
   public abstract boolean isEnterpriseEdition();
 
-  public static String dumpEnvironment() {
+  public static String dumpEnvironment(final String dumpType) {
     final StringBuilder buffer = new StringBuilder();
 
     final Runtime runtime = Runtime.getRuntime();
@@ -170,16 +179,91 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
                 OFileUtils.getSizeAsString(diskCacheTotal), OFileUtils.getSizeAsString(osUsedMem),
                 OFileUtils.getSizeAsString(osTotalMem), OFileUtils.getSizeAsString(freeSpaceInMB),
                 OFileUtils.getSizeAsString(totalSpaceInMB)));
-        return buffer.toString();
       }
     } catch (Exception e) {
-      // Nothing to do. Proceed with default output
+      // JMX NOT AVAILABLE, AVOID OS DATA
+      buffer.append(String.format("OrientDB Memory profiler: HEAP=%s of %s - DISKCACHE (%s dbs)=%s of %s - FS=%s of %s",
+          OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()), OFileUtils.getSizeAsString(runtime.maxMemory()),
+          stgs, OFileUtils.getSizeAsString(diskCacheUsed), OFileUtils.getSizeAsString(diskCacheTotal),
+          OFileUtils.getSizeAsString(freeSpaceInMB), OFileUtils.getSizeAsString(totalSpaceInMB)));
     }
 
-    buffer.append(String.format("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s - FS=%s of %s",
-        OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()), OFileUtils.getSizeAsString(runtime.maxMemory()),
-        stgs, OFileUtils.getSizeAsString(diskCacheUsed), OFileUtils.getSizeAsString(diskCacheTotal),
-        OFileUtils.getSizeAsString(freeSpaceInMB), OFileUtils.getSizeAsString(totalSpaceInMB)));
+    if ("performance".equalsIgnoreCase(dumpType)) {
+      try {
+        long lastCreateRecords = 0;
+        long lastReadRecords = 0;
+        long lastUpdateRecords = 0;
+        long lastDeleteRecords = 0;
+        long lastCommands = 0;
+        long lastTxCommit = 0;
+        long lastTxRollback = 0;
+
+        if (statsLastAutoDump > 0) {
+          final long msFromLastDump = System.currentTimeMillis() - statsLastAutoDump;
+
+          final String[] hooks = Orient.instance().getProfiler().getHookAsString();
+          for (String h : hooks) {
+            if (h.startsWith("db.") && h.endsWith("createRecord"))
+              lastCreateRecords += (Long) Orient.instance().getProfiler().getHookValue(h);
+            else if (h.startsWith("db.") && h.endsWith("readRecord"))
+              lastReadRecords += (Long) Orient.instance().getProfiler().getHookValue(h);
+            else if (h.startsWith("db.") && h.endsWith("updateRecord"))
+              lastUpdateRecords += (Long) Orient.instance().getProfiler().getHookValue(h);
+            else if (h.startsWith("db.") && h.endsWith("deleteRecord"))
+              lastDeleteRecords += (Long) Orient.instance().getProfiler().getHookValue(h);
+            else if (h.startsWith("db.") && h.endsWith("txCommit"))
+              lastTxCommit += (Long) Orient.instance().getProfiler().getHookValue(h);
+            else if (h.startsWith("db.") && h.endsWith("txRollback"))
+              lastTxRollback += (Long) Orient.instance().getProfiler().getHookValue(h);
+          }
+
+          final List<String> chronos = Orient.instance().getProfiler().getChronos();
+          for (String c : chronos) {
+            final OProfilerEntry chrono = Orient.instance().getProfiler().getChrono(c);
+            if (chrono != null) {
+              if (c.startsWith("db.") && c.contains(".command."))
+                lastCommands += chrono.entries;
+            }
+          }
+
+          long lastCreateRecordsSec = lastCreateRecords == 0 ?
+              msFromLastDump < 1000 ? 1 : 0 :
+              (lastCreateRecords - statsCreateRecords) / (msFromLastDump / 1000);
+          long lastReadRecordsSec =
+              lastReadRecords == 0 ? 0 : msFromLastDump < 1000 ? 1 : (lastReadRecords - statsReadRecords) / (msFromLastDump / 1000);
+          long lastUpdateRecordsSec = lastUpdateRecords == 0 || msFromLastDump < 1000 ?
+              0 :
+              (lastUpdateRecords - statsUpdateRecords) / (msFromLastDump / 1000);
+          long lastDeleteRecordsSec = lastDeleteRecords == 0 ?
+              0 :
+              msFromLastDump < 1000 ? 1 : (lastDeleteRecords - statsDeleteRecords) / (msFromLastDump / 1000);
+          long lastCommandsSec =
+              lastCommands == 0 ? 0 : msFromLastDump < 1000 ? 1 : (lastCommands - statsCommands) / (msFromLastDump / 1000);
+          long lastTxCommitSec =
+              lastTxCommit == 0 ? 0 : msFromLastDump < 1000 ? 1 : (lastTxCommit - statsTxCommit) / (msFromLastDump / 1000);
+          long lastTxRollbackSec =
+              lastTxRollback == 0 ? 0 : msFromLastDump < 1000 ? 1 : (lastTxRollback - statsTxRollback) / (msFromLastDump / 1000);
+
+          buffer.append(String.format(
+              "\nCRUD: C(%d %d/sec) R(%d %d/sec) U(%d %d/sec) D(%d %d/sec) - COMMANDS (%d %d/sec) - TX: COMMIT(%d %d/sec) ROLLBACK(%d %d/sec)",
+              lastCreateRecords, lastCreateRecordsSec, lastReadRecords, lastReadRecordsSec, lastUpdateRecords, lastUpdateRecordsSec,
+              lastDeleteRecords, lastDeleteRecordsSec, lastCommands, lastCommandsSec, lastTxCommit, lastTxCommitSec, lastTxRollback,
+              lastTxRollbackSec));
+        }
+
+        statsLastAutoDump = System.currentTimeMillis();
+        statsCreateRecords = lastCreateRecords;
+        statsReadRecords = lastReadRecords;
+        statsUpdateRecords = lastUpdateRecords;
+        statsDeleteRecords = lastDeleteRecords;
+        statsCommands = lastCommands;
+        statsTxCommit = lastTxCommit;
+        statsTxRollback = lastTxRollback;
+
+      } catch (Throwable t) {
+        // IGNORE IT
+      }
+    }
 
     return buffer.toString();
   }
@@ -246,12 +330,17 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
   @Override
   public String dump() {
-    return dumpEnvironment();
+    return dumpEnvironment(OGlobalConfiguration.PROFILER_AUTODUMP_TYPE.getValueAsString());
   }
 
   @Override
   public void dump(final PrintStream out) {
-    out.println(dumpEnvironment());
+    out.println(dumpEnvironment(OGlobalConfiguration.PROFILER_AUTODUMP_TYPE.getValueAsString()));
+  }
+
+  @Override
+  public String dump(final String type) {
+    return dumpEnvironment(type);
   }
 
   @Override
@@ -318,10 +407,12 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
         public void run() {
           final StringBuilder output = new StringBuilder();
 
+          final String dumpType = OGlobalConfiguration.PROFILER_AUTODUMP_TYPE.getValueAsString();
+
           output.append(
               "\n*******************************************************************************************************************************************");
-          output.append("\nPROFILER AUTO DUMP OUTPUT (to disabled it set 'profiler.autoDump.interval' = 0):\n");
-          output.append(dump());
+          output.append("\nPROFILER AUTO DUMP '" + dumpType + "' OUTPUT (to disabled it set 'profiler.autoDump.interval' = 0):\n");
+          output.append(dump(dumpType));
           output.append(
               "\n*******************************************************************************************************************************************");
 
@@ -346,6 +437,13 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
     for (Entry<String, String> entry : dictionary.entrySet())
       metadata.put(entry.getKey(), new OPair<String, METRIC_TYPE>(entry.getValue(), types.get(entry.getKey())));
     return metadata;
+  }
+
+  @Override
+  public String[] getHookAsString() {
+    final List<String> keys = new ArrayList<String>(hooks.keySet());
+    final String[] array = new String[keys.size()];
+    return keys.toArray(array);
   }
 
   public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
