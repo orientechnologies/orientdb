@@ -78,7 +78,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPageDebug;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -1763,7 +1762,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           row.field("NAME", clusterName);
           row.field("ID", clusterId);
           row.field("CLASS", className);
-          row.field("CONFLICT-STRATEGY", conflictStrategy);
+          if (!currentDatabase.getStorage().isRemote()) {
+            row.field("CONFLICT-STRATEGY", conflictStrategy);
+          }
           row.field("COUNT", count);
           if (!isRemote) {
             row.field("SPACE-USED", OFileUtils.getSizeAsString(spaceUsed));
@@ -2011,7 +2012,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
-  @ConsoleCommand(description = "Check database integrity")
+  @ConsoleCommand(description = "Check database integrity", splitInWords = false)
   public void checkDatabase(@ConsoleParameter(name = "options", description = "Options: -v", optional = true) final String iOptions)
       throws IOException {
     checkForDatabase();

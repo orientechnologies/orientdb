@@ -491,6 +491,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public boolean check(final boolean verbose, final OCommandOutputListener listener) {
     try {
+      listener.onMessage("Check of storage is started...");
+
       checkOpenness();
       stateLock.acquireReadLock();
       try {
@@ -793,17 +795,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * <p>
    * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
    * <p>
-   * Data format:
-   * <ol>
-   * <li>Amount of records (single entry) - 8 bytes</li>
-   * <li>Record's cluster id - 4 bytes</li>
-   * <li>Record's cluster position - 8 bytes</li>
-   * <li>Delete flag, 1 if record is deleted - 1 byte</li>
-   * <li>Record version , only if record is not deleted - 4 bytes</li>
-   * <li>Record type, only if record is not deleted - 1 byte</li>
-   * <li>Length of binary presentation of record, only if record is not deleted - 4 bytes</li>
-   * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
-   * </ol>
+   * Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li> <li>Record's
+   * cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only if record is
+   * not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary presentation of
+   * record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is not deleted -
+   * length of content is provided in above entity</li> </ol>
    *
    * @param lsn                LSN from which we should find changed records
    * @param stream             Stream which will contain found records
@@ -859,8 +855,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           // start record is absent there is nothing that we can do
           OWALRecord walRecord = writeAheadLog.read(startLsn);
           if (walRecord == null) {
-            OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation", lsn);
-            return null;
+            OLogManager.instance()
+                .info(this, "Cannot find requested LSN=%s for database sync operation (record in WAL is absent)", lsn);
           }
 
           OLogSequenceNumber currentLsn = startLsn;
@@ -1298,8 +1294,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   /**
-   * Completes gathering performance characteristics for current thread initiated by call of
-   * {@link #startGatheringPerformanceStatisticForCurrentThread()}
+   * Completes gathering performance characteristics for current thread initiated by call of {@link
+   * #startGatheringPerformanceStatisticForCurrentThread()}
    *
    * @return Performance statistic gathered after call of {@link #startGatheringPerformanceStatisticForCurrentThread()} or
    * <code>null</code> if profiling of storage was not started.

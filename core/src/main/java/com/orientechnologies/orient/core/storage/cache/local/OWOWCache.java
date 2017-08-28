@@ -84,11 +84,8 @@ import java.util.zip.CRC32;
  * capabilities we suppose that better to write data in single big chunk by one thread than by many small chunks from many threads
  * introducing contention and multi threading overhead. Another reasons for usage of only one thread are
  * <p>
- * <ol>
- * <li>That we should
- * give room for readers to read data during data write phase</li>
- * <li>It provides much less synchronization overhead</li>
- * </ol>
+ * <ol> <li>That we should give room for readers to read data during data write phase</li> <li>It provides much less synchronization
+ * overhead</li> </ol>
  * <p>
  * Background thread is running by with predefined intervals. Such approach allows SSD GC to use pauses to make some clean up of
  * half empty erase blocks.
@@ -111,14 +108,14 @@ import java.util.zip.CRC32;
  */
 public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCachePointer.WritersListener {
   /**
-   * If distance between last WAL log record and WAL record changes of which are for sure present in data files
-   * bigger than this value we switch flush mode to {@link FLUSH_MODE#LSN} if current mode is {@link FLUSH_MODE#IDLE}
+   * If distance between last WAL log record and WAL record changes of which are for sure present in data files bigger than this
+   * value we switch flush mode to {@link FLUSH_MODE#LSN} if current mode is {@link FLUSH_MODE#IDLE}
    */
   private static final long WAL_SIZE_TO_START_FLUSH = OGlobalConfiguration.DISK_CACHE_WAL_SIZE_TO_START_FLUSH.getValueAsLong();
 
   /**
-   * If distance between last WAL log record and WAL record changes of which are for sure present in data files
-   * is less than this value we switch from {@link FLUSH_MODE#LSN} fluch mode to {@link FLUSH_MODE#IDLE}
+   * If distance between last WAL log record and WAL record changes of which are for sure present in data files is less than this
+   * value we switch from {@link FLUSH_MODE#LSN} fluch mode to {@link FLUSH_MODE#IDLE}
    */
   private static final long WAL_SIZE_TO_STOP_FLUSH = OGlobalConfiguration.DISK_CACHE_WAL_SIZE_TO_STOP_FLUSH.getValueAsLong();
 
@@ -134,8 +131,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private static final int MAX_CHUNK_DISTANCE = OGlobalConfiguration.DISK_CACHE_CHUNK_SIZE.getValueAsInteger();
 
   /**
-   * If portion of exclusive pages in cache less than this value we release {@link #exclusivePagesLimitLatch} latch
-   * and allow writer threads to continue
+   * If portion of exclusive pages in cache less than this value we release {@link #exclusivePagesLimitLatch} latch and allow writer
+   * threads to continue
    */
   private static final double EXCLUSIVE_BOUNDARY_UNLOCK_LIMIT = OGlobalConfiguration.DISK_CACHE_EXCLUSIVE_FLUSH_BOUNDARY
       .getValueAsFloat();
@@ -158,17 +155,15 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private static final String NAME_ID_MAP_V1 = "name_id_map" + NAME_ID_MAP_EXTENSION;
 
   /**
-   * Name for file which contains second version of binary format.
-   * Second version of format contains not only file name which is used in write cache
-   * but also file name which is used in file system so those two names may be different
-   * which allows usage of case sensitive file names.
+   * Name for file which contains second version of binary format. Second version of format contains not only file name which is
+   * used in write cache but also file name which is used in file system so those two names may be different which allows usage of
+   * case sensitive file names.
    */
   private static final String NAME_ID_MAP_V2 = "name_id_map_v2" + NAME_ID_MAP_EXTENSION;
 
   /**
-   * Name of file temporary which contains second version of binary format.
-   * Temporary name is used to prevent situation when DB is crashed because of migration from first to second
-   * version of binary format and data are lost.
+   * Name of file temporary which contains second version of binary format. Temporary name is used to prevent situation when DB is
+   * crashed because of migration from first to second version of binary format and data are lost.
    *
    * @see #NAME_ID_MAP_V2
    * @see #convertNameIdMapFromV1ToV2()
@@ -213,14 +208,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger() * 1000 * 1000;
 
   /**
-   * Listeners which are called once we detect that there is not enough space left on disk to work.
-   * Mostly used to put database in "read only" mode
+   * Listeners which are called once we detect that there is not enough space left on disk to work. Mostly used to put database in
+   * "read only" mode
    */
   private final List<WeakReference<OLowDiskSpaceListener>> lowDiskSpaceListeners = new CopyOnWriteArrayList<>();
 
   /**
-   * The last amount of pages which were added to the file system by database when check of free space was performed.
-   * It is used together with {@link #amountOfNewPagesAdded} to detect when new disk space check should be performed.
+   * The last amount of pages which were added to the file system by database when check of free space was performed. It is used
+   * together with {@link #amountOfNewPagesAdded} to detect when new disk space check should be performed.
    */
   private final AtomicLong lastDiskSpaceCheck = new AtomicLong(0);
 
@@ -230,14 +225,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final Path storagePath;
 
   /**
-   * Container of all files are managed by write cache. That is special type of container
-   * which ensures that only limited amount of files is open at the same time and opens closed files upon request
+   * Container of all files are managed by write cache. That is special type of container which ensures that only limited amount of
+   * files is open at the same time and opens closed files upon request
    */
   private final OClosableLinkedContainer<Long, OFileClassic> files;
 
   /**
-   * The main storage of pages for write cache. If pages is hold by write cache it should be present in this map.
-   * Map is ordered by position to speed up flush of pages to the disk
+   * The main storage of pages for write cache. If pages is hold by write cache it should be present in this map. Map is ordered by
+   * position to speed up flush of pages to the disk
    */
   private final ConcurrentSkipListMap<PageKey, OCachePointer> writeCachePages = new ConcurrentSkipListMap<>();
 
@@ -273,15 +268,15 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final ConcurrentHashMap<PageKey, OLogSequenceNumber> dirtyPages = new ConcurrentHashMap<>();
 
   /**
-   * Copy of content of {@link #dirtyPages} table at the moment when {@link #convertSharedDirtyPagesToLocal()} was called.
-   * This field is not thread safe because it is used inside of tasks which are running inside of {@link #commitExecutor} thread.
-   * It is used to keep results of postprocessing of {@link #dirtyPages} table.
+   * Copy of content of {@link #dirtyPages} table at the moment when {@link #convertSharedDirtyPagesToLocal()} was called. This
+   * field is not thread safe because it is used inside of tasks which are running inside of {@link #commitExecutor} thread. It is
+   * used to keep results of postprocessing of {@link #dirtyPages} table.
    * <p>
-   * Every time we invoke {@link #convertSharedDirtyPagesToLocal()} all content of dirty pages is removed and copied to
-   * current field and {@link #localDirtyPagesByLSN} filed.
+   * Every time we invoke {@link #convertSharedDirtyPagesToLocal()} all content of dirty pages is removed and copied to current
+   * field and {@link #localDirtyPagesByLSN} filed.
    * <p>
-   * Such approach is possible because {@link #dirtyPages} table is filled by many threads but is read only from inside of
-   * {@link #commitExecutor} thread.
+   * Such approach is possible because {@link #dirtyPages} table is filled by many threads but is read only from inside of {@link
+   * #commitExecutor} thread.
    */
   private final HashMap<PageKey, OLogSequenceNumber> localDirtyPages = new HashMap<>();
 
@@ -305,8 +300,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final AtomicLong countOfNotFlushedPages = new AtomicLong();
 
   /**
-   * This counter is need for "free space" check implementation.
-   * Once amount of added pages is reached some threshold, amount of free space available on disk will be checked.
+   * This counter is need for "free space" check implementation. Once amount of added pages is reached some threshold, amount of
+   * free space available on disk will be checked.
    */
   private final AtomicLong amountOfNewPagesAdded = new AtomicLong();
 
@@ -321,8 +316,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final AtomicLong exclusiveWriteCacheSize = new AtomicLong();
 
   /**
-   * Amount of times when maximum limit of exclusive write pages allowed to be stored
-   * by write cache is reached
+   * Amount of times when maximum limit of exclusive write pages allowed to be stored by write cache is reached
    */
   private final LongAdder cacheOverflowCount = new LongAdder();
 
@@ -342,14 +336,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final OWriteAheadLog writeAheadLog;
 
   /**
-   * Lock manager is used to acquire locks in RW mode for cases when we are going to read
-   * or write page from write cache.
+   * Lock manager is used to acquire locks in RW mode for cases when we are going to read or write page from write cache.
    */
   private final OLockManager<PageKey> lockManager = new OPartitionedLockManager<>();
 
   /**
-   * Latch which is switched on once amount of pages are cached exclusively in write cache is reached limit.
-   * And switched off once size of write cache is down bellow threshold.
+   * Latch which is switched on once amount of pages are cached exclusively in write cache is reached limit. And switched off once
+   * size of write cache is down bellow threshold.
    * <p>
    * Once this latch is switched on all threads which are wrote data in write cache wait till it will be switched off.
    * <p>
@@ -364,8 +357,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final OLocalPaginatedStorage storageLocal;
 
   /**
-   * We acquire lock managed by this manager in read mode if we need to read data from files,
-   * and in write mode if we add/remove/truncate file.
+   * We acquire lock managed by this manager in read mode if we need to read data from files, and in write mode if we
+   * add/remove/truncate file.
    */
   private final OReadersWriterSpinLock filesLock = new OReadersWriterSpinLock();
 
@@ -380,26 +373,24 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final ExecutorService lowSpaceEventsPublisher;
 
   /**
-   * Mapping between case sensitive file names are used in write cache and file's internal id.
-   * Name of file in write cache is case sensitive and can be different from file name which is used to store file in
-   * file system.
+   * Mapping between case sensitive file names are used in write cache and file's internal id. Name of file in write cache is case
+   * sensitive and can be different from file name which is used to store file in file system.
    */
   private final ConcurrentMap<String, Integer> nameIdMap = new ConcurrentHashMap<>();
 
   /**
-   * Mapping between file's internal ids and case sensitive file names are used in write cache.
-   * Name of file in write cache is case sensitive and can be different from file name which is used to store file in
-   * file system.
+   * Mapping between file's internal ids and case sensitive file names are used in write cache. Name of file in write cache is case
+   * sensitive and can be different from file name which is used to store file in file system.
    */
   private final ConcurrentMap<Integer, String> idNameMap = new ConcurrentHashMap<>();
 
   /**
-   * File which contains map between names and ids of files used in write cache.
-   * Each record in file has following format (size of file name in bytes (int), file name (string), internal file id)
+   * File which contains map between names and ids of files used in write cache. Each record in file has following format (size of
+   * file name in bytes (int), file name (string), internal file id)
    * <p>
-   * Internal file id may have negative value, it means that this file existed in storage but was deleted.
-   * We still keep mapping between files so if file with given name will be created again it will get the same file id, which
-   * can be handy during process of restore of storage data after crash.
+   * Internal file id may have negative value, it means that this file existed in storage but was deleted. We still keep mapping
+   * between files so if file with given name will be created again it will get the same file id, which can be handy during process
+   * of restore of storage data after crash.
    */
   private FileChannel nameIdMapHolder;
 
@@ -409,8 +400,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final int exclusiveWriteCacheMaxSize;
 
   /**
-   * Value of next internal id to be set when file is added.
-   * If storage is loaded from disk this value equals to maximum absolute value of all internal ids + 1.
+   * Value of next internal id to be set when file is added. If storage is loaded from disk this value equals to maximum absolute
+   * value of all internal ids + 1.
    */
   private int nextInternalId = 1;
 
@@ -427,8 +418,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final OPerformanceStatisticManager performanceStatisticManager;
 
   /**
-   * Pool of direct memory <code>ByteBuffer</code>s.
-   * We can not use them directly because they do not have deallocator.
+   * Pool of direct memory <code>ByteBuffer</code>s. We can not use them directly because they do not have deallocator.
    */
   private final OByteBufferPool bufferPool;
 
@@ -482,8 +472,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   /**
-   * Loads files already registered in storage.
-   * Has to be called before usage of this cache
+   * Loads files already registered in storage. Has to be called before usage of this cache
    */
   public void loadRegisteredFiles() throws IOException, InterruptedException {
     filesLock.acquireWriteLock();
@@ -582,8 +571,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   /**
-   * This method is called once new pages are added to the disk inside of
-   * {@link #load(long, long, int, boolean, OModifiableBoolean, boolean)} method.
+   * This method is called once new pages are added to the disk inside of {@link #load(long, long, int, boolean, OModifiableBoolean, * boolean)} method.
    * <p>
    * If total amount of added pages minus amount of added pages at the time of last disk space check bigger than threshold value
    * {@link #diskSizeCheckInterval} new disk space check is performed and if amount of space left on disk less than threshold {@link
@@ -1516,7 +1504,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       flush(intId);
 
       if (commandOutputListener != null)
-        commandOutputListener.onMessage("Start verification of content of " + fileName + "file ...");
+        commandOutputListener.onMessage("Start verification of content of " + fileName + "file ...\n");
 
       long time = System.currentTimeMillis();
 
@@ -1537,7 +1525,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           magicNumberIncorrect = true;
           if (commandOutputListener != null)
             commandOutputListener
-                .onMessage("Error: Magic number for page " + (pos / pageSize) + " in file " + fileName + " does not match !!!");
+                .onMessage("Error: Magic number for page " + (pos / pageSize) + " in file '" + fileName + "' does not match!\n");
           fileIsCorrect = false;
         }
 
@@ -1552,7 +1540,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             checkSumIncorrect = true;
             if (commandOutputListener != null)
               commandOutputListener
-                  .onMessage("Error: Checksum for page " + (pos / pageSize) + " in file " + fileName + " is incorrect !!!");
+                  .onMessage("Error: Checksum for page " + (pos / pageSize) + " in file '" + fileName + "' is incorrect!\n");
             fileIsCorrect = false;
           }
         }
@@ -1562,12 +1550,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         if (commandOutputListener != null && System.currentTimeMillis() - time > notificationTimeOut) {
           time = notificationTimeOut;
-          commandOutputListener.onMessage((pos / pageSize) + " pages were processed ...");
+          commandOutputListener.onMessage((pos / pageSize) + " pages were processed...\n");
         }
       }
     } catch (IOException ioe) {
       if (commandOutputListener != null)
-        commandOutputListener.onMessage("Error: Error during processing of file " + fileName + ". " + ioe.getMessage());
+        commandOutputListener.onMessage("Error: Error during processing of file '" + fileName + "'. " + ioe.getMessage() + "\n");
 
       fileIsCorrect = false;
     } finally {
@@ -1576,10 +1564,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     if (!fileIsCorrect) {
       if (commandOutputListener != null)
-        commandOutputListener.onMessage("Verification of file " + fileName + " is finished with errors.");
+        commandOutputListener.onMessage("Verification of file '" + fileName + "' is finished with errors.\n");
     } else {
       if (commandOutputListener != null)
-        commandOutputListener.onMessage("Verification of file " + fileName + " is successfully finished.");
+        commandOutputListener.onMessage("Verification of file '" + fileName + "' is successfully finished.\n");
     }
   }
 
@@ -1789,12 +1777,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   /**
    * Read information about files are registered inside of write cache/storage
    * <p>
-   * File consist of rows of variable length which contains following entries:
-   * <ol>
-   * <li>Internal file id, may be positive or negative depends on whether file is removed or not</li>
-   * <li>Name of file inside of write cache, this name is case sensitive</li>
-   * <li>Name of file which is used inside file system it can be different from name of file used inside write cache</li>
-   * </ol>
+   * File consist of rows of variable length which contains following entries: <ol> <li>Internal file id, may be positive or
+   * negative depends on whether file is removed or not</li> <li>Name of file inside of write cache, this name is case
+   * sensitive</li> <li>Name of file which is used inside file system it can be different from name of file used inside write
+   * cache</li> </ol>
    */
   private void readNameIdMapV2() throws IOException, InterruptedException {
     nameIdMap.clear();
