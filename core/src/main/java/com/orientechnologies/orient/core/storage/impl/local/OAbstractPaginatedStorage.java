@@ -597,6 +597,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public boolean check(final boolean verbose, final OCommandOutputListener listener) {
     checkOpeness();
+
+    listener.onMessage("Check of storage is started...");
+
     try {
       stateLock.acquireReadLock();
       try {
@@ -1001,7 +1004,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           // start record is absent there is nothing that we can do
           OWALRecord walRecord = writeAheadLog.read(startLsn);
           if (walRecord == null) {
-            OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation (record in WAL is absent)", lsn);
+            OLogManager.instance()
+                .info(this, "Cannot find requested LSN=%s for database sync operation (record in WAL is absent)", lsn);
             return null;
           }
 

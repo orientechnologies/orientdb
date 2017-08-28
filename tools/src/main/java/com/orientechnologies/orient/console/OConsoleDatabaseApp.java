@@ -1812,7 +1812,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           row.field("NAME", clusterName);
           row.field("ID", clusterId);
           row.field("CLASS", className);
-          if(!currentDatabase.getStorage().isRemote()) {
+          if (!currentDatabase.getStorage().isRemote()) {
             row.field("CONFLICT-STRATEGY", conflictStrategy);
           }
           row.field("COUNT", count);
@@ -2086,7 +2086,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
-  @ConsoleCommand(description = "Check database integrity")
+  @ConsoleCommand(description = "Check database integrity", splitInWords = false)
   public void checkDatabase(@ConsoleParameter(name = "options", description = "Options: -v", optional = true) final String iOptions)
       throws IOException {
     checkForDatabase();

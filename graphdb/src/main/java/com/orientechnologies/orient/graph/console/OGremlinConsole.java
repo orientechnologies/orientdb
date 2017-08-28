@@ -246,6 +246,21 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
   }
 
   @Override
+  @ConsoleCommand(description = "Check database integrity", splitInWords = false)
+  public void checkDatabase(
+      @ConsoleParameter(name = "options", description = "Options: -v --skip-graph", optional = true) final String iOptions)
+      throws IOException {
+    final boolean fix_graph = iOptions == null || !iOptions.contains("--skip-graph");
+    if (fix_graph) {
+      // REPAIR GRAPH
+      final Map<String, List<String>> options = parseOptions(iOptions);
+      new OGraphRepair().check(OrientGraphFactory.getNoTxGraphImplFactory().getGraph(currentDatabase), this, options);
+    }
+
+    super.checkDatabase(iOptions);
+  }
+
+  @Override
   @ConsoleCommand(description = "Repair database structure", splitInWords = false)
   public void repairDatabase(
       @ConsoleParameter(name = "options", description = "Options: [--fix-graph] [--fix-links] [-v]] [--fix-ridbags] [--fix-bonsai]", optional = true) String iOptions)

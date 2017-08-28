@@ -565,8 +565,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         future.get();
       } catch (Exception e) {
         throw OException.wrapException(
-            new OStorageException("Error during fuzzy checkpoint execution for storage '" + storageLocal.getName() + "'"),
-                e);
+            new OStorageException("Error during fuzzy checkpoint execution for storage '" + storageLocal.getName() + "'"), e);
       }
     }
   }
@@ -1065,12 +1064,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final OFileClassic fileClassic = entry.get();
         try {
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Flushing file '" + fileClassic.getName() + "'... ");
+            commandOutputListener.onMessage("Flushing file '" + fileClassic.getName() + "'...\n");
 
           flush(intId);
 
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Start verification of content of '" + fileClassic.getName() + "' file...");
+            commandOutputListener.onMessage("Start verification of content of '" + fileClassic.getName() + "' file...\n");
 
           long time = System.currentTimeMillis();
 
@@ -1092,7 +1091,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
               if (commandOutputListener != null)
                 commandOutputListener.onMessage(
                     "Error: Magic number for page " + (pos / pageSize) + " in file '" + fileClassic.getName()
-                        + "' does not match. It could be corrupted");
+                        + "' does not match. It could be corrupted\n");
               fileIsCorrect = false;
             }
 
@@ -1105,7 +1104,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
                 if (commandOutputListener != null)
                   commandOutputListener.onMessage(
                       "Error: Checksum for page " + (pos / pageSize) + " in file '" + fileClassic.getName()
-                          + "' is incorrect. It could be corrupted");
+                          + "' is incorrect. It could be corrupted\n");
                 fileIsCorrect = false;
               }
             }
@@ -1116,13 +1115,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
             if (commandOutputListener != null && System.currentTimeMillis() - time > notificationTimeOut) {
               time = notificationTimeOut;
-              commandOutputListener.onMessage((pos / pageSize) + " pages were processed...");
+              commandOutputListener.onMessage((pos / pageSize) + " pages were processed...\n");
             }
           }
         } catch (IOException ioe) {
           if (commandOutputListener != null)
             commandOutputListener
-                .onMessage("Error: Error during processing of file '" + fileClassic.getName() + "': " + ioe.getMessage());
+                .onMessage("Error: Error during processing of file '" + fileClassic.getName() + "': " + ioe.getMessage() + "\n");
 
           fileIsCorrect = false;
         } finally {
@@ -1131,10 +1130,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         if (!fileIsCorrect) {
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Verification of file '" + fileClassic.getName() + "' is finished with errors.");
+            commandOutputListener.onMessage("Verification of file '" + fileClassic.getName() + "' is finished with errors.\n");
         } else {
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Verification of file '" + fileClassic.getName() + "' is successfully finished.");
+            commandOutputListener.onMessage("Verification of file '" + fileClassic.getName() + "' is successfully finished.\n");
         }
       }
 
