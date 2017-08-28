@@ -11,7 +11,10 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.InputStream;
@@ -105,36 +108,23 @@ public class OLuceneIndexCrashRestoreIT {
 //  @Ignore
   public void testEntriesAddition() throws Exception {
     createSchema(testDocumentTx);
+    List<Future> futures;
+    for (int i = 0; i < 5; i++) {
+      //first round
+      System.out.println("Start data propagation 1");
 
-    //first round
-    System.out.println("Start data propagation 1");
+      futures = startLoaders();
 
-    List<Future> futures = startLoaders();
+      System.out.println("Wait for 1 minutes");
+      TimeUnit.MINUTES.sleep(1);
 
-    System.out.println("Wait for 1 minutes");
-    TimeUnit.MINUTES.sleep(1);
+      System.out.println("stop loaders");
+      stopLoaders(futures);
 
-    System.out.println("stop loaders");
-    stopLoaders(futures);
+      System.out.println("Wait for 1 minutes");
+      TimeUnit.MINUTES.sleep(1);
 
-    System.out.println("Wait for 1 minutes");
-    TimeUnit.MINUTES.sleep(1);
-
-//second round
-    System.out.println("Start data propagation 2");
-
-    futures = startLoaders();
-
-    System.out.println("Wait for 1 minutes");
-    TimeUnit.MINUTES.sleep(1);
-
-    System.out.println("stop loaders");
-    stopLoaders(futures);
-
-    System.out.println("Wait for 1 minutes");
-    TimeUnit.MINUTES.sleep(1);
-
-    System.out.println("Start data propagation 3");
+    }
 
     futures = startLoaders();
 
@@ -156,7 +146,7 @@ public class OLuceneIndexCrashRestoreIT {
     //crash the server
     // this works only on java8
     //serverProcess.destroyForcibly();
-    serverProcess.destroy();
+    serverProcess.destroyForcibly();
 
     serverProcess.waitFor();
 
@@ -190,6 +180,18 @@ public class OLuceneIndexCrashRestoreIT {
     OIndex<?> index = testDocumentTx.getMetadata().getIndexManager().getIndex("Person.name");
     assertThat(index).isNotNull();
 
+    System.out.println("dropping indeX");
+    testDocumentTx.command(new OCommandSQL("drop index Person.name")).execute();
+
+    testDocumentTx.getMetadata().reload();
+    index = testDocumentTx.getMetadata().getIndexManager().getIndex("Person.name");
+    assertThat(index).isNull();
+
+    System.out.println("recreating index");
+    testDocumentTx.command(new OCommandSQL(
+        "Create index Person.name on Person(name) fulltext engine lucene metadata {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer', 'unknownKey':'unknownValue'}"))
+        .execute();
+
     //sometimes the metadata is null!!!!!
     assertThat((Iterable<? extends Map.Entry<String, Object>>) index.getMetadata()).isNotNull();
 
@@ -199,13 +201,24 @@ public class OLuceneIndexCrashRestoreIT {
 
     //sometimes it is not null, and all works fine
     res = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from Person where name lucene 'Rob*' "));
-
     assertThat(res).hasSize(0);
 
     testDocumentTx.activateOnCurrentThread();
     res = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from Person where name lucene 'Robert' LIMIT 20"));
 
     assertThat(res).hasSize(20);
+
+    System.out.println("dropping indeX");
+    testDocumentTx.command(new OCommandSQL("drop index Person.name")).execute();
+
+    testDocumentTx.getMetadata().reload();
+    index = testDocumentTx.getMetadata().getIndexManager().getIndex("Person.name");
+    assertThat(index).isNull();
+
+    System.out.println("recreating index");
+    testDocumentTx.command(new OCommandSQL(
+        "Create index Person.name on Person(name) fulltext engine lucene metadata {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer', 'unknownKey':'unknownValue'}"))
+        .execute();
 
     //shutdown embedded
     server.shutdown();

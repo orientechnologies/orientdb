@@ -75,6 +75,12 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
             Integer.parseInt(part2),
             startInclusive,
             endInclusive);
+      case FLOAT:
+        return NumericRangeQuery.newFloatRange(field,
+            Float.parseFloat(part1),
+            Float.parseFloat(part2),
+            startInclusive,
+            endInclusive);
       case DOUBLE:
         return NumericRangeQuery.newDoubleRange(field,
             Double.parseDouble(part1),

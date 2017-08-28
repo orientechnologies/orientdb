@@ -29,6 +29,7 @@ public class LuceneRangeTest extends BaseLuceneTest {
     cls.createProperty("surname", OType.STRING);
     cls.createProperty("date", OType.DATETIME);
     cls.createProperty("age", OType.INTEGER);
+    cls.createProperty("weight", OType.FLOAT);
 
     List<String> names = Arrays.asList("John", "Robert", "Jane", "andrew", "Scott", "luke", "Enriquez", "Luis", "Gabriel", "Sara");
 
@@ -43,7 +44,8 @@ public class LuceneRangeTest extends BaseLuceneTest {
           .field("surname", "Reese")
           //from today back one day a time
           .field("date", cal.getTimeInMillis())
-          .field("age", i);
+          .field("age", i)
+          .field("weight", i + 0.1f);
       db.save(record);
     }
 
@@ -66,6 +68,25 @@ public class LuceneRangeTest extends BaseLuceneTest {
 
     assertThat(results).hasSize(1);
   }
+
+  @Test
+  public void shouldUseRangeQueryOnSingleFloatField() throws Exception {
+
+    db.command(new OCommandSQL("create index Person.weight on Person(weight) FULLTEXT ENGINE LUCENE")).execute();
+
+    assertThat(db.getMetadata().getIndexManager().getIndex("Person.weight").getSize()).isEqualTo(10);
+
+    //range
+    Collection<ODocument> results = db.command(new OCommandSQL("SELECT FROM Person WHERE weight  LUCENE 'weight :[0 TO 1.1]'")).execute();
+
+    assertThat(results).hasSize(2);
+
+    //single value
+    results = db.command(new OCommandSQL("SELECT FROM Person WHERE weight  LUCENE 'weight:7.1'")).execute();
+
+    assertThat(results).hasSize(1);
+  }
+
 
   @Test
   public void shouldUseRangeQueryOnSingleDateField() throws Exception {
