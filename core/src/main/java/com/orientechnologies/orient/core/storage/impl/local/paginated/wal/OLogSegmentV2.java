@@ -527,8 +527,8 @@ final class OLogSegmentV2 implements OLogSegment {
   }
 
   @Override
-  public int compareTo(@SuppressWarnings("NullableProblems") OLogSegment other) {
-    final long otherOrder = ((OLogSegmentV2) other).order;
+  public int compareTo(@SuppressWarnings("NullableProblems") final OLogSegment other) {
+    final long otherOrder = other.getOrder();
 
     if (order > otherOrder)
       return 1;
@@ -539,13 +539,13 @@ final class OLogSegmentV2 implements OLogSegment {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
 
-    OLogSegmentV2 that = (OLogSegmentV2) o;
+    final OLogSegmentV2 that = (OLogSegmentV2) o;
 
     return order == that.order;
 
