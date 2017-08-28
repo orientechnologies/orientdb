@@ -1216,7 +1216,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       }
 
       final OLogSequenceNumber currentLSN = wrapped.getLSN();
-      if (!lastLSN.equals(currentLSN))
+      if (lastLSN == null || !lastLSN.equals(currentLSN))
         // SAVE LAST LSN
         try {
           localDistributedDatabase.getSyncConfiguration()
