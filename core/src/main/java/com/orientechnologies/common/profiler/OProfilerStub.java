@@ -54,9 +54,9 @@ public class OProfilerStub extends OAbstractProfiler {
 
   @Override
   public void shutdown() {
-    counters = null;
-    tips = null;
-    tipsTimestamp = null;
+    counters.clear();
+    tips.clear();
+    tipsTimestamp.clear();
     super.shutdown();
   }
 
