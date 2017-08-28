@@ -78,7 +78,9 @@ public class OVertexTransformerTest extends OETLBaseTest {
 
   @Test
   public void testSkipDuplicateVertex() {
-    process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
+    process("{\"config\": {\n"
+        + "    \"log\": \"DEBUG\"\n"
+        + "  }, source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
         + " transformers: [{vertex: {class:'Person', skipDuplicates:true}},],"
         + " loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 

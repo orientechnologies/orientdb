@@ -20,6 +20,8 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.etl.OAbstractETLPipelineComponent;
 import com.orientechnologies.orient.etl.OETLProcessor;
+import com.tinkerpop.blueprints.impls.orient.OrientElement;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * Abstract Transformer.
@@ -38,7 +40,13 @@ public abstract class OAbstractTransformer extends OAbstractETLPipelineComponent
       context.setVariable("input", input);
       final Object result = executeTransform(input);
       if (output == null) {
-        log(OETLProcessor.LOG_LEVELS.DEBUG, "Transformer output: %s", result);
+
+        if (result instanceof OrientVertex) {
+          log(OETLProcessor.LOG_LEVELS.DEBUG, "Transformer output: %s", ((OrientVertex) result).copy());
+        } else {
+          log(OETLProcessor.LOG_LEVELS.DEBUG, "Transformer output: %s", result);
+        }
+
         return result;
       }
       context.setVariable(output, result);
