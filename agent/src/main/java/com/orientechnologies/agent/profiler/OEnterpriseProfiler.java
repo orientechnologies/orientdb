@@ -411,6 +411,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
     return buffer.toString();
   }
 
+  @Override
   public Object getHookValue(final String iName) {
     final OProfilerHookRuntime v = hooks.get(iName);
     return v != null ? v.hook.getValue() : null;
@@ -418,10 +419,6 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
   public String[] getCountersAsString() {
     return realTime.getCountersAsString();
-  }
-
-  public String[] getChronosAsString() {
-    return realTime.getChronosAsString();
   }
 
   public String[] getStatsAsString() {
@@ -440,19 +437,37 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
     return realTime.getStat(iStatName);
   }
 
+  @Override
+  public List<String> getChronos() {
+    return realTime.getChronos();
+  }
+
   public OProfilerEntry getChrono(final String iChronoName) {
     return realTime.getChrono(iChronoName);
   }
 
   public void setAutoDump(final int iSeconds) {
     if (iSeconds > 0) {
+      if (autoPause != null)
+        autoPause.cancel();
+
       final int ms = iSeconds * 1000;
 
       timer.schedule(new TimerTask() {
 
         @Override
         public void run() {
-          System.out.println(dump());
+          final String dumpType = OGlobalConfiguration.PROFILER_AUTODUMP_TYPE.getValueAsString();
+
+          final StringBuilder output = new StringBuilder();
+          output.append(
+              "\n*******************************************************************************************************************************************");
+          output.append("\nPROFILER AUTO DUMP '" + dumpType + "' OUTPUT (to disabled it set 'profiler.autoDump.interval' = 0):\n");
+          output.append(dump(dumpType));
+          output.append(
+              "\n*******************************************************************************************************************************************");
+
+          OLogManager.instance().info(null, output.toString());
         }
       }, ms, ms);
     }
@@ -543,20 +558,25 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
       });
     }
 
-    autoPause = new TimerTask() {
-      @Override
-      public void run() {
-        long current = System.currentTimeMillis();
+    if (OGlobalConfiguration.PROFILER_AUTODUMP_INTERVAL.getValueAsInteger() > 0)
+      setAutoDump(OGlobalConfiguration.PROFILER_AUTODUMP_INTERVAL.getValueAsInteger());
+    else {
+      // CREATE AUTO PAUSE TASK TO STOP RECORDING IF STUDIO IS NOT ASKING FOR METRICS
+      autoPause = new TimerTask() {
+        @Override
+        public void run() {
+          long current = System.currentTimeMillis();
 
-        long old = timestamp.get();
+          long old = timestamp.get();
 
-        if (current - old > KEEP_ALIVE) {
-          stopRecording();
-          paused.set(true);
+          if (current - old > KEEP_ALIVE) {
+            stopRecording();
+            paused.set(true);
+          }
         }
-      }
-    };
-    timer.schedule(autoPause, KEEP_ALIVE, KEEP_ALIVE);
+      };
+      timer.schedule(autoPause, KEEP_ALIVE, KEEP_ALIVE);
+    }
   }
 
   @Override

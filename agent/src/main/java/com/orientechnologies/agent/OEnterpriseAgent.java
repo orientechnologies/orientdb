@@ -279,6 +279,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
     Orient.instance().setProfiler(profiler);
     Orient.instance().getProfiler().startup();
+    if (currentProfiler.isRecording())
+      profiler.startRecording();
 
     currentProfiler.shutdown();
   }
