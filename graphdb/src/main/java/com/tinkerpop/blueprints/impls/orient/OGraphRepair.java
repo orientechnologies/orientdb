@@ -176,7 +176,7 @@ public class OGraphRepair {
         }
 
         if (outVertexMissing)
-          removalReason = "outcoming vertex (" + out + ") does not contain the edge";
+          removalReason = "outgoing vertex (" + out + ") does not contain the edge";
 
         boolean inVertexMissing = false;
 
