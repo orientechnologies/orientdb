@@ -49,7 +49,7 @@ public class OIndexUnique extends OIndexOneValue {
       }
 
       if (!newValue.getIdentity().isPersistent())
-        newValue.getRecord().save();
+        newValue = newValue.getRecord();
       return newValue.getIdentity();
     }
   };
