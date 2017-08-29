@@ -26,6 +26,7 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.map.listener.MapClearedListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -64,7 +65,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
   public boolean containsKey(final Object key) {
     return hzMap.containsKey(key);
   }
-
+  
   @Override
   public Set<Entry<String, Object>> entrySet() {
     return hzMap.entrySet();
@@ -172,5 +173,15 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
 
   public void clearLocalCache() {
     super.clear();
+  }
+
+  /**
+   * In Java 8 ConcurrentHashMap.keySet() returns a KeySetView.
+   * In Java 7 ConcurrentHashMap.keySet() returns a Set.
+   * Use this method instead of keySet() to ensure Java 7 compatibility.
+   */
+  public Set<String> getKeySet() {
+  	 Map<String, Object> map = this;
+  	 return map.keySet();
   }
 }

@@ -1360,7 +1360,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       return;
     }
 
-    final List<String> dbs = new ArrayList<String>(configurationMap.keySet());
+    // USE configurationMap.getKeySet() TO ENSURE JAVA 7 COMPATIBILITY.
+    final List<String> dbs = new ArrayList<String>(configurationMap.getKeySet());
     Collections.sort(dbs);
 
     for (String key : dbs) {
