@@ -21,6 +21,7 @@
 package com.orientechnologies.common.profiler;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import com.orientechnologies.common.log.OLogManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,12 +63,22 @@ public class OProfilerStub extends OAbstractProfiler {
 
   @Override
   protected void setTip(final String iMessage, final AtomicInteger counter) {
+    if (!isRecording()) {
+      //profiler is not started
+      return;
+    }
+
     tips.put(iMessage, counter);
     tipsTimestamp.put(iMessage, System.currentTimeMillis());
   }
 
   @Override
   protected AtomicInteger getTip(final String iMessage) {
+    if (!isRecording()) {
+      //profiler is not started.
+      return null;
+    }
+
     if (iMessage == null)
       return null;
 
