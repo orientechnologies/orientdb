@@ -146,7 +146,7 @@ public class OLuceneIndexCrashRestoreIT {
     //crash the server
     // this works only on java8
     //serverProcess.destroyForcibly();
-    serverProcess.destroyForcibly();
+    serverProcess.destroy();
 
     serverProcess.waitFor();
 
