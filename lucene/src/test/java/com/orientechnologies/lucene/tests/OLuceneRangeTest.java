@@ -44,14 +44,14 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
   }
 
   @Test
-  public void shouldUseRangeQueryOnSingleIntegerField() throws Exception {
+  public void shouldUseRangeQueryOnSingleFloatField() throws Exception {
 
     db.command("create index Person.weight on Person(weight) FULLTEXT ENGINE LUCENE");
 
     assertThat(db.getMetadata().getIndexManager().getIndex("Person.weight").getSize()).isEqualTo(11);
 
     //range
-    OResultSet results = db.command("SELECT FROM Person WHERE search_class('weight:[0 TO 1.1]') = true");
+    OResultSet results = db.command("SELECT FROM Person WHERE search_class('weight:[0.0 TO 1.1]') = true");
 
     assertThat(results).hasSize(2);
 
@@ -63,7 +63,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
   }
 
   @Test
-  public void shouldUseRangeQueryOnSingleFloatField() throws Exception {
+  public void shouldUseRangeQueryOnSingleIntegerField() throws Exception {
 
     db.command("create index Person.age on Person(age) FULLTEXT ENGINE LUCENE");
 
