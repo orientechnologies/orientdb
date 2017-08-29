@@ -33,9 +33,9 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PROF
 
 public class OProfilerStub extends OAbstractProfiler {
 
-  protected ConcurrentMap<String, Long>                    counters;
-  private   ConcurrentLinkedHashMap<String, AtomicInteger> tips;
-  private   ConcurrentLinkedHashMap<String, Long>          tipsTimestamp;
+  protected volatile ConcurrentMap<String, Long>                    counters;
+  private   volatile ConcurrentLinkedHashMap<String, AtomicInteger> tips;
+  private   volatile ConcurrentLinkedHashMap<String, Long>          tipsTimestamp;
 
   public OProfilerStub() {
   }
@@ -62,12 +62,21 @@ public class OProfilerStub extends OAbstractProfiler {
 
   @Override
   protected void setTip(final String iMessage, final AtomicInteger counter) {
+    if(!isRecording())
+      return;
+
     tips.put(iMessage, counter);
     tipsTimestamp.put(iMessage, System.currentTimeMillis());
   }
 
   @Override
   protected AtomicInteger getTip(final String iMessage) {
+    if (!isRecording())
+      return null;
+
+    if (iMessage == null)
+      return null;
+
     return tips.get(iMessage);
   }
 
