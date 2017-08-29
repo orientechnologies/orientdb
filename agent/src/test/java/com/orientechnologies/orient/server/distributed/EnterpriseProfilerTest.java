@@ -31,7 +31,7 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
 
     // wait for the first stats push from each node
-    waitAllServersForPush();
+//    waitAllServersForPush();
     // check stats for each nodes
     for (ServerRun serverRun : serverInstance) {
       checkStatsOnServer(serverRun);
@@ -48,7 +48,7 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
     serverInstance.remove(serverRun);
 
     // wait for the first stats push from each node
-    waitAllServersForPush();
+//    waitAllServersForPush();
 
     waitForDatabaseIsOffline(name, getDatabaseName(), 2000);
 

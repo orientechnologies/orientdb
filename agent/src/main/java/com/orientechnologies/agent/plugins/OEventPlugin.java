@@ -155,6 +155,11 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
         eventController.analyzeSnapshot((OProfilerData) snapshot);
 
       }
+
+      @Override
+      public boolean canSleep() {
+        return !eventController.hasMetricWhen();
+      }
     });
     if (distributedManager != null) {
       distributedManager.registerLifecycleListener(new ODistributedLifecycleListener() {

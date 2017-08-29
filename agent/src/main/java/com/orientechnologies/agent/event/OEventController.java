@@ -20,6 +20,7 @@ package com.orientechnologies.agent.event;
 import com.orientechnologies.agent.plugins.OEventPlugin;
 import com.orientechnologies.agent.profiler.OProfilerData;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.util.OPair;
@@ -33,8 +34,10 @@ public class OEventController extends Thread {
 
   private Map<String, Map<String, OEventExecutor>> executors = new HashMap<String, Map<String, OEventExecutor>>();
 
-  private ArrayBlockingQueue<OEvent>               events    = new ArrayBlockingQueue<OEvent>(10000);
-  private OEventPlugin                             owner;
+  private ArrayBlockingQueue<OEvent> events = new ArrayBlockingQueue<OEvent>(10000);
+  private OEventPlugin owner;
+
+  private OProfilerData lastSnapshot;
 
   public OEventController(OEventPlugin owner) {
     this.owner = owner;
@@ -90,9 +93,37 @@ public class OEventController extends Thread {
 
   public void analyzeSnapshot(OProfilerData profilerData) {
 
+    if (lastSnapshot != null) {
+
+      List<Map<String, Object>> matchingEvents = new ArrayList<Map<String, Object>>();
+      Collection<Map<String, Object>> events = owner.getConfig().field("events");
+
+      for (Map<String, Object> event : events) {
+        Map<String, Object> when = (Map<String, Object>) event.get("when");
+        String name = (String) when.get("name");
+        if (OEvent.EVENT_TYPE.METRIC_WHEN.toString().equalsIgnoreCase(name)) {
+          matchingEvents.add(event);
+        }
+      }
+
+      for (Map<String, Object> matchingEvent : matchingEvents) {
+        Map<String, Object> when = (Map<String, Object>) matchingEvent.get("when");
+        String type = (String) when.get("type");
+        String target = (String) when.get("target");
+
+        ODocument oDocument = metricToODocument(type, target, lastSnapshot, profilerData);
+
+        if (oDocument != null) {
+          broadcast(OEvent.EVENT_TYPE.METRIC_WHEN, oDocument);
+        }
+      }
+    }
+    lastSnapshot = profilerData;
+  }
+
+  public boolean hasMetricWhen() {
     List<Map<String, Object>> matchingEvents = new ArrayList<Map<String, Object>>();
     Collection<Map<String, Object>> events = owner.getConfig().field("events");
-
     for (Map<String, Object> event : events) {
       Map<String, Object> when = (Map<String, Object>) event.get("when");
       String name = (String) when.get("name");
@@ -100,33 +131,36 @@ public class OEventController extends Thread {
         matchingEvents.add(event);
       }
     }
-
-    for (Map<String, Object> matchingEvent : matchingEvents) {
-      Map<String, Object> when = (Map<String, Object>) matchingEvent.get("when");
-      String type = (String) when.get("type");
-
-      ODocument oDocument = metricToODocument(type, profilerData);
-
-      if (oDocument != null) {
-        broadcast(OEvent.EVENT_TYPE.METRIC_WHEN, oDocument);
-      }
-    }
-
+    return matchingEvents.size() > 0;
   }
 
-  private ODocument metricToODocument(String type, OProfilerData profilerData) {
+  private ODocument metricToODocument(String type, String target, OProfilerData lastSnapshot, OProfilerData profilerData) {
     OPair<String, OProfiler.METRIC_TYPE> mType = Orient.instance().getProfiler().getMetadata().get(type);
 
     ODocument metric = null;
     if (mType != null) {
       switch (mType.value) {
       case COUNTER:
-
-        long counter = profilerData.getCounter(type);
-
         metric = new ODocument();
         metric.field("name", type);
+        Long counter = new Long(0);
+        if (type.startsWith("db.*")) {
+          if (target != null) {
+            String db = type.replaceFirst("\\*", target);
+            metric.field("target", target);
+            OAbstractProfiler.OProfilerHookStatic hookValue = (OAbstractProfiler.OProfilerHookStatic) profilerData.getHookValue(db);
+            OAbstractProfiler.OProfilerHookStatic old = (OAbstractProfiler.OProfilerHookStatic) lastSnapshot.getHookValue(db);
+            if (hookValue != null && old != null) {
+              counter = ((Long) hookValue.value) - ((Long) old.value);
+            }
+          } else {
+            counter = sumCounters(type, lastSnapshot, profilerData);
+          }
+        } else {
+          counter = profilerData.getCounter(type);
+        }
         metric.field("value", counter);
+        break;
 
       case CHRONO:
 
@@ -146,7 +180,6 @@ public class OEventController extends Thread {
           metric.field("min", chrono.min);
           metric.field("last", chrono.last);
           metric.field("total", chrono.total);
-          return metric;
         }
         break;
       case STAT:
@@ -171,6 +204,25 @@ public class OEventController extends Thread {
       return metric;
     }
     return null;
+  }
+
+  private Long sumCounters(String type, OProfilerData lastSnapshot, OProfilerData profilerData) {
+
+    Long sum = 0l;
+    OAbstractProfiler.OProfilerHookStatic dbs = (OAbstractProfiler.OProfilerHookStatic) profilerData
+        .getHookValue("system.databases");
+    String[] split = dbs.value.toString().split(",");
+    for (String s : split) {
+      String database = type.replaceFirst("\\*", s);
+      OAbstractProfiler.OProfilerHookStatic db = (OAbstractProfiler.OProfilerHookStatic) profilerData.getHookValue(database);
+      OAbstractProfiler.OProfilerHookStatic old = (OAbstractProfiler.OProfilerHookStatic) lastSnapshot.getHookValue(database);
+      if (db != null && old != null) {
+        Number number = (Number) db.value;
+        Number oldNumber = (Number) old.value;
+        sum += number.longValue() - oldNumber.longValue();
+      }
+    }
+    return sum;
   }
 
   private OProfilerEntry sumDBValues(String type, OProfilerData profilerData) {

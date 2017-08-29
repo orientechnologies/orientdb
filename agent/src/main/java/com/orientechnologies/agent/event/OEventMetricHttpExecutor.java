@@ -40,7 +40,7 @@ public class OEventMetricHttpExecutor extends OEventMetricExecutor {
       try {
         executeHttp(what, mapResolve);
       } catch (MalformedURLException e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error executing HTTP request", e);
       }
     }
   }

@@ -17,6 +17,7 @@
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -76,8 +77,9 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
       } else {
         final StringWriter jsonBuffer = new StringWriter();
         final OJSONWriter json = new OJSONWriter(jsonBuffer);
+        OEnterpriseProfiler profiler = (OEnterpriseProfiler) Orient.instance().getProfiler();
+        profiler.updateStats();
         json.append(Orient.instance().getProfiler().toJSON(command, arg));
-
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
       }
 

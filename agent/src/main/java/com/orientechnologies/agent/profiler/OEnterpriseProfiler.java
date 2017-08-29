@@ -570,12 +570,20 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
           long old = timestamp.get();
 
           if (current - old > KEEP_ALIVE) {
-            stopRecording();
-            paused.set(true);
+
+            boolean canSleep = true;
+
+            for (OProfilerListener listener : listeners) {
+              canSleep = canSleep && listener.canSleep();
+            }
+            if (canSleep) {
+              stopRecording();
+              paused.set(true);
+            }
           }
+          timer.schedule(autoPause, KEEP_ALIVE, KEEP_ALIVE);
         }
-      };
-      timer.schedule(autoPause, KEEP_ALIVE, KEEP_ALIVE);
+      } ;
     }
   }
 
@@ -594,7 +602,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
     return json;
   }
 
-  private void updateStats() {
+  public void updateStats() {
     double cpuUsage = cpuUsage();
     updateStat(getProcessMetric("runtime.cpu"), "Total cpu used by the process", (long) (cpuUsage * 100));
     updateStat(getProcessMetric("runtime.availableMemory"), "Available memory for the process", Runtime.getRuntime().freeMemory());
