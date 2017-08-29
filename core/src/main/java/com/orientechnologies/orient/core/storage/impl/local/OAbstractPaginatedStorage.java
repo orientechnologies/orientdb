@@ -3701,6 +3701,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (recoverListener != null)
           recoverListener.onStorageRecover();
 
+        makeFullCheckpoint();
       } catch (Exception e) {
         OLogManager.instance().error(this, "Exception during storage data restore", e);
         throw e;
@@ -4082,8 +4083,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param cluster OCluster implementation
    *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
-   *
-   * @throws IOException
    */
   private int registerCluster(final OCluster cluster) throws IOException {
     final int id;
