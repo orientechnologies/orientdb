@@ -24,9 +24,11 @@ package com.orientechnologies.common.profiler;
  */
 public interface OProfilerListener {
 
-  public void onUpdateCounter(String iName, long counter, long recordingFrom, long recordingTo);
+  void onUpdateCounter(String iName, long counter, long recordingFrom, long recordingTo);
 
-  public void onUpdateChrono(OProfilerEntry chrono);
+  void onUpdateChrono(OProfilerEntry chrono);
 
-  public void onSnapshotCreated(Object snapshot);
+  void onSnapshotCreated(Object snapshot);
+
+  boolean canSleep();
 }
