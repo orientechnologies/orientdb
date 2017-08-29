@@ -485,13 +485,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         return;
 
       status = STATUS.CLOSING;
-      // CLOSE ALL THE CONNECTIONS
-      for (String url : serverURLs) {
-        connectionManager.closePool(url);
-      }
-      sbTreeCollectionManager.close();
-
       super.close(true, false);
+
       if (pushThread != null) {
         pushThread.shutdown();
         try {
@@ -500,6 +495,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           Thread.currentThread().interrupt();
         }
       }
+
+      // CLOSE ALL THE SOCKET POOLS
+      for (String url : serverURLs) {
+        connectionManager.closePool(url);
+      }
+      sbTreeCollectionManager.close();
+
       status = STATUS.CLOSED;
 
     } finally {
