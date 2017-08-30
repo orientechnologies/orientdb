@@ -1,15 +1,19 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.hazelcast.core.HazelcastException;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -25,6 +29,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
@@ -487,4 +492,89 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   protected boolean supportsMicroTransactions(ORecord record) {
     return OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
+
+  public List<ORecordOperation> commit(final OTransaction iTx) {
+    final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
+    ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
+    final String localNodeName = dManager.getLocalNodeName();
+    getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
+    ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(),dManager,getStorageDistributed().getLocalDistributedDatabase());
+    try {
+      // EXECUTE DISTRIBUTED TX
+      int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
+      if (maxAutoRetry <= 0)
+        maxAutoRetry = 1;
+
+      int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
+      if (autoRetryDelay <= 0)
+        autoRetryDelay = 1;
+
+      Throwable lastException = null;
+      for (int retry = 1; retry <= maxAutoRetry; ++retry) {
+
+        try {
+
+          final List<ORecordOperation> result = txManager
+              .commit(this, iTx, null, getStorageDistributed().getEventListener());
+
+          if (result != null) {
+            for (ORecordOperation r : result) {
+              // UPDATE LOCAL CONTENT IN LOCKS TO ASSURE READ MY WRITES IF THE REQUEST IS STILL RUNNING
+              getStorageDistributed().getLocalDistributedDatabase().replaceRecordContentIfLocked(r.getRID(), r.getRecord().toStream());
+            }
+          }
+
+          return result;
+
+        } catch (Throwable e) {
+          lastException = e;
+
+          if (retry >= maxAutoRetry) {
+            // REACHED MAX RETRIES
+            ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
+            break;
+          }
+
+          // SKIP RETRY IN CASE OF OConcurrentModificationException BECAUSE IT NEEDS A RETRY AT APPLICATION LEVEL
+          if (!(e instanceof OConcurrentModificationException) && (e instanceof ONeedRetryException
+              || e instanceof ORecordNotFoundException)) {
+            // RETRY
+            final long wait = autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay);
+
+            ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                "Distributed transaction cannot be completed, wait %dms and retry again (%d/%d)", wait, retry, maxAutoRetry);
+
+            Thread.sleep(wait);
+
+            Orient.instance().getProfiler()
+                .updateCounter("db." + getName() + ".distributedTxRetries", "Number of retries executed in distributed transaction",
+                    +1, "db.*.distributedTxRetries");
+
+          } else
+            // SKIP RETRY LOOP
+            break;
+        }
+      }
+
+      if (lastException instanceof RuntimeException)
+        throw (RuntimeException) lastException;
+      else
+        throw OException.wrapException(new ODistributedException("Error on executing distributed transaction"), lastException);
+
+    } catch (OValidationException e) {
+      throw e;
+    } catch (HazelcastInstanceNotActiveException e) {
+      throw new OOfflineNodeException("Hazelcast instance is not available");
+
+    } catch (HazelcastException e) {
+      throw new OOfflineNodeException("Hazelcast instance is not available");
+
+    } catch (Exception e) {
+      getStorageDistributed().handleDistributedException("Cannot route TX operation against distributed node", e);
+    }
+
+    return null;
+  }
+
 }
