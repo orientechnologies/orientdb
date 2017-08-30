@@ -67,6 +67,11 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     assertThat(rs).isNotNull();
     assertThat(rs.getFetchSize()).isEqualTo(20);
 
+    final ResultSetMetaData metaData = rs.getMetaData();
+
+    for (int i = 1; i <= metaData.getColumnCount(); i++) {
+      assertThat(rs.getObject(metaData.getColumnLabel(i))).isEqualTo(rs.getObject(i));
+    }
   }
 
   @Test
@@ -207,7 +212,6 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
   }
 
-
   @Test
   public void shouldExecuteQueryInSparkMode() throws Exception {
 
@@ -225,7 +229,6 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     assertThat(rs.getString(1)).isEqualTo("anAuthor1");
     assertThat(metaData.getColumnTypeName(1)).isEqualTo("STRING");
     assertThat(rs.getObject(1)).isInstanceOf(String.class);
-
 
   }
 
