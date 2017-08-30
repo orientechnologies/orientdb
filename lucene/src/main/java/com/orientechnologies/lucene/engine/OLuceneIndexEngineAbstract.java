@@ -262,10 +262,13 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       final TopDocs topDocs = searcher.search(new TermQuery(new Term("_CLASS", "JSON_METADATA")), 1);
       if (topDocs.totalHits == 0) {
         String metaAsJson = metadata.toJSON();
+        String defAsJson = indexDefinition.toStream().toJSON();
         Document metaDoc = new Document();
-        metaDoc.add(new StringField("_JSON", metaAsJson, Field.Store.YES));
+        metaDoc.add(new StringField("_META_JSON", metaAsJson, Field.Store.YES));
+        metaDoc.add(new StringField("_DEF_JSON", defAsJson, Field.Store.YES));
+        metaDoc.add(new StringField("_DEF_CLASS_NAME", indexDefinition.getClass().getCanonicalName(), Field.Store.YES));
         metaDoc.add(new StringField("_CLASS", "JSON_METADATA", Field.Store.YES));
-        OLogManager.instance().info(this, "Storing index metadata :: " + metaDoc);
+//        OLogManager.instance().info(this, "Storing index metadata :: " + metaDoc);
         addDocument(metaDoc);
       }
 
@@ -277,9 +280,11 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
     //for check
 
-    final ODocument metadata = OLuceneIndexEngineUtils.getMetadataFromIndex(indexWriter);
-
-    OLogManager.instance().info(this, "metdata retrieved:: " + metadata.toJSON());
+//    final ODocument metadata = OLuceneIndexEngineUtils.getMetadataFromIndex(indexWriter);
+//    final OIndexDefinition def = OLuceneIndexEngineUtils.getIndexDefinitionFromIndex(indexWriter);
+//
+//    OLogManager.instance().info(this, "metdata retrieved:: " + metadata.toJSON());
+//    OLogManager.instance().info(this, "def retrieved:: " + def.toStream().toJSON());
   }
 
   private void startNRT() {
@@ -420,7 +425,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   protected void openIfClosed() {
     if (closed.get()) {
-      OLogManager.instance().info(this, "open closed index:: " + indexName());
+//      OLogManager.instance().info(this, "open closed index:: " + indexName());
 
       try {
         reOpen();
@@ -525,7 +530,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       return;
 
     try {
-      OLogManager.instance().debug(this, "Closing Lucene index '" + this.name + "'...");
+//      OLogManager.instance().debug(this, "Closing Lucene index '" + this.name + "'...");
 
       cancelCommitTask();
 
@@ -535,7 +540,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
       commitAndCloseWriter();
 
-      OLogManager.instance().info(this, "Closed Lucene index '" + this.name);
+//      OLogManager.instance().info(this, "Closed Lucene index '" + this.name);
 
     } catch (Throwable e) {
       OLogManager.instance().error(this, "Error on closing Lucene index", e);

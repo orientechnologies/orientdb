@@ -152,7 +152,7 @@ public class OLuceneIndexCrashRestoreIT {
     }
     //crash the server
 
-    serverProcess.destroyForcibly();
+   serverProcess.destroyForcibly();
 
     serverProcess.waitFor();
     //crash the server
