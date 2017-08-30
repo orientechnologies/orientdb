@@ -60,7 +60,7 @@ public class TransactionRidAllocationTest {
 
     ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids(db.getTransaction());
     ORID generated = v.getIdentity();
-    db.commit();
+    ((OAbstractPaginatedStorage) db.getStorage()).commitPreAllocated(db.getTransaction(),null);
 
     ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
     assertNotNull(db1.load(generated));
@@ -87,7 +87,7 @@ public class TransactionRidAllocationTest {
     for (ORecord rec : orecords) {
       allocated.add(rec.getIdentity());
     }
-    db.commit();
+    ((OAbstractPaginatedStorage) db.getStorage()).commitPreAllocated(db.getTransaction(),null);
 
     ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
     for (ORID id : allocated) {

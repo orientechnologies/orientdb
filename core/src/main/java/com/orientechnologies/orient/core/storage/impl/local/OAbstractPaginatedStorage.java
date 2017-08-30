@@ -1487,6 +1487,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public List<ORecordOperation> commit(final OTransaction clientTx, Runnable callback) {
+    return  commit(clientTx,callback,false);
+  }
+
+  public List<ORecordOperation> commitPreAllocated(final OTransaction clientTx, Runnable callback) {
+    return commit(clientTx,callback,true);
+  }
+
+  private List<ORecordOperation> commit(final OTransaction clientTx, Runnable callback,boolean allocated) {
     // XXX: At this moment, there are two implementations of the commit method. One for regular client transactions and one for
     // implicit micro-transactions. The implementations are quite identical, but operate on slightly different data. If you change
     // this method don't forget to change its counterpart:
@@ -1561,9 +1569,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             for (ORecordOperation txEntry : newRecords) {
               ORecord rec = txEntry.getRecord();
 
-              if(rec.getIdentity().isPersistent()){
+              if (allocated && rec.getIdentity().isPersistent()) {
                 positions.put(txEntry, new OPhysicalPosition(rec.getIdentity().getClusterPosition()));
-              }else  if (rec.isDirty()) {
+              } else if (rec.isDirty() && !rec.getIdentity().isPersistent()) {
                 ORecordId rid = (ORecordId) rec.getIdentity().copy();
                 ORecordId oldRID = rid.copy();
 
