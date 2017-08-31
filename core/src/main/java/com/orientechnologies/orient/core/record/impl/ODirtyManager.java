@@ -82,18 +82,8 @@ public class ODirtyManager {
   public void merge(ODirtyManager toMerge) {
     if (isSame(toMerge))
       return;
-    final Set<ORecord> newRecords = toMerge.getNewRecords();
-    if (newRecords != null) {
-      if (this.newRecords == null)
-        this.newRecords = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>(newRecords.size()));
-      this.newRecords.addAll(newRecords);
-    }
-    final Set<ORecord> updateRecords = toMerge.getUpdateRecords();
-    if (updateRecords != null) {
-      if (this.updateRecords == null)
-        this.updateRecords = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>(updateRecords.size()));
-      this.updateRecords.addAll(updateRecords);
-    }
+    this.newRecords = mergeSet(this.newRecords, toMerge.getNewRecords());
+    this.updateRecords = mergeSet(this.updateRecords, toMerge.getUpdateRecords());
     if (toMerge.getReferences() != null) {
       if (references == null)
         references = new IdentityHashMap<ODocument, List<OIdentifiable>>();
@@ -106,6 +96,32 @@ public class ODirtyManager {
       }
     }
     toMerge.override(this);
+  }
+
+  /**
+   * Merge the two set try to use the optimum case
+   *
+   * @param target
+   * @param source
+   *
+   * @return
+   */
+  private static Set<ORecord> mergeSet(Set<ORecord> target, Set<ORecord> source) {
+    if (source != null) {
+      if (target == null) {
+        return source;
+      } else {
+        if (target.size() > source.size()) {
+          target.addAll(source);
+          return target;
+        } else {
+          source.addAll(target);
+          return source;
+        }
+      }
+    } else {
+      return target;
+    }
   }
 
   public void track(ORecord pointing, OIdentifiable pointed) {
