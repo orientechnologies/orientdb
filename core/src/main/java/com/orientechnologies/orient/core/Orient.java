@@ -206,6 +206,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         timer = new Timer(true);
 
       profiler = new OProfilerStub();
+      profiler.startup();
 
       shutdownHook = new OrientShutdownHook();
       if (signalHandler == null) {
