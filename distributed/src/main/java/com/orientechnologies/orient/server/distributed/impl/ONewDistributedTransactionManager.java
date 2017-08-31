@@ -139,21 +139,18 @@ public class ONewDistributedTransactionManager {
           // SYNCHRONOUS CALL: REPLICATE IT
           final ODistributedResponse lastResult = dManager
               .sendRequest(storage.getName(), involvedClusters, nodes, txTask, requestId.getMessageId(), EXECUTION_MODE.RESPONSE,
-                  localResult, null, new OCallable<Void, ODistributedResponseManager>() {
-                    @Override
-                    public Void call(final ODistributedResponseManager resp) {
-                      // FINALIZE ONLY IF IT IS IN ASYNCH MODE
-                      if (finalizeRequest(resp, localNodeName, involvedClusters, txTask)) {
-                        if (lockReleased.compareAndSet(false, true)) {
-                          localDistributedDatabase.popTxContext(requestId);
-                          ctx.destroy();
-                        }
+                  localResult, null, resp -> {
+                    // FINALIZE ONLY IF IT IS IN ASYNCH MODE
+                    if (finalizeRequest(resp, localNodeName, involvedClusters, txTask)) {
+                      if (lockReleased.compareAndSet(false, true)) {
+                        localDistributedDatabase.popTxContext(requestId);
+                        ctx.destroy();
                       }
-
-                      // CONTEXT WILL BE RELEASED
-                      releaseContext.set(true);
-                      return null;
                     }
+
+                    // CONTEXT WILL BE RELEASED
+                    releaseContext.set(true);
+                    return null;
                   });
 
           if (ctx.isCanceled())
@@ -417,88 +414,6 @@ public class ONewDistributedTransactionManager {
     }
   }
 
-  /**
-   * Create undo content for distributed 2-phase rollback. This list of undo tasks is sent to all the nodes to revert a transaction
-   * and it's also applied locally.
-   *
-   * @param iTx       Current transaction
-   * @param database
-   * @param requestId
-   *
-   * @return List of remote undo tasks
-   */
-  protected List<OAbstractRemoteTask> createUndoTasksFromTx(final OTransaction iTx, final ODistributedDatabase database,
-      final ODistributedRequestId requestId) {
-    final List<OAbstractRemoteTask> undoTasks = new ArrayList<OAbstractRemoteTask>();
-    for (final ORecordOperation op : iTx.getAllRecordEntries()) {
-      OAbstractRemoteTask undoTask = null;
-
-      final ORecord record = op.getRecord();
-
-      switch (op.type) {
-      case ORecordOperation.CREATED:
-        // CREATE UNDO TASK LATER ONCE THE RID HAS BEEN ASSIGNED
-        break;
-
-      case ORecordOperation.UPDATED:
-      case ORecordOperation.DELETED:
-        // CREATE UNDO TASK WITH THE PREVIOUS RECORD CONTENT/VERSION
-        final ORecordId rid = (ORecordId) record.getIdentity();
-
-        final AtomicReference<ORecord> previousRecord = new AtomicReference<ORecord>();
-        OScenarioThreadLocal.executeAsDefault(new Callable<Object>() {
-          @Override
-          public Object call() throws Exception {
-            final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-            final ORecordOperation txEntry = db.getTransaction().getRecordEntry(rid);
-
-            final ORecord record;
-
-            if (txEntry != null && txEntry.type == ORecordOperation.DELETED)
-              // GET DELETED RECORD FROM TX
-              record = txEntry.getRecord();
-            else {
-              final ORawBuffer loadedBuffer = database.getRecordIfLocked(rid);
-              if (loadedBuffer != null) {
-                // LOAD THE RECORD FROM THE STORAGE AVOIDING USING THE DB TO GET THE TRANSACTIONAL CHANGES
-                record = Orient.instance().getRecordFactoryManager().newInstance(loadedBuffer.recordType);
-                ORecordInternal.fill(record, rid, loadedBuffer.version, loadedBuffer.getBuffer(), false);
-                previousRecord.set(record);
-              } else
-                // RECORD NOT FOUND ON LOCAL STORAGE, ASK TO DB BECAUSE IT COULD BE SHARDED AND RESIDE ON ANOTHER SERVER
-                record = db.load(rid);
-            }
-
-            ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                "Setting previous record for undo: %s (reqId=%s op=%s)", record, requestId, op);
-
-            previousRecord.set(record);
-
-            return null;
-          }
-        });
-
-        if (previousRecord.get() == null)
-          throw new ORecordNotFoundException(rid);
-
-        if (op.type == ORecordOperation.UPDATED)
-          undoTask = new OFixUpdateRecordTask()
-              .init(previousRecord.get(), ORecordVersionHelper.clearRollbackMode(previousRecord.get().getVersion()));
-        else
-          undoTask = new OResurrectRecordTask().init(previousRecord.get());
-        break;
-
-      default:
-        continue;
-      }
-
-      if (undoTask != null)
-        undoTasks.add(undoTask);
-    }
-    return undoTasks;
-
-  }
-
   protected void processCommitResult(final String localNodeName, final OTransaction iTx, final OTransactionTask txTask,
       final Set<String> involvedClusters, final Iterable<ORecordOperation> tmpEntries, final Collection<String> nodes,
       final ODistributedRequestId reqId, final ODistributedResponse dResponse) throws InterruptedException {
@@ -585,74 +500,71 @@ public class ONewDistributedTransactionManager {
   /**
    * Finalizes the request only if in asynchronous mode.
    */
-  private boolean finalizeRequest(final ODistributedResponseManager resp, final String localNodeName,
+  private boolean finalizeRequest(final ODistributedResponseManager aresp, final String localNodeName,
       final Set<String> involvedClusters, final OTransactionTask txTask) {
 
-    return resp.executeInLock(new OCallable<Boolean, ODistributedResponseManager>() {
-      @Override
-      public Boolean call(final ODistributedResponseManager resp) {
-        if (resp.isSynchronousWaiting())
-          // SYNCHRONOUS RESPONSE STILL PENDING, IT WILL MANAGE THE END OF THE RESPONSE
-          return false;
+    return aresp.executeInLock((resp) -> {
+      if (resp.isSynchronousWaiting())
+        // SYNCHRONOUS RESPONSE STILL PENDING, IT WILL MANAGE THE END OF THE RESPONSE
+        return false;
 
-        // CALLBACK IN CASE OF TIMEOUT AND COMPLETION OF RESPONSE
-        final Set<String> serversToFollowup = resp.getServersWithoutFollowup();
-        serversToFollowup.remove(dManager.getLocalNodeName());
+      // CALLBACK IN CASE OF TIMEOUT AND COMPLETION OF RESPONSE
+      final Set<String> serversToFollowup = resp.getServersWithoutFollowup();
+      serversToFollowup.remove(dManager.getLocalNodeName());
 
-        if (!serversToFollowup.isEmpty()) {
-          final ODistributedResponse quorumResponse = resp.getQuorumResponse();
+      if (!serversToFollowup.isEmpty()) {
+        final ODistributedResponse quorumResponse = resp.getQuorumResponse();
 
-          if (ODistributedServerLog.isDebugEnabled())
-            ODistributedServerLog.debug(this, localNodeName, serversToFollowup.toString(), ODistributedServerLog.DIRECTION.OUT,
-                "Distributed transaction completed (quorum=%d winnerResponse=%s responses=%s reqId=%s), servers %s need a followup message",
-                resp.getQuorum(), quorumResponse, resp.getRespondingNodes(), resp.getMessageId(), serversToFollowup);
+        if (ODistributedServerLog.isDebugEnabled())
+          ODistributedServerLog.debug(this, localNodeName, serversToFollowup.toString(), ODistributedServerLog.DIRECTION.OUT,
+              "Distributed transaction completed (quorum=%d winnerResponse=%s responses=%s reqId=%s), servers %s need a followup message",
+              resp.getQuorum(), quorumResponse, resp.getRespondingNodes(), resp.getMessageId(), serversToFollowup);
 
-          if (quorumResponse == null) {
-            // NO QUORUM REACHED: SEND ROLLBACK TO ALL THE MISSING NODES
-            final OCompleted2pcTask twopcTask = (OCompleted2pcTask) dManager.getTaskFactoryManager()
-                .getFactoryByServerNames(serversToFollowup).createTask(OCompleted2pcTask.FACTORYID);
-            twopcTask.init(resp.getMessageId(), false, txTask.getPartitionKey());
+        if (quorumResponse == null) {
+          // NO QUORUM REACHED: SEND ROLLBACK TO ALL THE MISSING NODES
+          final OCompleted2pcTask twopcTask = (OCompleted2pcTask) dManager.getTaskFactoryManager()
+              .getFactoryByServerNames(serversToFollowup).createTask(OCompleted2pcTask.FACTORYID);
+          twopcTask.init(resp.getMessageId(), false, txTask.getPartitionKey());
 
-            sendTxCompleted(localNodeName, involvedClusters, serversToFollowup, twopcTask);
-            return true;
-          }
-
-          // QUORUM REACHED
-          for (String s : serversToFollowup) {
-            resp.addFollowupToServer(s);
-
-            final Object serverResponse = resp.getResponseFromServer(s);
-
-            if (quorumResponse.equals(serverResponse)) {
-              // SEND COMMIT
-              ODistributedServerLog.debug(this, localNodeName, s, ODistributedServerLog.DIRECTION.OUT,
-                  "Sending 2pc message for distributed transaction (reqId=%s)", s, resp.getMessageId());
-
-              final OCompleted2pcTask twopcTask = (OCompleted2pcTask) dManager.getTaskFactoryManager()
-                  .getFactoryByServerNames(serversToFollowup).createTask(OCompleted2pcTask.FACTORYID);
-              twopcTask.init(resp.getMessageId(), true, txTask.getPartitionKey());
-
-              try {
-                sendTxCompleted(localNodeName, involvedClusters, OMultiValue.getSingletonList(s), twopcTask);
-              } catch (Exception e) {
-                // SWALLOW THE EXCEPTION AND CONTINUE
-                ODistributedServerLog.debug(this, localNodeName, s, ODistributedServerLog.DIRECTION.OUT,
-                    "Error on sending 2pc message for distributed transaction (reqId=%s)", e, resp.getMessageId());
-              }
-
-            } else {
-              //TODO: Check the response of the node:
-              //  if none: wait a bit more,
-              //  if error:
-              //      if error allow force, send TPC OK with force
-              //      if error allow retry, resend the tx with attached OK.
-              //      if error is for state inconsistency put the node offline for re-alignment
-            }
-          }
+          sendTxCompleted(localNodeName, involvedClusters, serversToFollowup, twopcTask);
+          return true;
         }
 
-        return true;
+        // QUORUM REACHED
+        for (String s : serversToFollowup) {
+          resp.addFollowupToServer(s);
+
+          final Object serverResponse = resp.getResponseFromServer(s);
+
+          if (quorumResponse.equals(serverResponse)) {
+            // SEND COMMIT
+            ODistributedServerLog.debug(this, localNodeName, s, ODistributedServerLog.DIRECTION.OUT,
+                "Sending 2pc message for distributed transaction (reqId=%s)", s, resp.getMessageId());
+
+            final OCompleted2pcTask twopcTask = (OCompleted2pcTask) dManager.getTaskFactoryManager()
+                .getFactoryByServerNames(serversToFollowup).createTask(OCompleted2pcTask.FACTORYID);
+            twopcTask.init(resp.getMessageId(), true, txTask.getPartitionKey());
+
+            try {
+              sendTxCompleted(localNodeName, involvedClusters, OMultiValue.getSingletonList(s), twopcTask);
+            } catch (Exception e) {
+              // SWALLOW THE EXCEPTION AND CONTINUE
+              ODistributedServerLog.debug(this, localNodeName, s, ODistributedServerLog.DIRECTION.OUT,
+                  "Error on sending 2pc message for distributed transaction (reqId=%s)", e, resp.getMessageId());
+            }
+
+          } else {
+            //TODO: Check the response of the node:
+            //  if none: wait a bit more,
+            //  if error:
+            //      if error allow force, send TPC OK with force
+            //      if error allow retry, resend the tx with attached OK.
+            //      if error is for state inconsistency put the node offline for re-alignment
+          }
+        }
       }
+
+      return true;
     });
   }
 }
