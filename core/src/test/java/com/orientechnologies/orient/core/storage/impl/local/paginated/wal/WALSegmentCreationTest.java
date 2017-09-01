@@ -22,9 +22,8 @@ import static org.mockito.Mockito.when;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 24/12/14
  */
-public class WALSegmentCreation {
+public class WALSegmentCreationTest {
   private ODiskWriteAheadLog writeAheadLog;
-  private File               testDir;
   private volatile boolean stop = false;
 
   private ExecutorService        writerExecutor;
@@ -39,7 +38,7 @@ public class WALSegmentCreation {
     if (buildDirectory == null || buildDirectory.isEmpty())
       buildDirectory = ".";
 
-    testDir = new File(buildDirectory, "WALSegmentCreationTest");
+    File testDir = new File(buildDirectory, "WALSegmentCreationTest");
     if (!testDir.exists())
       testDir.mkdir();
 
