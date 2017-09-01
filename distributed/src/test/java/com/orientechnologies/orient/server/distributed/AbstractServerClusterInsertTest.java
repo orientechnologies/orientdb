@@ -238,7 +238,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     protected void deleteRecord(ODatabaseDocumentTx database, ODocument doc) {
       checkClusterStrategy(database);
-
       doc.delete();
     }
 
@@ -426,6 +425,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     OClass provider = schema.createClass("Provider", person);
     provider.createProperty("totalPurchased", OType.DECIMAL);
+
+    poolFactory.reset();
   }
 
   protected void dropIndexNode1() {
@@ -531,8 +532,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
           Assert.assertEquals("Index count is different by index content", indexSize,
               ((Long) qResult.get(0).field("count")).longValue());
 
-//          if (indexSize != expected)
-//            printMissingIndexEntries(server, database);
+          if (indexSize != expected)
+            printMissingIndexEntries(server, database);
 
         } finally {
           database.close();
@@ -549,43 +550,42 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         value = result.values().iterator().next();
       } else if (entry.getValue() != value) {
         Assert.assertEquals("Not coherent result between servers. Server " + entry.getKey() + " has " + entry.getValue()
-            + " indexed entries, but server " + server + " has " + value, (Long) value, entry.getValue());
+                + " indexed entries, but server " + server + " has " + value + ". Map of count: " + result, (Long) value,
+            entry.getValue());
       }
     }
 
     // CHECK IF RESULT IS EXPECTED
     for (Map.Entry<String, Long> entry : result.entrySet()) {
       if (entry.getValue() != expected) {
-        Assert.assertEquals(
-            "Indexed items on server " + entry.getKey() + " are " + entry.getValue() + ", but " + expected + " was expected",
-            (Long) expected, entry.getValue());
+        Assert.assertEquals("Indexed items on server " + entry.getKey() + " are " + entry.getValue() + ", but " + expected
+            + " was expected. Map of count: " + result, (Long) expected, entry.getValue());
       }
     }
   }
 
   private void printMissingIndexEntries(final ServerRun server, final ODatabaseDocumentTx database) {
-    List<ODocument> qResult;// ERROR: CHECK WHAT'S MISSING
-    int missingKeys = 0;
-    for (int s = 0; s < executeTestsOnServers.size(); ++s) {
-      ServerRun srv = executeTestsOnServers.get(s);
-      final int srvId = Integer.parseInt(srv.serverId);
+    try {
+      final List<ODocument> result = database.command(new OCommandSQL("select from Person")).execute();
+      final List<ODocument> result2 = database.command(new OCommandSQL("select from index:Person.name")).execute();
 
-      for (int threadId = srvId * writerCount; threadId < (srvId + 1) * writerCount; ++threadId) {
+      if (result2.size() < result.size()) {
+        for (ODocument d : result) {
+          boolean found = false;
+          for (ODocument d2 : result2) {
+            if (d2.field("rid").equals(d.getIdentity())) {
+              found = true;
+              break;
+            }
+          }
 
-        for (int i = 0; i < count; ++i) {
-          final String key = "Billy" + srvId + "-" + threadId + "-" + i;
-
-          qResult = database
-              .query(new OSQLSynchQuery<OIdentifiable>("select from index:" + indexName + " where key='" + key + "'"));
-
-          if (qResult.isEmpty()) {
-            missingKeys++;
-            System.out.println("Missing key: " + key + " on server: " + server);
+          if (!found) {
+            System.out.println("Missing indexed record " + d);
           }
         }
       }
+    } catch (Throwable t) {
     }
-    System.out.println("Total missing keys " + missingKeys + " on server: " + server);
   }
 
   protected void checkInsertedEntries() {

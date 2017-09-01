@@ -155,6 +155,8 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     factory = new OrientGraphFactory(graph.getRawGraph().getURL(), "admin", "admin", false);
     setFactorySettings(factory);
     factory.setStandardElementConstraints(false);
+
+    poolFactory.reset();
   }
 
   protected void setFactorySettings(OrientGraphFactory factory) {
