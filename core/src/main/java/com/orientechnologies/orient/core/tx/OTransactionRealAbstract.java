@@ -245,28 +245,47 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   public ODocument getIndexChanges() {
     final ODocument result = new ODocument().setAllowChainedAccess(false).setTrackingChanges(false);
 
-    for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
-      final ODocument indexDoc = new ODocument().setTrackingChanges(false);
-      ODocumentInternal.addOwner(indexDoc, result);
+    if (!indexEntries.isEmpty()) {
+      for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
+        // CHECK IF THERE ARE CHANGES TO BE SERIALIZED
+        boolean containsData = indexEntry.getValue().cleared;
+        if (!containsData) {
+          for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
+            if (!entry.clientTrackOnly) {
+              containsData = true;
+              break;
+            }
+          }
+        }
 
-      result.field(indexEntry.getKey(), indexDoc, OType.EMBEDDED);
+        if (!containsData) {
+          final OTransactionIndexChangesPerKey entry = indexEntry.getValue().nullKeyChanges;
+          containsData = entry.key != null || (entry.entries != null && !entry.entries.isEmpty());
+        }
 
-      if (indexEntry.getValue().cleared)
-        indexDoc.field("clear", Boolean.TRUE);
+        if (containsData) {
+          final ODocument indexDoc = new ODocument().setTrackingChanges(false);
+          ODocumentInternal.addOwner(indexDoc, result);
 
-      final List<ODocument> entries = new ArrayList<ODocument>();
-      indexDoc.field("entries", entries, OType.EMBEDDEDLIST);
+          result.field(indexEntry.getKey(), indexDoc, OType.EMBEDDED);
 
-      // STORE INDEX ENTRIES
-      for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
-        if (!entry.clientTrackOnly)
-          entries.add(serializeIndexChangeEntry(entry, indexDoc));
+          if (indexEntry.getValue().cleared)
+            indexDoc.field("clear", Boolean.TRUE);
+
+          final List<ODocument> entries = new ArrayList<ODocument>();
+          indexDoc.field("entries", entries, OType.EMBEDDEDLIST);
+
+          // STORE INDEX ENTRIES
+          for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
+            if (!entry.clientTrackOnly)
+              entries.add(serializeIndexChangeEntry(entry, indexDoc));
+          }
+
+          indexDoc.field("nullEntries", serializeIndexChangeEntry(indexEntry.getValue().nullKeyChanges, indexDoc));
+        }
       }
-
-      indexDoc.field("nullEntries", serializeIndexChangeEntry(indexEntry.getValue().nullKeyChanges, indexDoc));
+      indexEntries.clear();
     }
-
-    indexEntries.clear();
 
     return result;
   }
