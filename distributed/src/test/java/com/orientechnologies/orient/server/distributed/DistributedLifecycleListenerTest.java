@@ -71,7 +71,7 @@ public class DistributedLifecycleListenerTest extends AbstractServerClusterTest 
   @Test
   public void test() throws Exception {
     this.startupNodesInSequence = true;
-    this.terminateAtShutdown = false;
+    this.terminateAtShutdown = true;
     init(SERVERS);
     prepare(false);
     execute();
