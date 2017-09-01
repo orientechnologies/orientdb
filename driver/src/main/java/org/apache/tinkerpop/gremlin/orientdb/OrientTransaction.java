@@ -6,6 +6,7 @@ import org.apache.tinkerpop.gremlin.structure.util.AbstractThreadLocalTransactio
 
 public class OrientTransaction extends AbstractThreadLocalTransaction {
 
+
     protected OrientGraph graph;
 
     public OrientTransaction(OrientGraph graph) {
@@ -26,6 +27,26 @@ public class OrientTransaction extends AbstractThreadLocalTransaction {
     @Override
     protected void doCommit() throws TransactionException {
         this.db().commit();
+    }
+
+    @Override
+    protected void doClose() {
+        super.doClose();
+    }
+
+    @Override
+    protected void doReadWrite() {
+        super.doReadWrite();
+    }
+
+    @Override
+    protected void fireOnCommit() {
+        super.fireOnCommit();
+    }
+
+    @Override
+    protected void fireOnRollback() {
+        super.fireOnRollback();
     }
 
     @Override

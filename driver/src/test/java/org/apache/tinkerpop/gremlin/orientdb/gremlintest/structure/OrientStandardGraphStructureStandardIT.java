@@ -3,15 +3,18 @@ package org.apache.tinkerpop.gremlin.orientdb.gremlintest.structure;
 import org.apache.tinkerpop.gremlin.GraphProviderClass;
 import org.apache.tinkerpop.gremlin.orientdb.OrientStandardGraph;
 import org.apache.tinkerpop.gremlin.orientdb.gremlintest.OrientStandardGraphProvider;
-import org.apache.tinkerpop.gremlin.orientdb.gremlintest.suite.OrientDBDebugSuite;
+import org.apache.tinkerpop.gremlin.structure.StructureStandardSuite;
 import org.junit.runner.RunWith;
 
 /**
- * Created by Enrico Risa on 10/11/16.
+ * Executes the Standard Gremlin Structure Test Suite using OrientGraph.
+ *
+ * Extracted from TinkerGraph tests
+ * 
+ * @author Stephen Mallette (http://stephen.genoprime.com)
+ * @author Marvin Froeder (about.me/velo)
  */
-
-@RunWith(OrientDBDebugSuite.class)
-//@GraphProviderClass(provider = OrientGraphTxProvider.class, graph = OrientGraph.class)
+@RunWith(StructureStandardSuite.class)
 @GraphProviderClass(provider = OrientStandardGraphProvider.class, graph = OrientStandardGraph.class)
-public class OrientDebugGraphStructure {
+public class OrientStandardGraphStructureStandardIT {
 }

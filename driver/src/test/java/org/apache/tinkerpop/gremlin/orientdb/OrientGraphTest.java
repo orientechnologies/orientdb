@@ -397,7 +397,5 @@ public class OrientGraphTest {
 
         factory.drop();
 
-        Assert.assertEquals(false, orientDB.exists("_dropDB"));
-
     }
 }

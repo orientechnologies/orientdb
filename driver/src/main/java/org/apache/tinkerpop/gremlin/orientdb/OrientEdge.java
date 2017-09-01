@@ -27,31 +27,24 @@ public final class OrientEdge extends OrientElement implements Edge {
     protected OVertex vIn;
     protected String label;
 
-    public OrientEdge(OrientGraph graph, OEdge rawElement, final OVertex out, final OVertex in, final String iLabel) {
+    public OrientEdge(OGraph graph, OEdge rawElement, final OVertex out, final OVertex in, final String iLabel) {
         super(graph, rawElement);
         vOut = checkNotNull(out, "out vertex on edge " + rawElement);
         vIn = checkNotNull(in, "out vertex on edge " + rawElement);
         label = checkNotNull(iLabel, "label on edge " + rawElement);
     }
 
-    public OrientEdge(OrientGraph graph, String label, final OVertex out, final OVertex in, final String iLabel) {
-        this(graph, createRawElement(graph, label), out, in, iLabel);
-    }
 
-    public OrientEdge(OrientGraph graph, final OVertex out, final OVertex in, final String iLabel) {
-        this(graph, (OEdge) null, out, in, iLabel);
-    }
-
-    public OrientEdge(OrientGraph graph, OEdge rawEdge, String label) {
+    public OrientEdge(OGraph graph, OEdge rawEdge, String label) {
         this(graph, rawEdge, rawEdge.getVertex(ODirection.OUT), rawEdge.getVertex(ODirection.IN), label);
     }
 
-    public OrientEdge(OrientGraph graph, OIdentifiable identifiable) {
+    public OrientEdge(OGraph graph, OIdentifiable identifiable) {
         this(graph, new ODocument(identifiable.getIdentity()).asEdge()
                 .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get an Edge for identity %s", identifiable))));
     }
 
-    public OrientEdge(OrientGraph graph, OEdge rawEdge) {
+    public OrientEdge(OGraph graph, OEdge rawEdge) {
         this(graph, rawEdge, rawEdge.getSchemaType().get().getName());
     }
 
@@ -59,7 +52,7 @@ public final class OrientEdge extends OrientElement implements Edge {
         return iEdgeRecord.rawField(iDirection == Direction.OUT ? OrientGraphUtils.CONNECTION_OUT : OrientGraphUtils.CONNECTION_IN);
     }
 
-    protected static OEdge createRawElement(OrientGraph graph, String label) {
+    protected static OEdge createRawElement(OGraph graph, String label) {
         String className = graph.createEdgeClass(label);
         OEdgeDelegate delegate = new OEdgeDelegate(new ODocument(className));
         return delegate;
