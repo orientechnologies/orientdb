@@ -531,8 +531,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
           Assert.assertEquals("Index count is different by index content", indexSize,
               ((Long) qResult.get(0).field("count")).longValue());
 
-          if (indexSize != expected)
-            printMissingIndexEntries(server, database);
+//          if (indexSize != expected)
+//            printMissingIndexEntries(server, database);
 
         } finally {
           database.close();

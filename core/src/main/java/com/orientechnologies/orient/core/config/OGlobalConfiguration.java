@@ -799,8 +799,15 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2.15
    */
-  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST("distributed.backupTryIncrementalFirst",
+  @OApi(maturity = OApi.MATURITY.STABLE) DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST("distributed.backupTryIncrementalFirst",
       "Try to execute an incremental backup first.", Boolean.class, true),
+
+  /**
+   * @Since 2.2.27
+   */
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CHECKINTEGRITY_LAST_TX("distributed.checkIntegrityLastTxs",
+      "Before asking for a delta sync, checks the integrity of the records touched by the last X transactions committed on local server.",
+      Integer.class, 16),
 
   /**
    * @Since 2.1

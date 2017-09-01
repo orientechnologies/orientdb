@@ -241,7 +241,8 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the clusters where a server is owner. This is used when a cluster must be selected: locality is always the best choice.
+   * Returns the clusters where a server is owner. This is used when a cluster must be selected: locality is always the best
+   * choice.
    *
    * @param iClusterNames Set of cluster names
    * @param iNode         Node
@@ -445,12 +446,11 @@ public class ODistributedConfiguration {
    * @param iClusterName Cluster name, or null for *
    */
   public String getClusterOwner(final String iClusterName) {
-
     String owner;
 
     final ODocument clusters = getConfiguredClusters();
 
-// GET THE CLUSTER CFG
+    // GET THE CLUSTER CFG
     final ODocument cfg = iClusterName != null ? (ODocument) clusters.field(iClusterName) : null;
 
     if (cfg != null) {
@@ -507,7 +507,6 @@ public class ODistributedConfiguration {
    * Returns the array of configured clusters
    */
   public String[] getClusterNames() {
-
     final ODocument clusters = configuration.field(CLUSTERS);
     return clusters.fieldNames();
   }
@@ -701,7 +700,7 @@ public class ODistributedConfiguration {
   /**
    * Returns the read quorum.
    *
-   * @param clusterName    Cluster name, or null for *
+   * @param clusterName            Cluster name, or null for *
    * @param totalConfiguredServers Total node available
    */
   public int getReadQuorum(final String clusterName, final int totalConfiguredServers, final String server) {

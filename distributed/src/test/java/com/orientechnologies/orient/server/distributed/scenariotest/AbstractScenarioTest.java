@@ -79,8 +79,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
    */
 
   protected void executeMultipleWrites(final List<ServerRun> executeOnServers, final String storageType, final String dbURL,
-      final List<ServerRun> checkOnServers)
-      throws InterruptedException, ExecutionException {
+      final List<ServerRun> checkOnServers) throws InterruptedException, ExecutionException {
 
     ODatabaseDocumentTx database;
     if (dbURL == null) {
@@ -190,32 +189,31 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       dbs.add(poolFactory.get(getPlocalDatabaseURL(server), "admin", "admin").acquire());
     }
 
-    Map<Integer, Integer> serverIndex2thresholdThread = new LinkedHashMap<Integer, Integer>();
-    Map<Integer, String> serverIndex2serverName = new LinkedHashMap<Integer, String>();
-
-    int lastThread = 0;
-    int serverIndex = 0;
-
-    for (ServerRun server : writerServer) {
-      serverIndex2thresholdThread.put(serverIndex, lastThread + 5);
-      serverIndex++;
-      lastThread += 5;
-    }
-
-    serverIndex = 0;
-
-    for (ServerRun server : writerServer) {
-      serverIndex2serverName.put(serverIndex, server.getServerInstance().getDistributedManager().getLocalNodeName());
-      serverIndex++;
-    }
-
-    List<ODocument> docsToCompare = new LinkedList<ODocument>();
-
-    super.banner(
-        "Checking consistency among servers...\nChecking on servers {" + checkOnServer + "} that all the records written on {"
-            + writtenServer + "} are consistent.");
-
     try {
+      Map<Integer, Integer> serverIndex2thresholdThread = new LinkedHashMap<Integer, Integer>();
+      Map<Integer, String> serverIndex2serverName = new LinkedHashMap<Integer, String>();
+
+      int lastThread = 0;
+      int serverIndex = 0;
+
+      for (ServerRun server : writerServer) {
+        serverIndex2thresholdThread.put(serverIndex, lastThread + 5);
+        serverIndex++;
+        lastThread += 5;
+      }
+
+      serverIndex = 0;
+
+      for (ServerRun server : writerServer) {
+        serverIndex2serverName.put(serverIndex, server.getServerInstance().getDistributedManager().getLocalNodeName());
+        serverIndex++;
+      }
+
+      List<ODocument> docsToCompare = new LinkedList<ODocument>();
+
+      super.banner(
+          "Checking consistency among servers...\nChecking on servers {" + checkOnServer + "} that all the records written on {"
+              + writtenServer + "} are consistent.");
 
       int index = 0;
       String serverName = null;
@@ -370,12 +368,13 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   protected ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument,
       OCallable<ODocument, ODocument> assertion) {
     ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
-    // dbServer.getLocalCache().invalidate();
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
-
-    dbServer.getMetadata().getSchema().reload();
-
     try {
+
+      // dbServer.getLocalCache().invalidate();
+      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+
+      dbServer.getMetadata().getSchema().reload();
+
       List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Person where id = '" + uniqueId + "'"));
       if (result.size() == 0) {
         if (returnsMissingDocument) {
@@ -398,20 +397,23 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
       return doc;
     } finally {
+      dbServer.close();
       ODatabaseRecordThreadLocal.INSTANCE.set(null);
     }
   }
 
   private long selectCountInClass(String dbUrl, String className) {
-    ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
     long numberOfRecords = 0L;
+
+    ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
     try {
+      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
       List<ODocument> result = dbServer.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from " + className));
       numberOfRecords = ((Number) result.get(0).field("count")).longValue();
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
+      dbServer.close();
       ODatabaseRecordThreadLocal.INSTANCE.set(null);
     }
 
@@ -562,22 +564,24 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     public Void call() throws Exception {
 
       final ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
+      try {
+        if (useTransaction)
+          dbServer.begin();
 
-      if (useTransaction) {
-        dbServer.begin();
+        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+        for (String fieldName : fields.keySet())
+          this.recordToUpdate.field(fieldName, fields.get(fieldName));
+
+        this.recordToUpdate.save();
+
+        if (useTransaction)
+          dbServer.commit();
+
+        return null;
+
+      } finally {
+        dbServer.close();
       }
-
-      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
-      for (String fieldName : fields.keySet()) {
-        this.recordToUpdate.field(fieldName, fields.get(fieldName));
-      }
-      this.recordToUpdate.save();
-
-      if (useTransaction) {
-        dbServer.commit();
-      }
-
-      return null;
     }
   }
 
@@ -606,20 +610,22 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     public Void call() throws Exception {
 
       ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
+      try {
+        if (useTransaction)
+          dbServer.begin();
 
-      if (useTransaction) {
-        dbServer.begin();
+        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+        this.recordToDelete.delete();
+        this.recordToDelete.save();
+
+        if (useTransaction)
+          dbServer.commit();
+
+        return null;
+
+      } finally {
+        dbServer.close();
       }
-
-      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
-      this.recordToDelete.delete();
-      this.recordToDelete.save();
-
-      if (useTransaction) {
-        dbServer.commit();
-      }
-
-      return null;
     }
   }
 

@@ -950,9 +950,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is not deleted -
    * length of content is provided in above entity</li> </ol>
    *
-   * @param lsn                LSN from which we should find changed records
-   * @param stream             Stream which will contain found records
-   * @param excludedClusterIds Array of cluster ids to exclude from the export
+   * @param lsn                 LSN from which we should find changed records
+   * @param stream              Stream which will contain found records
+   * @param includeClusterNames Array of cluster ids to include from the export
    *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
@@ -960,7 +960,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
-      final Set<String> excludedClusterIds, final OCommandOutputListener outputListener) {
+      final Set<String> includeClusterNames, final OCommandOutputListener outputListener) {
     try {
       if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
         throw new IllegalStateException(
@@ -1033,7 +1033,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                     .getAtomicOperationMetadata().get(ORecordOperationMetadata.RID_METADATA_KEY);
                 final Set<ORID> rids = recordOperationMetadata.getValue();
                 for (ORID rid : rids) {
-                  if (!excludedClusterIds.contains(getPhysicalClusterNameById(rid.getClusterId())))
+                  //if(includeClusterNames.contains(getPhysicalClusterNameById(rid.getClusterId())))
                     sortedRids.add(rid);
                 }
               }
@@ -1125,7 +1125,104 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         return endLsn;
       } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Error of reading of records changed after LSN " + lsn), e);
+        throw OException.wrapException(new OStorageException("Error on reading changed records after LSN " + lsn), e);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  /**
+   * This method finds all the records changed in the last X transactions.
+   *
+   * @param maxEntries Maximum number of entries to check back from last log.
+   *
+   * @return A set of record ids of the changed records
+   *
+   * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
+   */
+  public Set<ORecordId> recordsChangedRecently(final int maxEntries, final Set<String> includeClusterNames) {
+    final SortedSet<ORecordId> result = new TreeSet<ORecordId>();
+
+    try {
+      if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
+        throw new IllegalStateException(
+            "Cannot find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
+                + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getKey()
+                + " to the true value, please note that only records"
+                + " which are stored after this property was set will be retrieved");
+
+      stateLock.acquireReadLock();
+      try {
+        if (writeAheadLog == null) {
+          OLogManager.instance().warn(this, "No WAL found for database '%s'", name);
+          return null;
+        }
+
+        final OLogSequenceNumber startLsn = writeAheadLog.begin();
+        if (startLsn == null) {
+          OLogManager.instance().warn(this, "The WAL is empty for database '%s'", name);
+          return result;
+        }
+
+        final OLogSequenceNumber endLsn = writeAheadLog.end();
+        if (endLsn == null) {
+          OLogManager.instance().warn(this, "The WAL is empty for database '%s'", name);
+          return result;
+        }
+
+        OWALRecord walRecord = writeAheadLog.read(startLsn);
+        if (walRecord == null) {
+          OLogManager.instance()
+              .info(this, "Cannot find requested LSN=%s for database sync operation (record in WAL is absent)", startLsn);
+          return null;
+        }
+
+        OLogSequenceNumber currentLsn = startLsn;
+
+        // KEEP LAST MAX-ENTRIES TRANSACTIONS' LSN
+        final List<OLogSequenceNumber> lastTx = new LinkedList<OLogSequenceNumber>();
+        while (currentLsn != null && endLsn.compareTo(currentLsn) >= 0) {
+          walRecord = writeAheadLog.read(currentLsn);
+
+          if (walRecord instanceof OAtomicUnitEndRecord) {
+            if (lastTx.size() >= maxEntries)
+              lastTx.remove(0);
+            lastTx.add(currentLsn);
+          }
+
+          currentLsn = writeAheadLog.next(currentLsn);
+        }
+
+        // COLLECT ALL THE MODIFIED RECORDS
+        for (OLogSequenceNumber lsn : lastTx) {
+          walRecord = writeAheadLog.read(lsn);
+
+          final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
+
+          if (atomicUnitEndRecord.getAtomicOperationMetadata().containsKey(ORecordOperationMetadata.RID_METADATA_KEY)) {
+            final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicUnitEndRecord
+                .getAtomicOperationMetadata().get(ORecordOperationMetadata.RID_METADATA_KEY);
+            final Set<ORID> rids = recordOperationMetadata.getValue();
+            for (ORID rid : rids) {
+              //if (includeClusterNames.contains(getPhysicalClusterNameById(rid.getClusterId())))
+                result.add((ORecordId) rid);
+            }
+          }
+        }
+
+        OLogManager.instance().info(this, "Found %d records changed in last %d operations", result.size(), lastTx.size());
+
+        return result;
+
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error on reading last changed records"), e);
       } finally {
         stateLock.releaseReadLock();
       }
@@ -3443,7 +3540,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void registerRecoverListener(final OStorageRecoverListener recoverListener) {
     try {
-      this.recoverListener = recoverListener;
+      if (recoverListener == null)
+        this.recoverListener = recoverListener;
     } catch (RuntimeException e) {
       throw logAndPrepareForRethrow(e);
     } catch (Error e) {
@@ -3494,10 +3592,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (configuration != null)
           configuration.synch();
 
-        final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
+        writeAheadLog.logFullCheckpointStart();
         writeCache.flush();
         writeAheadLog.logFullCheckpointEnd();
         writeAheadLog.flush();
+
+        final OLogSequenceNumber lastLSN = writeAheadLog.getOldestTxLsn();
 
         writeAheadLog.cutTill(lastLSN);
 
@@ -3693,7 +3793,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void recoverIfNeeded() throws Exception {
     if (isDirty()) {
-      OLogManager.instance().warn(this, "Storage '" + name + "' was not closed properly. Will try to recover from write ahead log");
+      OLogManager.instance()
+          .warn(this, "Storage '" + name + "' was not closed properly. Will try to recover from write ahead log...");
       try {
 
         restoreFromWAL();

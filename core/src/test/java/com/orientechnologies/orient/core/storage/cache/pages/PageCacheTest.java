@@ -625,6 +625,11 @@ public class PageCacheTest {
     }
 
     @Override
+    public OLogSequenceNumber getOldestTxLsn() {
+      return null;
+    }
+
+    @Override
     public void truncate() throws IOException {
 
     }

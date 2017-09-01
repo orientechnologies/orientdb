@@ -17,6 +17,8 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -57,202 +59,212 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
   @Override
   public void executeTest() throws Exception {
 
+    final int prevValue = OGlobalConfiguration.DISTRIBUTED_CHECKINTEGRITY_LAST_TX.getValueAsInteger();
+    OGlobalConfiguration.DISTRIBUTED_CHECKINTEGRITY_LAST_TX.setValue(0);
+    try {
     /*
      * Test with writeQuorum = majority
      */
 
-    banner("Test with writeQuorum = majority");
+      banner("Test with writeQuorum = majority");
 
-    ODatabaseDocumentTx dbServer1 = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+      ODatabaseDocumentTx dbServer1 = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
 
-    // changing configuration: readQuorum=2, autoDeploy=false
-    System.out.print("\nChanging configuration (autoDeploy=false)...");
+      // changing configuration: readQuorum=2, autoDeploy=false
+      System.out.print("\nChanging configuration (autoDeploy=false)...");
 
-    ODocument cfg = null;
-    ServerRun server = serverInstance.get(2);
-    OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
-    ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
-    cfg = databaseConfiguration.getDocument();
+      ODocument cfg = null;
+      ServerRun server = serverInstance.get(2);
+      OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
+      ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
+      cfg = databaseConfiguration.getDocument();
 
-    System.out.println("\nConfiguration updated.");
+      System.out.println("\nConfiguration updated.");
 
-    // inserting record r1 and checking consistency on all the servers
-    try {
-      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+      // inserting record r1 and checking consistency on all the servers
+      try {
+        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
 
-      System.out.print("Inserting record r1...");
-      new ODocument("Person").fields("id", "R001", "firstName", "Luke", "lastName", "Skywalker").save();
-      System.out.println("Done.");
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Record r1 not inserted!.");
-    }
+        System.out.print("Inserting record r1...");
+        new ODocument("Person").fields("id", "R001", "firstName", "Luke", "lastName", "Skywalker").save();
+        System.out.println("Done.");
+      } catch (Exception e) {
+        e.printStackTrace();
+        fail("Record r1 not inserted!.");
+      }
 
-    waitForInsertedRecordPropagation("R001");
+      waitForInsertedRecordPropagation("R001");
 
-    System.out.print("Checking consistency for record r1...");
-    ODocument r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
-    ODocument r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
-    ODocument r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001");
+      System.out.print("Checking consistency for record r1...");
+      ODocument r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
+      ODocument r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
+      ODocument r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001");
 
-    final ORecordId r1Rid = (ORecordId) r1onServer1.getIdentity();
+      final ORecordId r1Rid = (ORecordId) r1onServer1.getIdentity();
 
-    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
-    assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
-    assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
-    assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
+      assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
+      assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
+      assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
+      assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
 
-    assertEquals(r1onServer2.field("@version"), r1onServer3.field("@version"));
-    assertEquals(r1onServer2.field("id"), r1onServer3.field("id"));
-    assertEquals(r1onServer2.field("firstName"), r1onServer3.field("firstName"));
-    assertEquals(r1onServer2.field("lastName"), r1onServer3.field("lastName"));
+      assertEquals(r1onServer2.field("@version"), r1onServer3.field("@version"));
+      assertEquals(r1onServer2.field("id"), r1onServer3.field("id"));
+      assertEquals(r1onServer2.field("firstName"), r1onServer3.field("firstName"));
+      assertEquals(r1onServer2.field("lastName"), r1onServer3.field("lastName"));
 
-    System.out.println("\tDone.");
+      System.out.println("\tDone.");
 
-    // initial version of the record r1
-    int initialVersion = r1onServer1.field("@version");
+      // initial version of the record r1
+      int initialVersion = r1onServer1.field("@version");
 
-    // isolating server3
-    System.out.println("Network fault on server3.\n");
-    simulateServerFault(serverInstance.get(2), "net-fault");
-    assertFalse(serverInstance.get(2).isActive());
+      // isolating server3
+      System.out.println("Network fault on server3.\n");
+      simulateServerFault(serverInstance.get(2), "net-fault");
+      assertFalse(serverInstance.get(2).isActive());
 
-    waitForDatabaseIsOffline(serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
-        getDatabaseName(), 10000);
+      poolFactory.reset();
 
-    // updating r1 in r1* on server3
-    banner("Updating r1* on server3 (isolated from the the cluster)");
-    ODatabaseDocumentTx dbServer3 = null;
-    try {
+      waitForDatabaseIsOffline(serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
+          getDatabaseName(), 10000);
+
+      // updating r1 in r1* on server3
+      banner("Updating r1* on server3 (isolated from the the cluster)");
+
       r1onServer3 = retrieveRecord(getPlocalDatabaseURL(serverInstance.get(2)), "R001");
-      dbServer3 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(2))).open("admin", "admin");
-      r1onServer3.field("firstName", "Darth");
-      r1onServer3.field("lastName", "Vader");
-      r1onServer3.save();
-      System.out.println(r1onServer3.getRecord().toString());
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail();
-    }
 
-    // restarting server3
-    serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-    System.out.println("Server 3 restarted.");
-    assertTrue(serverInstance.get(2).isActive());
+      ODatabase dbServer3 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(2))).open("admin", "admin");
+      try {
+        r1onServer3.field("firstName", "Darth");
+        r1onServer3.field("lastName", "Vader");
+        r1onServer3.save();
+        System.out.println(r1onServer3.getRecord().toString());
+      } catch (Exception e) {
+        e.printStackTrace();
+        fail();
+      } finally {
+        dbServer3.close();
+      }
 
-    waitForDatabaseIsOnline(2, serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
-        getDatabaseName(), 10000);
+      // restarting server3
+      serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+      System.out.println("Server 3 restarted.");
+      assertTrue(serverInstance.get(2).isActive());
 
-    // reading r1* on server3
-    dbServer3 = poolFactory.get(getDatabaseURL(serverInstance.get(2)), "admin", "admin").acquire();
-    try {
+      waitForDatabaseIsOnline(2, serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
+          getDatabaseName(), 10000);
+
+      poolFactory.reset();
+
+      // reading r1* on server3
       r1onServer3 = retrieveRecord(getPlocalDatabaseURL(serverInstance.get(2)), "R001");
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      dbServer3.close();
-    }
 
-    // r1 was not modified both on server1 and server2
-    r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
-    r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
+      // r1 was not modified both on server1 and server2
+      r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
+      r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
 
-    assertEquals(1, r1onServer1.field("@version"));
-    assertEquals("R001", r1onServer1.field("id"));
-    assertEquals("Luke", r1onServer1.field("firstName"));
-    assertEquals("Skywalker", r1onServer1.field("lastName"));
+      assertEquals(1, r1onServer1.field("@version"));
+      assertEquals("R001", r1onServer1.field("id"));
+      assertEquals("Luke", r1onServer1.field("firstName"));
+      assertEquals("Skywalker", r1onServer1.field("lastName"));
 
-    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
-    assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
-    assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
-    assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
+      assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
+      assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
+      assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
+      assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
 
-    // checking we have different values for r1* on server3
-    assertEquals("R001", r1onServer3.field("id"));
-    assertEquals("Darth", r1onServer3.field("firstName"));
-    assertEquals("Vader", r1onServer3.field("lastName"));
-    assertEquals(initialVersion + 1, r1onServer3.field("@version"));
+      // checking we have different values for r1* on server3
+      assertEquals("R001", r1onServer3.field("id"));
+      assertEquals("Darth", r1onServer3.field("firstName"));
+      assertEquals("Vader", r1onServer3.field("lastName"));
+      assertEquals(initialVersion + 1, r1onServer3.field("@version"));
 
-    // shutdown server1
-    System.out.println("Network fault on server1.\n");
-    simulateServerFault(serverInstance.get(0), "net-fault");
-    assertFalse(serverInstance.get(0).isActive());
+      // shutdown server1
+      System.out.println("Network fault on server1.\n");
+      simulateServerFault(serverInstance.get(0), "net-fault");
+      assertFalse(serverInstance.get(0).isActive());
 
-    // delete request on server3 for r1*
-    dbServer3 = poolFactory.get(getDatabaseURL(serverInstance.get(2)), "admin", "admin").acquire();
-    try {
-      dbServer3.command(new OCommandSQL("delete from Person where @rid=#27:0")).execute();
-    } catch (Exception e) {
-      System.out.println(e.getMessage());
-    } finally {
-      dbServer3.close();
-    }
+      poolFactory.reset();
 
-    // restarting server1
-    serverInstance.get(0).startServer(getDistributedServerConfiguration(serverInstance.get(0)));
-    System.out.println("Server 1 restarted.");
-    assertTrue(serverInstance.get(0).isActive());
-
-    waitForDatabaseIsOnline(0, serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName(),
-        getDatabaseName(), 10000);
-
-    // r1 is still present both on server1 and server2
-    r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
-    r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
-
-    assertEquals(1, r1onServer1.field("@version"));
-    assertEquals("R001", r1onServer1.field("id"));
-    assertEquals("Luke", r1onServer1.field("firstName"));
-    assertEquals("Skywalker", r1onServer1.field("lastName"));
-
-    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
-    assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
-    assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
-    assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
-
-    // r1* is still present on server3
-    r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001");
-
-    assertEquals(2, r1onServer3.field("@version"));
-    assertEquals("R001", r1onServer3.field("id"));
-    assertEquals("Darth", r1onServer3.field("firstName"));
-    assertEquals("Vader", r1onServer3.field("lastName"));
-
-    waitForDatabaseIsOnline(0, serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
-        getDatabaseName(), 10000);
-
-    // delete request on server1 for r1
-    dbServer1 = poolFactory.get(getRemoteDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
-    try {
-      Integer result = dbServer1.command(new OCommandSQL("delete from " + r1Rid)).execute();
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      dbServer1.close();
-    }
-
-    // r1 is no more present neither on server1, server2 nor server3
-    r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001", true, new OCallable<ODocument, ODocument>() {
-      @Override
-      public ODocument call(ODocument doc) {
-        assertEquals(MISSING_DOCUMENT, doc);
-        return null;
+      // delete request on server3 for r1*
+      dbServer3 = poolFactory.get(getDatabaseURL(serverInstance.get(2)), "admin", "admin").acquire();
+      try {
+        dbServer3.command(new OCommandSQL("delete from Person where @rid=#27:0")).execute();
+      } catch (Exception e) {
+        System.out.println(e.getMessage());
+      } finally {
+        dbServer3.close();
       }
-    });
-    r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001", true, new OCallable<ODocument, ODocument>() {
-      @Override
-      public ODocument call(ODocument doc) {
-        assertEquals(MISSING_DOCUMENT, doc);
-        return null;
+
+      // restarting server1
+      serverInstance.get(0).startServer(getDistributedServerConfiguration(serverInstance.get(0)));
+      System.out.println("Server 1 restarted.");
+      assertTrue(serverInstance.get(0).isActive());
+
+      waitForDatabaseIsOnline(0, serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName(),
+          getDatabaseName(), 10000);
+
+      poolFactory.reset();
+
+      // r1 is still present both on server1 and server2
+      r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
+      r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
+
+      assertEquals(1, r1onServer1.field("@version"));
+      assertEquals("R001", r1onServer1.field("id"));
+      assertEquals("Luke", r1onServer1.field("firstName"));
+      assertEquals("Skywalker", r1onServer1.field("lastName"));
+
+      assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
+      assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
+      assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
+      assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
+
+      // r1* is still present on server3
+      r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001");
+
+      assertEquals(2, r1onServer3.field("@version"));
+      assertEquals("R001", r1onServer3.field("id"));
+      assertEquals("Darth", r1onServer3.field("firstName"));
+      assertEquals("Vader", r1onServer3.field("lastName"));
+
+      waitForDatabaseIsOnline(0, serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
+          getDatabaseName(), 10000);
+
+      // delete request on server1 for r1
+      dbServer1 = poolFactory.get(getRemoteDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+      try {
+        Integer result = dbServer1.command(new OCommandSQL("delete from " + r1Rid)).execute();
+      } catch (Exception e) {
+        e.printStackTrace();
+      } finally {
+        dbServer1.close();
       }
-    });
-    r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001", true, new OCallable<ODocument, ODocument>() {
-      @Override
-      public ODocument call(ODocument doc) {
-        assertEquals(MISSING_DOCUMENT, doc);
-        return null;
-      }
-    });
+
+      // r1 is no more present neither on server1, server2 nor server3
+      r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001", true, new OCallable<ODocument, ODocument>() {
+        @Override
+        public ODocument call(ODocument doc) {
+          assertEquals(MISSING_DOCUMENT, doc);
+          return null;
+        }
+      });
+      r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001", true, new OCallable<ODocument, ODocument>() {
+        @Override
+        public ODocument call(ODocument doc) {
+          assertEquals(MISSING_DOCUMENT, doc);
+          return null;
+        }
+      });
+      r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001", true, new OCallable<ODocument, ODocument>() {
+        @Override
+        public ODocument call(ODocument doc) {
+          assertEquals(MISSING_DOCUMENT, doc);
+          return null;
+        }
+      });
+    } finally {
+      OGlobalConfiguration.DISTRIBUTED_CHECKINTEGRITY_LAST_TX.setValue(prevValue);
+    }
   }
 
   @Override

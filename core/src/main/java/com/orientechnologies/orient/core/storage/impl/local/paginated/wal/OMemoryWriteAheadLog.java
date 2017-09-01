@@ -44,6 +44,11 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
+  public OLogSequenceNumber getOldestTxLsn() {
+    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
+  }
+
+  @Override
   public void flush() {
   }
 

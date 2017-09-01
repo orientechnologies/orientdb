@@ -70,6 +70,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final long             preferredSegmentCount;
   private final File             walLocation;
   private final RandomAccessFile masterRecordLSNHolder;
+  private final        List<OLogSequenceNumber> lastTXs      = new LinkedList<OLogSequenceNumber>();
+  private final static int                      MAX_LAST_TXS = 16;
 
   /**
    * If file of {@link OLogSegmentV2} will not be accessed inside of this interval (in seconds) it will be closed by timer.
@@ -526,8 +528,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber log(OWALRecord record) throws IOException {
-    OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
+  public OLogSequenceNumber log(final OWALRecord record) throws IOException {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     if (statistic != null)
       statistic.startWALLogRecordTimer();
     try {
@@ -542,7 +544,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   /**
    * it log a record getting the serialized content as parameter.
    */
-  private OLogSequenceNumber internalLog(OWALRecord record, byte[] recordContent) throws IOException {
+  private OLogSequenceNumber internalLog(final OWALRecord record, final byte[] recordContent) throws IOException {
     syncObject.lock();
     try {
       checkForClose();
@@ -608,11 +610,25 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         }
       }
 
+      if (record instanceof OAtomicUnitEndRecord) {
+        if (lastTXs.size() > MAX_LAST_TXS)
+          lastTXs.remove(0);
+        lastTXs.add(lsn);
+      }
+
       return lsn;
 
     } finally {
       syncObject.unlock();
     }
+  }
+
+  @Override
+  public OLogSequenceNumber getOldestTxLsn() {
+    if (!lastTXs.isEmpty())
+      return lastTXs.get(0);
+
+    return end();
   }
 
   @Override

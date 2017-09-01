@@ -56,10 +56,14 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
     ORemoteTaskFactory factory = getFactoryByVersion(minVersion);
 
     for (String server : serverNames) {
-      final ORemoteTaskFactory f = getFactoryByServerName(server);
-      if (f.getProtocolVersion() < minVersion) {
-        factory = f;
-        minVersion = f.getProtocolVersion();
+      try {
+        final ORemoteTaskFactory f = getFactoryByServerName(server);
+        if (f.getProtocolVersion() < minVersion) {
+          factory = f;
+          minVersion = f.getProtocolVersion();
+        }
+      } catch (OIOException e) {
+        // SKIP THIS SERVER BECAUSE IS NOT REACHABLE
       }
     }
 

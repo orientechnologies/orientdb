@@ -57,6 +57,8 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber log(OWALRecord record) throws IOException;
 
+  OLogSequenceNumber getOldestTxLsn();
+
   void truncate() throws IOException;
 
   void close() throws IOException;
@@ -98,5 +100,4 @@ public interface OWriteAheadLog {
   void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
   void removeLowDiskSpaceListener(OLowDiskSpaceListener listener);
-
 }

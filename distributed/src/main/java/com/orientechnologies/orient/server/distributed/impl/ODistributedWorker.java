@@ -89,10 +89,8 @@ public class ODistributedWorker extends Thread {
     }
 
     if (!localQueue.offer(request)) {
-//    throw new ODistributedException(
-//        "Local queue for database '" + this.databaseName + "' is full, cannot process further requests");
       ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-          "Local queue for database '%s' is full, cannot process further requests", this.databaseName);
+          "Local queue for database '%s' is full, waiting for more room...", this.databaseName);
 
       // BLOCK WAITING THE QUEUE IS NOT FULL
       try {

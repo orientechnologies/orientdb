@@ -410,6 +410,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
   }
 
   private boolean repairRecords(final ODatabaseDocumentInternal db, final Collection<ORecordId> ridSet) {
+    if( ridSet.isEmpty())
+      return true;
+
     final List<ORecordId> rids = new ArrayList<ORecordId>(ridSet);
 
     final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);

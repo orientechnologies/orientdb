@@ -522,6 +522,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public long getClusterTime() {
+    if (hazelcastInstance == null)
+      throw new HazelcastInstanceNotActiveException();
+
     try {
       return hazelcastInstance.getCluster().getClusterTime();
     } catch (HazelcastInstanceNotActiveException e) {
@@ -1587,6 +1590,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    */
   @Override
   public String electNewLockManager() {
+    if (hazelcastInstance == null)
+      throw new HazelcastInstanceNotActiveException();
+
     final ILock lock = hazelcastInstance.getLock("orientdb.lockManagerElection");
     lock.lock();
     try {

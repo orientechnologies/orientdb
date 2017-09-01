@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,6 +35,9 @@ public class HATxCrashTest extends AbstractHARemoveNode {
 
   @Test
   public void test() throws Exception {
+
+    OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.setValue(false);
+
     startupNodesInSequence = true;
     count = 500;
     maxRetries = 10;
