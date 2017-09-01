@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -292,6 +290,16 @@ public class OrientDB implements AutoCloseable {
   @Override
   public void close() {
     this.internal.close();
+  }
+
+  /**
+   * Check if the current OrientDB context is open
+   *
+   *
+   * @return boolean true if is open false otherwise.
+   */
+  public boolean isOpen(){
+    return this.internal.isOpen();
   }
 
   ODatabasePoolInternal openPool(String database, String user, String password, OrientDBConfig config) {
