@@ -45,8 +45,6 @@ public class SplitBrainNetwork3StaticServersTest extends AbstractHARemoveNode {
     checkInsertedEntries();
     checkIndexedEntries(executeTestsOnServers);
 
-    banner("SIMULATE ISOLATION OF SERVER " + (SERVERS - 1) + "...");
-
     serverInstance.get(2).disconnectFrom(serverInstance.get(0), serverInstance.get(1));
 
     banner("SERVER " + (SERVERS - 1) + " HAS BEEN ISOLATED, WAITING FOR THE DATABASE ON SERVER 2 TO BE OFFLINE...");

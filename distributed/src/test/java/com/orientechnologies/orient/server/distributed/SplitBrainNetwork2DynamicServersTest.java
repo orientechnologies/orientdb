@@ -42,8 +42,6 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
     Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getLockManagerServer());
     Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getLockManagerServer());
 
-    banner("SIMULATE ISOLATION OF SERVER " + (SERVERS - 1) + "...");
-
     checkInsertedEntries(executeTestsOnServers);
     checkIndexedEntries(executeTestsOnServers);
 

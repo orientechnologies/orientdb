@@ -62,6 +62,7 @@ import sun.misc.Signal;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.SocketException;
 import java.security.SecureRandom;
 import java.util.*;
 
@@ -629,7 +630,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new ODistributedException("Cannot find node '" + rNodeName + "'");
+            throw new ODistributedException("Cannot find node '" + rNodeName + "' from server '" + getLocalNodeName() + "'");
           }
         }
 
@@ -637,13 +638,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         if (url == null) {
           closeRemoteServer(rNodeName);
-          throw new ODatabaseException("Cannot connect to a remote node because the url was not found");
+          throw new ODatabaseException(
+              "Cannot connect from server '" + getLocalNodeName() + "' to a remote node because the url was not found");
         }
 
         final String userPassword = cfg.field("user_replicator");
 
         if (userPassword != null) {
           // OK
+          if (ONetworkSimulator.getInstance().areIsolated(getLocalNodeName(), rNodeName))
+            throw new SocketException(
+                "Servers '" + getLocalNodeName() + "' and '" + rNodeName + "' have been isolated through the network simulator");
+
           remoteServer = new ORemoteServerController(this, rNodeName, url, REPLICATOR_USER, userPassword);
           final ORemoteServerController old = remoteServers.putIfAbsent(rNodeName, remoteServer);
           if (old != null) {
@@ -658,7 +664,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           Thread.sleep(100);
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw new OInterruptedException("Cannot connect to remote sevrer " + rNodeName);
+          throw new OInterruptedException("Cannot connect to remote server '" + rNodeName + "'");
         }
 
       }

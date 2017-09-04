@@ -451,7 +451,6 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   protected void simulateServerFault(ServerRun serverRun, String faultName) {
-
     if (faultName.equals("shutdown"))
       serverRun.terminateServer();
     else if (faultName.equals("net-fault")) {

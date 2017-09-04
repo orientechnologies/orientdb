@@ -33,6 +33,7 @@ import com.orientechnologies.orient.server.distributed.impl.task.OCreateRecordTa
 import com.orientechnologies.orient.server.distributed.impl.task.OFixCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OFixUpdateRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordTask;
+import com.orientechnologies.orient.server.hazelcast.ONetworkSimulator;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Assert;
@@ -315,6 +316,8 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void deleteServers() {
+    ONetworkSimulator.getInstance().reset();
+
     for (ServerRun s : serverInstance)
       s.deleteNode();
 
