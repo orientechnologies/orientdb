@@ -764,7 +764,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       // COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
       if (tempResult == null)
-        tempResult = new ArrayList<OIdentifiable>();
+        tempResult = new SoftQueryResultList<OIdentifiable>();
 
       applyPartialOrderBy();
 
@@ -831,7 +831,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
       if (tempResult instanceof List && ((List) tempResult).size() >= sortBufferSize + PARTIAL_SORT_BUFFER_THRESHOLD) {
         applyOrderBy(false);
-        tempResult = new ArrayList(((List) tempResult).subList(0, sortBufferSize));
+        tempResult = new SoftQueryResultList<OIdentifiable>(((List) tempResult).subList(0, sortBufferSize));
       }
     }
   }
@@ -1283,7 +1283,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               }
 
               if (tempResult == null)
-                tempResult = new ArrayList<OIdentifiable>();
+                tempResult = new SoftQueryResultList<OIdentifiable>();
               ((Collection<OIdentifiable>) tempResult).add(new ODocument().field(entry.getKey(), count));
               return true;
             }
@@ -2267,7 +2267,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                     .updateCounter(profiler.getDatabaseMetric(database.getName(), "query.indexUsed"), "Used index in query", +1);
               }
               if (tempResult == null)
-                tempResult = new ArrayList<OIdentifiable>();
+                tempResult = new SoftQueryResultList<OIdentifiable>();
               ((Collection<OIdentifiable>) tempResult).add(new ODocument().field(entry.getKey(), count));
               return true;
             }
@@ -2554,7 +2554,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     try {
 
       if (tempResult == null) {
-        tempResult = new ArrayList<OIdentifiable>();
+        tempResult = new SoftQueryResultList<OIdentifiable>();
         if (expandTarget instanceof OSQLFilterItemVariable) {
           Object r = ((OSQLFilterItemVariable) expandTarget).getValue(null, null, context);
           if (r != null) {
@@ -2586,7 +2586,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       } else {
         if (tempResult == null) {
-          tempResult = new ArrayList<OIdentifiable>();
+          tempResult = new SoftQueryResultList<OIdentifiable>();
         }
         final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
 
@@ -2869,7 +2869,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final long startGroupBy = System.currentTimeMillis();
       try {
 
-        tempResult = new ArrayList<OIdentifiable>();
+        tempResult = new SoftQueryResultList<OIdentifiable>();
 
         for (Entry<Object, ORuntimeResult> g : groupedResult.entrySet()) {
           if (g.getKey() != null || (groupedResult.size() == 1 && groupByFields == null)) {
