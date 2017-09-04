@@ -616,8 +616,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
               if (ddb != null && !(result instanceof Throwable) && task instanceof OAbstractReplicatedTask && !task
                   .isIdempotent()) {
+
                 // UPDATE LSN WITH LAST OPERATION
                 ddb.setLSN(sourceNodeName, ((OAbstractReplicatedTask) task).getLastLSN(), true);
+
+                // UPDATE LSN WITH LAST LOCAL OPERATION
+                ddb.setLSN(getLocalNodeName(), ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN(), true);
               }
             }
           }

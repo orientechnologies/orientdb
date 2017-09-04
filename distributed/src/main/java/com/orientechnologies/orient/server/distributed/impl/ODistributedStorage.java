@@ -97,8 +97,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   private ODistributedStorageEventListener           eventListener;
 
   private volatile ODistributedConfiguration distributedConfiguration;
-  private volatile boolean       running              = true;
-  private volatile File          lastValidBackup      = null;
+  private volatile boolean running         = true;
+  private volatile File    lastValidBackup = null;
 
   public ODistributedStorage(final OServer iServer, final String dbName) {
     this.serverInstance = iServer;
@@ -712,6 +712,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       // PASS THROUGH
       throw e;
+    } catch (InterruptedException e) {
+
+      throw new OOfflineNodeException("Current node has been interrupted");
     } catch (HazelcastInstanceNotActiveException e) {
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
@@ -734,9 +737,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
       final boolean iIgnoreCache, final boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
 
-    final ORawBuffer memCopy = localDistributedDatabase.getRecordIfLocked(iRecordId);
-    if (memCopy != null)
-      return new OStorageOperationResult<ORawBuffer>(memCopy);
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+      final ORawBuffer memCopy = localDistributedDatabase.getRecordIfLocked(iRecordId);
+      if (memCopy != null)
+        return new OStorageOperationResult<ORawBuffer>(memCopy);
+    }
 
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
@@ -779,6 +784,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
+
     } catch (HazelcastInstanceNotActiveException e) {
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
@@ -795,9 +801,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   @Override
   public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
       final boolean ignoreCache, final int recordVersion) throws ORecordNotFoundException {
-    final ORawBuffer memCopy = localDistributedDatabase.getRecordIfLocked(rid);
-    if (memCopy != null)
-      return new OStorageOperationResult<ORawBuffer>(memCopy);
+
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+      final ORawBuffer memCopy = localDistributedDatabase.getRecordIfLocked(rid);
+      if (memCopy != null)
+        return new OStorageOperationResult<ORawBuffer>(memCopy);
+    }
 
     try {
       final String clusterName = getClusterNameByRID(rid);
@@ -985,6 +994,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // PASS THROUGH
       throw e;
 
+    } catch (InterruptedException e) {
+      throw new OOfflineNodeException("Current node has been interrupted");
+
     } catch (HazelcastInstanceNotActiveException e) {
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
@@ -1133,6 +1145,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       // PASS THROUGH
       throw e;
+
+    } catch (InterruptedException e) {
+      throw new OOfflineNodeException("Current node has been interrupted");
 
     } catch (HazelcastInstanceNotActiveException e) {
       throw new OOfflineNodeException("Hazelcast instance is not available");
@@ -1441,6 +1456,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           throw OException.wrapException(new ODistributedException("Error on executing distributed transaction"), lastException);
       }
 
+    } catch (InterruptedException e) {
+      throw new OOfflineNodeException("Current node has been interrupted");
     } catch (OValidationException e) {
       throw e;
     } catch (HazelcastInstanceNotActiveException e) {

@@ -1034,7 +1034,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 final Set<ORID> rids = recordOperationMetadata.getValue();
                 for (ORID rid : rids) {
                   //if(includeClusterNames.contains(getPhysicalClusterNameById(rid.getClusterId())))
-                    sortedRids.add(rid);
+                  sortedRids.add(rid);
                 }
               }
             }
@@ -1212,7 +1212,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             final Set<ORID> rids = recordOperationMetadata.getValue();
             for (ORID rid : rids) {
               //if (includeClusterNames.contains(getPhysicalClusterNameById(rid.getClusterId())))
-                result.add((ORecordId) rid);
+              result.add((ORecordId) rid);
             }
           }
         }
@@ -3093,7 +3093,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public boolean isFrozen() {
     try {
-      return atomicOperationsManager.isFrozen();
+      return !isClosed() && atomicOperationsManager.isFrozen();
     } catch (RuntimeException e) {
       throw logAndPrepareForRethrow(e);
     } catch (Error e) {
