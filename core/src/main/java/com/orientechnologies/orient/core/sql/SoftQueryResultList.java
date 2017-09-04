@@ -137,7 +137,12 @@ public class SoftQueryResultList<T> implements List<T> {
 
   @Override
   public boolean addAll(int index, Collection<? extends T> c) {
-    throw new UnsupportedOperationException();
+    boolean added = false;
+    for (T o : c) {
+      added = true;
+      add(index++, o);
+    }
+    return added;
   }
 
   @Override
@@ -337,12 +342,12 @@ public class SoftQueryResultList<T> implements List<T> {
 
       @Override
       public void set(T t) {
-        throw new UnsupportedOperationException();
+        innerIterator.set(new SoftReference<T>(t));
       }
 
       @Override
       public void add(T t) {
-        throw new UnsupportedOperationException();
+        innerIterator.add(new SoftReference<T>(t));
       }
     };
   }
