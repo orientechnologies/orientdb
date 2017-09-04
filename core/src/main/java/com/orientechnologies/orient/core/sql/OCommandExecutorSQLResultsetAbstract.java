@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
@@ -77,21 +78,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements
-    OCommandDistributedReplicateRequest, Iterable<OIdentifiable>, OIterableRecordSource {
-  protected static final String               KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
-  protected static final String               KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
+public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest, Iterable<OIdentifiable>, OIterableRecordSource {
+  protected static final String KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
+  protected static final String KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
 
-  protected OSQLAsynchQuery<ODocument>        request;
-  protected OSQLTarget                        parsedTarget;
-  protected OSQLFilter                        compiledFilter;
-  protected Map<String, Object>               let                = null;
+  protected OSQLAsynchQuery<ODocument> request;
+  protected OSQLTarget                 parsedTarget;
+  protected OSQLFilter                 compiledFilter;
+  protected Map<String, Object> let = null;
   protected Iterator<? extends OIdentifiable> target;
   protected Iterable<OIdentifiable>           tempResult;
   protected int                               resultCount;
-  protected AtomicInteger                     serialTempRID      = new AtomicInteger(0);
-  protected int                               skip               = 0;
-  protected boolean                           lazyIteration      = true;
+  protected AtomicInteger serialTempRID = new AtomicInteger(0);
+  protected int           skip          = 0;
+  protected boolean       lazyIteration = true;
 
   private static final class IndexValuesIterator implements Iterator<OIdentifiable> {
     private OIndexCursor  indexCursor;
@@ -99,10 +100,14 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     private boolean       noItems;
 
     private IndexValuesIterator(String indexName, boolean ascOrder) {
+      OIndex<?> idx = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+      if (idx == null) {
+        throw new OCommandExecutionException("Index not found: " + indexName);
+      }
       if (ascOrder)
-        indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).cursor();
+        indexCursor = idx.cursor();
       else
-        indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).descCursor();
+        indexCursor = idx.descCursor();
     }
 
     @Override
@@ -192,8 +197,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   /**
    * Assign the right TARGET if found.
    *
-   * @param iArgs
-   *          Parameters to bind
+   * @param iArgs Parameters to bind
+   *
    * @return true if the target has been recognized, otherwise false
    */
   protected boolean assignTarget(final Map<Object, Object> iArgs) {
@@ -339,9 +344,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * Parses the limit keyword if found.
    *
    * @param w
+   *
    * @return the limit found as integer, or -1 if no limit is found. -1 means no limits.
-   * @throws OCommandSQLParsingException
-   *           if no valid limit has been found
+   *
+   * @throws OCommandSQLParsingException if no valid limit has been found
    */
   protected int parseLimit(final String w) throws OCommandSQLParsingException {
     if (!w.equals(KEYWORD_LIMIT))
@@ -356,7 +362,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     }
 
     if (limit == 0)
-      throwParsingException("Invalid LIMIT value setted to ZERO. Use -1 to ignore the limit or use a positive number. Example: LIMIT 10");
+      throwParsingException(
+          "Invalid LIMIT value setted to ZERO. Use -1 to ignore the limit or use a positive number. Example: LIMIT 10");
 
     return limit;
   }
@@ -365,9 +372,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * Parses the skip keyword if found.
    *
    * @param w
+   *
    * @return the skip found as integer, or -1 if no skip is found. -1 means no skip.
-   * @throws OCommandSQLParsingException
-   *           if no valid skip has been found
+   *
+   * @throws OCommandSQLParsingException if no valid skip has been found
    */
   protected int parseSkip(final String w) throws OCommandSQLParsingException {
     if (!w.equals(KEYWORD_SKIP) && !w.equals(KEYWORD_OFFSET))
@@ -379,13 +387,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       skip = Integer.parseInt(word);
 
     } catch (Exception e) {
-      throwParsingException("Invalid SKIP value setted to '" + word
-          + "' but it should be a valid positive integer. Example: SKIP 10");
+      throwParsingException(
+          "Invalid SKIP value setted to '" + word + "' but it should be a valid positive integer. Example: SKIP 10");
     }
 
     if (skip < 0)
-      throwParsingException("Invalid SKIP value setted to the negative number '" + word
-          + "'. Only positive numbers are valid. Example: SKIP 10");
+      throwParsingException(
+          "Invalid SKIP value setted to the negative number '" + word + "'. Only positive numbers are valid. Example: SKIP 10");
 
     return skip;
   }
@@ -476,11 +484,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
     if (iAscendentOrder)
-      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, isUseCache(), false).setRange(range[0],
-          range[1]);
+      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, isUseCache(), false)
+          .setRange(range[0], range[1]);
     else
-      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic).setRange(range[0],
-          range[1]);
+      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic)
+          .setRange(range[0], range[1]);
   }
 
   protected boolean isUseCache() {
@@ -560,6 +568,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * Check function arguments and pre calculate it if possible
    *
    * @param function
+   *
    * @return optimized function, same function if no change
    */
   protected Object optimizeFunction(OSQLFunctionRuntime function) {
@@ -696,7 +705,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   public boolean isCacheable() {
     return true;
   }
-  
+
   public Object mergeResults(Map<String, Object> results) throws Exception {
 
     if (results.isEmpty())
