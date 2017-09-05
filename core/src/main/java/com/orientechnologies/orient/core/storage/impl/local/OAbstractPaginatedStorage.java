@@ -1171,55 +1171,61 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           return result;
         }
 
-        final OLogSequenceNumber endLsn = writeAheadLog.end();
-        if (endLsn == null) {
-          OLogManager.instance().warn(this, "The WAL is empty for database '%s'", name);
-          return result;
-        }
+        writeAheadLog.preventCutTill(startLsn);
+        try {
 
-        OWALRecord walRecord = writeAheadLog.read(startLsn);
-        if (walRecord == null) {
-          OLogManager.instance()
-              .info(this, "Cannot find requested LSN=%s for database sync operation (record in WAL is absent)", startLsn);
-          return null;
-        }
-
-        OLogSequenceNumber currentLsn = startLsn;
-
-        // KEEP LAST MAX-ENTRIES TRANSACTIONS' LSN
-        final List<OLogSequenceNumber> lastTx = new LinkedList<OLogSequenceNumber>();
-        while (currentLsn != null && endLsn.compareTo(currentLsn) >= 0) {
-          walRecord = writeAheadLog.read(currentLsn);
-
-          if (walRecord instanceof OAtomicUnitEndRecord) {
-            if (lastTx.size() >= maxEntries)
-              lastTx.remove(0);
-            lastTx.add(currentLsn);
+          final OLogSequenceNumber endLsn = writeAheadLog.end();
+          if (endLsn == null) {
+            OLogManager.instance().warn(this, "The WAL is empty for database '%s'", name);
+            return result;
           }
 
-          currentLsn = writeAheadLog.next(currentLsn);
-        }
+          OWALRecord walRecord = writeAheadLog.read(startLsn);
+          if (walRecord == null) {
+            OLogManager.instance()
+                .info(this, "Cannot find requested LSN=%s for database sync operation (record in WAL is absent)", startLsn);
+            return null;
+          }
 
-        // COLLECT ALL THE MODIFIED RECORDS
-        for (OLogSequenceNumber lsn : lastTx) {
-          walRecord = writeAheadLog.read(lsn);
+          OLogSequenceNumber currentLsn = startLsn;
 
-          final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
+          // KEEP LAST MAX-ENTRIES TRANSACTIONS' LSN
+          final List<OLogSequenceNumber> lastTx = new LinkedList<OLogSequenceNumber>();
+          while (currentLsn != null && endLsn.compareTo(currentLsn) >= 0) {
+            walRecord = writeAheadLog.read(currentLsn);
 
-          if (atomicUnitEndRecord.getAtomicOperationMetadata().containsKey(ORecordOperationMetadata.RID_METADATA_KEY)) {
-            final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicUnitEndRecord
-                .getAtomicOperationMetadata().get(ORecordOperationMetadata.RID_METADATA_KEY);
-            final Set<ORID> rids = recordOperationMetadata.getValue();
-            for (ORID rid : rids) {
-              //if (includeClusterNames.contains(getPhysicalClusterNameById(rid.getClusterId())))
-              result.add((ORecordId) rid);
+            if (walRecord instanceof OAtomicUnitEndRecord) {
+              if (lastTx.size() >= maxEntries)
+                lastTx.remove(0);
+              lastTx.add(currentLsn);
+            }
+
+            currentLsn = writeAheadLog.next(currentLsn);
+          }
+
+          // COLLECT ALL THE MODIFIED RECORDS
+          for (OLogSequenceNumber lsn : lastTx) {
+            walRecord = writeAheadLog.read(lsn);
+
+            final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
+
+            if (atomicUnitEndRecord.getAtomicOperationMetadata().containsKey(ORecordOperationMetadata.RID_METADATA_KEY)) {
+              final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicUnitEndRecord
+                  .getAtomicOperationMetadata().get(ORecordOperationMetadata.RID_METADATA_KEY);
+              final Set<ORID> rids = recordOperationMetadata.getValue();
+              for (ORID rid : rids) {
+                //if (includeClusterNames.contains(getPhysicalClusterNameById(rid.getClusterId())))
+                result.add((ORecordId) rid);
+              }
             }
           }
+
+          OLogManager.instance().info(this, "Found %d records changed in last %d operations", result.size(), lastTx.size());
+
+          return result;
+        } finally {
+          writeAheadLog.preventCutTill(null);
         }
-
-        OLogManager.instance().info(this, "Found %d records changed in last %d operations", result.size(), lastTx.size());
-
-        return result;
 
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error on reading last changed records"), e);
