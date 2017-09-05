@@ -4,7 +4,6 @@ import * as $ from "jquery"
 
 import {downgradeComponent} from '@angular/upgrade/static';
 import {NotificationService} from "../../core/services/notification.service";
-import {AgentService} from "../../core/services/agent.service";
 import {Neo4jImporterService} from "../../core/services/neo4jimporter.service"
 
 declare var angular:any
@@ -33,7 +32,7 @@ class Neo4jImporterComponent implements AfterViewChecked {
 
   private hints;
 
-  constructor(private neo4jImorterService: Neo4jImporterService, private notification: NotificationService, private zone: NgZone) {
+  constructor(private neo4jImporterService: Neo4jImporterService, private notification: NotificationService, private zone: NgZone) {
       this.init();
   }
 
@@ -73,7 +72,7 @@ class Neo4jImporterComponent implements AfterViewChecked {
       outDbName: "The target database name where the Neo4j database will be migrated. The database will be created by the import tool if not present. " +
       "In case the database already exists, the Neo4j to OrientDB Importer will behave accordingly to the checkbox below.",
       overwriteOrientDB: "Overwrite OrientDB target database if it already exists.",
-      createIndicesOnRelationhips: "Create indices on imported edges in OrientDB. In this way an index will be built for each Edge class on 'Neo4jRelID' property.",
+      createIndicesOnRelationships: "Create indices on imported edges in OrientDB. In this way an index will be built for each Edge class on 'Neo4jRelID' property.",
       logLevel: "Level of verbosity printed to the output during the execution."
     }
 
@@ -119,7 +118,7 @@ class Neo4jImporterComponent implements AfterViewChecked {
   }
 
   testConnection() {
-    this.neo4jImorterService.testConnection(this.config).then((data) => {
+    this.neo4jImporterService.testConnection(this.config).then((data) => {
       this.notification.push({content: "Connection is alive", autoHide: true});
     }).catch((error) => {
       this.notification.push({content: error.json(), error: true, autoHide: true});
@@ -130,7 +129,7 @@ class Neo4jImporterComponent implements AfterViewChecked {
 
     this.initJobInfo();
 
-    this.neo4jImorterService.launch(this.config).then((data) => {
+    this.neo4jImporterService.launch(this.config).then((data) => {
       this.step = "running";
       this.jobRunning = true;
       this.status();
@@ -142,7 +141,7 @@ class Neo4jImporterComponent implements AfterViewChecked {
 
   status() {
     if(this.jobRunning) {
-      this.neo4jImorterService.status().then((data) => {
+      this.neo4jImporterService.status().then((data) => {
         if (data.jobs.length > 0) {
           var currentJobInfo = data.jobs[0];
           this.job.cfg = currentJobInfo.cfg;
@@ -172,6 +171,7 @@ class Neo4jImporterComponent implements AfterViewChecked {
 
   scrollLogAreaDown() {
     var logArea = $("#logArea");
+    //noinspection TypeScriptUnresolvedFunction
     logArea.scrollTop(9999999);
   }
 

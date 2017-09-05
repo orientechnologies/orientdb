@@ -773,6 +773,7 @@ class EtlComponent implements OnDestroy {
     this.readyForExecution();
 
     // Jquery
+    //noinspection TypeScriptUnresolvedFunction
     $("#createExtractor").hide();
     $("#pleaseExtractor").hide();
     $("#panelPlaceholder").hide();
@@ -1336,15 +1337,10 @@ class EtlComponent implements OnDestroy {
 
     this.finalJson = JSON.stringify(etl);
 
-    this.step = '3';
+    this.step = 'running';
+    this.jobRunning = true;
 
-    /*this.etlService.launch(this.finalJson).then((data) => {
-     this.step = "3";
-     this.jobRunning = true;
-     this.status();
-     }).catch(function (error) {
-     alert("Error during etl process!")
-     });*/
+    // TODO: launch the program
 
   }
 
@@ -1352,7 +1348,11 @@ class EtlComponent implements OnDestroy {
     if(this.jobRunning) {
       this.etlService.status().then((data) => {
         if(data.jobs.length > 0) {
-          this.job = data.jobs[0];
+          var currentJobInfo = data.jobs[0];
+          this.job.cfg = currentJobInfo.cfg;
+          this.job.status = currentJobInfo.status;
+          this.job.log += currentJobInfo.log;
+
           this.scrollLogAreaDown();
         }
         else {
