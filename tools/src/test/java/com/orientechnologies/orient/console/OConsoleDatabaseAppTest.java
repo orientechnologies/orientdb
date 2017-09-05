@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.console;
 
-import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -8,13 +7,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.text.Format;
-import java.util.Iterator;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
@@ -24,69 +24,8 @@ import static org.junit.Assert.fail;
  * Created by tglman on 14/03/16.
  */
 public class OConsoleDatabaseAppTest {
-
-  class ConsoleTest {
-    OConsoleDatabaseApp   console;
-    ByteArrayOutputStream out;
-    PrintStream           stream;
-
-    ConsoleTest() {
-      console = new OConsoleDatabaseApp(null) {
-        @Override
-        protected void onException(Throwable e) {
-          super.onException(e);
-          fail(e.getMessage());
-        }
-      };
-      resetOutput();
-    }
-
-    ConsoleTest(String[] args) {
-      console = new OConsoleDatabaseApp(args) {
-        @Override
-        protected void onException(Throwable e) {
-          super.onException(e);
-          fail(e.getMessage());
-        }
-      };
-      resetOutput();
-    }
-
-    public OConsoleDatabaseApp console() {
-      return console;
-    }
-
-    public String getConsoleOutput() {
-      byte[] result = out.toByteArray();
-      return new String(result);
-    }
-
-    void resetOutput() {
-      if (out != null) {
-        try {
-          stream.close();
-          out.close();
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
-      out = new ByteArrayOutputStream();
-      stream = new PrintStream(out);
-      console.setOutput(stream);
-    }
-
-    void shutdown() {
-      if (out != null) {
-        try {
-          stream.close();
-          out.close();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-      console.close();
-    }
-  }
+  @Rule
+  public TestName testName = new TestName();
 
   @Test
   public void testSelectBinaryDoc() throws IOException {
@@ -281,7 +220,7 @@ public class OConsoleDatabaseAppTest {
 
   @Test
   public void testSimple() {
-    String dbUrl = "memory:OConsoleDatabaseAppTest";
+    String dbUrl = "memory:" + testName.getMethodName();
     StringBuilder builder = new StringBuilder();
     builder.append("create database " + dbUrl + ";\n");
     builder.append("profile storage on;\n");
@@ -342,6 +281,135 @@ public class OConsoleDatabaseAppTest {
       console.close();
     }
 
+  }
+
+  @Test
+  @Ignore
+  public void testMultiLine() {
+    String dbUrl = "memory:" + testName.getMethodName();
+    StringBuilder builder = new StringBuilder();
+    builder.append("create database " + dbUrl + ";\n");
+    builder.append("profile storage on;\n");
+    builder.append("create class foo;\n");
+    builder.append("config;\n");
+    builder.append("list classes;\n");
+    builder.append("list properties;\n");
+    builder.append("list clusters;\n");
+    builder.append("list indexes;\n");
+    builder.append("info class OUser;\n");
+    builder.append("info property OUser.name;\n");
+
+    builder.append("begin;\n");
+    builder.append("insert into foo set name = 'foo';\n");
+    builder.append("insert into foo set name = 'bla';\n");
+    builder.append("update foo set surname = 'bar' where name = 'foo';\n");
+    builder.append("commit;\n");
+    builder.append("select from foo;\n");
+
+    builder.append("create class bar;\n");
+    builder.append("create property bar.name STRING;\n");
+    builder.append("create index bar_name on bar (name) NOTUNIQUE;\n");
+
+    builder.append("insert into bar set name = 'foo';\n");
+    builder.append("delete from bar;\n");
+    builder.append("begin;\n");
+    builder.append("insert into bar set name = 'foo';\n");
+    builder.append("rollback;\n");
+
+    builder.append("create vertex V set name = 'foo';\n");
+    builder.append("create vertex V set name = 'bar';\n");
+
+    builder.append("traverse out() from V;\n");
+
+//    builder.append("create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
+
+    builder.append("create edge from \n"
+        + "(select from V where name = 'foo') \n"
+        + "to (select from V where name = 'bar');\n");
+
+    ConsoleTest c = new ConsoleTest(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = c.console();
+
+
+    try {
+      console.run();
+
+      ODatabaseDocument db = console.getCurrentDatabase();
+      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
+      Assert.assertEquals(1, result.size());
+      ODocument doc = result.get(0);
+      Assert.assertEquals("bar", doc.field("surname"));
+
+      result = db.query(new OSQLSynchQuery<ODocument>("select from bar"));
+      Assert.assertEquals(0, result.size());
+
+    } finally {
+      console.close();
+    }
+
+  }
+
+  class ConsoleTest {
+    OConsoleDatabaseApp   console;
+    ByteArrayOutputStream out;
+    PrintStream           stream;
+
+    ConsoleTest() {
+      console = new OConsoleDatabaseApp(null) {
+        @Override
+        protected void onException(Throwable e) {
+          super.onException(e);
+          fail(e.getMessage());
+        }
+      };
+      resetOutput();
+    }
+
+    ConsoleTest(String[] args) {
+      console = new OConsoleDatabaseApp(args) {
+        @Override
+        protected void onException(Throwable e) {
+          super.onException(e);
+          fail(e.getMessage());
+        }
+      };
+      resetOutput();
+    }
+
+    public OConsoleDatabaseApp console() {
+      return console;
+    }
+
+    public String getConsoleOutput() {
+      byte[] result = out.toByteArray();
+      return new String(result);
+    }
+
+    void resetOutput() {
+      if (out != null) {
+        try {
+          stream.close();
+          out.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+      out = new ByteArrayOutputStream();
+      stream = new PrintStream(out);
+      console.setOutput(stream);
+    }
+
+    void shutdown() {
+      if (out != null) {
+        try {
+          stream.close();
+          out.close();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+      console.close();
+    }
   }
 
 }
