@@ -36,7 +36,7 @@ public class SoftQueryResultList<T> implements List<T> {
   public boolean contains(Object o) {
     for (SoftReference<T> ref : buffer) {
       T item = getItem(ref);
-      if (item != null) {
+      if (item.equals(o)) {
         return true;
       }
     }
