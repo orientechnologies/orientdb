@@ -109,7 +109,9 @@ public interface ODistributedDatabase {
 
   void waitForOnline();
 
-  void processRequest(ODistributedRequest request, boolean waitForAcceptingRequests);
+  boolean waitIsReady(OCallable<Boolean, Void> retryCallback);
+
+  void processRequest(ODistributedRequest request);
 
   ODistributedTxContext registerTxContext(ODistributedRequestId reqId);
 

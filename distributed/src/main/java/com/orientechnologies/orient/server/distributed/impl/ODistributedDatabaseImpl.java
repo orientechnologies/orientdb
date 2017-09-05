@@ -194,20 +194,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
    * Distributed requests against the available workers by using one queue per worker. This guarantee the sequence of the operations
    * against the same record cluster.
    */
-  public void processRequest(final ODistributedRequest request, final boolean waitForAcceptingRequests) {
+  public void processRequest(final ODistributedRequest request) {
     if (!running)
       // DISCARD IT
       return;
 
     final ORemoteTask task = request.getTask();
-
-    if (waitForAcceptingRequests) {
-      waitIsReady(task);
-
-      if (!running)
-        // DISCARD IT
-        return;
-    }
 
     totalReceivedRequests.incrementAndGet();
 
@@ -371,18 +363,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  public void waitIsReady(ORemoteTask task) {
-    if (task.isNodeOnlineRequired())
-      if (!parsing.get()) {
-        // WAIT FOR PARSING REQUESTS
-        while (!parsing.get()) {
-          try {
-            Thread.sleep(300);
-          } catch (InterruptedException e) {
-            break;
-          }
-        }
-      }
+  @Override
+  public boolean waitIsReady(final OCallable<Boolean, Void> retryCallback) {
+    // WAIT FOR PARSING REQUESTS
+    while (!parsing.get()) {
+      if (!retryCallback.call(null))
+        return false;
+    }
+    return true;
   }
 
   protected Set<Integer> getInvolvedQueuesByPartitionKeys(final int[] partitionKeys) {
@@ -880,7 +868,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     final OUnreachableServerLocalTask task = new OUnreachableServerLocalTask(nodeName);
     final ODistributedRequest rollbackRequest = new ODistributedRequest(null, manager.getLocalNodeId(),
         manager.getNextMessageIdCounter(), null, task);
-    processRequest(rollbackRequest, false);
+    processRequest(rollbackRequest);
   }
 
   @Override

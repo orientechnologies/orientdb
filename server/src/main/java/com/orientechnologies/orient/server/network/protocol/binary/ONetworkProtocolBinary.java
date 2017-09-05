@@ -29,6 +29,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.core.OConstants;
@@ -181,7 +182,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected void execute() throws Exception {
     requestType = -1;
 
-    if(server.rejectRequests()){
+    if (server.rejectRequests()) {
       this.softShutdown();
       return;
     }
@@ -396,7 +397,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
       sendShutdown();
     } catch (OInterruptedException e) {
-      OLogManager.instance().debug(this, "An underlying task has been interrupted clientId=%d reqType=%d", clientTxId, requestType, e);
+      OLogManager.instance()
+          .debug(this, "An underlying task has been interrupted clientId=%d reqType=%d", clientTxId, requestType, e);
       sendShutdown();
     } catch (OException e) {
       sendErrorOrDropConnection(connection, clientTxId, e);
@@ -1004,7 +1006,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
   }
 
-  private void executeDistributedRequest(OClientConnection connection) throws IOException {
+  private void executeDistributedRequest(final OClientConnection connection) throws IOException {
     setDataCommandInfo(connection, "Distributed request");
 
     checkServerAccess("server.replication", connection);
@@ -1026,9 +1028,26 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     String senderNodeName = manager.getNodeNameById(req.getId().getNodeId());
     req.getTask().setNodeSource(senderNodeName);
 
-    if (ddb != null)
-      ddb.processRequest(req, true);
-    else {
+    if (ddb != null) {
+      if (req.getTask().isNodeOnlineRequired())
+        if (!ddb.waitIsReady(new OCallable<Boolean, Void>() {
+          @Override
+          public Boolean call(final Void iArgument) {
+            // RELEASE THE CONNECTION AND RE-ACQUIRE IT
+            connection.release();
+            try {
+              Thread.sleep(300);
+              connection.acquire();
+            } catch (InterruptedException e) {
+              return false;
+            }
+            return true;
+          }
+        }))
+          return;
+
+      ddb.processRequest(req);
+    } else {
       manager.executeOnLocalNode(req.getId(), req.getTask(), null);
     }
   }
@@ -1749,12 +1768,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   /**
-   * VERSION MANAGEMENT:<br>
-   * -1 : DOCUMENT UPDATE, NO VERSION CONTROL<br>
-   * -2 : DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION INCREMENT<br>
-   * -3 : DOCUMENT ROLLBACK, DECREMENT VERSION<br>
-   * >-1 : MVCC CONTROL, RECORD UPDATE AND VERSION INCREMENT<br>
-   * <-3 : WRONG VERSION VALUE
+   * VERSION MANAGEMENT:<br> -1 : DOCUMENT UPDATE, NO VERSION CONTROL<br> -2 : DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION
+   * INCREMENT<br> -3 : DOCUMENT ROLLBACK, DECREMENT VERSION<br> >-1 : MVCC CONTROL, RECORD UPDATE AND VERSION INCREMENT<br> <-3 :
+   * WRONG VERSION VALUE
    *
    * @param connection
    *
@@ -2662,13 +2678,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   /**
-   * Write a OIdentifiable instance using this format:<br>
-   * - 2 bytes: class id [-2=no record, -3=rid, -1=no class id, > -1 = valid] <br>
-   * - 1 byte: record type [d,b,f] <br>
-   * - 2 bytes: cluster id <br>
-   * - 8 bytes: position in cluster <br>
-   * - 4 bytes: record version <br>
-   * - x bytes: record content <br>
+   * Write a OIdentifiable instance using this format:<br> - 2 bytes: class id [-2=no record, -3=rid, -1=no class id, > -1 = valid]
+   * <br> - 1 byte: record type [d,b,f] <br> - 2 bytes: cluster id <br> - 8 bytes: position in cluster <br> - 4 bytes: record
+   * version <br> - x bytes: record content <br>
    *
    * @param connection
    * @param o

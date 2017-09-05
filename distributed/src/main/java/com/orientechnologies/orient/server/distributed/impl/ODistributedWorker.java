@@ -24,6 +24,7 @@ import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -110,7 +111,7 @@ public class ODistributedWorker extends Thread {
       try {
         message = readRequest();
 
-        if( !running )
+        if (!running)
           break;
 
         currentExecuting = message;
@@ -315,7 +316,13 @@ public class ODistributedWorker extends Thread {
     try {
       waitNodeIsOnline();
 
-      distributed.waitIsReady(task);
+      if (task.isNodeOnlineRequired())
+        distributed.waitIsReady(new OCallable<Boolean, Void>() {
+          @Override
+          public Boolean call(Void iArgument) {
+            return null;
+          }
+        });
 
       if (task.isUsingDatabase()) {
         initDatabaseInstance();
