@@ -27,6 +27,9 @@ import sun.misc.SignalHandler;
 
 import java.io.*;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -36,23 +39,27 @@ import java.util.Set;
  * Custom implementation of TTY reader. Supports arrow keys + history.
  */
 public class TTYConsoleReader implements OConsoleReader {
-  private final static String HISTORY_FILE_NAME   = ".orientdb_history";
-  public final static  int    END_CHAR            = 70;
-  public final static  int    BEGIN_CHAR          = 72;
-  public final static  int    DEL_CHAR            = 126;
-  public final static  int    DOWN_CHAR           = 66;
+  public final static  int    HORIZONTAL_TAB_CHAR = 9;
+  public final static  int    NEW_LINE_CHAR       = 10;
+  public final static  int    VERTICAL_TAB_CHAR   = 11;
+  public final static  int    ESC                 = 27;
+  public final static  int    UNIT_SEPARATOR_CHAR = 31;
+  public final static  int    CTRL                = 53;
+  public final static  int    SEMICOLON           = 59;
   public final static  int    UP_CHAR             = 65;
+  public final static  int    DOWN_CHAR           = 66;
   public final static  int    RIGHT_CHAR          = 67;
   public final static  int    LEFT_CHAR           = 68;
-  public final static  int    HORIZONTAL_TAB_CHAR = 9;
-  public final static  int    VERTICAL_TAB_CHAR   = 11;
+  public final static  int    END_CHAR            = 70;
+  public final static  int    BEGIN_CHAR          = 72;
+  public final static  int    BACKSLASH           = 92;
+  public final static  int    DEL_CHAR            = 126;
   public final static  int    BACKSPACE_CHAR      = 127;
-  public final static  int    NEW_LINE_CHAR       = 10;
-  public final static  int    UNIT_SEPARATOR_CHAR = 31;
   private final static int    MAX_HISTORY_ENTRIES = 50;
-
-  private static final Object signalLock         = new Object();
-  private static       int    cachedConsoleWidth = -1; // -1 for no cached value, -2 to indicate the error
+  private static final Object signalLock          = new Object();
+  private static       String HISTORY_FILE_NAME   = ".orientdb_history";
+  private static       String ORIENTDB_HOME_DIR   = ".orientdb";
+  private static       int    cachedConsoleWidth  = -1; // -1 for no cached value, -2 to indicate the error
 
   static {
     final Signal signal = new Signal("WINCH");
@@ -66,14 +73,12 @@ public class TTYConsoleReader implements OConsoleReader {
     });
   }
 
-  protected int cursorPosition    = 0;
-  protected int oldPromptLength   = 0;
-  protected int oldTextLength     = 0;
-  protected int oldCursorPosition = 0;
-  protected int maxTotalLength    = 0;
-
-  protected final List<String> history = new ArrayList<String>();
-
+  protected final List<String> history           = new ArrayList<String>();
+  protected       int          cursorPosition    = 0;
+  protected       int          oldPromptLength   = 0;
+  protected       int          oldTextLength     = 0;
+  protected       int          oldCursorPosition = 0;
+  protected       int          maxTotalLength    = 0;
   protected String historyBuffer;
 
   protected Reader inStream;
@@ -124,7 +129,7 @@ public class TTYConsoleReader implements OConsoleReader {
       boolean escape = false;
       boolean ctrl = false;
       int next = inStream.read();
-      if (next == 27) {
+      if (next == ESC) {
         escape = true;
         inStream.read();
         next = inStream.read();
@@ -134,7 +139,7 @@ public class TTYConsoleReader implements OConsoleReader {
           inStream.read();
           next = inStream.read();
         }
-        if (next == 53) {
+        if (next == CTRL) {
           ctrl = true;
           next = inStream.read();
         }
@@ -215,6 +220,7 @@ public class TTYConsoleReader implements OConsoleReader {
           oldCursorPosition = 0;
           maxTotalLength = 0;
           break;
+
         } else if (next == BACKSPACE_CHAR) {
           if (buffer.length() > 0 && cursorPosition > 0) {
             buffer.deleteCharAt(cursorPosition - 1);
@@ -544,22 +550,26 @@ public class TTYConsoleReader implements OConsoleReader {
   }
 
   private File getHistoryFile(boolean read) {
-    File file = new File(HISTORY_FILE_NAME);
-    if (!file.exists()) {
-      try {
-        file.createNewFile();
-      } catch (IOException ioe) {
-        OLogManager.instance().error(this, "Error creating history file", ioe);
-      }
-    } else if (!read) {
-      file.delete();
-      try {
-        file.createNewFile();
-      } catch (IOException ioe) {
-        OLogManager.instance().error(this, "Error creating history file", ioe);
-      }
+
+    final Path orientDBDir = Paths.get(System.getProperty("user.home"), ORIENTDB_HOME_DIR);
+    try {
+      Files.createDirectories(orientDBDir);
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error creating OrientDB directory", e);
     }
-    return file;
+
+    Path history = orientDBDir.resolve(HISTORY_FILE_NAME);
+    try {
+
+      if (!read)
+        Files.deleteIfExists(history);
+
+      return Files.createFile(history).toFile();
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error creating history file", e);
+    }
+
+    return history.toFile();
   }
 
 }
