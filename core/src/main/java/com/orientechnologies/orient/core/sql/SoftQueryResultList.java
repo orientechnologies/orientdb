@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Array;
 import java.util.*;
@@ -11,29 +12,54 @@ import java.util.*;
  */
 public class SoftQueryResultList<T> implements List<T> {
 
-  List<SoftReference<T>> buffer = new ArrayList<SoftReference<T>>();
+  protected List<SoftReference<T>> buffer = new ArrayList<SoftReference<T>>();
+  protected ReferenceQueue<T>      queue  = new ReferenceQueue<T>();
+  protected String query;
 
   public SoftQueryResultList() {
+    this((String) null);
+  }
+
+  public SoftQueryResultList(String query) {
+    this.query = query;
   }
 
   public SoftQueryResultList(List other) {
+    this(other, null);
+  }
+
+  public SoftQueryResultList(List other, String query) {
+    this(query);
     for (Object x : other) {
-      buffer.add(new SoftReference(x));
+      buffer.add(new SoftReference(x, queue));
+    }
+  }
+
+  protected void checkQueue() {
+    if (queue.poll() != null) {
+      if (query != null) {
+        throw new OCommandExecutionException("Cannot execute query \"" + query + "\": low heap memory");
+      } else {
+        throw new OCommandExecutionException("Cannot execute query: low heap memory");
+      }
     }
   }
 
   @Override
   public int size() {
+    checkQueue();
     return buffer.size();
   }
 
   @Override
   public boolean isEmpty() {
+    checkQueue();
     return buffer.isEmpty();
   }
 
   @Override
   public boolean contains(Object o) {
+    checkQueue();
     for (SoftReference<T> ref : buffer) {
       T item = getItem(ref);
       if (item.equals(o)) {
@@ -44,6 +70,7 @@ public class SoftQueryResultList<T> implements List<T> {
   }
 
   private T getItem(SoftReference<T> ref) {
+    checkQueue();
     T result = ref.get();
     if (result == null) {
       throw new OCommandExecutionException("Cannot execute query: low heap memory");
@@ -68,6 +95,7 @@ public class SoftQueryResultList<T> implements List<T> {
 
       @Override
       public void remove() {
+        checkQueue();
         innerIterator.remove();
       }
     };
@@ -98,10 +126,11 @@ public class SoftQueryResultList<T> implements List<T> {
 
   @Override
   public boolean add(T t) {
+    checkQueue();
     if (t == null) {
       throw new IllegalArgumentException();
     }
-    return buffer.add(new SoftReference<T>(t));
+    return buffer.add(new SoftReference<T>(t, queue));
   }
 
   @Override
@@ -202,7 +231,7 @@ public class SoftQueryResultList<T> implements List<T> {
     if (element == null) {
       throw new IllegalArgumentException();
     }
-    SoftReference<T> res = buffer.set(index, new SoftReference<T>(element));
+    SoftReference<T> res = buffer.set(index, new SoftReference<T>(element, queue));
     if (res == null) {
       return null;
     }
@@ -211,10 +240,11 @@ public class SoftQueryResultList<T> implements List<T> {
 
   @Override
   public void add(int index, T element) {
+    checkQueue();
     if (element == null) {
       throw new IllegalArgumentException();
     }
-    buffer.add(index, new SoftReference<T>(element));
+    buffer.add(index, new SoftReference<T>(element, queue));
   }
 
   @Override
@@ -290,12 +320,12 @@ public class SoftQueryResultList<T> implements List<T> {
 
       @Override
       public void set(T t) {
-        innerIterator.set(new SoftReference<T>(t));
+        innerIterator.set(new SoftReference<T>(t, queue));
       }
 
       @Override
       public void add(T t) {
-        innerIterator.add(new SoftReference<T>(t));
+        innerIterator.add(new SoftReference<T>(t, queue));
       }
     };
   }
@@ -342,19 +372,19 @@ public class SoftQueryResultList<T> implements List<T> {
 
       @Override
       public void set(T t) {
-        innerIterator.set(new SoftReference<T>(t));
+        innerIterator.set(new SoftReference<T>(t, queue));
       }
 
       @Override
       public void add(T t) {
-        innerIterator.add(new SoftReference<T>(t));
+        innerIterator.add(new SoftReference<T>(t, queue));
       }
     };
   }
 
   @Override
   public List<T> subList(int fromIndex, int toIndex) {
-    SoftQueryResultList<T> result = new SoftQueryResultList<T>();
+    SoftQueryResultList<T> result = new SoftQueryResultList<T>(query);
     result.buffer = buffer.subList(fromIndex, toIndex);
     return result;
   }
