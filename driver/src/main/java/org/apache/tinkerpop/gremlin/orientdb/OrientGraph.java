@@ -28,6 +28,7 @@ import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.orientdb.executor.OGremlinResultSet;
+import org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphCountStrategy;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphMatchStepStrategy;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
@@ -35,7 +36,6 @@ import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.io.Io;
-import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
@@ -49,15 +49,8 @@ import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_INTEGRATE)
-@Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_PERFORMANCE)
 @Graph.OptIn(Graph.OptIn.SUITE_PROCESS_STANDARD)
 @Graph.OptIn(Graph.OptIn.SUITE_PROCESS_COMPUTER)
-@Graph.OptIn(Graph.OptIn.SUITE_PROCESS_PERFORMANCE)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_PROCESS_STANDARD)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_PROCESS_COMPUTER)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT_INTEGRATE)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT_PERFORMANCE)
 @Graph.OptIn("org.apache.tinkerpop.gremlin.orientdb.gremlintest.suite.OrientDBDebugSuite")
 public final class OrientGraph implements OGraph {
   static {
@@ -742,9 +735,8 @@ public final class OrientGraph implements OGraph {
     return iCallable.call(this);
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Override
-  public <I extends Io> I io(Builder<I> builder) {
+  public <I extends Io> I io(Io.Builder<I> builder) {
     return (I) OGraph.super.io(builder.onMapper(mb -> mb.addRegistry(OrientIoRegistry.getInstance())));
   }
 

@@ -3,6 +3,7 @@ package org.apache.tinkerpop.gremlin.orientdb;
 import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.apache.commons.configuration.Configuration;
+import org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -20,15 +21,8 @@ import static org.apache.tinkerpop.gremlin.orientdb.OrientGraph.CONFIG_TRANSACTI
  */
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_INTEGRATE)
-@Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_PERFORMANCE)
 @Graph.OptIn(Graph.OptIn.SUITE_PROCESS_STANDARD)
 @Graph.OptIn(Graph.OptIn.SUITE_PROCESS_COMPUTER)
-@Graph.OptIn(Graph.OptIn.SUITE_PROCESS_PERFORMANCE)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_PROCESS_STANDARD)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_PROCESS_COMPUTER)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT_INTEGRATE)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT_PERFORMANCE)
 @Graph.OptIn("org.apache.tinkerpop.gremlin.orientdb.gremlintest.suite.OrientDBDebugSuite")
 public class OrientStandardGraph implements OGraph {
 

@@ -18,7 +18,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <gremlin.version>3.2.5</gremlin.version>
+        <gremlin.version>3.3.0</gremlin.version>
     </properties>
 
     <developers>
@@ -93,12 +93,12 @@
             <version>${gremlin.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.tinkerpop</groupId>
-            <artifactId>gremlin-groovy-test</artifactId>
-            <version>${gremlin.version}</version>
-            <scope>test</scope>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.apache.tinkerpop</groupId>-->
+            <!--<artifactId>gremlin-groovy-test</artifactId>-->
+            <!--<version>${gremlin.version}</version>-->
+            <!--<scope>test</scope>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

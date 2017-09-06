@@ -2,6 +2,7 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.util.AbstractTransaction;
+import org.apache.tinkerpop.gremlin.structure.util.TransactionException;
 
 import java.util.function.Consumer;
 
@@ -23,7 +24,7 @@ public class OrientStandardTransaction extends AbstractTransaction {
   }
 
   @Override
-  protected void doCommit() throws AbstractTransaction.TransactionException {
+  protected void doCommit() throws TransactionException {
     tx().doCommit();
   }
 

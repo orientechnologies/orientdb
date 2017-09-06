@@ -10,14 +10,16 @@ import org.junit.runners.model.RunnerBuilder;
  */
 public class OrientDBDebugSuite extends AbstractGremlinSuite {
 
-    private static final Class<?>[] allTests = new Class<?>[] {
-//            GraphTest.class,
-//            TransactionTest.class,
-//            VertexTest.class
-            //            TransactionTest.class
-    };
+  private static final Class<?>[] allTests = new Class<?>[] {
+      //      SerializationTest.class,
+      //      IoVertexTest.class
+      //            GraphTest.class,
+      //            TransactionTest.class,
+      //            VertexTest.class
+      //            TransactionTest.class
+  };
 
-    public OrientDBDebugSuite(final Class<?> klass, final RunnerBuilder builder) throws InitializationError {
-        super(klass, builder, allTests, null, false, TraversalEngine.Type.STANDARD);
-    }
+  public OrientDBDebugSuite(final Class<?> klass, final RunnerBuilder builder) throws InitializationError {
+    super(klass, builder, allTests, null, false, TraversalEngine.Type.STANDARD);
+  }
 }

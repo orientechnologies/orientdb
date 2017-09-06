@@ -3,6 +3,7 @@ package org.apache.tinkerpop.gremlin.orientdb;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import org.apache.tinkerpop.gremlin.structure.util.AbstractThreadLocalTransaction;
+import org.apache.tinkerpop.gremlin.structure.util.TransactionException;
 
 public class OrientTransaction extends AbstractThreadLocalTransaction {
 

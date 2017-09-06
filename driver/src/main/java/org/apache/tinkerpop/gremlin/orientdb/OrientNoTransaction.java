@@ -1,5 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import org.apache.tinkerpop.gremlin.structure.util.TransactionException;
+
 public class OrientNoTransaction extends OrientTransaction {
 
     public OrientNoTransaction(OrientGraph g) {

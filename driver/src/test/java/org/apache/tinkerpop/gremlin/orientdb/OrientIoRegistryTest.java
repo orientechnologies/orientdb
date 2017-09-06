@@ -2,6 +2,7 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONIo;
 import org.apache.tinkerpop.shaded.jackson.databind.Module;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
