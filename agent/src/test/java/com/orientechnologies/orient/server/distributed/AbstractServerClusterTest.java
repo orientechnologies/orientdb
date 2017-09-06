@@ -197,6 +197,8 @@ public abstract class AbstractServerClusterTest {
       banner("Clean server directories...");
       Orient.setRegisterDatabaseByPath(false);
       deleteServers();
+
+      Orient.instance().closeAllStorages();
     }
 
   }
