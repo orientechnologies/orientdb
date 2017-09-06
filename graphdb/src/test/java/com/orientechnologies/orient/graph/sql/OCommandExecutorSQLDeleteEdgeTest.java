@@ -22,7 +22,7 @@ public class OCommandExecutorSQLDeleteEdgeTest {
   private static ODatabaseDocumentTx db;
   private static ORID                folderId1;
   private static ORID                userId1;
-  private List<OIdentifiable>        edges;
+  private        List<OIdentifiable> edges;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -77,9 +77,8 @@ public class OCommandExecutorSQLDeleteEdgeTest {
 
   @Test
   public void testFromSelectToSelect() throws Exception {
-    final int res = (Integer) db
-        .command(new OCommandSQL(
-            "delete edge CanAccess from ( select from User where username = 'gongolo' ) to ( select from Folder where keyId = '01234567893' )"))
+    final int res = (Integer) db.command(new OCommandSQL(
+        "delete edge CanAccess from ( select from User where username = 'gongolo' ) to ( select from Folder where keyId = '01234567893' )"))
         .execute();
     Assert.assertEquals(res, 1);
     Assert.assertTrue(db.query(new OSQLSynchQuery<Object>("select flatten(out(CanAccess)) from " + userId1)).isEmpty());
@@ -124,15 +123,40 @@ public class OCommandExecutorSQLDeleteEdgeTest {
 
     for (int i = 0; i < 100; i++) {
       db.command(new OCommandSQL("create vertex User set name = 'testDeleteEdgeBatch2" + i + "'")).execute();
-      db.command(new OCommandSQL("create edge CanAccess from (select from User where name = 'testDeleteEdgeBatch2" + i + "') to " + folderId1))
-              .execute();
+      db.command(new OCommandSQL(
+          "create edge CanAccess from (select from User where name = 'testDeleteEdgeBatch2" + i + "') to " + folderId1)).execute();
     }
 
-    final int res = (Integer) db.command(new OCommandSQL("delete edge CanAccess where inV().@rid = "+folderId1+" batch 5")).execute();
+    final int res = (Integer) db.command(new OCommandSQL("delete edge CanAccess where inV().@rid = " + folderId1 + " batch 5"))
+        .execute();
 
     List<?> result = db.query(new OSQLSynchQuery("select expand( in('CanAccess') ) from " + folderId1));
     Assert.assertEquals(result.size(), 0);
   }
 
+  @Test
+  public void testDeleteEdgeWithLimit() throws Exception {
+    // for issue #7680
+
+    db.command(new OCommandSQL("create class testDeleteEdgeWithLimit_V extends V")).execute();
+    db.command(new OCommandSQL("create class testDeleteEdgeWithLimit_E extends E")).execute();
+
+    db.command(new OCommandSQL("create vertex testDeleteEdgeWithLimit_V set name = 'name0'")).execute();
+    db.command(new OCommandSQL("create vertex testDeleteEdgeWithLimit_V set name = 'name1'")).execute();
+    for (int i = 0; i < 5; i++) {
+      db.command(new OCommandSQL(
+          "create edge testDeleteEdgeWithLimit_E from (select from testDeleteEdgeWithLimit_V where name = 'name0') to (select from testDeleteEdgeWithLimit_V where name = 'name1')"))
+          .execute();
+    }
+
+    db.command(new OCommandSQL(
+        "DELETE EDGE testDeleteEdgeWithLimit_E from (select from testDeleteEdgeWithLimit_V where name = 'name0') to (select from testDeleteEdgeWithLimit_V where name = 'name1') LIMIT 2"))
+        .execute();
+
+    List<?> result = db.query(new OSQLSynchQuery("select count(*) as count from  testDeleteEdgeWithLimit_E"));
+    Assert.assertEquals(1, result.size());
+    ODocument doc = (ODocument) result.get(0);
+    Assert.assertEquals(3L, doc.field("count"));
+  }
 
 }

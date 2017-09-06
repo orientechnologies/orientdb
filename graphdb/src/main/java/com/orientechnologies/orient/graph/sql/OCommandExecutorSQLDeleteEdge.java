@@ -49,19 +49,19 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
-  public static final String               NAME          = "DELETE EDGE";
-  private static final String              KEYWORD_BATCH = "BATCH";
-  private List<ORecordId>                  rids;
-  private String                           fromExpr;
-  private String                           toExpr;
-  private int                              removed       = 0;
-  private OCommandRequest                  query;
-  private OSQLFilter                       compiledFilter;
-  private AtomicReference<OrientBaseGraph> currentGraph  = new AtomicReference<OrientBaseGraph>();
-  private String                           label;
-  private OModifiableBoolean               shutdownFlag  = new OModifiableBoolean();
-  private boolean                          txAlreadyBegun;
-  private int                              batch         = 100;
+  public static final  String NAME          = "DELETE EDGE";
+  private static final String KEYWORD_BATCH = "BATCH";
+  private List<ORecordId> rids;
+  private String          fromExpr;
+  private String          toExpr;
+  private int removed = 0;
+  private OCommandRequest query;
+  private OSQLFilter      compiledFilter;
+  private AtomicReference<OrientBaseGraph> currentGraph = new AtomicReference<OrientBaseGraph>();
+  private String label;
+  private OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+  private boolean txAlreadyBegun;
+  private int batch = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteEdge parse(final OCommandRequest iRequest) {
@@ -130,9 +130,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
               clazz = graph.getEdgeType(OrientEdgeType.CLASS_NAME);
 
             where = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
-            if(this.preParsedStatement!=null){
+            if (this.preParsedStatement != null) {
               StringBuilder builder = new StringBuilder();
-              ((ODeleteEdgeStatement)this.preParsedStatement).getWhereClause().toString(parameters, builder);
+              ((ODeleteEdgeStatement) this.preParsedStatement).getWhereClause().toString(parameters, builder);
               where = builder.toString();
             }
 
@@ -146,8 +146,10 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
 
           } else if (temp.equals(KEYWORD_LIMIT)) {
             temp = parserNextWord(true);
-            if (temp != null)
+            if (temp != null) {
               limit = Integer.parseInt(temp);
+              this.limit = limit;
+            }
 
           } else if (temp.length() > 0) {
             // GET/CHECK CLASS NAME
@@ -232,9 +234,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
             Set<OIdentifiable> toIds = null;
             if (toExpr != null)
               toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), toExpr, context, iArgs);
-            if(label == null )
+            if (label == null)
               label = OrientEdgeType.CLASS_NAME;
-            
+
             if (fromIds != null && toIds != null) {
               int fromCount = 0;
               int toCount = 0;
@@ -273,7 +275,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
             } else if (fromIds != null) {
               // REMOVE ALL THE EDGES THAT START FROM A VERTEXES
               for (OIdentifiable fromId : fromIds) {
-                
+
                 final OrientVertex v = graph.getVertex(fromId);
                 if (v != null) {
                   for (Edge e : v.getEdges(Direction.OUT, label)) {
@@ -296,7 +298,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
 
             if (compiledFilter != null) {
               // ADDITIONAL FILTERING
-              for (Iterator<OrientEdge> it = edges.iterator(); it.hasNext();) {
+              for (Iterator<OrientEdge> it = edges.iterator(); it.hasNext(); ) {
                 final OrientEdge edge = it.next();
                 if (!(Boolean) compiledFilter.evaluate(edge.getRecord(), null, context))
                   it.remove();
@@ -305,8 +307,15 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
 
             // DELETE THE FOUND EDGES
             removed = edges.size();
-            for (OrientEdge edge : edges)
-              edge.remove();
+            long deleted = 0;
+            for (OrientEdge edge : edges) {
+              if (limit < 0 || deleted < limit) {
+                edge.remove();
+                deleted++;
+              } else {
+                break;
+              }
+            }
 
             return null;
           }
@@ -395,8 +404,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
   }
 
   public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
-    return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ? DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS
-        : DISTRIBUTED_RESULT_MGMT.MERGE;
+    return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ?
+        DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS :
+        DISTRIBUTED_RESULT_MGMT.MERGE;
   }
 
   @Override
