@@ -16,7 +16,7 @@
  * For more information: http://www.orientdb.com
  */
 
-package com.orientechnologies.orient.outputmanager;
+package com.orientechnologies.orient.output;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
