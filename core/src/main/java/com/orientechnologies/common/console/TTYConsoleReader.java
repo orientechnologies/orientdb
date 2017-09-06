@@ -564,6 +564,9 @@ public class TTYConsoleReader implements OConsoleReader {
       if (!read)
         Files.deleteIfExists(history);
 
+      if (Files.exists(history))
+        return history.toFile();
+
       return Files.createFile(history).toFile();
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error creating history file", e);
