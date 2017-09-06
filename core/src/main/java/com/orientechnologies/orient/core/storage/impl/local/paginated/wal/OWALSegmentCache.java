@@ -35,27 +35,62 @@ import java.util.concurrent.TimeUnit;
 import static com.orientechnologies.common.io.OIOUtils.readByteBuffer;
 import static com.orientechnologies.common.io.OIOUtils.writeByteBuffers;
 
-public class OSegmentFile {
+/**
+ * Write cache for the file which presents segment of WAL.
+ * <p>
+ * The last written pages will be cached so later they can be flushed by single batch.
+ * File will be closed if there will be no access to this cache during last N min.
+ */
+public class OWALSegmentCache {
+  /**
+   * File is closed automatically in background thread.
+   * This is timeout after which if we can not shutdown thread during cache close we treat it as exceptional situation.
+   *
+   * @see #fileTTL
+   * @see FileCloser
+   */
   private static final int CLOSER_TIMEOUT_MIN = 15;
-  private final Object     lockObject         = new Object();
 
-  private final Path        path;
-  private       FileChannel segChannel;
+  /**
+   * Cache wide mutex
+   */
+  private final Object lockObject = new Object();
 
-  private long             firstCachedPage = -1;
-  private List<ByteBuffer> pageCache       = new ArrayList<>();
+  /**
+   * Path to the underlying file of WAL segment
+   */
+  private final Path path;
 
+  private FileChannel segChannel;
+
+  /**
+   * Index of first page contained in cache.
+   * Pages are cached continuously.
+   */
+  private       long             firstCachedPage = -1;
+  private final List<ByteBuffer> pageCache       = new ArrayList<>();
+
+  /**
+   * Last time when cache was accessed in ns.
+   */
   private long lastAccessTime = -1;
 
+  /**
+   * The maximum limit time limit after which if there were no accesses to the file , it will be closed automatically.
+   */
   private final int fileTTL;
   private final int bufferSize;
 
   private long lastWrittenPageIndex = -1;
+
+  /**
+   * Content of last page written in file
+   */
   private ByteBuffer lastWrittenPage;
 
-  private ScheduledExecutorService closer;
+  private final ScheduledExecutorService closer;
 
-  OSegmentFile(final Path path, int fileTTL, int bufferSize, ScheduledExecutorService closer) {
+  OWALSegmentCache(final Path path, int fileTTL, int bufferSize, ScheduledExecutorService closer) {
     this.path = path;
 
     this.fileTTL = fileTTL;
@@ -63,6 +98,9 @@ public class OSegmentFile {
     this.closer = closer;
   }
 
+  /**
+   * Writes page with given page index to the cache and eventually writes it to the file.
+   */
   void writePage(ByteBuffer page, long pageIndex) throws IOException {
     synchronized (lockObject) {
       lastAccessTime = System.nanoTime();
@@ -127,6 +165,9 @@ public class OSegmentFile {
     }
   }
 
+  /**
+   * Read page content with given index from cache or file.
+   */
   byte[] readPage(long pageIndex) throws IOException {
     synchronized (lockObject) {
       lastAccessTime = System.nanoTime();
@@ -150,6 +191,26 @@ public class OSegmentFile {
     }
   }
 
+  /**
+   * Flushes all buffered pages and truncates file till passed in page index
+   */
+  void truncate(long pageIndex) throws IOException {
+    synchronized (lockObject) {
+      lastAccessTime = System.nanoTime();
+
+      flushBuffer();
+
+      lastWrittenPageIndex = -1;
+      lastWrittenPage = null;
+
+      segChannel.truncate(pageIndex * OWALPage.PAGE_SIZE);
+    }
+  }
+
+  /**
+   * Reads page content from the cache to the <code>ByteBuffer</code>
+   * <code>ByteBuffer</code> is not backed by the cache and can be freely changed
+   */
   ByteBuffer readPageBuffer(long pageIndex) throws IOException {
     synchronized (lockObject) {
       lastAccessTime = System.nanoTime();
@@ -186,6 +247,9 @@ public class OSegmentFile {
     }
   }
 
+  /**
+   * Writes cache content to the file and performs <code>fsync</code>
+   */
   public void sync() throws IOException {
     synchronized (lockObject) {
       if (segChannel != null) {
@@ -197,6 +261,10 @@ public class OSegmentFile {
     }
   }
 
+  /**
+   * Writes cache content to the file and closes it.
+   * Calls <code>fsync</code> if needed.
+   */
   public void close(boolean flush) {
 
     closer.shutdown();
@@ -231,6 +299,9 @@ public class OSegmentFile {
     segChannel = null;
   }
 
+  /**
+   * Clears cache and deletes underlying file
+   */
   public void delete() throws IOException {
 
     closer.shutdown();
@@ -259,6 +330,9 @@ public class OSegmentFile {
 
   }
 
+  /**
+   * Initializes cache and opens underlying file.
+   */
   public void open() throws IOException {
     synchronized (lockObject) {
       lastAccessTime = System.nanoTime();
@@ -280,6 +354,9 @@ public class OSegmentFile {
     }
   }
 
+  /**
+   * @return Size of file in the amount of pages
+   */
   public long filledUpTo() throws IOException {
     synchronized (lockObject) {
       lastAccessTime = System.nanoTime();
@@ -304,8 +381,10 @@ public class OSegmentFile {
     }
   }
 
-
   private final class FileCloser implements Runnable {
+    /**
+     * Link to itself. It is needed to stop scheduled execution of task if file is already closed.
+     */
     private volatile ScheduledFuture<?> self = null;
 
     @Override

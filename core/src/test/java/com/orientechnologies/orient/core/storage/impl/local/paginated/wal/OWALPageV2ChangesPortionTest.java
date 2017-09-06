@@ -13,7 +13,7 @@ import java.util.Random;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.
  * @since 8/19/2015
  */
-public class OWALPageChangesPortionTest {
+public class OWALPageV2ChangesPortionTest {
 
   @Before
   public void before() {

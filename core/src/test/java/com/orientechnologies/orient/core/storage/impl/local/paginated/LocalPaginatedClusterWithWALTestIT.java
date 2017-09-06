@@ -32,15 +32,11 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
 
   private ODatabaseDocumentTx expectedDatabase;
 
-  private ODiskWriteAheadLog writeAheadLog;
-
   private OReadCache  readCache;
   private OWriteCache writeCache;
 
   private OReadCache  expectedReadCache;
   private OWriteCache expectedWriteCache;
-
-  private OLocalPaginatedStorage expectedStorage;
 
   private String                 storageDir;
   private String                 expectedStorageDir;
@@ -78,7 +74,7 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
     }
 
     expectedDatabase.create();
-    expectedStorage = (OLocalPaginatedStorage) expectedDatabase.getStorage();
+    OLocalPaginatedStorage expectedStorage = (OLocalPaginatedStorage) expectedDatabase.getStorage();
     expectedWriteCache = expectedStorage.getWriteCache();
     expectedReadCache = expectedStorage.getReadCache();
 
@@ -97,7 +93,7 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
     storage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
 
     storage.synch();
-    writeAheadLog = (ODiskWriteAheadLog) storage.getWALInstance();
+    ODiskWriteAheadLog writeAheadLog = (ODiskWriteAheadLog) storage.getWALInstance();
     writeAheadLog.preventCutTill(writeAheadLog.getFlushedLsn());
     writeCache = storage.getWriteCache();
     readCache = storage.getReadCache();

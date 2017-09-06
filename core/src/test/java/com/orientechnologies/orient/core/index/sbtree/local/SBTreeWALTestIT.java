@@ -40,13 +40,9 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
   private String actualStorageDir;
   private String expectedStorageDir;
 
-  private ODiskWriteAheadLog writeAheadLog;
-
   private OLocalPaginatedStorage actualStorage;
-  private OReadCache             actualReadCache;
   private OWriteCache            actualWriteCache;
 
-  private OLocalPaginatedStorage expectedStorage;
   private OReadCache             expectedReadCache;
   private OWriteCache            expectedWriteCache;
 
@@ -101,12 +97,12 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     }
 
     actualStorage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
-    writeAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
+    ODiskWriteAheadLog writeAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
 
     actualStorage.synch();
     writeAheadLog.preventCutTill(writeAheadLog.getFlushedLsn());
 
-    actualReadCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getReadCache();
+    OReadCache actualReadCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getReadCache();
     actualWriteCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getWriteCache();
 
     sbTree = new OSBTree<>("actualSBTree", ".sbt", true, ".nbt", actualStorage);
@@ -128,7 +124,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
       expectedDatabaseDocumentTx.create();
     }
 
-    expectedStorage = (OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage();
+    OLocalPaginatedStorage expectedStorage = (OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage();
     expectedReadCache = expectedStorage.getReadCache();
     expectedWriteCache = expectedStorage.getWriteCache();
   }
