@@ -47,7 +47,6 @@ class EtlComponent implements OnDestroy {
   private loaderType;
 
   // Control booleans
-  private advanced;
   private ready;
   private classReady;
   private indexReady;
@@ -65,13 +64,9 @@ class EtlComponent implements OnDestroy {
   private hints;
 
   constructor(private agentService: AgentService, private etlService: EtlService, private zone: NgZone, private objectKeys: ObjectKeysPipe) {
+
     this.objectKeys = objectKeys;
-
     this.init();
-
-    /*this.agentService.isActive().then(() => {
-     this.init();
-     }); */ // TODO activate enterprise control
   }
 
   // Destroy the library when another studio tool is opened to prevent broken sort
@@ -101,6 +96,8 @@ class EtlComponent implements OnDestroy {
         }
       }
     };
+
+    this.initAdvanced();
 
     this.beginPrototype = { // TODO add this module. it's an array of blocks
       begin: {
@@ -579,7 +576,6 @@ class EtlComponent implements OnDestroy {
     };
 
     // User support
-    this.advanced = false;
     this.ready = false;
     this.classReady = false;
     this.indexReady = false;
@@ -1061,7 +1057,6 @@ class EtlComponent implements OnDestroy {
 
     // Initialize the advanced config if exists
     if(etl.config) {
-      this.addAdvanced();
       if(etl.config.parallel != undefined) this.config.parallel = etl.config.parallel;
       if(etl.config.haltOnError != undefined) this.config.haltOnError = etl.config.haltOnError;
       if(etl.config.maxRetries != undefined) this.config.maxRetries = etl.config.maxRetries;
@@ -1304,7 +1299,7 @@ class EtlComponent implements OnDestroy {
     this.sortTransformers(); // Sort transformers starting from the indexes
     this.blockFix(); // Fixes the different behavior of block transformers
 
-    if(this.source && this.config)
+    if(this.source) {
       etl = {
         config: this.config,
         source: this.source,
@@ -1312,36 +1307,30 @@ class EtlComponent implements OnDestroy {
         transformers: this.transformers,
         loader: this.loader
       };
+    }
 
-    if(!this.source && this.config)
+    if(!this.source) {
       etl = {
         config: this.config,
         extractor: this.extractor,
         transformers: this.transformers,
         loader: this.loader
       };
-
-    if(this.source && !this.config)
-      etl = {
-        source: this.source,
-        extractor: this.extractor,
-        transformers: this.transformers,
-        loader: this.loader
-      };
-    if(!this.source && !this.config)
-      etl = {
-        extractor: this.extractor,
-        transformers: this.transformers,
-        loader: this.loader
-      };
+    }
 
     this.finalJson = JSON.stringify(etl);
+    var executionParams = {
+      "jsonConfig": this.finalJson,
+      "logLevel": this.config.log.value
+    }
 
     this.step = 'running';
     this.jobRunning = true;
-
-    // TODO: launch the program
-
+    this.etlService.launch(executionParams).then(() => {
+      this.status();
+    }).catch(function (error) {
+      alert("Error during migration!")
+    });
   }
 
   status() {
@@ -1393,7 +1382,6 @@ class EtlComponent implements OnDestroy {
       this.sourcePrototype.URLMethod.value = undefined;
       this.extractorType = undefined;
       this.loaderType = undefined;
-      this.advanced = false;
       this.ready = false;
       this.classReady = false;
       this.indexReady = false;
@@ -1544,10 +1532,7 @@ class EtlComponent implements OnDestroy {
     });
   }
 
-
-  addAdvanced() {
-    this.advanced = true;
-
+  initAdvanced() {
     this.config = {
       log: this.configPrototype.config.log.value,
       maxRetries: this.configPrototype.config.maxRetries.value,
