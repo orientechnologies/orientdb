@@ -229,6 +229,8 @@ public class ODistributedTransactionManager {
             throw (RuntimeException) e;
           else if (e instanceof InterruptedException)
             throw OException.wrapException(new ODistributedOperationException("Cannot commit transaction"), e);
+          else if (e.getCause() instanceof InterruptedException)
+            throw OException.wrapException(new ODistributedOperationException("Cannot commit transaction"), e.getCause());
           else
             throw OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
         }

@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.ODatabaseRepair;
 import com.orientechnologies.orient.core.db.tool.ODatabaseTool;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -251,7 +252,8 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
     final String query = String.format("SELECT FROM %s WHERE name = ?", CLASS_NAME);
     final List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(query)).execute("value" + n);
     if (result.size() != 1) {
-      throw new RuntimeException(String.format("The query [%s] result size is %d. Expected size is 1.", query, result.size()));
+      throw new RuntimeException(String
+          .format("The query [%s] with value '%s' result size is %d. Expected size is 1.", query, "value" + n, result.size()));
     }
   }
 
@@ -268,6 +270,10 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
       @Override
       public Object call(Integer iArgument) {
         final ODocument doc = rec.getRecord();
+
+        if (doc == null)
+          throw new ORecordNotFoundException(rec.getIdentity(), "Record " + rec + " was not found in StressTest for update");
+
         doc.field("updated", true);
         doc.save();
         return doc;
