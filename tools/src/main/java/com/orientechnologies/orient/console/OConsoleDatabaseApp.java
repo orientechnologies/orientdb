@@ -1482,6 +1482,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void infoClass(@ConsoleParameter(name = "class-name", description = "The name of the class") final String iClassName) {
     checkForDatabase();
 
+    currentDatabase.getMetadata().reload();
     final OClass cls = currentDatabase.getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
 
     if (cls == null) {
