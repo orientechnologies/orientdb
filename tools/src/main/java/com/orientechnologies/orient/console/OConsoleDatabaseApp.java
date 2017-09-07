@@ -1366,6 +1366,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (currentDatabaseName != null) {
       message("\nCurrent database: " + currentDatabaseName + " (url=" + currentDatabase.getURL() + ")");
 
+      currentDatabase.getMetadata().reload();
       final OStorage stg = currentDatabase.getStorage();
 
       if (stg instanceof OStorageRemote) {
@@ -1431,6 +1432,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void infoClass(@ConsoleParameter(name = "class-name", description = "The name of the class") final String iClassName) {
     checkForDatabase();
 
+    currentDatabase.getMetadata().reload();
+
     final OClass cls = currentDatabase.getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
 
     if (cls == null) {
@@ -1447,6 +1450,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\nAlias................: " + cls.getShortName());
     if (cls.hasSuperClasses())
       message("\nSuper classes........: " + Arrays.toString(cls.getSuperClassesNames().toArray()));
+
     message("\nDefault cluster......: " + currentDatabase.getClusterNameById(cls.getDefaultClusterId()) + " (id=" + cls
         .getDefaultClusterId() + ")");
 
@@ -1460,8 +1464,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       clusters.append(clId);
       clusters.append(")");
     }
-    message("\nSupported clusters...: " + clusters.toString());
 
+    message("\nSupported clusters...: " + clusters.toString());
     message("\nCluster selection....: " + cls.getClusterSelection().getName());
     message("\nOversize.............: " + cls.getClassOverSize());
 
