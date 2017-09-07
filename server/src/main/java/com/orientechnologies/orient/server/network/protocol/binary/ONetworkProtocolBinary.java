@@ -143,6 +143,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   @Override
+  public void sendShutdown() {
+    super.sendShutdown();
+
+    try {
+      // FORCE SOCKET CLOSING
+      if (channel != null)
+        channel.close();
+    } catch (final Exception e) {
+    }
+  }
+
+  @Override
   public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
       final OContextConfiguration iConfig) throws IOException {
     listener = iListener;

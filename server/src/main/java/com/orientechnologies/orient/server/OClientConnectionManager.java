@@ -435,45 +435,12 @@ public class OClientConnectionManager {
 
       OLogManager.instance().debug(this, "Sending shutdown to thread %s", protocol);
 
-      OCommandRequestText command = entry.getValue().getData().command;
-      if (command != null && command.isIdempotent()) {
-        protocol.interrupt();
-      } else {
-        if (protocol instanceof ONetworkProtocolBinary
-            && ((ONetworkProtocolBinary) protocol).getRequestType() == OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
-          continue;
-        }
+      if (protocol instanceof ONetworkProtocolBinary
+          && ((ONetworkProtocolBinary) protocol).getRequestType() == OChannelBinaryProtocol.REQUEST_SHUTDOWN)
+        continue;
 
-        final Socket socket;
-        if (protocol == null || protocol.getChannel() == null)
-          socket = null;
-        else
-          socket = protocol.getChannel().socket;
-
-        if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
-          try {
-            OLogManager.instance().debug(this, "Closing input socket of thread %s", protocol);
-            if (!(socket instanceof SSLSocket)) // An SSLSocket will throw an UnsupportedOperationException.
-              socket.shutdownInput();
-          } catch (IOException e) {
-            OLogManager.instance()
-                .debug(this, "Error on closing connection of %s client during shutdown", e, entry.getValue().getRemoteAddress());
-          }
-        }
-        if (protocol.isAlive()) {
-          if (protocol instanceof ONetworkProtocolBinary && ((ONetworkProtocolBinary) protocol).getRequestType() == -1) {
-            try {
-              OLogManager.instance().debug(this, "Closing socket of thread %s", protocol);
-              protocol.getChannel().close();
-            } catch (Exception e) {
-              OLogManager.instance().debug(this, "Error during chanel close at shutdown", e);
-            }
-            OLogManager.instance().debug(this, "Sending interrupt signal to thread %s", protocol);
-            protocol.interrupt();
-          }
-          toWait.add(protocol);
-        }
-      }
+      if (protocol.isAlive())
+        toWait.add(protocol);
     }
 
     for (ONetworkProtocol protocol : toWait) {
@@ -483,7 +450,6 @@ public class OClientConnectionManager {
         Thread.currentThread().interrupt();
       }
     }
-
   }
 
   public void killAllChannels() {
