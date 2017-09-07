@@ -3,7 +3,7 @@
 
 #point to your orientDB installation
 #ORIENTDB_HOME="/opt/orientdb/orientdb-community-3.0.0m2/"
-ORIENTDB_HOME="/Users/frank/local/orientdb/orientdb-community-importers-2.2.25/"
+ORIENTDB_HOME="/opt/orientdb/orientdb-community-importers-2.2.25/"
 
 oetl_sh=$ORIENTDB_HOME/bin/oetl.sh
 
