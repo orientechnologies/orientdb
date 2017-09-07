@@ -737,6 +737,9 @@ public enum OGlobalConfiguration {
   DISTRIBUTED_RESPONSE_CHANNELS("distributed.responseChannels", "Number of network channels used to send responses", Integer.class,
       1),
 
+  DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout",
+      "Maximum timeout (in ms) to wait when the replication queue is full", Long.class, 15000l, true),
+
   /**
    * @Since 2.2.5
    */
@@ -886,9 +889,6 @@ public enum OGlobalConfiguration {
   @Deprecated JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
       "This property disables using JNA, should it be installed on your system. (Default true) To use JNA bundled with database",
       boolean.class, true),
-
-  @Deprecated DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout",
-      "Maximum timeout (in ms) to wait for the response in replication", Long.class, 500000l, true),
 
   @Deprecated DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange",
       "When index metadata is changed, a full checkpoint is performed", Boolean.class, true, true),

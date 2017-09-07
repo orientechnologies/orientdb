@@ -44,10 +44,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OWaitForTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.File;
@@ -203,22 +200,23 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     totalReceivedRequests.incrementAndGet();
 
-    // final ODistributedMomentum lastMomentum = filterByMomentum.get();
-    // if (lastMomentum != null && task instanceof OAbstractReplicatedTask) {
-    // final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
-    //
-    // final String sourceServer = manager.getNodeNameById(request.getId().getNodeId());
-    // final OLogSequenceNumber lastLSNFromMomentum = lastMomentum.getLSN(sourceServer);
-    //
-    // if (taskLastLSN != null && lastLSNFromMomentum != null && taskLastLSN.compareTo(lastLSNFromMomentum) < 0) {
-    // // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
-    // final String msg = String.format("Skipped request %s on database '%s' because %s < current %s", request, databaseName,
-    // taskLastLSN, lastLSNFromMomentum);
-    // ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, msg);
-    // ODistributedWorker.sendResponseBack(this, manager, request, new ODistributedException(msg));
-    // return;
-    // }
-    // }
+    final ODistributedMomentum lastMomentum = filterByMomentum.get();
+    if (lastMomentum != null && task instanceof OAbstractReplicatedTask) {
+      final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
+
+      final String sourceServer = manager.getNodeNameById(request.getId().getNodeId());
+      final OLogSequenceNumber lastLSNFromMomentum = lastMomentum.getLSN(sourceServer);
+
+      if (taskLastLSN != null && lastLSNFromMomentum != null && taskLastLSN.compareTo(lastLSNFromMomentum) < 0) {
+        // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
+        final String msg = String
+            .format("Skipped request %s on database '%s' because %s < current %s", request, databaseName, taskLastLSN,
+                lastLSNFromMomentum);
+        ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, msg);
+        ODistributedWorker.sendResponseBack(this, manager, request, new ODistributedException(msg));
+        return;
+      }
+    }
 
     final int[] partitionKeys = task.getPartitionKey();
 
@@ -1054,10 +1052,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (quorum < 0)
       quorum = 0;
 
-    if (checkNodesAreOnline && quorum > totalServerInQuorum)
-      throw new ODistributedException(
-          "Quorum (" + quorum + ") cannot be reached on server '" + localNodeName + "' database '" + databaseName
-              + "' because it is major than available nodes (" + totalServerInQuorum + ")");
+    if (checkNodesAreOnline)
+      if (quorum > totalServerInQuorum)
+        throw new ODistributedException(
+            "Quorum (" + quorum + ") cannot be reached on server '" + localNodeName + "' database '" + databaseName
+                + "' because it is major than the nodes in quorum (" + totalServerInQuorum + ")");
+      else if (quorum > totalServers)
+        throw new ODistributedException(
+            "Quorum (" + quorum + ") cannot be reached on server '" + localNodeName + "' database '" + databaseName
+                + "' because it is major than available nodes (" + totalServers + ")");
 
     return quorum;
   }

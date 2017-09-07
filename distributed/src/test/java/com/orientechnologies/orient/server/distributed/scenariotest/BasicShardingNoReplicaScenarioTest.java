@@ -86,12 +86,14 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
 
       assertTrue(graphNoTx.getRawGraph().getMetadata().getIndexManager().existsIndex("Client.name"));
 
-      Thread.sleep(500);
-
       graphNoTx.getRawGraph().close();
+
+      Thread.sleep(1000);
 
       // writes on the three clusters
       executeMultipleWritesOnShards(executeTestsOnServers, "plocal");
+
+      Thread.sleep(1000);
 
       // check consistency (no-replica)
       checkAvailabilityOnShardsNoReplica(serverInstance, executeTestsOnServers);

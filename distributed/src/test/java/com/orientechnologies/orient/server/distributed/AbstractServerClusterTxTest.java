@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -60,8 +61,8 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
           int retry;
           for (retry = 0; retry < maxRetries; retry++) {
             if ((i + 1) % printBlocksOf == 0)
-              System.out.println("\nWriter " + database.getURL() + "(thread=" + threadId + ") managed " + (i + 1) + "/" + count
-                  + " records so far");
+              OLogManager.instance().info(this,
+                  "Writer " + database.getURL() + "(thread=" + threadId + ") managed " + (i + 1) + "/" + count + " records so far");
 
             if (useTransactions)
               database.begin();
@@ -100,34 +101,35 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
               break;
             } catch (ORecordNotFoundException e) {
               // IGNORE IT AND RETRY
-              System.out
-                  .println("ORecordNotFoundException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
+              OLogManager.instance().info(this,
+                  "ORecordNotFoundException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
               // e.printStackTrace();
             } catch (ORecordDuplicatedException e) {
               // IGNORE IT AND RETRY
-              System.out.println(
+              OLogManager.instance().info(this,
                   "ORecordDuplicatedException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
               // e.printStackTrace();
             } catch (OTransactionException e) {
               if (e.getCause() instanceof ORecordDuplicatedException)
                 // IGNORE IT AND RETRY
-                System.out.println(
+                OLogManager.instance().info(this,
                     "ORecordDuplicatedException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
               else {
-                System.out.println(
-                    e.getCause().getClass() + " Exception caught on writer thread " + threadId + " (db=" + database.getURL());
+                OLogManager.instance().info(this,
+                    (e.getCause() != null ? e.getCause().getClass() : e.getClass()) + " Exception caught on writer thread "
+                        + threadId + " (db=" + database.getURL());
                 throw e;
               }
             } catch (ONeedRetryException e) {
-              // System.out.println("ONeedRetryException Exception caught on writer thread " + threadId + " (db=" +
-              // database.getURL());
+              OLogManager.instance()
+                  .debug(this, "ONeedRetryException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
 
               if (retry >= maxRetries)
                 e.printStackTrace();
 
             } catch (ODistributedException e) {
-              System.out
-                  .println("ODistributedException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
+              OLogManager.instance()
+                  .info(this, "ODistributedException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
               if (!(e.getCause() instanceof ORecordDuplicatedException)) {
                 database.rollback();
                 throw e;
@@ -135,7 +137,8 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
 
               // RETRY
             } catch (Throwable e) {
-              System.out.println(e.getClass() + " Exception caught on writer thread " + threadId + " (db=" + database.getURL());
+              OLogManager.instance()
+                  .info(this, e.getClass() + " Exception caught on writer thread " + threadId + " (db=" + database.getURL());
               e.printStackTrace();
               return null;
             }
@@ -146,7 +149,8 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
         }
       }
 
-      System.out.println("\nWriter " + name + " END total:" + count + " clusters:" + clusters + " names:" + clusterNames);
+      OLogManager.instance()
+          .info(this, "Writer " + name + " END total:" + count + " clusters:" + clusters + " names:" + clusterNames);
       return null;
     }
 

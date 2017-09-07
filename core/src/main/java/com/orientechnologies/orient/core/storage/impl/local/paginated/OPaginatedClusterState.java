@@ -40,7 +40,7 @@ public class OPaginatedClusterState extends ODurablePage {
     super(cacheEntry, changes);
   }
 
-  public void setSize(long size) throws IOException {
+  public void setSize(final long size) throws IOException {
     setLongValue(SIZE_OFFSET, size);
   }
 
@@ -48,7 +48,7 @@ public class OPaginatedClusterState extends ODurablePage {
     return getLongValue(SIZE_OFFSET);
   }
 
-  public void setRecordsSize(long recordsSize) throws IOException {
+  public void setRecordsSize(final long recordsSize) throws IOException {
     setLongValue(RECORDS_SIZE_OFFSET, recordsSize);
   }
 
@@ -56,11 +56,11 @@ public class OPaginatedClusterState extends ODurablePage {
     return getLongValue(RECORDS_SIZE_OFFSET);
   }
 
-  public void setFreeListPage(int index, long pageIndex) throws IOException {
+  public void setFreeListPage(final int index, final long pageIndex) throws IOException {
     setLongValue(FREE_LIST_OFFSET + index * OLongSerializer.LONG_SIZE, pageIndex);
   }
 
-  public long getFreeListPage(int index) {
+  public long getFreeListPage(final int index) {
     return getLongValue(FREE_LIST_OFFSET + index * OLongSerializer.LONG_SIZE);
   }
 }

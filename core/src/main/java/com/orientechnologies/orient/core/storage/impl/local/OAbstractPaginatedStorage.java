@@ -1745,12 +1745,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             lockRidBags(clustersToLock, indexesToCommit);
             lockIndexes(indexesToCommit);
 
-            Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
-            for (ORecordOperation txEntry : newRecords) {
-              ORecord rec = txEntry.getRecord();
+            final Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
 
-              ORecordId rid = (ORecordId) rec.getIdentity().copy();
-              ORecordId oldRID = rid.copy();
+            final Set<ORecordOperation> itemsToSkip = new HashSet<ORecordOperation>();
+
+            for (ORecordOperation txEntry : newRecords) {
+              final ORecord rec = txEntry.getRecord();
+              final ORecordId rid = (ORecordId) rec.getIdentity().copy();
+              final ORecordId oldRID = rid.copy();
 
               final Integer clusterOverride = clusterOverrides.get(txEntry);
               final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
@@ -1782,6 +1784,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 final ORecord record = txEntry.getRecord();
                 record.setDirty();
                 recyclePosition(rid, record.toStream(), record.getVersion(), ORecordInternal.getRecordType(record));
+                itemsToSkip.add(txEntry);
               }
 
               positions.put(txEntry, ppos);
@@ -1793,7 +1796,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
 
             for (ORecordOperation txEntry : entries) {
-              commitEntry(txEntry, positions.get(txEntry));
+              if (!itemsToSkip.contains(txEntry))
+                commitEntry(txEntry, positions.get(txEntry));
               result.add(txEntry);
             }
 

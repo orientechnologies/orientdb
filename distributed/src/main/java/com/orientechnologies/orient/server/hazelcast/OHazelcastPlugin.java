@@ -1144,13 +1144,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                   new OCallable<Object, OModifiableDistributedConfiguration>() {
                     @Override
                     public Object call(final OModifiableDistributedConfiguration cfg) {
-                      for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-                        final String server = entry.getKey();
-                        if (!cfg.getRegisteredServers().contains(server)) {
-                          if (getDatabaseStatus(server, databaseName) != DB_STATUS.OFFLINE)
-                            cfg.addNewNodeInServerList(server);
-                        }
-                      }
+                      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+                          "Replacing local database '%s' configuration with the most recent from the joined cluster...",
+                          databaseName);
+
+                      cfg.override((ODocument) configurationMap.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName));
                       return null;
                     }
                   });

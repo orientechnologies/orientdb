@@ -274,4 +274,9 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
 
     return cluster;
   }
+
+  public void override(final ODocument newCfg) {
+    configuration.fromStream(newCfg.toStream());
+    incrementVersion();
+  }
 }

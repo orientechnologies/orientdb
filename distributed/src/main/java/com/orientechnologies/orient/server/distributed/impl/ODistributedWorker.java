@@ -95,9 +95,12 @@ public class ODistributedWorker extends Thread {
 
       // BLOCK WAITING THE QUEUE IS NOT FULL
       try {
-        localQueue.put(request);
+        localQueue.offer(request, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
         // JUST RETURN
+        ODistributedServerLog.error(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+            "Timeout waiting for room in the local queue for database '%s' (messages=%d). The message will be discarded.",
+            this.databaseName, localQueue.size());
         Thread.currentThread().interrupt();
       }
     }

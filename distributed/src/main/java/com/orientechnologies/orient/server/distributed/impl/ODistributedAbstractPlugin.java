@@ -1131,9 +1131,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                       (Throwable) value);
 
             } else if (value instanceof ODistributedDatabaseChunk) {
-              // distrDatabase.filterBeforeThisMomentum(((ODistributedDatabaseChunk) value).getMomentum());
-              // DISABLED BECAYSE THE MOMENTUM IS NOT YET RELIABLE
-              // distrDatabase.setParsing(true);
+              distrDatabase.filterBeforeThisMomentum(((ODistributedDatabaseChunk) value).getMomentum());
 
               final File uniqueClustersBackupDirectory = getClusterOwnedExclusivelyByCurrentNode(dbPath, databaseName);
 
