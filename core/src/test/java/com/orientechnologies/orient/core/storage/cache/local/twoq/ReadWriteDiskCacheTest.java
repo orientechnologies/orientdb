@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
+import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
@@ -174,7 +175,7 @@ public class ReadWriteDiskCacheTest {
 
   private void initBuffer() throws IOException, InterruptedException {
     writeBuffer = new OWOWCache(PAGE_SIZE, new OByteBufferPool(PAGE_SIZE), writeAheadLog, -1, WRITE_CACHE_MAX_SIZE, storageLocal,
-        false, files, 1);
+        false, files, 1, OChecksumMode.StoreAndThrow);
     writeBuffer.loadRegisteredFiles();
 
     readBuffer = new O2QCache(READ_CACHE_MAX_MEMORY, PAGE_SIZE, false, 50);
@@ -1278,7 +1279,7 @@ public class ReadWriteDiskCacheTest {
     segmentConfiguration.fileType = OFileClassic.NAME;
 
     writeBuffer = new OWOWCache(8 + systemOffset, new OByteBufferPool(8 + systemOffset), writeAheadLog, 100, 2 * (8 + systemOffset),
-        storageLocal, false, files, 10);
+        storageLocal, false, files, 10, OChecksumMode.StoreAndThrow);
 
     writeBuffer.loadRegisteredFiles();
 

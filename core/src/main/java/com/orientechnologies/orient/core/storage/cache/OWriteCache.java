@@ -24,6 +24,7 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
+import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 
@@ -33,6 +34,17 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 public interface OWriteCache {
+  /**
+   * Adds listener which is called by cache if corruption of file page is detected.
+   */
+  void addPageIsBrokenListener(OPageIsBrokenListener listener);
+
+  /**
+   * Removes listener which is called by cache if corruption of file page is detected.
+   */
+  @SuppressWarnings("unused")
+  void removePageIsBrokenListener(OPageIsBrokenListener listener);
+
   void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
   void removeLowDiskSpaceListener(OLowDiskSpaceListener listener);
@@ -131,8 +143,6 @@ public interface OWriteCache {
 
   Map<String, Long> files();
 
-  int pageSize();
-
   /**
    * Finds if there was file in write cache with given id which is deleted right now.
    * If such file exists it creates new file with the same name at it was in deleted file.
@@ -142,8 +152,6 @@ public interface OWriteCache {
    * @return Name of restored file or <code>null</code> if such name does not exist
    */
   String restoreFileById(long fileId) throws IOException;
-
-  boolean fileIdsAreEqual(long firsId, long secondId);
 
   /**
    * Adds listener which is triggered if exception is cast inside background flush data thread.

@@ -30,6 +30,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -100,7 +101,7 @@ import java.util.zip.ZipOutputStream;
  */
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     implements OLowDiskSpaceListener, OCheckpointRequestListener, OIdentifiableStorage, OBackgroundExceptionListener,
-    OFreezableStorageComponent {
+    OFreezableStorageComponent, OPageIsBrokenListener {
   private static final int RECORD_LOCK_TIMEOUT         = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
   private static final int WAL_RESTORE_REPORT_INTERVAL = 30 * 1000; // milliseconds
 
@@ -142,6 +143,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected volatile OAtomicOperationsManager atomicOperationsManager;
   private volatile boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
   private volatile OLowDiskSpaceInformation lowDiskSpace                               = null;
+
+  /**
+   * Set of pages which were detected as broken and need to be repaired.
+   */
+  private final Set<OPair<String, Long>> brokenPages = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   protected volatile ScheduledExecutorService fuzzyCheckpointExecutor;
 
@@ -226,7 +232,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           OLogManager.instance().error(this, "MBean for profiler cannot be registered.");
         }
 
-        initWalAndDiskCache();
+        initWalAndDiskCache(contextConfiguration);
 
         atomicOperationsManager = new OAtomicOperationsManager(this);
         try {
@@ -288,11 +294,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     for (String indexName : indexNames) {
       final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName);
       final OIndexEngine engine = OIndexes
-          .createIndexEngine(engineData.getName(), engineData.getAlgorithm(), engineData.getIndexType(), engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties(), null);
+          .createIndexEngine(engineData.getName(), engineData.getAlgorithm(), engineData.getIndexType(),
+              engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties(), null);
 
       try {
         engine.load(engineData.getName(), cf.binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()),
-            engineData.isAutomatic(), cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()), engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize(), engineData.getEngineProperties());
+            engineData.isAutomatic(), cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()),
+            engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize(), engineData.getEngineProperties());
 
         indexEngineNameMap.put(engineData.getName(), engine);
         indexEngines.add(engine);
@@ -328,7 +336,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             clusters.get(pos).open();
           }
         } catch (FileNotFoundException e) {
-          OLogManager.instance().warn(this, "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i + "): file not found. It will be excluded from current database '" + getName() + "'.");
+          OLogManager.instance().warn(this, "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i
+              + "): file not found. It will be excluded from current database '" + getName() + "'.");
 
           clusterMap.remove(clusters.get(i).getName().toLowerCase(configuration.getLocaleInstance()));
 
@@ -367,7 +376,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           OLogManager.instance().error(this, "MBean for profiler cannot be registered.");
         }
         transaction = new ThreadLocal<>();
-        initWalAndDiskCache();
+        initWalAndDiskCache(contextConfiguration);
 
         atomicOperationsManager = new OAtomicOperationsManager(this);
         try {
@@ -531,7 +540,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public int addCluster(String clusterName, boolean forceListBased, final Object... parameters) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
       stateLock.acquireWriteLock();
       try {
@@ -558,7 +567,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public int addCluster(String clusterName, int requestedId, boolean forceListBased, Object... parameters) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
@@ -567,8 +576,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throw new OConfigurationException("Cluster id must be positive!");
         }
         if (requestedId < clusters.size() && clusters.get(requestedId) != null) {
-          throw new OConfigurationException("Requested cluster ID [" + requestedId + "] is occupied by cluster with name [" + clusters.get(requestedId).getName()
-              + "]");
+          throw new OConfigurationException(
+              "Requested cluster ID [" + requestedId + "] is occupied by cluster with name [" + clusters.get(requestedId).getName()
+                  + "]");
         }
 
         makeStorageDirty();
@@ -592,7 +602,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public boolean dropCluster(final int clusterId, final boolean iTruncate) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
       stateLock.acquireWriteLock();
       try {
@@ -600,7 +610,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         if (clusterId < 0 || clusterId >= clusters.size())
           throw new IllegalArgumentException(
-              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1) + ") in database '" + name + "'");
+              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
+                  + ") in database '" + name + "'");
 
         final OCluster cluster = clusters.get(clusterId);
         if (cluster == null)
@@ -1033,7 +1044,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final byte recordType, final int mode, final ORecordCallback<Long> callback) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
       final OPhysicalPosition ppos = new OPhysicalPosition(recordType);
       final OCluster cluster = getClusterById(rid.getClusterId());
@@ -1134,7 +1145,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int version, final byte recordType, final int mode, final ORecordCallback<Integer> callback) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
       final OCluster cluster = getClusterById(rid.getClusterId());
 
@@ -1171,7 +1182,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final byte recordType) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
       final OCluster cluster = getClusterById(rid.getClusterId());
       if (transaction.get() != null) {
@@ -1220,7 +1231,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       ORecordCallback<Boolean> callback) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
       final OCluster cluster = getClusterById(rid.getClusterId());
 
@@ -1248,7 +1259,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public OStorageOperationResult<Boolean> hideRecord(final ORecordId rid, final int mode, ORecordCallback<Boolean> callback) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
       final OCluster cluster = getClusterById(rid.getClusterId());
 
@@ -1409,7 +1420,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
       txBegun.incrementAndGet();
 
@@ -1536,7 +1547,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance()
-            .debug(this, "%d Committed transaction %d on database '%s' (result=%s)", Thread.currentThread().getId(), clientTx.getId(), databaseRecord.getName(), result);
+            .debug(this, "%d Committed transaction %d on database '%s' (result=%s)", Thread.currentThread().getId(),
+                clientTx.getId(), databaseRecord.getName(), result);
 
       return result;
     } catch (RuntimeException ee) {
@@ -1562,7 +1574,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
       txBegun.incrementAndGet();
 
@@ -1773,7 +1785,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
         // this method introduced for binary compatibility only
         if (configuration.binaryFormatVersion > 15)
@@ -1828,7 +1840,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
         if (indexEngineNameMap.containsKey(engineName)) {
           // OLD INDEX FILE ARE PRESENT: THIS IS THE CASE OF PARTIAL/BROKEN INDEX
@@ -1923,7 +1935,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
         checkIndexId(indexId);
 
@@ -2004,7 +2016,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
         return doRemoveKeyFromIndex(indexId, key);
       } finally {
@@ -2047,7 +2059,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
         doClearIndex(indexId);
       } finally {
@@ -2138,7 +2150,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
         doUpdateIndexEntry(indexId, key, valueCreator);
       } finally {
@@ -2267,7 +2279,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
         doPutIndexValue(indexId, key, value);
       } finally {
@@ -2323,7 +2335,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
         return doValidatedPutIndexValue(indexId, key, value, validator);
       } finally {
@@ -3191,6 +3203,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     lowDiskSpace = information;
   }
 
+  /**
+   * @inheritDoc
+   */
+  @Override
+  public void pageIsBroken(String fileName, long pageIndex) {
+    brokenPages.add(new OPair<>(fileName, pageIndex));
+  }
+
   @Override
   public void requestCheckpoint() {
     try {
@@ -3287,7 +3307,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           Map<Object, Object> params = iCommand.getParameters();
           result = executor.execute(params);
 
-          if (result != null && iCommand.isCacheableResult() && executor.isCacheable() && (iCommand.getParameters() == null || iCommand.getParameters().isEmpty()))
+          if (result != null && iCommand.isCacheableResult() && executor.isCacheable() && (iCommand.getParameters() == null
+              || iCommand.getParameters().isEmpty()))
             // CACHE THE COMMAND RESULT
             db.getMetadata().getCommandCache()
                 .put(db.getUser(), iCommand.getText(), result, iCommand.getLimit(), executor.getInvolvedClusters(),
@@ -3314,8 +3335,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             final OSecurityUser user = db.getUser();
             final String userString = user != null ? user.toString() : null;
             //noinspection ResultOfMethodCallIgnored
-            Orient.instance().getProfiler().stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
-                "Command executed against the database", beginTime, "db.*.command.*", null, userString);
+            Orient.instance().getProfiler()
+                .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
+                    "Command executed against the database", beginTime, "db.*.command.*", null, userString);
           }
         }
       }
@@ -3625,7 +3647,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected void preCreateSteps() throws IOException {
   }
 
-  protected abstract void initWalAndDiskCache() throws IOException, InterruptedException;
+  protected abstract void initWalAndDiskCache(OContextConfiguration contextConfiguration) throws IOException, InterruptedException;
 
   protected void postCloseSteps(@SuppressWarnings("unused") boolean onDelete) throws IOException {
   }
@@ -4671,7 +4693,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         recordsProcessed++;
 
         final long currentTime = System.currentTimeMillis();
-        if (reportBatchSize > 0 && recordsProcessed % reportBatchSize == 0 || currentTime - lastReportTime > WAL_RESTORE_REPORT_INTERVAL) {
+        if (reportBatchSize > 0 && recordsProcessed % reportBatchSize == 0
+            || currentTime - lastReportTime > WAL_RESTORE_REPORT_INTERVAL) {
           OLogManager.instance().info(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed, lsn,
               writeAheadLog.end());
           lastReportTime = currentTime;
@@ -4680,10 +4703,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         lsn = writeAheadLog.next(lsn);
       }
     } catch (OWALPageBrokenException e) {
-      OLogManager.instance().error(this, "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
+      OLogManager.instance()
+          .error(this, "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
     } catch (RuntimeException e) {
       OLogManager.instance().error(this,
-          "Data restore was paused because of exception. The rest of changes will be rolled back and WAL files will be backed up." + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.");
+          "Data restore was paused because of exception. The rest of changes will be rolled back and WAL files will be backed up."
+              + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.");
       backUpWAL(e);
     }
 
@@ -4789,9 +4814,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           String fileName = writeCache.restoreFileById(fileId);
 
           if (fileName == null) {
-            throw new OStorageException("File with id " + fileId + " was deleted from storage, the rest of operations can not be restored");
+            throw new OStorageException(
+                "File with id " + fileId + " was deleted from storage, the rest of operations can not be restored");
           } else {
-            OLogManager.instance().warn(this, "Previously deleted file with name " + fileName + " was deleted but new empty file was added to continue restore process");
+            OLogManager.instance().warn(this, "Previously deleted file with name " + fileName
+                + " was deleted but new empty file was added to continue restore process");
           }
         }
 
@@ -4824,14 +4851,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         //noinspection UnnecessaryContinue
         continue;
       } else {
-        OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.", walRecord.getClass());
+        OLogManager.instance()
+            .error(this, "Invalid WAL record type was passed %s. Given record will be skipped.", walRecord.getClass());
 
         assert false : "Invalid WAL record type was passed " + walRecord.getClass().getName();
       }
     }
   }
 
-  private void checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions() {
+  /**
+   * Method which is called before any data modification operation to check alarm conditions such as:
+   * <ol>
+   * <li>Low disk space</li>
+   * <li>Exception during data flush in background threads</li>
+   * <li>Broken files</li>
+   * </ol>
+   * <p>
+   * If one of those conditions are satisfied data modification operation is aborted and
+   * storage is switched in "read only" mode.
+   */
+  private void checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages() {
     if (transaction.get() != null)
       return;
 
@@ -4870,6 +4909,42 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw OException.wrapException(new OStorageException(
               "Error in data flush background thread, please restart database and send full stack trace inside of bug report"),
           dataFlushException);
+    }
+
+    if (!brokenPages.isEmpty()) {
+      //order pages by file and index
+      final Map<String, SortedSet<Long>> pagesByFile = new HashMap<>();
+
+      for (OPair<String, Long> brokenPage : brokenPages) {
+        final SortedSet<Long> sortedPages = pagesByFile.computeIfAbsent(brokenPage.key, (fileName) -> new TreeSet<>());
+        sortedPages.add(brokenPage.value);
+      }
+
+      final StringBuilder brokenPagesList = new StringBuilder();
+      brokenPagesList.append("[");
+
+      for (String fileName : pagesByFile.keySet()) {
+        brokenPagesList.append('\'').append(fileName).append("' :");
+
+        final SortedSet<Long> pageIndexes = pagesByFile.get(fileName);
+        final long lastPage = pageIndexes.last();
+
+        for (Long pageIndex : pagesByFile.get(fileName)) {
+          brokenPagesList.append(pageIndex);
+          if (pageIndex != lastPage) {
+            brokenPagesList.append(", ");
+          }
+        }
+
+        brokenPagesList.append(";");
+      }
+      brokenPagesList.append("]");
+
+      throw new OPageIsBrokenException("Following files and pages are detected to be broken " + brokenPagesList + ", storage is "
+          + "switched to 'read only' mode. Any modification operations are prohibited. Typically it means hardware error, before "
+          + "filling a bug please check your hardware. To restore database and make it fully operational you may export and import database "
+          + "to and from JSON.");
+
     }
   }
 

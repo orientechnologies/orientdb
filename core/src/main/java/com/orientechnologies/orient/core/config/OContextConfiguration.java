@@ -26,9 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Represents a context configuration where custom setting could be defined for the context only. If not defined, globals will be
  * taken.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OContextConfiguration implements Serializable {
   private final Map<String, Object> config = new ConcurrentHashMap<String, Object>();
@@ -41,9 +40,8 @@ public class OContextConfiguration implements Serializable {
 
   /**
    * Initializes the context with custom parameters.
-   * 
-   * @param iConfig
-   *          Map of parameters of type Map<String, Object>.
+   *
+   * @param iConfig Map of parameters of type Map<String, Object>.
    */
   public OContextConfiguration(final Map<String, Object> iConfig) {
     this.config.putAll(iConfig);
@@ -68,9 +66,9 @@ public class OContextConfiguration implements Serializable {
     return config.put(iName, iValue);
   }
 
-  public Object getValue(final OGlobalConfiguration iConfig) {
+  public <T> T getValue(final OGlobalConfiguration iConfig) {
     if (config != null && config.containsKey(iConfig.getKey()))
-      return config.get(iConfig.getKey());
+      return (T) config.get(iConfig.getKey());
     return iConfig.getValue();
   }
 
@@ -88,7 +86,7 @@ public class OContextConfiguration implements Serializable {
 
   public boolean getValueAsBoolean(final OGlobalConfiguration iConfig) {
     final Object v = getValue(iConfig);
-    if( v == null )
+    if (v == null)
       return false;
     return v instanceof Boolean ? ((Boolean) v).booleanValue() : Boolean.parseBoolean(v.toString());
   }

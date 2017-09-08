@@ -41,7 +41,7 @@ public class WOWCacheTestIT {
   private static ODiskWriteAheadLog writeAheadLog;
 
   private static OWOWCache wowCache;
-  private OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<Long, OFileClassic>(1024);
+  private OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(1024);
 
   @BeforeClass
   public static void beforeClass() throws IOException {
@@ -110,7 +110,8 @@ public class WOWCacheTestIT {
   }
 
   private void initBuffer() throws IOException, InterruptedException {
-    wowCache = new OWOWCache(pageSize, new OByteBufferPool(pageSize), writeAheadLog, 10, 100, storageLocal, false, files, 1);
+    wowCache = new OWOWCache(pageSize, new OByteBufferPool(pageSize), writeAheadLog, 10, 100, storageLocal, false, files, 1,
+        OChecksumMode.StoreAndVerify);
     wowCache.loadRegisteredFiles();
   }
 
@@ -163,7 +164,7 @@ public class WOWCacheTestIT {
 
   @Test
   public void testDataUpdate() throws Exception {
-    final NavigableMap<Long, byte[]> pageIndexDataMap = new TreeMap<Long, byte[]>();
+    final NavigableMap<Long, byte[]> pageIndexDataMap = new TreeMap<>();
     long fileId = wowCache.addFile(fileName);
     final String nativeFileName = wowCache.nativeFileNameById(fileId);
 

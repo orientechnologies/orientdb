@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.memory;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -52,7 +53,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void initWalAndDiskCache() throws IOException {
+  protected void initWalAndDiskCache(OContextConfiguration contextConfiguration) throws IOException {
     if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       if (writeAheadLog == null)
         writeAheadLog = new OMemoryWriteAheadLog();
@@ -89,6 +90,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
     return OEngineMemory.NAME;
   }
 
+  @Override
   public String getURL() {
     return OEngineMemory.NAME + ":" + url;
   }
