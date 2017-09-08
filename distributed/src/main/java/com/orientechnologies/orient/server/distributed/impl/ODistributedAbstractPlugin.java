@@ -1542,31 +1542,24 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODatabaseDocumentTx db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta,
         uniqueClustersBackupDirectory, cfg);
 
-    if (db != null) {
-      // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER AND ADD LAST LOCAL LSN
-      try {
-        distrDatabase.getSyncConfiguration().load();
-        distrDatabase.getSyncConfiguration()
-            .setLastLSN(localNodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), false);
-      } catch (IOException e) {
-        ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on loading %s file for database '%s'", e,
-            DISTRIBUTED_SYNC_JSON_FILENAME, databaseName);
-      }
+    if (db == null)
+      return;
 
-      try {
-        try {
-          rebalanceClusterOwnership(nodeName, db, cfg, false);
-        } catch (Exception e) {
-          // HANDLE IT AS WARNING
-          ODistributedServerLog
-              .warn(this, nodeName, null, DIRECTION.NONE, "Error on re-balancing the cluster for database '%s'", e, databaseName);
-          // NOT CRITICAL, CONTINUE
-        }
-        distrDatabase.setOnline();
-      } finally {
-        db.activateOnCurrentThread();
-        db.close();
-      }
+    // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER AND ADD LAST LOCAL LSN
+    try {
+      distrDatabase.getSyncConfiguration().load();
+      distrDatabase.getSyncConfiguration()
+          .setLastLSN(localNodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), false);
+    } catch (IOException e) {
+      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on loading %s file for database '%s'", e,
+          DISTRIBUTED_SYNC_JSON_FILENAME, databaseName);
+    }
+
+    try {
+      distrDatabase.setOnline();
+    } finally {
+      db.activateOnCurrentThread();
+      db.close();
     }
 
     // ASK FOR INDIVIDUAL CLUSTERS IN CASE OF SHARDING AND NO LOCAL COPY
@@ -1588,6 +1581,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     for (String cl : toSynchClusters) {
       // FILTER CLUSTER CHECKING IF ANY NODE IS ACTIVE
       OCommandExecutorSQLHASyncCluster.replaceCluster(this, serverInstance, databaseName, cl);
+    }
+
+    try {
+      rebalanceClusterOwnership(nodeName, db, cfg, false);
+    } catch (Exception e) {
+      // HANDLE IT AS WARNING
+      ODistributedServerLog
+          .warn(this, nodeName, null, DIRECTION.NONE, "Error on re-balancing the cluster for database '%s'", e, databaseName);
+      // NOT CRITICAL, CONTINUE
     }
   }
 
