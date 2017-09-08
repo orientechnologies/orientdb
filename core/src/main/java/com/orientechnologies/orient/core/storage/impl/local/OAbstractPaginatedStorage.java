@@ -84,6 +84,9 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
@@ -106,6 +109,42 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private static final Comparator<ORecordOperation> COMMIT_RECORD_OPERATION_COMPARATOR = Comparator
       .comparing(o -> o.getRecord().getIdentity());
+
+  private static volatile DataOutputStream journaledStream = null;
+
+  static {
+    // initialize journaled tx streaming if enabled by configuration
+
+    final Integer journaledPort = OGlobalConfiguration.STORAGE_INTERNAL_JOURNALED_TX_STREAMING_PORT.getValue();
+    if (journaledPort != null) {
+      ServerSocket serverSocket;
+      try {
+        serverSocket = new ServerSocket(journaledPort, 0, InetAddress.getLocalHost());
+        serverSocket.setReuseAddress(true);
+      } catch (IOException e) {
+        serverSocket = null;
+        OLogManager.instance().error(OAbstractPaginatedStorage.class, "unable to create journaled tx server socket", e);
+      }
+
+      if (serverSocket != null) {
+        final ServerSocket finalServerSocket = serverSocket;
+        final Thread serverThread = new Thread(() -> {
+          OLogManager.instance()
+              .info(OAbstractPaginatedStorage.class, "journaled tx streaming server is listening on localhost:" + journaledPort);
+          try {
+            final Socket clientSocket = finalServerSocket.accept(); // accept single connection only and only once
+            clientSocket.setSendBufferSize(4 * 1024 * 1024 /* 4MB */);
+            journaledStream = new DataOutputStream(clientSocket.getOutputStream());
+          } catch (IOException e) {
+            journaledStream = null;
+            OLogManager.instance().error(OAbstractPaginatedStorage.class, "unable to accept journaled tx client connection", e);
+          }
+        });
+        serverThread.setDaemon(true);
+        serverThread.start();
+      }
+    }
+  }
 
   private final OComparableLockManager<ORID> lockManager;
 
@@ -288,11 +327,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     for (String indexName : indexNames) {
       final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName);
       final OIndexEngine engine = OIndexes
-          .createIndexEngine(engineData.getName(), engineData.getAlgorithm(), engineData.getIndexType(), engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties(), null);
+          .createIndexEngine(engineData.getName(), engineData.getAlgorithm(), engineData.getIndexType(),
+              engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties(), null);
 
       try {
         engine.load(engineData.getName(), cf.binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()),
-            engineData.isAutomatic(), cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()), engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize(), engineData.getEngineProperties());
+            engineData.isAutomatic(), cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()),
+            engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize(), engineData.getEngineProperties());
 
         indexEngineNameMap.put(engineData.getName(), engine);
         indexEngines.add(engine);
@@ -328,7 +369,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             clusters.get(pos).open();
           }
         } catch (FileNotFoundException e) {
-          OLogManager.instance().warn(this, "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i + "): file not found. It will be excluded from current database '" + getName() + "'.");
+          OLogManager.instance().warn(this, "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i
+              + "): file not found. It will be excluded from current database '" + getName() + "'.");
 
           clusterMap.remove(clusters.get(i).getName().toLowerCase(configuration.getLocaleInstance()));
 
@@ -567,8 +609,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throw new OConfigurationException("Cluster id must be positive!");
         }
         if (requestedId < clusters.size() && clusters.get(requestedId) != null) {
-          throw new OConfigurationException("Requested cluster ID [" + requestedId + "] is occupied by cluster with name [" + clusters.get(requestedId).getName()
-              + "]");
+          throw new OConfigurationException(
+              "Requested cluster ID [" + requestedId + "] is occupied by cluster with name [" + clusters.get(requestedId).getName()
+                  + "]");
         }
 
         makeStorageDirty();
@@ -600,7 +643,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         if (clusterId < 0 || clusterId >= clusters.size())
           throw new IllegalArgumentException(
-              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1) + ") in database '" + name + "'");
+              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
+                  + ") in database '" + name + "'");
 
         final OCluster cluster = clusters.get(clusterId);
         if (cluster == null)
@@ -1516,7 +1560,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             commitIndexes(indexesToCommit);
 
-            endStorageTx();
+            final OLogSequenceNumber lsn = endStorageTx();
+            final DataOutputStream journaledStream = OAbstractPaginatedStorage.journaledStream;
+            if (journaledStream != null) { // send event to journaled tx stream if the streaming is on
+              final int txId = clientTx.getClientTransactionId();
+              if (lsn == null) // if tx is not journaled
+                try {
+                  journaledStream.writeInt(txId);
+                } catch (IOException e) {
+                  OLogManager.instance().error(this, "unable to write tx id into journaled stream", e);
+                }
+              else
+                writeAheadLog.addEventAt(lsn, () -> {
+                  try {
+                    journaledStream.writeInt(txId);
+                  } catch (IOException e) {
+                    OLogManager.instance().error(this, "unable to write tx id into journaled stream", e);
+                  }
+                });
+            }
 
             OTransactionAbstract.updateCacheFromEntries(clientTx, entries, true);
 
@@ -1536,7 +1598,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance()
-            .debug(this, "%d Committed transaction %d on database '%s' (result=%s)", Thread.currentThread().getId(), clientTx.getId(), databaseRecord.getName(), result);
+            .debug(this, "%d Committed transaction %d on database '%s' (result=%s)", Thread.currentThread().getId(),
+                clientTx.getId(), databaseRecord.getName(), result);
 
       return result;
     } catch (RuntimeException ee) {
@@ -3287,7 +3350,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           Map<Object, Object> params = iCommand.getParameters();
           result = executor.execute(params);
 
-          if (result != null && iCommand.isCacheableResult() && executor.isCacheable() && (iCommand.getParameters() == null || iCommand.getParameters().isEmpty()))
+          if (result != null && iCommand.isCacheableResult() && executor.isCacheable() && (iCommand.getParameters() == null
+              || iCommand.getParameters().isEmpty()))
             // CACHE THE COMMAND RESULT
             db.getMetadata().getCommandCache()
                 .put(db.getUser(), iCommand.getText(), result, iCommand.getLimit(), executor.getInvolvedClusters(),
@@ -3314,8 +3378,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             final OSecurityUser user = db.getUser();
             final String userString = user != null ? user.toString() : null;
             //noinspection ResultOfMethodCallIgnored
-            Orient.instance().getProfiler().stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
-                "Command executed against the database", beginTime, "db.*.command.*", null, userString);
+            Orient.instance().getProfiler()
+                .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
+                    "Command executed against the database", beginTime, "db.*.command.*", null, userString);
           }
         }
       }
@@ -3693,10 +3758,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void endStorageTx() throws IOException {
-    atomicOperationsManager.endAtomicOperation(false, null);
-
+  private OLogSequenceNumber endStorageTx() throws IOException {
+    final OLogSequenceNumber lsn = atomicOperationsManager.endAtomicOperation(false, null);
     assert atomicOperationsManager.getCurrentOperation() == null;
+    return lsn;
   }
 
   private void startStorageTx(OTransaction clientTx) throws IOException {
@@ -4671,7 +4736,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         recordsProcessed++;
 
         final long currentTime = System.currentTimeMillis();
-        if (reportBatchSize > 0 && recordsProcessed % reportBatchSize == 0 || currentTime - lastReportTime > WAL_RESTORE_REPORT_INTERVAL) {
+        if (reportBatchSize > 0 && recordsProcessed % reportBatchSize == 0
+            || currentTime - lastReportTime > WAL_RESTORE_REPORT_INTERVAL) {
           OLogManager.instance().info(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed, lsn,
               writeAheadLog.end());
           lastReportTime = currentTime;
@@ -4680,10 +4746,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         lsn = writeAheadLog.next(lsn);
       }
     } catch (OWALPageBrokenException e) {
-      OLogManager.instance().error(this, "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
+      OLogManager.instance()
+          .error(this, "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
     } catch (RuntimeException e) {
       OLogManager.instance().error(this,
-          "Data restore was paused because of exception. The rest of changes will be rolled back and WAL files will be backed up." + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.");
+          "Data restore was paused because of exception. The rest of changes will be rolled back and WAL files will be backed up."
+              + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.");
       backUpWAL(e);
     }
 
@@ -4789,9 +4857,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           String fileName = writeCache.restoreFileById(fileId);
 
           if (fileName == null) {
-            throw new OStorageException("File with id " + fileId + " was deleted from storage, the rest of operations can not be restored");
+            throw new OStorageException(
+                "File with id " + fileId + " was deleted from storage, the rest of operations can not be restored");
           } else {
-            OLogManager.instance().warn(this, "Previously deleted file with name " + fileName + " was deleted but new empty file was added to continue restore process");
+            OLogManager.instance().warn(this, "Previously deleted file with name " + fileName
+                + " was deleted but new empty file was added to continue restore process");
           }
         }
 
@@ -4824,7 +4894,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         //noinspection UnnecessaryContinue
         continue;
       } else {
-        OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.", walRecord.getClass());
+        OLogManager.instance()
+            .error(this, "Invalid WAL record type was passed %s. Given record will be skipped.", walRecord.getClass());
 
         assert false : "Invalid WAL record type was passed " + walRecord.getClass().getName();
       }

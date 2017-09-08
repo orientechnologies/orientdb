@@ -272,7 +272,7 @@ final class OLogSegmentV2 implements OLogSegment {
     OLogSequenceNumber stored = storedUpTo;
     segmentCache.sync();
 
-    writeAheadLog.casFlushedLsn(stored);
+    writeAheadLog.setFlushedLsn(stored);
   }
 
   /**
@@ -668,7 +668,20 @@ final class OLogSegmentV2 implements OLogSegment {
   }
 
   private void writeData() {
-    if (!commitExecutor.isShutdown()) {
+    if (commitExecutor.isShutdown()) {
+      if (!commitExecutor.isTerminated()) {
+        try {
+          if (!commitExecutor
+              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+            throw new OStorageException("Unable to write data, WAL commit executor appears hung");
+        } catch (InterruptedException e) {
+          Thread.interrupted();
+          throw OException.wrapException(new OStorageException("Thread was interrupted during waiting for WAL commit executor"), e);
+        }
+      }
+
+      new WriteTask().run();
+    } else {
       try {
         commitExecutor.submit(new WriteTask()).get();
       } catch (InterruptedException e) {
@@ -677,8 +690,6 @@ final class OLogSegmentV2 implements OLogSegment {
       } catch (ExecutionException e) {
         throw OException.wrapException(new OStorageException("Error during WAL segment '" + getPath() + "' flush"), e);
       }
-    } else {
-      new WriteTask().run();
     }
   }
 

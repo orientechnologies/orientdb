@@ -209,6 +209,10 @@ public enum OGlobalConfiguration {
       "If this flag is set metadata which contains rids of changed records is added at the end of each atomic operation",
       Boolean.class, false),
 
+  STORAGE_INTERNAL_JOURNALED_TX_STREAMING_PORT("storage.internal.journaled.tx.streaming.port", "Activates journaled tx streaming "
+      + "on the given TCP/IP port. Used for internal testing purposes only. Never touch it if you don't know what you doing.",
+      Integer.class, null),
+
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
   WAL_SYNC_ON_PAGE_FLUSH("storage.wal.syncOnPageFlush", "Indicates whether a force sync should be performed during WAL page flush",
@@ -802,7 +806,7 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2.0
    */
-  @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads",
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads",
       "Number of parallel worker threads per database that process distributed messages. Use 0 for automatic", Integer.class, 0),
 
   /**

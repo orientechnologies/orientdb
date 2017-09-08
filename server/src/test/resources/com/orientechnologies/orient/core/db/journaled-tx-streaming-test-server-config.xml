@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<orient-server>
+    <network>
+        <protocols>
+            <protocol name="binary"
+                      implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary"/>
+        </protocols>
+        <listeners>
+            <listener ip-address="0.0.0.0" port-range="3500" protocol="binary"/>
+        </listeners>
+    </network>
+    <users>
+        <user name="root" password="root" resources="*"/>
+        <user name="guest" password="guest" resources="connect,server.listDatabases"/>
+    </users>
+    <isAfterFirstTime>true</isAfterFirstTime>
+</orient-server>

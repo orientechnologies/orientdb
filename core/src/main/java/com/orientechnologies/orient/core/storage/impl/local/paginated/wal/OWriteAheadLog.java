@@ -97,4 +97,21 @@ public interface OWriteAheadLog {
   long activeSegment();
 
   void newSegment() throws IOException;
+
+  /**
+   * Adds the event to fire when this write ahead log instances reaches the given LSN.
+   * <p>
+   * The thread on which the event will be fired is unspecified, the event may be even fired synchronously before this method
+   * returns. Avoid running long tasks in the event handler since this may degrade the performance of this write ahead log and/or
+   * its event managing component.
+   * <p>
+   * The exact LSN, up to which this write ahead log is actually grown, may differ from the event's LSN at the moment of invocation.
+   * But it's guarantied that the write ahead log's LSN will be larger than or equal to the event's LSN. In other words, the event
+   * invocation may be postponed, exact timings depend on implementation details of this write ahead log.
+   *
+   * @param lsn   the LSN to fire at.
+   * @param event the event to fire.
+   */
+  void addEventAt(OLogSequenceNumber lsn, Runnable event);
+
 }

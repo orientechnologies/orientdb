@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -354,7 +353,15 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     return currentOperation.get();
   }
 
-  public OAtomicOperation endAtomicOperation(boolean rollback, Exception exception) throws IOException {
+  /**
+   * Ends the current atomic operation on this manager.
+   *
+   * @param rollback  {@code true} to indicate a rollback, {@code false} for successful commit.
+   * @param exception the exception caused the rollback, {@code null} for no exception.
+   *
+   * @return the LSN produced by committing the current operation or {@code null} if no commit was done.
+   */
+  public OLogSequenceNumber endAtomicOperation(boolean rollback, Exception exception) throws IOException {
     final OAtomicOperation operation = currentOperation.get();
     assert operation != null;
 
@@ -380,6 +387,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final int counter = operation.getCounter();
     assert counter > 0;
 
+    final OLogSequenceNumber lsn;
     if (counter == 1) {
       final boolean useWal = useWal();
 
@@ -387,8 +395,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         operation.commitChanges(useWal ? writeAheadLog : null);
 
       if (useWal)
-        writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
+        lsn = writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
             operation.getMetadata());
+      else
+        lsn = null;
 
       // We have to decrement the counter after the disk operations, otherwise, if they
       // fail, we will be unable to rollback the atomic operation later.
@@ -403,10 +413,12 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
 
       atomicOperationsCount.decrement();
-    } else
+    } else {
+      lsn = null;
       operation.decrementCounter();
+    }
 
-    return operation;
+    return lsn;
   }
 
   /**
