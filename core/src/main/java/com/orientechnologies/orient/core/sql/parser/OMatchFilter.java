@@ -41,16 +41,14 @@ public class OMatchFilter extends SimpleNode {
     boolean found = false;
     for (OMatchFilterItem item : items) {
       if (item.alias != null) {
-        item.alias = new OIdentifier(-1);
-        item.alias.setValue(alias);
+        item.alias = new OIdentifier(alias);
         found = true;
         break;
       }
     }
     if (!found) {
       OMatchFilterItem newItem = new OMatchFilterItem(-1);
-      newItem.alias = new OIdentifier(-1);
-      newItem.alias.setValue(alias);
+      newItem.alias = new OIdentifier(alias);
       items.add(newItem);
     }
   }

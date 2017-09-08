@@ -49,7 +49,7 @@ public class OGtOperator extends SimpleNode implements OBinaryCompareOperator {
 
   @Override
   public OGtOperator copy() {
-    return new OGtOperator(-1);
+    return this;
   }
 
   @Override

@@ -52,7 +52,7 @@ public class OLeOperator extends SimpleNode implements OBinaryCompareOperator {
 
   @Override
   public OLeOperator copy() {
-    return new OLeOperator(-1);
+    return this;
   }
 
   @Override

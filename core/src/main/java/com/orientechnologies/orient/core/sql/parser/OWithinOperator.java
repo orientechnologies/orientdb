@@ -31,7 +31,7 @@ public class OWithinOperator extends SimpleNode implements OBinaryCompareOperato
   }
 
   @Override public OWithinOperator copy() {
-    return new OWithinOperator(-1);
+    return this;
   }
 
   @Override public boolean equals(Object obj) {

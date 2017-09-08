@@ -44,7 +44,7 @@ public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator 
 
   @Override
   public OLikeOperator copy() {
-    return new OLikeOperator(-1);
+    return this;
   }
 
   @Override

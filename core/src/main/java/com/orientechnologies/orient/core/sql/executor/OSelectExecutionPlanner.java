@@ -729,7 +729,7 @@ public class OSelectExecutionPlanner {
         isSplitted = true;
         OProjectionItem post = item.splitForAggregation(result);
         OIdentifier postAlias = item.getProjectionAlias();
-        postAlias.setQuoted(true);
+        postAlias = new OIdentifier(postAlias, true);
         post.setAlias(postAlias);
         postAggregate.getItems().add(post);
         aggregate.getItems().addAll(result.getAggregate());
@@ -802,8 +802,7 @@ public class OSelectExecutionPlanner {
       if (!found) {
         OProjectionItem newItem = new OProjectionItem(-1);
         newItem.setExpression(exp);
-        OIdentifier groupByAlias = new OIdentifier(-1);
-        groupByAlias.setStringValue("_$$$GROUP_BY_ALIAS$$$_" + i);
+        OIdentifier groupByAlias = new OIdentifier("_$$$GROUP_BY_ALIAS$$$_" + i);
         newItem.setAlias(groupByAlias);
         if (info.preAggregateProjection == null) {
           info.preAggregateProjection = new OProjection(-1);
@@ -1787,8 +1786,7 @@ public class OSelectExecutionPlanner {
   private IndexSearchDescriptor buildIndexSearchDescriptor(OCommandContext ctx, OIndex<?> index, OAndBlock block, OClass clazz) {
     List<String> indexFields = index.getDefinition().getFields();
     OBinaryCondition keyCondition = new OBinaryCondition(-1);
-    OIdentifier key = new OIdentifier(-1);
-    key.setStringValue("key");
+    OIdentifier key = new OIdentifier("key");
     keyCondition.setLeft(new OExpression(key));
     boolean allowsRange = allowsRangeQueries(index);
     boolean found = false;

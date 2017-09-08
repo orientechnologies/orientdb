@@ -33,7 +33,7 @@ public class ONeqOperator extends SimpleNode implements OBinaryCompareOperator {
   }
 
   @Override public ONeqOperator copy() {
-    return new ONeqOperator(-1);
+    return this;
   }
 
   @Override public boolean equals(Object obj) {

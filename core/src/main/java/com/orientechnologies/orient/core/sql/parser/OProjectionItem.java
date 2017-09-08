@@ -138,11 +138,11 @@ public class OProjectionItem extends SimpleNode {
     if (alias != null) {
       return alias;
     }
-    OIdentifier result = new OIdentifier(-1);
+    OIdentifier result;
     if (all) {
-      result.setStringValue("*");
+      result = new OIdentifier("*");
     } else {
-      result.setStringValue(expression.toString());
+      result = new OIdentifier(expression.toString());
     }
     return result;
   }
@@ -273,8 +273,7 @@ public class OProjectionItem extends SimpleNode {
   public void deserialize(OResult fromResult) {
     all = fromResult.getProperty("all");
     if (fromResult.getProperty("alias") != null) {
-      alias = new OIdentifier(-1);
-      alias.deserialize(fromResult.getProperty("alias"));
+      alias = OIdentifier.deserialize(fromResult.getProperty("alias"));
     }
     if (fromResult.getProperty("expression") != null) {
       expression = new OExpression(-1);

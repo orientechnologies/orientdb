@@ -136,8 +136,7 @@ public class FilterByClassStep extends AbstractExecutionStep {
   public void deserialize(OResult fromResult) {
     try {
       OExecutionStepInternal.basicDeserialize(fromResult, this);
-      identifier = new OIdentifier(-1);
-      identifier.deserialize(fromResult.getProperty("identifier"));
+      identifier = OIdentifier.deserialize(fromResult.getProperty("identifier"));
     } catch (Exception e) {
       throw new OCommandExecutionException("");
     }

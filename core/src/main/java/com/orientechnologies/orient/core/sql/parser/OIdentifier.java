@@ -7,6 +7,12 @@ import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
 
+/**
+ * This class is used to represent all the indentifies in the SQL grammar, ie. class names, property names, index names, variables
+ * and so on so forth.
+ * <p>
+ * Instances of this class are immutable and can be recycled multiple times in the same or in different queries.
+ */
 public class OIdentifier extends SimpleNode {
 
   protected String value;
@@ -17,13 +23,26 @@ public class OIdentifier extends SimpleNode {
    */
   protected boolean internalAlias = false;
 
-  public OIdentifier(int id) {
-    super(id);
+  public OIdentifier(OIdentifier copyFrom, boolean quoted){
+    this(-1);
+    this.value = copyFrom.value;
+    this.quoted = quoted;
   }
 
   public OIdentifier(String content) {
     this(-1);
     setStringValue(content);
+  }
+
+  protected OIdentifier(int id) {
+    super(id);
+  }
+
+  public static OIdentifier deserialize(OResult fromResult) {
+    OIdentifier identifier = new OIdentifier(-1);
+    identifier.value = fromResult.getProperty("value");
+    identifier.quoted = fromResult.getProperty("quoted");
+    return identifier;
   }
 
   public OIdentifier(OrientSql p, int id) {
@@ -51,7 +70,7 @@ public class OIdentifier extends SimpleNode {
    *
    * @param value
    */
-  public void setValue(String value) {
+  private void setValue(String value) {
     this.value = value;
   }
 
@@ -68,11 +87,12 @@ public class OIdentifier extends SimpleNode {
   }
 
   /**
-   * returns the plain string representation of this identifier, with quoting removed from back-ticks
+   * sets the value of the identifier. It can contain any values, this method can manage back-ticks (internally quote them), so
+   * back-ticks have not to be quoted when passed as a parameter
    *
-   * @return
+   * @param s
    */
-  public void setStringValue(String s) {
+  private void setStringValue(String s) {
     if (s == null) {
       value = null;
     } else {
@@ -100,15 +120,16 @@ public class OIdentifier extends SimpleNode {
     }
   }
 
-  public void setQuoted(boolean quoted) {
+  private void setQuoted(boolean quoted) {
     this.quoted = quoted;
   }
 
   public OIdentifier copy() {
-    OIdentifier result = new OIdentifier(-1);
-    result.value = value;
-    result.quoted = quoted;
-    return result;
+    return this;
+//    OIdentifier result = new OIdentifier(-1);
+//    result.value = value;
+//    result.quoted = quoted;
+//    return result;
   }
 
   @Override
@@ -145,9 +166,5 @@ public class OIdentifier extends SimpleNode {
     return result;
   }
 
-  public void deserialize(OResult fromResult) {
-    value = fromResult.getProperty("value");
-    quoted = fromResult.getProperty("quoted");
-  }
 }
 /* JavaCC - OriginalChecksum=691a2eb5096f7b5e634b2ca8ac2ded3a (do not edit this line) */

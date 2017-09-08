@@ -73,7 +73,7 @@ public class OGeOperator extends SimpleNode implements OBinaryCompareOperator {
 
   @Override
   public OGeOperator copy() {
-    return new OGeOperator(-1);
+    return this;
   }
 
   @Override

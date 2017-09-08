@@ -31,7 +31,7 @@ public class ONearOperator extends SimpleNode implements OBinaryCompareOperator 
   }
 
   @Override public ONearOperator copy() {
-    return new ONearOperator(-1);
+    return this;
   }
 
   @Override public boolean equals(Object obj) {
