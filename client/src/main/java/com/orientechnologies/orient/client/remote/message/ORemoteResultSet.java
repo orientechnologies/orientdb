@@ -3,6 +3,7 @@ package com.orientechnologies.orient.client.remote.message;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.ArrayList;
@@ -17,12 +18,12 @@ public class ORemoteResultSet implements OResultSet {
 
   private final ODatabaseDocumentRemote  db;
   private final String                   queryId;
-  private       List<OResult>            currentPage;
+  private       List<OResultInternal>    currentPage;
   private       Optional<OExecutionPlan> executionPlan;
   private       Map<String, Long>        queryStats;
   private       boolean                  hasNextPage;
 
-  public ORemoteResultSet(ODatabaseDocumentRemote db, String queryId, List<OResult> currentPage,
+  public ORemoteResultSet(ODatabaseDocumentRemote db, String queryId, List<OResultInternal> currentPage,
       Optional<OExecutionPlan> executionPlan, Map<String, Long> queryStats, boolean hasNextPage) {
     this.db = db;
     this.queryId = queryId;
@@ -31,6 +32,9 @@ public class ORemoteResultSet implements OResultSet {
     this.queryStats = queryStats;
     this.hasNextPage = hasNextPage;
     db.queryStarted(queryId, this);
+    for (OResultInternal result : currentPage) {
+      result.bindToCache(db);
+    }
   }
 
   @Override
@@ -78,7 +82,7 @@ public class ORemoteResultSet implements OResultSet {
     return queryStats;
   }
 
-  public void add(OResult item) {
+  public void add(OResultInternal item) {
     currentPage.add(item);
   }
 
@@ -90,11 +94,7 @@ public class ORemoteResultSet implements OResultSet {
     return queryId;
   }
 
-  public List<OResult> getCurrentPage() {
-    return currentPage;
-  }
-
-  public void fetched(List<OResult> result, boolean hasNextPage, Optional<OExecutionPlan> executionPlan,
+  public void fetched(List<OResultInternal> result, boolean hasNextPage, Optional<OExecutionPlan> executionPlan,
       Map<String, Long> queryStats) {
     this.currentPage = result;
     this.hasNextPage = hasNextPage;

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 
@@ -43,6 +44,14 @@ public interface OResult {
   boolean isBlob();
 
   Optional<OBlob> getBlob();
+
+  Optional<ORecord> getRecord();
+
+  default boolean isRecord() {
+    return !isProjection();
+  }
+
+  boolean isProjection();
 
   /**
    * return metadata related to current result given a key
