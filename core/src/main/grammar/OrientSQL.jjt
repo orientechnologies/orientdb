@@ -2948,31 +2948,35 @@ OBooleanExpression IndexMatchCondition():
     (
      	<KEY>
      	(
-     	    jjtThis.operator = CompareOperator() <LBRACKET>
-     	    [
-     	        lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
-     	        ( <COMMA>
-     	            lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
-     	        )*
-     	    ]
-     	    <RBRACKET>
+     	    (
+                jjtThis.operator = CompareOperator() <LBRACKET>
+                [
+                    lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
+                    ( <COMMA>
+                        lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
+                    )*
+                ]
+                <RBRACKET>
+     	    )
      	    |
-     	    <BETWEEN> {jjtThis.between = true;} <LBRACKET>
-     	    [
-     	        lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
-     	        (
-     	            <COMMA>
-     	            lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
-     	        )*
-     	    ]
-     	    <RBRACKET> <AND> <LBRACKET>
-     	    [
-     	        lastExpression = Expression() { jjtThis.rightExpressions.add(lastExpression); }
-     	        (
-     	            <COMMA>
-     	            lastExpression = Expression() { jjtThis.rightExpressions.add(lastExpression); }
-     	        )*
-     	    ] <RBRACKET>
+     	    (
+                <BETWEEN> {jjtThis.between = true;} <LBRACKET>
+                [
+                    lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
+                    (
+                        <COMMA>
+                        lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
+                    )*
+                ]
+                <RBRACKET> <AND> <LBRACKET>
+                [
+                    lastExpression = Expression() { jjtThis.rightExpressions.add(lastExpression); }
+                    (
+                        <COMMA>
+                        lastExpression = Expression() { jjtThis.rightExpressions.add(lastExpression); }
+                    )*
+                ] <RBRACKET>
+            )
      	)
     )
     {return jjtThis;}
