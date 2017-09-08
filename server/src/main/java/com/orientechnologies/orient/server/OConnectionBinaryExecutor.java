@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -1161,10 +1162,10 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
 
     //copy the result-set to make sure that the execution is successful
-    List<OResult> rsCopy = new ArrayList<>(request.getRecordsPerPage());
+    List<OResultInternal> rsCopy = new ArrayList<>(request.getRecordsPerPage());
     int i = 0;
     while (rs.hasNext() && i < request.getRecordsPerPage()) {
-      rsCopy.add(rs.next());
+      rsCopy.add((OResultInternal) rs.next());
       i++;
     }
 
@@ -1199,10 +1200,10 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OResultSet rs = connection.getDatabase().getActiveQuery(request.getQueryId());
 
     //copy the result-set to make sure that the execution is successful
-    List<OResult> rsCopy = new ArrayList<>(request.getRecordsPerPage());
+    List<OResultInternal> rsCopy = new ArrayList<>(request.getRecordsPerPage());
     int i = 0;
     while (rs.hasNext() && i < request.getRecordsPerPage()) {
-      rsCopy.add(rs.next());
+      rsCopy.add((OResultInternal) rs.next());
       i++;
     }
     boolean hasNext = rs.hasNext();

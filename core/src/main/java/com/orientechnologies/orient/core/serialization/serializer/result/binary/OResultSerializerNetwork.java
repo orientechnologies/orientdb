@@ -650,7 +650,7 @@ public class OResultSerializerNetwork {
     channel.writeBytes(bytes.fitBytes());
   }
 
-  public OResult fromStream(OChannelDataInput channel) throws IOException {
+  public OResultInternal fromStream(OChannelDataInput channel) throws IOException {
     BytesContainer bytes = new BytesContainer();
     bytes.bytes = channel.readBytes();
     return this.deserialize(bytes);
