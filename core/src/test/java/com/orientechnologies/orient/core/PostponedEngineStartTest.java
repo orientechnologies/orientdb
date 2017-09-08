@@ -217,6 +217,11 @@ public class PostponedEngineStartTest {
         }
 
         @Override
+        public String getCreatedAtVersion() {
+          return null;
+        }
+
+        @Override
         public boolean existsResource(String iName) {
           return false;
         }

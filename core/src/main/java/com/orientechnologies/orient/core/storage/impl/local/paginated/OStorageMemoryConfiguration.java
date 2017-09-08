@@ -64,14 +64,6 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
   }
 
   @Override
-  public void lock() throws IOException {
-  }
-
-  @Override
-  public void unlock() throws IOException {
-  }
-
-  @Override
   public void update() throws OSerializationException {
     try {
       serializedContent = toStream(streamCharset);
@@ -81,10 +73,6 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
   }
 
   public void synch() throws IOException {
-  }
-
-  @Override
-  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
   }
 
 }

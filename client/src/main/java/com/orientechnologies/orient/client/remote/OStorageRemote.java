@@ -345,6 +345,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return false;
   }
 
+  /**
+   * Supported only in embedded storage.
+   * Use <code>SELECT FROM metadata:storage</code> instead.
+   */
+  @Override
+  public String getCreatedAtVersion() {
+    throw new UnsupportedOperationException("Supported only in embedded storage. Use 'SELECT FROM metadata:storage' instead.");
+  }
+
   public int getSessionId() {
     OStorageRemoteSession session = getCurrentSession();
     return session != null ? session.getSessionId() : -1;
@@ -1566,11 +1575,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
    * Acquire a network channel from the pool. Don't lock the write stream since the connection usage is exclusive.
    *
    * @param iCommand id. Ids described at {@link OChannelBinaryProtocol}
-   * @param session
    *
    * @return connection to server
-   *
-   * @throws IOException
    */
   public OChannelBinaryAsynchClient beginRequest(final OChannelBinaryAsynchClient network, final byte iCommand,
       OStorageRemoteSession session) throws IOException {

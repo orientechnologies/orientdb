@@ -49,10 +49,6 @@ import java.util.concurrent.Callable;
 public interface OStorage extends OBackupable, OSharedContainer {
   String CLUSTER_DEFAULT_NAME = "default";
 
-  enum SIZE {
-    TINY, MEDIUM, LARGE, HUGE
-  }
-
   enum STATUS {
     CLOSED, OPEN, CLOSING, @Deprecated OPENING
   }
@@ -60,9 +56,9 @@ public interface OStorage extends OBackupable, OSharedContainer {
   enum LOCKING_STRATEGY {
     NONE, DEFAULT, SHARED_LOCK, EXCLUSIVE_LOCK,
 
-    @Deprecated KEEP_SHARED_LOCK,
+    @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated KEEP_SHARED_LOCK,
 
-    @Deprecated KEEP_EXCLUSIVE_LOCK
+    @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated KEEP_EXCLUSIVE_LOCK
   }
 
   void open(String iUserName, String iUserPassword, final OContextConfiguration contextConfiguration);
@@ -125,22 +121,15 @@ public interface OStorage extends OBackupable, OSharedContainer {
   /**
    * Add a new cluster into the storage.
    *
-   * @param iClusterName
-   *          name of the cluster
-   * @param forceListBased
-   * @param iParameters
+   * @param iClusterName name of the cluster
    */
   int addCluster(String iClusterName, boolean forceListBased, Object... iParameters);
 
   /**
    * Add a new cluster into the storage.
    *
-   * @param iClusterName
-   *          name of the cluster
-   * @param iRequestedId
-   *          requested id of the cluster
-   * @param forceListBased
-   * @param iParameters
+   * @param iClusterName name of the cluster
+   * @param iRequestedId requested id of the cluster
    */
   int addCluster(String iClusterName, int iRequestedId, boolean forceListBased, Object... iParameters);
 
@@ -149,8 +138,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
   /**
    * Drops a cluster.
    *
-   * @param iId
-   *          id of the cluster to delete
+   * @param iId id of the cluster to delete
+   *
    * @return true if has been removed, otherwise false
    */
   boolean dropCluster(int iId, final boolean iTruncate);
@@ -189,6 +178,11 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   long getVersion();
 
+  /**
+   * @return Version of product release under which storage was created.
+   */
+  String getCreatedAtVersion();
+
   void synch();
 
   /**
@@ -200,8 +194,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
    * Returns a pair of long values telling the begin and end positions of data in the requested cluster. Useful to know the range of
    * the records.
    *
-   * @param currentClusterId
-   *          Cluster id
+   * @param currentClusterId Cluster id
    */
   long[] getClusterDataRange(int currentClusterId);
 
@@ -217,15 +210,11 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   /**
    * Returns the current storage's status
-   *
-   * @return
    */
   STATUS getStatus();
 
   /**
    * Returns the storage's type.
-   *
-   * @return
    */
   String getType();
 
@@ -250,8 +239,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   void setConflictStrategy(ORecordConflictStrategy iResolver);
 
   /**
-   *
-   * @param backupDirectory
    * @return Backup file name
    */
   String incrementalBackup(String backupDirectory);

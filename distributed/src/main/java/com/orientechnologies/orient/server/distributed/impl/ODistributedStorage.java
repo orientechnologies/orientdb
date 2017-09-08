@@ -96,8 +96,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   private ODistributedStorageEventListener           eventListener;
 
   private volatile ODistributedConfiguration distributedConfiguration;
-  private volatile boolean       running              = true;
-  private volatile File          lastValidBackup      = null;
+  private volatile boolean running         = true;
+  private volatile File    lastValidBackup = null;
 
   public ODistributedStorage(final OServer iServer, final String dbName) {
     this.serverInstance = iServer;
@@ -126,6 +126,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     else
       asynchronousOperationsQueue = new LinkedBlockingQueue<OAsynchDistributedOperation>(queueSize);
     startAsynchronousWorker();
+  }
+
+  /**
+   * Supported only in embedded storage.
+   * Use <code>SELECT FROM metadata:storage</code> instead.
+   */
+  @Override
+  public String getCreatedAtVersion() {
+    throw new UnsupportedOperationException("Supported only in embedded storage. Use 'SELECT FROM metadata:storage' instead.");
   }
 
   public void startAsynchronousWorker() {
@@ -188,7 +197,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     asynchWorker.setName("OrientDB Distributed asynch ops node=" + getNodeId() + " db=" + getName());
     asynchWorker.start();
   }
-
 
   @Override
   public boolean isDistributed() {
@@ -566,8 +574,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   /**
    * Only idempotent commands that don't involve any other node can be executed locally.
-   *
-   * @return
    */
   protected boolean executeOnlyLocally(final String localNodeName, final ODistributedConfiguration dbCfg,
       final OCommandExecutor exec, final Collection<String> involvedClusters, final Collection<String> nodes) {
@@ -1430,7 +1436,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
           try {
 
-            final List<ORecordOperation> result = txManager.commit(ODatabaseRecordThreadLocal.INSTANCE.get(), iTx, callback, eventListener);
+            final List<ORecordOperation> result = txManager
+                .commit(ODatabaseRecordThreadLocal.INSTANCE.get(), iTx, callback, eventListener);
 
             if (result != null) {
               for (ORecordOperation r : result) {

@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,22 +55,23 @@ import java.util.concurrent.ConcurrentMap;
  * data segments</li>
  * <li>14 = no changes, but version was incremented</li>
  * <li>15 = introduced encryption and encryptionKey</li>
+ * <li>18 = we keep version of product release under which storage was created</li>
  * </ul>
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId CONFIG_RID = new OImmutableRecordId(0, 0);
+  protected static final ORecordId CONFIG_RID = new OImmutableRecordId(0, 0);
 
-  public static final String DEFAULT_CHARSET         = "UTF-8";
-  public static final String DEFAULT_DATE_FORMAT     = "yyyy-MM-dd";
-  public static final String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+  private static final String DEFAULT_CHARSET         = "UTF-8";
+  public static final  String DEFAULT_DATE_FORMAT     = "yyyy-MM-dd";
+  public static final  String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
   private String charset;
-  public static final int                              CURRENT_VERSION               = 17;
-  public static final int                              CURRENT_BINARY_FORMAT_VERSION = 12;
-  private final       List<OStorageEntryConfiguration> properties                    = new ArrayList<OStorageEntryConfiguration>();
+  public static final  int                              CURRENT_VERSION               = 17;
+  private static final int                              CURRENT_BINARY_FORMAT_VERSION = 12;
+  private final        List<OStorageEntryConfiguration> properties                    = new ArrayList<>();
   protected final transient  OStorage                               storage;
   private volatile           OContextConfiguration                  configuration;
   public volatile            int                                    version;
@@ -82,13 +82,12 @@ public class OStorageConfiguration implements OSerializableStream {
   public volatile            String                                 dateFormat;
   public volatile            String                                 dateTimeFormat;
   public volatile            int                                    binaryFormatVersion;
-  public volatile            OStorageSegmentConfiguration           fileTemplate;
+  protected volatile         OStorageSegmentConfiguration           fileTemplate;
   public volatile            List<OStorageClusterConfiguration>     clusters;
   private volatile           String                                 localeLanguage;
   private volatile           String                                 localeCountry;
   private volatile           TimeZone                               timeZone;
   private transient volatile Locale                                 localeInstance;
-  private transient volatile DecimalFormatSymbols                   unusualSymbols;
   private volatile           String                                 clusterSelection;
   private volatile           String                                 conflictStrategy;
   private volatile           String                                 recordSerializer;
@@ -97,6 +96,10 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile           ConcurrentMap<String, IndexEngineData> indexEngines;
   private volatile transient boolean validation = true;
   private volatile boolean txRequiredForSQLGraphOperations;
+  /**
+   * Version of product release under which storage was created
+   */
+  private volatile String  createdAtVersion;
 
   protected final Charset streamCharset;
 
@@ -109,11 +112,25 @@ public class OStorageConfiguration implements OSerializableStream {
     clear();
   }
 
+  /**
+   * Sets version of product release under which storage was created.
+   */
+  public void setCreationVersion(String version) {
+    this.createdAtVersion = version;
+  }
+
+  /**
+   * @return version of product release under which storage was created.
+   */
+  public String getCreatedAtVersion() {
+    return createdAtVersion;
+  }
+
   public void initConfiguration(OContextConfiguration conf) {
     this.configuration = conf;
   }
 
-  public void clear() {
+  private void clear() {
     fileTemplate = new OStorageSegmentConfiguration();
 
     charset = DEFAULT_CHARSET;
@@ -134,7 +151,6 @@ public class OStorageConfiguration implements OSerializableStream {
     localeCountry = Locale.getDefault().getCountry();
     timeZone = TimeZone.getDefault();
     localeInstance = null;
-    unusualSymbols = null;
     clusterSelection = null;
     conflictStrategy = null;
 
@@ -147,7 +163,7 @@ public class OStorageConfiguration implements OSerializableStream {
     recordSerializerVersion = 0;
     strictSQL = false;
     txRequiredForSQLGraphOperations = true;
-    indexEngines = new ConcurrentHashMap<String, IndexEngineData>();
+    indexEngines = new ConcurrentHashMap<>();
     validation = getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION);
 
     binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
@@ -179,11 +195,6 @@ public class OStorageConfiguration implements OSerializableStream {
    * This method load the record information by the internal cluster segment. It's for compatibility with older database than
    * 0.9.25.
    *
-   * @param configuration
-   *
-   * @return
-   *
-   * @throws OSerializationException
    * @compatibility 0.9.25
    */
   public OStorageConfiguration load(final OContextConfiguration configuration) throws OSerializationException {
@@ -204,10 +215,6 @@ public class OStorageConfiguration implements OSerializableStream {
     storage.updateRecord(CONFIG_RID, true, record, -1, OBlob.RECORD_TYPE, 0, null);
   }
 
-  public boolean isEmpty() {
-    return clusters.isEmpty();
-  }
-
   public String getDirectory() {
     return fileTemplate.location != null ?
         fileTemplate.getLocation() :
@@ -219,10 +226,6 @@ public class OStorageConfiguration implements OSerializableStream {
       localeInstance = new Locale(localeLanguage, localeCountry);
 
     return localeInstance;
-  }
-
-  public void resetLocaleInstance() {
-    localeInstance = null;
   }
 
   public SimpleDateFormat getDateFormatInstance() {
@@ -239,12 +242,7 @@ public class OStorageConfiguration implements OSerializableStream {
     return dateTimeFormatInstance;
   }
 
-  public DecimalFormatSymbols getUnusualSymbols() {
-    if (unusualSymbols == null)
-      unusualSymbols = new DecimalFormatSymbols(getLocaleInstance());
-    return unusualSymbols;
-  }
-
+  @SuppressWarnings("ConstantConditions")
   public void fromStream(final byte[] stream, int offset, int length, Charset charset) {
     clear();
 
@@ -265,7 +263,7 @@ public class OStorageConfiguration implements OSerializableStream {
     localeLanguage = read(values[index++]);
     localeCountry = read(values[index++]);
 
-    //@COMPATIBILIY with 2.1 version, in this version locale was not mandatory
+    //@COMPATIBILITY with 2.1 version, in this version locale was not mandatory
     if (localeLanguage == null || localeCountry == null) {
       final Locale locale = Locale.getDefault();
 
@@ -304,13 +302,15 @@ public class OStorageConfiguration implements OSerializableStream {
         continue;
 
       final String clusterName = read(values[index++]);
-      final int targetDataSegmentId = Integer.parseInt(read(values[index++]));
+      //noinspection ResultOfMethodCallIgnored
+      read(values[index++]);
 
       final String clusterType = read(values[index++]);
 
       final OStorageClusterConfiguration currentCluster;
 
-      if (clusterType.equals("d")) {
+      switch (clusterType) {
+      case "d":
         final boolean cc = Boolean.valueOf(read(values[index++]));
         final float bb = Float.valueOf(read(values[index++]));
         final float aa = Float.valueOf(read(values[index++]));
@@ -328,18 +328,20 @@ public class OStorageConfiguration implements OSerializableStream {
 
         final String clusterConflictStrategy = read(values[index++]);
 
-        OStorageClusterConfiguration.STATUS status = OStorageClusterConfiguration.STATUS.ONLINE;
+        OStorageClusterConfiguration.STATUS status;
         status = OStorageClusterConfiguration.STATUS.valueOf(read(values[index++]));
 
         currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
             clusterCompression, clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
             clusterConflictStrategy, status);
 
-      } else if (clusterType.equals("p"))
+        break;
+      case "p":
         // PHYSICAL CLUSTER
         throw new IllegalArgumentException("Cluster of storage 'local' are not supported since 2.0");
-      else
+      default:
         throw new IllegalArgumentException("Unsupported cluster type: " + clusterType);
+      }
 
       // MAKE ROOMS, EVENTUALLY FILLING EMPTIES ENTRIES
       for (int c = clusters.size(); c <= clusterId; ++c)
@@ -420,7 +422,7 @@ public class OStorageConfiguration implements OSerializableStream {
         if (propertiesSize == 0)
           engineProperties = null;
         else {
-          engineProperties = new HashMap<String, String>(propertiesSize);
+          engineProperties = new HashMap<>(propertiesSize);
           for (int n = 0; n < propertiesSize; n++) {
             final String key = read(values[index++]);
             final String value = read(values[index++]);
@@ -434,11 +436,17 @@ public class OStorageConfiguration implements OSerializableStream {
         indexEngines.put(name, indexEngineData);
       }
     }
+
+    if (version > 17) {
+      //noinspection UnusedAssignment
+      createdAtVersion = read(values[index++]);
+    }
   }
 
   /**
    * @deprecated because method uses native encoding use {@link #fromStream(byte[], int, int, Charset)} instead.
    */
+  @Override
   @Deprecated
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
     fromStream(iStream, 0, iStream.length, Charset.defaultCharset());
@@ -448,6 +456,7 @@ public class OStorageConfiguration implements OSerializableStream {
   /**
    * @deprecated because method uses native encoding use {@link #toStream(Charset)} instead.
    */
+  @Override
   public byte[] toStream() throws OSerializationException {
     return toStream(Integer.MAX_VALUE, Charset.defaultCharset());
   }
@@ -458,12 +467,6 @@ public class OStorageConfiguration implements OSerializableStream {
 
   /**
    * Added version used for managed Network Versioning.
-   *
-   * @param iNetworkVersion
-   *
-   * @return
-   *
-   * @throws OSerializationException
    */
   public byte[] toStream(final int iNetworkVersion, Charset charset) throws OSerializationException {
     final StringBuilder buffer = new StringBuilder(8192);
@@ -513,7 +516,7 @@ public class OStorageConfiguration implements OSerializableStream {
         if (iNetworkVersion > 24)
           write(buffer, paginatedClusterConfiguration.conflictStrategy);
         if (iNetworkVersion > 25)
-          write(buffer, paginatedClusterConfiguration.getStatus().name().toString());
+          write(buffer, paginatedClusterConfiguration.getStatus().name());
       }
     }
     if (iNetworkVersion <= 25) {
@@ -591,16 +594,12 @@ public class OStorageConfiguration implements OSerializableStream {
       }
     }
 
+    write(buffer, createdAtVersion);
+
     // PLAIN: ALLOCATE ENOUGH SPACE TO REUSE IT EVERY TIME
     buffer.append("|");
 
     return buffer.toString().getBytes(charset);
-  }
-
-  public void lock() throws IOException {
-  }
-
-  public void unlock() throws IOException {
   }
 
   public void create() throws IOException {
@@ -608,9 +607,6 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public void synch() throws IOException {
-  }
-
-  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
   }
 
   public void delete() throws IOException {
@@ -768,8 +764,7 @@ public class OStorageConfiguration implements OSerializableStream {
       validation = "true".equalsIgnoreCase(iValue);
 
     synchronized (properties) {
-      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
-        final OStorageEntryConfiguration e = it.next();
+      for (final OStorageEntryConfiguration e : properties) {
         if (e.name.equalsIgnoreCase(iName)) {
           // FOUND: OVERWRITE IT
           e.value = iValue;
@@ -784,23 +779,11 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public String getProperty(final String iName) {
     synchronized (properties) {
-      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
-        final OStorageEntryConfiguration e = it.next();
+      for (final OStorageEntryConfiguration e : properties) {
         if (e.name.equalsIgnoreCase(iName))
           return e.value;
       }
       return null;
-    }
-  }
-
-  public boolean existsProperty(final String iName) {
-    synchronized (properties) {
-      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
-        final OStorageEntryConfiguration e = it.next();
-        if (e.name.equalsIgnoreCase(iName))
-          return true;
-      }
-      return false;
     }
   }
 
@@ -839,12 +822,14 @@ public class OStorageConfiguration implements OSerializableStream {
     iSegment.fileIncrementSize = read(values[index++]);
     iSegment.defrag = read(values[index++]);
 
+    @SuppressWarnings("ConstantConditions")
     final int size = Integer.parseInt(read(values[index++]));
     iSegment.infoFiles = new OStorageFileConfiguration[size];
     String fileName;
     for (int i = 0; i < size; ++i) {
       fileName = read(values[index++]);
 
+      //noinspection ConstantConditions
       if (!fileName.contains("$")) {
         // @COMPATIBILITY 0.9.25
         int pos = fileName.indexOf("/databases");
@@ -928,7 +913,7 @@ public class OStorageConfiguration implements OSerializableStream {
       if (engineProperties == null)
         this.engineProperties = null;
       else
-        this.engineProperties = new HashMap<String, String>(engineProperties);
+        this.engineProperties = new HashMap<>(engineProperties);
     }
 
     public int getKeySize() {

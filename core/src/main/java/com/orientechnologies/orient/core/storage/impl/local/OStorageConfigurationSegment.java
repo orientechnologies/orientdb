@@ -145,14 +145,6 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   }
 
   @Override
-  public void lock() throws IOException {
-  }
-
-  @Override
-  public void unlock() throws IOException {
-  }
-
-  @Override
   public void update() throws OSerializationException {
     try {
       final OFile f = segment.getFile();
@@ -194,10 +186,6 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
   public void synch() throws IOException {
     segment.getFile().synch();
-  }
-
-  @Override
-  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
   }
 
   public String getFileName() {
