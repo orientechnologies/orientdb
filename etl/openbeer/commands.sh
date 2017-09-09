@@ -1,9 +1,8 @@
 #!/bin/sh
 
 
-#point to your orientDB installation
-#ORIENTDB_HOME="/opt/orientdb/orientdb-community-3.0.0m2/"
-ORIENTDB_HOME="/opt/orientdb/orientdb-community-importers-2.2.25/"
+#point to your orientDB installation: absolute path required
+ORIENTDB_HOME="/opt/orientdb/orientdb-community-3.0.0m2/"
 
 oetl_sh=$ORIENTDB_HOME/bin/oetl.sh
 
@@ -29,10 +28,10 @@ configs=( "categories.json" "styles.json" "breweries.json" "beers.json" )
 
 for i in "${configs[@]}"
 do
-    echo "-------- importing $i ------------"
+    echo "\n-------- importing $i ------------\n"
 
     $oetl_sh $(pwd)/$i -databasePath=$(pwd) -sourceDirPath=$(pwd)
 
-    echo "-------- imported $i ------------"
+    echo "\n-------- imported $i ------------\n"
 done
 
