@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,7 +53,8 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
 
   @Test
   public void testOneObject() {
-    configure("{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }");
+    configure(
+        "{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }");
     proc.execute();
 
     assertEquals(1, getResult().size());
@@ -84,6 +86,42 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
 
       assertThat(doc.<Integer>field("id")).isEqualTo(i);
       i++;
+    }
+  }
+
+  @Test
+  public void testHaltOnBadInput() {
+
+    configure("{\"source\": {\n"
+        + "    \"file\": {\n"
+        + "      \"path\": \"./src/test/resources/comments.json\"\n"
+        + "    }\n"
+        + "  }, extractor : { json: {} }, loader: { test: {} } }");
+    proc.execute();
+
+    assertThat(getResult().size()).isEqualTo(2);
+    int i = 0;
+    for (ODocument doc : getResult()) {
+      assertThat(doc.<Integer>field("id")).isLessThan(5);
+    }
+  }
+  @Test
+  public void testSkipOnBadInput() {
+
+    configure(" { \"config\": {\n"
+        + "    \"haltOnError\": false\n"
+        + "  },"
+        + "\"source\": {\n"
+        + "    \"file\": {\n"
+        + "      \"path\": \"./src/test/resources/comments.json\"\n"
+        + "    }\n"
+        + "  }, extractor : { json: {} }, loader: { test: {} } }");
+    proc.execute();
+
+    assertThat(getResult().size()).isEqualTo(4);
+    int i = 0;
+    for (ODocument doc : getResult()) {
+//      assertThat(doc.<Integer>field("id")).isLessThan(5);
     }
   }
 }

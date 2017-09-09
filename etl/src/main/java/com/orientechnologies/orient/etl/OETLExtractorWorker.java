@@ -19,40 +19,55 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.etl.extractor.OETLExtractor;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by frank on 14/06/2016.
  */
 class OETLExtractorWorker implements Runnable {
   private final BlockingQueue<OETLExtractedItem> queue;
-  private final AtomicLong                       counter;
-  private       OETLProcessor                    oetlProcessor;
+  private final boolean                          haltOnError;
+  private final OETLExtractor                    extractor;
 
-  public OETLExtractorWorker(OETLProcessor oetlProcessor, BlockingQueue<OETLExtractedItem> queue, AtomicLong counter) {
-    this.oetlProcessor = oetlProcessor;
+  public OETLExtractorWorker(OETLExtractor extractor, BlockingQueue<OETLExtractedItem> queue, boolean haltOnError) {
     this.queue = queue;
-    this.counter = counter;
+    this.haltOnError = haltOnError;
+    this.extractor = extractor;
   }
 
   @Override
   public void run() {
-    try {
-//      oetlProcessor.out(OETLProcessor.LOG_LEVELS.DEBUG, "Start extracting");
-      OLogManager.instance().debug(this, "Start extracting");
-      while (oetlProcessor.extractor.hasNext()) {
-        // EXTRACTOR
-        final OETLExtractedItem current = oetlProcessor.extractor.next();
+    OLogManager.instance().debug(this, "Start extracting");
+    boolean fetch = true;
+    while (fetch == true) {
 
-        // enqueue for transform and load
-        queue.put(current);
-        counter.incrementAndGet();
+      try {
+        if (extractor.hasNext()) {
+          // EXTRACTOR
+          final OETLExtractedItem current = extractor.next();
+
+          // enqueue for transform and load
+          queue.put(current);
+        } else {
+
+          queue.put(new OETLExtractedItem(true));
+          fetch = false;
+        }
+      } catch (InterruptedException e) {
+
+      } catch (Exception e) {
+        if (haltOnError) {
+          try {
+            queue.put(new OETLExtractedItem(true));
+          } catch (InterruptedException e1) {
+
+          }
+          fetch = false;
+          throw e;
+        }
       }
-      queue.put(new OETLExtractedItem(true));
-    } catch (InterruptedException e) {
-
     }
   }
 }
