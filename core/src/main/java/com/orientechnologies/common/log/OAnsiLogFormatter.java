@@ -20,7 +20,7 @@
 
 package com.orientechnologies.common.log;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
@@ -28,7 +28,7 @@ import static java.util.logging.Level.SEVERE;
 
 /**
  * Log formatter that uses ANSI code if they are available and enabled.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OAnsiLogFormatter extends OLogFormatter {
@@ -43,9 +43,7 @@ public class OAnsiLogFormatter extends OLogFormatter {
     final StringBuilder buffer = new StringBuilder(512);
     buffer.append(EOL);
     buffer.append("$ANSI{cyan ");
-    synchronized (dateFormat) {
-      buffer.append(dateFormat.format(new Date()));
-    }
+    buffer.append(dateFormatter.format(LocalDateTime.now()));
     buffer.append("}");
 
     if (OAnsiCode.isSupportsColors()) {
