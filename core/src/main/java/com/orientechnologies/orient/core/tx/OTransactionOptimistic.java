@@ -379,7 +379,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = iStatus;
   }
 
-  public ORecordOperation addRecord(final ORecord iRecord, final byte iStatus, String iClusterName) {
+  public ORecordOperation addRecord(final ORecord iRecord, byte iStatus, String iClusterName) {
     changed = true;
     checkTransaction();
 
@@ -390,6 +390,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       changedDocuments.remove(iRecord);
 
     try {
+      final ORecordId rid = (ORecordId) iRecord.getIdentity();
+      ORecordOperation txEntry = getRecordEntry(rid);
+      if (iStatus == ORecordOperation.CREATED && txEntry != null) {
+        iStatus = ORecordOperation.UPDATED;
+      }
       switch (iStatus) {
       case ORecordOperation.CREATED: {
         database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
@@ -418,7 +423,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       }
 
       try {
-        final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
         if (!rid.isValid()) {
           ORecordInternal.onBeforeIdentityChanged(iRecord);
@@ -428,8 +432,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
           ORecordInternal.onAfterIdentityChanged(iRecord);
         }
-
-        ORecordOperation txEntry = getRecordEntry(rid);
 
         if (txEntry == null) {
           if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {

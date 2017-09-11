@@ -121,6 +121,7 @@ public class OETLProcessor {
       logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase(Locale.ENGLISH)).toJulLevel();
 
     final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
+
     if (cfgHaltOnError != null)
       haltOnError = cfgHaltOnError;
 
@@ -190,7 +191,6 @@ public class OETLProcessor {
 
       BlockingQueue<OETLExtractedItem> queue = new LinkedBlockingQueue<OETLExtractedItem>(workers * 500);
 
-      final AtomicLong counter = new AtomicLong();
 
       List<CompletableFuture<Void>> futures = IntStream.range(0, workers).boxed()
           .map(i -> CompletableFuture.runAsync(
@@ -199,7 +199,7 @@ public class OETLProcessor {
               executor))
           .collect(Collectors.toList());
 
-      futures.add(CompletableFuture.runAsync(new OETLExtractorWorker(this, queue, counter), executor));
+      futures.add(CompletableFuture.runAsync(new OETLExtractorWorker(extractor, queue, haltOnError), executor));
 
       futures.forEach(cf -> cf.join());
 

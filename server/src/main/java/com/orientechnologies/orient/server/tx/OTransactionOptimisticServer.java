@@ -142,6 +142,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
           }
         }
 
+        database.getLocalCache().updateRecord(entry.getValue().getRecord());
         addRecord(entry.getValue().getRecord(), entry.getValue().type, null, database.getTransaction());
       }
       tempEntries.clear();
@@ -310,12 +311,12 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
 
         if (!rid.isPersistent() && !rid.isTemporary()) {
           ORecordId oldRid = rid.copy();
-          ORecordInternal.onBeforeIdentityChanged(iRecord);
-          if (rid.getClusterId() == ORecordId.CLUSTER_POS_INVALID)
+          if (rid.getClusterPosition() == ORecordId.CLUSTER_POS_INVALID) {
+            ORecordInternal.onBeforeIdentityChanged(iRecord);
             rid.setClusterPosition(newObjectCounter--);
-          database.assignAndCheckCluster(iRecord, iClusterName);
-          updatedRids.put(oldRid, rid);
-          ORecordInternal.onAfterIdentityChanged(iRecord);
+            updatedRids.put(oldRid, rid);
+            ORecordInternal.onAfterIdentityChanged(iRecord);
+          }
         }
 
         ORecordOperation txEntry = getRecordEntry(rid);
@@ -418,6 +419,21 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
           break;
         }
       }
+    }
+  }
+
+  public void assignClusters() {
+    for (ORecordOperation entry : allEntries.values()) {
+      ORecordId rid = (ORecordId) entry.getRID();
+      ORecord record = entry.getRecord();
+      if (!rid.isPersistent() && !rid.isTemporary()) {
+        ORecordId oldRid = rid.copy();
+        ORecordInternal.onBeforeIdentityChanged(record);
+        database.assignAndCheckCluster(record, null);
+        updatedRids.put(rid, oldRid);
+        ORecordInternal.onAfterIdentityChanged(record);
+      }
+
     }
   }
 

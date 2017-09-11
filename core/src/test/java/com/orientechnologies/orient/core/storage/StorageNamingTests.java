@@ -238,6 +238,11 @@ public class StorageNamingTests {
     }
 
     @Override
+    public String getCreatedAtVersion() {
+      return null;
+    }
+
+    @Override
     public void synch() {
 
     }

@@ -2,6 +2,11 @@ package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
@@ -23,12 +28,12 @@ public class OQueryResponse implements OBinaryResponse {
 
   private String                   queryId;
   private boolean                  txChanges;
-  private List<OResult>            result;
+  private List<OResultInternal>    result;
   private Optional<OExecutionPlan> executionPlan;
   private boolean                  hasNextPage;
   private Map<String, Long>        queryStats;
 
-  public OQueryResponse(String queryId, boolean txChanges, List<OResult> result, Optional<OExecutionPlan> executionPlan,
+  public OQueryResponse(String queryId, boolean txChanges, List<OResultInternal> result, Optional<OExecutionPlan> executionPlan,
       boolean hasNextPage, Map<String, Long> queryStats) {
     this.queryId = queryId;
     this.txChanges = txChanges;
@@ -125,7 +130,7 @@ public class OQueryResponse implements OBinaryResponse {
     return queryId;
   }
 
-  public List<OResult> getResult() {
+  public List<OResultInternal> getResult() {
     return result;
   }
 

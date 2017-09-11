@@ -43,9 +43,7 @@ class OScAndOperator extends SimpleNode implements OBinaryCompareOperator {
   }
 
   @Override public OScAndOperator copy() {
-    OScAndOperator result = new OScAndOperator(-1);
-    result.lowLevelOperator = lowLevelOperator;
-    return result;
+    return this;
   }
 
   @Override public boolean equals(Object obj) {

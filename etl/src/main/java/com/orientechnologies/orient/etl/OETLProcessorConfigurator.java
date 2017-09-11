@@ -49,12 +49,12 @@ public class OETLProcessorConfigurator {
           final String config = OIOUtils.readFileAsString(new File(arg));
 
           configuration.merge(new ODocument().fromJSON(config, "noMap"), true, true);
-          ODocument cfgGlobal = configuration.field("config");
-          if (cfgGlobal != null) {
-            for (String f : cfgGlobal.fieldNames()) {
-              context.setVariable(f, cfgGlobal.field(f));
-            }
-          }
+//          ODocument cfgGlobal = configuration.field("config");
+//          if (cfgGlobal != null) {
+//            for (String f : cfgGlobal.fieldNames()) {
+//              context.setVariable(f, cfgGlobal.field(f));
+//            }
+//          }
         } catch (IOException e) {
           throw OException.wrapException(new OConfigurationException("Error on loading config file: " + arg), e);
         }
@@ -73,6 +73,16 @@ public class OETLProcessorConfigurator {
   }
 
   public OETLProcessor parse(final ODocument cfg, final OCommandContext context) {
+
+    //setup contex vars
+
+    ODocument cfgGlobal = cfg.field("config");
+    if (cfgGlobal != null) {
+      for (String f : cfgGlobal.fieldNames()) {
+        if (context.getVariable(f) == null)
+          context.setVariable(f, cfgGlobal.field(f));
+      }
+    }
 
     if (cfg.<ODocument>field("extractor") == null)
       throw new IllegalArgumentException("No Extractor configured");

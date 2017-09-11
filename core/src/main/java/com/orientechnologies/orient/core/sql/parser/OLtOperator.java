@@ -49,7 +49,7 @@ public class OLtOperator extends SimpleNode implements OBinaryCompareOperator {
 
   @Override
   public OLtOperator copy() {
-    return new OLtOperator(-1);
+    return this;
   }
 
   @Override

@@ -956,9 +956,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
         Object executed = item.execute(mapDoc, ctx);
         // Force Embedded Document
-        if(executed instanceof ODocument && !((ODocument) executed).getIdentity().isValid()){
+        if (executed instanceof ODocument && !((ODocument) executed).getIdentity().isValid()) {
           doc.setProperty(returnAlias.getStringValue(), executed, OType.EMBEDDED);
-        }else {
+        } else {
           doc.setProperty(returnAlias.getStringValue(), executed);
         }
         i++;
@@ -1076,11 +1076,13 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       StringBuilder builder = new StringBuilder();
       oWhereClause.toString(ctx.getInputParameters(), builder);
 
-      synchronized (oWhereClause) { //this instance is shared...
-        replaceIdentifier(oWhereClause, "$currentMatch", "@this");
-        text = "(select from " + className + " where " + builder.toString().replaceAll("\\$currentMatch", "@this") + ")";
-        replaceIdentifier(oWhereClause, "@this", "$currentMatch");
-      }
+      //TODO make it more OO!
+//      synchronized (oWhereClause) { //this instance is shared...
+//        replaceIdentifier(oWhereClause, "$currentMatch", "@this"); //
+//        newWhere = oWhereClause.replaceIdentifier("$currentMatch", "@this");
+      text = "(select from " + className + " where " + builder.toString().replaceAll("\\$currentMatch", "@this") + ")";
+//        replaceIdentifier(oWhereClause, "@this", "$currentMatch");
+//      }
     }
     OSQLTarget target = new OSQLTarget(text, ctx);
     Iterable targetResult = (Iterable) target.getTargetRecords();
@@ -1099,26 +1101,25 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return targetResult.iterator();
   }
 
-  private void replaceIdentifier(SimpleNode node, String from, String to) {
-    if (node instanceof OIdentifier) {
-      if (from.equals(node.getValue())) {
-        ((OIdentifier) node).setValue(to);
-      }
-    } else {
-      for (int i = 0; i < node.jjtGetNumChildren(); i++) {
-        replaceIdentifier((SimpleNode) node.jjtGetChild(i), from, to);
-      }
-    }
-
-  }
+//  private void replaceIdentifier(SimpleNode node, String from, String to) {
+//    if (node instanceof OIdentifier) {
+//      if (from.equals(node.getValue())) {
+//        ((OIdentifier) node).setStringValue(to);
+//      }
+//    } else {
+//      for (int i = 0; i < node.jjtGetNumChildren(); i++) {
+//        replaceIdentifier((SimpleNode) node.jjtGetChild(i), from, to);
+//      }
+//    }
+//
+//  }
 
   private OSelectStatement buildSelectStatement(String className, OWhereClause oWhereClause) {
     OSelectStatement stm = new OSelectStatement(-1);
     stm.whereClause = oWhereClause;
     stm.target = new OFromClause(-1);
     stm.target.item = new OFromItem(-1);
-    stm.target.item.identifier = new OIdentifier(-1);
-    stm.target.item.identifier.value = className;
+    stm.target.item.identifier = new OIdentifier(className);
     return stm;
   }
 

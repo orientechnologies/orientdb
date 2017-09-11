@@ -40,6 +40,7 @@ import java.util.Set;
 /**
  * Remote administration class of OrientDB Server instances.
  */
+@Deprecated
 public class OServerAdmin {
   protected OStorageRemote storage;
   protected OStorageRemoteSession session      = new OStorageRemoteSession(-1);
@@ -53,6 +54,7 @@ public class OServerAdmin {
    *
    * @throws IOException
    */
+  @Deprecated
   public OServerAdmin(String iURL) throws IOException {
     if (iURL.startsWith(OEngineRemote.NAME))
       iURL = iURL.substring(OEngineRemote.NAME.length() + 1);
@@ -76,6 +78,7 @@ public class OServerAdmin {
    *
    * @param iStorage
    */
+  @Deprecated
   public OServerAdmin(final OStorageRemote iStorage) {
     storage = iStorage;
   }
@@ -90,6 +93,7 @@ public class OServerAdmin {
    *
    * @throws IOException
    */
+  @Deprecated
   public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
     final String username;
     final String password;
@@ -133,6 +137,7 @@ public class OServerAdmin {
    *
    * @throws IOException
    */
+  @Deprecated
   public synchronized Map<String, String> listDatabases() throws IOException {
     OListDatabasesRequest request = new OListDatabasesRequest();
     OListDatabasesResponse response = networkAdminOperation(request, "Cannot retrieve the configuration list");
@@ -144,6 +149,7 @@ public class OServerAdmin {
    *
    * @throws IOException
    */
+  @Deprecated
   public synchronized ODocument getServerInfo() throws IOException {
     OServerInfoRequest request = new OServerInfoRequest();
     OServerInfoResponse response = networkAdminOperation(request, "Cannot retrieve server information");
@@ -174,6 +180,7 @@ public class OServerAdmin {
    *
    * @throws IOException
    */
+  @Deprecated
   public synchronized OServerAdmin createDatabase(final String iDatabaseType, String iStorageMode) throws IOException {
     return createDatabase(storage.getName(), iDatabaseType, iStorageMode);
   }

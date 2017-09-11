@@ -75,7 +75,7 @@ public class OInOperator extends SimpleNode implements OBinaryCompareOperator {
   }
 
   @Override public OInOperator copy() {
-    return new OInOperator(-1);
+    return this;
   }
 
   @Override public boolean equals(Object obj) {

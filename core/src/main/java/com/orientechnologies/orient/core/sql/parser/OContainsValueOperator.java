@@ -34,7 +34,7 @@ public class OContainsValueOperator extends SimpleNode implements OBinaryCompare
   }
 
   @Override public OContainsValueOperator copy() {
-    return new OContainsValueOperator(-1);
+    return this;
   }
 
   @Override public String toString() {

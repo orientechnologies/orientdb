@@ -31,7 +31,7 @@ public class OLuceneOperator extends SimpleNode implements OBinaryCompareOperato
   }
 
   @Override public OLuceneOperator copy() {
-    return new OLuceneOperator(-1);
+    return this;
   }
 
   @Override public boolean equals(Object obj) {

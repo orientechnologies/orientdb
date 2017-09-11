@@ -42,14 +42,6 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
     super(iStorage, Charset.forName("UTF-8"));
   }
 
-  public void close() throws IOException {
-    super.close();
-  }
-
-  public void create() throws IOException {
-    super.create();
-  }
-
   @Override
   public OStorageConfiguration load(final OContextConfiguration configuration) throws OSerializationException {
     initConfiguration(configuration);
@@ -64,14 +56,6 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
   }
 
   @Override
-  public void lock() throws IOException {
-  }
-
-  @Override
-  public void unlock() throws IOException {
-  }
-
-  @Override
   public void update() throws OSerializationException {
     try {
       serializedContent = toStream(streamCharset);
@@ -80,11 +64,8 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
     }
   }
 
-  public void synch() throws IOException {
-  }
-
   @Override
-  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+  public void synch() throws IOException {
   }
 
 }

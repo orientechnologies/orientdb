@@ -39,8 +39,7 @@ public class AggregateProjectionSplit {
 
 
   public OIdentifier getNextAlias() {
-    OIdentifier result = new OIdentifier(-1);
-    result.setStringValue(GENERATED_ALIAS_PREFIX + (nextAliasId++));
+    OIdentifier result = new OIdentifier(GENERATED_ALIAS_PREFIX + (nextAliasId++));
     result.internalAlias = true;
     return result;
   }

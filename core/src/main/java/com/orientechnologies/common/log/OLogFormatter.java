@@ -22,9 +22,8 @@ package com.orientechnologies.common.log;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -37,7 +36,7 @@ import java.util.logging.LogRecord;
 
 public class OLogFormatter extends Formatter {
 
-  protected static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+  protected static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
 
   /**
    * The end-of-line character for this platform.
@@ -78,11 +77,9 @@ public class OLogFormatter extends Formatter {
     final String requester = getSourceClassSimpleName(iRecord.getLoggerName());
 
     final StringBuilder buffer = new StringBuilder(512);
-    buffer.append(EOL);
-    synchronized (dateFormat) {
-      buffer.append(dateFormat.format(new Date()));
-    }
 
+    buffer.append(EOL);
+    buffer.append(dateFormatter.format(LocalDateTime.now()));
     buffer.append(String.format(" %-5.5s ", level.getName()));
 
     // FORMAT THE MESSAGE
@@ -105,7 +102,7 @@ public class OLogFormatter extends Formatter {
   }
 
   protected String getSourceClassSimpleName(final String iSourceClassName) {
-    if(iSourceClassName==null)
+    if (iSourceClassName == null)
       return null;
     return iSourceClassName.substring(iSourceClassName.lastIndexOf(".") + 1);
   }

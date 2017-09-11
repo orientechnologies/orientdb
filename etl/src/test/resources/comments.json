@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "comment": "text of comment 1"
+  },
+  {
+    "id": 2,
+    "comment": "text of comment 2"
+  },
+  {
+    "id": 3,
+    "comment": text of broken comment 3
+  },
+  {
+    "id": 4,
+    "comment": "text of comment 4"
+  },
+  {
+    "id": 5,
+    "comment": "text of comment 5"
+  }
+]

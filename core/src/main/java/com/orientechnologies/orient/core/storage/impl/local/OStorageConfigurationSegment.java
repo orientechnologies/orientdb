@@ -26,7 +26,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -42,9 +41,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class OStorageConfigurationSegment extends OStorageConfiguration {
-  private static final long                  serialVersionUID = 638874446554389034L;
+  private static final long serialVersionUID = 638874446554389034L;
 
-  private static final int                   START_SIZE       = 10000;
+  private static final int START_SIZE = 10000;
   private final transient OSingleFileSegment segment;
 
   private static final long ENCODING_FLAG_1 = 128975354756545L;
@@ -54,27 +53,30 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   public OStorageConfigurationSegment(final OLocalPaginatedStorage iStorage) throws IOException {
     super(iStorage, Charset.forName("UTF-8"));
 
-    segment = new OSingleFileSegment((OLocalPaginatedStorage) storage, new OStorageFileConfiguration(null,
-        getDirectory() + "/database.ocf", "classic", fileTemplate.maxSize, fileTemplate.fileIncrementSize));
+    segment = new OSingleFileSegment((OLocalPaginatedStorage) storage,
+        new OStorageFileConfiguration(null, getDirectory() + "/database.ocf", "classic", fileTemplate.maxSize,
+            fileTemplate.fileIncrementSize));
   }
 
+  @Override
   public void close() throws IOException {
     super.close();
     segment.close();
   }
 
+  @Override
   public void delete() throws IOException {
     super.delete();
     segment.delete();
   }
 
+  @Override
   public void create() throws IOException {
     segment.create(START_SIZE);
     super.create();
 
     final OFile f = segment.getFile();
-    if ( OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean())
-      f.synch();
+    f.synch();
   }
 
   @Override
@@ -91,6 +93,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
         // CHECK FOR OLD VERSION OF DATABASE
         final ORawBuffer rawRecord = storage.readRecord(CONFIG_RID, null, false, false, null).getResult();
         if (rawRecord != null)
+          //noinspection deprecation
           fromStream(rawRecord.buffer);
 
         update();
@@ -145,14 +148,6 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   }
 
   @Override
-  public void lock() throws IOException {
-  }
-
-  @Override
-  public void unlock() throws IOException {
-  }
-
-  @Override
   public void update() throws OSerializationException {
     try {
       final OFile f = segment.getFile();
@@ -184,23 +179,16 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
       f.writeInt(OIntegerSerializer.INT_SIZE + buffer.length + 3 * OLongSerializer.LONG_SIZE, binaryEncodingName.length);
       f.write(2 * OIntegerSerializer.INT_SIZE + buffer.length + 3 * OLongSerializer.LONG_SIZE, binaryEncodingName);
 
-      if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean())
-        f.synch();
+      f.synch();
 
     } catch (Exception e) {
       throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
     }
   }
 
+  @Override
   public void synch() throws IOException {
     segment.getFile().synch();
   }
 
-  @Override
-  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-  }
-
-  public String getFileName() {
-    return segment.getFile().getName();
-  }
 }

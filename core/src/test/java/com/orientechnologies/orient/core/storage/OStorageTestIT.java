@@ -255,6 +255,20 @@ public class OStorageTestIT {
 
   }
 
+  @Test
+  public void testCreatedVersionIsStored() {
+    orientDB = new OrientDB("embedded:" + buildPath.toFile().getAbsolutePath(), OrientDBConfig.defaultConfig());
+    orientDB.create(OStorageTestIT.class.getSimpleName(), ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
+
+    final ODatabaseSession session = orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin");
+    try (OResultSet resultSet = session.query("SELECT FROM metadata:storage")) {
+      Assert.assertTrue(resultSet.hasNext());
+
+      final OResult result = resultSet.next();
+      Assert.assertEquals(OConstants.getVersion(), result.getProperty("createdAtVersion"));
+    }
+  }
+
   @After
   public void after() {
     orientDB.drop(OStorageTestIT.class.getSimpleName());

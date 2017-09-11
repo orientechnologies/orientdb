@@ -83,8 +83,7 @@ public class LetExpressionStep extends AbstractExecutionStep {
     try {
       OExecutionStepInternal.basicDeserialize(fromResult, this);
       if (fromResult.getProperty("varname") != null) {
-        varname = new OIdentifier(-1);
-        varname.deserialize(fromResult.getProperty("varname"));
+        varname = OIdentifier.deserialize(fromResult.getProperty("varname"));
       }
       if (fromResult.getProperty("expression") != null) {
         expression = new OExpression(-1);

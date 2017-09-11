@@ -1,0 +1,10 @@
+{
+  "name": "etl",
+  "version": "3.0.0",
+  "javaClass": "com.orientechnologies.orient.etl.OETLPlugin",
+  "description": "This is ETL plugin",
+  "web": "http://www.orientdb.com",
+  "copyrights": "OrientDB LTD",
+  "license": "Commercial",
+  "parameters": {}
+}

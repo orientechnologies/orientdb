@@ -31,6 +31,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -284,6 +285,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  /**
+   * @inheritDoc
+   */
+  @Override
+  public String getCreatedAtVersion() {
+    return configuration.getCreatedAtVersion();
+  }
+
   @SuppressWarnings("WeakerAccess")
   protected void openIndexes() {
     OCurrentStorageComponentsFactory cf = componentsFactory;
@@ -392,6 +401,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
         doAddCluster(OMetadataDefault.CLUSTER_INTERNAL_NAME, null);
         configuration.create();
+        configuration.setCreationVersion(OConstants.getVersion());
 
         // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
         // INDEXING
@@ -3097,13 +3107,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        final long freezeId;
-
         if (throwException)
-          freezeId = atomicOperationsManager
+          atomicOperationsManager
               .freezeAtomicOperations(OModificationOperationProhibitedException.class, "Modification requests are prohibited");
         else
-          freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
+          atomicOperationsManager.freezeAtomicOperations(null, null);
 
         final List<OFreezableStorageComponent> frozenIndexes = new ArrayList<>(indexEngines.size());
         try {
@@ -3121,15 +3129,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         synch();
-        try {
-
-          if (configuration != null)
-            configuration.setSoftlyClosed(true);
-
-        } catch (IOException e) {
-          atomicOperationsManager.releaseAtomicOperations(freezeId);
-          throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
-        }
       } finally {
         stateLock.releaseReadLock();
       }
@@ -3145,16 +3144,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public void release() {
     try {
-      try {
-        for (OIndexEngine indexEngine : indexEngines)
-          if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
-            ((OFreezableStorageComponent) indexEngine).release();
-
-        if (configuration != null)
-          configuration.setSoftlyClosed(false);
-      } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Error on release of storage '" + name + "'"), e);
-      }
+      for (OIndexEngine indexEngine : indexEngines)
+        if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
+          ((OFreezableStorageComponent) indexEngine).release();
 
       atomicOperationsManager.releaseAtomicOperations(-1);
     } catch (RuntimeException ee) {

@@ -35,9 +35,7 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
   }
 
   @Override public OEqualsCompareOperator copy() {
-    OEqualsCompareOperator result = new OEqualsCompareOperator(-1);
-    result.doubleEquals = doubleEquals;
-    return result;
+    return this;
   }
 
   @Override public boolean equals(Object obj) {

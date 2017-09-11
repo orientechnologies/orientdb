@@ -1,13 +1,15 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
+import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -63,7 +65,7 @@ public class OResultInternal implements OResult {
     if (element == null || element instanceof OElement) {
       return Optional.ofNullable((OElement) element);
     }
-    if (element instanceof OIdentifiable) {
+    if (element.getRecord() instanceof OElement) {
       return Optional.ofNullable(element.getRecord());
     }
     return Optional.empty();
@@ -110,6 +112,19 @@ public class OResultInternal implements OResult {
       return Optional.of(element.getIdentity());
     }
     return Optional.empty();
+  }
+
+  @Override
+  public boolean isProjection() {
+    return this.element == null;
+  }
+
+  @Override
+  public Optional<ORecord> getRecord() {
+    if (this.element == null) {
+      return Optional.empty();
+    }
+    return Optional.ofNullable(this.element.getRecord());
   }
 
   @Override
@@ -234,5 +249,26 @@ public class OResultInternal implements OResult {
       return element.hashCode();
     }
     return content.hashCode();
+  }
+
+  public void bindToCache(ODatabaseDocumentInternal db) {
+    if (isRecord()) {
+      ORecord rec = element.getRecord();
+      ORecord cached = db.getLocalCache().findRecord(rec.getIdentity());
+      if (cached != null) {
+        if (!cached.isDirty()) {
+          cached.fromStream(rec.toStream());
+        }
+        if (element instanceof OVertex) {
+          element = new OVertexDelegate((ODocument) cached);
+        } else if (element instanceof OEdge) {
+          element = new OEdgeDelegate((ODocument) cached);
+        } else {
+          element = cached;
+        }
+      } else {
+        db.getLocalCache().updateRecord(rec);
+      }
+    }
   }
 }

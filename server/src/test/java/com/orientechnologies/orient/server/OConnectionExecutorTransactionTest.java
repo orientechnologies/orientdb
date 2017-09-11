@@ -531,7 +531,7 @@ public class OConnectionExecutorTransactionTest {
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
     OBeginTransactionResponse txResponse = (OBeginTransactionResponse) response;
-    assertEquals(1, txResponse.getUpdatedIds().size());
+    assertEquals(0, txResponse.getUpdatedIds().size());
 
     // Batch Op
 
