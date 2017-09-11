@@ -21,7 +21,7 @@ public class CountFromClassStepTest extends TestUtilsFixture {
             document.save();
         }
 
-        OIdentifier classIdentifier = new OIdentifier(className);
+      OIdentifier classIdentifier = new OIdentifier(className);
 
         OBasicCommandContext context = new OBasicCommandContext();
         context.setDatabase(database);

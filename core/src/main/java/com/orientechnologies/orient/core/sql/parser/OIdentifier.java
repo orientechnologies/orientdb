@@ -23,7 +23,7 @@ public class OIdentifier extends SimpleNode {
    */
   protected boolean internalAlias = false;
 
-  public OIdentifier(OIdentifier copyFrom, boolean quoted){
+  public OIdentifier(OIdentifier copyFrom, boolean quoted) {
     this(-1);
     this.value = copyFrom.value;
     this.quoted = quoted;
