@@ -1239,6 +1239,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     } else {
       tx = (OTransactionOptimisticServer) database.getTransaction();
     }
+    tx.assignClusters();
 
     database.commit();
     List<OCommit37Response.OCreatedRecordResponse> createdRecords = new ArrayList<>(tx.getCreatedRecords().size());
