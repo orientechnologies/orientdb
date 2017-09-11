@@ -55,6 +55,7 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
               result.setProperty("size", storage.getSize());
               result.setProperty("type", storage.getType());
               result.setProperty("version", storage.getVersion());
+              result.setProperty("createdAtVersion", storage.getCreatedAtVersion());
             }
             served = true;
             return result;

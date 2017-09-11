@@ -30,6 +30,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -278,6 +279,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  /**
+   * @inheritDoc
+   */
+  @Override
+  public String getCreatedAtVersion() {
+    return configuration.getCreatedAtVersion();
+  }
+
   @SuppressWarnings("WeakerAccess")
   protected void openIndexes() {
     OCurrentStorageComponentsFactory cf = componentsFactory;
@@ -288,11 +297,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     for (String indexName : indexNames) {
       final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName);
       final OIndexEngine engine = OIndexes
-          .createIndexEngine(engineData.getName(), engineData.getAlgorithm(), engineData.getIndexType(), engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties(), null);
+          .createIndexEngine(engineData.getName(), engineData.getAlgorithm(), engineData.getIndexType(),
+              engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties(), null);
 
       try {
         engine.load(engineData.getName(), cf.binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()),
-            engineData.isAutomatic(), cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()), engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize(), engineData.getEngineProperties());
+            engineData.isAutomatic(), cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()),
+            engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize(), engineData.getEngineProperties());
 
         indexEngineNameMap.put(engineData.getName(), engine);
         indexEngines.add(engine);
@@ -328,7 +339,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             clusters.get(pos).open();
           }
         } catch (FileNotFoundException e) {
-          OLogManager.instance().warn(this, "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i + "): file not found. It will be excluded from current database '" + getName() + "'.");
+          OLogManager.instance().warn(this, "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i
+              + "): file not found. It will be excluded from current database '" + getName() + "'.");
 
           clusterMap.remove(clusters.get(i).getName().toLowerCase(configuration.getLocaleInstance()));
 
@@ -383,6 +395,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
         doAddCluster(OMetadataDefault.CLUSTER_INTERNAL_NAME, null);
         configuration.create();
+        configuration.setCreationVersion(OConstants.getVersion());
 
         // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
         // INDEXING
@@ -567,8 +580,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throw new OConfigurationException("Cluster id must be positive!");
         }
         if (requestedId < clusters.size() && clusters.get(requestedId) != null) {
-          throw new OConfigurationException("Requested cluster ID [" + requestedId + "] is occupied by cluster with name [" + clusters.get(requestedId).getName()
-              + "]");
+          throw new OConfigurationException(
+              "Requested cluster ID [" + requestedId + "] is occupied by cluster with name [" + clusters.get(requestedId).getName()
+                  + "]");
         }
 
         makeStorageDirty();
@@ -600,7 +614,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         if (clusterId < 0 || clusterId >= clusters.size())
           throw new IllegalArgumentException(
-              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1) + ") in database '" + name + "'");
+              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
+                  + ") in database '" + name + "'");
 
         final OCluster cluster = clusters.get(clusterId);
         if (cluster == null)
@@ -1536,7 +1551,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance()
-            .debug(this, "%d Committed transaction %d on database '%s' (result=%s)", Thread.currentThread().getId(), clientTx.getId(), databaseRecord.getName(), result);
+            .debug(this, "%d Committed transaction %d on database '%s' (result=%s)", Thread.currentThread().getId(),
+                clientTx.getId(), databaseRecord.getName(), result);
 
       return result;
     } catch (RuntimeException ee) {
@@ -3085,13 +3101,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        final long freezeId;
-
         if (throwException)
-          freezeId = atomicOperationsManager
+          atomicOperationsManager
               .freezeAtomicOperations(OModificationOperationProhibitedException.class, "Modification requests are prohibited");
         else
-          freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
+          atomicOperationsManager.freezeAtomicOperations(null, null);
 
         final List<OFreezableStorageComponent> frozenIndexes = new ArrayList<>(indexEngines.size());
         try {
@@ -3109,15 +3123,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         synch();
-        try {
-
-          if (configuration != null)
-            configuration.setSoftlyClosed(true);
-
-        } catch (IOException e) {
-          atomicOperationsManager.releaseAtomicOperations(freezeId);
-          throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
-        }
       } finally {
         stateLock.releaseReadLock();
       }
@@ -3133,16 +3138,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public void release() {
     try {
-      try {
-        for (OIndexEngine indexEngine : indexEngines)
-          if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
-            ((OFreezableStorageComponent) indexEngine).release();
-
-        if (configuration != null)
-          configuration.setSoftlyClosed(false);
-      } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Error on release of storage '" + name + "'"), e);
-      }
+      for (OIndexEngine indexEngine : indexEngines)
+        if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
+          ((OFreezableStorageComponent) indexEngine).release();
 
       atomicOperationsManager.releaseAtomicOperations(-1);
     } catch (RuntimeException ee) {
@@ -3287,7 +3285,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           Map<Object, Object> params = iCommand.getParameters();
           result = executor.execute(params);
 
-          if (result != null && iCommand.isCacheableResult() && executor.isCacheable() && (iCommand.getParameters() == null || iCommand.getParameters().isEmpty()))
+          if (result != null && iCommand.isCacheableResult() && executor.isCacheable() && (iCommand.getParameters() == null
+              || iCommand.getParameters().isEmpty()))
             // CACHE THE COMMAND RESULT
             db.getMetadata().getCommandCache()
                 .put(db.getUser(), iCommand.getText(), result, iCommand.getLimit(), executor.getInvolvedClusters(),
@@ -3314,8 +3313,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             final OSecurityUser user = db.getUser();
             final String userString = user != null ? user.toString() : null;
             //noinspection ResultOfMethodCallIgnored
-            Orient.instance().getProfiler().stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
-                "Command executed against the database", beginTime, "db.*.command.*", null, userString);
+            Orient.instance().getProfiler()
+                .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
+                    "Command executed against the database", beginTime, "db.*.command.*", null, userString);
           }
         }
       }
@@ -4671,7 +4671,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         recordsProcessed++;
 
         final long currentTime = System.currentTimeMillis();
-        if (reportBatchSize > 0 && recordsProcessed % reportBatchSize == 0 || currentTime - lastReportTime > WAL_RESTORE_REPORT_INTERVAL) {
+        if (reportBatchSize > 0 && recordsProcessed % reportBatchSize == 0
+            || currentTime - lastReportTime > WAL_RESTORE_REPORT_INTERVAL) {
           OLogManager.instance().info(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed, lsn,
               writeAheadLog.end());
           lastReportTime = currentTime;
@@ -4680,10 +4681,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         lsn = writeAheadLog.next(lsn);
       }
     } catch (OWALPageBrokenException e) {
-      OLogManager.instance().error(this, "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
+      OLogManager.instance()
+          .error(this, "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
     } catch (RuntimeException e) {
       OLogManager.instance().error(this,
-          "Data restore was paused because of exception. The rest of changes will be rolled back and WAL files will be backed up." + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.");
+          "Data restore was paused because of exception. The rest of changes will be rolled back and WAL files will be backed up."
+              + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.");
       backUpWAL(e);
     }
 
@@ -4789,9 +4792,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           String fileName = writeCache.restoreFileById(fileId);
 
           if (fileName == null) {
-            throw new OStorageException("File with id " + fileId + " was deleted from storage, the rest of operations can not be restored");
+            throw new OStorageException(
+                "File with id " + fileId + " was deleted from storage, the rest of operations can not be restored");
           } else {
-            OLogManager.instance().warn(this, "Previously deleted file with name " + fileName + " was deleted but new empty file was added to continue restore process");
+            OLogManager.instance().warn(this, "Previously deleted file with name " + fileName
+                + " was deleted but new empty file was added to continue restore process");
           }
         }
 
@@ -4824,7 +4829,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         //noinspection UnnecessaryContinue
         continue;
       } else {
-        OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.", walRecord.getClass());
+        OLogManager.instance()
+            .error(this, "Invalid WAL record type was passed %s. Given record will be skipped.", walRecord.getClass());
 
         assert false : "Invalid WAL record type was passed " + walRecord.getClass().getName();
       }
