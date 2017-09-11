@@ -13,96 +13,70 @@ import java.util.TreeMap;
 public class ORule implements Serializable {
 
   public static abstract class ResourceGeneric implements Serializable {
-    private static final long                             serialVersionUID     = 1L;
-    private static final TreeMap<String, ResourceGeneric> nameToGenericMap     = new TreeMap<String, ResourceGeneric>();
-    private static final TreeMap<String, ResourceGeneric> legacyToGenericMap   = new TreeMap<String, ResourceGeneric>();
-    private static final Map<ResourceGeneric, String>     genericToLegacyMap   = new HashMap<ResourceGeneric, String>();
+    private static final long                             serialVersionUID   = 1L;
+    private static final TreeMap<String, ResourceGeneric> nameToGenericMap   = new TreeMap<String, ResourceGeneric>();
+    private static final TreeMap<String, ResourceGeneric> legacyToGenericMap = new TreeMap<String, ResourceGeneric>();
+    private static final Map<ResourceGeneric, String>     genericToLegacyMap = new HashMap<ResourceGeneric, String>();
 
-    public static final ResourceGeneric                   FUNCTION             = new ResourceGeneric("FUNCTION",
-        ODatabaseSecurityResources.FUNCTION) {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
-    public static final ResourceGeneric                   CLASS                = new ResourceGeneric("CLASS",
-        ODatabaseSecurityResources.CLASS) {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
-    public static final ResourceGeneric                   CLUSTER              = new ResourceGeneric("CLUSTER",
-        ODatabaseSecurityResources.CLUSTER) {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
-    public static final ResourceGeneric                   BYPASS_RESTRICTED    = new ResourceGeneric("BYPASS_RESTRICTED",
+    public static final ResourceGeneric FUNCTION          = new ResourceGeneric("FUNCTION", ODatabaseSecurityResources.FUNCTION) {
+    };
+    public static final ResourceGeneric CLASS             = new ResourceGeneric("CLASS", ODatabaseSecurityResources.CLASS) {
+    };
+    public static final ResourceGeneric CLUSTER           = new ResourceGeneric("CLUSTER", ODatabaseSecurityResources.CLUSTER) {
+    };
+    public static final ResourceGeneric BYPASS_RESTRICTED = new ResourceGeneric("BYPASS_RESTRICTED",
         ODatabaseSecurityResources.BYPASS_RESTRICTED) {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
-    public static final ResourceGeneric                   DATABASE             = new ResourceGeneric("DATABASE",
-        ODatabaseSecurityResources.DATABASE) {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
-    public static final ResourceGeneric                   SCHEMA               = new ResourceGeneric("SCHEMA",
-        ODatabaseSecurityResources.SCHEMA) {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
-    public static final ResourceGeneric                   COMMAND              = new ResourceGeneric("COMMAND",
-        ODatabaseSecurityResources.COMMAND) {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
+    };
+    public static final ResourceGeneric DATABASE          = new ResourceGeneric("DATABASE", ODatabaseSecurityResources.DATABASE) {
+    };
+    public static final ResourceGeneric SCHEMA            = new ResourceGeneric("SCHEMA", ODatabaseSecurityResources.SCHEMA) {
+    };
+    public static final ResourceGeneric COMMAND           = new ResourceGeneric("COMMAND", ODatabaseSecurityResources.COMMAND) {
+    };
 
-    public static final ResourceGeneric                   COMMAND_GREMLIN      = new ResourceGeneric("COMMAND_GREMLIN",
+    public static final ResourceGeneric COMMAND_GREMLIN = new ResourceGeneric("COMMAND_GREMLIN",
         ODatabaseSecurityResources.COMMAND_GREMLIN) {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
+    };
 
-    public static final ResourceGeneric                   RECORD_HOOK          = new ResourceGeneric("RECORD_HOOK",
-        ODatabaseSecurityResources.RECORD_HOOK) {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
+    public static final ResourceGeneric RECORD_HOOK = new ResourceGeneric("RECORD_HOOK", ODatabaseSecurityResources.RECORD_HOOK) {
+    };
 
-    public static final ResourceGeneric                   SYSTEM_CLUSTERS      = new ResourceGeneric("SYSTEM_CLUSTER",
+    public static final ResourceGeneric SYSTEM_CLUSTERS = new ResourceGeneric("SYSTEM_CLUSTER",
         ODatabaseSecurityResources.SYSTEMCLUSTERS) {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
+    };
 
-    public static final ResourceGeneric                   SERVER               = new ResourceGeneric("SERVER", "server") {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
+    public static final ResourceGeneric SERVER = new ResourceGeneric("SERVER", "server") {
+    };
 
-    public static final ResourceGeneric                   DATABASE_COPY        = new ResourceGeneric("DATABASE_COPY",
-        "database.copy") {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
+    public static final ResourceGeneric DATABASE_COPY = new ResourceGeneric("DATABASE_COPY", "database.copy") {
+    };
 
-    public static final ResourceGeneric                   DATABASE_CREATE      = new ResourceGeneric("DATABASE_CREATE",
-        "database.create") {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
+    public static final ResourceGeneric DATABASE_CREATE = new ResourceGeneric("DATABASE_CREATE", "database.create") {
+    };
 
-    public static final ResourceGeneric                   DATABASE_DROP        = new ResourceGeneric("DATABASE_DROP",
-        "database.drop") {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
+    public static final ResourceGeneric DATABASE_DROP = new ResourceGeneric("DATABASE_DROP", "database.drop") {
+    };
 
-    public static final ResourceGeneric                   DATABASE_EXISTS      = new ResourceGeneric("DATABASE_EXISTS",
-        "database.exists") {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
+    public static final ResourceGeneric DATABASE_EXISTS = new ResourceGeneric("DATABASE_EXISTS", "database.exists") {
+    };
 
-    public static final ResourceGeneric                   DATABASE_FREEZE      = new ResourceGeneric("DATABASE_FREEZE",
-        "database.freeze") {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
+    public static final ResourceGeneric DATABASE_FREEZE = new ResourceGeneric("DATABASE_FREEZE", "database.freeze") {
+    };
 
-    public static final ResourceGeneric                   DATABASE_RELEASE     = new ResourceGeneric("DATABASE_RELEASE",
-        "database.release") {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
+    public static final ResourceGeneric DATABASE_RELEASE = new ResourceGeneric("DATABASE_RELEASE", "database.release") {
+    };
 
-    public static final ResourceGeneric                   DATABASE_PASSTHROUGH = new ResourceGeneric("DATABASE_PASSTHROUGH",
-        "database.passthrough") {
-                                                                                 private static final long serialVersionUID = 1L;
-                                                                               };
+    public static final ResourceGeneric DATABASE_PASSTHROUGH = new ResourceGeneric("DATABASE_PASSTHROUGH", "database.passthrough") {
+    };
 
-    private final String                                  name;
-    private final String                                  legacyName;
+    public static final ResourceGeneric DATABASE_BACKUP = new ResourceGeneric("DATABASE_BACKUP", "database.backup") {
+    };
+
+    public static final ResourceGeneric DATABASE_RESTORE = new ResourceGeneric("DATABASE_RESTORE", "database.restore") {
+    };
+
+    private final String name;
+    private final String legacyName;
 
     protected ResourceGeneric(String name, String legacyName) {
       this.name = name;
@@ -120,8 +94,8 @@ public class ORule implements Serializable {
 
     private static void register(ResourceGeneric resource) {
       String legacyNameLowCase = resource.legacyName.toLowerCase(Locale.ENGLISH);
-      if (nameToGenericMap.containsKey(resource.name) || legacyToGenericMap.containsKey(resource.legacyName.toLowerCase(Locale.ENGLISH))
-          || genericToLegacyMap.containsKey(resource)) {
+      if (nameToGenericMap.containsKey(resource.name) || legacyToGenericMap
+          .containsKey(resource.legacyName.toLowerCase(Locale.ENGLISH)) || genericToLegacyMap.containsKey(resource)) {
         throw new IllegalArgumentException(resource + " already registered");
       }
       nameToGenericMap.put(resource.name, resource);
@@ -143,12 +117,12 @@ public class ORule implements Serializable {
     }
   }
 
-  private static final long       serialVersionUID  = 1L;
+  private static final long serialVersionUID = 1L;
 
-  private final ResourceGeneric   resourceGeneric;
+  private final ResourceGeneric resourceGeneric;
   private final Map<String, Byte> specificResources = new HashMap<String, Byte>();
 
-  private Byte                    access            = null;
+  private Byte access = null;
 
   public ORule(final ResourceGeneric resourceGeneric, final Map<String, Byte> specificResources, final Byte access) {
     this.resourceGeneric = resourceGeneric;
@@ -158,7 +132,8 @@ public class ORule implements Serializable {
   }
 
   public static ResourceGeneric mapLegacyResourceToGenericResource(final String resource) {
-    final Map.Entry<String, ResourceGeneric> found = ResourceGeneric.legacyToGenericMap.floorEntry(resource.toLowerCase(Locale.ENGLISH));
+    final Map.Entry<String, ResourceGeneric> found = ResourceGeneric.legacyToGenericMap
+        .floorEntry(resource.toLowerCase(Locale.ENGLISH));
     if (found == null)
       return null;
 

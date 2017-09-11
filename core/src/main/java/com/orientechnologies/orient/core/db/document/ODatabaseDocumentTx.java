@@ -3030,12 +3030,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @Override
   public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
+    checkSecurity(ORule.ResourceGeneric.DATABASE_BACKUP, ORole.PERMISSION_CREATE);
+
     return storage.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
   @Override
   public void restore(final InputStream in, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener) throws IOException {
+    checkSecurity(ORule.ResourceGeneric.DATABASE_RESTORE, ORole.PERMISSION_CREATE);
+
     if (storage == null)
       storage = Orient.instance().loadStorage(url);
 
