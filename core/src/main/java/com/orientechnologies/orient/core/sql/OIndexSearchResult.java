@@ -53,7 +53,7 @@ public class OIndexSearchResult {
 
   public static boolean isIndexEqualityOperator(OQueryOperator queryOperator) {
     return queryOperator instanceof OQueryOperatorEquals || queryOperator instanceof OQueryOperatorContains
-        || queryOperator instanceof OQueryOperatorContainsKey || queryOperator instanceof OQueryOperatorContainsValue;
+        || queryOperator instanceof OQueryOperatorContainsKey || queryOperator instanceof OQueryOperatorContainsValue || queryOperator instanceof OQueryOperatorIs;
   }
 
   /**
