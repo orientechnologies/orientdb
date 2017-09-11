@@ -122,8 +122,13 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
   public void handleUnreachableNode(final String nodeName) {
     // WAKE UP ALL THE WAITING RESPONSES
-    for (ODistributedResponseManager r : responsesByRequestIds.values())
-      r.removeServerBecauseUnreachable(nodeName);
+    for (ODistributedResponseManager r : responsesByRequestIds.values()) {
+      try {
+        r.removeServerBecauseUnreachable(nodeName);
+      } catch (Exception e) {
+        ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE, "Error on removing a response", e);
+      }
+    }
   }
 
   public long getAverageResponseTime() {

@@ -1497,34 +1497,58 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     try {
       // REMOVE INTRA SERVER CONNECTION
       closeRemoteServer(nodeLeftName);
+    } catch (Exception e) {
+      // IGNORE IT
+      ODistributedServerLog
+          .debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on closing remote server connection", e, nodeLeftName);
+    }
 
-      // NOTIFY ABOUT THE NODE HAS LEFT
-      for (ODistributedLifecycleListener l : listeners)
-        try {
-          l.onNodeLeft(nodeLeftName);
-        } catch (Exception e) {
-          // IGNORE IT
-        }
+    // NOTIFY ABOUT THE NODE HAS LEFT
+    for (ODistributedLifecycleListener l : listeners)
+      try {
+        l.onNodeLeft(nodeLeftName);
+      } catch (Exception e) {
+        // IGNORE IT
+        ODistributedServerLog
+            .debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on calling onNodeLeft event on '%s'", e, l);
+      }
 
+    try {
       if (nodeLeftName.equals(getLockManagerRequester().getServer()))
         electNewLockManager();
 
       getLockManagerExecutor().handleUnreachableServer(nodeLeftName);
       getLockManagerRequester().handleUnreachableServer(nodeLeftName);
 
-      // UNLOCK ANY PENDING LOCKS
-      if (messageService != null) {
-        for (String dbName : messageService.getDatabases())
-          messageService.getDatabase(dbName).handleUnreachableNode(nodeLeftName);
-      }
+    } catch (Exception e) {
+      // IGNORE IT
+      ODistributedServerLog.debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on electing new lockManager", e);
+    }
 
+    // UNLOCK ANY PENDING LOCKS
+    if (messageService != null) {
+      for (String dbName : messageService.getDatabases())
+        try {
+          messageService.getDatabase(dbName).handleUnreachableNode(nodeLeftName);
+        } catch (Exception e) {
+          // IGNORE IT
+          ODistributedServerLog.debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on handling an unreachable node", e);
+        }
+    }
+
+    try {
       if (member.getUuid() != null)
         activeNodesNamesByUuid.remove(member.getUuid());
       activeNodesUuidByName.remove(nodeLeftName);
 
       if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
         return;
+    } catch (Exception e) {
+      // IGNORE IT
+      ODistributedServerLog.debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on removing the node from Hazelcast", e);
+    }
 
+    try {
       final long autoRemoveOffLineServer = OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.getValueAsLong();
       if (autoRemoveOffLineServer == 0)
         // REMOVE THE NODE RIGHT NOW
@@ -1550,43 +1574,52 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           }
         }, autoRemoveOffLineServer, 0);
       }
+    } catch (Exception e) {
+      // IGNORE IT
+      ODistributedServerLog
+          .debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on removing the node from distributed configuration", e);
+    }
 
-      for (String databaseName : getManagedDatabases()) {
+    for (String databaseName : getManagedDatabases()) {
+      try {
         final DB_STATUS nodeLeftStatus = getDatabaseStatus(nodeLeftName, databaseName);
         if (nodeLeftStatus != DB_STATUS.OFFLINE && nodeLeftStatus != DB_STATUS.NOT_AVAILABLE)
           configurationMap.put(CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName, DB_STATUS.NOT_AVAILABLE);
+      } catch (Exception e) {
+        // IGNORE IT
+        ODistributedServerLog
+            .debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on removing the node from Hazelcast configuration", e);
       }
-
-      ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Node removed id=%s name=%s", member, nodeLeftName);
-
-      if (nodeLeftName.startsWith("ext:")) {
-        final List<String> registeredNodes = getRegisteredNodes();
-
-        ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
-            "Removed node id=%s name=%s has not being recognized. Remove the node manually (registeredNodes=%s)", member,
-            nodeLeftName, registeredNodes);
-      }
-
-      for (String databaseName : getManagedDatabases()) {
-        try {
-          reassignClustersOwnership(nodeName, databaseName, null, false);
-        } catch (Exception e) {
-          // IGNORE IT
-          ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
-              "Cannot re-balance the cluster for database '%s' because the lockManager is not available (err=%s)", databaseName,
-              e.getMessage());
-        }
-      }
-
-      if (nodeLeftName.equalsIgnoreCase(nodeName))
-        // CURRENT NODE: EXIT
-        System.exit(1);
-
-    } finally {
-      // REMOVE NODE IN DB CFG
-      if (messageService != null)
-        messageService.handleUnreachableNode(nodeLeftName);
     }
+
+    ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Node removed id=%s name=%s", member, nodeLeftName);
+
+    if (nodeLeftName.startsWith("ext:")) {
+      final List<String> registeredNodes = getRegisteredNodes();
+
+      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
+          "Removed node id=%s name=%s has not being recognized. Remove the node manually (registeredNodes=%s)", member,
+          nodeLeftName, registeredNodes);
+    }
+
+    for (String databaseName : getManagedDatabases()) {
+      try {
+        reassignClustersOwnership(nodeName, databaseName, null, false);
+      } catch (Exception e) {
+        // IGNORE IT
+        ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
+            "Cannot re-balance the cluster for database '%s' because the lockManager is not available (err=%s)", databaseName,
+            e.getMessage());
+      }
+    }
+
+    // REMOVE NODE IN DB CFG
+    if (messageService != null)
+      messageService.handleUnreachableNode(nodeLeftName);
+
+    if (nodeLeftName.equalsIgnoreCase(nodeName))
+      // CURRENT NODE: EXIT
+      System.exit(1);
   }
 
   /**
