@@ -66,10 +66,41 @@ public class OContextConfiguration implements Serializable {
     return config.put(iName, iValue);
   }
 
-  public <T> T getValue(final OGlobalConfiguration iConfig) {
+  public Object getValue(final OGlobalConfiguration iConfig) {
     if (config != null && config.containsKey(iConfig.getKey()))
-      return (T) config.get(iConfig.getKey());
+      return config.get(iConfig.getKey());
     return iConfig.getValue();
+  }
+
+  /**
+   * @param config Global configuration parameter.
+   *
+   * @return Value of configuration parameter stored in this context as enumeration if such one exists, otherwise value stored in passed in
+   * {@link OGlobalConfiguration} instance.
+   *
+   * @throws ClassCastException       if stored value can not be casted and parsed from string to passed in enumeration class.
+   * @throws IllegalArgumentException if value associated with configuration parameter is a string bug can not be converted to
+   *                                  instance of passed in enumeration class.
+   */
+  public <T extends Enum<T>> T getValueAsEnum(final OGlobalConfiguration config, Class<T> enumType) {
+    final Object value;
+    if (this.config != null && this.config.containsKey(config.getKey())) {
+      value = this.config.get(config.getKey());
+    } else {
+      value = config.getValue();
+    }
+
+    if (value == null)
+      return null;
+
+    if (enumType.isAssignableFrom(value.getClass())) {
+      return enumType.cast(value);
+    } else if (value instanceof String) {
+      final String presentation = value.toString();
+      return Enum.valueOf(enumType, presentation);
+    } else {
+      throw new ClassCastException("Value " + value + " can not be cast to enumeration " + enumType.getSimpleName());
+    }
   }
 
   @SuppressWarnings("unchecked")
