@@ -21,7 +21,6 @@
 package com.orientechnologies.common.profiler;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import com.orientechnologies.common.log.OLogManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,9 +54,15 @@ public class OProfilerStub extends OAbstractProfiler {
 
   @Override
   public void shutdown() {
-    counters.clear();
-    tips.clear();
-    tipsTimestamp.clear();
+    if (counters != null) {
+      counters.clear();
+    }
+    if (tips != null) {
+      tips.clear();
+    }
+    if (tipsTimestamp != null) {
+      tipsTimestamp.clear();
+    }
     super.shutdown();
   }
 
