@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,20 +14,21 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://orientdb.com
+ *  * For more information: http://www.orientechnologies.com
  *
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
  * Factory of remote tasks.
+ * <p>
+ * <ul> <li>V2 (11/09/2017) </li> </ul>
  *
- * @author Luca Garulli (l.garulli--at--orientdb.com)
+ * @author Luigi Dell'Aquila (l.dellaquila--at--orientdb.com)
  */
-public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
+public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
   @Override
   public ORemoteTask createTask(final int code) {
     switch (code) {
@@ -56,7 +57,7 @@ public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
       return new OTxTask();
 
     case OCompleted2pcTask.FACTORYID: // 8
-      return new OCompleted2pcTask();
+      return new OCompleted2pcTaskV1();
 
     case OStopServerTask.FACTORYID: // 9
       return new OStopServerTask();
@@ -118,6 +119,27 @@ public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
     case OUnreachableServerLocalTask.FACTORYID: // 28
       throw new IllegalArgumentException("Task with code " + code + " is not supported in remote configuration");
 
+
+    //--- here starts V2 ----
+
+    case ORunQueryExecutionPlanTask.FACTORYID: // 40
+      return new ORunQueryExecutionPlanTask();
+
+    case OFetchQueryPageTask.FACTORYID: // 41
+      return new OFetchQueryPageTask();
+
+    case OCloseQueryTask.FACTORYID: // 42
+      return new OCloseQueryTask();
+
+    case OTransactionPhase1Task.FACTORYID: // 43
+      return new OTransactionPhase1Task();
+
+    case OTransactionPhase2Task.FACTORYID: // 44
+      return new OTransactionPhase1Task();
+
+    case OEnterpriseStatsTask.FACTORYID: // 29
+      return new OEnterpriseStatsTask();
+      
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");
@@ -125,6 +147,6 @@ public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
 
   @Override
   public int getProtocolVersion() {
-    return 0;
+    return 1;
   }
 }
