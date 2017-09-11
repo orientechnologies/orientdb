@@ -860,7 +860,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         // IGNORE IT WILL FAIL THE ASSERT IN CASE
       }
     }
-    if (link.getIdentity().getClusterId() < 0)
+    if (link.getIdentity().getClusterId() < 0 || link.getIdentity().getClusterPosition() < 0)
       throw new ODatabaseException("Impossible to serialize invalid link " + link.getIdentity());
 
     final int pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());

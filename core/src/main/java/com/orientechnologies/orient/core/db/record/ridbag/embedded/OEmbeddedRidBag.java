@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.Change;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -423,6 +424,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
         if (link == null)
           throw new OSerializationException("Found null entry in ridbag with rid=" + rid);
+
+        if (link.getIdentity().getClusterId() < 0 || link.getIdentity().getClusterPosition() < 0)
+          throw new ODatabaseException("Impossible to serialize invalid link " + link.getIdentity());
+
 
         OLinkSerializer.INSTANCE.serialize(link, stream, offset);
         offset += OLinkSerializer.RID_SIZE;
