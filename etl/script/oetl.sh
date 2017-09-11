@@ -69,4 +69,4 @@ exec "$JAVA" $JAVA_OPTS \
     $SSL_OPTS \
     -Djava.util.logging.config.file="$ORIENTDB_ETL_LOG_CONF" \
     -Dfile.encoding=utf-8 -Dorientdb.build.number="@BUILD@" \
-    -cp "$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.etl.OETLProcessor $*
+    -cp "$ORIENTDB_HOME/lib/*:$ORIENTDB_HOME/plugins/*" com.orientechnologies.orient.etl.OETLProcessor $*
