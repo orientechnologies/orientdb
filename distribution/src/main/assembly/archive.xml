@@ -60,6 +60,10 @@
             <outputDirectory>config</outputDirectory>
             <includes>
                 <include>*.xml</include>
+                <include>*.json</include>
+                <include>*.yaml</include>
+                <include>*.groovy</include>
+                <include>*.properties</include>
             </includes>
             <filtered>true</filtered>
         </fileSet>

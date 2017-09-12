@@ -70,6 +70,7 @@ public final class OrientGraph implements OGraph {
 
   public static String CONFIG_URL                = "orient-url";
   public static String CONFIG_DB_NAME            = "orient-db-name";
+  public static String CONFIG_DB_TYPE            = "orient-db-type";
   public static String CONFIG_USER               = "orient-user";
   public static String CONFIG_PASS               = "orient-pass";
   public static String CONFIG_CREATE             = "orient-create";
@@ -85,7 +86,7 @@ public final class OrientGraph implements OGraph {
   protected final Configuration      configuration;
   protected final String             user;
   protected final String             password;
-  protected       OrientGraphFactory factory;
+  protected       OrientGraphBaseFactory factory;
   protected boolean shouldCloseFactory = false;
   protected OElementFactory   elementFactory;
   protected OrientTransaction tx;
@@ -116,7 +117,7 @@ public final class OrientGraph implements OGraph {
     return new OrientGraph(factory, config, true);
   }
 
-  public OrientGraph(OrientGraphFactory factory, final ODatabaseDocument database, final Configuration configuration,
+  public OrientGraph(OrientGraphBaseFactory factory, final ODatabaseDocument database, final Configuration configuration,
       final String user, final String password) {
     this.factory = factory;
     this.user = user;
@@ -135,11 +136,11 @@ public final class OrientGraph implements OGraph {
     this.elementFactory = new OElementFactory(this);
   }
 
-  public OrientGraph(final OrientGraphFactory factory, final Configuration configuration) {
+  public OrientGraph(final OrientGraphBaseFactory factory, final Configuration configuration) {
     this(factory, configuration, false);
   }
 
-  public OrientGraph(final OrientGraphFactory factory, final Configuration configuration, boolean closeFactory) {
+  public OrientGraph(final OrientGraphBaseFactory factory, final Configuration configuration, boolean closeFactory) {
     this.factory = factory;
     this.database = factory.getDatabase(true, true);
     this.user = "";

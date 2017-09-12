@@ -14,7 +14,7 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 
 import java.util.Optional;
 
-public final class OrientGraphFactory implements AutoCloseable {
+public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseFactory {
   public static String ADMIN = "admin";
   protected          String                              connectionURI;
   protected          String                              dbName;
@@ -77,6 +77,7 @@ public final class OrientGraphFactory implements AutoCloseable {
     return getGraph(create, open, false);
   }
 
+  @Override
   public OrientGraph getNoTx() {
     return getNoTx(true, true);
   }
@@ -85,6 +86,7 @@ public final class OrientGraphFactory implements AutoCloseable {
     return getGraph(create, open, true);
   }
 
+  @Override
   public OrientGraph getTx() {
     return getTx(true, true);
   }
@@ -145,7 +147,7 @@ public final class OrientGraphFactory implements AutoCloseable {
    *               URL does not exist
    * @param open   if true automatically opens the database
    */
-  protected ODatabaseDocument getDatabase(boolean create, boolean open) {
+  public ODatabaseDocument getDatabase(boolean create, boolean open) {
 
     if (create && type.isPresent()) {
       this.factory.createIfNotExists(dbName, type.get());
@@ -175,7 +177,7 @@ public final class OrientGraphFactory implements AutoCloseable {
    * @param is if true classname equals label, if false classname is prefixed
    *           with V_ or E_ (default)
    */
-  public OrientGraphFactory setLabelAsClassName(boolean is) {
+  public OrientGraphBaseFactory setLabelAsClassName(boolean is) {
     this.labelAsClassName = is;
     return this;
   }
@@ -184,7 +186,7 @@ public final class OrientGraphFactory implements AutoCloseable {
    * Setting up the factory to use database pool instead of creation a new
    * instance of database connection each time.
    */
-  public OrientGraphFactory setupPool(final int max) {
+  public OrientGraphBaseFactory setupPool(final int max) {
     pool = new OPartitionedReCreatableDatabasePool(this.factory, dbName, user, password, max);
     return this;
   }

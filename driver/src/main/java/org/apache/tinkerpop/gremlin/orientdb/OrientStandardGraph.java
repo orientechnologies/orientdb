@@ -30,12 +30,12 @@ public class OrientStandardGraph implements OGraph {
   private final   Map<Thread, OrientGraph> graphs        = Maps.newConcurrentMap();
 
   private final Configuration      config;
-  private       OrientGraphFactory factory;
+  private       OrientGraphBaseFactory factory;
   private boolean transactional = true;
   private Transaction     tx;
   private OElementFactory elementFactory;
 
-  protected OrientStandardGraph(OrientGraphFactory factory, Configuration config) {
+  public OrientStandardGraph(OrientGraphBaseFactory factory, Configuration config) {
     this.factory = factory;
     this.config = config;
     if (config.containsKey(CONFIG_TRANSACTIONAL)) {

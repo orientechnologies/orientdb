@@ -30,7 +30,7 @@ public class OrientGraphTest {
 
     @Test
     public void testGraphTransactions() throws Exception {
-        OrientGraphFactory graphFactory = graphFactory();
+        OrientGraphBaseFactory graphFactory = graphFactory();
         Object id;
         try (Graph graph = graphFactory.getTx()) {
             try (Transaction tx = graph.tx()) {
@@ -90,7 +90,7 @@ public class OrientGraphTest {
 
     @Test
     public void testGraphTransactionOnNoTrxOrientGraph() throws Exception {
-        OrientGraphFactory graphFactory = graphFactory();
+        OrientGraphBaseFactory graphFactory = graphFactory();
         Object id;
         try (Graph graph = graphFactory.getTx()) {
             try (Transaction tx = graph.tx()) {
@@ -135,7 +135,7 @@ public class OrientGraphTest {
     @Test
     public void testMTPooledGraph() throws Exception {
         int THREADS = 2;
-        OrientGraphFactory factory = graphFactory().setupPool(THREADS);
+        OrientGraphBaseFactory factory = graphFactory().setupPool(THREADS);
         for (int i = 0; i < THREADS; i++) {
             factory.getTx();
         }
@@ -295,7 +295,7 @@ public class OrientGraphTest {
     public void checkClassNameConstruction() {
         String edgeLabel = "edge_label";
         String vertexLabel = "vertex_label";
-        OrientGraphFactory factory = new OrientGraphFactory("memory:myGraph");
+        OrientGraphBaseFactory factory = new OrientGraphFactory("memory:myGraph");
         OrientGraph graph = factory.getNoTx();
 
         graph.createVertexClass(vertexLabel);

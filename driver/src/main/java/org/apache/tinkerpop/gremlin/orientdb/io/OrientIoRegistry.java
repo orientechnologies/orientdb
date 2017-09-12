@@ -27,6 +27,10 @@ public class OrientIoRegistry extends AbstractIoRegistry {
 
   }
 
+  public static OrientIoRegistry instance() {
+    return INSTANCE;
+  }
+
   public static OrientIoRegistry getInstance() {
     return INSTANCE;
   }
