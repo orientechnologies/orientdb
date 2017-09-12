@@ -198,5 +198,10 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * Executed the commit on the storage hiding away storage concepts from the transaction
+   *
+   * @param transaction
+   */
   void internalCommit(OTransactionOptimistic transaction);
 }

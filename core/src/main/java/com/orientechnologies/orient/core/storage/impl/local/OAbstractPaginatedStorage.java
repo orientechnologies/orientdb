@@ -1420,8 +1420,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  /**
+   * Scan the given transaction for new record and allocate a record id for them, the relative record id is inserted inside the
+   * transaction for future use.
+   *
+   * @param clientTx
+   */
   public void preallocateRids(final OTransaction clientTx) {
-
     try {
       checkOpenness();
       checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
@@ -1450,7 +1455,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         try {
           lockClusters(clustersToLock);
 
-          Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation txEntry : newRecords) {
             ORecord rec = txEntry.getRecord();
 
@@ -1460,7 +1464,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               final OCluster cluster = getClusterById(rid.getClusterId());
               OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
               rid.setClusterId(cluster.getId());
-              positions.put(txEntry, ppos);
               rid.setClusterPosition(ppos.clusterPosition);
               clientTx.updateIdentityAfterCommit(oldRID, rid);
             }
@@ -1485,16 +1488,48 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  /**
+   * Traditional commit that support already temporary rid and already assigned rids
+   *
+   * @param clientTx
+   * @param callback ignored will be removed
+   *
+   * @return
+   */
   @Override
   public List<ORecordOperation> commit(final OTransaction clientTx, Runnable callback) {
-    return  commit(clientTx,callback,false);
+    return commit(clientTx, false);
   }
 
-  public List<ORecordOperation> commitPreAllocated(final OTransaction clientTx, Runnable callback) {
-    return commit(clientTx,callback,true);
+  /**
+   * Commit a transaction where the rid where pre-allocated in a previous phase
+   *
+   * @param clientTx
+   *
+   * @return
+   */
+  public List<ORecordOperation> commitPreAllocated(final OTransaction clientTx) {
+    return commit(clientTx, true);
   }
 
-  private List<ORecordOperation> commit(final OTransaction clientTx, Runnable callback,boolean allocated) {
+  /**
+   * The commit operation can be run in 3 different conditions, embedded commit, pre-allocated commit, other node commit.
+   * <p>
+   * <bold>Embedded commit</bold> is the basic commit where the operation is run in embedded or server side, the transaction arrive
+   * with invalid rids that get allocated and committed.
+   * <p>
+   * <bold>pre-allocated commit</bold> is the commit that happen after an preAllocateRids call is done, this is usually run by the
+   * coordinator of a tx in distributed.
+   * <p>
+   * <bold>other node commit</bold> is the commit that happen when a node execute a transaction of another node where all the rids
+   * are already allocated in the other node.
+   *
+   * @param clientTx
+   * @param allocated true if the operation is pre-allocated commit
+   *
+   * @return
+   */
+  private List<ORecordOperation> commit(final OTransaction clientTx, boolean allocated) {
     // XXX: At this moment, there are two implementations of the commit method. One for regular client transactions and one for
     // implicit micro-transactions. The implementations are quite identical, but operate on slightly different data. If you change
     // this method don't forget to change its counterpart:
@@ -1569,8 +1604,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             for (ORecordOperation txEntry : newRecords) {
               ORecord rec = txEntry.getRecord();
 
-              if (allocated && rec.getIdentity().isPersistent()) {
-                positions.put(txEntry, new OPhysicalPosition(rec.getIdentity().getClusterPosition()));
+              if (allocated) {
+                if (rec.getIdentity().isPersistent()) {
+                  positions.put(txEntry, new OPhysicalPosition(rec.getIdentity().getClusterPosition()));
+                } else {
+                  throw new OStorageException("Impossible to commit a transaction with not valid rid in pre-allocated commit");
+                }
               } else if (rec.isDirty() && !rec.getIdentity().isPersistent()) {
                 ORecordId rid = (ORecordId) rec.getIdentity().copy();
                 ORecordId oldRID = rid.copy();
