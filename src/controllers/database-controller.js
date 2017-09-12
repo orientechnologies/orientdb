@@ -1,6 +1,6 @@
-import  DatabaseService from '../services/database-services';
-import  BookmarkService from '../services/bookmark-services';
-import  HistoryService from '../services/history-services';
+import DatabaseService from '../services/database-services';
+import BookmarkService from '../services/bookmark-services';
+import HistoryService from '../services/history-services';
 import BrowseConfig from '../services/browse-services';
 import angular from 'angular';
 import Utilities from '../util/library'
@@ -9,10 +9,11 @@ import '../util/orientdb-hint';
 import '../views/database/browseConfig.html';
 import '../views/database/bookmark.html';
 import '../views/hints/query-hint.html';
-import BookmarkAside from  '../views/database/context/bookmarksAside.html';
-import  '../views/database/bookmarkEdit.html';
+import BookmarkAside from '../views/database/context/bookmarksAside.html';
+import '../views/database/bookmarkEdit.html';
 
 import '../views/database/query.html';
+
 let dbModule = angular.module('database.controller', [DatabaseService, BookmarkService, HistoryService, BrowseConfig]);
 dbModule.controller("BrowseController", ['$scope', '$routeParams', '$route', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', 'GraphConfig', 'BatchApi', 'DocumentApi', 'History', function ($scope, $routeParams, $route, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout, GraphConfig, BatchApi, DocumentApi, History) {
 
@@ -473,10 +474,14 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$route', '$l
 
 
 }]);
-dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'NgTableParams', '$document', '$ojson', 'ngTableEventsChannel', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, $document, $ojson, ngTableEventsChannel) {
+dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'NgTableParams', '$document', '$ojson', 'ngTableEventsChannel', 'BrowseConfig', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, $document, $ojson, ngTableEventsChannel, BrowseConfig) {
+
+  let pPage = BrowseConfig.get('pageSize');
+
+  $scope.itemByPage = pPage ? parseInt(pPage) : 10;
 
   $scope.current = 'table';
-  $scope.itemByPage = 10;
+
   var data = $scope.item.resultTotal;
 
   if ($scope.item.rawData instanceof Object) {
@@ -689,7 +694,10 @@ dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localSt
   $scope.shallow = config.shallowCollection;
   $scope.keepLimit = config.keepLimit;
   $scope.hideSettings = config.hideSettings;
+  $scope.pageSize = config.get('pageSize');
   $scope.showw = false;
+
+  $scope.counts = [10, 25, 50, 100, 1000, 5000];
 
   $scope.$watch("limit", function (data) {
     config.set('limit', data);
@@ -708,6 +716,9 @@ dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localSt
   });
   $scope.$watch("keepLimit", function (data) {
     config.set('keepLimit', data);
+  });
+  $scope.$watch("pageSize", function (data) {
+    config.set('pageSize', data);
   });
   $scope.$watch("hideSettings", function (data) {
     config.set('hideSettings', data);
@@ -833,7 +844,7 @@ dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi',
 }]);
 
 
-export  default dbModule.name;
+export default dbModule.name;
 
 
 

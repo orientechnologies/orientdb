@@ -29,6 +29,12 @@
                 <label>Limit</label>
                 <input type="text" class="form-control input-sm" ng-model="limit" focus="true"/>
               </div>
+              <div class="form-group">
+                <label> Default page size</label>
+                <select ng-model="pageSize"
+                        class="form-control input-sm"
+                        ng-options="q for q in counts"></select>
+              </div>
               <div class="checkbox hide-settings">
                 <label>
                   <input type="checkbox" ng-model="hideSettings"/> Hide settings
@@ -43,6 +49,7 @@
                 <label> Keep result set in history</label>
                 <input type="text" class="form-control input-sm" ng-model="keepLimit"/>
               </div>
+
             </fieldset>
 
 
