@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
+import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
@@ -583,6 +584,20 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
+  }
+
+  /**
+   * Not implemented because has no sense
+   */
+  @Override
+  public void addPageIsBrokenListener(OPageIsBrokenListener listener) {
+  }
+
+  /**
+   * Not implemented because has no sense
+   */
+  @Override
+  public void removePageIsBrokenListener(OPageIsBrokenListener listener) {
   }
 
   @Override

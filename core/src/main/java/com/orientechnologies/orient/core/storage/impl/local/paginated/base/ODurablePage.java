@@ -57,7 +57,7 @@ import java.nio.ByteBuffer;
  */
 public class ODurablePage {
 
-  protected static final int MAGIC_NUMBER_OFFSET = 0;
+  public static final    int MAGIC_NUMBER_OFFSET = 0;
   protected static final int CRC32_OFFSET        = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
   public static final int WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;

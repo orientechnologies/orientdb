@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
+import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -105,7 +106,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private final int diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES.getValueAsInteger();
 
-  private final List<WeakReference<OLowDiskSpaceListener>> listeners = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
+  private final List<WeakReference<OLowDiskSpaceListener>> listeners             = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
+  /**
+   * Listeners which are called once we detect that some of the pages of files are broken.
+   */
+  private final List<WeakReference<OPageIsBrokenListener>> pageIsBrokenListeners = new CopyOnWriteArrayList<WeakReference<OPageIsBrokenListener>>();
 
   private final AtomicLong lastDiskSpaceCheck = new AtomicLong(0);
   private final String storagePath;
@@ -131,7 +136,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final OReadersWriterSpinLock filesLock = new OReadersWriterSpinLock();
   private final ScheduledExecutorService commitExecutor;
 
-  private final ExecutorService lowSpaceEventsPublisher;
+  /**
+   * Executor which is used to call event listeners in  background thread
+   */
+  private final ExecutorService cacheEventsPublisher;
 
   private volatile ConcurrentMap<String, Integer> nameIdMap;
 
@@ -152,7 +160,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private final OByteBufferPool bufferPool;
 
-  private OChecksumMode checksumMode = OGlobalConfiguration.STORAGE_CHECKSUM_MODE.getValue();
+  private volatile OChecksumMode checksumMode;
 
   private Method crc32UpdateByteBuffer;
 
@@ -163,7 +171,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, OByteBufferPool bufferPool, long groupTTL, OWriteAheadLog writeAheadLog,
       long pageFlushInterval, long writeCacheMaxSize, long cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize,
-      OClosableLinkedContainer<Long, OFileClassic> files, int id) {
+      OClosableLinkedContainer<Long, OFileClassic> files, int id, OChecksumMode checksumMode) {
     filesLock.acquireWriteLock();
     try {
       this.id = id;
@@ -174,6 +182,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       this.groupTTL = groupTTL;
       this.writeAheadLog = writeAheadLog;
       this.bufferPool = bufferPool;
+      this.checksumMode = checksumMode;
 
       int writeNormalizedSize = normalizeMemory(writeCacheMaxSize, pageSize);
       if (checkMinSize && writeNormalizedSize < MIN_CACHE_SIZE)
@@ -204,7 +213,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
 
       commitExecutor = Executors.newSingleThreadScheduledExecutor(new FlushThreadFactory(storageLocal.getName()));
-      lowSpaceEventsPublisher = Executors.newCachedThreadPool(new LowSpaceEventsPublisherFactory(storageLocal.getName()));
+      cacheEventsPublisher = Executors.newCachedThreadPool(new CacheEventsPublisherFactory(storageLocal.getName()));
 
       MAX_PAGES_PER_FLUSH = (int) (4000 / (1000.0 / pageFlushInterval));
 
@@ -234,6 +243,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
    *
    * @param listener Listener to trigger
    */
+  @Override
   public void addBackgroundExceptionListener(OBackgroundExceptionListener listener) {
     backgroundExceptionListeners.add(new WeakReference<OBackgroundExceptionListener>(listener));
   }
@@ -243,6 +253,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
    *
    * @param listener Listener to remove
    */
+  @Override
   public void removeBackgroundExceptionListener(OBackgroundExceptionListener listener) {
     List<WeakReference<OBackgroundExceptionListener>> itemsToRemove = new ArrayList<WeakReference<OBackgroundExceptionListener>>();
 
@@ -253,9 +264,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
     }
 
-    for (WeakReference<OBackgroundExceptionListener> ref : itemsToRemove) {
-      backgroundExceptionListeners.remove(ref);
-    }
+    backgroundExceptionListeners.removeAll(itemsToRemove);
   }
 
   /**
@@ -302,10 +311,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
+  @Override
   public void addLowDiskSpaceListener(final OLowDiskSpaceListener listener) {
     listeners.add(new WeakReference<OLowDiskSpaceListener>(listener));
   }
 
+  @Override
   public void removeLowDiskSpaceListener(final OLowDiskSpaceListener listener) {
     final List<WeakReference<OLowDiskSpaceListener>> itemsToRemove = new ArrayList<WeakReference<OLowDiskSpaceListener>>();
 
@@ -316,8 +327,50 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         itemsToRemove.add(ref);
     }
 
-    for (WeakReference<OLowDiskSpaceListener> ref : itemsToRemove)
-      listeners.remove(ref);
+    listeners.removeAll(itemsToRemove);
+  }
+
+  /**
+   * @inheritDoc
+   */
+  @Override
+  public void addPageIsBrokenListener(OPageIsBrokenListener listener) {
+    pageIsBrokenListeners.add(new WeakReference<OPageIsBrokenListener>(listener));
+  }
+
+  /**
+   * @inheritDoc
+   */
+  @Override
+  public void removePageIsBrokenListener(OPageIsBrokenListener listener) {
+    final List<WeakReference<OPageIsBrokenListener>> itemsToRemove = new ArrayList<WeakReference<OPageIsBrokenListener>>();
+
+    for (WeakReference<OPageIsBrokenListener> ref : pageIsBrokenListeners) {
+      final OPageIsBrokenListener pageIsBrokenListener = ref.get();
+
+      if (pageIsBrokenListener == null || pageIsBrokenListener.equals(listener))
+        itemsToRemove.add(ref);
+    }
+
+    pageIsBrokenListeners.removeAll(itemsToRemove);
+  }
+
+  private void callPageIsBrokenListeners(final String fileName, final long pageIndex) {
+    cacheEventsPublisher.execute(new Runnable() {
+      @Override
+      public void run() {
+        for (WeakReference<OPageIsBrokenListener> pageIsBrokenListenerWeakReference : pageIsBrokenListeners) {
+          final OPageIsBrokenListener listener = pageIsBrokenListenerWeakReference.get();
+          if (listener != null)
+            try {
+              listener.pageIsBroken(fileName, pageIndex);
+            } catch (Exception e) {
+              OLogManager.instance()
+                  .error(this, "Error during notification of page is broken for storage " + storageLocal.getName(), e);
+            }
+        }
+      }
+    });
   }
 
   private void freeSpaceCheckAfterNewPageAdd(int pagesAdded) {
@@ -341,7 +394,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private void callLowSpaceListeners(final OLowDiskSpaceInformation information) {
-    lowSpaceEventsPublisher.execute(new Runnable() {
+    cacheEventsPublisher.execute(new Runnable() {
       @Override
       public void run() {
         for (WeakReference<OLowDiskSpaceListener> lowDiskSpaceListenerWeakReference : listeners) {
@@ -364,6 +417,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     return (int) crc32.getValue();
   }
 
+  @Override
   public long bookFileId(String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
@@ -1455,7 +1509,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
               fileClassic.read(firstPageStartPosition, buffer, false);
 
-              if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow))
+              if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
+                  || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode))
                 verifyChecksum(buffer, fileId, startPageIndex, null);
 
               buffer.position(0);
@@ -1476,7 +1531,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
             fileClassic.read(firstPageStartPosition, buffers, false);
 
-            if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow))
+            if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
+                || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode))
               for (int i = 0; i < buffers.length; ++i)
                 verifyChecksum(buffers[i], fileId, startPageIndex + i, buffers);
 
@@ -1533,10 +1589,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
               bufferPool.release(bufferToRelease);
 
           throw new OStorageException(message);
+        } else if (checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode) {
+          callPageIsBrokenListeners(fileNameById(fileId), pageIndex);
         }
-      }
 
-      return;
+        return;
+      }
     }
 
     buffer.position(CHECKSUM_OFFSET);
@@ -1579,6 +1637,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             bufferPool.release(bufferToRelease);
 
         throw new OStorageException(message);
+      } else if (checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode) {
+        callPageIsBrokenListeners(fileNameById(fileId), pageIndex);
       }
 
     }
@@ -2242,10 +2302,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  private static class LowSpaceEventsPublisherFactory implements ThreadFactory {
+  private static class CacheEventsPublisherFactory implements ThreadFactory {
     private final String storageName;
 
-    private LowSpaceEventsPublisherFactory(String storageName) {
+    private CacheEventsPublisherFactory(String storageName) {
       this.storageName = storageName;
     }
 
@@ -2253,7 +2313,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     public Thread newThread(Runnable r) {
       Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
-      thread.setName("OrientDB Low Disk Space Publisher (" + storageName + ")");
+      thread.setName("OrientDB Write Cache Event Publisher  (" + storageName + ")");
       return thread;
     }
   }

@@ -6,6 +6,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
@@ -97,7 +98,8 @@ public class ReadWriteCacheConcurrentTest {
 
   private void initBuffer() throws IOException {
     writeBuffer = new OWOWCache(false, 8 + systemOffset, new OByteBufferPool(8 + systemOffset), 10000, null, -1,
-        15000 * (8 + systemOffset), 4 * (8 + systemOffset) + 15000 * (8 + systemOffset), storageLocal, true, files, 1);
+        15000 * (8 + systemOffset), 4 * (8 + systemOffset) + 15000 * (8 + systemOffset), storageLocal, true, files, 1,
+        OChecksumMode.StoreAndThrow);
     writeBuffer.loadRegisteredFiles();
     readBuffer = new O2QCache(4 * (8 + systemOffset), 8 + systemOffset, true, 20);
   }
