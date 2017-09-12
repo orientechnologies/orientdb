@@ -374,7 +374,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final ScheduledExecutorService commitExecutor;
 
   /**
-   * Executor which is used to call "low disk space" listeners in  background thread
+   * Executor which is used to call event listeners in  background thread
    */
   private final ExecutorService cacheEventsPublisher;
 
@@ -658,7 +658,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
               listener.pageIsBroken(fileName, pageIndex);
             } catch (Exception e) {
               OLogManager.instance()
-                  .error(this, "Error during notification of low disk space for storage " + storageLocal.getName(), e);
+                  .error(this, "Error during notification of page is broken for storage " + storageLocal.getName(), e);
             }
         }
       }
