@@ -1,4 +1,3 @@
-
 /*
  *
  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
@@ -38,7 +37,7 @@ public class OrientDBConfigTest {
     OrientDBConfig settings = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 20)
         .addAttribute(ATTRIBUTES.VALIDATION, true).build();
 
-    assertEquals(settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), 20);
+    assertEquals(settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), (Integer) 20);
     assertEquals(settings.getAttributes().get(ATTRIBUTES.VALIDATION), true);
 
   }
@@ -49,7 +48,7 @@ public class OrientDBConfigTest {
     Map<String, Object> configs = new HashMap<>();
     configs.put(OGlobalConfiguration.DB_POOL_MAX.getKey(), 20);
     OrientDBConfig settings = OrientDBConfig.builder().fromMap(configs).build();
-    assertEquals(settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), 20);
+    assertEquals(settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), (Integer) 20);
   }
 
 }

@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
+import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
@@ -66,8 +67,8 @@ import java.util.zip.ZipOutputStream;
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
-  private static String[] ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet",
-      ".fl", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+  private static final String[] ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef", ".oem",
+      ".oet", ".fl", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION,
@@ -147,6 +148,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       return name;
   }
 
+  @Override
   public boolean exists() {
     try {
       if (status == STATUS.OPEN)
@@ -296,16 +298,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     }
 
     for (final File nonActiveSegment : nonActiveSegments) {
-      final FileInputStream fileInputStream = new FileInputStream(nonActiveSegment);
-      try {
-        final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-        try {
+      try (FileInputStream fileInputStream = new FileInputStream(nonActiveSegment)) {
+        try (BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream)) {
           final ZipEntry entry = new ZipEntry(nonActiveSegment.getName());
           zipOutputStream.putNextEntry(entry);
           try {
             final byte[] buffer = new byte[4096];
 
-            int br = 0;
+            int br;
 
             while ((br = bufferedInputStream.read(buffer)) >= 0) {
               zipOutputStream.write(buffer, 0, br);
@@ -313,11 +313,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           } finally {
             zipOutputStream.closeEntry();
           }
-        } finally {
-          bufferedInputStream.close();
         }
-      } finally {
-        fileInputStream.close();
       }
     }
 
@@ -346,10 +342,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     int bl = 0;
 
     final File walBackupFile = new File(directory, name);
-    final FileOutputStream outputStream = new FileOutputStream(walBackupFile);
-    try {
-      final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
-      try {
+    try (FileOutputStream outputStream = new FileOutputStream(walBackupFile)) {
+      try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream)) {
         while (true) {
           while (bl < buffer.length && (rb = stream.read(buffer, bl, buffer.length - bl)) > -1) {
             bl += rb;
@@ -362,11 +356,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             break;
           }
         }
-      } finally {
-        bufferedOutputStream.close();
       }
-    } finally {
-      outputStream.close();
     }
   }
 
@@ -462,10 +452,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ". Database files seem locked");
   }
 
+  @Override
   protected void makeStorageDirty() throws IOException {
     dirtyFlag.makeDirty();
   }
 
+  @Override
   protected void clearStorageDirty() throws IOException {
     dirtyFlag.clearDirty();
   }
@@ -480,7 +472,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     return true;
   }
 
-  protected void initWalAndDiskCache() throws IOException, InterruptedException {
+  @Override
+  protected void initWalAndDiskCache(OContextConfiguration contextConfiguration) throws IOException, InterruptedException {
     if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
           OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(),
@@ -500,10 +493,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     final OWOWCache wowCache = new OWOWCache(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
         OByteBufferPool.instance(), writeAheadLog, OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(),
-        writeCacheSize, this, true, files, getId());
+        writeCacheSize, this, true, files, getId(),
+        contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class));
+
     wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();
     wowCache.addBackgroundExceptionListener(this);
+    wowCache.addPageIsBrokenListener(this);
 
     writeCache = wowCache;
   }

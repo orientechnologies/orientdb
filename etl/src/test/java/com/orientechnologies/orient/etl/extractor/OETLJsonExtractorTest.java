@@ -92,10 +92,7 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
   @Test
   public void testHaltOnBadInput() {
 
-    configure("{\"source\": {\n"
-        + "    \"file\": {\n"
-        + "      \"path\": \"./src/test/resources/comments.json\"\n"
-        + "    }\n"
+    configure("{\"source\": {\n" + "    \"file\": {\n" + "      \"path\": \"./src/test/resources/comments.json\"\n" + "    }\n"
         + "  }, extractor : { json: {} }, loader: { test: {} } }");
     proc.execute();
 
@@ -105,16 +102,12 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
       assertThat(doc.<Integer>field("id")).isLessThan(5);
     }
   }
+
   @Test
   public void testSkipOnBadInput() {
 
-    configure(" { \"config\": {\n"
-        + "    \"haltOnError\": false\n"
-        + "  },"
-        + "\"source\": {\n"
-        + "    \"file\": {\n"
-        + "      \"path\": \"./src/test/resources/comments.json\"\n"
-        + "    }\n"
+    configure(" { \"config\": {\n" + "    \"haltOnError\": false\n" + "  }," + "\"source\": {\n" + "    \"file\": {\n"
+        + "      \"path\": \"./src/test/resources/comments.json\"\n" + "    }\n"
         + "  }, extractor : { json: {} }, loader: { test: {} } }");
     proc.execute();
 

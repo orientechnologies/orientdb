@@ -171,10 +171,11 @@ public enum OGlobalConfiguration {
   STORAGE_CHECKSUM_MODE("storage.diskCache.checksumMode", "Controls the per-page checksum storage and verification done by "
       + "the file cache. Possible modes: 'off' – checksums are completely off; 'store' – checksums are calculated and stored "
       + "on page flushes, no verification is done on page loads, stored checksums are verified only during user-initiated health "
-      + "checks; 'storeAndVerify' (default) – checksums are calculated and stored on page flushes, verification is performed on "
+      + "checks; 'storeAndVerify' – checksums are calculated and stored on page flushes, verification is performed on "
       + "each page load, errors are reported in the log; 'storeAndThrow' – same as `storeAndVerify` with addition of exceptions "
-      + "thrown on errors, this mode is useful for debugging and testing, but should be avoided in a production environment.",
-      OChecksumMode.class, OChecksumMode.StoreAndVerify, false),
+      + "thrown on errors, this mode is useful for debugging and testing, but should be avoided in a production environment;"
+      + " 'storeAndSwitchReadOnlyMode' (default) - Same as 'storeAndVerify' with addition that storage will be switched in read only mode "
+      + "till it will not be repaired.", OChecksumMode.class, OChecksumMode.StoreAndSwitchReadOnlyMode, false),
 
   @Deprecated STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Indicates a force sync should be performed for each update on the storage configuration", Boolean.class, true),
@@ -802,7 +803,7 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2.0
    */
-  @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads",
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads",
       "Number of parallel worker threads per database that process distributed messages. Use 0 for automatic", Integer.class, 0),
 
   /**

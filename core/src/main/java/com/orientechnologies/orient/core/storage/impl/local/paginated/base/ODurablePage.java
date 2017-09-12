@@ -27,7 +27,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
@@ -45,9 +44,6 @@ import java.nio.ByteBuffer;
  * </ol>
  * <p>
  * Developer which will extend this class should use all page memory starting from {@link #NEXT_FREE_POSITION} offset.
- * <p>
- * {@link OReadCache#release(OCacheEntry, com.orientechnologies.orient.core.storage.cache.OWriteCache)} back to the cache.
- * <p>
  * All data structures which use this kind of pages should be derived from
  * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent} class.
  *
@@ -56,7 +52,7 @@ import java.nio.ByteBuffer;
  */
 public class ODurablePage {
 
-  protected static final int MAGIC_NUMBER_OFFSET = 0;
+  public static final    int MAGIC_NUMBER_OFFSET = 0;
   protected static final int CRC32_OFFSET        = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
   public static final int WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -65,7 +61,7 @@ public class ODurablePage {
 
   protected static final int NEXT_FREE_POSITION = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
-  protected OWALChanges changes;
+  private OWALChanges changes;
 
   private final OCacheEntry cacheEntry;
 
@@ -78,28 +74,16 @@ public class ODurablePage {
 
     if (cacheEntry != null) {
       this.pointer = cacheEntry.getCachePointer();
+      this.changes = cacheEntry.getChanges();
     } else
       this.pointer = null;
 
-    this.changes = cacheEntry.getChanges();
   }
 
   public static OLogSequenceNumber getLogSequenceNumberFromPage(ByteBuffer buffer) {
     buffer.position(WAL_SEGMENT_OFFSET);
     final long segment = buffer.getLong();
     final long position = buffer.getLong();
-
-    return new OLogSequenceNumber(segment, position);
-  }
-
-  public static void getPageData(ByteBuffer buffer, byte[] data, int offset, int length) {
-    buffer.position(0);
-    buffer.get(data, offset, length);
-  }
-
-  public static OLogSequenceNumber getLogSequenceNumber(int offset, byte[] data) {
-    final long segment = OLongSerializer.INSTANCE.deserializeNative(data, offset + WAL_SEGMENT_OFFSET);
-    final long position = OLongSerializer.INSTANCE.deserializeNative(data, offset + WAL_POSITION_OFFSET);
 
     return new OLogSequenceNumber(segment, position);
   }
@@ -177,6 +161,7 @@ public class ODurablePage {
     return changes.getByteValue(buffer, pageOffset);
   }
 
+  @SuppressWarnings("SameReturnValue")
   protected int setIntValue(int pageOffset, int value) {
     assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
@@ -191,6 +176,7 @@ public class ODurablePage {
     return OIntegerSerializer.INT_SIZE;
   }
 
+  @SuppressWarnings("SameReturnValue")
   protected int setByteValue(int pageOffset, byte value) {
     assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
@@ -205,6 +191,7 @@ public class ODurablePage {
     return OByteSerializer.BYTE_SIZE;
   }
 
+  @SuppressWarnings("SameReturnValue")
   protected int setLongValue(int pageOffset, long value) {
     assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
@@ -271,15 +258,6 @@ public class ODurablePage {
     changes.applyChanges(buffer);
 
     cacheEntry.markDirty();
-  }
-
-  public OLogSequenceNumber getLsn() {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    final long segment = getLongValue(WAL_SEGMENT_OFFSET);
-    final long position = getLongValue(WAL_POSITION_OFFSET);
-
-    return new OLogSequenceNumber(segment, position);
   }
 
   public void setLsn(OLogSequenceNumber lsn) {
