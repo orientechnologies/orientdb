@@ -1564,7 +1564,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             final DataOutputStream journaledStream = OAbstractPaginatedStorage.journaledStream;
             if (journaledStream != null) { // send event to journaled tx stream if the streaming is on
               final int txId = clientTx.getClientTransactionId();
-              if (lsn == null) // if tx is not journaled
+              if (lsn == null || writeAheadLog == null) // if tx is not journaled
                 try {
                   journaledStream.writeInt(txId);
                 } catch (IOException e) {

@@ -1170,12 +1170,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private void fireEventsFor(OLogSequenceNumber lsn) {
     // may be executed by only one thread at every instant of time
 
-    final ConcurrentNavigableMap<OLogSequenceNumber, Runnable> eventsToFire = events.headMap(lsn, true);
-
-    for (Runnable runnable : eventsToFire.values())
-      runnable.run();
-
-    eventsToFire.clear();
+    final Iterator<Runnable> eventsToFire = events.headMap(lsn, true).values().iterator();
+    while (eventsToFire.hasNext()) {
+      eventsToFire.next().run();
+      eventsToFire.remove();
+    }
   }
 
 }
