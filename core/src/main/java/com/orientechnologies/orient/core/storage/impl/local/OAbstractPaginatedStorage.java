@@ -1429,7 +1429,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public void preallocateRids(final OTransaction clientTx) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
+      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
 
       @SuppressWarnings("unchecked")
       final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
