@@ -106,6 +106,7 @@ public class OClientConnectionManager {
             entry.getValue().getProtocol().sendShutdown();
             entry.getValue().getProtocol().interrupt();
           }
+          removeConnectionFromSession(entry.getValue());
           entry.getValue().close();
 
         } catch (Exception e) {
@@ -116,6 +117,7 @@ public class OClientConnectionManager {
         if (entry.getValue().getToken() != null && !entry.getValue().getToken().isNowValid() && !entry.getValue().getToken()
             .getIsValid()) {
           // Close the current session but not the network because can be used by another session.
+          removeConnectionFromSession(entry.getValue());
           entry.getValue().close();
           iterator.remove();
         }
@@ -298,6 +300,7 @@ public class OClientConnectionManager {
     if (connection != null) {
       OServerPluginHelper.invokeHandlerCallbackOnClientDisconnection(server, connection);
       connection.close();
+      removeConnectionFromSession(connection);
 
       // CHECK IF THERE ARE OTHER CONNECTIONS
       for (Entry<Integer, OClientConnection> entry : connections.entrySet()) {
