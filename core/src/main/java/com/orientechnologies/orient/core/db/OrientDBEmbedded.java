@@ -135,7 +135,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
       cfg.setParent(this.configurations);
       return cfg;
     }
-
   }
 
   public ODatabaseDocumentInternal poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {

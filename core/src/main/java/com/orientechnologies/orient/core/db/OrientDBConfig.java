@@ -29,11 +29,11 @@ import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
  */
 public class OrientDBConfig {
 
-  private       OrientDBConfig          parent;
-  private final OContextConfiguration   configurations;
-  private final Map<ATTRIBUTES, Object> attributes;
-  private final Set<ODatabaseListener>  listeners;
-  private final ClassLoader             classLoader;
+  private OrientDBConfig          parent;
+  private OContextConfiguration   configurations;
+  private Map<ATTRIBUTES, Object> attributes;
+  private Set<ODatabaseListener>  listeners;
+  private ClassLoader             classLoader;
 
   protected OrientDBConfig() {
     configurations = new OContextConfiguration();
@@ -84,6 +84,39 @@ public class OrientDBConfig {
 
   protected void setParent(OrientDBConfig parent) {
     this.parent = parent;
+    if (parent != null) {
+      if (parent.attributes != null) {
+        Map<ATTRIBUTES, Object> attrs = new HashMap<>();
+        attrs.putAll(parent.attributes);
+        if (attributes != null) {
+          attrs.putAll(attributes);
+        }
+        this.attributes = attrs;
+      }
+
+      if (parent.configurations != null) {
+        OContextConfiguration confis = new OContextConfiguration();
+        confis.merge(parent.configurations);
+        if (this.configurations != null) {
+          confis.merge(this.configurations);
+        }
+        this.configurations = confis;
+      }
+
+      if (this.classLoader == null) {
+        this.classLoader = parent.classLoader;
+      }
+
+      if (parent.listeners != null) {
+        Set<ODatabaseListener> lis = new HashSet<>();
+        lis.addAll(parent.listeners);
+        if (this.listeners != null) {
+          lis.addAll(this.listeners);
+        }
+        this.listeners = lis;
+      }
+    }
+
   }
 
 }

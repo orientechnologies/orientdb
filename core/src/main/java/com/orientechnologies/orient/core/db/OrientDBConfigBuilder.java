@@ -45,7 +45,7 @@ public class OrientDBConfigBuilder {
 
   public OrientDBConfigBuilder fromMap(Map<String, Object> values) {
     for (Map.Entry<String, Object> entry : values.entrySet()) {
-      addConfig(OGlobalConfiguration.valueOf(entry.getKey()), entry.getValue());
+      configurations.setValue(entry.getKey(), entry.getValue());
     }
     return this;
   }

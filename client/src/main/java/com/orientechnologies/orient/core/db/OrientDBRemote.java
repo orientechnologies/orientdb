@@ -256,12 +256,11 @@ public class OrientDBRemote implements OrientDBInternal {
     if (config != null) {
       config.setParent(this.configurations);
       return config;
-    } else
-      return this.configurations;
-  }
-
-  public OrientDBConfig getConfigurations() {
-    return configurations;
+    } else {
+      OrientDBConfig cfg = OrientDBConfig.defaultConfig();
+      cfg.setParent(this.configurations);
+      return cfg;
+    }
   }
 
   private void checkOpen() {
