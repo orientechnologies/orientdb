@@ -2099,11 +2099,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     boolean verbose = iOptions != null && iOptions.contains("-v");
 
+    message("\nChecking storage.");
     try {
       ((OAbstractPaginatedStorage) currentDatabase.getStorage()).check(verbose, this);
     } catch (ODatabaseImportException e) {
       printError(e);
     }
+
+    message("\nChecking indexes.\n");
+    OCheckIndexTool indexTool = new OCheckIndexTool();
+    indexTool.setDatabase(currentDatabase);
+    indexTool.setOutputListener(this);
+    indexTool.setVerbose(true);
+    indexTool.run();
+
   }
 
   @ConsoleCommand(description = "Repair database structure")
