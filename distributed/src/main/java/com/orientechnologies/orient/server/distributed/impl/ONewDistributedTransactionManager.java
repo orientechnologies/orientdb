@@ -140,19 +140,7 @@ public class ONewDistributedTransactionManager {
           // SYNCHRONOUS CALL: REPLICATE IT
           final ODistributedResponse lastResult = dManager
               .sendRequest(storage.getName(), involvedClusters, nodes, txTask, requestId.getMessageId(), EXECUTION_MODE.RESPONSE,
-                  localResult, null, resp -> {
-                    // FINALIZE ONLY IF IT IS IN ASYNCH MODE
-                    if (finalizeRequest(resp, localNodeName, involvedClusters, txTask)) {
-                      if (lockReleased.compareAndSet(false, true)) {
-                        localDistributedDatabase.popTxContext(requestId);
-                        ctx.destroy();
-                      }
-                    }
-
-                    // CONTEXT WILL BE RELEASED
-                    releaseContext.set(true);
-                    return null;
-                  });
+                  localResult, null, null);
 
           if (ctx.isCanceled())
             throw new ODistributedOperationException("Transaction as been canceled because concurrent updates");
