@@ -19,12 +19,8 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 import java.util.Map;
@@ -32,9 +28,8 @@ import java.util.Set;
 
 /**
  * SQL UPDATE command.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   protected OCommandExecutor delegate;
@@ -71,7 +66,12 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
-    return delegate.execute(iArgs);
+    try {
+      return delegate.execute(iArgs);
+    } catch (OCommandExecutionException e) {
+      OLogManager.instance().info(this, "Error executing query: " + toString());
+      throw e;
+    }
   }
 
   @Override
