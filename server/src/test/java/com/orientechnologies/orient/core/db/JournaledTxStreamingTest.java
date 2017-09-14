@@ -39,8 +39,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
