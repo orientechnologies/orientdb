@@ -28,8 +28,10 @@ import java.util.zip.CRC32;
 final class OLogSegmentV2 implements OLogSegment {
   private final ODiskWriteAheadLog writeAheadLog;
 
-  private volatile long               writtenUpTo;
+  private volatile long writtenUpTo;
+
   private volatile OLogSequenceNumber storedUpTo;
+  private volatile OLogSequenceNumber syncedUpTo;
 
   private final Path path;
   private final long order;
@@ -197,12 +199,21 @@ final class OLogSegmentV2 implements OLogSegment {
     }
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
-  private final class FSyncer implements Runnable {
+  private final class SyncTask implements Runnable {
     @Override
     public void run() {
       try {
-        fsync();
+        final OLogSequenceNumber stored = storedUpTo;
+        final OLogSequenceNumber synced = syncedUpTo;
+
+        if (stored == null) // nothing stored yet, so there is nothing to sync, exit
+          return;
+
+        if (synced == null || synced.compareTo(stored) < 0) { // it's a first sync request or we have a new data to sync
+          segmentCache.sync();
+          syncedUpTo = stored;
+          writeAheadLog.setFlushedLsn(stored);
+        }
       } catch (IOException ioe) {
         OLogManager.instance().error(this, "Can not force sync content of file " + path);
       }
@@ -231,7 +242,7 @@ final class OLogSegmentV2 implements OLogSegment {
   public void startBackgroundWrite() {
     if (writeAheadLog.getCommitDelay() > 0) {
       commitExecutor.scheduleAtFixedRate(new WriteTask(), 100, 100, TimeUnit.MICROSECONDS);
-      commitExecutor.scheduleAtFixedRate(new FSyncer(), writeAheadLog.getCommitDelay(), writeAheadLog.getCommitDelay(),
+      commitExecutor.scheduleAtFixedRate(new SyncTask(), writeAheadLog.getCommitDelay(), writeAheadLog.getCommitDelay(),
           TimeUnit.MILLISECONDS);
     }
   }
@@ -266,13 +277,6 @@ final class OLogSegmentV2 implements OLogSegment {
     CRC32 crc32 = new CRC32();
     crc32.update(data);
     content.putInt(OWALPage.CRC_OFFSET, (int) crc32.getValue());
-  }
-
-  private void fsync() throws IOException {
-    OLogSequenceNumber stored = storedUpTo;
-    segmentCache.sync();
-
-    writeAheadLog.setFlushedLsn(stored);
   }
 
   /**
@@ -664,7 +668,7 @@ final class OLogSegmentV2 implements OLogSegment {
   @Override
   public void flush() throws IOException {
     writeData();
-    fsync();
+    syncData();
   }
 
   private void writeData() {
@@ -689,6 +693,32 @@ final class OLogSegmentV2 implements OLogSegment {
         throw OException.wrapException(new OStorageException("Thread was interrupted during flush"), e);
       } catch (ExecutionException e) {
         throw OException.wrapException(new OStorageException("Error during WAL segment '" + getPath() + "' flush"), e);
+      }
+    }
+  }
+
+  private void syncData() {
+    if (commitExecutor.isShutdown()) {
+      if (!commitExecutor.isTerminated()) {
+        try {
+          if (!commitExecutor
+              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+            throw new OStorageException("Unable to sync data, WAL commit executor appears hung");
+        } catch (InterruptedException e) {
+          Thread.interrupted();
+          throw OException.wrapException(new OStorageException("Thread was interrupted during waiting for WAL commit executor"), e);
+        }
+      }
+
+      new SyncTask().run();
+    } else {
+      try {
+        commitExecutor.submit(new SyncTask()).get();
+      } catch (InterruptedException e) {
+        Thread.interrupted();
+        throw OException.wrapException(new OStorageException("Thread was interrupted during sync"), e);
+      } catch (ExecutionException e) {
+        throw OException.wrapException(new OStorageException("Error during WAL segment '" + getPath() + "' sync"), e);
       }
     }
   }

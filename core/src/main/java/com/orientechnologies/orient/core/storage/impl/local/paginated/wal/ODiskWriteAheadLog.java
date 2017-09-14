@@ -1117,16 +1117,18 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return storage;
   }
 
-  void setFlushedLsn(OLogSequenceNumber flushedLsn) {
+  void setFlushedLsn(OLogSequenceNumber newLsn) {
     // The only way the flushed LSN may change is as a result of the OLogSegmentVX.WriteTask invocation, which is always scheduled
     // sequentially. No instances of WriteTask may run concurrently, but they may run on different threads. Later, the LSN stored
-    // by the WriteTask is transferred to here by the WAL segment syncer thread.
+    // by the WriteTask is transferred to here by the OLogSegmentVX.SyncTask.
 
-    if (flushedLsn == null)
-      return;
+    final OLogSequenceNumber oldLsn = this.flushedLsn;
+    if (oldLsn != null && newLsn.compareTo(oldLsn) <= 0)
+      throw new IllegalStateException("new flushed LSN must be newer than the old one, old = " + oldLsn + ", new = " + newLsn);
 
-    this.flushedLsn = flushedLsn;
-    fireEventsFor(flushedLsn);
+    this.flushedLsn = newLsn;
+
+    fireEventsFor(newLsn);
   }
 
   public void checkFreeSpace() throws IOException {
