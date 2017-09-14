@@ -33,9 +33,9 @@ import java.util.List;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OTransactionTaskResult implements OStreamable {
+public class OTransactionPhase1TaskResult implements OStreamable {
 
-  public OTransactionTaskResult() {
+  public OTransactionPhase1TaskResult() {
   }
 
   @Override

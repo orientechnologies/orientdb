@@ -114,7 +114,7 @@ public class ONewDistributedTransactionManager {
         final Set<String> involvedClusters = getInvolvedClusters(uResult);
         Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
 
-        final OTransactionTask txTask = !nodes.isEmpty() ? createTxTask(uResult, nodes) : null;
+        final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(uResult, nodes) : null;
 
         // AFTER THE CREATION OF TASKS, REMOVE THE TX OBJECT FROM DATABASE TO AVOID UNDO OPERATIONS ARE "LOST IN TRANSACTION"
 
@@ -132,7 +132,8 @@ public class ONewDistributedTransactionManager {
 
         try {
           //TODO:check the lsn
-          //txTask.setLastLSN(((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN());
+
+          txTask.setLastLSN(((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN());
 
           OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
 
@@ -268,9 +269,9 @@ public class ONewDistributedTransactionManager {
     return involvedClusters;
   }
 
-  protected OTransactionTask createTxTask(final List<ORecordOperation> uResult, final Set<String> nodes) {
-    final OTransactionTask txTask = (OTransactionTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
-        .createTask(OTransactionTask.FACTORYID);
+  protected OTransactionPhase1Task createTxTask(final List<ORecordOperation> uResult, final Set<String> nodes) {
+    final OTransactionPhase1Task txTask = (OTransactionPhase1Task) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
+        .createTask(OTransactionPhase1Task.FACTORYID);
     txTask.init(uResult);
     return txTask;
   }
@@ -414,7 +415,7 @@ public class ONewDistributedTransactionManager {
     }
   }
 
-  protected void processCommitResult(final String localNodeName, final OTransaction iTx, final OTransactionTask txTask,
+  protected void processCommitResult(final String localNodeName, final OTransaction iTx, final OTransactionPhase1Task txTask,
       final Set<String> involvedClusters, final Iterable<ORecordOperation> tmpEntries, final Collection<String> nodes,
       final ODistributedRequestId reqId, final ODistributedResponse dResponse) throws InterruptedException {
     final Object result = dResponse.getPayload();
@@ -501,7 +502,7 @@ public class ONewDistributedTransactionManager {
    * Finalizes the request only if in asynchronous mode.
    */
   private boolean finalizeRequest(final ODistributedResponseManager aresp, final String localNodeName,
-      final Set<String> involvedClusters, final OTransactionTask txTask) {
+      final Set<String> involvedClusters, final OTransactionPhase1Task txTask) {
 
     return aresp.executeInLock((resp) -> {
       if (resp.isSynchronousWaiting())

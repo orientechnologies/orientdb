@@ -27,7 +27,8 @@ import java.util.List;
 public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 43;
 
-  List<ORecordOperation> ops = new ArrayList<>();
+  private OLogSequenceNumber lastLSN;
+  private List<ORecordOperation> ops = new ArrayList<>();
 
   @Override
   public String getName() {
@@ -42,7 +43,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   @Override
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
-    return null; //TODO
+    return new OTransactionPhase1TaskResult(); //TODO
   }
 
   @Override
@@ -99,5 +100,13 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   @Override
   public int getFactoryId() {
     return FACTORYID;
+  }
+
+  public void init(List<ORecordOperation> operations) {
+    this.ops = operations;
+  }
+
+  public void setLastLSN(OLogSequenceNumber lastLSN) {
+    this.lastLSN = lastLSN;
   }
 }
