@@ -48,6 +48,11 @@ public enum OChecksumMode {
    * Same as {@link OChecksumMode#StoreAndVerify} with addition of exceptions thrown on errors. This mode is useful for debugging
    * and testing, but should be avoided in a production environment.
    */
-  StoreAndThrow
+  StoreAndThrow,
 
+  /**
+   * Same as {@link OChecksumMode#StoreAndVerify} with addition that storage will be switched in read only mode
+   * till it will not be repaired.
+   */
+  StoreAndSwitchReadOnlyMode
 }

@@ -158,8 +158,9 @@ public enum OGlobalConfiguration {
       + "on page flushes, no verification is done on page loads, stored checksums are verified only during user-initiated health "
       + "checks; 'storeAndVerify' (default) – checksums are calculated and stored on page flushes, verification is performed on "
       + "each page load, errors are reported in the log; 'storeAndThrow' – same as `storeAndVerify` with addition of exceptions "
-      + "thrown on errors, this mode is useful for debugging and testing, but should be avoided in a production environment.",
-      OChecksumMode.class, OChecksumMode.StoreAndVerify, false),
+      + "thrown on errors, this mode is useful for debugging and testing, but should be avoided in a production environment;"
+      + " 'storeAndSwitchReadOnlyMode' (default) - Same as 'storeAndVerify' with addition that storage will be switched in read only mode "
+      + "till it will not be repaired.", OChecksumMode.class, OChecksumMode.StoreAndSwitchReadOnlyMode, false),
 
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Indicates a force sync should be performed for each update on the storage configuration", Boolean.class, true),
@@ -737,8 +738,8 @@ public enum OGlobalConfiguration {
   DISTRIBUTED_RESPONSE_CHANNELS("distributed.responseChannels", "Number of network channels used to send responses", Integer.class,
       1),
 
-  DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout",
-      "Maximum timeout (in ms) to wait when the replication queue is full", Long.class, 15000l, true),
+  DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout (in ms) to wait when the replication queue is full",
+      Long.class, 15000l, true),
 
   /**
    * @Since 2.2.5
@@ -1083,6 +1084,29 @@ public enum OGlobalConfiguration {
   public <T> T getValue() {
     //noinspection unchecked
     return (T) (value != null ? value : defValue);
+  }
+
+  /**
+   * @return Value of configuration parameter stored as enumeration if such one exists.
+   *
+   * @throws ClassCastException       if stored value can not be casted and parsed from string to passed in enumeration class.
+   * @throws IllegalArgumentException if value associated with configuration parameter is a string bug can not be converted to
+   *                                  instance of passed in enumeration class.
+   */
+  public <T extends Enum<T>> T getValueAsEnum(Class<T> enumType) {
+    final Object value = getValue();
+
+    if (value == null)
+      return null;
+
+    if (enumType.isAssignableFrom(value.getClass())) {
+      return enumType.cast(value);
+    } else if (value instanceof String) {
+      final String presentation = value.toString();
+      return Enum.valueOf(enumType, presentation);
+    } else {
+      throw new ClassCastException("Value " + value + " can not be cast to enumeration " + enumType.getSimpleName());
+    }
   }
 
   public void setValue(final Object iValue) {

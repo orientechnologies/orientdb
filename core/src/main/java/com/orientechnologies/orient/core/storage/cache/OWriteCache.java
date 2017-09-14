@@ -24,6 +24,7 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
+import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 
 import java.io.File;
@@ -33,6 +34,16 @@ import java.util.concurrent.Future;
 
 public interface OWriteCache {
   void startFuzzyCheckpoints();
+
+  /**
+   * Adds listener which is called by cache if corruption of file page is detected.
+   */
+  void addPageIsBrokenListener(OPageIsBrokenListener listener);
+
+  /**
+   * Removes listener which is called by cache if corruption of file page is detected.
+   */
+  void removePageIsBrokenListener(OPageIsBrokenListener listener);
 
   void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
 

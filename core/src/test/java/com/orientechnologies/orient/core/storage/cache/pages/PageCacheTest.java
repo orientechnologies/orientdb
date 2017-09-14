@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
+import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -358,6 +359,14 @@ public class PageCacheTest {
     @Override
     public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
 
+    }
+
+    @Override
+    public void addPageIsBrokenListener(OPageIsBrokenListener listener) {
+    }
+
+    @Override
+    public void removePageIsBrokenListener(OPageIsBrokenListener listener) {
     }
 
     @Override

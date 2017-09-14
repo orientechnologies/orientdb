@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
@@ -593,10 +594,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     final OWOWCache wowCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
         OByteBufferPool.instance(), OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000, writeAheadLog,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize, this, true,
-        files, getId());
+        files, getId(), OGlobalConfiguration.STORAGE_CHECKSUM_MODE.getValueAsEnum(OChecksumMode.class));
+
     wowCache.loadRegisteredFiles();
     wowCache.addLowDiskSpaceListener(this);
     wowCache.addBackgroundExceptionListener(this);
+    wowCache.addPageIsBrokenListener(this);
 
     writeCache = wowCache;
   }
