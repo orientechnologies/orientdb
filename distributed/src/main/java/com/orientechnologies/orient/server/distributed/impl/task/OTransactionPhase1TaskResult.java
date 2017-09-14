@@ -20,22 +20,36 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.serialization.OStreamable;
-import com.orientechnologies.orient.core.serialization.OStreamableHelper;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
 /**
- * Result of distributed transaction.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author tglman
  */
 public class OTransactionPhase1TaskResult implements OStreamable {
+  enum Result {
+    Ok(1), KO(2);
+    int id;
+
+    Result(int id) {
+      this.id = id;
+    }
+  }
+
+  private Result                              result;
+  private Optional<OTransactionResultPayload> resultPayload;
 
   public OTransactionPhase1TaskResult() {
+
+  }
+
+  public OTransactionPhase1TaskResult(Result result, Optional<OTransactionResultPayload> resultPayload) {
+    this.result = result;
+    this.resultPayload = resultPayload;
   }
 
   @Override
