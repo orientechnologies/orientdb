@@ -1,4 +1,5 @@
 import {Component, NgZone, AfterViewChecked, EventEmitter, Output, ViewChild} from '@angular/core';
+import {ModalComponent} from 'ng2-bs3-modal/ng2-bs3-modal';
 
 import * as $ from "jquery"
 
@@ -56,6 +57,11 @@ class TeleporterComponent implements AfterViewChecked {
 
   @ViewChild('detailPanel') detailPanel;
   @ViewChild('graphPanel') graphPanel;
+
+  // Modals' variables
+  @ViewChild('acceptOracleLicenseModal') acceptOracleLicenseModal: ModalComponent;
+  private licensePermission = false;
+
 
   constructor(private teleporterService: TeleporterService, private notification: NotificationService,
               private zone: NgZone) {
@@ -284,41 +290,47 @@ class TeleporterComponent implements AfterViewChecked {
 
   launch() {
 
-    // fetching modelling config if it's not undefined and preparation
-    if(this.modellingConfig) {
-
-      // copying the configuration object
-      var configCopy = JSON.parse(JSON.stringify(this.modellingConfig));
-
-      this.prepareModellingConfig(configCopy);
-      this.config.migrationConfig = JSON.stringify(configCopy);
+    if(this.config.driver === 'Oracle' && this.licensePermission === false) {
+      this.prepareAndOpenAcceptOracleLicenseModal();
     }
+    else {
 
-    this.config.outDbUrl = this.config.protocol + ":" + this.config.outDBName;
+      // fetching modelling config if it's not undefined and preparation
+      if (this.modellingConfig) {
 
-    // transforming includedTables if set
-    if(this.includedTables.length > 0) {
-      for(var i=0; i < this.includedTables.length; i++) {
-        this.config.includedTables.push(this.includedTables[i].tableName);
+        // copying the configuration object
+        var configCopy = JSON.parse(JSON.stringify(this.modellingConfig));
+
+        this.prepareModellingConfig(configCopy);
+        this.config.migrationConfig = JSON.stringify(configCopy);
       }
+
+      this.config.outDbUrl = this.config.protocol + ":" + this.config.outDBName;
+
+      // transforming includedTables if set
+      if (this.includedTables.length > 0) {
+        for (var i = 0; i < this.includedTables.length; i++) {
+          this.config.includedTables.push(this.includedTables[i].tableName);
+        }
+      }
+
+      // invalidate the old migration config
+      this.modellingConfig = undefined;
+      this.selectedElement = undefined;
+      if (this.graphPanel !== undefined) {
+        this.graphPanel.invalidateMigrationConfig();
+      }
+
+      this.initJobInfo();
+
+      this.step = "running";
+      this.jobRunning = true;
+      this.teleporterService.launch(this.config).then(() => {
+        this.status();
+      }).catch(function (error) {
+        alert("Error during migration!")
+      });
     }
-
-    // invalidate the old migration config
-    this.modellingConfig = undefined;
-    this.selectedElement = undefined;
-    if(this.graphPanel !== undefined) {
-      this.graphPanel.invalidateMigrationConfig();
-    }
-
-    this.initJobInfo();
-
-    this.step = "running";
-    this.jobRunning = true;
-    this.teleporterService.launch(this.config).then(() => {
-      this.status();
-    }).catch(function (error) {
-      alert("Error during migration!")
-    });
   }
 
   prepareModellingConfig(configCopy) {
@@ -422,6 +434,61 @@ class TeleporterComponent implements AfterViewChecked {
   removeElementInGraph(event) {
     this.graphPanel.removeElementInGraph(event);
   }
+
+  /**
+   * ----------------------------------------------------------
+   *
+   *                      Modals' methods
+   *
+   * ----------------------------------------------------------
+   */
+
+  /**
+   * It prepares and opens an "accept oracle license" modal.
+   */
+  prepareAndOpenAcceptOracleLicenseModal() {
+
+    // opening the modal
+    this.acceptOracleLicenseModal.open();
+  }
+
+  /**
+   * It's called when an "accept oracle license" modal closing or dismissing occurs.
+   */
+  dismissOrCloseAcceptOracleLicenseModal(action) {
+
+    if(action === 'accept') {
+
+      // setting acceptOracleLicense true
+      this.licensePermission = true;
+
+      this.launch();
+
+      // closing the modal
+      this.acceptOracleLicenseModal.close();
+    }
+    else if(action === 'reject') {
+
+      // setting permission to false
+      this.licensePermission = false;
+
+      // closing the modal
+      this.acceptOracleLicenseModal.close();
+    }
+    else if(action === 'dismiss') {
+
+      // setting permission to false
+      this.licensePermission = false;
+
+      // dismissing the modal
+      this.acceptOracleLicenseModal.dismiss();
+    }
+  }
+
+
+  /**
+   *   auxiliary function, useful to build a basic migration config
+   */
 
   // // old graph
   // buildConfigJSON() {

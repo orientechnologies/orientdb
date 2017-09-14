@@ -50,7 +50,20 @@
 
         <!-- Step 1 - source configuration, advanced parameters configuration -->
         <div class="stepOne" *ngSwitchCase="'1'">
-          <h3 align="center">Step 1 - Configure the Source</h3><br/>
+          <h3 align="center">Step 1: Configuration and Source</h3><br/>
+
+          <div class="form-group">
+            <label class="col-md-4 control-label">Configuration name</label>
+            <div class="col-md-4">
+              <input type="text" id="configName" class="form-control" name="configName" [(ngModel)]="configName"
+                     placeholder="Name for your configuration file" required/>
+            </div>
+            <div class="col-md-4">
+              <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.configNameHint"><i class="fa fa-question-circle"></i>
+              </button>
+            </div>
+          </div>
 
           <div class="form-group">
             <label class="col-md-4 control-label">Source Type</label>
@@ -188,7 +201,7 @@
 
         <!-- Step 2 - Etl modules creation, configuration and sorting -->
         <div class="stepTwo" *ngSwitchCase="'2'">
-          <h3 align="center">Step 2 - Configure the ETL Parameters</h3><br>
+          <h3 align="center">Step 2: Configure the ETL Parameters</h3><br>
           <div class="col-md-8">
             <div class="panel panel-default" style="height:500px">
               <div class="panel-heading" align="center"><b>ETL OVERVIEW - CHOSEN SOURCE: {{sourcePrototype.source.value.toUpperCase()}}</b></div>

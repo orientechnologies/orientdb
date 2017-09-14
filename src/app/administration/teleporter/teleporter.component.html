@@ -1,5 +1,30 @@
 <div class="row">
 
+  <!-- Accept Oracle license Modal -->
+  <modal #acceptOracleLicenseModal (onDismiss)="dismissOrCloseAcceptOracleLicenseModal('dismiss')">
+    <modal-header [show-close]="false">
+      <h4 class="modal-title">Warning!</h4>
+    </modal-header>
+    <modal-body>
+      <div class="row" style="padding-left: 7%; padding-right: 7%; padding-top: 5%; padding-bottom: 5%;">
+      <p style="text-align: justify">
+        In order to connect Teleporter to your Oracle database, you need to download the Oracle Database JDBC Driver.<br><br>
+        By downloading this driver, you must accept the OTN License Agreement terms.<br><br>
+        For more info about the OTN License Agreement please visit the link <br>
+      </p>
+      <p style="text-align: center">
+        <a href="http://www.oracle.com/technetwork/licenses/distribution-license-152002.html" target="_blank">
+          http://www.oracle.com/technetwork/licenses/distribution-license-152002.html
+        </a>
+      </p>
+      </div>
+    </modal-body>
+    <modal-footer [show-default-buttons]="false">
+      <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissOrCloseAcceptOracleLicenseModal('reject')">Reject</button>
+      <button type="button" class="btn btn-primary" (click)="dismissOrCloseAcceptOracleLicenseModal('accept')">Accept</button>
+    </modal-footer>
+  </modal>
+
   <form class="form-horizontal" id="teleporterForm" name="teleporterForm" #form="ngForm">
 
     <div id="stepSwitch" [ngSwitch]="getStep()">

@@ -30,6 +30,7 @@ class EtlComponent implements OnDestroy {
   private loaderPrototype;
 
   // Configuration parts
+  private configName;
   private config;
   private source;
 
@@ -45,6 +46,7 @@ class EtlComponent implements OnDestroy {
   // Types needed for controls
   private extractorType;
   private loaderType;
+  private level2levelCode
 
   // Control booleans
   private ready;
@@ -75,6 +77,17 @@ class EtlComponent implements OnDestroy {
   }
 
   init() {
+
+    this.configName = "";
+
+    // todo: levelName2levelNumber map
+    this.level2levelCode = {
+      "NONE": 0,
+      "DEBUG": 1,
+      "INFO": 2,
+      "ERROR": 3
+    }
+
     this.configPrototype = {
       config: {
         log: {
@@ -586,7 +599,9 @@ class EtlComponent implements OnDestroy {
     this.step = 0;
     this.hints = {
       // Main hints
-      sourceHint: "This is the source on wich the etl is applied. You can use different sources, such as an URL, a local file or a JDBC connection.",
+      configNameHint: "This name will be used to save the configuration you are going to specify. " +
+      "In the future you will be able to load the current configuration by this specific name.",
+      sourceHint: "This is the source on which the etl is applied. You can use different sources, such as an URL, a local file or a JDBC connection.",
       extractorHint: "The extractor manages how the data are handled from the provided source.",
       transformerHint: "The transformer modules are executed in a pipeline and modify the input data.",
       loaderHint: "The loader is the final part of the process. You can use a debug mode or directly persist your data to OrientDB.",
@@ -1321,7 +1336,7 @@ class EtlComponent implements OnDestroy {
     this.finalJson = JSON.stringify(etl);
     var executionParams = {
       "jsonConfig": this.finalJson,
-      "logLevel": this.config.log.value
+      "logLevel": this.level2levelCode[this.config.log]
     }
 
     this.step = 'running';
