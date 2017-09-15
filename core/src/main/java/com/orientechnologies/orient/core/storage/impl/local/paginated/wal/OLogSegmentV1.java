@@ -16,6 +16,7 @@ import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -559,54 +560,37 @@ public class OLogSegmentV1 implements OLogSegment {
   }
 
   private void writeData() {
-    if (commitExecutor.isShutdown()) {
-      if (!commitExecutor.isTerminated()) {
-        try {
-          if (!commitExecutor
-              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
-            throw new OStorageException("Unable to write data, WAL commit executor appears hung");
-        } catch (InterruptedException e) {
-          Thread.interrupted();
-          throw OException.wrapException(new OStorageException("Thread was interrupted during waiting for WAL commit executor"), e);
-        }
-      }
+    if (commitExecutor.isShutdown())
+      if (flushNewData)
+        throw new OStorageException("Unable to write data, WAL thread is shutdown");
+      else
+        return;
 
-      new WriteTask().run();
-    } else {
-      try {
-        commitExecutor.submit(new WriteTask()).get();
-      } catch (InterruptedException e) {
-        Thread.interrupted();
-        throw OException.wrapException(new OStorageException("Thread was interrupted during flush"), e);
-      } catch (ExecutionException e) {
-        throw OException.wrapException(new OStorageException("Error during WAL segment '" + getPath() + "' flush"), e);
-      }
+    try {
+      commitExecutor.submit(new WriteTask()).get();
+    } catch (InterruptedException e) {
+      Thread.interrupted();
+      throw OException.wrapException(new OStorageException("Thread was interrupted during data write"), e);
+    } catch (ExecutionException e) {
+      throw OException.wrapException(new OStorageException("Error during WAL segment '" + getPath() + "' data write"), e);
     }
   }
 
   private void syncData() {
     if (commitExecutor.isShutdown()) {
-      if (!commitExecutor.isTerminated()) {
-        try {
-          if (!commitExecutor
-              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
-            throw new OStorageException("Unable to sync data, WAL commit executor appears hung");
-        } catch (InterruptedException e) {
-          Thread.interrupted();
-          throw OException.wrapException(new OStorageException("Thread was interrupted during waiting for WAL commit executor"), e);
-        }
-      }
+      if (flushNewData || !Objects.equals(storedUpTo, syncedUpTo))
+        throw new OStorageException("Unable to sync data, WAL thread is shutdown");
+      else
+        return;
+    }
 
-      new SyncTask().run();
-    } else {
-      try {
-        commitExecutor.submit(new SyncTask()).get();
-      } catch (InterruptedException e) {
-        Thread.interrupted();
-        throw OException.wrapException(new OStorageException("Thread was interrupted during sync"), e);
-      } catch (ExecutionException e) {
-        throw OException.wrapException(new OStorageException("Error during WAL segment '" + getPath() + "' sync"), e);
-      }
+    try {
+      commitExecutor.submit(new SyncTask()).get();
+    } catch (InterruptedException e) {
+      Thread.interrupted();
+      throw OException.wrapException(new OStorageException("Thread was interrupted during data sync"), e);
+    } catch (ExecutionException e) {
+      throw OException.wrapException(new OStorageException("Error during WAL segment '" + getPath() + "' data sync"), e);
     }
   }
 
