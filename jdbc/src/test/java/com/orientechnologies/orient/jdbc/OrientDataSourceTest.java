@@ -58,6 +58,8 @@ public class OrientDataSourceTest extends OrientJdbcDbPerClassTemplateTest {
     info.setProperty("db.usePool", "TRUE");
     info.setProperty("db.pool.min", "1");
     info.setProperty("db.pool.max", "1");
+    info.put("serverUser", "admin");
+    info.put("serverPassword", "admin");
 
     final OrientDataSource ds = new OrientDataSource();
     ds.setDbUrl("jdbc:orient:memory:" + name.getMethodName());

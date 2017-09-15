@@ -49,6 +49,8 @@ public abstract class OrientJdbcDbPerClassTemplateTest {
     Properties info = new Properties();
     info.put("user", "admin");
     info.put("password", "admin");
+    info.put("serverUser", "admin");
+    info.put("serverPassword", "admin");
 
     OrientDataSource ods = new OrientDataSource("jdbc:orient:" + "memory:" + dbName, "admin", "admin", info);
     ds = new DataSourceWithLetterCase(ods, LetterCase.TABLE_DEFAULT, LetterCase.TABLE_DEFAULT, LetterCase.TABLE_DEFAULT);
