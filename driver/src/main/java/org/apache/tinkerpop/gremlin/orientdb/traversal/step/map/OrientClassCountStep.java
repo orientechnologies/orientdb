@@ -3,7 +3,7 @@ package org.apache.tinkerpop.gremlin.orientdb.traversal.step.map;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.Step;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
@@ -42,7 +42,7 @@ public class OrientClassCountStep<S> extends AbstractStep<S, Long> {
   }
 
   private ODatabaseDocument getDatabase() {
-    OrientGraph graph = (OrientGraph) this.traversal.getGraph().get();
+    OGraph graph = (OGraph) this.traversal.getGraph().get();
     return graph.getRawDatabase();
   }
 

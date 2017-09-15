@@ -2,17 +2,22 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.index.OIndex;
 import org.apache.commons.configuration.Configuration;
+import org.apache.tinkerpop.gremlin.orientdb.executor.OGremlinResultSet;
 import org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry;
+import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphCountStrategy;
+import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphMatchStepStrategy;
+import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
+import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.io.Io;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.apache.tinkerpop.gremlin.orientdb.OrientGraph.CONFIG_TRANSACTIONAL;
 
@@ -26,10 +31,17 @@ import static org.apache.tinkerpop.gremlin.orientdb.OrientGraph.CONFIG_TRANSACTI
 @Graph.OptIn("org.apache.tinkerpop.gremlin.orientdb.gremlintest.suite.OrientDBDebugSuite")
 public class OrientStandardGraph implements OGraph {
 
+  static {
+    TraversalStrategies.GlobalCache.registerStrategies(OrientStandardGraph.class,
+        TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone()
+            .addStrategies(OrientGraphStepStrategy.instance(), OrientGraphCountStrategy.instance(),
+                OrientGraphMatchStepStrategy.instance()));
+  }
+
   protected final ThreadLocal<OrientGraph> graphInternal = new ThreadLocal<>();
   private final   Map<Thread, OrientGraph> graphs        = Maps.newConcurrentMap();
 
-  private final Configuration      config;
+  private final Configuration          config;
   private       OrientGraphBaseFactory factory;
   private boolean transactional = true;
   private Transaction     tx;
@@ -153,8 +165,28 @@ public class OrientStandardGraph implements OGraph {
   }
 
   @Override
+  public Stream<OrientVertex> getIndexedVertices(OIndex<Object> index, Iterator<Object> valueIter) {
+    return graph().getIndexedVertices(index, valueIter);
+  }
+
+  @Override
+  public Stream<OrientEdge> getIndexedEdges(OIndex<Object> index, Iterator<Object> valueIter) {
+    return graph().getIndexedEdges(index, valueIter);
+  }
+
+  @Override
   public ODatabaseDocument getRawDatabase() {
     return graph().getRawDatabase();
+  }
+
+  @Override
+  public OGremlinResultSet executeSql(String sql, Map params) {
+    return graph().executeSql(sql, params);
+  }
+
+  @Override
+  public Set<String> getIndexedKeys(Class<? extends Element> elementClass, String label) {
+    return graph().getIndexedKeys(elementClass, label);
   }
 
   @Override

@@ -26,15 +26,15 @@ public class OrientGraphQuery {
         return params;
     }
 
-    public OGremlinResultSet execute(OrientGraph graph) {
+    public OGremlinResultSet execute(OGraph graph) {
         return graph.executeSql(this.query, this.params);
     }
 
-    public Optional<OExecutionPlan> explain(OrientGraph graph) {
+    public Optional<OExecutionPlan> explain(OGraph graph) {
         return graph.executeSql(String.format("EXPLAIN %s", query), params).getRawResultSet().getExecutionPlan();
     }
 
-    public int usedIndexes(OrientGraph graph) {
+    public int usedIndexes(OGraph graph) {
         return this.explain(graph).get().getSteps().stream().filter(step -> step instanceof GlobalLetQueryStep).map(s -> {
             GlobalLetQueryStep subStep = (GlobalLetQueryStep) s;
             return (int) subStep.getSubExecutionPlans().stream()

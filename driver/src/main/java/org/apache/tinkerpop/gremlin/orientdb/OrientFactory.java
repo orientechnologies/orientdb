@@ -58,6 +58,8 @@ public class OrientFactory {
    */
 
   public static OrientStandardGraph open(final Configuration config) {
+    boolean transactional = config.getBoolean(OrientGraph.CONFIG_TRANSACTIONAL, true);
+    config.setProperty(OrientGraph.CONFIG_TRANSACTIONAL, transactional);
     OrientGraphFactory factory = new OrientGraphFactory(config);
     return new OrientStandardGraph(factory, config);
   }
