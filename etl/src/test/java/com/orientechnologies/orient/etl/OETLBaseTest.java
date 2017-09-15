@@ -19,9 +19,9 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.context.OETLContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -68,7 +68,7 @@ public abstract class OETLBaseTest {
 
   protected void configure(final String cfgJson) {
 
-    configure(cfgJson, new OBasicCommandContext());
+    configure(cfgJson, new OETLContext());
   }
 
   protected void configure(final String cfgJson, final OCommandContext iContext) {

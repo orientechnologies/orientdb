@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl;
 
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import com.orientechnologies.orient.etl.extractor.OETLExtractor;
 
 import java.util.concurrent.BlockingQueue;
@@ -39,7 +39,7 @@ class OETLExtractorWorker implements Runnable {
 
   @Override
   public void run() {
-    OLogManager.instance().debug(this, "Start extracting");
+    OETLContextWrapper.getInstance().getMessageHandler().debug(this, "Start extracting");
     boolean fetch = true;
     while (fetch == true) {
 

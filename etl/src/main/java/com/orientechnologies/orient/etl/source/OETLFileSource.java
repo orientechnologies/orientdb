@@ -18,10 +18,10 @@
 
 package com.orientechnologies.orient.etl.source;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -145,7 +145,7 @@ public class OETLFileSource extends OETLAbstractSource {
       try {
         lock = channel.lock();
       } catch (IOException e) {
-        OLogManager.instance().error(this, "Error on locking file: %s", e, fileName);
+        OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error on locking file: %s", e, fileName);
       }
 
     log(Level.INFO, "Reading from file " + path + " with encoding " + encoding.displayName());

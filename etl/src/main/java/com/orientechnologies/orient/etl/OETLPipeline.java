@@ -20,11 +20,11 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import com.orientechnologies.orient.etl.loader.OETLLoader;
 import com.orientechnologies.orient.etl.transformer.OETLTransformer;
 
@@ -96,7 +96,7 @@ public class OETLPipeline {
         for (OETLTransformer t : transformers) {
           current = t.transform(db, current);
           if (current == null) {
-            OLogManager.instance().warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
+            OETLContextWrapper.getInstance().getMessageHandler().warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
           }
         }
         if (current != null) {
@@ -108,9 +108,9 @@ public class OETLPipeline {
       } catch (ONeedRetryException e) {
         loader.rollback(db);
         retry++;
-        OLogManager.instance().info(this, "Error in pipeline execution, retry = %d/%d (exception=)", retry, maxRetries, e);
+        OETLContextWrapper.getInstance().getMessageHandler().info(this, "Error in pipeline execution, retry = %d/%d (exception=)", retry, maxRetries, e);
       } catch (OETLProcessHaltedException e) {
-        OLogManager.instance().error(this, "Pipeline execution halted");
+        OETLContextWrapper.getInstance().getMessageHandler().error(this, "Pipeline execution halted");
 
         processor.getStats().incrementErrors();
 
@@ -118,7 +118,7 @@ public class OETLPipeline {
         throw e;
 
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error in Pipeline execution:", e);
+        OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error in Pipeline execution:", e);
 
         processor.getStats().incrementErrors();
 

@@ -1,8 +1,9 @@
 package com.orientechnologies.orient.etl.http;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLPlugin;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
+import com.orientechnologies.orient.etl.context.OETLMessageHandler;
 import com.orientechnologies.orient.output.OPluginMessageHandler;
 import com.orientechnologies.orient.server.OServer;
 
@@ -39,7 +40,7 @@ public class OETLJob implements Runnable {
   public void run() {
 
     final String jsonConfig = cfg.field("jsonConfig");
-    int logLevel = Integer.parseInt((String)cfg.field("logLevel"));
+    int logLevel = cfg.field("logLevel");
 
     // disabling debug level
     if(logLevel > 0) {
@@ -47,14 +48,13 @@ public class OETLJob implements Runnable {
     }
 
     status = Status.RUNNING;
-//    this.messageHandler = new OETLMessageHandler(this.stream, logLevel);
-    this.messageHandler = null;
+    this.messageHandler = new OETLMessageHandler(this.stream, logLevel);
 
     final OETLPlugin etlPlugin = new OETLPlugin();
     String[] args = {jsonConfig};
 
     try {
-      etlPlugin.executeJob(args);
+      etlPlugin.executeJob(args, messageHandler);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -114,7 +114,7 @@ public class OETLJob implements Runnable {
       }
       int baosFinalSize = baos.size();
       if (baosFinalSize - baosInitSize > 0) {
-        OLogManager.instance().info(this, "Losing some buffer info.");
+        OETLContextWrapper.getInstance().getMessageHandler().info(this, "Losing some buffer info.");
       } else {
         baos.reset();
       }

@@ -20,7 +20,6 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -29,6 +28,7 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.block.OETLBlock;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import com.orientechnologies.orient.etl.extractor.OETLExtractor;
 import com.orientechnologies.orient.etl.loader.OETLLoader;
 import com.orientechnologies.orient.etl.source.OETLSource;
@@ -99,6 +99,9 @@ public class OETLProcessor {
     executor = Executors.newCachedThreadPool();
 
     configRunBehaviour(context);
+
+    // Context setting
+    OETLContextWrapper.newInstance().setContext(context);
   }
 
   public static void main(final String[] args) {
@@ -186,7 +189,7 @@ public class OETLProcessor {
   private void runExtractorAndPipeline() {
     try {
 
-      OLogManager.instance().info(this, "Started execution with %d worker threads", workers);
+      OETLContextWrapper.getInstance().getMessageHandler().info(this, "Started execution with %d worker threads", workers);
       extractor.extract(source.read());
 
       BlockingQueue<OETLExtractedItem> queue = new LinkedBlockingQueue<OETLExtractedItem>(workers * 500);
@@ -203,20 +206,20 @@ public class OETLProcessor {
 
       futures.forEach(cf -> cf.join());
 
-      OLogManager.instance().debug(this, "all items extracted");
+      OETLContextWrapper.getInstance().getMessageHandler().debug(this, "all items extracted");
       executor.shutdown();
     } catch (OETLProcessHaltedException e) {
-      OLogManager.instance().error(this, "ETL process halted: ", e);
+      OETLContextWrapper.getInstance().getMessageHandler().error(this, "ETL process halted: ", e);
       executor.shutdownNow();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "ETL process has problem: ", e);
+      OETLContextWrapper.getInstance().getMessageHandler().error(this, "ETL process has problem: ", e);
       executor.shutdownNow();
     }
     executor.shutdown();
   }
 
   protected void begin() {
-    OLogManager.instance().info(this, "BEGIN ETL PROCESSOR");
+    OETLContextWrapper.getInstance().getMessageHandler().info(this, "BEGIN ETL PROCESSOR");
     final Integer cfgMaxRetries = (Integer) context.getVariable("maxRetries");
     if (cfgMaxRetries != null)
       maxRetries = cfgMaxRetries;
@@ -270,7 +273,7 @@ public class OETLProcessor {
       dumpTask.cancel();
     }
 
-    OLogManager.instance().info(this, "END ETL PROCESSOR");
+    OETLContextWrapper.getInstance().getMessageHandler().info(this, "END ETL PROCESSOR");
     dumpProgress();
   }
 
@@ -289,7 +292,7 @@ public class OETLProcessor {
     final String extractorTotalFormatted = extractorTotal > -1 ? String.format("%,d", extractorTotal) : "?";
 
     if (extractorTotal == -1) {
-      OLogManager.instance().info(this,
+      OETLContextWrapper.getInstance().getMessageHandler().info(this,
           "+ extracted %,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
           extractorProgress, extractorUnit, extractorItemsSec, extractorUnit, extractor.getProgress(), extractor.getUnit(),
           loaderProgress, loaderUnit, loaderItemsSec, loaderUnit, OIOUtils.getTimeAsString(now - startTime), stats.warnings.get(),
@@ -298,7 +301,7 @@ public class OETLProcessor {
     } else {
       float extractorPercentage = ((float) extractorProgress * 100 / extractorTotal);
 
-      OLogManager.instance().info(this,
+      OETLContextWrapper.getInstance().getMessageHandler().info(this,
           "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
           extractorPercentage, extractorProgress, extractorTotal, extractorUnit, extractorItemsSec, extractorUnit,
           extractor.getProgress(), extractor.getUnit(), loaderProgress, loaderUnit, loaderItemsSec, loaderUnit,

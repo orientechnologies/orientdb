@@ -18,7 +18,6 @@
 
 package com.orientechnologies.orient.etl.loader;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabasePool;
@@ -33,6 +32,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLPipeline;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 
 import java.util.Arrays;
 import java.util.List;
@@ -127,7 +127,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
       }
 
     } else {
-      OLogManager.instance().error(this, "input type not supported::  %s", input.getClass());
+      OETLContextWrapper.getInstance().getMessageHandler().error(this, "input type not supported::  %s", input.getClass());
     }
 
     progress.incrementAndGet();

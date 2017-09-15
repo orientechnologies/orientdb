@@ -19,10 +19,10 @@
 package com.orientechnologies.orient.etl.integration;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
+import com.orientechnologies.orient.etl.context.OETLContext;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -51,7 +51,7 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
     configure("{extractor : { random: {items: " + TOTAL + ", fields: 10} }, "
             + "loader: { orientdb: {batchCommit: 10000 , dbURL: 'plocal:./target/" + name.getMethodName()
             + "', dbType:'graph', class: 'Person', useLightweightEdges:false, " + "classes: [{name: 'Person', extends: 'V'}] } } }",
-        new OBasicCommandContext().setVariable("parallel", Boolean.FALSE).setVariable("dumpEveryMs", 1000));
+        new OETLContext().setVariable("parallel", Boolean.FALSE).setVariable("dumpEveryMs", 1000));
 
     proc.execute();
 
@@ -72,7 +72,7 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
             + "loader: { orientdb: { dbURL: 'plocal:./target/" + name.getMethodName()
             + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
             + "classes: [{name: 'Person', extends: 'V', clusters: 8  }] } } }",
-        new OBasicCommandContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
+        new OETLContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
 
     proc.execute();
     ODatabasePool pool = proc.getLoader().getPool();
@@ -91,7 +91,7 @@ public class OETLJsonRandomExtractorIT extends OETLBaseTest {
             + "loader: { orientdb: {batchCommit: 10000 ,dbURL: 'plocal:./target/" + name.getMethodName()
             + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
             + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",
-        new OBasicCommandContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
+        new OETLContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
 
     proc.execute();
     ODatabasePool pool = proc.getLoader().getPool();

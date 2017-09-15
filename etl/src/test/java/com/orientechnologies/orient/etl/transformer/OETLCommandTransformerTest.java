@@ -18,12 +18,11 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.etl.OETLBaseTest;
+import com.orientechnologies.orient.etl.context.OETLContext;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -69,7 +68,7 @@ public class OETLCommandTransformerTest extends OETLBaseTest {
     ODocument cnf = new ODocument().field("language", "sql").field("log", "INFO").field("output", "prev")
         .field("command", "SELECT name FROM Person WHERE surname= \"={eval('$input.surname')}\"");
 
-    OCommandContext ctx = new OBasicCommandContext();
+    OCommandContext ctx = new OETLContext();
 
     tr.configure(cnf, ctx);
     tr.begin(null);

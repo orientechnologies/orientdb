@@ -18,7 +18,6 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -28,6 +27,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -72,7 +72,8 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
         else {
           index = db.getMetadata().getIndexManager().getIndex(lookup);
           if (index == null) {
-            OLogManager.instance().warn(this, "WARNING: index %s not found. Lookups could be really slow", lookup);
+            OETLContextWrapper
+                .getInstance().getMessageHandler().warn(this, "WARNING: index %s not found. Lookups could be really slow", lookup);
             final String[] parts = lookup.split("\\.");
             sqlQuery = new OSQLSynchQuery<ODocument>("SELECT FROM " + parts[0] + " WHERE " + parts[1] + " = ?");
           }
