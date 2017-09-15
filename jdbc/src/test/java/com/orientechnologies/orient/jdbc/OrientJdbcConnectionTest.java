@@ -68,6 +68,8 @@ public class OrientJdbcConnectionTest extends OrientJdbcDbPerClassTemplateTest {
     String dbUrl = "jdbc:orient:memory:OrientJdbcConnectionTest";
     Properties p = new Properties();
     p.setProperty("db.usePool", "TRUE");
+    p.setProperty("serverUser", "root");
+    p.setProperty("serverPassword", "root");
 
     Connection connection = DriverManager.getConnection(dbUrl, p);
 

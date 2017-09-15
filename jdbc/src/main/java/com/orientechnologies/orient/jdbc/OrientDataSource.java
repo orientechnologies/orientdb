@@ -1,17 +1,14 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
  * <p>
  * For more information: http://orientdb.com
  */
@@ -115,6 +112,9 @@ public class OrientDataSource implements DataSource {
       info.put("user", username);
       info.put("password", password);
 
+      final String serverUsername = info.getProperty("serverUser", "");
+      final String serverPassword = info.getProperty("serverPassword", "");
+
       String orientDbUrl = dbUrl.replace("jdbc:orient:", "");
 
       OURLConnection connUrl = OURLHelper.parseNew(orientDbUrl);
@@ -123,8 +123,10 @@ public class OrientDataSource implements DataSource {
           .addConfig(OGlobalConfiguration.DB_POOL_MAX, Integer.valueOf(info.getProperty("db.pool.max", "10")))
           .build();
 
-      orientDB = new OrientDB(connUrl.getType() + ":" + connUrl.getPath(), username, password, settings);
-      orientDB.createIfNotExists(connUrl.getDbName(), connUrl.getDbType().orElse(ODatabaseType.MEMORY));
+      orientDB = new OrientDB(connUrl.getType() + ":" + connUrl.getPath(), serverUsername, serverPassword, settings);
+
+      if (!serverUsername.isEmpty() && !serverPassword.isEmpty())
+        orientDB.createIfNotExists(connUrl.getDbName(), connUrl.getDbType().orElse(ODatabaseType.MEMORY));
 
       pool = new ODatabasePool(orientDB, connUrl.getDbName(), username, password);
     }

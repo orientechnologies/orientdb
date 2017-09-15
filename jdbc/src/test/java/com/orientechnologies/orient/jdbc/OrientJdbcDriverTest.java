@@ -43,6 +43,8 @@ public class OrientJdbcDriverTest {
     Properties info = new Properties();
     info.put("user", "admin");
     info.put("password", "admin");
+    info.setProperty("serverUser", "root");
+    info.setProperty("serverPassword", "root");
 
     OrientJdbcConnection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:memory:OrientJdbcDriverTest", info);
 
