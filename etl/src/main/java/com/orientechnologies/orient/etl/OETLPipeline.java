@@ -20,14 +20,14 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
+import com.orientechnologies.orient.etl.context.OETLContext;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.transformer.OTransformer;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 
 import java.util.List;
 
@@ -58,7 +58,7 @@ public class OETLPipeline {
     this.maxRetries = maxRetries;
     this.haltOnError = haltOnError;
 
-    context = new OBasicCommandContext();
+    context = new OETLContext();
 
     for (OTransformer t : this.transformers)
       t.setPipeline(this);
@@ -109,10 +109,7 @@ public class OETLPipeline {
         for (OTransformer t : transformers) {
           current = t.transform(current);
           if (current == null) {
-            if (logLevel == DEBUG) {
-              OLogManager.instance().warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
-              break;
-            }
+            OETLContextWrapper.getInstance().getMessageHandler().warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
           }
         }
         if (current != null)
@@ -123,16 +120,18 @@ public class OETLPipeline {
       } catch (ONeedRetryException e) {
         loader.rollback(this);
         retry++;
-        processor.out(INFO, "Error in pipeline execution, retry = %d/%d (exception=%s)", retry, maxRetries, e);
+        OETLContextWrapper.getInstance().getMessageHandler().info(this, "Error in pipeline execution, retry = %d/%d (exception=)", retry, maxRetries, e);
       } catch (OETLProcessHaltedException e) {
-        processor.out(ERROR, "Pipeline execution halted");
+        OETLContextWrapper.getInstance().getMessageHandler().error(this, "Pipeline execution halted");
+
         processor.getStats().incrementErrors();
 
         loader.rollback(this);
         throw e;
 
       } catch (Exception e) {
-        processor.out(ERROR, "Error in Pipeline execution: %s", e);
+        OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error in Pipeline execution:", e);
+
         processor.getStats().incrementErrors();
 
         if (!haltOnError) {

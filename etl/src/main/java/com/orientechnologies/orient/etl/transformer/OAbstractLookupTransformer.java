@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.OETLProcessor;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,7 +76,8 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
         else {
           index = pipeline.getDocumentDatabase().getMetadata().getIndexManager().getIndex(lookup);
           if (index == null) {
-            log(OETLProcessor.LOG_LEVELS.DEBUG, "WARNING: index %s not found. Lookups could be really slow", lookup);
+            OETLContextWrapper
+                .getInstance().getMessageHandler().warn(this, "WARNING: index %s not found. Lookups could be really slow", lookup);
             final String[] parts = lookup.split("\\.");
             sqlQuery = new OSQLSynchQuery<ODocument>("SELECT FROM " + parts[0] + " WHERE " + parts[1] + " = ?");
           }

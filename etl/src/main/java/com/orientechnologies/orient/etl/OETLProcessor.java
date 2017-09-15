@@ -20,14 +20,13 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.block.OBlock;
+import com.orientechnologies.orient.etl.context.OETLContext;
 import com.orientechnologies.orient.etl.extractor.OExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.source.OSource;
@@ -38,6 +37,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -91,10 +91,19 @@ public class OETLProcessor {
     loader = iLoader;
     endBlocks = iEndBlocks;
     context = ctx;
+
+    // Context setting
+    OETLContextWrapper.newInstance().setContext(context);
+
     init();
   }
 
   public OETLProcessor() {
+
+    this.context = createDefaultContext();
+
+    // Context setting
+    OETLContextWrapper.newInstance().setContext(context);
   }
 
   public static void main(final String[] args) {
@@ -146,7 +155,7 @@ public class OETLProcessor {
   }
 
   protected static OCommandContext createDefaultContext() {
-    final OCommandContext context = new OBasicCommandContext();
+    final OCommandContext context = new OETLContext();
     context.setVariable("dumpEveryMs", 1000);
     return context;
   }
@@ -375,8 +384,7 @@ public class OETLProcessor {
     executor = Executors.newCachedThreadPool();
     try {
 
-      out(INFO, "Started execution with %d worker threads", workers);
-
+      OETLContextWrapper.getInstance().getMessageHandler().info(this, "Started execution with %d worker threads", workers);
       extractor.extract(source.read());
 
       queue = new LinkedBlockingQueue<OExtractedItem>(workers * 500);
@@ -398,22 +406,20 @@ public class OETLProcessor {
 
       for (Future<Boolean> future : tasks) {
         Boolean result = future.get();
-        out(LOG_LEVELS.DEBUG, "Pipeline worker done without errors: " + result);
+        OETLContextWrapper.getInstance().getMessageHandler().debug(this, "Pipeline worker done without errors: " + result);
       }
     } catch (OETLProcessHaltedException e) {
-      out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
-
+      OETLContextWrapper.getInstance().getMessageHandler().error(this, "ETL process halted: %s", e);
       executor.shutdownNow();
     } catch (Exception e) {
-      out(LOG_LEVELS.ERROR, "ETL process has problem: %s", e);
+      OETLContextWrapper.getInstance().getMessageHandler().error(this, "ETL process has problem: %s", e);
       executor.shutdownNow();
     }
     executor.shutdown();
   }
 
   protected void begin() {
-    out(INFO, "BEGIN ETL PROCESSOR");
-
+    OETLContextWrapper.getInstance().getMessageHandler().info(this, "BEGIN ETL PROCESSOR");
     final Integer cfgMaxRetries = (Integer) context.getVariable("maxRetries");
     if (cfgMaxRetries != null)
       maxRetries = cfgMaxRetries;
@@ -463,8 +469,7 @@ public class OETLProcessor {
       dumpTask.cancel();
     }
 
-    out(INFO, "END ETL PROCESSOR");
-
+    OETLContextWrapper.getInstance().getMessageHandler().info(this, "END ETL PROCESSOR");
     dumpProgress();
   }
 
@@ -487,7 +492,7 @@ public class OETLProcessor {
     final String extractorTotalFormatted = extractorTotal > -1 ? String.format("%,d", extractorTotal) : "?";
 
     if (extractorTotal == -1) {
-      out(INFO,
+      OETLContextWrapper.getInstance().getMessageHandler().info(this,
           "+ extracted %,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
           extractorProgress, extractorUnit, extractorItemsSec, extractorUnit, extractor.getProgress(), extractor.getUnit(),
           loaderProgress, loaderUnit, loaderItemsSec, loaderUnit, OIOUtils.getTimeAsString(now - startTime), stats.warnings.get(),
@@ -495,7 +500,7 @@ public class OETLProcessor {
     } else {
       float extractorPercentage = ((float) extractorProgress * 100 / extractorTotal);
 
-      out(INFO,
+      OETLContextWrapper.getInstance().getMessageHandler().info(this,
           "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
           extractorPercentage, extractorProgress, extractorTotal, extractorUnit, extractorItemsSec, extractorUnit,
           extractor.getProgress(), extractor.getUnit(), loaderProgress, loaderUnit, loaderItemsSec, loaderUnit,
@@ -620,10 +625,10 @@ public class OETLProcessor {
           pipeline.execute(content);
         }
       } catch (InterruptedException e) {
-        OLogManager.instance().error(this, "ETL process interrupted: " + e);
+        OETLContextWrapper.getInstance().getMessageHandler().error(this, "ETL process interrupted: " + e);
         return Boolean.FALSE;
       } catch (OETLProcessHaltedException e) {
-        OLogManager.instance().error(this, "ETL process halted: " + e);
+        OETLContextWrapper.getInstance().getMessageHandler().error(this, "ETL process halted: " + e);
         return Boolean.FALSE;
       } finally {
         pipeline.end();
@@ -677,7 +682,7 @@ public class OETLProcessor {
         queue.put(new OExtractedItem(true));
         return Boolean.TRUE;
       } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error during extraction: " + t);
+        OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error during extraction: " + t);
         return Boolean.FALSE;
       }
     }

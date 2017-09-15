@@ -21,6 +21,7 @@ package com.orientechnologies.orient.etl;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.orientechnologies.orient.etl.context.OETLContext;
 import org.junit.After;
 import org.junit.Before;
 

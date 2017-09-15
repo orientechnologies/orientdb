@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -40,6 +39,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.io.IOException;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
@@ -129,6 +130,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       } else {
         doc.save();
       }
+
+    } else {
+      OETLContextWrapper.getInstance().getMessageHandler().error(this, "input type not supported::  %s", input.getClass());
     }
 
     progress.incrementAndGet();

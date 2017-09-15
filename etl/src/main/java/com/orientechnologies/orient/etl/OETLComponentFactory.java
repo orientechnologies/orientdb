@@ -18,11 +18,11 @@
 
 package com.orientechnologies.orient.etl;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.etl.block.OBlock;
 import com.orientechnologies.orient.etl.block.OCodeBlock;
 import com.orientechnologies.orient.etl.block.OConsoleBlock;
 import com.orientechnologies.orient.etl.block.OLetBlock;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import com.orientechnologies.orient.etl.extractor.*;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.loader.OOrientDBLoader;
@@ -88,7 +88,7 @@ public class OETLComponentFactory {
     try {
       sources.put(iComponent.newInstance().getName(), iComponent);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on registering source: %s", iComponent.getName());
+      OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error on registering source: %s", iComponent.getName());
     }
     return this;
   }
@@ -97,7 +97,7 @@ public class OETLComponentFactory {
     try {
       blocks.put(iComponent.newInstance().getName(), iComponent);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on registering block: %s", iComponent.getName());
+      OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error on registering block: %s", iComponent.getName());
     }
     return this;
   }
@@ -106,7 +106,7 @@ public class OETLComponentFactory {
     try {
       extractors.put(iComponent.newInstance().getName(), iComponent);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on registering extractor: %s", iComponent.getName());
+      OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error on registering extractor: %s", iComponent.getName());
     }
     return this;
   }
@@ -115,7 +115,7 @@ public class OETLComponentFactory {
     try {
       transformers.put(iComponent.newInstance().getName(), iComponent);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on registering transformer: %s", iComponent.getName());
+      OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error on registering transformer: %s", iComponent.getName());
     }
     return this;
   }
@@ -124,7 +124,7 @@ public class OETLComponentFactory {
     try {
       loaders.put(iComponent.newInstance().getName(), iComponent);
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on registering loader: %s", iComponent.getName());
+      OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error on registering loader: %s", iComponent.getName());
     }
     return this;
   }

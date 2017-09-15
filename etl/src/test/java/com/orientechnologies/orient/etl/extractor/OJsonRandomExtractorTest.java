@@ -18,10 +18,10 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.orientechnologies.orient.etl.OETLStubRandomExtractor;
+import com.orientechnologies.orient.etl.context.OETLContext;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -60,7 +60,7 @@ public class OJsonRandomExtractorTest extends OETLBaseTest {
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
         + "loader: { orientdb: { dbURL: 'plocal:./target/OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
-        + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",  new OBasicCommandContext()
+        + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",  new OETLContext()
         .setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
 
     assertEquals(TOTAL, graph.countVertices("Person"));

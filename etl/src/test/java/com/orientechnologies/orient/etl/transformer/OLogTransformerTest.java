@@ -11,6 +11,7 @@ import java.io.PrintStream;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class OLogTransformerTest extends OETLBaseTest {
 
@@ -42,8 +43,29 @@ public class OLogTransformerTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
     String[] stringList = output.toString().split(System.getProperty("line.separator"));
-    assertEquals("[1:log] INFO -> {id:1,text:Hello}", stringList[2]);
-    assertEquals("[2:log] INFO -> {id:2,text:Bye}", stringList[3]);
+
+
+    String firstLogExpectedValue = "[1:log] INFO -> {id:1,text:Hello}";
+    String secondLogExpectedValue = "[2:log] INFO -> {id:2,text:Bye}";
+
+    boolean firstLogRowPresent = false;
+    boolean secondLogRowPresent = false;
+    for(int i=0; i<stringList.length; i++) {
+      if(stringList[i].equals(firstLogExpectedValue)) {
+        firstLogRowPresent = true;
+      }
+      else if(stringList[i].equals(secondLogExpectedValue)) {
+        secondLogRowPresent = true;
+      }
+
+      if(firstLogRowPresent && secondLogRowPresent) {
+        break;
+      }
+    }
+
+    assertTrue(firstLogRowPresent);
+    assertTrue(secondLogRowPresent);
+
   }
 
   @Test
@@ -55,8 +77,26 @@ public class OLogTransformerTest extends OETLBaseTest {
     ODocument doc = res.get(0);
     String[] stringList = output.toString().split(System.getProperty("line.separator"));
 
-    assertEquals("[1:log] INFO {id:1,text:Hello}-> ", stringList[2]);
-    assertEquals("[2:log] INFO {id:2,text:Bye}-> ", stringList[3]);
+    String firstLogExpectedValue = "[1:log] INFO {id:1,text:Hello}-> ";
+    String secondLogExpectedValue = "[2:log] INFO {id:2,text:Bye}-> ";
+
+    boolean firstLogRowPresent = false;
+    boolean secondLogRowPresent = false;
+    for(int i=0; i<stringList.length; i++) {
+      if(stringList[i].equals(firstLogExpectedValue)) {
+        firstLogRowPresent = true;
+      }
+      else if(stringList[i].equals(secondLogExpectedValue)) {
+        secondLogRowPresent = true;
+      }
+
+      if(firstLogRowPresent && secondLogRowPresent) {
+        break;
+      }
+    }
+
+    assertTrue(firstLogRowPresent);
+    assertTrue(secondLogRowPresent);
   }
 
   private ByteArrayOutputStream getByteArrayOutputStream() {
