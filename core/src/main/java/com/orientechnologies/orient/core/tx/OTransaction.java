@@ -19,18 +19,15 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.HashMap;
@@ -66,8 +63,8 @@ public interface OTransaction extends OBasicTransaction {
    * Changes the isolation level. Default is READ_COMMITTED. When REPEATABLE_READ is set, any record read from the storage is cached
    * in memory to guarantee the repeatable reads. This affects the used RAM and speed (because JVM Garbage Collector job).
    *
-   * @param iIsolationLevel
-   *          Isolation level to set
+   * @param iIsolationLevel Isolation level to set
+   *
    * @return Current object to allow call in chain
    */
   OTransaction setIsolationLevel(ISOLATION_LEVEL iIsolationLevel);
@@ -98,6 +95,13 @@ public interface OTransaction extends OBasicTransaction {
 
   int getId();
 
+  /**
+   * @return this transaction ID as seen by the client of this transaction.
+   */
+  default int getClientTransactionId() {
+    return getId();
+  }
+
   TXSTATUS getStatus();
 
   @Deprecated
@@ -126,7 +130,7 @@ public interface OTransaction extends OBasicTransaction {
    * <li>Rollback data changes in case of exception</li>
    * <li>Restore data in case of server crash</li>
    * </ol>
-   *
+   * <p>
    * So you practically unable to work in multithreaded environment and keep data consistent.
    */
   void setUsingLog(boolean useLog);
@@ -137,10 +141,8 @@ public interface OTransaction extends OBasicTransaction {
    * When commit in transaction is performed all new records will change their identity, but index values will contain stale links,
    * to fix them given method will be called for each entry. This update local transaction maps too.
    *
-   * @param oldRid
-   *          Record identity before commit.
-   * @param newRid
-   *          Record identity after commit.
+   * @param oldRid Record identity before commit.
+   * @param newRid Record identity after commit.
    */
   void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
 

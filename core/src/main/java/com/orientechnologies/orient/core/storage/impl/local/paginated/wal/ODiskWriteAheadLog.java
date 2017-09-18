@@ -38,18 +38,21 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
-import java.io.*;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
@@ -97,7 +100,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private          OLogSequenceNumber firstMasterRecord;
   private          OLogSequenceNumber secondMasterRecord;
 
-  private final AtomicReference<OLogSequenceNumber> flushedLsn = new AtomicReference<>();
+  private volatile OLogSequenceNumber flushedLsn;
 
   private volatile OLogSequenceNumber preventCutTill;
 
@@ -123,6 +126,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     thread.setName("OrientDB WAL Flush Task (" + getStorage().getName() + ")");
     return thread;
   });
+
+  private final ConcurrentNavigableMap<OLogSequenceNumber, Runnable> events = new ConcurrentSkipListMap<>();
 
   public ODiskWriteAheadLog(OLocalPaginatedStorage storage) throws IOException {
     this(storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
@@ -247,13 +252,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         logSegment.startBackgroundWrite();
         logSegments.add(logSegment);
 
-        flushedLsn.set(null);
+        flushedLsn = null;
       } else {
         Collections.sort(logSegments);
 
         logSegments.get(logSegments.size() - 1).startBackgroundWrite();
 
-        flushedLsn.set(findFlushedLSN());
+        flushedLsn = findFlushedLSN();
 
         end = calculateEndLSN();
       }
@@ -779,7 +784,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       if (!commitExecutor.isShutdown()) {
         commitExecutor.shutdown();
         try {
-          if (!commitExecutor.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+          if (!commitExecutor
+              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
             throw new OStorageException("WAL flush task for '" + getStorage().getName() + "' storage cannot be stopped");
 
         } catch (InterruptedException e) {
@@ -787,10 +793,16 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         }
       }
 
+      if (!events.isEmpty()) {
+        OLogManager.instance().warn(this, "There are unfired events left waiting to happen after the shutdown.");
+        assert false;
+      }
+
       if (!autoFileCloser.isShutdown()) {
         autoFileCloser.shutdown();
         try {
-          if (!autoFileCloser.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+          if (!autoFileCloser
+              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
             throw new OStorageException("WAL file auto close tasks '" + getStorage().getName() + "' storage cannot be stopped");
 
         } catch (InterruptedException e) {
@@ -887,7 +899,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public OLogSequenceNumber getFlushedLsn() {
-    return flushedLsn.get();
+    return flushedLsn;
   }
 
   @Override
@@ -1105,17 +1117,18 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return storage;
   }
 
-  void casFlushedLsn(OLogSequenceNumber flushedLsn) {
-    if (flushedLsn == null)
-      return;
+  void setFlushedLsn(OLogSequenceNumber newLsn) {
+    // The only way the flushed LSN may change is as a result of the OLogSegmentVX.WriteTask invocation, which is always scheduled
+    // sequentially. No instances of WriteTask may run concurrently, but they may run on different threads. Later, the LSN stored
+    // by the WriteTask is transferred to here by the OLogSegmentVX.SyncTask.
 
-    OLogSequenceNumber lsn = this.flushedLsn.get();
-    while (lsn == null || flushedLsn.compareTo(lsn) > 0) {
-      if (this.flushedLsn.compareAndSet(lsn, flushedLsn))
-        return;
+    final OLogSequenceNumber oldLsn = this.flushedLsn;
+    if (oldLsn != null && newLsn.compareTo(oldLsn) <= 0)
+      throw new IllegalStateException("new flushed LSN must be newer than the old one, old = " + oldLsn + ", new = " + newLsn);
 
-      lsn = this.flushedLsn.get();
-    }
+    this.flushedLsn = newLsn;
+
+    fireEventsFor(newLsn);
   }
 
   public void checkFreeSpace() throws IOException {
@@ -1137,6 +1150,33 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   int getCommitDelay() {
     return commitDelay;
+  }
+
+  @Override
+  public void addEventAt(OLogSequenceNumber lsn, Runnable event) {
+    // may be executed by multiple threads simultaneously
+
+    final OLogSequenceNumber localFlushedLsn = flushedLsn;
+
+    if (localFlushedLsn != null && lsn.compareTo(localFlushedLsn) <= 0)
+      event.run();
+    else {
+      events.put(lsn, event);
+
+      final OLogSequenceNumber potentiallyUpdatedLocalFlushedLsn = flushedLsn;
+      if (potentiallyUpdatedLocalFlushedLsn != null && lsn.compareTo(potentiallyUpdatedLocalFlushedLsn) <= 0)
+        commitExecutor.execute(() -> fireEventsFor(potentiallyUpdatedLocalFlushedLsn));
+    }
+  }
+
+  private void fireEventsFor(OLogSequenceNumber lsn) {
+    // may be executed by only one thread at every instant of time
+
+    final Iterator<Runnable> eventsToFire = events.headMap(lsn, true).values().iterator();
+    while (eventsToFire.hasNext()) {
+      eventsToFire.next().run();
+      eventsToFire.remove();
+    }
   }
 
 }

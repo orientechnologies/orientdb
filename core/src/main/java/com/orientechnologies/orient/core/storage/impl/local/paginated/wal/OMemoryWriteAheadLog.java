@@ -154,4 +154,10 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
   public void cutAllSegmentsSmallerThan(long segmentId) throws IOException {
   }
+
+  @Override
+  public void addEventAt(OLogSequenceNumber lsn, Runnable event) {
+    event.run();
+  }
+
 }

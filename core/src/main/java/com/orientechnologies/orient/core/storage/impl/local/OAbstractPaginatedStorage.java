@@ -86,6 +86,9 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
@@ -108,6 +111,42 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private static final Comparator<ORecordOperation> COMMIT_RECORD_OPERATION_COMPARATOR = Comparator
       .comparing(o -> o.getRecord().getIdentity());
+
+  private static volatile DataOutputStream journaledStream = null;
+
+  static {
+    // initialize journaled tx streaming if enabled by configuration
+
+    final Integer journaledPort = OGlobalConfiguration.STORAGE_INTERNAL_JOURNALED_TX_STREAMING_PORT.getValue();
+    if (journaledPort != null) {
+      ServerSocket serverSocket;
+      try {
+        serverSocket = new ServerSocket(journaledPort, 0, InetAddress.getLocalHost());
+        serverSocket.setReuseAddress(true);
+      } catch (IOException e) {
+        serverSocket = null;
+        OLogManager.instance().error(OAbstractPaginatedStorage.class, "unable to create journaled tx server socket", e);
+      }
+
+      if (serverSocket != null) {
+        final ServerSocket finalServerSocket = serverSocket;
+        final Thread serverThread = new Thread(() -> {
+          OLogManager.instance()
+              .info(OAbstractPaginatedStorage.class, "journaled tx streaming server is listening on localhost:" + journaledPort);
+          try {
+            final Socket clientSocket = finalServerSocket.accept(); // accept single connection only and only once
+            clientSocket.setSendBufferSize(4 * 1024 * 1024 /* 4MB */);
+            journaledStream = new DataOutputStream(clientSocket.getOutputStream());
+          } catch (IOException e) {
+            journaledStream = null;
+            OLogManager.instance().error(OAbstractPaginatedStorage.class, "unable to accept journaled tx client connection", e);
+          }
+        });
+        serverThread.setDaemon(true);
+        serverThread.start();
+      }
+    }
+  }
 
   private final OComparableLockManager<ORID> lockManager;
 
@@ -1537,7 +1576,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             commitIndexes(indexesToCommit);
 
-            endStorageTx();
+            final OLogSequenceNumber lsn = endStorageTx();
+            final DataOutputStream journaledStream = OAbstractPaginatedStorage.journaledStream;
+            if (journaledStream != null) { // send event to journaled tx stream if the streaming is on
+              final int txId = clientTx.getClientTransactionId();
+              if (lsn == null || writeAheadLog == null) // if tx is not journaled
+                try {
+                  journaledStream.writeInt(txId);
+                } catch (IOException e) {
+                  OLogManager.instance().error(this, "unable to write tx id into journaled stream", e);
+                }
+              else
+                writeAheadLog.addEventAt(lsn, () -> {
+                  try {
+                    journaledStream.writeInt(txId);
+                  } catch (IOException e) {
+                    OLogManager.instance().error(this, "unable to write tx id into journaled stream", e);
+                  }
+                });
+            }
 
             OTransactionAbstract.updateCacheFromEntries(clientTx, entries, true);
 
@@ -3707,10 +3764,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void endStorageTx() throws IOException {
-    atomicOperationsManager.endAtomicOperation(false, null);
-
+  private OLogSequenceNumber endStorageTx() throws IOException {
+    final OLogSequenceNumber lsn = atomicOperationsManager.endAtomicOperation(false, null);
     assert atomicOperationsManager.getCurrentOperation() == null;
+    return lsn;
   }
 
   private void startStorageTx(OTransaction clientTx) throws IOException {

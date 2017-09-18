@@ -16,7 +16,6 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -55,6 +54,11 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     this.setUsingLog(usingLong);
     this.operations = operations;
     this.indexChanges = indexChanges;
+  }
+
+  @Override
+  public int getClientTransactionId() {
+    return clientTxId;
   }
 
   @Override
