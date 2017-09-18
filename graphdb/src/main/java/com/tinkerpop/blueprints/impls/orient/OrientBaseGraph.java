@@ -2121,9 +2121,12 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     if (r == null)
       return;
-
     final String inverseFieldName = OrientVertex.getInverseConnectionFieldName(iFieldName, useVertexFieldsForEdgeLabels);
     OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(r);
+    if (immutableClass == null) {
+      OLogManager.instance().warn(null, "Removing edge, schema class not found for " + r);
+      return;
+    }
     if (immutableClass.isVertexType()) {
       // DIRECT VERTEX
       removeEdges(graph, r, inverseFieldName, iVertex, false, useVertexFieldsForEdgeLabels, autoScaleEdgeType, forceReload);
