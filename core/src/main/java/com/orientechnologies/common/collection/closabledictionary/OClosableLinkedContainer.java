@@ -353,7 +353,9 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    * @param entry Entry to release
    */
   public void release(OClosableEntry<K, V> entry) {
-    entry.releaseAcquired();
+    if (entry != null) {
+      entry.releaseAcquired();
+    }
   }
 
   /**
