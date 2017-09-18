@@ -28,10 +28,13 @@ import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.highlight.TextFragment;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -39,27 +42,27 @@ import java.util.Optional;
  */
 public class OLuceneQueryContext {
 
-  private final OCommandContext               context;
-  private final IndexSearcher                 searcher;
-  private final Query                         query;
-  private final Sort                          sort;
-  private final QueryContextCFG               cfg;
-  private       Optional<OLuceneTxChanges>    changes;
+  private final OCommandContext                 context;
+  private final IndexSearcher                   searcher;
+  private final Query                           query;
+  private final Sort                            sort;
+  private       Optional<OLuceneTxChanges>      changes;
   private       HashMap<String, TextFragment[]> fragments;
 
   public OLuceneQueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
-    this(context, searcher, query, null);
+    this(context, searcher, query, Collections.emptyList());
   }
 
-  public OLuceneQueryContext(OCommandContext context, IndexSearcher searcher, Query query, Sort sort) {
+  public OLuceneQueryContext(OCommandContext context, IndexSearcher searcher, Query query, List<SortField> sortFields) {
     this.context = context;
     this.searcher = searcher;
     this.query = query;
-    this.sort = sort;
-    if (sort != null)
-      cfg = QueryContextCFG.SORT;
-    else
-      cfg = QueryContextCFG.FILTER;
+
+    if (sortFields.isEmpty()) {
+      sort = null;
+    } else {
+      sort = new Sort(sortFields.toArray(new SortField[] {}));
+    }
 
     changes = Optional.empty();
     fragments = new HashMap<>();
@@ -75,7 +78,7 @@ public class OLuceneQueryContext {
   }
 
   public OLuceneQueryContext addHighlightFragment(String field, TextFragment[] fieldFragment) {
-    fragments.put(field,fieldFragment);
+    fragments.put(field, fieldFragment);
 
     return this;
   }
@@ -86,6 +89,10 @@ public class OLuceneQueryContext {
 
   public Query getQuery() {
     return query;
+  }
+
+  public Optional<OLuceneTxChanges> getChanges() {
+    return changes;
   }
 
   public Sort getSort() {
@@ -107,10 +114,6 @@ public class OLuceneQueryContext {
     }
   }
 
-  public QueryContextCFG getCfg() {
-    return cfg;
-  }
-
   public int deletedDocs(Query query) {
 
     return changes.map(c -> c.deletedDocs(query)).orElse(0);
@@ -130,10 +133,6 @@ public class OLuceneQueryContext {
 
   public HashMap<String, TextFragment[]> getFragments() {
     return fragments;
-  }
-
-  public enum QueryContextCFG {
-    FILTER, SORT
   }
 
 }

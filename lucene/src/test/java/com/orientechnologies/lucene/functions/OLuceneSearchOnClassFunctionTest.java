@@ -7,6 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -101,5 +103,6 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
         .forEach(r -> assertThat(r.<String>getProperty("$title_hl")).containsIgnoringCase("<span>believe</span>"));
 
   }
+
 
 }

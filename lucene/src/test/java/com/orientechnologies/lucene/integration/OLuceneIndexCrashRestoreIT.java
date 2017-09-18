@@ -124,7 +124,7 @@ public class OLuceneIndexCrashRestoreIT {
     OResultSet res;
     for (int i = 0; i < 1; i++) {
       //first round
-      System.out.println("Start data propagation ::" + 1);
+      System.out.println("Start data propagation ::" + i);
 
       futures = startLoaders();
 
@@ -147,7 +147,7 @@ public class OLuceneIndexCrashRestoreIT {
       assertThat(res).hasSize(20);
       res.close();
       db.close();
-      System.out.println("END data propagation ::" + 1);
+      System.out.println("END data propagation ::" + i);
 
     }
     //crash the server

@@ -102,7 +102,12 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
 
 
 
-
-
   }
+
+  @Test
+  public void charset() throws Exception {
+
+    String element = ";";
+    int x = element.charAt(0);
+    System.out.println("x=" + x);  }
 }

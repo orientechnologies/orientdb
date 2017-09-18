@@ -24,6 +24,7 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.util.BytesRef;
 
 import java.util.*;
 
@@ -33,22 +34,6 @@ import java.util.*;
 public class OLuceneIndexType {
 
   public static Field createField(String fieldName, Object value, Field.Store store /*,Field.Index index*/) {
-
-    if (value instanceof Number) {
-      Number number = (Number) value;
-      if (value instanceof Long) {
-        return new LongPoint(fieldName, number.longValue());
-      } else if (value instanceof Float) {
-        return new FloatPoint(fieldName, number.floatValue());
-      } else if (value instanceof Double) {
-        return new DoublePoint(fieldName, number.doubleValue());
-      }
-      return new IntPoint(fieldName, number.intValue());
-
-    } else if (value instanceof Date) {
-      Date date = (Date) value;
-      return new LongPoint(fieldName, date.getTime());
-    }
 
     if (fieldName.equalsIgnoreCase(OLuceneIndexEngineAbstract.RID)) {
       StringField ridField = new StringField(fieldName, value.toString(), store);
@@ -62,7 +47,43 @@ public class OLuceneIndexType {
     }
 
     return new TextField(fieldName, value.toString(), Field.Store.YES);
+  }
 
+  public static List<Field> createFields(String fieldName, Object value, Field.Store store /*,Field.Index index*/) {
+
+    List<Field> fields = new ArrayList<>();
+
+    if (value instanceof Number) {
+      Number number = (Number) value;
+      if (value instanceof Long) {
+        fields.add(new NumericDocValuesField(fieldName, number.longValue()));
+        fields.add(new LongPoint(fieldName, number.longValue()));
+        return fields;
+      } else if (value instanceof Float) {
+        fields.add(new FloatDocValuesField(fieldName, number.floatValue()));
+        fields.add(new FloatPoint(fieldName, number.floatValue()));
+        return fields;
+      } else if (value instanceof Double) {
+        fields.add(new DoubleDocValuesField(fieldName, number.doubleValue()));
+        fields.add(new DoublePoint(fieldName, number.doubleValue()));
+        return fields;
+      }
+
+      fields.add(new NumericDocValuesField(fieldName, number.longValue()));
+      fields.add(new IntPoint(fieldName, number.intValue()));
+      return fields;
+
+    } else if (value instanceof Date) {
+      Date date = (Date) value;
+      fields.add(new NumericDocValuesField(fieldName, date.getTime()));
+      fields.add(new LongPoint(fieldName, date.getTime()));
+      return fields;
+    }
+
+    fields.add(new SortedDocValuesField(fieldName, new BytesRef(value.toString())));
+    fields.add(new TextField(fieldName, value.toString(), Field.Store.YES));
+
+    return fields;
   }
 
   public static Query createExactQuery(OIndexDefinition index, Object key) {

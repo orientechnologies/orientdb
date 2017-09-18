@@ -92,15 +92,12 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
     try {
 
       IndexSearcher searcher = queryContext.getSearcher();
-      switch (queryContext.getCfg()) {
 
-      case FILTER:
+      if (queryContext.getSort() == null)
         topDocs = searcher.search(query, PAGE_SIZE);
-        break;
-      case SORT:
+
+      else
         topDocs = searcher.search(query, PAGE_SIZE, queryContext.getSort());
-        break;
-      }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
     }
@@ -274,16 +271,14 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
       try {
 
         IndexSearcher searcher = queryContext.getSearcher();
-        switch (queryContext.getCfg()) {
 
-        case FILTER:
+        if (queryContext.getSort() == null)
           topDocs = searcher.searchAfter(scoreDocs[scoreDocs.length - 1], query, PAGE_SIZE);
-          break;
-        case SORT:
+        else
           topDocs = searcher.searchAfter(scoreDocs[scoreDocs.length - 1], query, PAGE_SIZE, queryContext.getSort());
-          break;
-        }
+
         scoreDocs = topDocs.scoreDocs;
+
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
       }

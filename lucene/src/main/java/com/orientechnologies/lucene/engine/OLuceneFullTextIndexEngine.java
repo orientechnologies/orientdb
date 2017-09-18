@@ -44,6 +44,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.store.Directory;
 
@@ -183,8 +184,14 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   private Set<OIdentifiable> getResults(Query query, OCommandContext context, OLuceneTxChanges changes,
       ODocument metadata) {
 
+    //sort
+
+    final List<SortField> fields = OLuceneIndexEngineUtils.buildSortFields(metadata);
+
     IndexSearcher searcher = searcher();
-    OLuceneQueryContext queryContext = new OLuceneQueryContext(context, searcher, query)
+
+    OLuceneQueryContext queryContext = new OLuceneQueryContext(context, searcher, query,
+        fields)
         .withChanges(changes);
 
     return new OLuceneResultSet(this, queryContext, metadata);

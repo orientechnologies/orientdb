@@ -12,12 +12,14 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by frank on 04/05/2017.
@@ -84,6 +86,48 @@ public class OLuceneIndexEngineUtils {
 
     }
 
+  }
+
+  public static List<SortField> buildSortFields(ODocument metadata) {
+    List<Map<String, Object>> sortConf = Optional.ofNullable(metadata.<List<Map<String, Object>>>getProperty("sort"))
+        .orElse(Collections.emptyList());
+
+    final List<SortField> fields = sortConf.stream()
+        .map(d -> buildSortField(d))
+        .collect(Collectors.toList());
+
+    return fields;
+  }
+
+  /**
+   * Builds {@link SortField} from a configuration {@link ODocument}
+   *
+   * @param conf
+   *
+   * @return
+   */
+  public static SortField buildSortField(ODocument conf) {
+
+    return buildSortField(conf.toMap());
+  }
+
+  /**
+   * Builds a {@link SortField} from a configuration map. The map can contains up to three fields: field (name), reverse
+   * (true/false) and type {@link SortField.Type}.
+   *
+   * @param conf
+   *
+   * @return
+   */
+  public static SortField buildSortField(Map<String, Object> conf) {
+
+    final String field = Optional.ofNullable((String) conf.get("field")).orElse(null);
+    final String type = Optional.ofNullable(((String) conf.get("type")).toUpperCase()).orElse(SortField.Type.STRING.name());
+    final Boolean reverse = Optional.ofNullable((Boolean) conf.get("reverse")).orElse(false);
+
+    SortField sortField = new SortField(field, SortField.Type.valueOf(type), reverse);
+
+    return sortField;
   }
 
   public static ODocument getMetadataFromIndex(IndexWriter writer) {

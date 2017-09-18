@@ -19,9 +19,9 @@ create vertex Author set name="Lennon McCartney", score =7;
 create vertex Author set name="Chuck Berry", score =10;
 create vertex Author set name="Jack Mountain", score =4;
 
-create vertex Song set title="BELIEVE IT OR NOT", author="Hunter";
+create vertex Song set title="BELIEVE IT OR NOT", author="Hunter", lyrics="believe you are right";
 create vertex Song set title="ANDD WE BID YOU GOODNIGHT", author="Traditional";
-create vertex Song set title="BELIEVE IT OR NOTT", author="Hunter";
+create vertex Song set title="BELIEVE IT OR NOTT", author="Hunter" ,lyrics="believe the hunter";
 create vertex Song set title="NOT FADE AWAY", author="Hardin Petty";
 create vertex Song set title="BALLAD OF FRANKIE LEE AND JUDAS PRIEST", author="Bob Dylan";
 create vertex Song set title="BETTY AND DUPREE", author="Traditional";
