@@ -536,7 +536,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.COMMITTING;
 
     if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
-      database.getStorage().commit(this, null);
+      database.internalCommit(this);
     }
 
     invokeCallbacks();

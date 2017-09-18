@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
 
@@ -140,7 +141,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       factory = (OrientDBEmbedded) embedded.get(baseUrl);
       if (factory == null || !factory.isOpen()) {
         try {
-          factory= OrientDBInternal.distributed(baseUrl, config);
+          factory = OrientDBInternal.distributed(baseUrl, config);
         } catch (ODatabaseException ex) {
           factory = (OrientDBEmbedded) OrientDBInternal.embedded(baseUrl, config);
         }
@@ -1631,5 +1632,10 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public void recycle(ORecord record) {
     checkOpenness();
     internal.recycle(record);
+  }
+
+  @Override
+  public void internalCommit(OTransactionOptimistic transaction) {
+    internal.internalCommit(transaction);
   }
 }
