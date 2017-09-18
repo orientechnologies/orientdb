@@ -843,7 +843,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
               "File with name '" + fileName + "'' already exists in storage '" + storageLocal.getName() + "'");
         else
           throw new OStorageException(
-              "File with given name already exists but has different id " + existingFileId + " vs. proposed " + fileId);
+              "File with given name '" + fileName + "' already exists but has different id " + existingFileId + " vs. proposed "
+                  + fileId);
       }
 
       fileId = composeFileId(id, intId);
