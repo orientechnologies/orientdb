@@ -1424,7 +1424,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Scan the given transaction for new record and allocate a record id for them, the relative record id is inserted inside the
    * transaction for future use.
    *
-   * @param clientTx
+   * @param clientTx the transaction of witch allocate rids
    */
   public void preallocateRids(final OTransaction clientTx) {
     try {
@@ -1491,10 +1491,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * Traditional commit that support already temporary rid and already assigned rids
    *
-   * @param clientTx
+   * @param clientTx the transaction to commit
    * @param callback ignored will be removed
    *
-   * @return
+   * @return The list of operations applied by the transaction
    */
   @Override
   public List<ORecordOperation> commit(final OTransaction clientTx, Runnable callback) {
@@ -1504,9 +1504,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * Commit a transaction where the rid where pre-allocated in a previous phase
    *
-   * @param clientTx
+   * @param clientTx the pre-allocated transaction to commit
    *
-   * @return
+   * @return The list of operations applied by the transaction
    */
   public List<ORecordOperation> commitPreAllocated(final OTransaction clientTx) {
     return commit(clientTx, true);
@@ -1524,10 +1524,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * <bold>other node commit</bold> is the commit that happen when a node execute a transaction of another node where all the rids
    * are already allocated in the other node.
    *
-   * @param clientTx
+   * @param clientTx the transaction to commit
    * @param allocated true if the operation is pre-allocated commit
    *
-   * @return
+   * @return The list of operations applied by the transaction
    */
   private List<ORecordOperation> commit(final OTransaction clientTx, boolean allocated) {
     // XXX: At this moment, there are two implementations of the commit method. One for regular client transactions and one for
