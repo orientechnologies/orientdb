@@ -1,26 +1,28 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
+import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ONewDistributedResponseManager implements ODistributedResponseManager {
 
-  private       ODistributedRequest iRequest;
-  private final Collection<String>  iNodes;
-  private final Set<String>         nodesConcurToTheQuorum;
-  private final int                 availableNodes;
-  private final int                 expectedResponses;
-  private final int                 quorum;
+  private       OTransactionPhase1Task iRequest;
+  private final Collection<String>     iNodes;
+  private final Set<String>            nodesConcurToTheQuorum;
+  private final int                    availableNodes;
+  private final int                    expectedResponses;
+  private final int                    quorum;
+  private Map<Integer, List<OTransactionResultPayload>> resultsByType = new HashMap<>();
 
-  public ONewDistributedResponseManager(ODistributedRequest iRequest, Collection<String> iNodes, Set<String> nodesConcurToTheQuorum,
-      int availableNodes, int expectedResponses, int quorum) {
+  public ONewDistributedResponseManager(OTransactionPhase1Task iRequest, Collection<String> iNodes,
+      Set<String> nodesConcurToTheQuorum, int availableNodes, int expectedResponses, int quorum) {
     this.iRequest = iRequest;
     this.iNodes = iNodes;
     this.nodesConcurToTheQuorum = nodesConcurToTheQuorum;
@@ -119,9 +121,23 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     return false;
   }
 
+  public synchronized boolean collectResponse(OTransactionPhase1TaskResult response) {
+    OTransactionResultPayload result = response.getResultPayload();
+    List<OTransactionResultPayload> results = resultsByType.get(result.getResponseType());
+    if (results == null) {
+      results = new ArrayList<>();
+      results.add(result);
+      resultsByType.put(result.getResponseType(), results);
+    } else {
+      results.add(result);
+    }
+
+    return results.size() >= quorum;
+  }
+
   @Override
   public boolean collectResponse(ODistributedResponse response) {
-    return false;
+    return collectResponse((ODistributedResponse) response.getPayload());
   }
 
   @Override

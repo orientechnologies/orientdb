@@ -31,24 +31,14 @@ import java.util.Optional;
  * @author tglman
  */
 public class OTransactionPhase1TaskResult implements OStreamable {
-  enum Result {
-    Ok(1), KO(2);
-    int id;
 
-    Result(int id) {
-      this.id = id;
-    }
-  }
-
-  private Result                              result;
-  private Optional<OTransactionResultPayload> resultPayload;
+  private OTransactionResultPayload resultPayload;
 
   public OTransactionPhase1TaskResult() {
 
   }
 
-  public OTransactionPhase1TaskResult(Result result, Optional<OTransactionResultPayload> resultPayload) {
-    this.result = result;
+  public OTransactionPhase1TaskResult(OTransactionResultPayload resultPayload) {
     this.resultPayload = resultPayload;
   }
 
@@ -60,4 +50,7 @@ public class OTransactionPhase1TaskResult implements OStreamable {
   public void fromStream(final DataInput in) throws IOException {
   }
 
+  public OTransactionResultPayload getResultPayload() {
+    return resultPayload;
+  }
 }

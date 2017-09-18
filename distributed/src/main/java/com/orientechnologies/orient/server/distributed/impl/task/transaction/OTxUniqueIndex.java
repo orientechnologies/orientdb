@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 import com.orientechnologies.orient.core.id.ORecordId;
 
 public class OTxUniqueIndex implements OTransactionResultPayload {
+  private static final int ID = 3;
   private ORecordId recordId;
   private String    index;
   private Object    key;
@@ -35,5 +36,10 @@ public class OTxUniqueIndex implements OTransactionResultPayload {
 
   public void setKey(Object key) {
     this.key = key;
+  }
+
+  @Override
+  public int getResponseType() {
+    return ID;
   }
 }

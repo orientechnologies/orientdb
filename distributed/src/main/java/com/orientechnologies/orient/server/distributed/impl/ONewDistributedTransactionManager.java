@@ -141,7 +141,7 @@ public class ONewDistributedTransactionManager {
           final ODistributedResponse lastResult = ((ODistributedAbstractPlugin) dManager)
               .sendRequest(storage.getName(), involvedClusters, nodes, txTask, requestId.getMessageId(), EXECUTION_MODE.RESPONSE,
                   localResult, null, null, ((iRequest, iNodes, endCallback, task, nodesConcurToTheQuorum, availableNodes, expectedResponses, quorum, groupByResponse, waitLocalNode) -> {
-                    return new ONewDistributedResponseManager(iRequest,iNodes,nodesConcurToTheQuorum,availableNodes,expectedResponses,quorum);
+                    return new ONewDistributedResponseManager(txTask,iNodes,nodesConcurToTheQuorum,availableNodes,expectedResponses,quorum);
                   }));
 
           if (ctx.isCanceled())
