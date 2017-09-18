@@ -542,6 +542,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
       final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
       final OCallable<Void, ODistributedResponseManager> endCallback) {
+    return sendRequest(iDatabaseName, iClusterNames, iTargetNodes, iTask, reqId, iExecutionMode, localResult, iAfterSentCallback,
+        endCallback, null);
+  }
+
+  public ODistributedResponse sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
+      final Collection<String> iTargetNodes, final ORemoteTask iTask, final long reqId,
+      final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
+      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
+      final OCallable<Void, ODistributedResponseManager> endCallback, ODistributedResponseManagerFactory responseManagerFactory) {
 
     final ODistributedRequest req = new ODistributedRequest(this, nodeId, reqId, iDatabaseName, iTask);
 
@@ -566,8 +575,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
 
     messageService.updateMessageStats(iTask.getName());
-
-    return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, iAfterSentCallback, endCallback);
+    if (responseManagerFactory != null) {
+      return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, iAfterSentCallback, endCallback,
+          responseManagerFactory);
+    } else {
+      return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, iAfterSentCallback, endCallback,
+          responseManagerFactory);
+    }
   }
 
   /**

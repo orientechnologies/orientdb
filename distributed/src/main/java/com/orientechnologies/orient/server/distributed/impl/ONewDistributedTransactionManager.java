@@ -138,9 +138,11 @@ public class ONewDistributedTransactionManager {
           OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
 
           // SYNCHRONOUS CALL: REPLICATE IT
-          final ODistributedResponse lastResult = dManager
+          final ODistributedResponse lastResult = ((ODistributedAbstractPlugin) dManager)
               .sendRequest(storage.getName(), involvedClusters, nodes, txTask, requestId.getMessageId(), EXECUTION_MODE.RESPONSE,
-                  localResult, null, null);
+                  localResult, null, null, ((iRequest, iNodes, endCallback, task, nodesConcurToTheQuorum, availableNodes, expectedResponses, quorum, groupByResponse, waitLocalNode) -> {
+                    return new ONewDistributedResponseManager(iRequest,iNodes,nodesConcurToTheQuorum,availableNodes,expectedResponses,quorum);
+                  }));
 
           if (ctx.isCanceled())
             throw new ODistributedOperationException("Transaction as been canceled because concurrent updates");
