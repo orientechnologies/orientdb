@@ -49,15 +49,14 @@ node("master") {
 
                 stage("Downstream projects") {
 
+                    build job: "orientdb-gremlin-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "orientdb-spatial-multibranch/${env.BRANCH_NAME}", wait: false
                     //excluded: too long
                     //build job: "orientdb-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
-
                     build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "orientdb-neo4j-importer-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "orientdb-teleporter-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "spring-data-orientdb-multibranch/${env.BRANCH_NAME}", wait: false
-                    build job: "/develop/orientdb-gremlin-develop", wait: false
                 }
 
                 slackSend(color: '#00FF00', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
