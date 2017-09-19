@@ -3,7 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 import com.orientechnologies.orient.core.id.ORecordId;
 
 public class OTxConcurrentModification implements OTransactionResultPayload {
-  private static final int ID = 4;
+  public static final int ID = 4;
   private ORecordId recordId;
   private int       version;
 

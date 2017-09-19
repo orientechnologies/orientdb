@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OStreamable;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Optional;
 
 /**
  * @author tglman
@@ -44,10 +44,44 @@ public class OTransactionPhase1TaskResult implements OStreamable {
 
   @Override
   public void toStream(final DataOutput out) throws IOException {
+    out.writeInt(resultPayload.getResponseType());
+    switch (resultPayload.getResponseType()) {
+    case OTxSuccess.ID:
+    case OTxLockTimeout.ID:
+      break;
+    case OTxConcurrentModification.ID:
+      OTxConcurrentModification pl = (OTxConcurrentModification) resultPayload;
+      out.writeInt(pl.getRecordId().getClusterId());
+      out.writeLong(pl.getRecordId().getClusterPosition());
+      out.writeInt(pl.getVersion());
+      break;
+    case OTxException.ID:
+      throw new UnsupportedOperationException(); //TODO!
+    case OTxUniqueIndex.ID:
+      throw new UnsupportedOperationException(); //TODO!
+    }
   }
 
   @Override
   public void fromStream(final DataInput in) throws IOException {
+    int type = in.readInt();
+    switch (resultPayload.getResponseType()) {
+    case OTxSuccess.ID:
+      this.resultPayload = new OTxSuccess();
+      break;
+    case OTxLockTimeout.ID:
+      this.resultPayload = new OTxLockTimeout();
+      break;
+    case OTxConcurrentModification.ID:
+      ORecordId rid = new ORecordId(in.readInt(), in.readLong());
+      int version = in.readInt();
+      this.resultPayload = new OTxConcurrentModification(rid, version);
+      break;
+    case OTxException.ID:
+      throw new UnsupportedOperationException(); //TODO!
+    case OTxUniqueIndex.ID:
+      throw new UnsupportedOperationException(); //TODO!
+    }
   }
 
   public OTransactionResultPayload getResultPayload() {
