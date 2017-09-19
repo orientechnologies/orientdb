@@ -170,7 +170,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
       for (OIdentifiable from : fromIds) {
         final OVertex fromVertex = toVertex(from);
         if (fromVertex == null)
-          throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
+          throw new OCommandExecutionException("Source vertex '" + from + "' does not exist");
 
         for (OIdentifiable to : toIds) {
           final OVertex toVertex;
@@ -178,6 +178,9 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
             toVertex = fromVertex;
           } else {
             toVertex = toVertex(to);
+          }
+          if (toVertex == null) {
+            throw new OCommandExecutionException("Source vertex '" + to + "' does not exist");
           }
 
           if (fields != null)
@@ -235,7 +238,10 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
   }
 
   private OVertex toVertex(OIdentifiable item) {
-    if (item != null && item instanceof OElement) {
+    if (item == null) {
+      return null;
+    }
+    if (item instanceof OElement) {
       return ((OElement) item).asVertex().orElse(null);
     } else {
       item = getDatabase().load(item.getIdentity());
