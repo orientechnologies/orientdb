@@ -19,19 +19,6 @@
  */
 package com.orientechnologies.orient.client.binary;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
@@ -40,7 +27,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemoteNodeSession;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.client.remote.message.OError37Response;
-import com.orientechnologies.orient.client.remote.message.OErrorResponse;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -50,6 +36,14 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+
+import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Map;
 
 public class OChannelBinaryAsynchClient extends OChannelBinary {
   private         int    socketTimeout;                                               // IN MS
@@ -192,8 +186,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         tokenBytes = this.readBytes();
       else
         tokenBytes = null;
-      handleStatus(currentStatus, currentSessionId);
+
       currentMessage = readByte();
+      handleStatus(currentStatus, currentSessionId);
       return tokenBytes;
     } catch (OLockException e) {
       Thread.currentThread().interrupt();
