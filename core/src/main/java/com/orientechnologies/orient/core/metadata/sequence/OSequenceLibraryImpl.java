@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
@@ -39,7 +40,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OSequenceLibraryImpl {
   private final Map<String, OSequence> sequences = new ConcurrentHashMap<String, OSequence>();
-
 
   public void create(ODatabaseDocumentInternal database) {
     init(database);
@@ -127,6 +127,7 @@ public class OSequenceLibraryImpl {
     final OSequence sequence = OSequenceHelper.createSequence(iDocument);
 
     sequences.put(name, sequence);
+    onSequenceLibraryUpdate(database);
     return sequence;
   }
 
@@ -142,7 +143,6 @@ public class OSequenceLibraryImpl {
       return null;
 
     sequence.onUpdate(iDocument);
-
     return sequence;
   }
 
@@ -154,6 +154,7 @@ public class OSequenceLibraryImpl {
     name = name.toUpperCase(Locale.ENGLISH);
 
     sequences.remove(name);
+    onSequenceLibraryUpdate(database);
   }
 
   private void init(final ODatabaseDocumentInternal database) {
@@ -174,6 +175,12 @@ public class OSequenceLibraryImpl {
   private void validateSequenceExists(final String iName) {
     if (!sequences.containsKey(iName)) {
       throw new OSequenceException("Sequence '" + iName + "' does not exists");
+    }
+  }
+
+  private void onSequenceLibraryUpdate(ODatabaseDocumentInternal database) {
+    for (OMetadataUpdateListener one : database.getSharedContext().browseListeners()) {
+      one.onSequenceLibraryUpdate(this);
     }
   }
 

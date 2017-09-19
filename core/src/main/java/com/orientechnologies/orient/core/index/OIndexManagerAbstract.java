@@ -25,6 +25,7 @@ import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -139,6 +140,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         }
       }
     });
+
+    for(OMetadataUpdateListener listener: getDatabase ().getSharedContext().browseListeners()){
+      listener.onIndexManagerUpdate(this);
+    }
 
     return (RET) this;
   }

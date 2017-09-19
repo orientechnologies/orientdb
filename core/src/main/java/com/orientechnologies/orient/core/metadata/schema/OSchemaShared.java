@@ -26,6 +26,7 @@ import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -741,6 +742,10 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     });
 
     snapshot = new OImmutableSchema(this);
+    for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
+      listener.onSchemaUpdate(snapshot);
+    }
+
   }
 
   protected void addClusterClassMap(final OClass cls) {

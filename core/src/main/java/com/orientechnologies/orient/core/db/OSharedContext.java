@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
+import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
@@ -18,7 +19,7 @@ import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 /**
  * Created by tglman on 15/06/16.
  */
-public abstract class OSharedContext {
+public abstract class OSharedContext extends OListenerManger<OMetadataUpdateListener> {
   protected static final OProfiler PROFILER = Orient.instance().getProfiler();
 
   protected OSchemaShared                  schema;
@@ -33,6 +34,10 @@ public abstract class OSharedContext {
   protected OStatementCache                statementCache;
   protected OQueryStats                    queryStats;
   protected volatile boolean loaded = false;
+
+  public OSharedContext() {
+    super(true);
+  }
 
   public OSchemaShared getSchema() {
     return schema;
