@@ -38,13 +38,9 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
+import com.orientechnologies.orient.core.sql.filter.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
@@ -443,9 +439,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
             varValue = f.getFunction().getResult();
           } else
             varValue = f.execute(iRecord, iRecord, null, context);
-        } else if (letValue instanceof String)
-          varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim(), context);
-        else
+        } else if (letValue instanceof String) {
+          OSQLPredicate pred = new OSQLPredicate(((String) letValue).trim());
+          varValue = pred.evaluate(iRecord, (ODocument)iRecord, context);
+//          varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim(), context);
+        } else
           varValue = letValue;
 
         context.setVariable(varName, varValue);
