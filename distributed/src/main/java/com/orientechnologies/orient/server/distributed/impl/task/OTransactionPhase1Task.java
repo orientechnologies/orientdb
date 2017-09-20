@@ -5,20 +5,27 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 
 /**
@@ -27,8 +34,16 @@ import java.util.List;
 public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 43;
 
-  private OLogSequenceNumber lastLSN;
-  private List<ORecordOperation> ops = new ArrayList<>();
+  private OLogSequenceNumber     lastLSN;
+  private List<ORecordOperation> ops;
+
+  public OTransactionPhase1Task() {
+    ops = new ArrayList<>();
+  }
+
+  public OTransactionPhase1Task(List<ORecordOperation> ops) {
+    this.ops = ops;
+  }
 
   @Override
   public String getName() {
@@ -43,7 +58,21 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   @Override
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
-    return new OTransactionPhase1TaskResult(); //TODO
+    OTransactionResultPayload payload;
+    try {
+      ((ODatabaseDocumentDistributed) database).beginDistributedTx(ops);
+      payload = new OTxSuccess();
+    } catch (OConcurrentModificationException ex) {
+      payload = new OTxConcurrentModification((ORecordId) ex.getRid(), ex.getEnhancedDatabaseVersion());
+    } catch (ODistributedLockException ex) {
+      payload = new OTxLockTimeout();
+    } catch (ORecordDuplicatedException ex) {
+      //TODO:Check if can get out the key
+      payload = new OTxUniqueIndex((ORecordId) ex.getRid(), ex.getIndexName(), null);
+    } catch (Exception ex) {
+      payload = new OTxException(ex);
+    }
+    return new OTransactionPhase1TaskResult(payload);
   }
 
   @Override

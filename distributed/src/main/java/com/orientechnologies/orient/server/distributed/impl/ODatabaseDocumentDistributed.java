@@ -498,7 +498,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
     final String localNodeName = dManager.getLocalNodeName();
     getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
-    ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(),dManager,getStorageDistributed().getLocalDistributedDatabase());
+    ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
+        getStorageDistributed().getLocalDistributedDatabase());
     try {
       // EXECUTE DISTRIBUTED TX
       int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
@@ -514,13 +515,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
         try {
 
-          final List<ORecordOperation> result = txManager
-              .commit(this, iTx, null, getStorageDistributed().getEventListener());
+          final List<ORecordOperation> result = txManager.commit(this, iTx, null, getStorageDistributed().getEventListener());
 
           if (result != null) {
             for (ORecordOperation r : result) {
               // UPDATE LOCAL CONTENT IN LOCKS TO ASSURE READ MY WRITES IF THE REQUEST IS STILL RUNNING
-              getStorageDistributed().getLocalDistributedDatabase().replaceRecordContentIfLocked(r.getRID(), r.getRecord().toStream());
+              getStorageDistributed().getLocalDistributedDatabase()
+                  .replaceRecordContentIfLocked(r.getRID(), r.getRecord().toStream());
             }
           }
 
@@ -577,4 +578,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return null;
   }
 
+  public void beginDistributedTx(List<ORecordOperation> phase1Changes) {
+    //TODO: create a transaction with the operations and the index changes from the operations
+  }
 }
