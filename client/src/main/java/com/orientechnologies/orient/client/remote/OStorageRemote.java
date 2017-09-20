@@ -1617,6 +1617,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         // GET THE DEFAULT CLUSTER
         iClusterId = defaultClusterId;
 
+      if (iClusterId >= clusters.length) {
+        reload();
+      }
+
       return clusters[iClusterId];
 
     } finally {
