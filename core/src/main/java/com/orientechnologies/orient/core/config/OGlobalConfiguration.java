@@ -971,10 +971,15 @@ public enum OGlobalConfiguration {
   @Deprecated CACHE_LOCAL_ENABLED("cache.local.enabled", "Deprecated, Level1 cache cannot be disabled anymore", Boolean.class,
       true);
 
+  /**
+   * Place holder for the "undefined" value of setting.
+   */
+  private final Object nullValue = new Object();
+
   private final String   key;
   private final Object   defValue;
   private final Class<?> type;
-  private volatile Object value = null;
+  private volatile Object value = nullValue;
   private final String                       description;
   private final OConfigurationChangeCallback changeCallback;
   private final Boolean                      canChangeAtRuntime;
@@ -1083,7 +1088,14 @@ public enum OGlobalConfiguration {
 
   public <T> T getValue() {
     //noinspection unchecked
-    return (T) (value != null ? value : defValue);
+    return (T) (value != nullValue && value != null ? value : defValue);
+  }
+
+  /**
+   * @return <code>true</code> if configuration was changed from default value and <code>false</code> otherwise.
+   */
+  public boolean isChanged() {
+    return value != nullValue;
   }
 
   /**
@@ -1148,7 +1160,7 @@ public enum OGlobalConfiguration {
 
     if (changeCallback != null) {
       try {
-        changeCallback.change(oldValue, value);
+        changeCallback.change(oldValue == nullValue ? null : oldValue, value == nullValue ? null : value);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -1156,26 +1168,26 @@ public enum OGlobalConfiguration {
   }
 
   public boolean getValueAsBoolean() {
-    final Object v = value != null ? value : defValue;
+    final Object v = value != nullValue && value != null ? value : defValue;
     return v instanceof Boolean ? (Boolean) v : Boolean.parseBoolean(v.toString());
   }
 
   public String getValueAsString() {
-    return value != null ? value.toString() : defValue != null ? defValue.toString() : null;
+    return value != nullValue && value != null ? value.toString() : defValue != null ? defValue.toString() : null;
   }
 
   public int getValueAsInteger() {
-    final Object v = value != null ? value : defValue;
+    final Object v = value != nullValue && value != null ? value : defValue;
     return (int) (v instanceof Number ? ((Number) v).intValue() : OFileUtils.getSizeAsNumber(v.toString()));
   }
 
   public long getValueAsLong() {
-    final Object v = value != null ? value : defValue;
+    final Object v = value != nullValue && value != null ? value : defValue;
     return v instanceof Number ? ((Number) v).longValue() : OFileUtils.getSizeAsNumber(v.toString());
   }
 
   public float getValueAsFloat() {
-    final Object v = value != null ? value : defValue;
+    final Object v = value != nullValue && value != null ? value : defValue;
     return v instanceof Float ? (Float) v : Float.parseFloat(v.toString());
   }
 

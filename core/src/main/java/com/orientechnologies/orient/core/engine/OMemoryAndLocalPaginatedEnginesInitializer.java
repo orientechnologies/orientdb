@@ -58,10 +58,10 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
   }
 
   private void configureDefaults() {
-    if (System.getProperty(OGlobalConfiguration.DISK_CACHE_SIZE.getKey()) == null)
+    if (!OGlobalConfiguration.DISK_CACHE_SIZE.isChanged())
       configureDefaultDiskCacheSize();
 
-    if (System.getProperty(OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey()) == null)
+    if (!OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.isChanged())
       configureDefaultWalRestoreBatchSize();
   }
 
