@@ -27,11 +27,16 @@ import static org.junit.Assert.assertTrue;
  */
 public class OrientDBRemoteTest {
 
+  // Leaky. Database name clash.
+
   private static final String SERVER_DIRECTORY = "./target/dbfactory";
   private OServer server;
 
   @Before
   public void before() throws Exception {
+    // That changes the shutdown logic globally, results may vary depending on the tests execution order. Server-related tests
+    // running before/after this test case failing in a strange ways. The case when SERVER_BACKWARD_COMPATIBILITY=true, which is
+    // the default and supposed to be used by the end-users, is "half-tested" due to this global setting.
     OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
     server = new OServer();
     server.setServerRootDirectory(SERVER_DIRECTORY);

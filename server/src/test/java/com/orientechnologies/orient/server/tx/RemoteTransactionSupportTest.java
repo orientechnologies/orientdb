@@ -34,6 +34,8 @@ import static org.junit.Assert.*;
  */
 public class RemoteTransactionSupportTest {
 
+  // Leaky.
+
   private static final String SERVER_DIRECTORY = "./target/transaction";
   private OServer           server;
   private OrientDB          orientDB;

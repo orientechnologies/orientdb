@@ -26,6 +26,8 @@ import static org.junit.Assert.assertTrue;
  */
 public class RemoteIndexSupportTest {
 
+  // Leaky. Database name clash.
+
   private static final String SERVER_DIRECTORY = "./target/db";
   private OServer server;
 

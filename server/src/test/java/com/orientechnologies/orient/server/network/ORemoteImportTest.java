@@ -24,6 +24,8 @@ import static org.junit.Assert.assertTrue;
  */
 public class ORemoteImportTest {
 
+  // Leaky.
+
   private static final String SERVER_DIRECTORY = "./target/db";
   private OServer server;
 

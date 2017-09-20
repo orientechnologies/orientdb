@@ -26,6 +26,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class OLiveQueryRemoteTest {
 
+  // Leaky.
+
   private static final String SERVER_DIRECTORY = "./target/dbfactory";
   private OServer           server;
   private OrientDB          orientDB;

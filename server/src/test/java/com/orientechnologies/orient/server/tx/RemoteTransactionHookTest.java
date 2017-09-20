@@ -28,6 +28,8 @@ import static org.junit.Assert.assertEquals;
  */
 public class RemoteTransactionHookTest {
 
+  // Leaky.
+
   private static final String SERVER_DIRECTORY = "./target/hook-transaction";
   private OServer           server;
   private OrientDB          orientDB;

@@ -453,6 +453,11 @@ public class OServer {
     try {
       boolean res = deinit();
 
+      // Seems like the code below should be executed before deinit() call, otherwise databases are closed after the storages and
+      // legitimate leaks reported.
+      //
+      // Not sure how this supposed to work when SERVER_BACKWARD_COMPATIBILITY is true, apparently databases are still populated,
+      // but who is responsible for closing and cleaning them up in this case. Shared Orient instance?
       if (!getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY) && databases != null) {
         databases.close();
         databases = null;
@@ -533,6 +538,14 @@ public class OServer {
           OLogManager.instance().info(this, "Shutting down databases:");
           Orient.instance().shutdown();
         } catch (Throwable e) {
+          // We are eating all exceptions here. As a result, all state verification logic is unable to fail the tests. At least
+          // AssertionError-s should be passed through, or even better, all exceptions if we are running in a testing env
+          // (check for -ea?).
+          //
+          // Another thing to think about, in-process server tests will fail with pass-through exceptions, but tests running a
+          // server in a separate process wont fail, since there is no way to assert a clean shutdown of the remote server from the
+          // test.
+
           OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
         }
     } finally {

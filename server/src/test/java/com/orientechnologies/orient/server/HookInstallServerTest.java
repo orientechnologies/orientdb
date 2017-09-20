@@ -25,6 +25,8 @@ import com.orientechnologies.orient.server.config.OServerHookConfiguration;
 
 public class HookInstallServerTest {
 
+  // Leaky. Database name clash.
+
   public static class MyHook extends ODocumentHookAbstract {
 
     public MyHook() {

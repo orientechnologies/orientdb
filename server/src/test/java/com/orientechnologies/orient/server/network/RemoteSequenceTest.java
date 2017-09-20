@@ -18,6 +18,8 @@ import static org.junit.Assert.assertNotEquals;
  */
 public class RemoteSequenceTest {
 
+  // Leaky.
+
   private static final String SERVER_DIRECTORY = "./target/db";
   private OServer server;
 

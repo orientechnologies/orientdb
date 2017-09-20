@@ -16,6 +16,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.junit.Assert.assertNotNull;
 
 public class TestConcurrentCachedSequenceGenerationIT {
+  // Leaks sometimes (SERVER_BACKWARD_COMPATIBILITY, execution order?).
+
   static final int THREADS = 20;
   static final int RECORDS = 100;
   private static final String SERVER_DIRECTORY = "./target/db";

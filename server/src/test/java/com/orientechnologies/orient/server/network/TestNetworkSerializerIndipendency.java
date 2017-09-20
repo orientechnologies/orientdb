@@ -22,6 +22,9 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 
 public class TestNetworkSerializerIndipendency {
+
+  // Leaks sometimes (SERVER_BACKWARD_COMPATIBILITY, execution order?). Database name clash.
+
   private static final String SERVER_DIRECTORY = "./target/db";
   private OServer server;
 
