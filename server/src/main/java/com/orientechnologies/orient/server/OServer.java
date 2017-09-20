@@ -326,7 +326,6 @@ public class OServer {
     if (databases instanceof OServerAware) {
       ((OServerAware) databases).init(this);
     }
-    databases.removeShutdownHook();
     context = databases.newOrientDB();
 
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
