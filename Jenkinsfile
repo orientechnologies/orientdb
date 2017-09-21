@@ -48,8 +48,7 @@ node("master") {
                 }
 
                 stage("Downstream projects") {
-
-                    build job: "orientdb-gremlin-multibranch/${env.BRANCH_NAME}", wait: false
+                    build job: "develop/orientdb-develop-openjdk-9", wait: false
                     build job: "orientdb-spatial-multibranch/${env.BRANCH_NAME}", wait: false
                     //excluded: too long
                     //build job: "orientdb-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
