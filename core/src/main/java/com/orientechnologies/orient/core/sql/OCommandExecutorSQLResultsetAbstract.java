@@ -442,7 +442,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         } else if (letValue instanceof String) {
           OSQLPredicate pred = new OSQLPredicate(((String) letValue).trim());
           varValue = pred.evaluate(iRecord, (ODocument)iRecord, context);
-//          varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim(), context);
         } else
           varValue = letValue;
 
