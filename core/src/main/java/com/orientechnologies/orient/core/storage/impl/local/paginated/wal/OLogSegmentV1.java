@@ -394,7 +394,7 @@ final class OLogSegmentV1 implements OLogSegment {
   @SuppressWarnings("NullableProblems")
   @Override
   public int compareTo(OLogSegment other) {
-    final long otherOrder = ((OLogSegmentV1) other).order;
+    final long otherOrder = other.getOrder();
 
     if (order > otherOrder)
       return 1;
