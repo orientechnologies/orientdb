@@ -786,7 +786,8 @@ public class Orient extends OListenerManger<OOrientListener> {
 
     @Override
     public String toString() {
-      return getClass().getSimpleName();
+      //it is strange but windows defender block compilation if we get class name programmatically using Class instance
+      return "OShutdownPendingThreadsHandler";
     }
   }
 
