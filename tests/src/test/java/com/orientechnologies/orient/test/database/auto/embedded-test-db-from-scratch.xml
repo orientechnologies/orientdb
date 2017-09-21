@@ -6,7 +6,6 @@
             <class name="com.orientechnologies.orient.test.database.auto.ClusterMetadataTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DBMethodsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.AlterDatabaseTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.ConnectDatabaseTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseConflictStategyTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseConflictStrategyAutoMergeTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DbCopyTest"/>
