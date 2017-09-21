@@ -34,10 +34,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Created by enricorisa on 26/09/14.
- */
-
 public class OLuceneCrossClassIndexTest extends OLuceneBaseTest {
 
   @Before
@@ -166,6 +162,38 @@ public class OLuceneCrossClassIndexTest extends OLuceneBaseTest {
         .collect(Collectors.toList());
 
     assertThat(song).hasSize(0);
+
+    final List<OElement> authors = elements.stream()
+        .filter(el -> el.getSchemaType().get().getName().equals("Author"))
+        .collect(Collectors.toList());
+
+    assertThat(authors.size()).isGreaterThan(0);
+
+  }
+
+  @Test
+  public void shouldSearchAcrossIncludingAuthorIndex() {
+
+    String query = "select expand(SEARCH_CROSS('Song.title:mountain  Author.score:[4 TO 7]', "
+        + "{'excludes' : ['Song.title'],"
+        + "'includes' : ['Author.name']"
+        + "})) ";
+    OResultSet resultSet = db.query(query);
+    List<OElement> elements = fetchElements(resultSet).collect(Collectors.toList());
+
+    assertThat(elements).isNotEmpty();
+
+    final List<OElement> song = elements.stream()
+        .filter(el -> el.getSchemaType().get().getName().equals("Song"))
+        .collect(Collectors.toList());
+
+    assertThat(song).hasSize(0);
+
+    final List<OElement> authors = elements.stream()
+        .filter(el -> el.getSchemaType().get().getName().equals("Author"))
+        .collect(Collectors.toList());
+
+    assertThat(authors.size()).isGreaterThan(0);
 
   }
 

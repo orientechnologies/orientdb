@@ -35,6 +35,7 @@ import org.apache.lucene.search.highlight.TextFragment;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.orientechnologies.lucene.OLuceneIndexFactory.LUCENE_ALGORITHM;
 
@@ -113,25 +114,30 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   @Override
   public Object get(Object key) {
 
-    OLuceneKeyAndMetadata keyAndMeta = (OLuceneKeyAndMetadata) key;
-
+    final OLuceneKeyAndMetadata keyAndMeta = (OLuceneKeyAndMetadata) key;
     final ODocument metadata = keyAndMeta.metadata;
-    Collection<? extends OIndex> indexes = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager().getIndexes();
-
-    OLucenePerFieldAnalyzerWrapper globalAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
-
-    List<String> globalFields = new ArrayList<String>();
-
-    List<IndexReader> globalReaders = new ArrayList<IndexReader>();
-    Map<String, OType> types = new HashMap<>();
-
     final List<String> excludes = Optional.ofNullable(metadata.<List<String>>getProperty("excludes"))
         .orElse(Collections.emptyList());
+    final List<String> includes = Optional.ofNullable(metadata.<List<String>>getProperty("includes"))
+        .orElse(Collections.emptyList());
+
+    final Collection<? extends OIndex> indexes = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata()
+        .getIndexManager()
+        .getIndexes()
+        .stream()
+        .filter(i -> !excludes.contains(i.getName()))
+        .filter(i -> includes.isEmpty() || includes.contains(i.getName()))
+        .collect(Collectors.toList());
+
+    final OLucenePerFieldAnalyzerWrapper globalAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
+
+    final List<String> globalFields = new ArrayList<String>();
+
+    final List<IndexReader> globalReaders = new ArrayList<IndexReader>();
+    final Map<String, OType> types = new HashMap<>();
 
     try {
       for (OIndex index : indexes) {
-        if (excludes.contains(index.getName()))
-          continue;
 
         if (index.getAlgorithm().equalsIgnoreCase(LUCENE_ALGORITHM) &&
             index.getType().equalsIgnoreCase(OClass.INDEX_TYPE.FULLTEXT.toString())) {
