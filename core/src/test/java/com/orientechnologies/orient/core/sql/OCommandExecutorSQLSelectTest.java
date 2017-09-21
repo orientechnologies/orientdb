@@ -33,12 +33,12 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import sun.misc.BASE64Encoder;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -1416,7 +1416,7 @@ public class OCommandExecutorSQLSelectTest {
     doc.field("binaryField", "foobar");
     doc.save();
 
-    String base64Value = new BASE64Encoder().encode(array);
+    String base64Value = OBase64Utils.encodeBytes(array);
 
     List<ODocument> results = db
         .query(new OSQLSynchQuery<ODocument>("select from TestBinaryField where binaryField = decode(?, 'base64')"), base64Value);
