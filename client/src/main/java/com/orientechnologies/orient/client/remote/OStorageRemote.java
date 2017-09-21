@@ -346,8 +346,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   /**
-   * Supported only in embedded storage.
-   * Use <code>SELECT FROM metadata:storage</code> instead.
+   * Supported only in embedded storage. Use <code>SELECT FROM metadata:storage</code> instead.
    */
   @Override
   public String getCreatedAtVersion() {
@@ -1500,6 +1499,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
           env.put("com.sun.jndi.ldap.connect.timeout",
               getClientConfiguration().getValueAsString(OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT));
+
           final DirContext ictx = new InitialDirContext(env);
           final String hostName = !primaryServer.contains(":") ?
               primaryServer :
@@ -1512,12 +1512,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
               if (configuration.startsWith("\""))
                 configuration = configuration.substring(1, configuration.length() - 1);
               if (configuration != null) {
-                serverURLs.clear();
                 final String[] parts = configuration.split(" ");
+                List<String> toAdd = new ArrayList<>();
                 for (String part : parts) {
                   if (part.startsWith("s=")) {
-                    addHost(part.substring("s=".length()));
+                    toAdd.add(part.substring("s=".length()));
                   }
+                }
+                if (toAdd.size() > 0) {
+                  serverURLs.clear();
+                  for (String host : toAdd)
+                    addHost(host);
                 }
               }
             }
