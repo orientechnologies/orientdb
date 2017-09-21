@@ -152,6 +152,24 @@ public class OLuceneCrossClassIndexTest extends OLuceneBaseTest {
   }
 
   @Test
+  public void shouldSearchAcrossExcludingSongIndex() {
+
+    String query = "select expand(SEARCH_CROSS('Song.title:mountain  Author.score:[4 TO 7]', "
+        + "{'excludes' : ['Song.title']})) ";
+    OResultSet resultSet = db.query(query);
+    List<OElement> elements = fetchElements(resultSet).collect(Collectors.toList());
+
+    assertThat(elements).isNotEmpty();
+
+    final List<OElement> song = elements.stream()
+        .filter(el -> el.getSchemaType().get().getName().equals("Song"))
+        .collect(Collectors.toList());
+
+    assertThat(song).hasSize(0);
+
+  }
+
+  @Test
   public void shouldSearchAcrossAllClassesWithMetedata() {
 
     String query = "select  expand(SEARCH_CROSS('Author.name:bob Song.title:*tain', {"
@@ -173,6 +191,40 @@ public class OLuceneCrossClassIndexTest extends OLuceneBaseTest {
         assertThat(el.<String>getProperty("name")).containsIgnoringCase("bob");
 
     });
+  }
+
+  @Test
+  public void shouldSearchAcrossAllClassesWithCustomSort() {
+
+    String query = "select  expand(SEARCH_CROSS('*:* ', {"
+        + "sort: [{field:'Author.score', reverse:true, type:'INT' },"
+        + "{field:'Song.author', type:'STRING'}]"
+        + "})) limit 11";
+    OResultSet resultSet = db.query(query);
+
+    List<OElement> elements = fetchElements(resultSet).collect(Collectors.toList());
+
+    assertThat(elements).isNotEmpty();
+
+    //Authors sorted in reverse mode on score
+    List<Integer> scores = elements.stream()
+        .filter(e -> e.getSchemaType().get().getName().equals("Author"))
+        .map(o -> o.<Integer>getProperty("score")).collect(Collectors.toList());
+
+    assertThat(scores).containsExactly(10, 10, 7, 5, 4);
+
+    //song author sorted on name
+    List<String> songAuthoer = elements.stream()
+        .filter(e -> e.getSchemaType().get().getName().equals("Song"))
+        .map(o -> o.<String>getProperty("author")).collect(Collectors.toList());
+
+    assertThat(songAuthoer).startsWith("A.P.Carter",
+        "Al Green",
+        "Arthur Cruddup",
+        "Arthur Cruddup",
+        "Arthur Cruddup",
+        "B and S Womack");
+
   }
 
 }

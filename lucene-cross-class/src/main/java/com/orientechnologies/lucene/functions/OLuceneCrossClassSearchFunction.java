@@ -45,8 +45,7 @@ public class OLuceneCrossClassSearchFunction extends OSQLFunctionAbstract implem
 
     if (fullTextIndex != null) {
 
-      ODocument metadata = getMetadata(args);
-
+    ODocument metadata = getMetadata(args);
       Set<OIdentifiable> luceneResultSet = fullTextIndex
           .get(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), metadata));
 

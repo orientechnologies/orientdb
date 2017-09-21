@@ -30,6 +30,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.highlight.TextFragment;
 
 import java.io.IOException;
@@ -114,6 +115,7 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
 
     OLuceneKeyAndMetadata keyAndMeta = (OLuceneKeyAndMetadata) key;
 
+    final ODocument metadata = keyAndMeta.metadata;
     Collection<? extends OIndex> indexes = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager().getIndexes();
 
     OLucenePerFieldAnalyzerWrapper globalAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
@@ -123,8 +125,14 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
     List<IndexReader> globalReaders = new ArrayList<IndexReader>();
     Map<String, OType> types = new HashMap<>();
 
+    final List<String> excludes = Optional.ofNullable(metadata.<List<String>>getProperty("excludes"))
+        .orElse(Collections.emptyList());
+
     try {
       for (OIndex index : indexes) {
+        if (excludes.contains(index.getName()))
+          continue;
+
         if (index.getAlgorithm().equalsIgnoreCase(LUCENE_ALGORITHM) &&
             index.getType().equalsIgnoreCase(OClass.INDEX_TYPE.FULLTEXT.toString())) {
 
@@ -155,7 +163,7 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
 
       IndexSearcher searcher = new IndexSearcher(indexReader);
 
-      Map<String, Float> boost = Optional.ofNullable(keyAndMeta.metadata.<Map<String, Float>>getProperty("boost"))
+      Map<String, Float> boost = Optional.ofNullable(metadata.<Map<String, Float>>getProperty("boost"))
           .orElse(new HashMap<>());
 
       OLuceneMultiFieldQueryParser p = new OLuceneMultiFieldQueryParser(types,
@@ -164,19 +172,21 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
           boost);
 
       p.setAllowLeadingWildcard(
-          Optional.ofNullable(keyAndMeta.metadata.<Boolean>getProperty("allowLeadingWildcard"))
+          Optional.ofNullable(metadata.<Boolean>getProperty("allowLeadingWildcard"))
               .orElse(false));
 
       p.setLowercaseExpandedTerms(
-          Optional.ofNullable(keyAndMeta.metadata.<Boolean>getProperty("lowercaseExpandedTerms"))
+          Optional.ofNullable(metadata.<Boolean>getProperty("lowercaseExpandedTerms"))
               .orElse(false));
 
       Object params = keyAndMeta.key.getKeys().get(0);
 
       Query query = p.parse(params.toString());
 
-      OLuceneQueryContext ctx = new OLuceneQueryContext(null, searcher, query);
-      return new OLuceneResultSet(this, ctx, keyAndMeta.metadata);
+      final List<SortField> fields = OLuceneIndexEngineUtils.buildSortFields(metadata);
+
+      OLuceneQueryContext ctx = new OLuceneQueryContext(null, searcher, query, fields);
+      return new OLuceneResultSet(this, ctx, metadata);
     } catch (IOException e) {
       OLogManager.instance().error(this, "unable to create multi-reader", e);
     } catch (ParseException e) {
