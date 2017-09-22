@@ -3,8 +3,8 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -68,8 +68,8 @@ public class OClassImplTest {
 
     oClass.setAbstract(false);
 
-    Assert.assertFalse(oClass.getDefaultClusterId() == -1);
-    Assert.assertFalse(oClass.getDefaultClusterId() == db.getDefaultClusterId());
+    assertFalse(oClass.getDefaultClusterId() == -1);
+    assertFalse(oClass.getDefaultClusterId() == db.getDefaultClusterId());
   }
 
   @Test
@@ -496,4 +496,22 @@ public class OClassImplTest {
     }
 
   }
+
+  @Test
+  public void testTypeAny() {
+    String className = "testTypeAny";
+    final OSchema oSchema = db.getMetadata().getSchema();
+
+    OClass oClass = oSchema.createClass(className);
+
+    ODocument record = db.newInstance(className);
+    record.field("name", "foo");
+    record.save();
+
+    oClass.createProperty("name", OType.ANY);
+
+    List<?> result = db.query(new OSQLSynchQuery<Object>("select from " + className + " where name = 'foo'"));
+    assertEquals(result.size(), 1);
+  }
+
 }

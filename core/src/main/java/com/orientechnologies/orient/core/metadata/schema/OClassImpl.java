@@ -1516,6 +1516,9 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
   }
 
   public void checkPersistentPropertyType(final ODatabaseInternal<ORecord> database, final String propertyName, final OType type) {
+    if (OType.ANY.equals(type)) {
+      return;
+    }
     final boolean strictSQL = database.getStorage().getConfiguration().isStrictSql();
 
     final StringBuilder builder = new StringBuilder(256);
