@@ -25,13 +25,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 
-import javax.swing.text.html.Option;
 import java.util.*;
 
 /**
@@ -45,7 +43,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     super(database);
   }
 
-  private static class IndexChange {
+  public static class IndexChange {
     private final OIndex                             index;
     private final OTransactionIndexChanges.OPERATION operation;
     private final Object                             key;
@@ -71,41 +69,48 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   @Override
   public void onRecordAfterCreate(ODocument document) {
     document = checkForLoading(document);
+    List<IndexChange> ops = new ArrayList<>();
 
+    processIndexOnCreate(document, ops);
+    applyChanges(ops);
+  }
+
+  public static void processIndexOnCreate(ODocument document, List<IndexChange> ops) {
     final OClass cls = ODocumentInternal.getImmutableSchemaClass(document);
     if (cls != null) {
       final Collection<OIndex<?>> indexes = cls.getIndexes();
-      List<IndexChange> ops = new ArrayList<>();
       addIndexesEntries(document, indexes, ops);
-      applyChanges(ops);
     }
   }
 
   @Override
   public void onRecordAfterUpdate(ODocument iDocument) {
     iDocument = checkForLoading(iDocument);
+    List<IndexChange> changes = new ArrayList<>();
+    processIndexOnUpdate(iDocument, changes);
+    applyChanges(changes);
+  }
 
+  public static void processIndexOnUpdate(ODocument iDocument, List<IndexChange> changes) {
     final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
-    if (cls == null)
+    if (cls == null) {
       return;
-
+    }
     final Collection<OIndex<?>> indexes = cls.getIndexes();
-
     if (!indexes.isEmpty()) {
       final Set<String> dirtyFields = new HashSet<>(Arrays.asList(iDocument.getDirtyFields()));
-
       if (!dirtyFields.isEmpty())
         for (final OIndex<?> index : indexes) {
-          List<IndexChange> changes = new ArrayList<>();
           processIndexUpdate(iDocument, dirtyFields, index, changes);
-          applyChanges(changes);
         }
     }
   }
 
   @Override
   public void onRecordAfterDelete(final ODocument iDocument) {
-    deleteIndexEntries(iDocument);
+    List<IndexChange> changes = new ArrayList<>();
+    processIndexOnDelete(iDocument, changes);
+    applyChanges(changes);
   }
 
   protected static void putInIndex(OIndex<?> index, Object key, OIdentifiable value) {
@@ -265,7 +270,8 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     }
   }
 
-  private boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
+  private static boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord,
+      List<IndexChange> changes) {
     final OCompositeIndexDefinition indexDefinition = (OCompositeIndexDefinition) index.getDefinition();
 
     final String multiValueField = indexDefinition.getMultiValueField();
@@ -298,9 +304,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         }
 
         final Object origValue = indexDefinition.createValue(origValues);
-        List<IndexChange> changes = new ArrayList<>();
         deleteIndexKey(index, iRecord, origValue, changes);
-        applyChanges(changes);
         return true;
       }
     }
@@ -321,7 +325,8 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  private boolean processSingleIndexDelete(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
+  private static boolean processSingleIndexDelete(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord,
+      List<IndexChange> changes) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final List<String> indexFields = indexDefinition.getFields();
@@ -340,9 +345,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         origValue = indexDefinition.createValue(restoredMultiValue);
       } else
         origValue = indexDefinition.createValue(iRecord.getOriginalValue(indexField));
-      List<IndexChange> res = new ArrayList<>();
-      deleteIndexKey(index, iRecord, origValue, res);
-      applyChanges(res);
+      deleteIndexKey(index, iRecord, origValue, changes);
       return true;
     }
     return false;
@@ -366,7 +369,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       processSingleIndexUpdate(index, dirtyFields, iDocument, changes);
   }
 
-  private void addIndexesEntries(ODocument document, final Collection<OIndex<?>> indexes, List<IndexChange> changes) {
+  private static void addIndexesEntries(ODocument document, final Collection<OIndex<?>> indexes, List<IndexChange> changes) {
     // STORE THE RECORD IF NEW, OTHERWISE ITS RID
     final OIdentifiable rid = document.getIdentity();
 
@@ -386,13 +389,12 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       addPut(changes, index, key, rid);
   }
 
-  private void deleteIndexEntries(ODocument iDocument) {
+  public static void processIndexOnDelete(ODocument iDocument, List<IndexChange> changes) {
     final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (cls == null)
       return;
 
     final Collection<OIndex<?>> indexes = new ArrayList<>(cls.getIndexes());
-
     if (!indexes.isEmpty()) {
       final Set<String> dirtyFields = new HashSet<>(Arrays.asList(iDocument.getDirtyFields()));
 
@@ -405,9 +407,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
           final boolean result;
           if (index.getDefinition() instanceof OCompositeIndexDefinition)
-            result = processCompositeIndexDelete(index, dirtyFields, iDocument);
+            result = processCompositeIndexDelete(index, dirtyFields, iDocument, changes);
           else
-            result = processSingleIndexDelete(index, dirtyFields, iDocument);
+            result = processSingleIndexDelete(index, dirtyFields, iDocument, changes);
 
           if (result)
             indexIterator.remove();
@@ -418,9 +420,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     // REMOVE INDEX OF ENTRIES FOR THE NON CHANGED ONLY VALUES
     for (final OIndex<?> index : indexes) {
       final Object key = index.getDefinition().getDocumentValueToIndex(iDocument);
-      List<IndexChange> changes = new ArrayList<>();
       deleteIndexKey(index, iDocument, key, changes);
-      applyChanges(changes);
     }
   }
 
