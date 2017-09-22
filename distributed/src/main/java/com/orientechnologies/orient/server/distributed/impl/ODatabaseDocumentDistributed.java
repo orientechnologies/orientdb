@@ -38,6 +38,7 @@ import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecut
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.tx.OTransactionOptimisticServer;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -578,7 +579,24 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return null;
   }
 
-  public void beginDistributedTx(List<ORecordOperation> phase1Changes) {
+  public void beginDistributedTx(ODistributedRequestId requestId, List<ORecordOperation> changes) {
+    ODistributedTxContext txContext = getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId);
     //TODO: create a transaction with the operations and the index changes from the operations
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, changes);
+    for (ORecordOperation entry : tx.getAllRecordEntries()) {
+      txContext.lock(entry.getRID());
+    }
+
+    for (ORecordOperation entry : tx.getAllRecordEntries()) {
+      if (entry.getType() != ORecordOperation.CREATED) {
+        int changeVersion = entry.getRecord().getVersion();
+        int persistentVersion = getStorage().getRecordMetadata(entry.getRID()).getVersion();
+        if (changeVersion != persistentVersion) {
+          throw new OConcurrentModificationException(entry.getRID(), persistentVersion, changeVersion, entry.getType());
+        }
+      }
+
+    }
+
   }
 }

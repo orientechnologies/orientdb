@@ -60,7 +60,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       ODatabaseDocumentInternal database) throws Exception {
     OTransactionResultPayload payload;
     try {
-      ((ODatabaseDocumentDistributed) database).beginDistributedTx(ops);
+      ((ODatabaseDocumentDistributed) database).beginDistributedTx(requestId, ops);
       payload = new OTxSuccess();
     } catch (OConcurrentModificationException ex) {
       payload = new OTxConcurrentModification((ORecordId) ex.getRid(), ex.getEnhancedDatabaseVersion());
