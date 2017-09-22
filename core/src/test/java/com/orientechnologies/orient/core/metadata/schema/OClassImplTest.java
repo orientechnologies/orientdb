@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -514,4 +515,20 @@ public class OClassImplTest {
 
   }
 
+  @Test
+  public void testTypeAny() {
+    String className = "testTypeAny";
+    final OSchema oSchema = db.getMetadata().getSchema();
+
+    OClass oClass = oSchema.createClass(className);
+
+    ODocument record = db.newInstance(className);
+    record.field("name", "foo");
+    record.save();
+
+    oClass.createProperty("name", OType.ANY);
+
+    List<?> result = db.query(new OSQLSynchQuery<Object>("select from " + className + " where name = 'foo'"));
+    Assert.assertEquals(result.size(), 1);
+  }
 }

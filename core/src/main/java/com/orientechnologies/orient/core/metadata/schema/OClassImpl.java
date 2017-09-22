@@ -2164,6 +2164,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void checkPersistentPropertyType(final ODatabaseInternal<ORecord> database, final String propertyName, final OType type) {
+    if (OType.ANY.equals(type)) {
+      return;
+    }
     final boolean strictSQL = database.getStorage().getConfiguration().isStrictSql();
 
     final StringBuilder builder = new StringBuilder(256);
@@ -2795,7 +2798,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     for (String fieldName : fieldNames) {
       if (!fieldName.equals("@rid"))
-        types.add(getProperty(decodeClassName(OIndexDefinitionFactory.extractFieldName(fieldName)).toLowerCase(Locale.ENGLISH)).getType());
+        types.add(getProperty(decodeClassName(OIndexDefinitionFactory.extractFieldName(fieldName)).toLowerCase(Locale.ENGLISH))
+            .getType());
       else
         types.add(OType.LINK);
     }
