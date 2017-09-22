@@ -579,8 +579,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, iAfterSentCallback, endCallback,
           responseManagerFactory);
     } else {
-      return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, iAfterSentCallback, endCallback,
-          responseManagerFactory);
+      return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, iAfterSentCallback, endCallback);
     }
   }
 
