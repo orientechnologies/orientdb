@@ -20,7 +20,10 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.OStreamable;
+import com.orientechnologies.orient.core.serialization.OStreamableHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 
 import java.io.DataInput;
@@ -56,9 +59,24 @@ public class OTransactionPhase1TaskResult implements OStreamable {
       out.writeInt(pl.getVersion());
       break;
     case OTxException.ID:
-      throw new UnsupportedOperationException(); //TODO!
+      OTxException pl2 = (OTxException) resultPayload;
+      OStreamableHelper.toStream(out, pl2.getException());
     case OTxUniqueIndex.ID:
-      throw new UnsupportedOperationException(); //TODO!
+      OTxUniqueIndex pl3 = (OTxUniqueIndex) resultPayload;
+      //RID
+      out.writeInt(pl3.getRecordId().getClusterId());
+      out.writeLong(pl3.getRecordId().getClusterPosition());
+      //index name
+      String indexName = pl3.getIndex();
+      byte[] indexNameBytes = indexName.getBytes();
+      out.writeInt(indexNameBytes.length);
+      out.write(indexNameBytes);
+      //index key
+      OType type = OType.getTypeByValue(pl3.getKey());
+      out.writeInt(type.getId());
+      byte[] keyBytes = ORecordSerializerNetworkV37.INSTANCE.serializeValue(pl3.getKey(), type);
+      out.writeInt(keyBytes.length);
+      out.write(keyBytes);
     }
   }
 
@@ -78,9 +96,24 @@ public class OTransactionPhase1TaskResult implements OStreamable {
       this.resultPayload = new OTxConcurrentModification(rid, version);
       break;
     case OTxException.ID:
-      throw new UnsupportedOperationException(); //TODO!
+      Throwable exception = (Throwable) OStreamableHelper.fromStream(in);
+      this.resultPayload = new OTxException(exception);
     case OTxUniqueIndex.ID:
-      throw new UnsupportedOperationException(); //TODO!
+      //RID
+      ORecordId rid2 = new ORecordId(in.readInt(), in.readLong());
+      //index name
+      int indexNameSize = in.readInt();
+      byte[] indexNameBytes = new byte[indexNameSize];
+      in.readFully(indexNameBytes);
+      String indexName = new String(indexNameBytes);
+      //index key
+      int type2Id = in.readInt();
+      OType type2 = OType.getById((byte) type2Id);
+      int keySize = in.readInt();
+      byte[] keyBytes = new byte[keySize];
+      in.readFully(keyBytes);
+      Object keyValue = ORecordSerializerNetworkV37.INSTANCE.deserializeValue(keyBytes, type2);
+      this.resultPayload = new OTxUniqueIndex(rid2, indexName, keyValue);
     }
   }
 
