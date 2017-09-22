@@ -362,7 +362,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     return iRecord;
   }
 
-  private static void processIndexUpdate(ODocument iDocument, Set<String> dirtyFields, OIndex<?> index, List<IndexChange> changes) {
+  public static void processIndexUpdate(ODocument iDocument, Set<String> dirtyFields, OIndex<?> index, List<IndexChange> changes) {
     if (index.getDefinition() instanceof OCompositeIndexDefinition)
       processCompositeIndexUpdate(index, dirtyFields, iDocument, changes);
     else
