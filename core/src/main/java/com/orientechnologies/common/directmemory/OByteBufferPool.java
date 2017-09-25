@@ -27,7 +27,6 @@ import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import sun.nio.ch.DirectBuffer;
 
 import javax.management.*;
 import java.io.PrintWriter;
@@ -782,7 +781,7 @@ public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPool
   private static boolean logInAssertion() {
     boolean assertionsEnabled = false;
     assert assertionsEnabled = true;
-    return assertionsEnabled && !(LogManager.getLogManager() instanceof OLogManager.DebugLogManager);
+    return assertionsEnabled && !(LogManager.getLogManager() instanceof OLogManager.ShutdownLogManager);
   }
 
   private static void log(StringBuilder builder, final Object from, final String message, final Throwable exception,

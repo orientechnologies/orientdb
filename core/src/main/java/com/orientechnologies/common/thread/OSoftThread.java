@@ -21,6 +21,7 @@
 package com.orientechnologies.common.thread;
 
 import com.orientechnologies.common.util.OService;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 
 public abstract class OSoftThread extends Thread implements OService {
   private volatile boolean shutdownFlag;
@@ -28,23 +29,26 @@ public abstract class OSoftThread extends Thread implements OService {
   private boolean dumpExceptions = true;
 
   public OSoftThread() {
+    setDefaultUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
 
   public OSoftThread(final ThreadGroup iThreadGroup) {
     super(iThreadGroup, OSoftThread.class.getSimpleName());
     setDaemon(true);
+    setDefaultUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
 
   public OSoftThread(final String name) {
     super(name);
     setDaemon(true);
+    setDefaultUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
 
   public OSoftThread(final ThreadGroup group, final String name) {
     super(group, name);
     setDaemon(true);
+    setDefaultUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
-
 
   protected abstract void execute() throws Exception;
 
@@ -88,12 +92,11 @@ public abstract class OSoftThread extends Thread implements OService {
   /**
    * Pauses current thread until iTime timeout or a wake up by another thread.
    *
-   * @param iTime
    * @return true if timeout has reached, otherwise false. False is the case of wake-up by another thread.
    */
   public static boolean pauseCurrentThread(long iTime) {
     try {
-      if (iTime<=0)
+      if (iTime <= 0)
         iTime = Long.MAX_VALUE;
 
       Thread.sleep(iTime);
