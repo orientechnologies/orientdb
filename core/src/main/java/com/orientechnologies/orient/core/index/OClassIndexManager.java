@@ -44,10 +44,10 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   public static class IndexChange {
-    private final OIndex                             index;
-    private final OTransactionIndexChanges.OPERATION operation;
-    private final Object                             key;
-    private final OIdentifiable                      value;
+    public final OIndex                             index;
+    public final OTransactionIndexChanges.OPERATION operation;
+    public final Object                             key;
+    public final OIdentifiable                      value;
 
     public IndexChange(OIndex indexName, OTransactionIndexChanges.OPERATION operation, Object key, OIdentifiable value) {
       this.index = indexName;

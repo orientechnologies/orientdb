@@ -4,14 +4,18 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.parser.ODDLStatement;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxUniqueIndex;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,6 +49,8 @@ public class OTransactionPhase1TaskTest {
     orientDB.create(OTransactionPhase1TaskTest.class.getSimpleName(), ODatabaseType.PLOCAL);
     session = orientDB.open(OTransactionPhase1TaskTest.class.getSimpleName(), "admin", "admin");
     session.createClass("TestClass");
+    OClass clazz = session.createClass("TestClassInd");
+    clazz.createProperty("one", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
   }
 
   @After
@@ -123,6 +129,25 @@ public class OTransactionPhase1TaskTest {
     assertTrue(res.getResultPayload() instanceof OTxConcurrentModification);
     assertEquals(((OTxConcurrentModification) res.getResultPayload()).getRecordId(), old.getIdentity());
     assertEquals(((OTxConcurrentModification) res.getResultPayload()).getVersion(), doc.getVersion());
+  }
+
+  @Test
+  public void testExecutionDuplicateKey() throws Exception {
+    ODocument doc = new ODocument("TestClassInd");
+    doc.field("one", "value");
+    session.save(doc);
+    ODocument doc1 = new ODocument("TestClassInd");
+    doc1.field("one", "value");
+
+    List<ORecordOperation> operations = new ArrayList<>();
+    operations.add(new ORecordOperation(doc1, ORecordOperation.CREATED));
+
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations);
+    OTransactionPhase1TaskResult res = (OTransactionPhase1TaskResult) task
+        .execute(new ODistributedRequestId(10, 20), server, null, (ODatabaseDocumentInternal) session);
+
+    assertTrue(res.getResultPayload() instanceof OTxUniqueIndex);
+    assertEquals(((OTxUniqueIndex) res.getResultPayload()).getRecordId(), doc.getIdentity());
   }
 
 }

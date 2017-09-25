@@ -12,10 +12,12 @@ import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -30,6 +32,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
@@ -580,22 +584,54 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void beginDistributedTx(ODistributedRequestId requestId, List<ORecordOperation> changes) {
-    ODistributedTxContext txContext = getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId);
-    //TODO: create a transaction with the operations and the index changes from the operations
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, changes);
-    for (ORecordOperation entry : tx.getAllRecordEntries()) {
-      txContext.lock(entry.getRID());
-    }
+    ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
+    ODistributedTxContext txContext = localDistributedDatabase.registerTxContext(requestId);
+    try {
+      OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, changes);
+      for (ORecordOperation entry : tx.getAllRecordEntries()) {
+        txContext.lock(entry.getRID());
+      }
 
-    for (ORecordOperation entry : tx.getAllRecordEntries()) {
-      if (entry.getType() != ORecordOperation.CREATED) {
-        int changeVersion = entry.getRecord().getVersion();
-        int persistentVersion = getStorage().getRecordMetadata(entry.getRID()).getVersion();
-        if (changeVersion != persistentVersion) {
-          throw new OConcurrentModificationException(entry.getRID(), persistentVersion, changeVersion, entry.getType());
+      for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexEntries().entrySet()) {
+        //TODO: Lock Unique keys
+        OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
+        if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType())) {
+          for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
+//          txContext.lockKey(changesPerKey.key);
+          }
         }
       }
 
+      for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexEntries().entrySet()) {
+        OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
+        if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType())) {
+          for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
+            OIdentifiable old;
+            if ((old = (OIdentifiable) index.get(changesPerKey.key)) != null) {
+              OTransactionIndexChangesPerKey.OTransactionIndexEntry val = changesPerKey.entries
+                  .get(changesPerKey.entries.size() - 1);
+              throw new ORecordDuplicatedException(String
+                  .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                      val.value, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity());
+            }
+          }
+        }
+      }
+
+      for (ORecordOperation entry : tx.getAllRecordEntries()) {
+        if (entry.getType() != ORecordOperation.CREATED) {
+          int changeVersion = entry.getRecord().getVersion();
+          int persistentVersion = getStorage().getRecordMetadata(entry.getRID()).getVersion();
+          if (changeVersion != persistentVersion) {
+            throw new OConcurrentModificationException(entry.getRID(), persistentVersion, changeVersion, entry.getType());
+          }
+        }
+      }
+
+    } catch (Throwable t) {
+      // I GUESS DESTROY FREE THE LOCKS, TO DOUBLE CHECK
+      txContext.unlock();
+      throw t;
     }
 
   }
