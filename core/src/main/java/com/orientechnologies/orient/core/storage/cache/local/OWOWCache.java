@@ -1608,9 +1608,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         } else if (checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode) {
           callPageIsBrokenListeners(fileNameById(fileId), pageIndex);
         }
-
-        return;
       }
+
+      return;
     }
 
     buffer.position(CHECKSUM_OFFSET);
