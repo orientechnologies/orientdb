@@ -42,7 +42,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecut
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import com.orientechnologies.orient.server.tx.OTransactionOptimisticServer;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -585,9 +584,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public void beginDistributedTx(ODistributedRequestId requestId, List<ORecordOperation> changes) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
-    ODistributedTxContext txContext = localDistributedDatabase.registerTxContext(requestId);
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, changes);
+    ODistributedTxContext txContext = localDistributedDatabase.registerTxContext(requestId, tx);
     try {
-      OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, changes);
       for (ORecordOperation entry : tx.getAllRecordEntries()) {
         txContext.lock(entry.getRID());
       }
@@ -634,5 +633,18 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       throw t;
     }
 
+  }
+
+  public void commit2pc(ODistributedRequestId transactionId) {
+    ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
+    ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
+    txContext.commit(this);
+    txContext.destroy();
+  }
+
+  public void rollback2pc(ODistributedRequestId transactionId) {
+    ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
+    ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
+    txContext.destroy();
   }
 }

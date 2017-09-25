@@ -2,13 +2,11 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-
-import java.util.List;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -16,7 +14,13 @@ import java.util.List;
 public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 44;
 
-  List<ORecordOperation> ops;
+  private ODistributedRequestId transactionId;
+  private boolean               success;
+
+  public OTransactionPhase2Task(ODistributedRequestId transactionId, boolean success) {
+    this.transactionId = transactionId;
+    this.success = success;
+  }
 
   @Override
   public String getName() {
@@ -31,6 +35,11 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   @Override
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
+    if (success) {
+      ((ODatabaseDocumentDistributed) database).commit2pc(transactionId);
+    } else {
+      ((ODatabaseDocumentDistributed) database).rollback2pc(transactionId);
+    }
     return null; //TODO
   }
 

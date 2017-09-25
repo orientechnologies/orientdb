@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public interface ODistributedTxContext {
 
   ODistributedRequestId getReqId();
 
-  void commit();
+  void commit(ODatabaseDocumentInternal database);
 
   void fix(ODatabaseDocumentInternal database, List<ORemoteTask> fixTasks);
 
@@ -58,4 +59,5 @@ public interface ODistributedTxContext {
   Set<ORecordId> cancel(ODistributedServerManager current, ODatabaseDocumentInternal database);
 
   boolean isCanceled();
+
 }

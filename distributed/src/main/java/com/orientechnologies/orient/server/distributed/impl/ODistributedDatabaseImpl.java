@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -822,8 +823,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId) {
-    ODistributedTxContext ctx = new ODistributedTxContextImpl(this, reqId);
+    return registerTxContext(reqId, new ODistributedTxContextImpl(this, reqId));
+  }
 
+  @Override
+  public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, OTransaction tx) {
+    return registerTxContext(reqId, new ONewDistributedTxContextImpl(this, reqId, tx));
+  }
+
+  public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx) {
     final ODistributedTxContext prevCtx = activeTxContexts.putIfAbsent(reqId, ctx);
     if (prevCtx != null) {
       // ALREADY EXISTENT
