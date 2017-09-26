@@ -83,7 +83,7 @@ public class OTransactionPhase1TaskResult implements OStreamable {
   @Override
   public void fromStream(final DataInput in) throws IOException {
     int type = in.readInt();
-    switch (resultPayload.getResponseType()) {
+    switch (type) {
     case OTxSuccess.ID:
       this.resultPayload = new OTxSuccess();
       break;
