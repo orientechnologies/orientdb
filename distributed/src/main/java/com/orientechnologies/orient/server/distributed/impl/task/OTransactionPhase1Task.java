@@ -12,11 +12,13 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
+import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
@@ -25,7 +27,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
 import java.util.List;
 
 /**
@@ -58,9 +59,15 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   @Override
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
+    return new OTransactionPhase1TaskResult(executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx));
+  }
+
+  public static OTransactionResultPayload executeTransaction(ODistributedRequestId requestId, ODatabaseDocumentDistributed database,
+      OTransactionOptimistic tx) {
     OTransactionResultPayload payload;
     try {
-      ((ODatabaseDocumentDistributed) database).beginDistributedTx(requestId, ops);
+      (database).beginDistributedTx(requestId, tx);
       payload = new OTxSuccess();
     } catch (OConcurrentModificationException ex) {
       payload = new OTxConcurrentModification((ORecordId) ex.getRid(), ex.getEnhancedDatabaseVersion());
@@ -72,7 +79,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     } catch (Exception ex) {
       payload = new OTxException(ex);
     }
-    return new OTransactionPhase1TaskResult(payload);
+    return payload;
   }
 
   @Override
@@ -131,8 +138,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     return FACTORYID;
   }
 
-  public void init(List<ORecordOperation> operations) {
-    this.ops = operations;
+  public void init(OTransactionOptimistic operations) {
+    this.ops = new ArrayList<>(operations.getAllRecordEntries());
   }
 
   public void setLastLSN(OLogSequenceNumber lastLSN) {

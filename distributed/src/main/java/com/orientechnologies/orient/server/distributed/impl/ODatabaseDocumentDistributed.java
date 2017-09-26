@@ -31,9 +31,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
-import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.*;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
@@ -519,7 +517,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
         try {
 
-          final List<ORecordOperation> result = txManager.commit(this, iTx, null, getStorageDistributed().getEventListener());
+          final List<ORecordOperation> result = txManager
+              .commit(this, (OTransactionOptimistic) iTx, null, getStorageDistributed().getEventListener());
 
           if (result != null) {
             for (ORecordOperation r : result) {
@@ -582,24 +581,35 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return null;
   }
 
-  public void beginDistributedTx(ODistributedRequestId requestId, List<ORecordOperation> changes) {
-    ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, changes);
-    ODistributedTxContext txContext = localDistributedDatabase.registerTxContext(requestId, tx);
-    try {
-      for (ORecordOperation entry : tx.getAllRecordEntries()) {
-        txContext.lock(entry.getRID());
-      }
-
-      for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexEntries().entrySet()) {
-        //TODO: Lock Unique keys
-        OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
-        if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType())) {
-          for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
-//          txContext.lockKey(changesPerKey.key);
-          }
+  public void acquireLocksForTx(OTransactionRealAbstract tx, ODistributedTxContext txContext) {
+    //Sort and lock transaction entry in distributed environment
+    Set<ORID> rids = new TreeSet<>();
+    for (ORecordOperation entry : tx.getAllRecordEntries()) {
+      rids.add(entry.getRID());
+    }
+    for (ORID rid : rids) {
+      txContext.lock(rid);
+    }
+    Set<Object> keys = new TreeSet<>();
+    for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexEntries().entrySet()) {
+      OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
+      if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType())) {
+        for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
+          keys.add(changesPerKey.key);
         }
       }
+    }
+    for (Object key : keys) {
+      txContext.lockIndexKey(key);
+    }
+
+  }
+
+  public void beginDistributedTx(ODistributedRequestId requestId, OTransactionOptimistic tx) {
+    ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
+    ODistributedTxContext txContext = localDistributedDatabase.registerTxContext(requestId, tx);
+    try {
+      acquireLocksForTx(tx, txContext);
 
       for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexEntries().entrySet()) {
         OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());

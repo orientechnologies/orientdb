@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
@@ -45,9 +46,11 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 import com.orientechnologies.orient.server.distributed.task.*;
 
 import java.io.IOException;
@@ -75,12 +78,12 @@ public class ONewDistributedTransactionManager {
     this.localDistributedDatabase = iDDatabase;
   }
 
-  public List<ORecordOperation> commit(final ODatabaseDocumentInternal database, final OTransaction iTx, final Runnable callback,
-      final ODistributedStorageEventListener eventListener) {
+  public List<ORecordOperation> commit(final ODatabaseDocumentDistributed database, final OTransactionOptimistic iTx,
+      final Runnable callback, final ODistributedStorageEventListener eventListener) {
     final String localNodeName = dManager.getLocalNodeName();
 
     try {
-      OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.BEGUN);
+      OTransactionInternal.setStatus(iTx, OTransaction.TXSTATUS.BEGUN);
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(storage.getName());
 
@@ -93,14 +96,13 @@ public class ONewDistributedTransactionManager {
       final AtomicBoolean releaseContext = new AtomicBoolean(false);
 
       final AtomicBoolean lockReleased = new AtomicBoolean(true);
-      final ODistributedTxContext ctx = localDistributedDatabase.registerTxContext(requestId);
       try {
-
-        acquireMultipleRecordLocks(iTx, eventListener, ctx);
         lockReleased.set(false);
+        final Set<String> involvedClusters = getInvolvedClusters(iTx.getAllRecordEntries());
+        Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
+        final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(iTx, nodes) : null;
 
-        final List<ORecordOperation> uResult = (List<ORecordOperation>) OScenarioThreadLocal
-            .executeAsDistributed(() -> storage.commit(iTx, callback));
+        OTransactionResultPayload localResult = OTransactionPhase1Task.executeTransaction(requestId, database, iTx);
 
         try {
           localDistributedDatabase.getSyncConfiguration()
@@ -111,41 +113,31 @@ public class ONewDistributedTransactionManager {
                   "Error on updating local LSN configuration for database '%s'", storage.getName());
         }
 
-        final Set<String> involvedClusters = getInvolvedClusters(uResult);
-        Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
-
-        final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(uResult, nodes) : null;
-
-        // AFTER THE CREATION OF TASKS, REMOVE THE TX OBJECT FROM DATABASE TO AVOID UNDO OPERATIONS ARE "LOST IN TRANSACTION"
-
-        // After commit force the clean of dirty managers due to possible copy and miss clean.
-        for (ORecordOperation ent : iTx.getAllRecordEntries())
-          ORecordInternal.getDirtyManager(ent.getRecord()).clear();
-
         if (nodes.isEmpty()) {
           // NO FURTHER NODES TO INVOLVE
           releaseContext.set(true);
           return null;
         }
-
-        final OTxTaskResult localResult = createLocalTxResult(uResult);
+        //TODO: Recalcolate the results
+        List<ORecordOperation> uResult = null;
 
         try {
           //TODO:check the lsn
-
           txTask.setLastLSN(((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN());
 
-          OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
+          OTransactionInternal.setStatus(iTx, OTransaction.TXSTATUS.COMMITTING);
 
           // SYNCHRONOUS CALL: REPLICATE IT
           final ODistributedResponse lastResult = ((ODistributedAbstractPlugin) dManager)
               .sendRequest(storage.getName(), involvedClusters, nodes, txTask, requestId.getMessageId(), EXECUTION_MODE.RESPONSE,
-                  localResult, null, null, ((iRequest, iNodes, endCallback, task, nodesConcurToTheQuorum, availableNodes, expectedResponses, quorum, groupByResponse, waitLocalNode) -> {
-                    return new ONewDistributedResponseManager(txTask,iNodes,nodesConcurToTheQuorum,availableNodes,expectedResponses,quorum);
+                  localResult, null, null,
+                  ((iRequest, iNodes, endCallback, task, nodesConcurToTheQuorum, availableNodes, expectedResponses, quorum, groupByResponse, waitLocalNode) -> {
+                    return new ONewDistributedResponseManager(txTask, iNodes, nodesConcurToTheQuorum, availableNodes,
+                        expectedResponses, quorum);
                   }));
 
-          if (ctx.isCanceled())
-            throw new ODistributedOperationException("Transaction as been canceled because concurrent updates");
+          //if (ctx.isCanceled())
+          //throw new ODistributedOperationException("Transaction as been canceled because concurrent updates");
 
           if (lastResult == null)
             throw new OTransactionException("No response received from distributed servers");
@@ -175,19 +167,19 @@ public class ONewDistributedTransactionManager {
             throw OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
         }
 
+      } catch (OInterruptedException e) {
+        releaseContext.set(true);
+        throw OException.wrapException(new ODistributedOperationException("Cannot commit transaction"), e);
       } catch (RuntimeException e) {
         releaseContext.set(true);
         throw e;
-      } catch (InterruptedException e) {
-        releaseContext.set(true);
-        throw OException.wrapException(new ODistributedOperationException("Cannot commit transaction"), e);
       } catch (Exception e) {
         releaseContext.set(true);
         throw OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
       } finally {
         if (releaseContext.get() && lockReleased.compareAndSet(false, true)) {
           localDistributedDatabase.popTxContext(requestId);
-          ctx.destroy();
+          //ctx.destroy();
         }
       }
 
@@ -250,7 +242,7 @@ public class ONewDistributedTransactionManager {
     return nodes;
   }
 
-  protected Set<String> getInvolvedClusters(final List<ORecordOperation> uResult) {
+  protected Set<String> getInvolvedClusters(final Iterable<ORecordOperation> uResult) {
     final Set<String> involvedClusters = new HashSet<String>();
     for (ORecordOperation op : uResult) {
       final ORecord record = op.getRecord();
@@ -259,7 +251,7 @@ public class ONewDistributedTransactionManager {
     return involvedClusters;
   }
 
-  protected OTransactionPhase1Task createTxTask(final List<ORecordOperation> uResult, final Set<String> nodes) {
+  protected OTransactionPhase1Task createTxTask(final OTransactionOptimistic uResult, final Set<String> nodes) {
     final OTransactionPhase1Task txTask = (OTransactionPhase1Task) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
         .createTask(OTransactionPhase1Task.FACTORYID);
     txTask.init(uResult);

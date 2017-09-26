@@ -33,7 +33,8 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public boolean setLocalResult(String localNodeName, Object localResult) {
-    return false;
+    List<OTransactionResultPayload> results = addResult((OTransactionResultPayload) localResult);
+    return results.size() > quorum;
   }
 
   @Override
@@ -123,6 +124,11 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   public synchronized boolean collectResponse(OTransactionPhase1TaskResult response) {
     OTransactionResultPayload result = response.getResultPayload();
+    List<OTransactionResultPayload> results = addResult(result);
+    return results.size() >= quorum;
+  }
+
+  public List<OTransactionResultPayload> addResult(OTransactionResultPayload result) {
     List<OTransactionResultPayload> results = resultsByType.get(result.getResponseType());
     if (results == null) {
       results = new ArrayList<>();
@@ -131,8 +137,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     } else {
       results.add(result);
     }
-
-    return results.size() >= quorum;
+    return results;
   }
 
   @Override

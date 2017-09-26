@@ -33,7 +33,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void lockIndexKey(Object key) {
-    shared.getIndexKeyLockManager().acquireSharedLock(key);
+    shared.getIndexKeyLockManager().acquireExclusiveLock(key);
     lockedKeys.add(key);
   }
 

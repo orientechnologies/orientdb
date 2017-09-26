@@ -42,4 +42,16 @@ public class TestNewDistributedResponseManager {
     assertFalse(responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxLockTimeout())));
   }
 
+  @Test
+  public void testSimpleQuorumLocal() {
+    OTransactionPhase1Task transaction = new OTransactionPhase1Task();
+    Set<String> nodes = new HashSet<>();
+    nodes.add("one");
+    nodes.add("two");
+    nodes.add("three");
+    ONewDistributedResponseManager responseManager = new ONewDistributedResponseManager(transaction, nodes, nodes, 3, 3, 2);
+    assertFalse(responseManager.setLocalResult("one", new OTxSuccess()));
+    assertTrue(responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess())));
+  }
+
 }
