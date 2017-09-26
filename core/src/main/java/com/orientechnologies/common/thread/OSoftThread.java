@@ -21,6 +21,7 @@
 package com.orientechnologies.common.thread;
 
 import com.orientechnologies.common.util.OService;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 
 public abstract class OSoftThread extends Thread implements OService {
   private volatile boolean shutdownFlag;
@@ -28,21 +29,25 @@ public abstract class OSoftThread extends Thread implements OService {
   private boolean dumpExceptions = true;
 
   public OSoftThread() {
+    setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
 
   public OSoftThread(final ThreadGroup iThreadGroup) {
     super(iThreadGroup, OSoftThread.class.getSimpleName());
     setDaemon(true);
+    setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
 
   public OSoftThread(final String name) {
     super(name);
     setDaemon(true);
+    setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
 
   public OSoftThread(final ThreadGroup group, final String name) {
     super(group, name);
     setDaemon(true);
+    setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
 
 

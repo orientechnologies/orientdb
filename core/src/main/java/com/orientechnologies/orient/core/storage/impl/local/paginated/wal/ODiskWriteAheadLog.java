@@ -27,6 +27,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
@@ -117,6 +118,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
     thread.setDaemon(true);
     thread.setName("WAL Closer Task (" + getStorage().getName() + ")");
+    thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
     return thread;
   });
 
@@ -124,6 +126,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
     thread.setDaemon(true);
     thread.setName("OrientDB WAL Flush Task (" + getStorage().getName() + ")");
+    thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
     return thread;
   });
 

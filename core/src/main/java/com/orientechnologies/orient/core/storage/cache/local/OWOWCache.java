@@ -34,6 +34,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OTriple;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -2990,6 +2991,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       thread.setDaemon(true);
       thread.setPriority(Thread.MAX_PRIORITY);
       thread.setName("OrientDB Write Cache Flush Task (" + storageName + ")");
+      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       return thread;
     }
   }
@@ -3007,6 +3009,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       thread.setDaemon(true);
       thread.setName("OrientDB Write Cache Event Publisher (" + storageName + ")");
+      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
 
       return thread;
     }

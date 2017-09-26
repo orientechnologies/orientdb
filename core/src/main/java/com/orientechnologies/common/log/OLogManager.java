@@ -303,21 +303,21 @@ public class OLogManager {
    */
   public void shutdown() {
     try {
-      if (LogManager.getLogManager() instanceof DebugLogManager)
-        ((DebugLogManager) LogManager.getLogManager()).shutdown();
+      if (LogManager.getLogManager() instanceof ShutdownLogManager)
+        ((ShutdownLogManager) LogManager.getLogManager()).shutdown();
     } catch (NoClassDefFoundError e) {
       // Om nom nom. Some custom class loaders, like Tomcat's one, cannot load classes while in shutdown hooks, since their
-      // runtime is already shutdown. Ignoring the exception, if DebugLogManager is not loaded at this point there are no instances
+      // runtime is already shutdown. Ignoring the exception, if ShutdownLogManager is not loaded at this point there are no instances
       // of it anyway and we have nothing to shutdown.
     }
   }
 
   /**
    * Inhibits the logs reset request which is typically done on shutdown. This allows to use JDK logging from shutdown hooks.
-   * -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager must be passed to the JVM,
+   * -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager must be passed to the JVM,
    * to activate this log manager.
    */
-  public static class DebugLogManager extends LogManager {
+  public static class ShutdownLogManager extends LogManager {
 
     @Override
     public void reset() {

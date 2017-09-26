@@ -161,7 +161,7 @@
             -Dstorage.configuration.syncOnUpdate=false
             -Ddb.makeFullCheckpointOnIndexChange=false
             -Ddb.makeFullCheckpointOnSchemaChange=false
-            -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager
+            -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager.ShutdownLogManager
             -Dstorage.diskCache.checksumMode=storeAndThrow
         </argLine>
     </properties>

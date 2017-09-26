@@ -463,6 +463,8 @@ public class OServer {
         shutdownLatch.countDown();
         shutdownLatch = null;
       }
+
+      OLogManager.instance().shutdown();
     }
   }
 
