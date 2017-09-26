@@ -38,6 +38,8 @@ public interface ODistributedTxContext {
 
   void lock(ORID rid, long timeout);
 
+  void lockIndexKey(Object rid);
+
   void addUndoTask(ORemoteTask undoTask);
 
   ODistributedRequestId getReqId();

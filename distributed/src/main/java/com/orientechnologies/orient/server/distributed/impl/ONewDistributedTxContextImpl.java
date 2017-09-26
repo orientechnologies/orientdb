@@ -10,6 +10,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -19,6 +20,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   private final ODistributedRequestId    id;
   private final OTransaction             tx;
   private final long                     startedOn;
+  private final List<ORID>   lockedRids = new ArrayList<>();
+  private final List<Object> lockedKeys = new ArrayList<>();
 
   public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransaction tx) {
     this.shared = shared;
@@ -29,13 +32,22 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void lock(ORID rid) {
+  public void lockIndexKey(Object key) {
+    shared.getIndexKeyLockManager().acquireSharedLock(key);
+    lockedKeys.add(key);
+  }
 
+  @Override
+  public void lock(ORID rid) {
+    shared.getRecordLockManager().acquireExclusiveLock(rid);
+    lockedRids.add(rid);
   }
 
   @Override
   public void lock(ORID rid, long timeout) {
-
+    //TODO: the timeout is only in the lock manager, this implementation may need evolution
+    shared.getRecordLockManager().acquireExclusiveLock(rid);
+    lockedRids.add(rid);
   }
 
   @Override
@@ -76,7 +88,12 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void unlock() {
-
+    for (ORID lockedRid : lockedRids) {
+      shared.getRecordLockManager().releaseExclusiveLock(lockedRid);
+    }
+    for (Object lockedKey : lockedKeys) {
+      shared.getIndexKeyLockManager().releaseExclusiveLock(lockedKey);
+    }
   }
 
   @Override

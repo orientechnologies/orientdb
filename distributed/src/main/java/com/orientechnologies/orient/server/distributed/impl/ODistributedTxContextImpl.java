@@ -95,6 +95,11 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
       acquiredLocks.add(rid);
   }
 
+  @Override
+  public void lockIndexKey(Object rid) {
+    throw new UnsupportedOperationException();
+  }
+
   public ODistributedRequestId getReqId() {
     return reqId;
   }

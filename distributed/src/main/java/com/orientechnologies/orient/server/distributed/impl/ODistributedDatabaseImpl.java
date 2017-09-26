@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -31,7 +33,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -92,6 +93,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final    AtomicReference<ODistributedMomentum> filterByMomentum      = new AtomicReference<ODistributedMomentum>();
 
   private String localNodeName;
+  private OLockManager<ORID>   recordLockManager   = new OOneEntryPerKeyLockManager<>(true, -1, 1000);
+  private OLockManager<Object> indexKeyLockManager = new OOneEntryPerKeyLockManager<>(true, -1, 1000);
+
+  public OLockManager<ORID> getRecordLockManager() {
+    return recordLockManager;
+  }
+
+  public OLockManager<Object> getIndexKeyLockManager() {
+    return indexKeyLockManager;
+  }
 
   public class ODistributedLock {
     protected final    ODistributedRequestId reqId;
