@@ -35,19 +35,19 @@ public abstract class OSoftThread extends Thread implements OService {
   public OSoftThread(final ThreadGroup iThreadGroup) {
     super(iThreadGroup, OSoftThread.class.getSimpleName());
     setDaemon(true);
-    setDefaultUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+    setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
 
   public OSoftThread(final String name) {
     super(name);
     setDaemon(true);
-    setDefaultUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+    setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
 
   public OSoftThread(final ThreadGroup group, final String name) {
     super(group, name);
     setDaemon(true);
-    setDefaultUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+    setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
 
   protected abstract void execute() throws Exception;
