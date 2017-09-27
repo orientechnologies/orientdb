@@ -17,27 +17,26 @@
  */
 package com.orientechnologies.agent;
 
+import org.apache.commons.codec.binary.Base64;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
-
 @SuppressWarnings("restriction")
 public class OL {
 
-  public static final int      DELAY    = 60;
-  public static final String   AES      = "AES";
+  public static final int    DELAY = 60;
+  public static final String AES   = "AES";
   private static SecretKeySpec key;
-  private static final byte[]  keyValue = new byte[] { 'T', 'h', 'e', 'B', 'e', 's', 't', 'S', 'e', 'c', 'r', 'e', 't', 'K', 'e',
-      'y'                              };
-  public static final String   UTF_8    = "UTF-8";
+  private static final byte[] keyValue = new byte[] { 'T', 'h', 'e', 'B', 'e', 's', 't', 'S', 'e', 'c', 'r', 'e', 't', 'K', 'e',
+      'y' };
+  public static final  String UTF_8    = "UTF-8";
 
   static {
     try {
@@ -94,12 +93,12 @@ public class OL {
 
     private static final int delta = 0x9E3779B9;
 
-    public static String encrypt(final String iLicense, final String key) {
-      return new sun.misc.BASE64Encoder().encode(encrypt(iLicense.getBytes(), key.getBytes()));
+    public static String encrypt(final String iLicense, final String key) throws UnsupportedEncodingException {
+      return new String(Base64.encodeBase64(encrypt(iLicense.getBytes(), key.getBytes())), UTF_8);
     }
 
     public static String decrypt(final String iLicense, final String key) throws IOException {
-      return new String(decrypt(new sun.misc.BASE64Decoder().decodeBuffer(iLicense), key.getBytes()));
+      return new String(decrypt(Base64.decodeBase64(iLicense), key.getBytes()));
     }
 
     public static final byte[] encrypt(byte[] data, byte[] key) {
@@ -228,7 +227,7 @@ public class OL {
     Cipher cipher = Cipher.getInstance(AES);
     cipher.init(Cipher.ENCRYPT_MODE, key);
     byte[] enc = cipher.doFinal(plainText.getBytes(UTF_8));
-    String encryptedValue = new BASE64Encoder().encode(enc);
+    String encryptedValue = Base64.encodeBase64String(enc);
     return encryptedValue;
   }
 
@@ -236,7 +235,7 @@ public class OL {
 
     Cipher cipher = Cipher.getInstance(AES);
     cipher.init(Cipher.DECRYPT_MODE, key);
-    byte[] decordedValue = new BASE64Decoder().decodeBuffer(text);
+    byte[] decordedValue = Base64.decodeBase64(text);
     byte[] decValue = cipher.doFinal(decordedValue);
     String decryptedValue = new String(decValue, UTF_8);
     return decryptedValue;
