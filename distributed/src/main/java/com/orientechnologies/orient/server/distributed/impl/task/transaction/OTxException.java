@@ -3,17 +3,17 @@ package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 public class OTxException implements OTransactionResultPayload {
   public static final int ID = 5;
 
-  private Throwable exception;
+  private RuntimeException exception;
 
-  public OTxException(Throwable exception) {
+  public OTxException(RuntimeException exception) {
     this.exception = exception;
   }
 
-  public Throwable getException() {
+  public RuntimeException getException() {
     return exception;
   }
 
-  public void setException(Throwable exception) {
+  public void setException(RuntimeException exception) {
     this.exception = exception;
   }
 

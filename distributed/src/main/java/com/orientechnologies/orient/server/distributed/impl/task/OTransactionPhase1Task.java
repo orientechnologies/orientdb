@@ -76,7 +76,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     } catch (ORecordDuplicatedException ex) {
       //TODO:Check if can get out the key
       payload = new OTxUniqueIndex((ORecordId) ex.getRid(), ex.getIndexName(), null);
-    } catch (Exception ex) {
+    } catch (RuntimeException ex) {
       payload = new OTxException(ex);
     }
     return payload;
