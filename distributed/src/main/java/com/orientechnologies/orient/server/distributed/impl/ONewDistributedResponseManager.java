@@ -10,16 +10,21 @@ import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPha
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 public class ONewDistributedResponseManager implements ODistributedResponseManager {
 
-  private       OTransactionPhase1Task iRequest;
-  private final Collection<String>     iNodes;
-  private final Set<String>            nodesConcurToTheQuorum;
-  private final int                    availableNodes;
-  private final int                    expectedResponses;
-  private final int                    quorum;
-  private Map<Integer, List<OTransactionResultPayload>> resultsByType = new HashMap<>();
+  private final    OTransactionPhase1Task iRequest;
+  private final    Collection<String>     iNodes;
+  private final    Set<String>            nodesConcurToTheQuorum;
+  private final    int                    availableNodes;
+  private final    int                    expectedResponses;
+  private final    int                    quorum;
+  private volatile int                    responseCount;
+  private volatile Map<Integer, List<OTransactionResultPayload>> resultsByType = new HashMap<>();
+  private volatile boolean finished;
+  private volatile boolean quorumReached;
+  private volatile Object  finalResult;
 
   public ONewDistributedResponseManager(OTransactionPhase1Task iRequest, Collection<String> iNodes,
       Set<String> nodesConcurToTheQuorum, int availableNodes, int expectedResponses, int quorum) {
@@ -32,24 +37,31 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   }
 
   @Override
-  public boolean setLocalResult(String localNodeName, Object localResult) {
-    List<OTransactionResultPayload> results = addResult((OTransactionResultPayload) localResult);
-    return results.size() > quorum;
+  public synchronized boolean setLocalResult(String localNodeName, Object localResult) {
+    return addResult((OTransactionResultPayload) localResult);
   }
 
   @Override
   public ODistributedResponse getFinalResponse() {
-    return null;
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Object getGenericFinalResponse() {
+    return finalResult;
   }
 
   @Override
   public void removeServerBecauseUnreachable(String node) {
-
+    // ?? probably is more correct handle this case in collect response, to double check
   }
 
   @Override
-  public boolean waitForSynchronousResponses() throws InterruptedException {
-    return true;
+  public synchronized boolean waitForSynchronousResponses() throws InterruptedException {
+    if (!finished) {
+      wait();
+    }
+    return finished;
   }
 
   @Override
@@ -123,12 +135,10 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   }
 
   public synchronized boolean collectResponse(OTransactionPhase1TaskResult response) {
-    OTransactionResultPayload result = response.getResultPayload();
-    List<OTransactionResultPayload> results = addResult(result);
-    return results.size() >= quorum;
+    return addResult(response.getResultPayload());
   }
 
-  public List<OTransactionResultPayload> addResult(OTransactionResultPayload result) {
+  private boolean addResult(OTransactionResultPayload result) {
     List<OTransactionResultPayload> results = resultsByType.get(result.getResponseType());
     if (results == null) {
       results = new ArrayList<>();
@@ -137,12 +147,28 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     } else {
       results.add(result);
     }
-    return results;
+    responseCount += 1;
+    if (results.size() >= quorum) {
+      this.finished = true;
+      this.quorumReached = true;
+      this.finalResult = results;
+      this.notifyAll();
+    } else if (responseCount == expectedResponses) {
+      this.quorumReached = false;
+      this.finished = true;
+      this.finalResult = null;
+      this.notifyAll();
+    }
+    return this.finished;
   }
 
   @Override
   public boolean collectResponse(ODistributedResponse response) {
-    return collectResponse((ODistributedResponse) response.getPayload());
+    return collectResponse((OTransactionPhase1TaskResult) response.getPayload());
+  }
+
+  public synchronized boolean isQuorumReached() {
+    return quorumReached;
   }
 
   @Override

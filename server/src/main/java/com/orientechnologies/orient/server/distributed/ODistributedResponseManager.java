@@ -9,6 +9,10 @@ import java.util.Set;
 public interface ODistributedResponseManager {
   boolean setLocalResult(String localNodeName, Object localResult);
 
+  default Object getGenericFinalResponse() {
+    return getFinalResponse();
+  }
+
   ODistributedResponse getFinalResponse();
 
   void removeServerBecauseUnreachable(String node);
