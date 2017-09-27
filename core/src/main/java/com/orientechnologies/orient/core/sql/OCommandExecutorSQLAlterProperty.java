@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -43,8 +44,8 @@ import java.util.Map;
  *
  * @author Luca Garulli
  */
-@SuppressWarnings("unchecked") public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstract
-    implements OCommandDistributedReplicateRequest {
+@SuppressWarnings("unchecked")
+public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_ALTER    = "ALTER";
   public static final String KEYWORD_PROPERTY = "PROPERTY";
 
@@ -112,9 +113,9 @@ import java.util.Map;
       try {
         attribute = OProperty.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
       } catch (IllegalArgumentException e) {
-        throw new OCommandSQLParsingException(
+        throw OException.wrapException(new OCommandSQLParsingException(
             "Unknown property attribute '" + attributeAsString + "'. Supported attributes are: " + Arrays
-                .toString(OProperty.ATTRIBUTES.values()), parserText, oldPos);
+                .toString(OProperty.ATTRIBUTES.values()), parserText, oldPos), e);
       }
 
       value = parserText.substring(pos + 1).trim();
@@ -181,11 +182,13 @@ import java.util.Map;
     return false;
   }
 
-  @Override public long getDistributedTimeout() {
+  @Override
+  public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
 

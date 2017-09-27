@@ -746,7 +746,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpeness();
         if (clusterId < 0 || clusterId >= clusters.size())
           throw new IllegalArgumentException(
-              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1) + ") in database '" + name + "'");
+              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
+                  + ") in database '" + name + "'");
 
         final OCluster cluster = clusters.get(clusterId);
         if (cluster == null)
@@ -1709,7 +1710,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       });
 
       for (ORecordOperation txEntry : entries) {
-        if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.RECYCLED || txEntry.type == ORecordOperation.UPDATED) {
+        if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.RECYCLED
+            || txEntry.type == ORecordOperation.UPDATED) {
           final ORecord record = txEntry.getRecord();
           if (record instanceof ODocument)
             ((ODocument) record).validate();
@@ -2167,7 +2169,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       return engine.remove(key);
     } catch (IOException e) {
-      throw new OStorageException("Error during removal of entry with key " + key + " from index ");
+      throw OException.wrapException(new OStorageException("Error during removal of entry with key " + key + " from index "), e);
     }
   }
 
@@ -2418,7 +2420,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       engine.put(key, value);
     } catch (IOException e) {
-      throw new OStorageException("Cannot put key " + key + " value " + value + " entry to the index");
+      throw OException.wrapException(new OStorageException("Cannot put key " + key + " value " + value + " entry to the index"), e);
     }
   }
 
@@ -2473,7 +2475,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       return engine.validatedPut(key, value, validator);
     } catch (IOException e) {
-      throw new OStorageException("Cannot put key " + key + " value " + value + " entry to the index");
+      throw OException.wrapException(new OStorageException("Cannot put key " + key + " value " + value + " entry to the index"), e);
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sharding.auto;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
@@ -31,8 +32,8 @@ import java.util.List;
 /**
  * Returns the cluster selecting through the hash function.
  *
- * @since 3.0
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @since 3.0
  */
 public class OAutoShardingClusterSelectionStrategy implements OClusterSelectionStrategy {
   public static final String NAME = "auto-sharding";
@@ -59,7 +60,8 @@ public class OAutoShardingClusterSelectionStrategy implements OClusterSelectionS
     try {
       indexEngine = ((OAbstractPaginatedStorage) stg).getIndexEngine(index.getIndexId());
     } catch (OInvalidIndexEngineIdException e) {
-      throw new OConfigurationException("Cannot use auto-sharding cluster strategy because the underlying index has not found");
+      throw OException.wrapException(
+          new OConfigurationException("Cannot use auto-sharding cluster strategy because the underlying index has not found"), e);
     }
 
     if (indexEngine == null)

@@ -325,10 +325,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           installDbClustersLocalStrategy(iDatabase);
       }
     } catch (HazelcastException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } catch (HazelcastInstanceNotActiveException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } finally {
       // RESTORE ORIGINAL DATABASE INSTANCE IN TL
@@ -832,7 +832,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         Thread.sleep(100);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        throw new OOfflineNodeException("Message Service is not available");
+        throw OException.wrapException(new OOfflineNodeException("Message Service is not available"), e);
       }
     return messageService;
   }
@@ -1159,7 +1159,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         ODistributedServerLog
             .error(this, nodeName, targetNode, DIRECTION.OUT, "Error on asking delta backup of database '%s' (err=%s)",
                 databaseName, e.getMessage());
-        throw new ODistributedDatabaseDeltaSyncException(lsn, e.toString());
+        throw OException.wrapException(new ODistributedDatabaseDeltaSyncException(lsn, e.toString()), e);
       }
 
       if (databaseInstalledCorrectly && !cfg.isSharded())
@@ -1711,10 +1711,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   /**
    * Executes an operation protected by a distributed lock (one per database).
    *
-   * @param <T>            Return type
-   * @param databaseName   Database name
-   * @param timeoutLocking
-   * @param iCallback      Operation @return The operation's result of type T
+   * @param <T>          Return type
+   * @param databaseName Database name
+   * @param iCallback    Operation @return The operation's result of type T
    */
   public <T> T executeInDistributedDatabaseLock(final String databaseName, final long timeoutLocking,
       OModifiableDistributedConfiguration lastCfg, final OCallable<T, OModifiableDistributedConfiguration> iCallback) {

@@ -115,6 +115,8 @@ public class OLuceneQueryBuilder {
       return queryParser.parse(key);
 
     } catch (org.apache.lucene.queryparser.classic.ParseException e) {
+      OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
+      //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw new ParseException(e.getMessage());
     }
 

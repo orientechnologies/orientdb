@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.concur.executors.SubScheduledExecutorService;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -558,7 +559,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
           try {
             segmentCreationComplete.await();
           } catch (InterruptedException e) {
-            throw new OInterruptedException("Segment creation was interrupted");
+            throw OException.wrapException(new OInterruptedException("Segment creation was interrupted"), e);
           }
         }
       }

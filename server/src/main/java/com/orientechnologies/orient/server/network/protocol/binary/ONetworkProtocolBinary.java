@@ -133,9 +133,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   /**
    * Internal varialbe injection useful for testing.
-   *
-   * @param server
-   * @param channel
    */
   public void initVariables(final OServer server, OChannelBinaryServer channel) {
     this.server = server;
@@ -535,7 +532,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw new OInterruptedException("Request interrupted");
+          throw OException.wrapException(new OInterruptedException("Request interrupted"), e);
         }
     }
   }
@@ -1783,10 +1780,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
    * VERSION MANAGEMENT:<br> -1 : DOCUMENT UPDATE, NO VERSION CONTROL<br> -2 : DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION
    * INCREMENT<br> -3 : DOCUMENT ROLLBACK, DECREMENT VERSION<br> >-1 : MVCC CONTROL, RECORD UPDATE AND VERSION INCREMENT<br> <-3 :
    * WRONG VERSION VALUE
-   *
-   * @param connection
-   *
-   * @throws IOException
    */
   protected void updateRecord(OClientConnection connection) throws IOException {
     setDataCommandInfo(connection, "Update record");
@@ -2693,11 +2686,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
    * Write a OIdentifiable instance using this format:<br> - 2 bytes: class id [-2=no record, -3=rid, -1=no class id, > -1 = valid]
    * <br> - 1 byte: record type [d,b,f] <br> - 2 bytes: cluster id <br> - 8 bytes: position in cluster <br> - 4 bytes: record
    * version <br> - x bytes: record content <br>
-   *
-   * @param connection
-   * @param o
-   *
-   * @throws IOException
    */
   public void writeIdentifiable(OClientConnection connection, final OIdentifiable o) throws IOException {
     if (o == null)
@@ -2784,11 +2772,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   /**
    * Returns a database instance giving the database name, the database type and storage type.
    *
-   * @param dbName
-   * @param dbType
    * @param storageType Storage type between "plocal" or "memory".
-   *
-   * @return
    */
   protected ODatabaseDocumentInternal getDatabaseInstance(final String dbName, final String dbType, final String storageType) {
     String path;
@@ -2822,6 +2806,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     } catch (ORecordNotFoundException e) {
       // MAINTAIN COHERENT THE BEHAVIOR FOR ALL THE STORAGE TYPES
       if (e.getCause() instanceof OOfflineClusterException)
+        //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
         throw (OOfflineClusterException) e.getCause();
     } catch (OOfflineClusterException e) {
       throw e;
@@ -2871,6 +2856,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       } catch (ORecordNotFoundException e) {
         // MAINTAIN COHERENT THE BEHAVIOR FOR ALL THE STORAGE TYPES
         if (e.getCause() instanceof OOfflineClusterException)
+          //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
           throw (OOfflineClusterException) e.getCause();
       }
 

@@ -470,6 +470,7 @@ public class OClassImplTest {
       e.printStackTrace();
     } catch (ExecutionException e) {
       if (e.getCause() instanceof AssertionError) {
+        //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
         throw (AssertionError) e.getCause();
       }
     }

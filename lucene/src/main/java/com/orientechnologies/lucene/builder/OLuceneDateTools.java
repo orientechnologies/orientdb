@@ -1,5 +1,6 @@
 package com.orientechnologies.lucene.builder;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.text.ParseException;
@@ -63,6 +64,8 @@ public class OLuceneDateTools {
       SimpleDateFormat format = RESOLUTIONS[dateString.length()].format();
       return format.parse(dateString);
     } catch (Exception e) {
+      OLogManager.instance().error(OLuceneDateTools.class, "Exception is suppressed, original exception is ", e);
+      //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw new ParseException("Input is not a valid date string: " + dateString, 0);
     }
   }

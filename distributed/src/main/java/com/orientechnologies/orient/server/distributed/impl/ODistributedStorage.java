@@ -355,10 +355,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // PASS THROUGH
       throw e;
     } catch (HazelcastInstanceNotActiveException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } catch (HazelcastException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } catch (Exception e) {
       handleDistributedException("Cannot route COMMAND operation to the distributed node", e);
@@ -556,8 +556,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   /**
    * Only idempotent commands that don't involve any other node can be executed locally.
-   *
-   * @return
    */
   protected boolean executeOnlyLocally(final String localNodeName, final ODistributedConfiguration dbCfg,
       final OCommandExecutor exec, final Collection<String> involvedClusters, final Collection<String> nodes) {
@@ -714,12 +712,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw e;
     } catch (InterruptedException e) {
 
-      throw new OOfflineNodeException("Current node has been interrupted");
+      throw OException.wrapException(new OOfflineNodeException("Current node has been interrupted"), e);
     } catch (HazelcastInstanceNotActiveException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } catch (HazelcastException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } catch (Exception e) {
       localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord(iRecordId);
@@ -786,10 +784,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw e;
 
     } catch (HazelcastInstanceNotActiveException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } catch (HazelcastException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } catch (Exception e) {
       handleDistributedException("Cannot route read record operation for %s to the distributed node", e, iRecordId);
@@ -849,10 +847,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // PASS THROUGH
       throw e;
     } catch (HazelcastInstanceNotActiveException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
-
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
     } catch (HazelcastException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } catch (Exception e) {
       handleDistributedException("Cannot route read record operation for %s to the distributed node", e, rid);
@@ -995,13 +992,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw e;
 
     } catch (InterruptedException e) {
-      throw new OOfflineNodeException("Current node has been interrupted");
+      throw OException.wrapException(new OOfflineNodeException("Current node has been interrupted"), e);
 
     } catch (HazelcastInstanceNotActiveException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } catch (HazelcastException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } catch (Exception e) {
       localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord(iRecordId);
@@ -1147,14 +1144,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw e;
 
     } catch (InterruptedException e) {
-      throw new OOfflineNodeException("Current node has been interrupted");
+      throw OException.wrapException(new OOfflineNodeException("Current node has been interrupted"), e);
 
     } catch (HazelcastInstanceNotActiveException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } catch (HazelcastException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
-
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
     } catch (Exception e) {
       localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord(iRecordId);
 
@@ -1457,14 +1453,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       }
 
     } catch (InterruptedException e) {
-      throw new OOfflineNodeException("Current node has been interrupted");
+      throw OException.wrapException(new OOfflineNodeException("Current node has been interrupted"), e);
     } catch (OValidationException e) {
       throw e;
     } catch (HazelcastInstanceNotActiveException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
-
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
     } catch (HazelcastException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
+      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
 
     } catch (Exception e) {
       handleDistributedException("Cannot route TX operation against distributed node", e);

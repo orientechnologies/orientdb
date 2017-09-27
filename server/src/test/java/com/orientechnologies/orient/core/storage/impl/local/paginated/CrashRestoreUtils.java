@@ -37,11 +37,11 @@ public class CrashRestoreUtils {
       inheritIO.setAccessible(true);
       inheritIO.invoke(processBuilder);
     } catch (IllegalAccessException e) {
-      throw new IllegalStateException("unable to invoke inheritIO, please use 1.7+ compliant JVM");
+      throw new IllegalStateException("unable to invoke inheritIO, please use 1.7+ compliant JVM", e);
     } catch (InvocationTargetException e) {
-      throw new IllegalStateException("unable to invoke inheritIO, please use 1.7+ compliant JVM");
+      throw new IllegalStateException("unable to invoke inheritIO, please use 1.7+ compliant JVM", e);
     } catch (NoSuchMethodException e) {
-      throw new IllegalStateException("unable to invoke inheritIO, please use 1.7+ compliant JVM");
+      throw new IllegalStateException("unable to invoke inheritIO, please use 1.7+ compliant JVM", e);
     }
   }
 
@@ -51,11 +51,11 @@ public class CrashRestoreUtils {
       destroyForcibly.setAccessible(true);
       destroyForcibly.invoke(process);
     } catch (IllegalAccessException e) {
-      throw new IllegalStateException("unable to invoke destroyForcibly, please use 1.8+ compliant JVM");
+      throw new IllegalStateException("unable to invoke destroyForcibly, please use 1.8+ compliant JVM", e);
     } catch (InvocationTargetException e) {
-      throw new IllegalStateException("unable to invoke destroyForcibly, please use 1.8+ compliant JVM");
+      throw new IllegalStateException("unable to invoke destroyForcibly, please use 1.8+ compliant JVM", e);
     } catch (NoSuchMethodException e) {
-      throw new IllegalStateException("unable to invoke destroyForcibly, please use 1.8+ compliant JVM");
+      throw new IllegalStateException("unable to invoke destroyForcibly, please use 1.8+ compliant JVM", e);
     }
   }
 }

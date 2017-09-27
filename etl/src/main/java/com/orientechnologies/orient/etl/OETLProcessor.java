@@ -37,7 +37,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
+
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -82,8 +84,7 @@ public class OETLProcessor {
    * @param ctx           Execution Context
    */
   public OETLProcessor(final List<OBlock> iBeginBlocks, final OSource iSource, final OExtractor iExtractor,
-      final List<OTransformer> iTransformers, final OLoader iLoader, final List<OBlock> iEndBlocks,
-      final OCommandContext ctx) {
+      final List<OTransformer> iTransformers, final OLoader iLoader, final List<OBlock> iEndBlocks, final OCommandContext ctx) {
     beginBlocks = iBeginBlocks;
     source = iSource;
     extractor = iExtractor;
@@ -183,12 +184,8 @@ public class OETLProcessor {
   }
 
   public OETLProcessor parse(final ODocument cfg, final OCommandContext ctx) {
-    return parse(cfg.<Collection<ODocument>>field("begin"),
-        cfg.<ODocument>field("source"),
-        cfg.<ODocument>field("extractor"),
-        cfg.<Collection<ODocument>>field("transformers"),
-        cfg.<ODocument>field("loader"),
-        cfg.<Collection<ODocument>>field("end"),
+    return parse(cfg.<Collection<ODocument>>field("begin"), cfg.<ODocument>field("source"), cfg.<ODocument>field("extractor"),
+        cfg.<Collection<ODocument>>field("transformers"), cfg.<ODocument>field("loader"), cfg.<Collection<ODocument>>field("end"),
         ctx);
   }
 
@@ -205,12 +202,8 @@ public class OETLProcessor {
    *
    * @return Current OETProcessor instance
    **/
-  public OETLProcessor parse(final Collection<ODocument> iBeginBlocks,
-      final ODocument iSource,
-      final ODocument iExtractor,
-      final Collection<ODocument> iTransformers,
-      final ODocument iLoader,
-      final Collection<ODocument> iEndBlocks,
+  public OETLProcessor parse(final Collection<ODocument> iBeginBlocks, final ODocument iSource, final ODocument iExtractor,
+      final Collection<ODocument> iTransformers, final ODocument iLoader, final Collection<ODocument> iEndBlocks,
       final OCommandContext ctx) {
     if (iExtractor == null)
       throw new IllegalArgumentException("No Extractor configured");
@@ -581,8 +574,8 @@ public class OETLProcessor {
       try {
         inClass = Class.forName(iClassName);
       } catch (ClassNotFoundException e) {
-        throw new OConfigurationException(
-            "Class '" + iClassName + "' declared as 'input' of ETL Component '" + iComponent.getName() + "' was not found.");
+        throw OException.wrapException(new OConfigurationException(
+            "Class '" + iClassName + "' declared as 'input' of ETL Component '" + iComponent.getName() + "' was not found."), e);
       }
     return inClass;
   }

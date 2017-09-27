@@ -630,7 +630,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new ODistributedException("Cannot find node '" + rNodeName + "' from server '" + getLocalNodeName() + "'");
+            throw OException.wrapException(
+                new ODistributedException("Cannot find node '" + rNodeName + "' from server '" + getLocalNodeName() + "'"), e);
           }
         }
 
@@ -664,7 +665,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           Thread.sleep(100);
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw new OInterruptedException("Cannot connect to remote server '" + rNodeName + "'");
+          throw OException.wrapException(new OInterruptedException("Cannot connect to remote server '" + rNodeName + "'"), e);
         }
 
       }
@@ -1197,7 +1198,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         Thread.sleep(1000);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        throw new ODistributedException("Error on creating database '" + dbName + "' on distributed nodes");
+        throw OException
+            .wrapException(new ODistributedException("Error on creating database '" + dbName + "' on distributed nodes"), e);
       }
 
       // WAIT UNTIL THE DATABASE HAS BEEN PROPAGATED TO ALL THE SERVERS
@@ -1221,7 +1223,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             Thread.sleep(200);
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new ODistributedException("Error on creating database '" + dbName + "' on distributed nodes");
+            throw OException
+                .wrapException(new ODistributedException("Error on creating database '" + dbName + "' on distributed nodes"), e);
           }
         }
 

@@ -643,8 +643,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         linkLatch.await();
       } catch (InterruptedException e) {
-        throw new OInterruptedException(
-            "Thread was interrupted while was waiting for completion of 'waiting linked list' operation");
+        throw OException.wrapException(
+            new OInterruptedException("Thread was interrupted while was waiting for completion of 'waiting linked list' operation"),
+            e);
       }
     }
   }

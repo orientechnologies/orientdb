@@ -475,7 +475,7 @@ public class O2QCache implements OReadCache {
       try {
         flushFuture.get();
       } catch (InterruptedException e) {
-        throw new OInterruptedException("File flush was interrupted");
+        throw OException.wrapException(new OInterruptedException("File flush was interrupted"), e);
       } catch (Exception e) {
         throw OException.wrapException(new OReadCacheException("File flush was abnormally terminated"), e);
       }

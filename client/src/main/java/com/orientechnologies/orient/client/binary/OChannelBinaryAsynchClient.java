@@ -434,7 +434,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       throwable = objectInputStream.readObject();
     } catch (ClassNotFoundException e) {
       OLogManager.instance().error(this, "Error during exception deserialization", e);
-      throw new IOException("Error during exception deserialization: " + e.toString());
+      throw new IOException("Error during exception deserialization: " + e.toString(), e);
     }
 
     objectInputStream.close();

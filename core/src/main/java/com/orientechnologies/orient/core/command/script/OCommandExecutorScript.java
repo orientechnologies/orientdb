@@ -62,9 +62,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Luca Garulli
  * @see OCommandScript
  */
-public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest, OTemporaryRidGenerator {
-  private static final int             MAX_DELAY     = 100;
-  protected OCommandScript             request;
+public class OCommandExecutorScript extends OCommandExecutorAbstract
+    implements OCommandDistributedReplicateRequest, OTemporaryRidGenerator {
+  private static final int MAX_DELAY = 100;
+  protected OCommandScript request;
   protected DISTRIBUTED_EXECUTION_MODE executionMode = DISTRIBUTED_EXECUTION_MODE.LOCAL;
   protected AtomicInteger              serialTempRID = new AtomicInteger(0);
 
@@ -99,7 +100,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
       try {
         parserText = preParse(parserText, iArgs);
       } catch (ParseException e) {
-        throw new OCommandExecutionException("Invalid script:" + e.getMessage());
+        throw OException.wrapException(new OCommandExecutionException("Invalid script:" + e.getMessage()), e);
       }
       return executeSQL();
     } else {
@@ -170,16 +171,17 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         request.setCompiledScript(compiledScript);
       }
 
-      final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
-          (ODatabaseDocumentTx) db, iContext, iArgs);
+      final Bindings binding = scriptManager
+          .bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE), (ODatabaseDocumentTx) db, iContext, iArgs);
 
       try {
         final Object ob = compiledScript.eval(binding);
 
         return OCommandExecutorUtility.transformResult(ob);
       } catch (ScriptException e) {
-        throw OException.wrapException(
-            new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber()), e);
+        throw OException
+            .wrapException(new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber()),
+                e);
 
       } finally {
         scriptManager.unbind(binding, iContext, iArgs);
@@ -443,7 +445,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     try {
       result = condition.evaluate(null, null, getContext());
     } catch (Exception e) {
-      throw new OCommandExecutionException("Could not evaluate IF condition: " + cmd + " - " + e.getMessage());
+      throw OException
+          .wrapException(new OCommandExecutionException("Could not evaluate IF condition: " + cmd + " - " + e.getMessage()), e);
     }
 
     if (Boolean.TRUE.equals(result)) {
@@ -572,7 +575,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     if (!(result instanceof OIdentifiable) && !(result instanceof OResultSet)) {
       if (!OMultiValue.isMultiValue(result)) {
         request.setRecordResultSet(false);
-      } else  {
+      } else {
         for (Object val : OMultiValue.getMultiValueIterable(result)) {
           if (!(val instanceof OIdentifiable))
             request.setRecordResultSet(false);
@@ -615,10 +618,9 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
     Object lastResult = null;
 
-    if (cmd.equalsIgnoreCase("NULL") || cmd.startsWith("$") || (cmd.startsWith("[") && cmd.endsWith("]"))
-        || (cmd.startsWith("{") && cmd.endsWith("}"))
-        || (cmd.startsWith("\"") && cmd.endsWith("\"") || cmd.startsWith("'") && cmd.endsWith("'"))
-        || (cmd.startsWith("(") && cmd.endsWith(")")))
+    if (cmd.equalsIgnoreCase("NULL") || cmd.startsWith("$") || (cmd.startsWith("[") && cmd.endsWith("]")) || (cmd.startsWith("{")
+        && cmd.endsWith("}")) || (cmd.startsWith("\"") && cmd.endsWith("\"") || cmd.startsWith("'") && cmd.endsWith("'")) || (
+        cmd.startsWith("(") && cmd.endsWith(")")))
       lastResult = getValue(cmd, db);
     else
       lastResult = executeCommand(cmd, db);

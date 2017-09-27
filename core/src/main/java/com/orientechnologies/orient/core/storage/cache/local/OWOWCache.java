@@ -909,7 +909,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     try {
       future.get();
     } catch (InterruptedException e) {
-      throw new OInterruptedException("File flush was interrupted");
+      throw OException.wrapException(new OInterruptedException("File flush was interrupted"), e);
     } catch (Exception e) {
       throw OException.wrapException(new OWriteCacheException("File flush was abnormally terminated"), e);
     }
@@ -1252,7 +1252,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           throw new OWriteCacheException("Background data flush task cannot be stopped.");
       } catch (InterruptedException e) {
         OLogManager.instance().error(this, "Data flush thread was interrupted");
-        throw new OInterruptedException("Data flush thread was interrupted");
+        throw OException.wrapException(new OInterruptedException("Data flush thread was interrupted"), e);
       }
     }
 
@@ -1488,7 +1488,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     try {
       future.get();
     } catch (InterruptedException e) {
-      throw new OInterruptedException("File data removal was interrupted");
+      throw OException.wrapException(new OInterruptedException("File data removal was interrupted"), e);
     } catch (Exception e) {
       throw OException.wrapException(new OWriteCacheException("File data removal was abnormally terminated"), e);
     }

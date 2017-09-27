@@ -311,7 +311,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       try {
         Thread.sleep(connectionRetryDelay);
       } catch (InterruptedException e1) {
-        throw OException.wrapException(new OInterruptedException(e1.getMessage()), e);
+        OLogManager.instance().error(this, "Error during handling of IO exception, stack trace of initial exception is", e);
+        throw OException.wrapException(new OInterruptedException(e1.getMessage()), e1);
       }
     }
     return retry;
@@ -2242,11 +2243,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * Acquire a network channel from the pool. Don't lock the write stream since the connection usage is exclusive.
    *
    * @param iCommand id. Ids described at {@link OChannelBinaryProtocol}
-   * @param session
    *
    * @return connection to server
-   *
-   * @throws IOException
    */
   public OChannelBinaryAsynchClient beginRequest(final OChannelBinaryAsynchClient network, final byte iCommand,
       OStorageRemoteSession session) throws IOException {

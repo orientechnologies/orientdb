@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -92,17 +93,18 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       try {
         attribute = OClass.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
       } catch (IllegalArgumentException e) {
-        throw new OCommandSQLParsingException("Unknown class's attribute '" + attributeAsString + "'. Supported attributes are: "
-            + Arrays.toString(OClass.ATTRIBUTES.values()), parserText, oldPos);
+        throw OException.wrapException(new OCommandSQLParsingException(
+            "Unknown class's attribute '" + attributeAsString + "'. Supported attributes are: " + Arrays
+                .toString(OClass.ATTRIBUTES.values()), parserText, oldPos), e);
       }
 
       value = parserText.substring(pos + 1).trim();
 
-      if("addcluster".equalsIgnoreCase(attributeAsString) || "removecluster".equalsIgnoreCase(attributeAsString) ){
+      if ("addcluster".equalsIgnoreCase(attributeAsString) || "removecluster".equalsIgnoreCase(attributeAsString)) {
         value = decodeClassName(value);
       }
-      if("description".equalsIgnoreCase(attributeAsString) ){
-        if(value.length() >1 && '"' == value.charAt(0) && '"' == value.charAt(value.length() -1) ) {
+      if ("description".equalsIgnoreCase(attributeAsString)) {
+        if (value.length() > 1 && '"' == value.charAt(0) && '"' == value.charAt(value.length() - 1)) {
           value = value.substring(1);
           value = value.substring(0, value.length() - 1);
         }
@@ -183,8 +185,8 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       superClass = superClass.substring(1);
     }
     if (database.getMetadata().getSchema().getClass(decodeClassName(superClass)) == null) {
-      throw new OCommandExecutionException("Cannot alter superClass of '" + targetClass + "' because " + superClass
-          + " class not found");
+      throw new OCommandExecutionException(
+          "Cannot alter superClass of '" + targetClass + "' because " + superClass + " class not found");
     }
   }
 

@@ -1,5 +1,6 @@
 package com.orientechnologies.lucene.parser;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.builder.OLuceneDateTools;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.apache.lucene.analysis.Analyzer;
@@ -96,6 +97,9 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
               startInclusive,
               endInclusive);
         } catch (java.text.ParseException e) {
+          OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
+
+          //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
           throw new ParseException(e.getMessage());
         }
       }

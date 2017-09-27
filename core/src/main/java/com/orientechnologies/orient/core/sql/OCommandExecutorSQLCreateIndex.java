@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.collate.OCollate;
@@ -318,8 +319,8 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
         try {
           OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase(Locale.ENGLISH));
         } catch (IllegalArgumentException iae) {
-          throw new OCommandSQLParsingException(
-              "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + "'", text, pos);
+          throw OException.wrapException(new OCommandSQLParsingException(
+              "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + "'", text, pos), iae);
         }
         return;
       }

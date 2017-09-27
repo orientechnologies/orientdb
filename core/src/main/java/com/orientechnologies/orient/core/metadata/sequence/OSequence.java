@@ -297,6 +297,7 @@ public abstract class OSequence {
       return callable.call();
     } catch (Exception e) {
       if (e.getCause() instanceof OConcurrentModificationException) {
+        //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
         throw ((OConcurrentModificationException) e.getCause());
       }
       throw OException

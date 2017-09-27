@@ -17,6 +17,8 @@
 
 package com.orientechnologies.orient.core.schedule;
 
+import com.orientechnologies.common.log.OLogManager;
+
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.*;
@@ -461,6 +463,8 @@ public final class OCronExpression implements Serializable, Cloneable {
     } catch (ParseException pe) {
       throw pe;
     } catch (Exception e) {
+      OLogManager.instance().error(this, "Exception is supressed original exception is", e);
+      //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw new ParseException("Illegal cron expression format (" + e.toString() + ")", 0);
     }
   }
@@ -515,6 +519,8 @@ public final class OCronExpression implements Serializable, Cloneable {
                 throw new Exception();
               }
             } catch (Exception e) {
+              OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
+              //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
               throw new ParseException("A numeric value between 1 and 5 must follow the '#' option", i);
             }
           } else if (c == 'L') {
@@ -691,6 +697,8 @@ public final class OCronExpression implements Serializable, Cloneable {
           throw new Exception();
         }
       } catch (Exception e) {
+        OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
+        //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
         throw new ParseException("A numeric value between 1 and 5 must follow the '#' option", i);
       }
 

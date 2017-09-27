@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -56,9 +57,9 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
           try {
             this.sequenceType = OSequenceHelper.getSequenceTyeFromString(typeAsString);
           } catch (IllegalArgumentException e) {
-            throw new OCommandSQLParsingException(
+            throw OException.wrapException(new OCommandSQLParsingException(
                 "Unknown sequence type '" + typeAsString + "'. Supported attributes are: " + Arrays
-                    .toString(SEQUENCE_TYPE.values()));
+                    .toString(SEQUENCE_TYPE.values())), e);
           }
         } else if (temp.equals(KEYWORD_START)) {
           String startAsString = parserRequiredWord(true, "Expected <start value>");

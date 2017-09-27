@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.function;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction;
@@ -102,6 +103,8 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
     try {
       f.save();
     } catch (ORecordDuplicatedException ex) {
+      OLogManager.instance().error(this, "Exception was suppressed, original exception is", ex);
+      //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw OException.wrapException(new OFunctionDuplicatedException("Function with name '" + iName + "' already exist"), null);
     }
     functions.put(iName.toUpperCase(Locale.ENGLISH), f);

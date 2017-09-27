@@ -1032,7 +1032,7 @@ public class ODocument extends ORecordAbstract
               final int index = Integer.parseInt(indexAsString);
               OMultiValue.setValue(subObject, iPropertyValue, index);
             } catch (NumberFormatException e) {
-              throw new IllegalArgumentException("List / array subscripts must resolve to integer values.");
+              throw new IllegalArgumentException("List / array subscripts must resolve to integer values.", e);
             }
           } else {
             // APPLY CHANGE TO ALL THE ITEM IN SUB-COLLECTION

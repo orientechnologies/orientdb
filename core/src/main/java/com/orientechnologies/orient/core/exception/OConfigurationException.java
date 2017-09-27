@@ -30,4 +30,5 @@ public class OConfigurationException extends OCoreException {
   public OConfigurationException(String message) {
     super(message);
   }
+
 }
