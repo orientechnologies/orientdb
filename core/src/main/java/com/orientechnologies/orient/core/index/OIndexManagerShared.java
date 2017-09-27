@@ -571,6 +571,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
               engine.deleteWithoutLoad(index.getName());
             } catch (Exception e2) {
+              OLogManager.instance().error(this, "Error during deletion of index", e2);
             }
           }
         }
