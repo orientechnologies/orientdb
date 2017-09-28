@@ -13,7 +13,7 @@ node("master") {
         stage('Run tests on Java8') {
             docker.image("${mvnJdk8Image}").inside("${env.VOLUMES}") {
                 try {
-                    sudo apt-get install g++ build-essential python
+                    sh "sudo apt-get install g++ build-essential python"
 
                     sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean deploy  -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
 
