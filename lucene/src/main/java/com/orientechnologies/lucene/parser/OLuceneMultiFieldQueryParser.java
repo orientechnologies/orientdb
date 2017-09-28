@@ -1,5 +1,6 @@
 package com.orientechnologies.lucene.parser;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.builder.OLuceneDateTools;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.apache.lucene.analysis.Analyzer;
@@ -74,19 +75,18 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
         return Optional.of(IntPoint
             .newRangeQuery(field, Math.addExact(Integer.parseInt(part1), start), Math.addExact(Integer.parseInt(part2), end)));
       case FLOAT:
-        return Optional.of(FloatPoint
-            .newRangeQuery(field, Float.parseFloat(part1) - start, Float.parseFloat(part2) + end));
+        return Optional.of(FloatPoint.newRangeQuery(field, Float.parseFloat(part1) - start, Float.parseFloat(part2) + end));
       case DOUBLE:
-        return Optional.of(DoublePoint
-            .newRangeQuery(field, Double.parseDouble(part1) - start, Double.parseDouble(part2) + end));
+        return Optional.of(DoublePoint.newRangeQuery(field, Double.parseDouble(part1) - start, Double.parseDouble(part2) + end));
       case DATE:
       case DATETIME:
         try {
-          return Optional.of(LongPoint.newRangeQuery(field,
-              Math.addExact(OLuceneDateTools.stringToTime(part1), start),
+          return Optional.of(LongPoint.newRangeQuery(field, Math.addExact(OLuceneDateTools.stringToTime(part1), start),
               Math.addExact(OLuceneDateTools.stringToTime(part2), end)));
 
         } catch (java.text.ParseException e) {
+          OLogManager.instance().error(this, "Exception is suppressed, original exception exception is ", e);
+          //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
           throw new ParseException(e.getMessage());
         }
       }

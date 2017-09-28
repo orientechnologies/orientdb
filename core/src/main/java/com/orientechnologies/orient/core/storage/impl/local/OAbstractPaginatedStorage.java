@@ -1564,7 +1564,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * <bold>other node commit</bold> is the commit that happen when a node execute a transaction of another node where all the rids
    * are already allocated in the other node.
    *
-   * @param clientTx the transaction to commit
+   * @param clientTx  the transaction to commit
    * @param allocated true if the operation is pre-allocated commit
    *
    * @return The list of operations applied by the transaction
@@ -2224,7 +2224,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       return engine.remove(key);
     } catch (IOException e) {
-      throw new OStorageException("Error during removal of entry with key " + key + " from index ");
+      throw OException.wrapException(new OStorageException("Error during removal of entry with key " + key + " from index "), e);
     }
   }
 
@@ -2487,7 +2487,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       engine.put(key, value);
     } catch (IOException e) {
-      throw new OStorageException("Cannot put key " + key + " value " + value + " entry to the index");
+      throw OException.wrapException(new OStorageException("Cannot put key " + key + " value " + value + " entry to the index"), e);
     }
   }
 
@@ -2544,7 +2544,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       return engine.validatedPut(key, value, validator);
     } catch (IOException e) {
-      throw new OStorageException("Cannot put key " + key + " value " + value + " entry to the index");
+      throw OException.wrapException(new OStorageException("Cannot put key " + key + " value " + value + " entry to the index"), e);
     }
   }
 

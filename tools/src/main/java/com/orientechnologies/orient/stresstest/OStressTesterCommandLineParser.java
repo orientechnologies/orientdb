@@ -234,7 +234,7 @@ public class OStressTesterCommandLineParser {
       }
       return val;
     } catch (NumberFormatException ex) {
-      throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_INVALID_NUMBER, option, value));
+      throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_INVALID_NUMBER, option, value), ex);
     }
   }
 
@@ -252,7 +252,7 @@ public class OStressTesterCommandLineParser {
     try {
       OStressTester.OMode.valueOf(options.get(OPTION_MODE).toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException ex) {
-      throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_INVALID_MODE, options.get(OPTION_MODE)));
+      throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_INVALID_MODE, options.get(OPTION_MODE)), ex);
     }
 
     return options;

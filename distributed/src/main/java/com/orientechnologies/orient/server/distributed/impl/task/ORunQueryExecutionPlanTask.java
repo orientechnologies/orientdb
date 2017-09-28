@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.DistributedQueryContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -147,8 +148,7 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
       internalPlan = (OInternalExecutionPlan) Class.forName(className).newInstance();
       internalPlan.deserialize(serializedExecutionPlan);
     } catch (Exception e) {
-      e.printStackTrace();//TODO
-      throw new ODistributedException("Cannot create execution plan: " + className);
+      throw OException.wrapException(new ODistributedException("Cannot create execution plan: " + className), e);
     }
     return internalPlan;
   }

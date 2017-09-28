@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -362,7 +363,7 @@ public class OBinaryCondition extends OBooleanExpression {
     try {
       operator = (OBinaryCompareOperator) Class.forName(String.valueOf(fromResult.getProperty("operator"))).newInstance();
     } catch (Exception e) {
-      throw new OCommandExecutionException("");
+      throw OException.wrapException(new OCommandExecutionException(""), e);
     }
     right = new OExpression(-1);
     right.deserialize(fromResult.getProperty("right"));

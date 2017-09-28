@@ -398,6 +398,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       } catch (ORecordNotFoundException e) {
         // MAINTAIN COHERENT THE BEHAVIOR FOR ALL THE STORAGE TYPES
         if (e.getCause() instanceof OOfflineClusterException)
+          //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
           throw (OOfflineClusterException) e.getCause();
       }
 
@@ -450,6 +451,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     } catch (ORecordNotFoundException e) {
       // MAINTAIN COHERENT THE BEHAVIOR FOR ALL THE STORAGE TYPES
       if (e.getCause() instanceof OOfflineClusterException)
+        //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
         throw (OOfflineClusterException) e.getCause();
       result = 0;
     }

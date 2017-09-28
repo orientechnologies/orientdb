@@ -106,9 +106,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   /**
    * Internal varialbe injection useful for testing.
-   *
-   * @param server
-   * @param channel
    */
   public void initVariables(final OServer server, OChannelBinary channel) {
     this.server = server;
@@ -155,7 +152,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected void execute() throws Exception {
     requestType = -1;
 
-    if(server.rejectRequests()){
+    if (server.rejectRequests()) {
       this.softShutdown();
       return;
     }
@@ -316,7 +313,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             afterOperationRequest(connection);
           }
         }
-        if(connection!= null)
+        if (connection != null)
           tokenConnection = Boolean.TRUE.equals(connection.getTokenBased());
       } else {
         OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
@@ -465,7 +462,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw new OInterruptedException("Request interrupted");
+          throw OException.wrapException(new OInterruptedException("Request interrupted"), e);
         }
     }
   }
@@ -726,11 +723,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
    * - 4 bytes: record version <br>
    * - x bytes: record content <br>
    *
-   * @param channel    TODO
-   * @param connection
-   * @param o
-   *
-   * @throws IOException
+   * @param channel TODO
    */
   public static void writeIdentifiable(OChannelBinary channel, OClientConnection connection, final OIdentifiable o)
       throws IOException {

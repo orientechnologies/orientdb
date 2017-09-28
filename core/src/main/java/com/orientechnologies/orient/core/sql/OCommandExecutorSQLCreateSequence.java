@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -28,7 +29,8 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
   private SEQUENCE_TYPE          sequenceType;
   private OSequence.CreateParams params;
 
-  @Override public OCommandExecutorSQLCreateSequence parse(OCommandRequest iRequest) {
+  @Override
+  public OCommandExecutorSQLCreateSequence parse(OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
     String queryText = textRequest.getText();
@@ -55,9 +57,9 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
           try {
             this.sequenceType = OSequenceHelper.getSequenceTyeFromString(typeAsString);
           } catch (IllegalArgumentException e) {
-            throw new OCommandSQLParsingException(
+            throw OException.wrapException(new OCommandSQLParsingException(
                 "Unknown sequence type '" + typeAsString + "'. Supported attributes are: " + Arrays
-                    .toString(SEQUENCE_TYPE.values()));
+                    .toString(SEQUENCE_TYPE.values())), e);
           }
         } else if (temp.equals(KEYWORD_START)) {
           String startAsString = parserRequiredWord(true, "Expected <start value>");
@@ -80,7 +82,8 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
     return this;
   }
 
-  @Override public Object execute(Map<Object, Object> iArgs) {
+  @Override
+  public Object execute(Map<Object, Object> iArgs) {
     if (this.sequenceName == null) {
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
     }
@@ -92,11 +95,13 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
     return database.getMetadata().getSequenceLibrary().getSequenceCount();
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "CREATE SEQUENCE <sequence> [TYPE <CACHED|ORDERED>] [START <value>] [INCREMENT <value>] [CACHE <value>]";
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
 }

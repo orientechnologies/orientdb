@@ -854,7 +854,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       try {
         syncConfiguration = new ODistributedSyncConfiguration(manager, databaseName, cfgFile);
       } catch (IOException e) {
-        throw new ODistributedException("Cannot open database distributed sync configuration file: " + cfgFile);
+        throw OException
+            .wrapException(new ODistributedException("Cannot open database distributed sync configuration file: " + cfgFile), e);
       }
     }
 

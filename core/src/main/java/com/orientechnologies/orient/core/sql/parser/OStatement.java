@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -84,7 +85,7 @@ public class OStatement extends SimpleNode {
   /**
    * creates an execution plan for current statement
    *
-   * @param ctx the context that will be used to execute the statement
+   * @param ctx     the context that will be used to execute the statement
    * @param profile true to enable profiling, false to disable it
    *
    * @return an execution plan
@@ -107,11 +108,10 @@ public class OStatement extends SimpleNode {
 
   public static OStatement deserializeFromOResult(OResult doc) {
     try {
-      OStatement result = (OStatement) Class.forName(doc.getProperty("__class")).getConstructor(Integer.class)
-          .newInstance(-1);
+      OStatement result = (OStatement) Class.forName(doc.getProperty("__class")).getConstructor(Integer.class).newInstance(-1);
       result.deserialize(doc);
     } catch (Exception e) {
-      throw new OCommandExecutionException("");
+      throw OException.wrapException(new OCommandExecutionException(""), e);
     }
     return null;
   }

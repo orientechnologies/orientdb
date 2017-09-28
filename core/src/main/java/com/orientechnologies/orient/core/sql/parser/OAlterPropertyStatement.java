@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -36,7 +37,8 @@ public class OAlterPropertyStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     ODatabase db = ctx.getDatabase();
     OClass clazz = db.getMetadata().getSchema().getClass(className.getStringValue());
 
@@ -71,8 +73,9 @@ public class OAlterPropertyStatement extends ODDLStatement {
       try {
         attribute = OProperty.ATTRIBUTES.valueOf(setting.toUpperCase(Locale.ENGLISH));
       } catch (IllegalArgumentException e) {
-        throw new OCommandExecutionException("Unknown property attribute '" + setting + "'. Supported attributes are: " + Arrays
-            .toString(OProperty.ATTRIBUTES.values()));
+        throw OException.wrapException(new OCommandExecutionException(
+            "Unknown property attribute '" + setting + "'. Supported attributes are: " + Arrays
+                .toString(OProperty.ATTRIBUTES.values())), e);
       }
       Object oldValue = property.get(attribute);
       property.set(attribute, finalValue);
@@ -88,11 +91,13 @@ public class OAlterPropertyStatement extends ODDLStatement {
     return rs;
   }
 
-  @Override public void validate() throws OCommandSQLParsingException {
+  @Override
+  public void validate() throws OCommandSQLParsingException {
     super.validate();//TODO
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ALTER PROPERTY ");
     className.toString(params, builder);
     builder.append(".");
@@ -110,7 +115,8 @@ public class OAlterPropertyStatement extends ODDLStatement {
     }
   }
 
-  @Override public OAlterPropertyStatement copy() {
+  @Override
+  public OAlterPropertyStatement copy() {
     OAlterPropertyStatement result = new OAlterPropertyStatement(-1);
     result.className = className == null ? null : className.copy();
     result.propertyName = propertyName == null ? null : propertyName.copy();
@@ -121,7 +127,8 @@ public class OAlterPropertyStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -145,7 +152,8 @@ public class OAlterPropertyStatement extends ODDLStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = className != null ? className.hashCode() : 0;
     result = 31 * result + (propertyName != null ? propertyName.hashCode() : 0);
     result = 31 * result + (customPropertyName != null ? customPropertyName.hashCode() : 0);

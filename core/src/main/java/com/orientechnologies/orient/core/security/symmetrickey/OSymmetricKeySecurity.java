@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.security.symmetrickey;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -43,12 +44,11 @@ import java.util.Set;
 /**
  * Provides a symmetric key specific authentication.
  * Implements an OSecurity interface that delegates to the specified OSecurity object.
- * 
+ * <p>
  * This is used with embedded (non-server) databases, like so:
- *   db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSymmetricKeySecurity.class);
+ * db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSymmetricKeySecurity.class);
  *
  * @author S. Colin Leister
- * 
  */
 public class OSymmetricKeySecurity extends OProxedResource<OSecurity> implements OSecurity {
   public OSymmetricKeySecurity(final OSecurity iDelegate, final ODatabaseDocumentInternal iDatabase) {
@@ -56,33 +56,40 @@ public class OSymmetricKeySecurity extends OProxedResource<OSecurity> implements
   }
 
   public OUser authenticate(final String username, final String password) {
-    if(delegate == null) throw new OSecurityAccessException("OSymmetricKeySecurity.authenticate() Delegate is null for username: " + username);
-    
-    if(database == null) throw new OSecurityAccessException("OSymmetricKeySecurity.authenticate() Database is null for username: " + username);
-    
+    if (delegate == null)
+      throw new OSecurityAccessException("OSymmetricKeySecurity.authenticate() Delegate is null for username: " + username);
+
+    if (database == null)
+      throw new OSecurityAccessException("OSymmetricKeySecurity.authenticate() Database is null for username: " + username);
+
     final String dbName = database.getName();
-    
+
     OUser user = delegate.getUser(username);
-    
-    if(user == null) throw new OSecurityAccessException(dbName, "OSymmetricKeySecurity.authenticate() Username or Key is invalid for username: " + username);
-   
-    if(user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
+
+    if (user == null)
+      throw new OSecurityAccessException(dbName,
+          "OSymmetricKeySecurity.authenticate() Username or Key is invalid for username: " + username);
+
+    if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
       throw new OSecurityAccessException(dbName, "OSymmetricKeySecurity.authenticate() User '" + username + "' is not active");
 
     try {
       OUserSymmetricKeyConfig userConfig = new OUserSymmetricKeyConfig(user);
-    	  
+
       OSymmetricKey sk = OSymmetricKey.fromConfig(userConfig);
 
       String decryptedUsername = sk.decryptAsString(password);
-            
-      if(OSecurityManager.instance().checkPassword(username, decryptedUsername))
-        return user;      
+
+      if (OSecurityManager.instance().checkPassword(username, decryptedUsername))
+        return user;
     } catch (Exception ex) {
-      throw new OSecurityAccessException(dbName, "OSymmetricKeySecurity.authenticate() Exception for database: " + dbName + ", username: " + username + " " + ex.getMessage());
+      throw OException.wrapException(new OSecurityAccessException(dbName,
+          "OSymmetricKeySecurity.authenticate() Exception for database: " + dbName + ", username: " + username + " " + ex
+              .getMessage()), ex);
     }
-    
-    throw new OSecurityAccessException(dbName, "OSymmetricKeySecurity.authenticate() Username or Key is invalid for database: " + dbName + ", username: " + username);
+
+    throw new OSecurityAccessException(dbName,
+        "OSymmetricKeySecurity.authenticate() Username or Key is invalid for database: " + dbName + ", username: " + username);
   }
 
   @Override

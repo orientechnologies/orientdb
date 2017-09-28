@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
@@ -515,8 +516,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             // TRY TO PARSE AS DATE
             return ODateHelper.getDateFormatInstance().parseObject(iFieldValueAsString);
           } catch (ParseException ex) {
+            OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
             throw OException.wrapException(new OSerializationException(
-                "Unable to unmarshall date (format=" + ODateHelper.getDateFormat() + ") : " + iFieldValueAsString), e);
+                "Unable to unmarshall date (format=" + ODateHelper.getDateFormat() + ") : " + iFieldValueAsString), ex);
           }
         }
 
@@ -531,11 +533,12 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             // TRY TO PARSE AS DATETIME
             return ODateHelper.getDateTimeFormatInstance().parseObject(iFieldValueAsString);
           } catch (ParseException ex) {
+            OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
             throw OException
                 .wrapException(
                     new OSerializationException(
                         "Unable to unmarshall datetime (format=" + ODateHelper.getDateTimeFormat() + ") : " + iFieldValueAsString),
-                    e);
+                    ex);
           }
         }
       case BINARY:

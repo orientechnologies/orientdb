@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.collate.OCollate;
@@ -210,8 +211,9 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
           keyTypeList.toArray(keyTypes);
 
           if (fields != null && fields.length != 0 && fields.length != keyTypes.length) {
-            throw new OCommandSQLParsingException("Count of fields does not match with count of property types. " + "Fields: "
-                + Arrays.toString(fields) + "; Types: " + Arrays.toString(keyTypes), parserText, oldPos);
+            throw new OCommandSQLParsingException(
+                "Count of fields does not match with count of property types. " + "Fields: " + Arrays.toString(fields) + "; Types: "
+                    + Arrays.toString(keyTypes), parserText, oldPos);
           }
         }
       }
@@ -251,17 +253,12 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       OIndexFactory factory = OIndexes.getFactory(indexType.toString(), null);
 
       if (keyTypes != null)
-        idx = database
-            .getMetadata()
-            .getIndexManager()
-            .createIndex(indexName, indexType.toString(),
-                new OSimpleKeyIndexDefinition(keyTypes, collatesList, factory.getLastVersion()), null, null, metadataDoc, engine);
+        idx = database.getMetadata().getIndexManager().createIndex(indexName, indexType.toString(),
+            new OSimpleKeyIndexDefinition(keyTypes, collatesList, factory.getLastVersion()), null, null, metadataDoc, engine);
       else if (serializerKeyId != 0) {
-        idx = database
-            .getMetadata()
-            .getIndexManager()
-            .createIndex(indexName, indexType.toString(),
-                new ORuntimeKeyIndexDefinition(serializerKeyId, factory.getLastVersion()), null, null, metadataDoc, engine);
+        idx = database.getMetadata().getIndexManager()
+            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId, factory.getLastVersion()),
+                null, null, metadataDoc, engine);
       } else {
         throw new ODatabaseException("Impossible to create an index without specify the key type or the associated property");
       }
@@ -273,14 +270,16 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
         if (keyTypes == null) {
           for (final String fieldName : fields) {
             if (!fieldName.equals("@rid") && !oClass.existsProperty(fieldName))
-              throw new OIndexException("Index with name : '" + indexName + "' cannot be created on class : '" + oClass.getName() + "' because field: '" + fieldName + "' is absent in class definition.");
+              throw new OIndexException(
+                  "Index with name : '" + indexName + "' cannot be created on class : '" + oClass.getName() + "' because field: '"
+                      + fieldName + "' is absent in class definition.");
           }
           fieldTypeList = ((OClassImpl) oClass).extractFieldTypes(fields);
         } else
           fieldTypeList = Arrays.asList(keyTypes);
 
-        final OIndexDefinition idxDef = OIndexDefinitionFactory.createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList,
-            collatesList, indexType.toString(), null);
+        final OIndexDefinition idxDef = OIndexDefinitionFactory
+            .createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList, collatesList, indexType.toString(), null);
 
         idx = database.getMetadata().getIndexManager()
             .createIndex(indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc, engine);
@@ -317,17 +316,17 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
         try {
           OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase(Locale.ENGLISH));
         } catch (IllegalArgumentException iae) {
-          throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '"
-              + fieldName + "'", text, pos);
+          throw OException.wrapException(new OCommandSQLParsingException(
+              "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + "'", text, pos), iae);
         }
         return;
       }
-      throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '"
-          + fieldName + "'", text, pos);
+      throw new OCommandSQLParsingException(
+          "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + "'", text, pos);
     }
 
-    throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName
-        + "'", text, pos);
+    throw new OCommandSQLParsingException(
+        "Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName + "'", text, pos);
   }
 
   @Override

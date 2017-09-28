@@ -31,7 +31,8 @@ public class OAlterClusterStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ALTER CLUSTER ");
     name.toString(params, builder);
     if (starred) {
@@ -43,7 +44,8 @@ public class OAlterClusterStatement extends ODDLStatement {
     attributeValue.toString(params, builder);
   }
 
-  @Override public OAlterClusterStatement copy() {
+  @Override
+  public OAlterClusterStatement copy() {
     OAlterClusterStatement result = new OAlterClusterStatement(-1);
     result.name = name == null ? null : name.copy();
     result.attributeName = attributeName == null ? null : attributeName.copy();
@@ -52,7 +54,8 @@ public class OAlterClusterStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     OInternalResultSet result = new OInternalResultSet();
     List<com.orientechnologies.orient.core.storage.OCluster> clustersToUpdate = getClusters(ctx);
     Object finalValue = attributeValue.execute((OIdentifiable) null, ctx);
@@ -61,8 +64,9 @@ public class OAlterClusterStatement extends ODDLStatement {
     try {
       attribute = OCluster.ATTRIBUTES.valueOf(attributeName.getStringValue());
     } catch (IllegalArgumentException e) {
-      throw new OCommandExecutionException("Unknown class attribute '" + attributeName + "'. Supported attributes are: " + Arrays
-          .toString(OCluster.ATTRIBUTES.values()));
+      throw OException.wrapException(new OCommandExecutionException(
+          "Unknown class attribute '" + attributeName + "'. Supported attributes are: " + Arrays
+              .toString(OCluster.ATTRIBUTES.values())), e);
     }
 
     for (com.orientechnologies.orient.core.storage.OCluster cluster : clustersToUpdate) {
@@ -106,7 +110,8 @@ public class OAlterClusterStatement extends ODDLStatement {
     }
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -126,7 +131,8 @@ public class OAlterClusterStatement extends ODDLStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (attributeName != null ? attributeName.hashCode() : 0);
     result = 31 * result + (starred ? 1 : 0);

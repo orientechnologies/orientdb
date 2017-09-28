@@ -19,6 +19,7 @@
   */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -34,18 +35,17 @@ import java.util.Set;
 
 /**
  * FIND REFERENCES command: Finds references to records in all or part of database
- * 
+ *
  * @author Luca Molino
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyResultsetAbstract {
   public static final String KEYWORD_FIND       = "FIND";
   public static final String KEYWORD_REFERENCES = "REFERENCES";
 
-  private Set<ORID>          recordIds          = new HashSet<ORID>();
-  private String             classList;
-  private StringBuilder      subQuery;
+  private Set<ORID> recordIds = new HashSet<ORID>();
+  private String        classList;
+  private StringBuilder subQuery;
 
   public OCommandExecutorSQLFindReferences parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -74,7 +74,9 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyR
           recordIds.add(rid);
 
         } catch (IllegalArgumentException iae) {
-          throw new OCommandSQLParsingException("Error reading record Id", parserText, parserGetPreviousPosition());
+          throw OException
+              .wrapException(new OCommandSQLParsingException("Error reading record Id", parserText, parserGetPreviousPosition()),
+                  iae);
         }
       }
 
@@ -91,7 +93,7 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyR
       }
 
       return this;
-    }finally {
+    } finally {
       textRequest.setText(originalQuery);
     }
   }

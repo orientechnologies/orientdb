@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -16,44 +17,53 @@ import java.util.*;
 public abstract class OBooleanExpression extends SimpleNode {
 
   public static final OBooleanExpression TRUE = new OBooleanExpression(0) {
-    @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    @Override
+    public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return true;
     }
 
-
-    @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    @Override
+    public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
       return true;
     }
 
-    @Override protected boolean supportsBasicCalculation() {
+    @Override
+    protected boolean supportsBasicCalculation() {
       return true;
     }
 
-    @Override protected int getNumberOfExternalCalculations() {
+    @Override
+    protected int getNumberOfExternalCalculations() {
       return 0;
     }
 
-    @Override protected List<Object> getExternalCalculationConditions() {
+    @Override
+    protected List<Object> getExternalCalculationConditions() {
       return Collections.EMPTY_LIST;
     }
 
-
-    @Override public boolean needsAliases(Set<String> aliases) {
+    @Override
+    public boolean needsAliases(Set<String> aliases) {
       return false;
     }
 
-    @Override public OBooleanExpression copy() {
+    @Override
+    public OBooleanExpression copy() {
       return TRUE;
 
     }
-    @Override public List<String> getMatchPatternInvolvedAliases() {
+
+    @Override
+    public List<String> getMatchPatternInvolvedAliases() {
       return null;
     }
 
     @Override
-    public void translateLuceneOperator() {}
+    public void translateLuceneOperator() {
+    }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
       return "true";
     }
 
@@ -61,50 +71,61 @@ public abstract class OBooleanExpression extends SimpleNode {
       builder.append("true");
     }
 
-    @Override public boolean isEmpty() {
+    @Override
+    public boolean isEmpty() {
       return false;
     }
 
-    @Override public void extractSubQueries(SubQueryCollector collector) {
+    @Override
+    public void extractSubQueries(SubQueryCollector collector) {
 
     }
 
-    @Override public boolean refersToParent() {
+    @Override
+    public boolean refersToParent() {
       return false;
     }
 
   };
 
   public static final OBooleanExpression FALSE = new OBooleanExpression(0) {
-    @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    @Override
+    public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return false;
     }
 
-    @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    @Override
+    public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
       return false;
     }
 
-    @Override protected boolean supportsBasicCalculation() {
+    @Override
+    protected boolean supportsBasicCalculation() {
       return true;
     }
 
-    @Override protected int getNumberOfExternalCalculations() {
+    @Override
+    protected int getNumberOfExternalCalculations() {
       return 0;
     }
 
-    @Override protected List<Object> getExternalCalculationConditions() {
+    @Override
+    protected List<Object> getExternalCalculationConditions() {
       return Collections.EMPTY_LIST;
     }
 
-
-    @Override public boolean needsAliases(Set<String> aliases) {
+    @Override
+    public boolean needsAliases(Set<String> aliases) {
       return false;
     }
 
-    @Override public OBooleanExpression copy() {
+    @Override
+    public OBooleanExpression copy() {
       return FALSE;
     }
-    @Override public List<String> getMatchPatternInvolvedAliases() {
+
+    @Override
+    public List<String> getMatchPatternInvolvedAliases() {
       return null;
     }
 
@@ -113,7 +134,8 @@ public abstract class OBooleanExpression extends SimpleNode {
 
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
       return "false";
     }
 
@@ -121,15 +143,18 @@ public abstract class OBooleanExpression extends SimpleNode {
       builder.append("false");
     }
 
-    @Override public boolean isEmpty() {
+    @Override
+    public boolean isEmpty() {
       return false;
     }
 
-    @Override public void extractSubQueries(SubQueryCollector collector) {
+    @Override
+    public void extractSubQueries(SubQueryCollector collector) {
 
     }
 
-    @Override public boolean refersToParent() {
+    @Override
+    public boolean refersToParent() {
       return false;
     }
 
@@ -151,7 +176,6 @@ public abstract class OBooleanExpression extends SimpleNode {
   }
 
   public abstract boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx);
-
 
   public abstract boolean evaluate(OResult currentRecord, OCommandContext ctx);
 
@@ -188,7 +212,6 @@ public abstract class OBooleanExpression extends SimpleNode {
     return result;
   }
 
-
   public abstract boolean needsAliases(Set<String> aliases);
 
   public abstract OBooleanExpression copy();
@@ -213,10 +236,9 @@ public abstract class OBooleanExpression extends SimpleNode {
     return Optional.empty();
   }
 
-
   public abstract List<String> getMatchPatternInvolvedAliases();
 
-  public void translateLuceneOperator(){
+  public void translateLuceneOperator() {
 
   }
 
@@ -226,7 +248,7 @@ public abstract class OBooleanExpression extends SimpleNode {
           .newInstance(-1);
       result.deserialize(doc);
     } catch (Exception e) {
-      throw new OCommandExecutionException("");
+      throw OException.wrapException(new OCommandExecutionException(""), e);
     }
     return null;
   }

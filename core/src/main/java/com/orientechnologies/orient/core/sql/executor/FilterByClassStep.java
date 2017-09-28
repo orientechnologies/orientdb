@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -138,7 +139,7 @@ public class FilterByClassStep extends AbstractExecutionStep {
       OExecutionStepInternal.basicDeserialize(fromResult, this);
       identifier = OIdentifier.deserialize(fromResult.getProperty("identifier"));
     } catch (Exception e) {
-      throw new OCommandExecutionException("");
+      throw OException.wrapException(new OCommandExecutionException(""), e);
     }
   }
 }

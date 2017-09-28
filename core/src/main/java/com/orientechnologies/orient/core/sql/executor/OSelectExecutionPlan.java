@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
@@ -109,9 +110,9 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
         String className = serializedStep.getProperty(JAVA_TYPE);
         OExecutionStepInternal step = (OExecutionStepInternal) Class.forName(className).newInstance();
         step.deserialize(serializedStep);
-        chain( step);
+        chain(step);
       } catch (Exception e) {
-        throw new OCommandExecutionException("Cannot deserialize execution step:" + serializedStep);
+        throw OException.wrapException(new OCommandExecutionException("Cannot deserialize execution step:" + serializedStep), e);
       }
     }
   }
