@@ -77,6 +77,13 @@ public class OSelectExecutionPlanner {
     // TODO optimization: in most cases the projections can be calculated on remote nodes
     buildDistributedExecutionPlan(result, info, ctx, enableProfiling);
 
+    handleProjectionsBlock(result, info, ctx, enableProfiling);
+
+    return result;
+  }
+
+  public static  void handleProjectionsBlock(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
+      boolean enableProfiling) {
     handleProjectionsBeforeOrderBy(result, info, ctx, enableProfiling);
 
     if (info.expand || info.unwind != null) {
@@ -112,8 +119,6 @@ public class OSelectExecutionPlanner {
         handleProjections(result, info, ctx, enableProfiling);
       }
     }
-
-    return result;
   }
 
   private void buildDistributedExecutionPlan(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
@@ -525,24 +530,24 @@ public class OSelectExecutionPlanner {
     return item.getExpression().isCount();
   }
 
-  private void handleUnwind(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
+  public static void handleUnwind(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
     if (info.unwind != null) {
       result.chain(new UnwindStep(info.unwind, ctx, profilingEnabled));
     }
   }
 
-  private void handleDistinct(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
+  private static void handleDistinct(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
     result.chain(new DistinctExecutionStep(ctx, profilingEnabled));
   }
 
-  private void handleProjectionsBeforeOrderBy(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
+  private static void handleProjectionsBeforeOrderBy(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
       boolean profilingEnabled) {
     if (info.orderBy != null) {
       handleProjections(result, info, ctx, profilingEnabled);
     }
   }
 
-  private void handleProjections(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
+  private static void handleProjections(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
       boolean profilingEnabled) {
     if (!info.projectionsCalculated && info.projection != null) {
       if (info.preAggregateProjection != null) {
@@ -707,7 +712,7 @@ public class OSelectExecutionPlanner {
   /**
    * splits projections in three parts (pre-aggregate, aggregate and final) to efficiently manage aggregations
    */
-  private void splitProjectionsForGroupBy(QueryPlanningInfo info) {
+  private static void splitProjectionsForGroupBy(QueryPlanningInfo info) {
     if (info.projection == null) {
       return;
     }
@@ -760,7 +765,7 @@ public class OSelectExecutionPlanner {
     }
   }
 
-  private boolean isAggregate(OProjectionItem item) {
+  private static boolean isAggregate(OProjectionItem item) {
     if (item.isAggregate()) {
       return true;
     }
@@ -777,7 +782,7 @@ public class OSelectExecutionPlanner {
    * if GROUP BY is performed on an expression that is not explicitly in the pre-aggregate projections, then
    * that expression has to be put in the pre-aggregate (only here, in subsequent steps it's removed)
    */
-  private void addGroupByExpressionsToProjections(QueryPlanningInfo info) {
+  private static void addGroupByExpressionsToProjections(QueryPlanningInfo info) {
     if (info.groupBy == null || info.groupBy.getItems() == null || info.groupBy.getItems().size() == 0) {
       return;
     }
@@ -1193,7 +1198,7 @@ public class OSelectExecutionPlanner {
     plan.chain(new FetchFromRidsStep(actualRids, ctx, profilingEnabled));
   }
 
-  private void handleExpand(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
+  private static void handleExpand(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
     if (info.expand) {
       result.chain(new ExpandStep(ctx, profilingEnabled));
     }
@@ -1251,7 +1256,7 @@ public class OSelectExecutionPlanner {
     }
   }
 
-  private void handleOrderBy(OSelectExecutionPlan plan, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
+  public static void handleOrderBy(OSelectExecutionPlan plan, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
     int skipSize = info.skip == null ? 0 : info.skip.getValue(ctx);
     if (skipSize < 0) {
       throw new OCommandExecutionException("Cannot execute a query with a negative SKIP");
