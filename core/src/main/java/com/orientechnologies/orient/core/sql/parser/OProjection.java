@@ -21,6 +21,13 @@ public class OProjection extends SimpleNode {
 
   List<OProjectionItem> items;
 
+  public OProjection(List<OProjectionItem> items, boolean distinct) {
+    super(-1);
+    this.items = items;
+    this.distinct = distinct;
+    //TODO make the whole class immutable!
+  }
+
   public OProjection(int id) {
     super(id);
   }

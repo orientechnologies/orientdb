@@ -1679,6 +1679,83 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
+  @Test
+  public void testAggregate() {
+    String clazz = "testAggregate";
+    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 1")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 2")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 3")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb', num = 4")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb', num = 5")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb', num = 6")).execute();
+
+    String query = "MATCH { class: "+clazz+", as:a} RETURN a.name as a, max(a.num) as maxNum group by a.name order by a.name";
+
+    OResultSet result = db.query(query);
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertEquals("aaa", item.getProperty("a"));
+    Assert.assertEquals(3, (int)item.getProperty("maxNum"));
+
+    Assert.assertTrue(result.hasNext());
+    item = result.next();
+    Assert.assertEquals("bbb", item.getProperty("a"));
+    Assert.assertEquals(6, (int)item.getProperty("maxNum"));
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testOrderByOutOfProjAsc() {
+    String clazz = "testOrderByOutOfProjAsc";
+    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 0, num2 = 1")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 1, num2 = 2")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 2, num2 = 3")).execute();
+
+    String query = "MATCH { class: "+clazz+", as:a} RETURN a.name as name, a.num as num order by a.num2 asc";
+
+    OResultSet result = db.query(query);
+    for (int i = 0; i < 3; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertEquals("aaa", item.getProperty("name"));
+      Assert.assertEquals(i, (int)item.getProperty("num"));
+
+    }
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testOrderByOutOfProjDesc() {
+    String clazz = "testOrderByOutOfProjDesc";
+    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 0, num2 = 1")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 1, num2 = 2")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa', num = 2, num2 = 3")).execute();
+
+    String query = "MATCH { class: "+clazz+", as:a} RETURN a.name as name, a.num as num order by a.num2 desc";
+
+    OResultSet result = db.query(query);
+    for (int i = 2; i >= 0; i--) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertEquals("aaa", item.getProperty("name"));
+      Assert.assertEquals(i, (int)item.getProperty("num"));
+
+    }
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   private OResultSet getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");

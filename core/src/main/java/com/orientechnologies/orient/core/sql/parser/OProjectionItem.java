@@ -26,6 +26,13 @@ public class OProjectionItem extends SimpleNode {
 
   protected ONestedProjection nestedProjection;
 
+  public OProjectionItem(OExpression expression, OIdentifier alias, ONestedProjection nestedProjection) {
+    super(-1);
+    this.expression = expression;
+    this.alias = alias;
+    this.nestedProjection = nestedProjection;
+  }
+
   public OProjectionItem(int id) {
     super(id);
   }

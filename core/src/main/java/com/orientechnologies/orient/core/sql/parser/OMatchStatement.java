@@ -101,6 +101,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   protected           List<OIdentifier>       returnAliases           = new ArrayList<>();
   protected           List<ONestedProjection> returnNestedProjections = new ArrayList<>();
   protected           boolean                 returnDistinct          = false;
+  protected OGroupBy groupBy;
   protected OOrderBy orderBy;
   protected OLimit   limit;
 
@@ -306,6 +307,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context, OProgressListener progressListener) {
     if (orderBy != null) {
       throw new OCommandExecutionException("ORDER BY is not supported in MATCH on the legacy API");
+    }
+    if (groupBy != null) {
+      throw new OCommandExecutionException("GROUP BY is not supported in MATCH on the legacy API");
     }
     Map<Object, Object> iArgs = context.getInputParameters();
     try {
@@ -1355,6 +1359,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       i++;
       first = false;
     }
+    if (groupBy != null) {
+      builder.append(" ");
+      groupBy.toString(params, builder);
+    }
     if (orderBy != null) {
       builder.append(" ");
       orderBy.toString(params, builder);
@@ -1383,6 +1391,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     result.returnAliases = returnAliases == null ? null : returnAliases.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.returnNestedProjections =
         returnNestedProjections == null ? null : returnNestedProjections.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.groupBy = groupBy == null ? null : groupBy.copy();
     result.orderBy = orderBy == null ? null : orderBy.copy();
     result.limit = limit == null ? null : limit.copy();
     result.returnDistinct = this.returnDistinct;
@@ -1409,6 +1418,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         !returnNestedProjections.equals(that.returnNestedProjections) :
         that.returnNestedProjections != null)
       return false;
+    if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null)
+      return false;
     if (orderBy != null ? !orderBy.equals(that.orderBy) : that.orderBy != null)
       return false;
     if (limit != null ? !limit.equals(that.limit) : that.limit != null)
@@ -1426,6 +1437,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     result = 31 * result + (returnItems != null ? returnItems.hashCode() : 0);
     result = 31 * result + (returnAliases != null ? returnAliases.hashCode() : 0);
     result = 31 * result + (returnNestedProjections != null ? returnNestedProjections.hashCode() : 0);
+    result = 31 * result + (groupBy != null ? groupBy.hashCode() : 0);
     result = 31 * result + (orderBy != null ? orderBy.hashCode() : 0);
     result = 31 * result + (limit != null ? limit.hashCode() : 0);
     return result;
@@ -1477,6 +1489,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   public void setOrderBy(OOrderBy orderBy) {
     this.orderBy = orderBy;
+  }
+
+  public OGroupBy getGroupBy() {
+    return groupBy;
+  }
+
+  public void setGroupBy(OGroupBy groupBy) {
+    this.groupBy = groupBy;
   }
 }
 /* JavaCC - OriginalChecksum=6ff0afbe9d31f08b72159fcf24070c9f (do not edit this line) */

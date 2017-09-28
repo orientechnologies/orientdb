@@ -30,6 +30,7 @@ public class OMatchExecutionPlanner {
   boolean returnPathElements = false;
   boolean returnDistinct     = false;
   protected     OSkip    skip;
+  private final OGroupBy groupBy;
   private final OOrderBy orderBy;
   protected     OLimit   limit;
 
@@ -55,6 +56,7 @@ public class OMatchExecutionPlanner {
     this.returnPatterns = stm.returnsPatterns();
     this.returnPathElements = stm.returnsPathElements();
     this.returnDistinct = stm.isReturnDistinct();
+    this.groupBy = stm.getGroupBy() == null ? null : stm.getGroupBy().copy();
     this.orderBy = stm.getOrderBy() == null ? null : stm.getOrderBy().copy();
   }
 
@@ -91,21 +93,52 @@ public class OMatchExecutionPlanner {
     if (foundOptional) {
       result.chain(new RemoveEmptyOptionalsStep(context, enableProfiling));
     }
-    addReturnStep(result, context, enableProfiling);
 
-    if (this.returnDistinct) {
-      result.chain(new DistinctExecutionStep(context, enableProfiling));
-    }
+    if (returnElements || returnPaths || returnPatterns || returnPathElements) {
+      addReturnStep(result, context, enableProfiling);
 
-    if (this.orderBy != null) {
-      result.chain(new OrderByStep(orderBy, context, enableProfiling));
-    }
+      if (this.returnDistinct) {
+        result.chain(new DistinctExecutionStep(context, enableProfiling));
+      }
+      if (groupBy != null) {
+        throw new OCommandExecutionException(
+            "Cannot execute GROUP BY in MATCH query with RETURN $elements, $pathElements, $patterns or $paths");
+      }
 
-    if (this.skip != null && skip.getValue(context) >= 0) {
-      result.chain(new SkipExecutionStep(skip, context, enableProfiling));
-    }
-    if (this.limit != null && limit.getValue(context) >= 0) {
-      result.chain(new LimitExecutionStep(limit, context, enableProfiling));
+      if (this.orderBy != null) {
+        result.chain(new OrderByStep(orderBy, context, enableProfiling));
+      }
+
+      if (this.skip != null && skip.getValue(context) >= 0) {
+        result.chain(new SkipExecutionStep(skip, context, enableProfiling));
+      }
+      if (this.limit != null && limit.getValue(context) >= 0) {
+        result.chain(new LimitExecutionStep(limit, context, enableProfiling));
+      }
+    } else {
+      QueryPlanningInfo info = new QueryPlanningInfo();
+      List<OProjectionItem> items = new ArrayList<>();
+      for (int i = 0; i < this.returnItems.size(); i++) {
+        OProjectionItem item = new OProjectionItem(returnItems.get(i), this.returnAliases.get(i), returnNestedProjections.get(i));
+        items.add(item);
+      }
+      info.projection = new OProjection(items, returnDistinct);
+
+      info.projection = OSelectExecutionPlanner.translateDistinct(info.projection);
+      info.distinct = info.projection == null ? false : info.projection.isDistinct();
+      if (info.projection != null) {
+        info.projection.setDistinct(false);
+      }
+
+      info.groupBy = this.groupBy;
+      info.orderBy = this.orderBy;
+      info.unwind = null;//TODO
+      info.skip = this.skip;
+      info.limit = this.limit;
+
+
+      OSelectExecutionPlanner.optimizeQuery(info);
+      OSelectExecutionPlanner.handleProjectionsBlock(result, info, context, enableProfiling);
     }
 
     return result;

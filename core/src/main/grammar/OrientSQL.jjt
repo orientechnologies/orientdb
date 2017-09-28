@@ -1275,6 +1275,7 @@ OMatchStatement MatchStatement():
                 jjtThis.returnNestedProjections.add(lastNestedProjection);
             }
         )*
+        [ jjtThis.groupBy = GroupBy() ]
         [ jjtThis.orderBy = OrderBy() ]
         [ jjtThis.limit = Limit() ]
     ){ return jjtThis; }
