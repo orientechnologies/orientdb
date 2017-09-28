@@ -5,8 +5,13 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -30,6 +35,21 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
     return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
+  }
+
+  @Override
+  public void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException {
+    int nodeId = in.readInt();
+    long messageId = in.readLong();
+    this.transactionId = new ODistributedRequestId(nodeId, messageId);
+    this.success = in.readBoolean();
+  }
+
+  @Override
+  public void toStream(DataOutput out) throws IOException {
+    out.writeInt(transactionId.getNodeId());
+    out.writeLong(transactionId.getMessageId());
+    out.writeBoolean(success);
   }
 
   @Override

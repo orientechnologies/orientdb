@@ -104,7 +104,7 @@ public class ONewDistributedTransactionManager {
             ((iRequest, iNodes, endCallback, task, nodesConcurToTheQuorum, availableNodes, expectedResponses, quorum, groupByResponse, waitLocalNode) -> {
               responseManager = new ONewDistributedResponseManager(txTask, iNodes, nodesConcurToTheQuorum, availableNodes,
                   expectedResponses, quorum);
-              return responseManager;
+                return responseManager;
             }));
 
     handleResponse(requestId, responseManager, involvedClusters, nodes, database);

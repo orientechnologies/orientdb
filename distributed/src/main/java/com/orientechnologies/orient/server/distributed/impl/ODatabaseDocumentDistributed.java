@@ -497,6 +497,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public void internalCommit(OTransactionOptimistic iTx) {
     //This is future may handle a retry
     try {
+      for (ORecordOperation txEntry : iTx.getAllRecordEntries()) {
+        if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+          final ORecord record = txEntry.getRecord();
+          if (record instanceof ODocument)
+            ((ODocument) record).validate();
+        }
+      }
       final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
       ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
       final String localNodeName = dManager.getLocalNodeName();
@@ -558,13 +565,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
             .equals(index.getType())) {
           for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
-            OIdentifiable old;
-            if ((old = (OIdentifiable) index.get(changesPerKey.key)) != null) {
-              OTransactionIndexChangesPerKey.OTransactionIndexEntry val = changesPerKey.entries
-                  .get(changesPerKey.entries.size() - 1);
+            OIdentifiable old = (OIdentifiable) index.get(changesPerKey.key);
+            Object newValue = changesPerKey.entries.get(changesPerKey.entries.size() - 1).value;
+            if (old != null && !old.equals(newValue)) {
               throw new ORecordDuplicatedException(String
                   .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                      val.value, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity());
+                      newValue, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity());
             }
           }
         }
@@ -596,17 +602,24 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public void commit2pcLocal(ODistributedRequestId transactionId) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
-    ((OAbstractPaginatedStorage) getStorage().getUnderlying()).commitPreAllocated(getTransaction());
-    txContext.destroy();
+    try {
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).commitPreAllocated(getTransaction());
+    } finally {
+      txContext.destroy();
+    }
   }
 
   public void commit2pc(ODistributedRequestId transactionId) {
+
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
-    OTransactionOptimistic tx = txContext.getTransaction();
-    //This bypass the distributed layer and do a low level commit
-    super.internalCommit(tx);
-    txContext.destroy();
+    try {
+      OTransactionOptimistic tx = txContext.getTransaction();
+      //This bypass the distributed layer and do a low level commit
+      super.internalCommit(tx);
+    } finally {
+      txContext.destroy();
+    }
   }
 
   public void rollback2pc(ODistributedRequestId transactionId) {
