@@ -817,7 +817,7 @@ public class ODocumentHelper {
         try {
           result = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
               .parse(currentValue.toString());
-        } catch (ParseException e) {
+        } catch (ParseException ignore) {
         }
     else if (function.startsWith("ASDATETIME("))
       if (currentValue instanceof Date)
@@ -828,7 +828,7 @@ public class ODocumentHelper {
         try {
           result = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
               .parse(currentValue.toString());
-        } catch (ParseException e) {
+        } catch (ParseException ignore) {
         }
     else {
       // EXTRACT ARGUMENTS

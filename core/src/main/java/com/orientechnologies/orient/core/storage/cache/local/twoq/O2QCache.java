@@ -992,7 +992,7 @@ public class O2QCache implements OReadCache {
       }
     } catch (Exception e) {
       OLogManager.instance()
-          .error(this, "Cannot store state of cache for storage placed under %s (error: %s)", writeCache.getRootDirectory(), e);
+          .error(this, "Cannot store state of cache for storage placed under %s", e, writeCache.getRootDirectory());
     } finally {
       cacheLock.releaseWriteLock();
     }

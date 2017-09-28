@@ -53,7 +53,7 @@ public abstract class OSharedResourceTimeout {
       } else if (lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS))
         // OK
         return;
-    } catch (InterruptedException e) {
+    } catch (InterruptedException ignore) {
       Thread.currentThread().interrupt();
     }
 
@@ -72,7 +72,7 @@ public abstract class OSharedResourceTimeout {
       } else if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS))
         // OK
         return;
-    } catch (InterruptedException e) {
+    } catch (InterruptedException ignore) {
       Thread.currentThread().interrupt();
     }
 
@@ -114,15 +114,7 @@ public abstract class OSharedResourceTimeout {
 
       printWriter.flush();
       return stringWriter.toString();
-    } catch (RuntimeException e) {
-      return null;
-    } catch (NoSuchFieldException e) {
-      return null;
-    } catch (IllegalAccessException e) {
-      return null;
-    } catch (NoSuchMethodException e) {
-      return null;
-    } catch (InvocationTargetException e) {
+    } catch (RuntimeException | NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException ignore) {
       return null;
     }
   }

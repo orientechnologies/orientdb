@@ -216,7 +216,7 @@ final class OLogSegmentV2 implements OLogSegment {
           writeAheadLog.setFlushedLsn(stored);
         }
       } catch (IOException ioe) {
-        OLogManager.instance().error(this, "Can not force sync content of file " + path);
+        OLogManager.instance().error(this, "Can not force sync content of file " + path, ioe);
       }
     }
   }
@@ -263,7 +263,7 @@ final class OLogSegmentV2 implements OLogSegment {
           throw new OStorageException("WAL flush task for '" + getPath() + "' segment cannot be stopped");
 
       } catch (InterruptedException e) {
-        OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread");
+        OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread", e);
       }
     }
   }
@@ -322,7 +322,7 @@ final class OLogSegmentV2 implements OLogSegment {
         filledUpTo = 0;
 
         OLogManager.instance()
-            .error(this, "%d pages in WAL segment %s are broken and will be truncated, some data will be lost after restore.",
+            .error(this, "%d pages in WAL segment %s are broken and will be truncated, some data will be lost after restore.", null,
                 pages, path.getFileName());
 
         segmentCache.truncate(0);
@@ -348,7 +348,7 @@ final class OLogSegmentV2 implements OLogSegment {
     if (currentPage + 1 < pages) {
       OLogManager.instance()
           .error(this, "Last %d pages in WAL segment %s are broken and will be truncate, some data will be lost after restore.",
-              pages - currentPage - 1, path.getFileName());
+              null, pages - currentPage - 1, path.getFileName());
 
       segmentCache.truncate(currentPage + 1);
       segmentCache.sync();
@@ -363,7 +363,7 @@ final class OLogSegmentV2 implements OLogSegment {
     if (OWALPage.PAGE_SIZE - lastRecordEnd != freeSpaceOffset) {
       OLogManager.instance().error(this, "For the page '%d' of WAL segment '%s' amount of free space '%d' does not match"
               + " the end of last record in page '%d' it will be fixed automatically but may lead to data loss during recovery after crash",
-          currentPage, path.getFileName(), freeSpaceOffset, lastRecordEnd);
+          null, currentPage, path.getFileName(), freeSpaceOffset, lastRecordEnd);
       buffer.putInt(OWALPage.FREE_SPACE_OFFSET, OWALPage.PAGE_SIZE - lastRecordEnd);
       preparePageForFlush(buffer);
 

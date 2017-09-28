@@ -108,7 +108,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
         return Arrays.equals((byte[]) iLeft, (byte[]) iRight);
       }
       return iLeft.equals(right);
-    } catch (Exception e) {
+    } catch (Exception ignore) {
       return false;
     }
   }

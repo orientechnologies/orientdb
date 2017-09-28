@@ -51,7 +51,7 @@ public class TestAsyncReplMode2ServersAddEdge extends BareBoneBase2ServerTest {
           graph.commit();
           graph.begin();
 
-          OLogManager.instance().error(this, "parentV1 %s v%d should be v%d", parentV1.getIdentity(),
+          OLogManager.instance().error(this, "parentV1 %s v%d should be v%d", null, parentV1.getIdentity(),
               parentV1.getRecord().getVersion(), i + 2);
 
           assertEquals(i + 2,  parentV1.getVersion());

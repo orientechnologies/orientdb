@@ -42,7 +42,7 @@ public class OFileUtils {
 
     try {
       Class.forName("java.nio.file.FileSystemException");
-    } catch (ClassNotFoundException e) {
+    } catch (ClassNotFoundException ignore) {
       oldAPI = true;
     }
 
@@ -243,7 +243,7 @@ public class OFileUtils {
   public static void atomicMoveWithFallback(Path source, Path target, Object requester) throws IOException {
     try {
       Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
-    } catch (AtomicMoveNotSupportedException e) {
+    } catch (AtomicMoveNotSupportedException ignore) {
       OLogManager.instance()
           .warn(requester, "atomic file move is not possible, falling back to regular move (moving '%s' to '%s')", source, target);
       Files.move(source, target);

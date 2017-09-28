@@ -199,7 +199,7 @@ public class OSecurityManager {
   public boolean checkPasswordWithSalt(final String iPassword, final String iHash, final String algorithm) {
 
     if (!isAlgorithmSupported(algorithm)) {
-      OLogManager.instance().error(this, "The password hash algorithm is not supported: %s", algorithm);
+      OLogManager.instance().error(this, "The password hash algorithm is not supported: %s", null, algorithm);
       return false;
     }
 

@@ -44,13 +44,13 @@ import java.lang.reflect.Method;
 
 /**
  * Author : henryzhao81@gmail.com Feb 19, 2013
- * 
+ * <p>
  * Create a class OTriggered which contains 8 additional class attributes, which link to OFunction - beforeCreate - afterCreate -
  * beforeRead - afterRead - beforeUpdate - afterUpdate - beforeDelete - afterDelete
  */
 public class OClassTrigger extends ODocumentHookAbstract {
-  public static final String CLASSNAME          = "OTriggered";
-  public static final String METHOD_SEPARATOR   = ".";
+  public static final String CLASSNAME        = "OTriggered";
+  public static final String METHOD_SEPARATOR = ".";
 
   // Class Level Trigger (class custom attribute)
   public static final String ONBEFORE_CREATED   = "onBeforeCreate";
@@ -217,15 +217,16 @@ public class OClassTrigger extends ODocumentHookAbstract {
                 func = database.getMetadata().getFunctionLibrary().getFunction((String) funcDoc.field("name"));
               }
             } catch (Exception ex) {
-              OLogManager.instance().error(this, "illegal record id : ", ex.getMessage());
+              OLogManager.instance().error(this, "illegal record id : ", ex);
             }
           }
         }
       } else {
         final Object funcProp = iDocument.field(attr);
         if (funcProp != null) {
-          final String funcName = funcProp instanceof ODocument ? (String) ((ODocument) funcProp).field("name") : funcProp
-              .toString();
+          final String funcName = funcProp instanceof ODocument ?
+              (String) ((ODocument) funcProp).field("name") :
+              funcProp.toString();
           func = database.getMetadata().getFunctionLibrary().getFunction(funcName);
         }
       }
@@ -248,7 +249,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
       Method method = clz.getMethod(methodName, ODocument.class);
       return new Object[] { clz, method };
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "illegal class or method : " + clzName + "/" + methodName);
+      OLogManager.instance().error(this, "illegal class or method : " + clzName + "/" + methodName, ex);
       return null;
     }
   }
@@ -277,8 +278,8 @@ public class OClassTrigger extends ODocumentHookAbstract {
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
 
-    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(database.getName(),
-        func.getLanguage());
+    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager
+        .acquireDatabaseEngine(database.getName(), func.getLanguage());
     final ScriptEngine scriptEngine = entry.object;
     try {
       final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
@@ -304,8 +305,8 @@ public class OClassTrigger extends ODocumentHookAbstract {
           result = (String) invocableEngine.invokeFunction(func.getName(), EMPTY);
         }
       } catch (ScriptException e) {
-        throw OException.wrapException(
-            new OCommandScriptException("Error on execution of the script", func.getName(), e.getColumnNumber()), e);
+        throw OException
+            .wrapException(new OCommandScriptException("Error on execution of the script", func.getName(), e.getColumnNumber()), e);
       } catch (NoSuchMethodException e) {
         throw OException.wrapException(new OCommandScriptException("Error on execution of the script", func.getName(), 0), e);
       } catch (OCommandScriptException e) {
@@ -313,7 +314,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
         throw e;
 
       } finally {
-        scriptManager.unbind(scriptEngine,binding, null, null);
+        scriptManager.unbind(scriptEngine, binding, null, null);
       }
       if (result == null) {
         return RESULT.RECORD_NOT_CHANGED;

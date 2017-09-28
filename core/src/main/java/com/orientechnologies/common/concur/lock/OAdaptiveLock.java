@@ -85,7 +85,7 @@ public class OAdaptiveLock extends OAbstractLock {
                 Thread.currentThread().interrupt();
                 return;
               }
-            } catch (InterruptedException e2) {
+            } catch (InterruptedException ignore) {
               Thread.currentThread().interrupt();
             }
           }
@@ -165,15 +165,7 @@ public class OAdaptiveLock extends OAbstractLock {
 
       printWriter.flush();
       return stringWriter.toString();
-    } catch (RuntimeException e) {
-      return null;
-    } catch (NoSuchFieldException e) {
-      return null;
-    } catch (IllegalAccessException e) {
-      return null;
-    } catch (NoSuchMethodException e) {
-      return null;
-    } catch (InvocationTargetException e) {
+    } catch (RuntimeException | NoSuchFieldException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ignore) {
       return null;
     }
 

@@ -19,32 +19,39 @@
   */
 package com.orientechnologies.orient.core.command.script;
 
+import com.orientechnologies.common.log.OLogManager;
+
+import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Method;
 import java.util.*;
 
 /**
  * Script utility class
- * 
- * @see OCommandScript
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
+ * @see OCommandScript
  */
 public class OCommandExecutorUtility {
-  private static Method java8MethodIsArray;
+  private static final Method java8MethodIsArray;
+
   static {
-   try {
-     java8MethodIsArray = Class.forName("jdk.nashorn.api.scripting.JSObject").getDeclaredMethod("isArray",null);
-   } catch(Exception e) {}
+    Method isArray = null;
+
+    try {
+      isArray = Class.forName("jdk.nashorn.api.scripting.JSObject").getDeclaredMethod("isArray", null);
+    } catch (LinkageError | ClassNotFoundException | NoSuchMethodException | SecurityException ignore) {
+    }
+
+    java8MethodIsArray = isArray;
   }
+
   /**
    * Manages cross compiler compatibility issues.
-   * 
-   * @param result
-   *          Result to transform
-   * @return
+   *
+   * @param result Result to transform
    */
   public static Object transformResult(Object result) {
-    if (java8MethodIsArray == null || !(result instanceof Map)) { 
+    if (java8MethodIsArray == null || !(result instanceof Map)) {
       return result;
     }
     // PATCH BY MAT ABOUT NASHORN RETURNING VALUE FOR ARRAYS.
@@ -64,7 +71,10 @@ public class OCommandExecutorUtility {
         }
         return mapResult;
       }
-    } catch (Exception e) {}
+    } catch (Exception e) {
+      OLogManager.instance().error(OCommandExecutorUtility.class, "", e);
+    }
+
     return result;
   }
 }

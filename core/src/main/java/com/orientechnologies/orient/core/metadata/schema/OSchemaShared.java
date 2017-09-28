@@ -433,7 +433,8 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       final Integer schemaVersion = (Integer) document.field("schemaVersion");
       if (schemaVersion == null) {
         OLogManager.instance().error(this,
-            "Database's schema is empty! Recreating the system classes and allow the opening of the database but double check the integrity of the database");
+            "Database's schema is empty! Recreating the system classes and allow the opening of the database but double check the integrity of the database",
+            null);
         return;
       } else if (schemaVersion != CURRENT_VERSION_NUMBER && VERSION_NUMBER_V5 != schemaVersion) {
         // VERSION_NUMBER_V5 is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no changed associated with it

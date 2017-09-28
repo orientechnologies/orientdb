@@ -35,7 +35,7 @@ public class OConsoleStatement extends OSimpleExecStatement {
       System.out.println(msg);
     } else if (logLevel.getStringValue().equalsIgnoreCase("error")) {
       System.err.println(msg);
-      OLogManager.instance().error(this, "%s", msg);
+      OLogManager.instance().error(this, "%s", null, msg);
     } else if (logLevel.getStringValue().equalsIgnoreCase("warn")) {
       OLogManager.instance().warn(this, "%s", msg);
     } else if (logLevel.getStringValue().equalsIgnoreCase("debug")) {

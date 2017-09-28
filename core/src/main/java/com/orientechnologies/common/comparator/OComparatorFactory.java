@@ -40,7 +40,7 @@ public class OComparatorFactory {
     try {
       Class<?> sunClass = Class.forName("sun.misc.Unsafe");
       unsafeDetected = sunClass != null;
-    } catch (ClassNotFoundException cnfe) {
+    } catch (ClassNotFoundException ignore) {
       // Ignore
     }
 

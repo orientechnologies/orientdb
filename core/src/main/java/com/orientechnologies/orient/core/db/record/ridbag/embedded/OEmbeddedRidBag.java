@@ -340,7 +340,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
             sb.append(e.getIdentity());
           }
-        } catch (NoSuchElementException ex) {
+        } catch (NoSuchElementException ignore) {
           // IGNORE THIS
         }
       }

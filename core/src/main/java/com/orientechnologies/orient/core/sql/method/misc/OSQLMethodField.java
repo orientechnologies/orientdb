@@ -55,7 +55,7 @@ public class OSQLMethodField extends OAbstractSQLMethod {
         try {
           ioResult = new ODocument(new ORecordId((String) ioResult));
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
+          OLogManager.instance().error(this, "Error on reading rid with value '%s'", e, ioResult);
           ioResult = null;
         }
       } else if (ioResult instanceof OIdentifiable) {

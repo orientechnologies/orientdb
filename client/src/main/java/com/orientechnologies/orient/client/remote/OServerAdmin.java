@@ -211,7 +211,7 @@ public class OServerAdmin {
 
     if (iDatabaseName == null || iDatabaseName.length() <= 0) {
       final String message = "Cannot create unnamed remote storage. Check your syntax";
-      OLogManager.instance().error(this, message);
+      OLogManager.instance().error(this, message, null);
       throw new OStorageException(message);
     } else {
       String storageMode;

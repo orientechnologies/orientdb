@@ -131,7 +131,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
             }
 
           if (!saved)
-            OLogManager.instance().error(this, "failed to save the index manager configuration after 10 retries");
+            OLogManager.instance().error(this, "failed to save the index manager configuration after 10 retries", null);
 
           return null;
 
@@ -141,7 +141,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       }
     });
 
-    for(OMetadataUpdateListener listener: getDatabase ().getSharedContext().browseListeners()){
+    for (OMetadataUpdateListener listener : getDatabase().getSharedContext().browseListeners()) {
       listener.onIndexManagerUpdate(this);
     }
 

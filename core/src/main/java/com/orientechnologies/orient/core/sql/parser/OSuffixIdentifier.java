@@ -165,7 +165,7 @@ public class OSuffixIdentifier extends SimpleNode {
     if (iterator instanceof OResultSet) {
       try {
         ((OResultSet) iterator).reset();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
     }
     return result;

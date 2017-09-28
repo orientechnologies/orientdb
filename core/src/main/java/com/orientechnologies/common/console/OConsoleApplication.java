@@ -204,7 +204,7 @@ public class OConsoleApplication {
     OCommandStream scanner;
     try {
       scanner = new ODFACommandStream(commandFile);
-    } catch (FileNotFoundException e) {
+    } catch (FileNotFoundException ignore) {
       scanner = new ODFACommandStream(commandLine);
     }
 
@@ -398,7 +398,7 @@ public class OConsoleApplication {
       try {
         m.invoke(entry.getValue(), methodArgs);
 
-      } catch (IllegalArgumentException e) {
+      } catch (IllegalArgumentException ignore) {
         lastMethodInvoked = m;
         // GET THE COMMAND NAME
         lastCommandInvoked.setLength(0);
@@ -728,7 +728,7 @@ public class OConsoleApplication {
         result.append(line);
       }
       rd.close();
-    } catch (Exception e) {
+    } catch (Exception ignore) {
     }
     return result.toString();
   }

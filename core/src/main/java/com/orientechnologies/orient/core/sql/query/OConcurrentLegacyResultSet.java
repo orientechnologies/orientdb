@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
+import com.orientechnologies.common.log.OLogManager;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -353,6 +355,7 @@ public class OConcurrentLegacyResultSet<T> implements OLegacyResultSet<T> {
         try {
           waitForCompletion.wait();
         } catch (InterruptedException e) {
+          OLogManager.instance().error(this, "Thread was interrupted", e);
         }
     }
   }
@@ -363,6 +366,7 @@ public class OConcurrentLegacyResultSet<T> implements OLegacyResultSet<T> {
         try {
           waitForNextItem.wait();
         } catch (InterruptedException e) {
+          OLogManager.instance().error(this, "Thread was interrupted", e);
         }
     }
   }

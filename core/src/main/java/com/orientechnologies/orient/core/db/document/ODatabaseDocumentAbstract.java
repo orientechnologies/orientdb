@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -1932,7 +1933,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     checkOpenness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
-          "Only local paginated storage supports freeze. If you are using remote client please use OServerAdmin instead");
+          "Only local paginated storage supports freeze. If you are using remote client please use OServerAdmin instead", null);
 
       return;
     }
@@ -1956,7 +1957,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     checkOpenness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
-          "Only local paginated storage supports freeze. " + "If you use remote client please use OServerAdmin instead");
+          "Only local paginated storage supports freeze. " + "If you use remote client please use OServerAdmin instead", null);
 
       return;
     }
@@ -1991,7 +1992,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     checkOpenness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
-          "Only local paginated storage supports release. If you are using remote client please use OServerAdmin instead");
+          "Only local paginated storage supports release. If you are using remote client please use OServerAdmin instead", null);
       return;
     }
 
@@ -2188,6 +2189,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         try {
           edge.delete();
         } catch (Exception ex) {
+          OLogManager.instance().error(this, "Error during edge deletion", ex);
         }
         throw e;
       } catch (Throwable e) {
@@ -2195,6 +2197,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         try {
           edge.delete();
         } catch (Exception ex) {
+          OLogManager.instance().error(this, "Error during edge deletion", ex);
         }
         throw new IllegalStateException("Error on addEdge in non tx environment", e);
       }
@@ -2553,10 +2556,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       try {
         listener.onBeforeTxCommit(this);
       } catch (Exception e) {
-        rollback(force);
+        OLogManager.instance()
+            .error(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()", e,
+                listener.getClass().getName());
 
-        OLogManager.instance().error(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
-            listener.getClass().getName(), e);
+        try {
+          rollback(force);
+        } catch (Exception re) {
+          OLogManager.instance().error(this, "Exception during rollback", re);
+        }
+
         throw OException.wrapException(new OTransactionException(
             "Cannot commit the transaction: caught exception on execution of " + listener.getClass().getName()
                 + "#onBeforeTxCommit()"), e);
@@ -2565,7 +2574,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     try {
       currentTx.commit(force);
     } catch (RuntimeException e) {
-      OLogManager.instance().debug(this, "Error on transaction commit", e);
+
+      if (e instanceof OHighLevelException)
+        OLogManager.instance().debug(this, "Error on transaction commit", e);
+      else
+        OLogManager.instance().error(this, "Error on transaction commit", e);
 
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : browseListeners())
@@ -2575,8 +2588,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           OLogManager.instance().error(this, "Error before transaction rollback", t);
         }
 
-      // ROLLBACK TX AT DB LEVEL
-      ((OTransactionAbstract) currentTx).internalRollback();
+      try {
+        // ROLLBACK TX AT DB LEVEL
+        ((OTransactionAbstract) currentTx).internalRollback();
+      } catch (Exception re) {
+        OLogManager.instance().error(this, "Error during transaction rollback", re);
+      }
+
       getLocalCache().clear();
 
       // WAKE UP ROLLBACK LISTENERS
@@ -2907,7 +2925,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (s instanceof OFreezableStorageComponent)
       return (OFreezableStorageComponent) s;
     else {
-      OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation");
+      OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation", null);
       return null;
     }
   }
@@ -3107,7 +3125,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     }
   }
 
-  public void queryStarted(String id , OResultSet rs) {
+  public void queryStarted(String id, OResultSet rs) {
     this.activeQueries.put(id, rs);
   }
 

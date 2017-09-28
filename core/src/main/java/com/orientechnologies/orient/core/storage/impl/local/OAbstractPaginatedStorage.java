@@ -270,7 +270,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         try {
           performanceStatisticManager.registerMBean(name, id);
         } catch (Exception e) {
-          OLogManager.instance().error(this, "MBean for profiler cannot be registered.");
+          OLogManager.instance().error(this, "MBean for profiler cannot be registered.", e);
         }
 
         initWalAndDiskCache(contextConfiguration);
@@ -299,7 +299,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             if (c != null)
               c.close(false);
           } catch (IOException e1) {
-            OLogManager.instance().error(this, "Cannot close cluster after exception on open");
+            OLogManager.instance().error(this, "Cannot close cluster after exception on open", e);
           }
         }
 
@@ -422,7 +422,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         try {
           performanceStatisticManager.registerMBean(name, id);
         } catch (Exception e) {
-          OLogManager.instance().error(this, "MBean for profiler cannot be registered.");
+          OLogManager.instance().error(this, "MBean for profiler cannot be registered.", e);
         }
         transaction = new ThreadLocal<>();
         initWalAndDiskCache(contextConfiguration);
@@ -4636,12 +4636,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private OLogSequenceNumber restoreFromWAL() throws IOException {
     if (writeAheadLog == null) {
-      OLogManager.instance().error(this, "Restore is not possible because write ahead logging is switched off.");
+      OLogManager.instance().error(this, "Restore is not possible because write ahead logging is switched off.", null);
       return null;
     }
 
     if (writeAheadLog.begin() == null) {
-      OLogManager.instance().error(this, "Restore is not possible because write ahead log is empty.");
+      OLogManager.instance().error(this, "Restore is not possible because write ahead log is empty.", null);
       return null;
     }
 
@@ -4869,11 +4869,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     } catch (OWALPageBrokenException e) {
       OLogManager.instance()
-          .error(this, "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
+          .error(this, "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.", e);
     } catch (RuntimeException e) {
       OLogManager.instance().error(this,
           "Data restore was paused because of exception. The rest of changes will be rolled back and WAL files will be backed up."
-              + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.");
+              + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.",
+          e);
       backUpWAL(e);
     }
 
@@ -4890,7 +4891,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (!backUpDir.exists()) {
         final boolean created = backUpDir.mkdir();
         if (!created) {
-          OLogManager.instance().error(this, "Cannot create directory for backup files " + backUpDir.getAbsolutePath());
+          OLogManager.instance().error(this, "Cannot create directory for backup files " + backUpDir.getAbsolutePath(), null);
           return;
         }
       }
@@ -4903,7 +4904,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       final File archiveFile = new File(backUpDir, archiveName);
       if (!archiveFile.createNewFile()) {
-        OLogManager.instance().error(this, "Cannot create backup file " + archiveFile.getAbsolutePath());
+        OLogManager.instance().error(this, "Cannot create backup file " + archiveFile.getAbsolutePath(), null);
         return;
       }
 
@@ -5017,7 +5018,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         continue;
       } else {
         OLogManager.instance()
-            .error(this, "Invalid WAL record type was passed %s. Given record will be skipped.", walRecord.getClass());
+            .error(this, "Invalid WAL record type was passed %s. Given record will be skipped.", null, walRecord.getClass());
 
         assert false : "Invalid WAL record type was passed " + walRecord.getClass().getName();
       }
@@ -5044,7 +5045,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         try {
           if (writeCache.checkLowDiskSpace()) {
 
-            OLogManager.instance().error(this, "Not enough disk space, force sync will be called");
+            OLogManager.instance().error(this, "Not enough disk space, force sync will be called", null);
             synch();
 
             if (writeCache.checkLowDiskSpace()) {

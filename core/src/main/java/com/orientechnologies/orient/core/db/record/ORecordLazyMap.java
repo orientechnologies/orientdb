@@ -209,7 +209,7 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
               ORecordInternal.track(sourceRecord, record);
           }
           super.put(iKey, record);
-        } catch (ORecordNotFoundException e) {
+        } catch (ORecordNotFoundException ignore) {
           // IGNORE THIS
         }
       } finally {

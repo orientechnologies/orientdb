@@ -216,8 +216,8 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     }
     if (fromObject instanceof String) {
       try {
-        return Integer.parseInt((String) fromObject);
-      } catch (Exception e) {
+        return Integer.parseInt(fromObject.toString());
+      } catch (NumberFormatException ignore) {
       }
     }
     return null;

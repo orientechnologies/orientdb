@@ -146,7 +146,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
 
     try {
       traverse.setMaxDepth(Integer.parseInt(word));
-    } catch (Exception e) {
+    } catch (Exception ignore) {
       throwParsingException("Invalid " + KEYWORD_MAXDEPTH + " value set to '" + word + "' but it should be a valid long. Example: "
           + KEYWORD_MAXDEPTH + " 3000");
     }
@@ -257,7 +257,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
 
     try {
       traverse.setStrategy(OTraverse.STRATEGY.valueOf(strategyWord.toUpperCase(Locale.ENGLISH)));
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException ignore) {
       throwParsingException("Invalid " + KEYWORD_STRATEGY + ". Use one between " + Arrays.toString(OTraverse.STRATEGY.values()));
     }
     return true;

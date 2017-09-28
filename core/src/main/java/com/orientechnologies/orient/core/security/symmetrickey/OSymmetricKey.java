@@ -366,7 +366,7 @@ public class OSymmetricKey {
     try {
       result = Base64.getEncoder().encodeToString(bytes);
     } catch (Exception ex) {
-      OLogManager.instance().error(null, "convertToBase64() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(null, "convertToBase64()", ex);
     }
 
     return result;
@@ -380,7 +380,7 @@ public class OSymmetricKey {
         result = Base64.getDecoder().decode(base64.getBytes("UTF8"));
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(null, "convertFromBase64() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(null, "convertFromBase64()", ex);
     }
 
     return result;
@@ -500,7 +500,7 @@ public class OSymmetricKey {
       encodedJSON = convertToBase64(sb.toString().getBytes("UTF8"));
 
     } catch (Exception ex) {
-
+      OLogManager.instance().error(this, "Convert to Base64 exception", ex);
     }
 
     return encodedJSON;

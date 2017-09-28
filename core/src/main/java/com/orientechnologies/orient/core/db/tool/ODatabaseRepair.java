@@ -111,7 +111,7 @@ public class ODatabaseRepair extends ODatabaseTool {
                 message("\n-- updated document " + doc.getIdentity());
             }
           }
-        } catch (Exception e) {
+        } catch (Exception ignore) {
           errors++;
         }
       }

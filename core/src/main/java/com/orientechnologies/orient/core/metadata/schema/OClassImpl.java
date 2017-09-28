@@ -307,34 +307,34 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
   }
 
   protected void setSuperClassesInternal(final List<? extends OClass> classes) {
-      List<OClassImpl> newSuperClasses = new ArrayList<OClassImpl>();
-      OClassImpl cls;
-      for (OClass superClass : classes) {
-        if (superClass instanceof OClassAbstractDelegate)
-          cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
-        else
-          cls = (OClassImpl) superClass;
+    List<OClassImpl> newSuperClasses = new ArrayList<OClassImpl>();
+    OClassImpl cls;
+    for (OClass superClass : classes) {
+      if (superClass instanceof OClassAbstractDelegate)
+        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
+      else
+        cls = (OClassImpl) superClass;
 
-        if (newSuperClasses.contains(cls)) {
-          throw new OSchemaException("Duplicated superclass '" + cls.getName() + "'");
-        }
-
-        newSuperClasses.add(cls);
+      if (newSuperClasses.contains(cls)) {
+        throw new OSchemaException("Duplicated superclass '" + cls.getName() + "'");
       }
 
-      List<OClassImpl> toAddList = new ArrayList<OClassImpl>(newSuperClasses);
-      toAddList.removeAll(superClasses);
-      List<OClassImpl> toRemoveList = new ArrayList<OClassImpl>(superClasses);
-      toRemoveList.removeAll(newSuperClasses);
+      newSuperClasses.add(cls);
+    }
 
-      for (OClassImpl toRemove : toRemoveList) {
-        toRemove.removeBaseClassInternal(this);
-      }
-      for (OClassImpl addTo : toAddList) {
-        addTo.addBaseClass(this);
-      }
-      superClasses.clear();
-      superClasses.addAll(newSuperClasses);
+    List<OClassImpl> toAddList = new ArrayList<OClassImpl>(newSuperClasses);
+    toAddList.removeAll(superClasses);
+    List<OClassImpl> toRemoveList = new ArrayList<OClassImpl>(superClasses);
+    toRemoveList.removeAll(newSuperClasses);
+
+    for (OClassImpl toRemove : toRemoveList) {
+      toRemove.removeBaseClassInternal(this);
+    }
+    for (OClassImpl addTo : toAddList) {
+      addTo.addBaseClass(this);
+    }
+    superClasses.clear();
+    superClasses.addAll(newSuperClasses);
   }
 
   protected void addSuperClassInternal(ODatabaseDocumentInternal database, final OClass superClass) {
@@ -558,7 +558,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-
   @Override
   public void fromStream() {
     subclasses = null;
@@ -750,7 +749,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
     return cls;
   }
-
 
   protected void truncateClusterInternal(final String clusterName, final ODatabaseDocumentInternal database) {
     final OCluster cluster = database.getStorage().getClusterByName(clusterName);
@@ -965,8 +963,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
 
   /**
    * Truncates all the clusters the class uses.
-   *
-   * @throws IOException
    */
   public void truncate() throws IOException {
     ODatabaseDocumentInternal db = getDatabase();
@@ -1203,6 +1199,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
         try {
           c.set(OCluster.ATTRIBUTES.ENCRYPTION, iValue);
         } catch (IOException e) {
+          OLogManager.instance().error(this, "Can not set value of encryption parameter to '%s'", e, iValue);
         }
     }
   }

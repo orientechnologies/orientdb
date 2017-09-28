@@ -40,8 +40,8 @@ public class OFileUtilsJava7 {
 			Files.delete(path);
 
 			return true;
-		} catch (FileSystemException e) {
-			return false;
+    } catch (FileSystemException ignore) {
+      return false;
 		}
 	}
 }

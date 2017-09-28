@@ -128,7 +128,7 @@ public class OMultiValue {
         return Array.get(iObject, 0);
     } catch (RuntimeException e) {
       // IGNORE IT
-      OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", iObject);
+      OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", iObject, e);
     }
 
     return null;
@@ -165,7 +165,7 @@ public class OMultiValue {
         return Array.get(iObject, Array.getLength(iObject) - 1);
     } catch (RuntimeException e) {
       // IGNORE IT
-      OLogManager.instance().debug(iObject, "Error on reading the last item of the Multi-value field '%s'", iObject);
+      OLogManager.instance().debug(iObject, "Error on reading the last item of the Multi-value field '%s'", iObject, e);
     }
 
     return null;
@@ -228,7 +228,7 @@ public class OMultiValue {
       }
     } catch (RuntimeException e) {
       // IGNORE IT
-      OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", iObject);
+      OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", iObject, e);
     }
     return null;
   }
@@ -388,7 +388,7 @@ public class OMultiValue {
           sb.append(e == iObject ? "(this Collection)" : e);
           if (it.hasNext())
             sb.append(", ");
-        } catch (NoSuchElementException ex) {
+        } catch (NoSuchElementException ignore) {
           // IGNORE THIS
         }
       }
@@ -408,7 +408,7 @@ public class OMultiValue {
           sb.append(e.getValue() == iObject ? "(this Map)" : e.getValue());
           if (it.hasNext())
             sb.append(", ");
-        } catch (NoSuchElementException ex) {
+        } catch (NoSuchElementException ignore) {
           // IGNORE THIS
         }
       }

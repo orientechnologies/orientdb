@@ -84,13 +84,12 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   private final String password;
   private final int    maxPartitonSize;
   private final AtomicBoolean poolBusy      = new AtomicBoolean();
-  private int           maxPartitions = Runtime.getRuntime().availableProcessors() ;
+  private       int           maxPartitions = Runtime.getRuntime().availableProcessors();
   private final Semaphore connectionsCounter;
   private volatile ThreadLocal<PoolData> poolData = new ThreadPoolData();
   private volatile PoolPartition[] partitions;
   private volatile boolean closed     = false;
   private          boolean autoCreate = false;
-
 
   public OPartitionedDatabasePool(String url, String userName, String password) {
     this(url, userName, password, Runtime.getRuntime().availableProcessors(), -1);
@@ -297,7 +296,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         try {
           db.create();
         } catch (OStorageExistsException ex) {
-          OLogManager.instance().debug(this, "Can not create storage " + db.getStorage() + " because it already exists.");
+          OLogManager.instance().debug(this, "Can not create storage " + db.getStorage() + " because it already exists.", ex);
           db.internalOpen();
         }
       } else {
@@ -368,6 +367,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
    *
    * @param iName  Property name
    * @param iValue new value to set
+   *
    * @return The previous value if any, otherwise null
    */
   public Object setProperty(final String iName, final Object iValue) {
@@ -382,6 +382,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
    * Gets the property value.
    *
    * @param iName Property name
+   *
    * @return The previous value if any, otherwise null
    */
   public Object getProperty(final String iName) {

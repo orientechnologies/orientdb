@@ -95,17 +95,17 @@ public class OSignalHandler implements SignalHandler {
 
     try {
       listenTo("INT", iListener);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException ignore) {
       // NOT AVAILABLE
     }
     try {
       listenTo("TERM", iListener);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException ignore) {
       // NOT AVAILABLE
     }
     try {
       listenTo("TRAP", iListener);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException ignore) {
       // NOT AVAILABLE
     }
   }
@@ -116,6 +116,7 @@ public class OSignalHandler implements SignalHandler {
         // re-install the original handler we replaced
         Signal.handle(entry.getKey(), entry.getValue());
       } catch (IllegalStateException e) {
+        OLogManager.instance().error(this, "Error during reverting signal handlers to default ones", e);
         // not expected as we were able to redefine it earlier, but just in case
       }
     }

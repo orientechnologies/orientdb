@@ -270,7 +270,7 @@ public class OWALSegmentCache {
     closer.shutdown();
     try {
       if (!closer.awaitTermination(CLOSER_TIMEOUT_MIN, TimeUnit.MINUTES)) {
-        OLogManager.instance().error(this, "Can not close file " + path.getFileName());
+        OLogManager.instance().error(this, "Can not close file " + path.getFileName(), null);
       } else {
         synchronized (lockObject) {
           try {
@@ -308,7 +308,7 @@ public class OWALSegmentCache {
 
     try {
       if (!closer.awaitTermination(CLOSER_TIMEOUT_MIN, TimeUnit.MINUTES)) {
-        OLogManager.instance().error(this, "Can not delete file " + path.getFileName());
+        OLogManager.instance().error(this, "Can not delete file " + path.getFileName(), null);
       } else {
         synchronized (lockObject) {
           try {
@@ -341,7 +341,7 @@ public class OWALSegmentCache {
       long pagesCount = segChannel.size() / OWALPage.PAGE_SIZE;
 
       if (segChannel.size() % OWALPage.PAGE_SIZE > 0) {
-        OLogManager.instance().error(this, "Last WAL page was written partially, auto fix");
+        OLogManager.instance().error(this, "Last WAL page was written partially, auto fix", null);
 
         segChannel.truncate(OWALPage.PAGE_SIZE * pagesCount);
       }

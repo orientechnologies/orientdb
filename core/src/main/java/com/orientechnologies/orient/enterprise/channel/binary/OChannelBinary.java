@@ -310,7 +310,7 @@ public abstract class OChannelBinary extends OChannel implements OChannelDataInp
     final String message = "Received unread response from " + socket.getRemoteSocketAddress()
         + " probably corrupted data from the network connection. Cleared dirty data in the buffer (" + i + " bytes): ["
         + dirtyBuffer + (i > dirtyBuffer.length() ? "..." : "") + "]";
-    OLogManager.instance().error(this, message);
+    OLogManager.instance().error(this, message, null);
     throw new OIOException(message);
 
   }

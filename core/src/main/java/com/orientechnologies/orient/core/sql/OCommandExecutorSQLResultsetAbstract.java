@@ -340,7 +340,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     try {
       limit = Integer.parseInt(word);
-    } catch (Exception e) {
+    } catch (NumberFormatException ignore) {
       throwParsingException("Invalid LIMIT value setted to '" + word + "' but it should be a valid integer. Example: LIMIT 10");
     }
 
@@ -367,7 +367,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     try {
       skip = Integer.parseInt(word);
 
-    } catch (Exception e) {
+    } catch (NumberFormatException ignore) {
       throwParsingException("Invalid SKIP value setted to '" + word
           + "' but it should be a valid positive integer. Example: SKIP 10");
     }

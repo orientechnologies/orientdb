@@ -29,13 +29,13 @@ public class OFloatingPoint extends ONumber {
     if (stringValue.endsWith("F") || stringValue.endsWith("f")) {
       try {
         finalValue = Float.parseFloat(stringValue.substring(0, stringValue.length() - 1)) * sign;
-      } catch (Exception e) {
+      } catch (Exception ignore) {
         return null;//TODO NaN?
       }
     } else if (stringValue.endsWith("D") || stringValue.endsWith("d")) {
       try {
         finalValue = Double.parseDouble(stringValue.substring(0, stringValue.length() - 1)) * sign;
-      } catch (Exception e) {
+      } catch (Exception ignore) {
         return null;//TODO NaN?
       }
     } else {
@@ -46,7 +46,7 @@ public class OFloatingPoint extends ONumber {
         } else {
           finalValue = returnValue;
         }
-      } catch (Exception e) {
+      } catch (Exception ignore) {
         return null;//TODO NaN?
       }
     }

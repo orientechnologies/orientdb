@@ -104,7 +104,7 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioTest extends Abstract
   
       // gets the actual version of the record
       int actualVersion = recordServer0.getVersion();
-      OLogManager.instance().error(this, "Actual version: " + actualVersion);
+      OLogManager.instance().error(this, "Actual version: " + actualVersion, null);
   
       // sets a delay for operations on distributed storage of server0 and server1
       ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer0).getStorage()).setEventListener(new AfterRecordLockDelayer("server0", DOCUMENT_WRITE_TIMEOUT / 4));

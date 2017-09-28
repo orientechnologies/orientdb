@@ -319,13 +319,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         proxyInstance.addSuppressed((Exception) throwable);
         throw proxyInstance;
 
-      } catch (NoSuchMethodException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
-      } catch (InvocationTargetException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
-      } catch (InstantiationException e) {
-        OLogManager.instance().error(this, "Error during exception deserialization", e);
-      } catch (IllegalAccessException e) {
+      } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
         OLogManager.instance().error(this, "Error during exception deserialization", e);
       }
     }
@@ -337,8 +331,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     else
       OLogManager.instance().error(this,
           "Error during exception serialization, serialized exception is not Throwable, exception type is " + (throwable != null ?
-              throwable.getClass().getName() :
-              "null"));
+              throwable.getClass().getName() : "null"), null);
   }
 
   public void beginRequest(final byte iCommand, final OStorageRemoteSession session) throws IOException {

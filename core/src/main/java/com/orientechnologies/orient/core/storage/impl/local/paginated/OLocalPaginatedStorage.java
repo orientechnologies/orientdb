@@ -251,7 +251,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         try {
           callable.call();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on calling callback on database restore");
+          OLogManager.instance().error(this, "Error on calling callback on database restore", e);
         }
 
       open(null, null, new OContextConfiguration());
@@ -438,7 +438,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           if (!dbDir.delete())
             OLogManager.instance().error(this,
                 "Cannot delete storage directory with path " + dbDir.getAbsolutePath() + " because directory is not empty. Files: "
-                    + Arrays.toString(dbDir.listFiles()));
+                    + Arrays.toString(dbDir.listFiles()), null);
           return;
         }
       } else

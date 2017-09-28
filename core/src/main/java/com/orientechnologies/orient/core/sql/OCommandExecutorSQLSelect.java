@@ -604,7 +604,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           try {
             applyGroupBy(record, iContext);
             resultQueue.put(new AsyncResult(record, iContext));
-          } catch (InterruptedException e) {
+          } catch (InterruptedException ignore) {
             Thread.interrupted();
             return false;
           }
@@ -1731,7 +1731,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
         }
 
-      } catch (InterruptedException e) {
+      } catch (InterruptedException ignore) {
         Thread.interrupted();
         cancelQuery = true;
         break;
@@ -1751,7 +1751,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         try {
           jobs.get(i).get();
           context.merge(contexts[i]);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignore) {
           break;
         } catch (final ExecutionException e) {
           OLogManager.instance().error(this, "Error on executing parallel query", e);

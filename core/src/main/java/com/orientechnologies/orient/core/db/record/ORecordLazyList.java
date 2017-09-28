@@ -292,7 +292,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     for (int i = 0; i < size(); ++i) {
       try {
         convertLink2Record(i);
-      } catch (ORecordNotFoundException e) {
+      } catch (ORecordNotFoundException ignore) {
         // LEAVE THE RID DIRTY
       }
     }
@@ -310,7 +310,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
       try {
         if (!convertRecord2Link(i))
           allConverted = false;
-      } catch (ORecordNotFoundException e) {
+      } catch (ORecordNotFoundException ignore) {
         // LEAVE THE RID DIRTY
       }
     }
@@ -393,7 +393,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
         }
         super.set(iIndex, record);
 
-      } catch (ORecordNotFoundException e) {
+      } catch (ORecordNotFoundException ignore) {
         // IGNORE THIS
       } finally {
         marshalling = false;
@@ -422,7 +422,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
           super.set(iIndex, ((ORecord) o).getIdentity());
           // CONVERTED
           return true;
-        } catch (ORecordNotFoundException e) {
+        } catch (ORecordNotFoundException ignore) {
           // IGNORE THIS
         } finally {
           marshalling = false;

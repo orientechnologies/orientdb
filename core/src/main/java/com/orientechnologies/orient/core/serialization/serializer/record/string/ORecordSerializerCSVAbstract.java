@@ -181,7 +181,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           return new ORecordId(linkAsString);
         } catch (IllegalArgumentException e) {
           OLogManager.instance()
-              .error(this, "Error on unmarshalling field '%s' of record '%s': value '%s' is not a link", iName, iSourceRecord,
+              .error(this, "Error on unmarshalling field '%s' of record '%s': value '%s' is not a link", e, iName, iSourceRecord,
                   linkAsString);
           return new ORecordId();
         }

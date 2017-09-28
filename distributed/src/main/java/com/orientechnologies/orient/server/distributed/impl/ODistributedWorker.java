@@ -339,7 +339,7 @@ public class ODistributedWorker extends Thread {
             origin = null;
 
         } catch (Throwable ex) {
-          OLogManager.instance().error(this, "Failed on user switching database. " + ex.getMessage());
+          OLogManager.instance().error(this, "Failed on user switching database. ", ex);
         }
       }
 

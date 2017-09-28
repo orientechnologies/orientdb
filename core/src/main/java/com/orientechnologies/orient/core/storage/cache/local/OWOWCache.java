@@ -1386,7 +1386,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
           throw new OWriteCacheException("Background data flush task cannot be stopped.");
       } catch (InterruptedException e) {
-        OLogManager.instance().error(this, "Data flush thread was interrupted");
+        OLogManager.instance().error(this, "Data flush thread was interrupted", e);
 
         Thread.interrupted();
         throw OException.wrapException(new OWriteCacheException("Data flush thread was interrupted"), e);
@@ -1623,7 +1623,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
           throw new OWriteCacheException("Background data flush task cannot be stopped.");
       } catch (InterruptedException e) {
-        OLogManager.instance().error(this, "Data flush thread was interrupted");
+        OLogManager.instance().error(this, "Data flush thread was interrupted", e);
 
         Thread.interrupted();
         throw OException.wrapException(new OInterruptedException("Data flush thread was interrupted"), e);
@@ -2184,7 +2184,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     if (magicNumber != MAGIC_NUMBER_WITH_CHECKSUM) {
       if (magicNumber != MAGIC_NUMBER_WITHOUT_CHECKSUM) {
         final String message = "Magic number verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
-        OLogManager.instance().error(this, "%s", message);
+        OLogManager.instance().error(this, "%s", null, message);
 
         if (checksumMode == OChecksumMode.StoreAndThrow) {
           if (buffersToRelease == null)
@@ -2212,7 +2212,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     if (computedChecksum != storedChecksum) {
       final String message = "Checksum verification failed for page `" + pageIndex + "` of `" + fileNameById(fileId) + "`.";
-      OLogManager.instance().error(this, "%s", message);
+      OLogManager.instance().error(this, "%s", null, message);
       if (checksumMode == OChecksumMode.StoreAndThrow) {
         if (buffersToRelease == null)
           bufferPool.release(buffer);

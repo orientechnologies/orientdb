@@ -172,7 +172,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
                 OFileUtils.getSizeAsString(totalSpaceInMB)));
         return buffer.toString();
       }
-    } catch (Exception e) {
+    } catch (Exception ignore) {
       // Nothing to do. Proceed with default output
     }
 

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -138,12 +139,12 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       baseUrl += "/";
     OrientDBInternal factory;
     synchronized (embedded) {
-      factory = (OrientDBEmbedded) embedded.get(baseUrl);
+      factory = embedded.get(baseUrl);
       if (factory == null || !factory.isOpen()) {
         try {
           factory = OrientDBInternal.distributed(baseUrl, config);
-        } catch (ODatabaseException ex) {
-          factory = (OrientDBEmbedded) OrientDBInternal.embedded(baseUrl, config);
+        } catch (ODatabaseException ignore) {
+          factory = OrientDBInternal.embedded(baseUrl, config);
         }
         embedded.put(baseUrl, factory);
       }
@@ -152,8 +153,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   /**
-   * @param url
-   *
    * @Deprecated use {{@link OrientDB}} instead.
    */
   @Deprecated
@@ -644,7 +643,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         // OK
         break;
 
-      } catch (ONeedRetryException e) {
+      } catch (ONeedRetryException ignore) {
         // RETRY
         if (!outDocumentModified)
           outDocument.reload();
@@ -655,6 +654,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         try {
           edge.delete();
         } catch (Exception ex) {
+          OLogManager.instance().error(this, "Error during edge deletion", ex);
         }
         throw e;
       } catch (Throwable e) {
@@ -662,6 +662,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         try {
           edge.delete();
         } catch (Exception ex) {
+          OLogManager.instance().error(this, "Error during edge deletion", ex);
         }
         throw new IllegalStateException("Error on addEdge in non tx environment", e);
       }

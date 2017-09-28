@@ -207,7 +207,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       try {
         removeValuesContainer();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during deletion of index '%s'", name);
+        OLogManager.instance().error(this, "Error during deletion of index '%s'", e, name);
       }
 
       final Boolean durableInNonTxMode = isDurableInNonTxMode();
@@ -433,7 +433,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         if (indexId >= 0)
           storage.deleteIndexEngine(indexId);
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during index '%s' delete", name);
+        OLogManager.instance().error(this, "Error during index '%s' delete", e, name);
       }
 
       removeValuesContainer();

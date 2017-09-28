@@ -1079,7 +1079,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       return new OShutdownResponse();
     }
 
-    OLogManager.instance().error(this, "Authentication error of remote client: shutdown is aborted.");
+    OLogManager.instance().error(this, "Authentication error of remote client: shutdown is aborted.", null);
 
     throw new OSecurityAccessException("Invalid user/password to shutdown the server");
   }

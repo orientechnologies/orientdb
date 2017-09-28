@@ -115,7 +115,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
     try {
       timeoutMs = Long.parseLong(word);
-    } catch (Exception e) {
+    } catch (NumberFormatException ignore) {
       throwParsingException("Invalid " + KEYWORD_TIMEOUT + " value set to '" + word + "' but it should be a valid long. Example: "
           + KEYWORD_TIMEOUT + " 3000");
     }

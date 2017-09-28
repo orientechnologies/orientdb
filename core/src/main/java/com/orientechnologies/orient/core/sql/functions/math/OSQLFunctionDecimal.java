@@ -70,7 +70,7 @@ public class OSQLFunctionDecimal extends OSQLFunctionMathAbstract {
         result = new BigDecimal((String) inputValue);
       }
 
-    } catch (Exception e) {
+    } catch (Exception ignore) {
       result = null;
     }
     return getResult();

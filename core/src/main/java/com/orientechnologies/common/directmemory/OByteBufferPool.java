@@ -598,7 +598,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
         if (release != null)
           builder.append("released from: ").append('\n').append(getStackTraceAsString(release)).append('\n');
 
-        OLogManager.instance().error(this, builder.toString());
+        OLogManager.instance().error(this, builder.toString(), null);
       }
     }
   }

@@ -242,10 +242,12 @@ public abstract class AbstractServerClusterTest {
 
   protected void banner(final String iMessage) {
     OLogManager.instance()
-        .error(this, "**********************************************************************************************************");
-    OLogManager.instance().error(this, iMessage);
+        .error(this, "**********************************************************************************************************",
+            null);
+    OLogManager.instance().error(this, iMessage, null);
     OLogManager.instance()
-        .error(this, "**********************************************************************************************************");
+        .error(this, "**********************************************************************************************************",
+            null);
   }
 
   protected void log(final String iMessage) {
@@ -328,8 +330,6 @@ public abstract class AbstractServerClusterTest {
 
   /**
    * Create the database on first node only
-   *
-   * @throws IOException
    */
   protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase) throws Exception {
     // CREATE THE DATABASE
@@ -428,7 +428,7 @@ public abstract class AbstractServerClusterTest {
         != status) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
+        OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
         break;
       }
 
@@ -445,7 +445,7 @@ public abstract class AbstractServerClusterTest {
     while (serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
+        OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
         break;
       }
 
@@ -462,7 +462,7 @@ public abstract class AbstractServerClusterTest {
     while (!serverInstance.get(fromServerId).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance().error(this, "TIMEOUT on waitForDatabaseIsOnline condition (timeout=" + timeout + ")");
+        OLogManager.instance().error(this, "TIMEOUT on waitForDatabaseIsOnline condition (timeout=" + timeout + ")", null);
         break;
       }
 
@@ -488,7 +488,7 @@ public abstract class AbstractServerClusterTest {
           }
 
           if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-            OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
+            OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
             break;
           }
 

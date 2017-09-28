@@ -86,8 +86,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
         } catch (OSecurityAccessException e) {
           // WRONG USER/PASSWD
         } catch (OLockException e) {
-          OLogManager.instance()
-              .error(this, "Cannot access to the database '" + iRequest.databaseName + "'", ODatabaseException.class, e);
+          OLogManager.instance().error(this, "Cannot access to the database '" + iRequest.databaseName + "'", e);
         } finally {
           if (db != null) {
             db.close();
@@ -123,7 +122,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     } catch (OSecurityAccessException e) {
       // WRONG USER/PASSWD
     } catch (OLockException e) {
-      OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
+      OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", e);
     } finally {
       if (db != null) {
         db.close();

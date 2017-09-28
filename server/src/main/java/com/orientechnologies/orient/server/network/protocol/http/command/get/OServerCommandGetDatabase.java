@@ -220,7 +220,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
           try {
             cluster = db.getStorage().getClusterById(db.getClusterIdByName(clusterName));
           } catch (IllegalArgumentException e) {
-            OLogManager.instance().error(this, "Cluster '%s' does not exist in database", clusterName);
+            OLogManager.instance().error(this, "Cluster '%s' does not exist in database", e, clusterName);
             continue;
           }
 

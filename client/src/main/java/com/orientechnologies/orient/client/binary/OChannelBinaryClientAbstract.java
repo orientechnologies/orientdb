@@ -270,7 +270,8 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
     // WRAP IT
     else
       OLogManager.instance().error(this,
-          "Error during exception serialization, serialized exception is not Throwable, exception type is "
-              + (throwable != null ? throwable.getClass().getName() : "null"));
+          "Error during exception serialization, serialized exception is not Throwable, exception type is " + (throwable != null ?
+              throwable.getClass().getName() :
+              "null"), null);
   }
 }

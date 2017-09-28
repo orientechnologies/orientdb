@@ -30,7 +30,7 @@ public class OCallableUtils {
   public static void executeIgnoringAnyExceptions(final OCallableNoParamNoReturn callback) {
     try {
       callback.call();
-    } catch (Exception e) {
+    } catch (Exception ignore) {
       // IGNORE IT ON PURPOSE
     }
   }

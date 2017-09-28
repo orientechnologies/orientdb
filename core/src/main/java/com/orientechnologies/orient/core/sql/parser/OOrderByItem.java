@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -100,6 +101,7 @@ public class OOrderByItem {
       try {
         result = ((Comparable) aVal).compareTo(bVal);
       } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during comparision", e);
         result = 0;
       }
     }

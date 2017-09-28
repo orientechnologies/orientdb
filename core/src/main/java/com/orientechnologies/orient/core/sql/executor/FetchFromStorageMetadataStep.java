@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
@@ -133,6 +134,7 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
         try {
           item.setProperty("encryption", cluster.encryption());
         } catch (Exception e) {
+          OLogManager.instance().error(this, "Can not set value of encryption parameter", e);
         }
         result.add(item);
       }
