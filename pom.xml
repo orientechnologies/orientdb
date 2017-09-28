@@ -3,191 +3,281 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
 
-    <groupId>com.orientechnologies</groupId>
-    <artifactId>orientdb-studio</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+  <groupId>com.orientechnologies</groupId>
+  <artifactId>orientdb-studio</artifactId>
+  <version>3.0.0-SNAPSHOT</version>
 
-    <name>OrientDB Studio</name>
-    <description>OrientDB Studio - web interface for OrientDB server</description>
-    <url>http://www.orientdb.com</url>
+  <name>OrientDB Studio</name>
+  <description>OrientDB Studio - web interface for OrientDB server</description>
+  <url>http://www.orientdb.com</url>
 
-    <organization>
-        <name>OrientDB</name>
-        <url>https://orientdb.com</url>
-    </organization>
-    <licenses>
-        <license>
-            <name>Apache 2</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
+  <organization>
+    <name>OrientDB</name>
+    <url>https://orientdb.com</url>
+  </organization>
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
 
-    <scm>
-        <connection>scm:git:git@github.com:orientechnologies/orientdb-studio.git</connection>
-        <developerConnection>scm:git:git@github.com:orientechnologies/orientdb-studio.git</developerConnection>
-        <url>scm:git:git@github.com:orientechnologies/orientdb-studio.git</url>
-    </scm>
-    <issueManagement>
-        <system>GitHub Issues</system>
-        <url>https://github.com/orientechnologies/orientdb-studio/issues</url>
-    </issueManagement>
+  <scm>
+    <connection>scm:git:git@github.com:orientechnologies/orientdb-studio.git</connection>
+    <developerConnection>scm:git:git@github.com:orientechnologies/orientdb-studio.git</developerConnection>
+    <url>scm:git:git@github.com:orientechnologies/orientdb-studio.git</url>
+  </scm>
+  <issueManagement>
+    <system>GitHub Issues</system>
+    <url>https://github.com/orientechnologies/orientdb-studio/issues</url>
+  </issueManagement>
 
 
-    <developers>
-        <developer>
-            <id>l.garulli</id>
-            <name>Luca Garulli</name>
-            <email>l.garulli@orientdb.com</email>
-            <organization>OrientDB</organization>
-            <organizationUrl>https://www.orientdb.com</organizationUrl>
-            <roles>
-                <role>architect</role>
-                <role>developer</role>
-                <role>founder</role>
-            </roles>
-            <timezone>+1</timezone>
-        </developer>
-        <developer>
-            <id>e.risa</id>
-            <name>Enrico Risa</name>
-            <email>e.risa@orientdb.com</email>
-            <organization>OrientDB</organization>
-            <organizationUrl>https://www.orientdb.com</organizationUrl>
-            <roles>
-                <role>architect</role>
-                <role>developer</role>
-            </roles>
-            <timezone>+1</timezone>
-        </developer>
-    </developers>
-    <distributionManagement>
-        <repository>
-            <id>sonatype-nexus-staging</id>
-            <name>OrientDB Maven2 Repository</name>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-        </repository>
-        <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <name>OrientDB Maven2 Snapshot Repository</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <uniqueVersion>false</uniqueVersion>
-        </snapshotRepository>
-    </distributionManagement>
-    <repositories>
-        <repository>
-            <id>sonatype-nexus-snapshots</id>
-            <name>Sonatype Nexus Snapshots</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-    <build>
+  <developers>
+    <developer>
+      <id>l.garulli</id>
+      <name>Luca Garulli</name>
+      <email>l.garulli@orientdb.com</email>
+      <organization>OrientDB</organization>
+      <organizationUrl>https://www.orientdb.com</organizationUrl>
+      <roles>
+        <role>architect</role>
+        <role>developer</role>
+        <role>founder</role>
+      </roles>
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+      <id>e.risa</id>
+      <name>Enrico Risa</name>
+      <email>e.risa@orientdb.com</email>
+      <organization>OrientDB</organization>
+      <organizationUrl>https://www.orientdb.com</organizationUrl>
+      <roles>
+        <role>architect</role>
+        <role>developer</role>
+      </roles>
+      <timezone>+1</timezone>
+    </developer>
+  </developers>
+  <distributionManagement>
+    <repository>
+      <id>sonatype-nexus-staging</id>
+      <name>OrientDB Maven2 Repository</name>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+    </repository>
+    <snapshotRepository>
+      <id>sonatype-nexus-snapshots</id>
+      <name>OrientDB Maven2 Snapshot Repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <uniqueVersion>false</uniqueVersion>
+    </snapshotRepository>
+  </distributionManagement>
+  <repositories>
+    <repository>
+      <id>sonatype-nexus-snapshots</id>
+      <name>Sonatype Nexus Snapshots</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  <build>
 
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.8</version>
+        <executions>
+          <execution>
+            <id>unzip-community</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}</outputDirectory>
+              <stripVersion>true</stripVersion>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.orientechnologies</groupId>
+                  <artifactId>orientdb-community</artifactId>
+                  <version>${project.version}</version>
+                  <overWrite>true</overWrite>
+                  <type>zip</type>
+                </artifactItem>
+              </artifactItems>
+              <excludes>**/*orientdb-studio-*.zip</excludes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.0.2</version>
+        <executions>
+          <execution>
+            <id>copy-studio</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/orientdb-community-${project.version}/plugins
+              </outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.build.directory}</directory>
+                  <includes>
+                    <include>orientdb-studio-${project.version}.zip</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+
+        <!-- Build the front end -->
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.4.0</version>
+        <executions>
+          <execution>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>Run OrientB</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <phase>pre-integration-test</phase>
+            <configuration>
+              <executable>test/scripts/run.sh</executable>
+              <arguments>
+                <argument>${project.build.directory}/orientdb-community-${project.version}/bin/server.sh</argument>
+                <argument>-DORIENTDB_ROOT_PASSWORD=root</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>Stop OrientB</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <phase>post-integration-test</phase>
+            <configuration>
+              <executable>test/scripts/stop.sh</executable>
+              <arguments>
+                <argument>${project.build.directory}/orientdb-community-${project.version}/bin/shutdown.sh</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>npm run test (test)</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <phase>integration-test</phase>
+            <configuration>
+              <executable>test/scripts/test.sh</executable>
+            </configuration>
+          </execution>
+        </executions>
+        <configuration>
+          <executable>yarn</executable>
+          <arguments>
+            <argument>run</argument>
+            <argument>dist</argument>
+          </arguments>
+          <workingDirectory>.</workingDirectory>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <!--<version>2.4</version>-->
+        <executions>
+          <execution>
+            <id>distribution-package</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <appendAssemblyId>false</appendAssemblyId>
+              <descriptors>
+                <descriptor>${basedir}/assembly/archive.xml</descriptor>
+              </descriptors>
+              <filters>
+                <filter></filter>
+              </filters>
+              <ignoreDirFormatExtensions>false</ignoreDirFormatExtensions>
+              <tarLongFileMode>gnu</tarLongFileMode>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.4</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.10.4</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.8.2</version>
+      </plugin>
+    </plugins>
+  </build>
+
+
+  <profiles>
+    <profile>
+      <id>release-sign-artifacts</id>
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
         <plugins>
-
-            <plugin>
-
-                <!-- Build the front end -->
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.4.0</version>
-                <executions>
-                    <execution>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <executable>yarn</executable>
-                    <arguments>
-                        <argument>run</argument>
-                        <argument>dist</argument>
-                    </arguments>
-                    <workingDirectory>.</workingDirectory>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <!--<version>2.4</version>-->
-                <executions>
-                    <execution>
-                        <id>distribution-package</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <appendAssemblyId>false</appendAssemblyId>
-                            <descriptors>
-                                <descriptor>${basedir}/assembly/archive.xml</descriptor>
-                            </descriptors>
-                            <filters>
-                                <filter></filter>
-                            </filters>
-                            <ignoreDirFormatExtensions>false</ignoreDirFormatExtensions>
-                            <tarLongFileMode>gnu</tarLongFileMode>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.4</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.4</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.2</version>
-            </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
-    </build>
+      </build>
+    </profile>
 
-
-    <profiles>
-        <profile>
-            <id>release-sign-artifacts</id>
-            <activation>
-                <property>
-                    <name>performRelease</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-    </profiles>
+  </profiles>
 </project>
