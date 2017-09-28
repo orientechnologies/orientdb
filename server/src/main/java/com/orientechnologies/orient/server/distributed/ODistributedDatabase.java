@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -114,7 +115,7 @@ public interface ODistributedDatabase {
 
   ODistributedTxContext registerTxContext(ODistributedRequestId reqId);
 
-  ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, OTransaction ctx);
+  ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, OTransactionOptimistic ctx);
 
   ODistributedTxContext popTxContext(ODistributedRequestId requestId);
 

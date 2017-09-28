@@ -3,13 +3,11 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -495,77 +493,20 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 
-  public List<ORecordOperation> commit(final OTransaction iTx) {
-    final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
-    ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
-    final String localNodeName = dManager.getLocalNodeName();
-    getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
-    ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
-        getStorageDistributed().getLocalDistributedDatabase());
+  @Override
+  public void internalCommit(OTransactionOptimistic iTx) {
+    //This is future may handle a retry
     try {
-      // EXECUTE DISTRIBUTED TX
-      int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
-      if (maxAutoRetry <= 0)
-        maxAutoRetry = 1;
+      final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
+      ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
+      final String localNodeName = dManager.getLocalNodeName();
+      getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
+      ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
+          getStorageDistributed().getLocalDistributedDatabase());
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(iTx);
 
-      int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
-      if (autoRetryDelay <= 0)
-        autoRetryDelay = 1;
-
-      Throwable lastException = null;
-      for (int retry = 1; retry <= maxAutoRetry; ++retry) {
-
-        try {
-
-          final List<ORecordOperation> result = txManager
-              .commit(this, (OTransactionOptimistic) iTx, null, getStorageDistributed().getEventListener());
-
-          if (result != null) {
-            for (ORecordOperation r : result) {
-              // UPDATE LOCAL CONTENT IN LOCKS TO ASSURE READ MY WRITES IF THE REQUEST IS STILL RUNNING
-              getStorageDistributed().getLocalDistributedDatabase()
-                  .replaceRecordContentIfLocked(r.getRID(), r.getRecord().toStream());
-            }
-          }
-
-          return result;
-
-        } catch (Throwable e) {
-          lastException = e;
-
-          if (retry >= maxAutoRetry) {
-            // REACHED MAX RETRIES
-            ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
-            break;
-          }
-
-          // SKIP RETRY IN CASE OF OConcurrentModificationException BECAUSE IT NEEDS A RETRY AT APPLICATION LEVEL
-          if (!(e instanceof OConcurrentModificationException) && (e instanceof ONeedRetryException
-              || e instanceof ORecordNotFoundException)) {
-            // RETRY
-            final long wait = autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay);
-
-            ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                "Distributed transaction cannot be completed, wait %dms and retry again (%d/%d)", wait, retry, maxAutoRetry);
-
-            Thread.sleep(wait);
-
-            Orient.instance().getProfiler()
-                .updateCounter("db." + getName() + ".distributedTxRetries", "Number of retries executed in distributed transaction",
-                    +1, "db.*.distributedTxRetries");
-
-          } else
-            // SKIP RETRY LOOP
-            break;
-        }
-      }
-
-      if (lastException instanceof RuntimeException)
-        throw (RuntimeException) lastException;
-      else
-        throw OException.wrapException(new ODistributedException("Error on executing distributed transaction"), lastException);
-
+      txManager.commit(this, iTx, getStorageDistributed().getEventListener());
+      return;
     } catch (OValidationException e) {
       throw e;
     } catch (HazelcastInstanceNotActiveException e) {
@@ -573,12 +514,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     } catch (HazelcastException e) {
       throw new OOfflineNodeException("Hazelcast instance is not available");
-
     } catch (Exception e) {
       getStorageDistributed().handleDistributedException("Cannot route TX operation against distributed node", e);
     }
 
-    return null;
+    return;
   }
 
   public void acquireLocksForTx(OTransactionRealAbstract tx, ODistributedTxContext txContext) {
@@ -593,7 +533,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     Set<Object> keys = new TreeSet<>();
     for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexEntries().entrySet()) {
       OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
-      if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType())) {
+      if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
+          .equals(index.getType()) || OClass.INDEX_TYPE.DICTIONARY.name().equals(index.getType())
+          || OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(index.getType())) {
         for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
           keys.add(changesPerKey.key);
         }
@@ -613,7 +555,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
       for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexEntries().entrySet()) {
         OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
-        if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType())) {
+        if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
+            .equals(index.getType())) {
           for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
             OIdentifiable old;
             if ((old = (OIdentifiable) index.get(changesPerKey.key)) != null) {
@@ -645,10 +588,24 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
+  /**
+   * The Local commit is different from a remote commit due to local rid pre-allocation
+   *
+   * @param transactionId
+   */
+  public void commit2pcLocal(ODistributedRequestId transactionId) {
+    ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
+    ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
+    ((OAbstractPaginatedStorage) getStorage().getUnderlying()).commitPreAllocated(getTransaction());
+    txContext.destroy();
+  }
+
   public void commit2pc(ODistributedRequestId transactionId) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
-    txContext.commit(this);
+    OTransactionOptimistic tx = txContext.getTransaction();
+    //This bypass the distributed layer and do a low level commit
+    super.internalCommit(tx);
     txContext.destroy();
   }
 

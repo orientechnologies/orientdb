@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -18,12 +20,12 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   private final ODistributedDatabaseImpl shared;
   private final ODistributedRequestId    id;
-  private final OTransaction             tx;
+  private final OTransactionOptimistic   tx;
   private final long                     startedOn;
   private final List<ORID>   lockedRids = new ArrayList<>();
   private final List<Object> lockedKeys = new ArrayList<>();
 
-  public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransaction tx) {
+  public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransactionOptimistic tx) {
     this.shared = shared;
     this.id = reqId;
     this.tx = tx;
@@ -33,7 +35,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void lockIndexKey(Object key) {
-    shared.getIndexKeyLockManager().acquireExclusiveLock(key);
+    shared.getIndexKeyLockManager().acquireSharedLock(key);
     lockedKeys.add(key);
   }
 
@@ -111,4 +113,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     return false;
   }
 
+  @Override
+  public OTransactionOptimistic getTransaction() {
+    return tx;
+  }
 }
