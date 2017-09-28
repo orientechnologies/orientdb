@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -773,10 +774,8 @@ public class OMathExpression extends SimpleNode {
   /**
    * tests if current expression is an indexed funciton AND that function can also be executed without using the index
    *
-   * @param target   the query target
-   * @param context  the execution context
-   * @param operator
-   * @param right
+   * @param target  the query target
+   * @param context the execution context
    *
    * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false
    * otherwise
@@ -792,10 +791,8 @@ public class OMathExpression extends SimpleNode {
   /**
    * tests if current expression is an indexed function AND that function can be used on this target
    *
-   * @param target   the query target
-   * @param context  the execution context
-   * @param operator
-   * @param right
+   * @param target  the query target
+   * @param context the execution context
    *
    * @return true if current expression is an indexed function AND that function can be used on this target, false otherwise
    */
@@ -994,7 +991,7 @@ public class OMathExpression extends SimpleNode {
       result.deserialize(fromResult);
       return result;
     } catch (Exception e) {
-      throw new OCommandExecutionException("");
+      throw OException.wrapException(new OCommandExecutionException(""), e);
     }
 
   }

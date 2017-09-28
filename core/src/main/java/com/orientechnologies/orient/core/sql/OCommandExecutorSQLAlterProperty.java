@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -101,22 +102,22 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
       try {
         attribute = OProperty.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
       } catch (IllegalArgumentException e) {
-        throw new OCommandSQLParsingException("Unknown property attribute '" + attributeAsString + "'. Supported attributes are: "
-            + Arrays.toString(OProperty.ATTRIBUTES.values()), parserText, oldPos);
+        throw OException.wrapException(new OCommandSQLParsingException(
+            "Unknown property attribute '" + attributeAsString + "'. Supported attributes are: " + Arrays
+                .toString(OProperty.ATTRIBUTES.values()), parserText, oldPos), e);
       }
 
       value = parserText.substring(pos + 1).trim();
-      if(attribute.equals(ATTRIBUTES.NAME) ||attribute.equals(ATTRIBUTES.LINKEDCLASS)){
+      if (attribute.equals(ATTRIBUTES.NAME) || attribute.equals(ATTRIBUTES.LINKEDCLASS)) {
         value = decodeClassName(value);
       }
 
       if (value.length() == 0) {
-        throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
-            + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Missing property value to change for attribute '" + attribute + "'. Use " + getSyntax(), parserText, oldPos);
       }
 
-
-      if(preParsedStatement != null) {
+      if (preParsedStatement != null) {
         OExpression settingExp = ((OAlterPropertyStatement) preParsedStatement).settingValue;
         if (settingExp != null) {
           Object expValue = settingExp.execute((OIdentifiable) null, context);
@@ -132,7 +133,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
             value = decodeClassName(value);
           }
         }
-      }else {
+      } else {
         if (value.equalsIgnoreCase("null")) {
           value = null;
         }
@@ -150,7 +151,6 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
     s = s.trim();
     return s.substring(1, s.length() - 1).replaceAll("\\\\\"", "\"");
   }
-
 
   private boolean isQuoted(String s) {
     s = s.trim();
@@ -189,7 +189,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
     if (prop == null)
       throw new OCommandExecutionException("Property '" + className + "." + fieldName + "' not exists");
 
-    if("null".equalsIgnoreCase(value))
+    if ("null".equalsIgnoreCase(value))
       prop.set(attribute, null);
     else
       prop.set(attribute, value);

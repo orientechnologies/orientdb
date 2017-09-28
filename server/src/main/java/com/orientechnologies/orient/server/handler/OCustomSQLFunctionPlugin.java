@@ -89,7 +89,8 @@ public class OCustomSQLFunctionPlugin extends OServerPluginAbstract {
           Class functionsClass = Class.forName(clazz);
           OCustomSQLFunctionFactory.register(prefix + PREFIX_NAME_SEPARATOR, functionsClass);
         } catch (ClassNotFoundException e) {
-          throw new OConfigurationException("Unable to load class " + clazz + " for custom functions with prefix " + prefix);
+          throw OException.wrapException(
+              new OConfigurationException("Unable to load class " + clazz + " for custom functions with prefix " + prefix), e);
         }
 
       }

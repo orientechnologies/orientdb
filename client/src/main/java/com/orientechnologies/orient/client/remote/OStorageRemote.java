@@ -334,7 +334,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       try {
         Thread.sleep(connectionRetryDelay);
       } catch (InterruptedException e1) {
-        throw OException.wrapException(new OInterruptedException(e1.getMessage()), e);
+        OLogManager.instance().error(this, "Exception was suppressed, original exception is ", e);
+        throw OException.wrapException(new OInterruptedException(e1.getMessage()), e1);
       }
     }
     return retry;

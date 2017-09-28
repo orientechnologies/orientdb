@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.sql.functions.misc;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
@@ -100,9 +102,10 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
     try {
       return method.invoke(null, iParams);
     } catch (ReflectiveOperationException e) {
-      e.printStackTrace();
-      throw new OQueryParsingException("Error executing function " + name + paramsPrettyPrint.get());
+      throw OException.wrapException(new OQueryParsingException("Error executing function " + name + paramsPrettyPrint.get()), e);
     } catch (IllegalArgumentException x) {
+      OLogManager.instance().error(this, "Error executing function %s", name, x);
+
       return null; //if a function fails for given input, just return null to avoid breaking the query execution
     }
 

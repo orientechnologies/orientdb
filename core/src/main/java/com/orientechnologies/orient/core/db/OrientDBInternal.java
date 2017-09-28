@@ -87,8 +87,9 @@ public interface OrientDBInternal extends AutoCloseable {
       Constructor<?> constructor = kass.getConstructor(String[].class, OrientDBConfig.class, Orient.class);
       factory = (OrientDBInternal) constructor.newInstance(hosts, configuration, Orient.instance());
     } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
-      throw new ODatabaseException("OrientDB client API missing");
+      throw OException.wrapException(new ODatabaseException("OrientDB client API missing"), e);
     } catch (InvocationTargetException e) {
+      //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw OException.wrapException(new ODatabaseException("Error creating OrientDB remote factory"), e.getTargetException());
     }
     return factory;
@@ -121,8 +122,9 @@ public interface OrientDBInternal extends AutoCloseable {
       Constructor<?> constructor = kass.getConstructor(String.class, OrientDBConfig.class, Orient.class);
       factory = (OrientDBInternal) constructor.newInstance(directoryPath, configuration, Orient.instance());
     } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
-      throw new ODatabaseException("OrientDB distributed API missing");
+      throw OException.wrapException(new ODatabaseException("OrientDB distributed API missing"), e);
     } catch (InvocationTargetException e) {
+      //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw OException.wrapException(new ODatabaseException("Error creating OrientDB remote factory"), e.getTargetException());
     }
     return factory;
@@ -232,13 +234,6 @@ public interface OrientDBInternal extends AutoCloseable {
 
   /**
    * Internal api for request to open a database with a pool
-   *
-   * @param name
-   * @param user
-   * @param password
-   * @param pool
-   *
-   * @return
    */
   ODatabaseDocumentInternal poolOpen(String name, String user, String password, ODatabasePoolInternal pool);
 
@@ -259,15 +254,11 @@ public interface OrientDBInternal extends AutoCloseable {
 
   /**
    * Internal API for pool close
-   *
-   * @param toRemove
    */
   void removePool(ODatabasePoolInternal toRemove);
 
   /**
    * Check if the current instance is open
-   *
-   * @return
    */
   boolean isOpen();
 

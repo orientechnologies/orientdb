@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.builder;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
 import com.orientechnologies.lucene.parser.OLuceneMultiFieldQueryParser;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -125,6 +126,9 @@ public class OLuceneQueryBuilder {
       return queryParser.parse(query);
 
     } catch (org.apache.lucene.queryparser.classic.ParseException e) {
+      OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
+
+      //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw new ParseException(e.getMessage());
     }
   }

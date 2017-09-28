@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -160,7 +161,9 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
               try {
                 database.getStorage().getClusterById(clusterIds[i]);
               } catch (Exception e) {
-                throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
+                throw OException.wrapException(
+                    new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos),
+                    e);
               }
             }
           }

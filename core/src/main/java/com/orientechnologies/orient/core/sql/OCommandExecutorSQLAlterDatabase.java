@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -79,8 +80,9 @@ public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstrac
       try {
         attribute = ODatabase.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
       } catch (IllegalArgumentException e) {
-        throw new OCommandSQLParsingException("Unknown database's attribute '" + attributeAsString + "'. Supported attributes are: "
-            + Arrays.toString(ODatabase.ATTRIBUTES.values()), parserText, oldPos);
+        throw OException.wrapException(new OCommandSQLParsingException(
+            "Unknown database's attribute '" + attributeAsString + "'. Supported attributes are: " + Arrays
+                .toString(ODatabase.ATTRIBUTES.values()), parserText, oldPos), e);
       }
 
       value = parserText.substring(pos + 1).trim();

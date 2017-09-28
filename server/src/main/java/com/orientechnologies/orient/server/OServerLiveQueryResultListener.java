@@ -33,7 +33,7 @@ class OServerLiveQueryResultListener implements OLiveQueryResultListener {
     try {
       protocol.push(new OLiveQueryPushRequest(monitorId, OLiveQueryPushRequest.HAS_MORE, Collections.singletonList(event)));
     } catch (IOException e) {
-      throw new OLiveQueryInterruptedException("Live query interrupted by socket close");
+      throw OException.wrapException(new OLiveQueryInterruptedException("Live query interrupted by socket close"), e);
     }
   }
 
@@ -63,7 +63,7 @@ class OServerLiveQueryResultListener implements OLiveQueryResultListener {
       }
       protocol.push(new OLiveQueryPushRequest(monitorId, errorIdentifier, code, exception.getMessage()));
     } catch (IOException e) {
-      throw new OLiveQueryInterruptedException("Live query interrupted by socket close");
+      throw OException.wrapException(new OLiveQueryInterruptedException("Live query interrupted by socket close"), e);
     }
   }
 
@@ -72,7 +72,7 @@ class OServerLiveQueryResultListener implements OLiveQueryResultListener {
     try {
       protocol.push(new OLiveQueryPushRequest(monitorId, OLiveQueryPushRequest.END, Collections.emptyList()));
     } catch (IOException e) {
-      throw new OLiveQueryInterruptedException("Live query interrupted by socket close");
+      throw OException.wrapException(new OLiveQueryInterruptedException("Live query interrupted by socket close"), e);
     }
 
   }

@@ -17,6 +17,8 @@
 
 package com.orientechnologies.orient.core.schedule;
 
+import com.orientechnologies.common.log.OLogManager;
+
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.*;
@@ -226,6 +228,7 @@ public final class OCronExpression implements Serializable, Cloneable {
    * Constructs a new <CODE>CronExpression</CODE> based on the specified parameter.
    *
    * @param cronExpression String representation of the cron expression the new object should represent
+   *
    * @throws java.text.ParseException if the string expression cannot be parsed into a valid <CODE>CronExpression</CODE>
    */
   public OCronExpression(String cronExpression) throws ParseException {
@@ -264,6 +267,7 @@ public final class OCronExpression implements Serializable, Cloneable {
    * different milliseconds of the same second will always have the same result here.
    *
    * @param date the date to evaluate
+   *
    * @return a boolean indicating whether the given date satisfies the cron expression
    */
   public boolean isSatisfiedBy(Date date) {
@@ -283,6 +287,7 @@ public final class OCronExpression implements Serializable, Cloneable {
    * Returns the next date/time <I>after</I> the given date/time which satisfies the cron expression.
    *
    * @param date the date/time at which to begin the search for the next valid date/time
+   *
    * @return the next valid date/time
    */
   public Date getNextValidTimeAfter(Date date) {
@@ -293,6 +298,7 @@ public final class OCronExpression implements Serializable, Cloneable {
    * Returns the next date/time <I>after</I> the given date/time which does <I>not</I> satisfy the expression
    *
    * @param date the date/time at which to begin the search for the next invalid date/time
+   *
    * @return the next valid date/time
    */
   public Date getNextInvalidTimeAfter(Date date) {
@@ -359,6 +365,7 @@ public final class OCronExpression implements Serializable, Cloneable {
    * Indicates whether the specified cron expression can be parsed into a valid cron expression
    *
    * @param cronExpression the expression to evaluate
+   *
    * @return a boolean indicating whether the given expression is a valid cron expression
    */
   public static boolean isValidExpression(String cronExpression) {
@@ -461,6 +468,9 @@ public final class OCronExpression implements Serializable, Cloneable {
     } catch (ParseException pe) {
       throw pe;
     } catch (Exception e) {
+      OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
+
+      //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw new ParseException("Illegal cron expression format (" + e.toString() + ")", 0);
     }
   }
@@ -515,6 +525,8 @@ public final class OCronExpression implements Serializable, Cloneable {
                 throw new Exception();
               }
             } catch (Exception e) {
+              OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
+              //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
               throw new ParseException("A numeric value between 1 and 5 must follow the '#' option", i);
             }
           } else if (c == 'L') {
@@ -691,6 +703,8 @@ public final class OCronExpression implements Serializable, Cloneable {
           throw new Exception();
         }
       } catch (Exception e) {
+        OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
+        //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
         throw new ParseException("A numeric value between 1 and 5 must follow the '#' option", i);
       }
 
