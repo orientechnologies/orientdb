@@ -69,7 +69,7 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
     try {
       return delegate.execute(iArgs);
     } catch (OCommandExecutionException e) {
-      OLogManager.instance().info(this, "Error executing query: " + toString());
+      OLogManager.instance().info(this, "Error executing query (" + System.identityHashCode(e) + "): " + toString());
       throw e;
     }
   }
