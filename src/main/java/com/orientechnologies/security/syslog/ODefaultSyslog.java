@@ -58,7 +58,7 @@ public class ODefaultSyslog extends OServerPluginAbstract implements OSyslog {
         messageSender.setMessageFormat(MessageFormat.RFC_3164); // optional, default is RFC 3164
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultSyslog.active() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultSyslog.active()", ex);
     }
   }
 
@@ -148,7 +148,7 @@ public class ODefaultSyslog extends OServerPluginAbstract implements OSyslog {
         messageSender.sendMessage(sysMsg);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultSyslog.log() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultSyslog.log()", ex);
     }
   }
 

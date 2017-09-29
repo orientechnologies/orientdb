@@ -66,7 +66,7 @@ public class OSystemDBImporter extends Thread {
         sleepPeriod = jsonConfig.field("sleepPeriod");
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "OSystemDBImporter() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "OSystemDBImporter()", ex);
     }
 
     setDaemon(true);
@@ -89,7 +89,7 @@ public class OSystemDBImporter extends Thread {
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "run() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "run()", ex);
     }
   }
 
@@ -99,10 +99,10 @@ public class OSystemDBImporter extends Thread {
 
     try {
       db = server.openDatabase(dbName);
-      db.setProperty(ODefaultAuditing.IMPORTER_FLAG,true);
+      db.setProperty(ODefaultAuditing.IMPORTER_FLAG, true);
 
       if (db == null) {
-        OLogManager.instance().error(this, "importDB() Unable to import auditing log for database: %s", dbName);
+        OLogManager.instance().error(this, "importDB() Unable to import auditing log for database: %s", null, dbName);
         return;
       }
 
@@ -172,7 +172,7 @@ public class OSystemDBImporter extends Thread {
             db.activateOnCurrentThread();
             db.delete(doc);
           } catch (Exception ex) {
-            OLogManager.instance().error(this, "importDB() Inner Exception: %s", ex.getMessage());
+            OLogManager.instance().error(this, "importDB()", ex);
           }
         }
 
@@ -191,7 +191,7 @@ public class OSystemDBImporter extends Thread {
           totalImported == 1 ? "record" : "records", dbName);
 
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "importDB() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "importDB()", ex);
     } finally {
       if (sysdb != null) {
         sysdb.activateOnCurrentThread();

@@ -73,7 +73,7 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
         _HasUppercase = Pattern.compile((String) jsonConfig.field("uppercaseRegEx"));
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultPasswordValidator.config() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultPasswordValidator.config()", ex);
     }
   }
 

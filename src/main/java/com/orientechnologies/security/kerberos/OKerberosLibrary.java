@@ -190,7 +190,7 @@ OLogManager.instance().info(this, "OKerberosLibrary.getSPNegoSource() context sr
 						}
 						else
 						{
-							OLogManager.instance().error(this, "OKerberosLibrary.getSPNegoSource() Could not create a GSSContext");
+							OLogManager.instance().error(this, "OKerberosLibrary.getSPNegoSource() Could not create a GSSContext", null);
 						}
 					}
 					catch(Exception ex)
@@ -245,7 +245,7 @@ OLogManager.instance().info(this, "OKerberosLibrary.getSPNegoSource() context sr
 						}
 						else
 						{
-							OLogManager.instance().error(this, "getKerberosSource() Could not create a GSSContext");
+							OLogManager.instance().error(this, "getKerberosSource() Could not create a GSSContext", null);
 						}
 					}
 					catch(Exception ex)

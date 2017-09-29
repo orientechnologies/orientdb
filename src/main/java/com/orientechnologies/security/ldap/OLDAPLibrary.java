@@ -144,7 +144,7 @@ public class OLDAPLibrary
 			}
 			else
 			{
-				if(debug) OLogManager.instance().error(null, "OLDAPLibrary.retrieveUsers() DirContext is null");
+				if(debug) OLogManager.instance().error(null, "OLDAPLibrary.retrieveUsers() DirContext is null", null);
 			}
 		}
 		catch(Exception ex)
@@ -216,7 +216,8 @@ public class OLDAPLibrary
 			}
 			else
 			{
-				if(debug) OLogManager.instance().error(null, "OLDAPLibrary.traverse() Unable to find attributes for startingDN: %s", startingDN);				
+				if(debug) OLogManager.instance().error(null,
+						"OLDAPLibrary.traverse() Unable to find attributes for startingDN: %s", null, startingDN);
 			}
 		}
 		catch(Exception ex)
@@ -275,7 +276,8 @@ public class OLDAPLibrary
 			}
 			else
 			{
-				OLogManager.instance().error(null, "OLDAPLibrary.findMembers() Unable to find attributes for startingDN: %s", startingDN);				
+				OLogManager.instance().error(null,
+						"OLDAPLibrary.findMembers() Unable to find attributes for startingDN: %s", null, startingDN);
 			}
 		}
 		catch(Exception ex)
@@ -325,7 +327,7 @@ public class OLDAPLibrary
 		}
 		catch(Exception ex)
 		{
-			OLogManager.instance().error(null, "OLDAPLibrary fillAttributeList(" + name + ") Exception: " + ex);
+			OLogManager.instance().error(null, "OLDAPLibrary fillAttributeList(" + name + ")", ex);
 		}
 	}
 	
@@ -342,7 +344,7 @@ public class OLDAPLibrary
 		}
 		catch(Exception ex)
 		{
-			OLogManager.instance().error(null, "OLDAPLibrary.getFirstValue(" + name + ") Exception: " + ex);
+			OLogManager.instance().error(null, "OLDAPLibrary.getFirstValue(" + name + ") ", ex);
 		}
 		
 		return null;
@@ -401,12 +403,12 @@ public class OLDAPLibrary
 			}
 			else
 			{
-				OLogManager.instance().error(null, "OLDAPLibrary.isMemberOf() Has no 'memberOf' attribute.");
+				OLogManager.instance().error(null, "OLDAPLibrary.isMemberOf() Has no 'memberOf' attribute.", null);
 			}
 		}
 		catch(Exception ex)
 		{
-			OLogManager.instance().error(null, "OLDAPLibrary.isMemberOf() Exception: %s", ex.getMessage());
+			OLogManager.instance().error(null, "OLDAPLibrary.isMemberOf()", ex);
 		}
 		
 		return false;	

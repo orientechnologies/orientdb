@@ -1,18 +1,18 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p>
  * For more information: http://www.orientdb.com
  */
 package com.orientechnologies.security.ldap;
@@ -37,25 +37,24 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provides an LDAP importer.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
 public class OLDAPImporter implements OSecurityComponent {
-  private final String                              OLDAPUserClass = "_OLDAPUser";
+  private final String OLDAPUserClass = "_OLDAPUser";
 
-  private boolean                                   _Debug         = false;
-  private boolean                                   _Enabled       = true;
+  private boolean _Debug   = false;
+  private boolean _Enabled = true;
 
-  private OServer                                   _Server;
+  private OServer _Server;
 
-  private int                                       _ImportPeriod  = 60;                                       // Default to 60
-                                                                                                               // seconds.
-  private Timer                                     _ImportTimer;
+  private int _ImportPeriod = 60;                                       // Default to 60
+  // seconds.
+  private Timer _ImportTimer;
 
   // Used to track what roles are assigned to each database user.
   // Holds a map of the import databases and their corresponding dbGroups.
-  private final ConcurrentHashMap<String, Database> _DatabaseMap   = new ConcurrentHashMap<String, Database>();
+  private final ConcurrentHashMap<String, Database> _DatabaseMap = new ConcurrentHashMap<String, Database>();
 
   // OSecurityComponent
   public void active() {
@@ -69,7 +68,7 @@ public class OLDAPImporter implements OSecurityComponent {
 
         verifySchema(odb);
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "OLDAPImporter.active() Database: %s, Exception: %s", db.getName(), ex);
+        OLogManager.instance().error(this, "OLDAPImporter.active() Database: %s", ex, db.getName());
       } finally {
         if (odb != null)
           odb.close();
@@ -160,8 +159,9 @@ public class OLDAPImporter implements OSecurityComponent {
                       if (server != null) {
                         ldapServerList.add(server);
                       } else {
-                        OLogManager.instance().error(this, "Import LDAP Invalid server URL for database: %s, domain: %s, URL: %s",
-                            dbName, domain, url);
+                        OLogManager.instance()
+                            .error(this, "Import LDAP Invalid server URL for database: %s, domain: %s, URL: %s", null, dbName,
+                                domain, url);
                       }
                     }
 
@@ -179,8 +179,8 @@ public class OLDAPImporter implements OSecurityComponent {
                             final String filter = userDoc.field("filter");
 
                             if (_Debug)
-                              OLogManager.instance().info(this, "config() database: %s, baseDN: %s, filter: %s", dbName, baseDN,
-                                  filter);
+                              OLogManager.instance()
+                                  .info(this, "config() database: %s, baseDN: %s, filter: %s", dbName, baseDN, filter);
 
                             final List<String> roleList = userDoc.field("roles");
 
@@ -188,12 +188,13 @@ public class OLDAPImporter implements OSecurityComponent {
 
                             userList.add(User);
                           } else {
-                            OLogManager.instance().error(this,
-                                "Import LDAP The User's \"roles\" property is missing for database %s");
+                            OLogManager.instance()
+                                .error(this, "Import LDAP The User's \"roles\" property is missing for database %s", null);
                           }
                         } else {
-                          OLogManager.instance().error(this,
-                              "Import LDAP The User's \"baseDN\" or \"filter\" property is missing for database %s");
+                          OLogManager.instance()
+                              .error(this, "Import LDAP The User's \"baseDN\" or \"filter\" property is missing for database %s",
+                                  null);
                         }
                       }
                     }
@@ -202,11 +203,12 @@ public class OLDAPImporter implements OSecurityComponent {
 
                     dbDomainsList.add(dbd);
                   } else {
-                    OLogManager.instance().error(this, "Import LDAP database %s \"domain\" is missing its \"servers\" property");
+                    OLogManager.instance()
+                        .error(this, "Import LDAP database %s \"domain\" is missing its \"servers\" property", null);
                   }
                 } else {
-                  OLogManager.instance().error(this,
-                      "Import LDAP database %s \"domain\" object is missing its \"domain\" property");
+                  OLogManager.instance()
+                      .error(this, "Import LDAP database %s \"domain\" object is missing its \"domain\" property", null);
                 }
               }
 
@@ -215,17 +217,17 @@ public class OLDAPImporter implements OSecurityComponent {
                 _DatabaseMap.put(dbName, db);
               }
             } else {
-              OLogManager.instance().error(this, "Import LDAP database %s contains no \"domains\" property");
+              OLogManager.instance().error(this, "Import LDAP database %s contains no \"domains\" property", null);
             }
           } else {
-            OLogManager.instance().error(this, "Import LDAP databases contains no \"database\" property");
+            OLogManager.instance().error(this, "Import LDAP databases contains no \"database\" property", null);
           }
         }
       } else {
-        OLogManager.instance().error(this, "Import LDAP contains no \"databases\" property");
+        OLogManager.instance().error(this, "Import LDAP contains no \"databases\" property", null);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "OLDAPImporter.config() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "OLDAPImporter.config()", ex);
     }
   }
 
@@ -273,7 +275,7 @@ public class OLDAPImporter implements OSecurityComponent {
         prop.setNotNull(true);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "OLDAPImporter.verifySchema() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "OLDAPImporter.verifySchema()", ex);
     }
   }
 
@@ -336,7 +338,7 @@ public class OLDAPImporter implements OSecurityComponent {
   }
 
   private class DatabaseUser {
-    private String      _User;
+    private String _User;
     private Set<String> _Roles = new LinkedHashSet<String>();
 
     private String getUser() {
@@ -361,8 +363,8 @@ public class OLDAPImporter implements OSecurityComponent {
   }
 
   private class User {
-    private String      _BaseDN;
-    private String      _Filter;
+    private String _BaseDN;
+    private String _Filter;
     private Set<String> _Roles = new LinkedHashSet<String>();
 
     public String getBaseDN() {
@@ -411,7 +413,7 @@ public class OLDAPImporter implements OSecurityComponent {
    ***/
   private synchronized void importLDAP() {
     if (_Server.getSecurity() == null) {
-      OLogManager.instance().error(this, "OLDAPImporter.importLDAP() ServerSecurity is null");
+      OLogManager.instance().error(this, "OLDAPImporter.importLDAP() ServerSecurity is null", null);
       return;
     }
 
@@ -460,9 +462,9 @@ public class OLDAPImporter implements OSecurityComponent {
                     for (User user : userList) {
                       List<String> usersRetrieved = new ArrayList<String>();
 
-                      OLogManager.instance().info(this,
-                          "OLDAPImporter.importLDAP() Calling retrieveUsers for Database: %s, Filter: %s", db.getName(),
-                          user.getFilter());
+                      OLogManager.instance()
+                          .info(this, "OLDAPImporter.importLDAP() Calling retrieveUsers for Database: %s, Filter: %s", db.getName(),
+                              user.getFilter());
 
                       OLDAPLibrary.retrieveUsers(dc, user.getBaseDN(), user.getFilter(), usersRetrieved, _Debug);
 
@@ -471,8 +473,9 @@ public class OLDAPImporter implements OSecurityComponent {
                           if (usersToBeDeleted.contains(upn))
                             usersToBeDeleted.remove(upn);
 
-                          OLogManager.instance().info(this, "OLDAPImporter.importLDAP() Database: %s, Filter: %s, UPN: %s",
-                              db.getName(), user.getFilter(), upn);
+                          OLogManager.instance()
+                              .info(this, "OLDAPImporter.importLDAP() Database: %s, Filter: %s, UPN: %s", db.getName(),
+                                  user.getFilter(), upn);
 
                           DatabaseUser dbUser = null;
 
@@ -488,24 +491,25 @@ public class OLDAPImporter implements OSecurityComponent {
                           }
                         }
                       } else {
-                        OLogManager.instance().info(this,
-                            "OLDAPImporter.importLDAP() No users found at BaseDN: %s, Filter: %s, for Database: %s",
-                            user.getBaseDN(), user.getFilter(), db.getName());
+                        OLogManager.instance()
+                            .info(this, "OLDAPImporter.importLDAP() No users found at BaseDN: %s, Filter: %s, for Database: %s",
+                                user.getBaseDN(), user.getFilter(), db.getName());
                       }
                     }
                   } finally {
                     dc.close();
                   }
                 } else {
-                  OLogManager.instance().error(this,
-                      "OLDAPImporter.importLDAP() Could not obtain an LDAP DirContext for Database %s", db.getName());
+                  OLogManager.instance()
+                      .error(this, "OLDAPImporter.importLDAP() Could not obtain an LDAP DirContext for Database %s", null,
+                          db.getName());
                 }
               } else {
-                OLogManager.instance().error(this, "OLDAPImporter.importLDAP() Could not obtain an LDAP Subject for Database %s",
-                    db.getName());
+                OLogManager.instance()
+                    .error(this, "OLDAPImporter.importLDAP() Could not obtain an LDAP Subject for Database %s", null, db.getName());
               }
             } catch (Exception ex) {
-              OLogManager.instance().error(this, "OLDAPImporter.importLDAP() Database: %s, Exception: %s", db.getName(), ex);
+              OLogManager.instance().error(this, "OLDAPImporter.importLDAP() Database: %s", ex, db.getName());
             }
           }
 
@@ -523,7 +527,7 @@ public class OLDAPImporter implements OSecurityComponent {
             odb.close();
         }
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "OLDAPImporter.importLDAP() Exception: %s", ex.getMessage());
+        OLogManager.instance().error(this, "OLDAPImporter.importLDAP()", ex);
       }
     }
   }
@@ -551,13 +555,13 @@ public class OLDAPImporter implements OSecurityComponent {
           User user = new User((String) userDoc.field("BaseDN"), (String) userDoc.field("Filter"), roleList);
           userList.add(user);
         } else {
-          OLogManager.instance().error(this,
-              "OLDAPImporter.retrieveLDAPUsers() Roles is missing for entry Database: %s, Domain: %s", odb.getName(), domain);
+          OLogManager.instance()
+              .error(this, "OLDAPImporter.retrieveLDAPUsers() Roles is missing for entry Database: %s, Domain: %s", null,
+                  odb.getName(), domain);
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "OLDAPImporter.retrieveLDAPUsers() Database: %s, Domain: %s, Exception: %s", odb.getName(),
-          domain, ex);
+      OLogManager.instance().error(this, "OLDAPImporter.retrieveLDAPUsers() Database: %s, Domain: %s", ex, odb.getName(), domain);
     }
   }
 
@@ -582,7 +586,7 @@ public class OLDAPImporter implements OSecurityComponent {
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "OLDAPImporter.retrieveAllUsers() Database: %s, Exception: %s", odb.getName(), ex);
+      OLogManager.instance().error(this, "OLDAPImporter.retrieveAllUsers() Database: %s", ex, odb.getName());
     }
   }
 
@@ -594,7 +598,7 @@ public class OLDAPImporter implements OSecurityComponent {
         OLogManager.instance().info(this, "OLDAPImporter.deleteUsers() Deleted User: %s from Database: %s", user, odb.getName());
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "OLDAPImporter.deleteUsers() Database: %s, Exception: %s", odb.getName(), ex.getMessage());
+      OLogManager.instance().error(this, "OLDAPImporter.deleteUsers() Database: %s", ex, odb.getName());
     }
   }
 
@@ -606,10 +610,10 @@ public class OLDAPImporter implements OSecurityComponent {
         if (upsertDbUser(odb, upn, entry.getValue().getRoles()))
           OLogManager.instance().info(this, "Added/Modified Database User %s in Database %s", upn, odb.getName());
         else
-          OLogManager.instance().error(this, "Failed to add/update Database User %s in Database %s", upn, odb.getName());
+          OLogManager.instance().error(this, "Failed to add/update Database User %s in Database %s", null, upn, odb.getName());
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "OLDAPImporter.importUsers() Database: %s, Exception: %s", odb.getName(), ex.getMessage());
+      OLogManager.instance().error(this, "OLDAPImporter.importUsers() Database: %s", ex, odb.getName());
     }
   }
 
@@ -661,7 +665,7 @@ public class OLDAPImporter implements OSecurityComponent {
 
       return true;
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "OLDAPImporter.upsertDbUser() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "OLDAPImporter.upsertDbUser()", ex);
     }
 
     return false;

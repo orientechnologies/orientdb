@@ -133,7 +133,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
       final InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(DEFAULT_FILE_AUDITING_DB_CONFIG);
 
       if (resourceAsStream == null)
-        OLogManager.instance().error(this, "defaultHook() resourceAsStream is null");
+        OLogManager.instance().error(this, "defaultHook() resourceAsStream is null", null);
 
       content = getString(resourceAsStream);
       if (auditingFileConfig != null) {
@@ -367,7 +367,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
         cls.createProperty("database", OType.STRING);
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Creating auditing class exception: %s", e.getMessage());
+      OLogManager.instance().error(this, "Creating auditing class exception", e);
     } finally {
       if (sysdb != null)
         sysdb.close();
@@ -418,7 +418,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
         systemDbImporter = new OSystemDBImporter(server, sysImport);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "config() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "config()", ex);
     }
   }
 
