@@ -525,7 +525,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
             final Date value2AsDate = dateFormat.parse(value2AsString);
             final long value2 = value2AsDate.getTime();
             return value1 == value2;
-          } catch (ParseException e) {
+          } catch (ParseException ignore) {
             try {
               final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateFormatInstance()
                   : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
@@ -533,7 +533,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
               final Date value2AsDate = dateFormat.parse(value2AsString);
               final long value2 = value2AsDate.getTime();
               return value1 == value2;
-            } catch (ParseException e1) {
+            } catch (ParseException ignored) {
               return new Date(value1).toString().equals(value2AsString);
             }
           }
@@ -1031,7 +1031,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
             final Date value2AsDate = dateFormat.parse(value2AsString);
             final long value2 = value2AsDate.getTime();
             return (value1 < value2) ? -1 : ((value1 == value2) ? 0 : 1);
-          } catch (ParseException e) {
+          } catch (ParseException ignored) {
             try {
               final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateFormatInstance()
                   : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
@@ -1039,7 +1039,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
               final Date value2AsDate = dateFormat.parse(value2AsString);
               final long value2 = value2AsDate.getTime();
               return (value1 < value2) ? -1 : ((value1 == value2) ? 0 : 1);
-            } catch (ParseException e1) {
+            } catch (ParseException ignore) {
               return new Date(value1).toString().compareTo(value2AsString);
             }
           }
@@ -1097,7 +1097,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
             long value2 = value2AsDate.getTime();
             value2 = ORecordSerializerBinaryV0.convertDayToTimezone(ODateHelper.getDatabaseTimeZone(), TimeZone.getTimeZone("GMT"), value2);
             return (value1 < value2) ? -1 : ((value1 == value2) ? 0 : 1);
-          } catch (ParseException e) {
+          } catch (ParseException ignore) {
             try {
               final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateFormatInstance()
                   : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
@@ -1106,7 +1106,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
               long value2 = value2AsDate.getTime();
               value2 = ORecordSerializerBinaryV0.convertDayToTimezone(ODateHelper.getDatabaseTimeZone(), TimeZone.getTimeZone("GMT"), value2);
               return (value1 < value2) ? -1 : ((value1 == value2) ? 0 : 1);
-            } catch (ParseException e1) {
+            } catch (ParseException ignored) {
               return new Date(value1).toString().compareTo(value2AsString);
             }
           }
