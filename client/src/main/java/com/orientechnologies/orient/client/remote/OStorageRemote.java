@@ -2334,7 +2334,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       if (!network.tryLock()) {
         // CANNOT LOCK IT, MAYBE HASN'T BE CORRECTLY UNLOCKED BY PREVIOUS USER?
         OLogManager.instance()
-            .error(this, "Removing locked network channel '%s' (connected=%s)...", iCurrentURL, network.isConnected());
+            .error(this, "Removing locked network channel '%s' (connected=%s)...", null, iCurrentURL, network.isConnected());
         connectionManager.remove(network);
         network = null;
       }

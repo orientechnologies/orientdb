@@ -802,7 +802,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
             throw new OStorageException("WAL flush task for '" + getStorage().getName() + "' storage cannot be stopped");
 
         } catch (InterruptedException e) {
-          OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread");
+          OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread", e);
         }
       }
 
@@ -814,7 +814,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
             throw new OStorageException("WAL file auto close tasks '" + getStorage().getName() + "' storage cannot be stopped");
 
         } catch (InterruptedException e) {
-          OLogManager.instance().error(this, "Shutdown of file auto close tasks was interrupted");
+          OLogManager.instance().error(this, "Shutdown of file auto close tasks was interrupted", e);
         }
       }
 
@@ -1039,7 +1039,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       if (firstCRC != ((int) crc32.getValue())) {
         OLogManager.instance()
-            .error(this, "Cannot restore %d WAL master record for storage %s crc check is failed", index, storageName);
+            .error(this, "Cannot restore %d WAL master record for storage %s crc check is failed", null, index, storageName);
         return null;
       }
 

@@ -256,11 +256,11 @@ public class OCachePointer {
 
     if (getReaders(readersWritersReferrer.get()) != 0) {
       needInfo = true;
-      OLogManager.instance().error(this, "OCachePointer.finalize: readers != 0");
+      OLogManager.instance().error(this, "OCachePointer.finalize: readers != 0", null);
     }
     if (getWriters(readersWritersReferrer.get()) != 0) {
       needInfo = true;
-      OLogManager.instance().error(this, "OCachePointer.finalize: writers != 0");
+      OLogManager.instance().error(this, "OCachePointer.finalize: writers != 0", null);
     }
 
     if (needInfo && buffer != null)

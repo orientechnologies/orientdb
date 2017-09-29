@@ -559,8 +559,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           index.delete();
         } catch (Exception e) {
           OLogManager.instance()
-              .error(this, "Error on removing index '%s' on rebuilding. Trying removing index files (Cause: %s)", index.getName(),
-                  e);
+              .error(this, "Error on removing index '%s' on rebuilding. Trying removing index files", e, index.getName());
 
           // TRY DELETING ALL THE FILES RELATIVE TO THE INDEX
           for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext(); ) {
@@ -608,7 +607,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       } else {
         errors++;
         OLogManager.instance().error(this, "Information about index was restored incorrectly, following data were loaded : "
-            + "index name '%s', index definition '%s', clusters %s, type %s", indexName, indexDefinition, clusters, type);
+            + "index name '%s', index definition '%s', clusters %s, type %s", null, indexName, indexDefinition, clusters, type);
       }
     }
 
@@ -635,7 +634,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
       ODocument metadata = idx.field(OIndexInternal.METADATA);
       if (indexType == null) {
-        OLogManager.instance().error(this, "Index type is null, will process other record");
+        OLogManager.instance().error(this, "Index type is null, will process other record", null);
         throw new OIndexException("Index type is null, will process other record. Index configuration: " + idx.toString());
       }
 

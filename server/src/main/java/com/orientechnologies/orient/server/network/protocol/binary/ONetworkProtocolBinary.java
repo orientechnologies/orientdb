@@ -392,7 +392,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       try {
         if (!executeRequest(connection)) {
-          OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
+          OLogManager.instance().error(this, "Request not supported. Code: " + requestType, null);
           channel.clearInput();
           sendErrorOrDropConnection(connection, clientTxId,
               new ONetworkProtocolException("Request not supported. Code: " + requestType));
@@ -1172,7 +1172,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
 
     OLogManager.instance()
-        .error(this, "Authentication error of remote client %s:%d: shutdown is aborted.", channel.socket.getInetAddress(),
+        .error(this, "Authentication error of remote client %s:%d: shutdown is aborted.", null, channel.socket.getInetAddress(),
             channel.socket.getPort());
 
     sendErrorOrDropConnection(connection, clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));

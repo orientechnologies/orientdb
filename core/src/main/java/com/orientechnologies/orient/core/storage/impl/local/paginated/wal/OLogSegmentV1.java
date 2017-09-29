@@ -332,7 +332,7 @@ final class OLogSegmentV1 implements OLogSegment {
           throw new OStorageException("WAL flush task for '" + getPath() + "' segment cannot be stopped");
 
       } catch (InterruptedException e) {
-        OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread");
+        OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread", e);
       }
     }
 
@@ -695,7 +695,7 @@ final class OLogSegmentV1 implements OLogSegment {
             throw new OStorageException("WAL file auto close task '" + getPath() + "' cannot be stopped");
 
         } catch (InterruptedException e) {
-          OLogManager.instance().error(this, "Shutdown of file auto close thread was interrupted");
+          OLogManager.instance().error(this, "Shutdown of file auto close thread was interrupted", e);
         }
       }
 
@@ -796,7 +796,7 @@ final class OLogSegmentV1 implements OLogSegment {
       long pagesCount = rndFile.length() / OWALPage.PAGE_SIZE;
 
       if (rndFile.length() % OWALPage.PAGE_SIZE > 0) {
-        OLogManager.instance().error(this, "Last WAL page was written partially, auto fix");
+        OLogManager.instance().error(this, "Last WAL page was written partially, auto fix", null);
 
         rndFile.setLength(OWALPage.PAGE_SIZE * pagesCount);
       }

@@ -270,7 +270,7 @@ public class OObjectEntityEnhancer {
       try {
         instanceToReturn = iProxiedClass.newInstance();
       } catch (InstantiationException e) {
-        OLogManager.instance().error(this, "Cannot create an instance of the enclosing class '%s'", iOriginalClass);
+        OLogManager.instance().error(this, "Cannot create an instance of the enclosing class '%s'", e, iOriginalClass);
         throw e;
       }
     }

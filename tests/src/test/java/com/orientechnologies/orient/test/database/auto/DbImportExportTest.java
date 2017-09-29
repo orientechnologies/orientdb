@@ -119,6 +119,6 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
       dumpMode = true;
 
     if (dumpMode)
-      OLogManager.instance().error(this, iText);
+      OLogManager.instance().error(this, iText, null);
   }
 }

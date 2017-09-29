@@ -143,7 +143,7 @@ public class ORole extends OIdentity implements OSecurityRole {
       mode = modeField == null ? ALLOW_MODES.DENY_ALL_BUT : modeField.byteValue() == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT
           : ALLOW_MODES.DENY_ALL_BUT;
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "illegal mode " + ex.getMessage());
+      OLogManager.instance().error(this, "illegal mode ", ex);
       mode = ALLOW_MODES.DENY_ALL_BUT;
     }
 

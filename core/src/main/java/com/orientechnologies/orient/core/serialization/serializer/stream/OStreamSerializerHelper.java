@@ -27,14 +27,13 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
  * Abstract class. Allows short and long form. Examples: <br>
  * Short form: @[type][RID] where type = 1 byte<br>
  * Long form: org.myapp.Myrecord|[RID]<br>
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OStreamSerializerHelper {
 
-  public static final String SEPARATOR         = "|";
-  private static final char  SHORT_FORM_PREFIX = '!';
+  public static final  String SEPARATOR         = "|";
+  private static final char   SHORT_FORM_PREFIX = '!';
 
   public static StringBuilder writeRecordType(final Class<?> cls, final StringBuilder iBuffer) {
     // SEARCH INTO THE SERIALIZER REGISTER IF THE IMPLEMENTATION WAS REGISTERED TO GET THE SHORT FORM (AND OPTIMIZING IN SIZE AND
@@ -64,7 +63,7 @@ public class OStreamSerializerHelper {
       pos = iBuffer.indexOf(SEPARATOR);
       if (pos < 0) {
         final String message = "Class signature not found in the buffer: " + iBuffer;
-        OLogManager.instance().error(null, message);
+        OLogManager.instance().error(null, message, null);
 
         throw new OSerializationException(message);
       }

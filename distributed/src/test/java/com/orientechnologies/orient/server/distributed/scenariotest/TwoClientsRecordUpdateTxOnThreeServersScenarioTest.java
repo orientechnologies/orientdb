@@ -43,34 +43,34 @@ import static org.junit.Assert.assertTrue;
  * - introduce a delay after record locking for server0 and server1
  * - two clients (connected to server0 and server1) tries to update that record
  * - server0 notifies the update to server1 and server2: server1 return a RecordLockedException, since
- *   it's trying to update that record itself as well; server2 returns "true"
+ * it's trying to update that record itself as well; server2 returns "true"
  * - server0's request has reached the write quorum and propagates the new value to all the servers in the cluster
  */
 
 public class TwoClientsRecordUpdateTxOnThreeServersScenarioTest extends AbstractScenarioTest {
 
-  private final String        RECORD_ID   = "R001";
-  private Map<String, Object> hanFields   = new HashMap<String, Object>() {
-                                            {
-                                              put("id", RECORD_ID);
-                                              put("firstName", "Han");
-                                              put("lastName", "Solo");
-                                            }
-                                          };
-  private Map<String, Object> darthFields = new HashMap<String, Object>() {
-                                            {
-                                              put("id", RECORD_ID);
-                                              put("firstName", "Darth");
-                                              put("lastName", "Vader");
-                                            }
-                                          };
-  private Map<String, Object> leiaFields  = new HashMap<String, Object>() {
-                                            {
-                                              put("id", RECORD_ID);
-                                              put("firstName", "Leia");
-                                              put("lastName", "Organa");
-                                            }
-                                          };
+  private final String              RECORD_ID   = "R001";
+  private       Map<String, Object> hanFields   = new HashMap<String, Object>() {
+    {
+      put("id", RECORD_ID);
+      put("firstName", "Han");
+      put("lastName", "Solo");
+    }
+  };
+  private       Map<String, Object> darthFields = new HashMap<String, Object>() {
+    {
+      put("id", RECORD_ID);
+      put("firstName", "Darth");
+      put("lastName", "Vader");
+    }
+  };
+  private       Map<String, Object> leiaFields  = new HashMap<String, Object>() {
+    {
+      put("id", RECORD_ID);
+      put("firstName", "Leia");
+      put("lastName", "Organa");
+    }
+  };
 
   @Test
   @Ignore
@@ -102,11 +102,13 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioTest extends Abstract
 
     // gets the actual version of the record
     int actualVersion = recordServer0.getVersion();
-    OLogManager.instance().error(this, "Actual version: " + actualVersion);
+    OLogManager.instance().error(this, "Actual version: " + actualVersion, null);
 
     // sets a delay for operations on distributed storage of server0 and server1
-    ((ODistributedStorage) dbServer0.getStorage()).setEventListener(new AfterRecordLockDelayer("server0", DOCUMENT_WRITE_TIMEOUT / 4));
-    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT / 2));
+    ((ODistributedStorage) dbServer0.getStorage())
+        .setEventListener(new AfterRecordLockDelayer("server0", DOCUMENT_WRITE_TIMEOUT / 4));
+    ((ODistributedStorage) dbServer1.getStorage())
+        .setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT / 2));
 
     // updates the same record from two different clients, each calling a different server (server2 is idle)
     List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
@@ -125,7 +127,7 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioTest extends Abstract
 //    OLogManager.instance().error(this, "server2: " + recordServer2.toString() + " v" + recordServer2.getVersion());
 
     // checks that record on server0 is the one which wins over the others
-    System.out.println("serverInstance: "  +serverInstance);
+    System.out.println("serverInstance: " + serverInstance);
     waitForUpdatedRecordPropagation(RECORD_ID, "firstName", darthFields.get("firstName").toString());
 
     recordServer0 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), RECORD_ID);
@@ -145,12 +147,9 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioTest extends Abstract
     return "distributed-two-simultaneous-update-on-three-servers";
   }
 
-  
   private boolean compareRecords(ODocument record1, ODocument record2) {
-    return record1.getVersion() == record2.getVersion()
-            && record1.field("id").equals(record2.field("id"))
-            && record1.field("firstName").equals(record2.field("firstName"))
-            && record1.field("lastName").equals(record2.field("lastName"));
+    return record1.getVersion() == record2.getVersion() && record1.field("id").equals(record2.field("id")) && record1
+        .field("firstName").equals(record2.field("firstName")) && record1.field("lastName").equals(record2.field("lastName"));
   }
-  
+
 }

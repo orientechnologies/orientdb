@@ -1202,10 +1202,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (record != null)
         OLogManager.instance().error(this,
             "Error importing record " + record.getIdentity() + ". Source line " + jsonReader.getLineNumber() + ", column "
-                + jsonReader.getColumnNumber());
+                + jsonReader.getColumnNumber(), null);
       else
         OLogManager.instance().error(this,
-            "Error importing record. Source line " + jsonReader.getLineNumber() + ", column " + jsonReader.getColumnNumber());
+            "Error importing record. Source line " + jsonReader.getLineNumber() + ", column " + jsonReader.getColumnNumber(), null);
 
       if (!(t instanceof ODatabaseException)) {
         throw t;

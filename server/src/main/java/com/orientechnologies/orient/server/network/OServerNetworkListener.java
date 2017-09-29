@@ -42,16 +42,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OServerNetworkListener extends Thread {
-  private OServerSocketFactory                          socketFactory;
-  private ServerSocket                                  serverSocket;
-  private InetSocketAddress                             inboundAddr;
-  private Class<? extends ONetworkProtocol>             protocolType;
-  private volatile boolean                              active                                 = true;
-  private List<OServerCommandConfiguration>             statefulCommands                       = new ArrayList<OServerCommandConfiguration>();
-  private List<OServerCommand>                          statelessCommands                      = new ArrayList<OServerCommand>();
-  private int                                           socketBufferSize;
-  private OContextConfiguration                         configuration;
-  private OServer                                       server;
+  private OServerSocketFactory              socketFactory;
+  private ServerSocket                      serverSocket;
+  private InetSocketAddress                 inboundAddr;
+  private Class<? extends ONetworkProtocol> protocolType;
+  private volatile boolean                           active            = true;
+  private          List<OServerCommandConfiguration> statefulCommands  = new ArrayList<OServerCommandConfiguration>();
+  private          List<OServerCommand>              statelessCommands = new ArrayList<OServerCommand>();
+  private int                   socketBufferSize;
+  private OContextConfiguration configuration;
+  private OServer               server;
   private int                                           protocolVersion                        = -1;
   private List<OBeforeDatabaseOpenNetworkEventListener> beforeDatabaseOpenNetworkEventListener = new ArrayList<OBeforeDatabaseOpenNetworkEventListener>();
 
@@ -321,9 +321,6 @@ public class OServerNetworkListener extends Thread {
 
   /**
    * Initialize a server socket for communicating with the client.
-   *
-   * @param iHostPortRange
-   * @param iHostName
    */
   private void listen(final String iHostName, final String iHostPortRange, final String iProtocolName,
       Class<? extends ONetworkProtocol> protocolClass) {
@@ -352,16 +349,16 @@ public class OServerNetworkListener extends Thread {
       }
     }
 
-    OLogManager.instance().error(this, "Unable to listen for connections using the configured ports '%s' on host '%s'",
-        iHostPortRange, iHostName);
+    OLogManager.instance()
+        .error(this, "Unable to listen for connections using the configured ports '%s' on host '%s'", null, iHostPortRange,
+            iHostName);
+
     ShutdownHelper.shutdown(1);
   }
 
   /**
    * Initializes connection parameters by the reading XML configuration. If not specified, get the parameters defined as global
    * configuration.
-   *
-   * @param iServerConfig
    */
   private void readParameters(final OContextConfiguration iServerConfig, final OServerParameterConfiguration[] iParameters) {
     configuration = new OContextConfiguration(iServerConfig);

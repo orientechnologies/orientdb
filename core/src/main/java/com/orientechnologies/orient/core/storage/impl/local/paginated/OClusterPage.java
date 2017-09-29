@@ -454,7 +454,7 @@ public class OClusterPage extends ODurablePage {
       ++foundEntries;
     }
 
-    OLogManager.instance().error(this, "%s", text);
+    OLogManager.instance().error(this, "%s", null, text);
   }
 
   private boolean insideRecordBounds(final int entryPosition, final int offset, final int contentSize) {

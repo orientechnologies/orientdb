@@ -93,13 +93,13 @@ public class OETLMessageHandler implements OPluginMessageHandler {
 
   @Override
   public synchronized void error(Object requester, String message) {
-    OLogManager.instance().error(requester, message);
+    OLogManager.instance().error(requester, message, null);
     this.outputManager.error(message);
   }
 
   @Override
   public synchronized void error(Object requester, String format, Object... args) {
-    OLogManager.instance().error(requester, format, args);
+    OLogManager.instance().error(requester, format, null, args);
     this.outputManager.error(format, args);
   }
 }

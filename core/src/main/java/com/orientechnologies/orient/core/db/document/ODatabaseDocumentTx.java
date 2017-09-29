@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -2486,7 +2487,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     checkOpeness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
-          "Only local paginated storage supports freeze. If you are using remote client please use OServerAdmin instead");
+          "Only local paginated storage supports freeze. If you are using remote client please use OServerAdmin instead", null);
 
       return;
     }
@@ -2522,7 +2523,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     checkOpeness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
-          "Only local paginated storage supports freeze. " + "If you use remote client please use OServerAdmin instead");
+          "Only local paginated storage supports freeze. " + "If you use remote client please use OServerAdmin instead", null);
 
       return;
     }
@@ -2546,7 +2547,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     checkOpeness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
-          "Only local paginated storage supports release. If you are using remote client please use OServerAdmin instead");
+          "Only local paginated storage supports release. If you are using remote client please use OServerAdmin instead", null);
       return;
     }
 
@@ -2894,10 +2895,17 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       try {
         listener.onBeforeTxCommit(this);
       } catch (Exception e) {
-        rollback(force);
 
-        OLogManager.instance().error(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
-            listener.getClass().getName(), e);
+        try {
+          rollback(force);
+        } catch (Exception re) {
+          OLogManager.instance().error(this, "Error during tx rollback `%08X`", e, System.identityHashCode(re));
+        }
+
+        OLogManager.instance()
+            .error(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit() `%08X`", e,
+                listener.getClass().getName(), System.identityHashCode(e));
+
         throw OException.wrapException(new OTransactionException(
             "Cannot commit the transaction: caught exception on execution of " + listener.getClass().getName()
                 + "#onBeforeTxCommit()"), e);
@@ -2906,18 +2914,27 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     try {
       currentTx.commit(force);
     } catch (RuntimeException e) {
-      OLogManager.instance().debug(this, "Error on transaction commit", e);
+
+      if (e instanceof OHighLevelException)
+        OLogManager.instance().debug(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));
+      else
+        OLogManager.instance().error(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));
 
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onBeforeTxRollback(this);
         } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error before transaction rollback", t);
+          OLogManager.instance().error(this, "Error before transaction rollback `%08X`", t, System.identityHashCode(t));
         }
 
-      // ROLLBACK TX AT DB LEVEL
-      currentTx.rollback(false, 0);
+      try {
+        // ROLLBACK TX AT DB LEVEL
+        currentTx.rollback(false, 0);
+      } catch (Exception re) {
+        OLogManager.instance().error(this, "Error during tx rollback `%08X`", re, System.identityHashCode(re));
+      }
+
       getLocalCache().clear();
 
       activateOnCurrentThread();
@@ -2927,8 +2944,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         try {
           listener.onAfterTxRollback(this);
         } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error after transaction rollback", t);
+          OLogManager.instance().error(this, "Error after transaction rollback `%08X`", t, System.identityHashCode(t));
         }
+
       throw e;
     }
 
@@ -2939,9 +2957,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       } catch (Exception e) {
         final String message =
             "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of "
-                + listener.getClass() + ".onAfterTxCommit()";
+                + listener.getClass() + ".onAfterTxCommit()`%08X";
 
-        OLogManager.instance().error(this, message, e);
+        OLogManager.instance().error(this, message, e, System.identityHashCode(e));
 
         throw OException.wrapException(new OTransactionBlockedException(message), e);
 
@@ -3357,7 +3375,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (s instanceof OFreezableStorageComponent)
       return (OFreezableStorageComponent) s;
     else {
-      OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation");
+      OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation", null);
       return null;
     }
   }

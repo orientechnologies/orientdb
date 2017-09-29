@@ -642,7 +642,7 @@ public class OServer {
                 Throwable nested = e2;
                 while (nested != null) {
                   if (nested instanceof OSecurityException) {
-                    OLogManager.instance().error(this, "Invalid key for database '%s'. Skip database opening", databaseName);
+                    OLogManager.instance().error(this, "Invalid key for database '%s'. Skip database opening", e2, databaseName);
                     return;
                   }
                   nested = nested.getCause();
@@ -1077,7 +1077,7 @@ public class OServer {
 
         int idx = stg.path.indexOf(':');
         if (idx == -1) {
-          OLogManager.instance().error(this, "-> Invalid path '" + stg.path + "' for database '" + stg.name + "'");
+          OLogManager.instance().error(this, "-> Invalid path '" + stg.path + "' for database '" + stg.name + "'", null);
           return;
         }
         type = stg.path.substring(0, idx);
@@ -1105,7 +1105,7 @@ public class OServer {
 
           OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'");
         } catch (Exception e) {
-          OLogManager.instance().error(this, "-> Cannot load " + type + " database '" + stg.name + "': " + e);
+          OLogManager.instance().error(this, "-> Cannot load " + type + " database '" + stg.name + "'", e);
 
         } finally {
           if (db != null)

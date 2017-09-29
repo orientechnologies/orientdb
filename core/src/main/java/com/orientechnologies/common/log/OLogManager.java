@@ -183,10 +183,6 @@ public class OLogManager {
     log(iRequester, Level.CONFIG, iMessage, null, iAdditionalArgs);
   }
 
-  public void error(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    log(iRequester, Level.SEVERE, iMessage, null, iAdditionalArgs);
-  }
-
   public void error(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
     if (isErrorEnabled())
       log(iRequester, Level.SEVERE, iMessage, iException, iAdditionalArgs);

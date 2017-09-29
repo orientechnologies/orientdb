@@ -29,9 +29,8 @@ import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstra
 
 /**
  * Provides an OSecurityAuthenticator for the users listed in orientdb-server-config.xml.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
 public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
   // OSecurityComponent
@@ -60,10 +59,10 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
           }
         }
       } else {
-        OLogManager.instance().error(this, "OServerConfigAuthenticator.authenticate() ServerConfig is null");
+        OLogManager.instance().error(this, "OServerConfigAuthenticator.authenticate() ServerConfig is null", null);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "OServerConfigAuthenticator.authenticate() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "OServerConfigAuthenticator.authenticate()", ex);
     }
 
     return principal;
@@ -111,7 +110,7 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
         }
       }
     } else {
-      OLogManager.instance().error(this, "OServerConfigAuthenticator.isAuthorized() ServerConfig is null");
+      OLogManager.instance().error(this, "OServerConfigAuthenticator.isAuthorized() ServerConfig is null", null);
     }
 
     return false;

@@ -69,7 +69,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "config() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "config()", ex);
     }
   }
 
@@ -113,7 +113,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultPasswordAuthenticator.authenticate() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultPasswordAuthenticator.authenticate()", ex);
     }
 
     return principal;

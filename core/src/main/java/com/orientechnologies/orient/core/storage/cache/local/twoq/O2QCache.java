@@ -944,7 +944,7 @@ public class O2QCache implements OReadCache {
       }
     } catch (Exception e) {
       OLogManager.instance()
-          .error(this, "Cannot store state of cache for storage placed under %s (error: %s)", writeCache.getRootDirectory(), e);
+          .error(this, "Cannot store state of cache for storage placed under %s", e, writeCache.getRootDirectory());
     } finally {
       cacheLock.releaseWriteLock();
     }
@@ -998,7 +998,7 @@ public class O2QCache implements OReadCache {
       final File stateFile = new File(rootDirectory, CACHE_STATE_FILE);
       if (stateFile.exists()) {
         if (!stateFile.delete()) {
-          OLogManager.instance().error(this, "Cache state file %s cannot be deleted", stateFile);
+          OLogManager.instance().error(this, "Cache state file %s cannot be deleted", null, stateFile);
         }
       }
 

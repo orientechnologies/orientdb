@@ -894,10 +894,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           }
         }
       }
-    } catch (HazelcastInstanceNotActiveException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running");
-    } catch (RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running");
+    } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
+      OLogManager.instance().error(this, "Hazelcast is not running", e);
     }
   }
 
@@ -962,10 +960,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         getLockManagerRequester().setServer((String) iEvent.getValue());
       }
 
-    } catch (HazelcastInstanceNotActiveException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running");
-    } catch (RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running");
+    } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
+      OLogManager.instance().error(this, "Hazelcast is not running", e);
     }
 
   }
@@ -1018,10 +1014,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
       }
-    } catch (HazelcastInstanceNotActiveException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running");
-    } catch (RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running");
+    } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
+      OLogManager.instance().error(this, "Hazelcast is not running", e);
     }
 
   }
@@ -1055,13 +1049,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       removeServer(nodeLeftName, true);
 
-    } catch (HazelcastInstanceNotActiveException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running");
-    } catch (RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running");
+    } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
+      OLogManager.instance().error(this, "Hazelcast is not running", e);
     } catch (Throwable e) {
-      OLogManager.instance()
-          .error(this, "Error on removing the server '%s' (err=%s)", getNodeName(iEvent.getMember()), e.getMessage());
+      OLogManager.instance().error(this, "Error on removing the server '%s'", e, getNodeName(iEvent.getMember()));
     }
   }
 
@@ -1081,10 +1072,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // REMOVE THE NODE FROM AUTO REMOVAL
       autoRemovalOfServers.remove(addedNodeName);
 
-    } catch (HazelcastInstanceNotActiveException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running");
-    } catch (RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running");
+    } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
+      OLogManager.instance().error(this, "Hazelcast is not running", e);
     }
   }
 

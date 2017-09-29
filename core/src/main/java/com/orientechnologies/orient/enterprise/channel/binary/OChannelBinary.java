@@ -35,15 +35,15 @@ import java.util.Arrays;
 
 /**
  * Abstract representation of a channel.
- * 
+ *
  * @author Luca Garulli
  */
 public abstract class OChannelBinary extends OChannel {
   private static final int MAX_LENGTH_DEBUG = 150;
-  protected final boolean  debug;
-  private final int        maxChunkSize;
-  public DataInputStream   in;
-  public DataOutputStream  out;
+  protected final boolean          debug;
+  private final   int              maxChunkSize;
+  public          DataInputStream  in;
+  public          DataOutputStream out;
 
   public OChannelBinary(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
     super(iSocket, iConfig);
@@ -152,13 +152,14 @@ public abstract class OChannelBinary extends OChannel {
 
   public byte[] readBytes() throws IOException {
     if (debug)
-      OLogManager.instance().info(this, "%s - Reading chunk of bytes. Reading chunk length as int (4 bytes)...",
-          socket.getRemoteSocketAddress());
+      OLogManager.instance()
+          .info(this, "%s - Reading chunk of bytes. Reading chunk length as int (4 bytes)...", socket.getRemoteSocketAddress());
 
     final int len = in.readInt();
     if (len > maxChunkSize) {
-      throw OException.wrapException(new OIOException("Impossible to read a chunk of length:" + len + " max allowed chunk length:"
-          + maxChunkSize + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings "), null);
+      throw OException.wrapException(new OIOException(
+          "Impossible to read a chunk of length:" + len + " max allowed chunk length:" + maxChunkSize
+              + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings "), null);
     }
     updateMetricReceivedBytes(OBinaryProtocol.SIZE_INT + len);
 
@@ -260,16 +261,18 @@ public abstract class OChannelBinary extends OChannel {
 
   public OChannelBinary writeBytes(final byte[] iContent, final int iLength) throws IOException {
     if (debug)
-      OLogManager.instance().info(this, "%s - Writing bytes (4+%d=%d bytes): %s", socket.getRemoteSocketAddress(), iLength,
-          iLength + 4, Arrays.toString(iContent));
+      OLogManager.instance()
+          .info(this, "%s - Writing bytes (4+%d=%d bytes): %s", socket.getRemoteSocketAddress(), iLength, iLength + 4,
+              Arrays.toString(iContent));
 
     if (iContent == null) {
       out.writeInt(-1);
       updateMetricTransmittedBytes(OBinaryProtocol.SIZE_INT);
     } else {
       if (iLength > maxChunkSize) {
-        throw OException.wrapException(new OIOException("Impossible to write a chunk of length:" + iLength
-            + " max allowed chunk length:" + maxChunkSize + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings "), null);
+        throw OException.wrapException(new OIOException(
+            "Impossible to write a chunk of length:" + iLength + " max allowed chunk length:" + maxChunkSize
+                + " see NETWORK_BINARY_MAX_CONTENT_LENGTH settings "), null);
       }
 
       out.writeInt(iLength);
@@ -306,7 +309,7 @@ public abstract class OChannelBinary extends OChannel {
     final String message = "Received unread response from " + socket.getRemoteSocketAddress()
         + " probably corrupted data from the network connection. Cleared dirty data in the buffer (" + i + " bytes): ["
         + dirtyBuffer + (i > dirtyBuffer.length() ? "..." : "") + "]";
-    OLogManager.instance().error(this, message);
+    OLogManager.instance().error(this, message, null);
     throw new OIOException(message);
 
   }
@@ -314,8 +317,8 @@ public abstract class OChannelBinary extends OChannel {
   @Override
   public void flush() throws IOException {
     if (debug)
-      OLogManager.instance().info(this, "%s - Flush",
-          socket != null ? " null possible previous close" : socket.getRemoteSocketAddress());
+      OLogManager.instance()
+          .info(this, "%s - Flush", socket != null ? " null possible previous close" : socket.getRemoteSocketAddress());
 
     updateMetricFlushes();
 
@@ -329,8 +332,8 @@ public abstract class OChannelBinary extends OChannel {
   @Override
   public void close() {
     if (debug)
-      OLogManager.instance().info(this, "%s - Closing socket...",
-          socket != null ? " null possible previous close" : socket.getRemoteSocketAddress());
+      OLogManager.instance()
+          .info(this, "%s - Closing socket...", socket != null ? " null possible previous close" : socket.getRemoteSocketAddress());
 
     try {
       if (in != null) {

@@ -12,15 +12,15 @@ import java.util.List;
 import java.util.Map;
 
 public class OProxyServer extends OServerPluginAbstract {
-  protected String                     remoteHost                  = "localhost";
-  protected Map<Integer, Integer>      ports                       = new HashMap<Integer, Integer>();
-  protected int                        bufferSize                  = 16384;
+  protected String                remoteHost = "localhost";
+  protected Map<Integer, Integer> ports      = new HashMap<Integer, Integer>();
+  protected int                   bufferSize = 16384;
 
-  protected List<OProxyServerListener> serverThreads               = new ArrayList<OProxyServerListener>();
-  protected volatile boolean           running                     = false;
-  protected String                     tracing                     = "byte";
-  protected int                        readTimeout                 = 300;
-  protected boolean                    waitUntilRemotePortsAreOpen = false;
+  protected          List<OProxyServerListener> serverThreads               = new ArrayList<OProxyServerListener>();
+  protected volatile boolean                    running                     = false;
+  protected          String                     tracing                     = "byte";
+  protected          int                        readTimeout                 = 300;
+  protected          boolean                    waitUntilRemotePortsAreOpen = false;
 
   public OProxyServer() {
   }
@@ -41,8 +41,9 @@ public class OProxyServer extends OServerPluginAbstract {
       final int localPort = ports.getKey();
       final int remotePort = ports.getValue();
 
-      OLogManager.instance().info(this, "Proxy server: configuring proxy connection from localhost:%d -> %s:%d...", localPort,
-          remoteHost, remotePort);
+      OLogManager.instance()
+          .info(this, "Proxy server: configuring proxy connection from localhost:%d -> %s:%d...", localPort, remoteHost,
+              remotePort);
 
       try {
         final OProxyServerListener serverThread = new OProxyServerListener(this, localPort, remotePort);
@@ -50,7 +51,7 @@ public class OProxyServer extends OServerPluginAbstract {
         serverThreads.add(serverThread);
 
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Proxy server: error on starting proxy server");
+        OLogManager.instance().error(this, "Proxy server: error on starting proxy server", e);
       }
     }
 
@@ -75,7 +76,7 @@ public class OProxyServer extends OServerPluginAbstract {
         remoteHost = param.value;
       else if (param.name.equalsIgnoreCase("tracing")) {
         if (!"none".equalsIgnoreCase(param.value) && !"byte".equalsIgnoreCase(param.value) && !"hex".equalsIgnoreCase(param.value))
-          OLogManager.instance().error(this, "Invalid tracing value: %s", param.value);
+          OLogManager.instance().error(this, "Invalid tracing value: %s", null, param.value);
         else
           tracing = param.value;
 

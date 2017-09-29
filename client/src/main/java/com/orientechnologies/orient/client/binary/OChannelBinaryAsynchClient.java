@@ -56,14 +56,14 @@ import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEvent
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 public class OChannelBinaryAsynchClient extends OChannelBinary {
-  private int                                  socketTimeout;                                               // IN MS
-  protected final short                        srvProtocolVersion;
-  private final Condition                      readCondition = getLockRead().getUnderlying().newCondition();
-  private final int                            maxUnreadResponses;
-  private String                               serverURL;
-  private volatile boolean                     channelRead   = false;
-  private byte                                 currentStatus;
-  private int                                  currentSessionId;
+  private         int   socketTimeout;                                               // IN MS
+  protected final short srvProtocolVersion;
+  private final Condition readCondition = getLockRead().getUnderlying().newCondition();
+  private final int    maxUnreadResponses;
+  private       String serverURL;
+  private volatile boolean channelRead = false;
+  private          byte                        currentStatus;
+  private          int                         currentSessionId;
   private volatile OAsynchChannelServiceThread serviceThread;
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
@@ -195,8 +195,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
             currentSessionId = readInt();
 
             if (debug)
-              OLogManager.instance().debug(this, "%s - Read response: %d-%d", socket.getLocalAddress(), (int) currentStatus,
-                  currentSessionId);
+              OLogManager.instance()
+                  .debug(this, "%s - Read response: %d-%d", socket.getLocalAddress(), (int) currentStatus, currentSessionId);
 
           } catch (IOException e) {
             // UNLOCK THE RESOURCE AND PROPAGATES THE EXCEPTION
@@ -222,14 +222,16 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
         try {
           if (debug)
-            OLogManager.instance().debug(this, "%s - Session %d skip response, it is for %d", socket.getLocalAddress(),
-                iRequesterId, currentSessionId);
+            OLogManager.instance()
+                .debug(this, "%s - Session %d skip response, it is for %d", socket.getLocalAddress(), iRequesterId,
+                    currentSessionId);
 
           if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout) {
             readLock = false;
 
-            throw new IOException("Timeout on reading response from the server "
-                + (socket != null ? socket.getRemoteSocketAddress() : "") + " for the request " + iRequesterId);
+            throw new IOException(
+                "Timeout on reading response from the server " + (socket != null ? socket.getRemoteSocketAddress() : "")
+                    + " for the request " + iRequesterId);
           }
 
           // IN CASE OF TOO MUCH TIME FOR READ A MESSAGE, ASYNC THREAD SHOULD NOT BE INCLUDE IN THIS CHECK
@@ -255,8 +257,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
           if (debug) {
             final long now = System.currentTimeMillis();
-            OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start),
-                socket.getLocalAddress(), iRequesterId);
+            OLogManager.instance()
+                .debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start), socket.getLocalAddress(),
+                    iRequesterId);
           }
 
           unreadResponse++;
@@ -352,7 +355,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   /**
    * Gets the major supported protocol version
-   *
    */
   public short getSrvProtocolVersion() {
     return srvProtocolVersion;
@@ -465,8 +467,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     // WRAP IT
     else
       OLogManager.instance().error(this,
-          "Error during exception serialization, serialized exception is not Throwable, exception type is "
-              + (throwable != null ? throwable.getClass().getName() : "null"));
+          "Error during exception serialization, serialized exception is not Throwable, exception type is " + (throwable != null ?
+              throwable.getClass().getName() :
+              "null"), null);
   }
 
   public void beginRequest(final byte iCommand, final OStorageRemoteSession session) throws IOException {

@@ -37,7 +37,7 @@ public class OServerConfigurationLoaderXml {
   private JAXBContext                           context;
   private InputStream                           inputStream;
   private File                                  file;
-  private long                                  fileLastModified = -1;
+  private long fileLastModified = -1;
 
   public OServerConfigurationLoaderXml(final Class<? extends OServerConfiguration> iRootClass, final InputStream iInputStream) {
     rootClass = iRootClass;
@@ -73,7 +73,7 @@ public class OServerConfigurationLoaderXml {
         if (file.exists())
           obj = rootClass.cast(unmarshaller.unmarshal(file));
         else {
-          OLogManager.instance().error(this, "Server configuration file not found: %s", file);
+          OLogManager.instance().error(this, "Server configuration file not found: %s", null, file);
           return rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
         }
         obj.location = file.getAbsolutePath();

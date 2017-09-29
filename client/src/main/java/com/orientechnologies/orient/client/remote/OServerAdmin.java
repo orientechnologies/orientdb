@@ -52,7 +52,6 @@ public class OServerAdmin {
    * Creates the object passing a remote URL to connect. sessionToken
    *
    * @param iURL URL to connect. It supports only the "remote" storage type.
-   * @throws IOException
    */
   public OServerAdmin(String iURL) throws IOException {
     if (iURL.startsWith(OEngineRemote.NAME))
@@ -71,8 +70,6 @@ public class OServerAdmin {
 
   /**
    * Creates the object starting from an existent remote storage.
-   *
-   * @param iStorage
    */
   public OServerAdmin(final OStorageRemote iStorage) {
     storage = iStorage;
@@ -83,8 +80,8 @@ public class OServerAdmin {
    *
    * @param iUserName     Server's user name
    * @param iUserPassword Server's password for the user name used
+   *
    * @return The instance itself. Useful to execute method in chain
-   * @throws IOException
    */
   public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
     networkAdminOperation(new OStorageRemoteOperation<Void>() {
@@ -133,8 +130,6 @@ public class OServerAdmin {
 
   /**
    * Returns the list of databases on the connected remote server.
-   *
-   * @throws IOException
    */
   @SuppressWarnings("unchecked")
   public synchronized Map<String, String> listDatabases() throws IOException {
@@ -163,8 +158,6 @@ public class OServerAdmin {
 
   /**
    * Returns the server information in form of document.
-   *
-   * @throws IOException
    */
   @SuppressWarnings("unchecked")
   public synchronized ODocument getServerInfo() throws IOException {
@@ -206,8 +199,8 @@ public class OServerAdmin {
    *
    * @param iDatabaseType 'document' or 'graph'
    * @param iStorageMode  local or memory
+   *
    * @return The instance itself. Useful to execute method in chain
-   * @throws IOException
    */
   public synchronized OServerAdmin createDatabase(final String iDatabaseType, String iStorageMode) throws IOException {
     return createDatabase(storage.getName(), iDatabaseType, iStorageMode);
@@ -229,15 +222,15 @@ public class OServerAdmin {
    * @param iDatabaseType 'document' or 'graph'
    * @param iStorageMode  local or memory
    * @param backupPath    path to incremental backup which will be used to create database (optional)
+   *
    * @return The instance itself. Useful to execute method in chain
-   * @throws IOException
    */
   public synchronized OServerAdmin createDatabase(final String iDatabaseName, final String iDatabaseType, final String iStorageMode,
       final String backupPath) throws IOException {
 
     if (iDatabaseName == null || iDatabaseName.length() <= 0) {
       final String message = "Cannot create unnamed remote storage. Check your syntax";
-      OLogManager.instance().error(this, message);
+      OLogManager.instance().error(this, message, null);
       throw new OStorageException(message);
     } else {
       networkAdminOperation(new OStorageRemoteOperation<Void>() {
@@ -286,8 +279,8 @@ public class OServerAdmin {
    *
    * @param iDatabaseName The database name
    * @param storageType   Storage type between "plocal" or "memory".
+   *
    * @return true if exists, otherwise false
-   * @throws IOException
    */
   public synchronized boolean existsDatabase(final String iDatabaseName, final String storageType) throws IOException {
 
@@ -318,8 +311,8 @@ public class OServerAdmin {
    * Checks if a database exists in the remote server.
    *
    * @param storageType Storage type between "plocal" or "memory".
+   *
    * @return true if exists, otherwise false
-   * @throws IOException
    */
   public synchronized boolean existsDatabase(final String storageType) throws IOException {
     return existsDatabase(storage.getName(), storageType);
@@ -329,8 +322,9 @@ public class OServerAdmin {
    * Deprecated. Use dropDatabase() instead.
    *
    * @param storageType Storage type between "plocal" or "memory".
+   *
    * @return The instance itself. Useful to execute method in chain
-   * @throws IOException
+   *
    * @see #dropDatabase(String)
    */
   @Deprecated
@@ -343,8 +337,8 @@ public class OServerAdmin {
    *
    * @param iDatabaseName The database name
    * @param storageType   Storage type between "plocal" or "memory".
+   *
    * @return The instance itself. Useful to execute method in chain
-   * @throws IOException
    */
   public synchronized OServerAdmin dropDatabase(final String iDatabaseName, final String storageType) throws IOException {
 
@@ -393,8 +387,8 @@ public class OServerAdmin {
    * Drops a database from a remote server instance.
    *
    * @param storageType Storage type between "plocal" or "memory".
+   *
    * @return The instance itself. Useful to execute method in chain
-   * @throws IOException
    */
   public synchronized OServerAdmin dropDatabase(final String storageType) throws IOException {
     return dropDatabase(storage.getName(), storageType);
@@ -404,8 +398,7 @@ public class OServerAdmin {
    * Freezes the database by locking it in exclusive mode.
    *
    * @param storageType Storage type between "plocal" or "memory".
-   * @return
-   * @throws IOException
+   *
    * @see #releaseDatabase(String)
    */
   public synchronized OServerAdmin freezeDatabase(final String storageType) throws IOException {
@@ -432,8 +425,7 @@ public class OServerAdmin {
    * Releases a frozen database.
    *
    * @param storageType Storage type between "plocal" or "memory".
-   * @return
-   * @throws IOException
+   *
    * @see #freezeDatabase(String)
    */
   public synchronized OServerAdmin releaseDatabase(final String storageType) throws IOException {
@@ -461,8 +453,7 @@ public class OServerAdmin {
    *
    * @param clusterId   Id of cluster to freeze
    * @param storageType Storage type between "plocal" or "memory".
-   * @return
-   * @throws IOException
+   *
    * @see #releaseCluster(int, String)
    */
 
@@ -493,8 +484,7 @@ public class OServerAdmin {
    *
    * @param clusterId   Id of cluster to freeze
    * @param storageType Storage type between "plocal" or "memory".
-   * @return
-   * @throws IOException
+   *
    * @see #freezeCluster(int, String)
    */
   public synchronized OServerAdmin releaseCluster(final int clusterId, final String storageType) throws IOException {
@@ -695,12 +685,11 @@ public class OServerAdmin {
         }
       } while (network == null);
 
-
       T res = operation.execute(network, storage.getCurrentSession());
       storage.connectionManager.release(network);
       return res;
     } catch (Exception e) {
-      if(network != null)
+      if (network != null)
         storage.connectionManager.release(network);
       storage.close(true, false);
       throw OException.wrapException(new OStorageException(errorMessage), e);

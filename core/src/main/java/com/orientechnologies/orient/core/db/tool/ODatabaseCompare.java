@@ -888,7 +888,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               }
             }
           } catch (RuntimeException e) {
-            OLogManager.instance().error(this, "Error during data comparison of records with rid " + rid);
+            OLogManager.instance().error(this, "Error during data comparison of records with rid " + rid, e);
             throw e;
           }
         }

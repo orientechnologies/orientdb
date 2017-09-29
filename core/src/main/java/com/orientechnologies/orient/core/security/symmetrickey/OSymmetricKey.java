@@ -380,7 +380,7 @@ public class OSymmetricKey {
     try {
       result = OBase64Utils.encodeBytes(bytes);
     } catch (Exception ex) {
-      OLogManager.instance().error(null, "convertToBase64() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(null, "convertToBase64()", ex);
     }
 
     return result;
@@ -394,7 +394,7 @@ public class OSymmetricKey {
         result = OBase64Utils.decode(base64.getBytes("UTF8"));
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(null, "convertFromBase64() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(null, "convertFromBase64()", ex);
     }
 
     return result;

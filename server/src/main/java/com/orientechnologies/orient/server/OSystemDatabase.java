@@ -68,7 +68,7 @@ public class OSystemDatabase {
           if (cls != null) {
             cls.addCluster(clusterName);
           } else {
-            OLogManager.instance().error(this, "createCluster() Class name %s does not exist", className);
+            OLogManager.instance().error(this, "createCluster() Class name %s does not exist", null, className);
           }
         }
 

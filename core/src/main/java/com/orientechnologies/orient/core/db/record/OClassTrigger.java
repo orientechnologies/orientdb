@@ -220,7 +220,7 @@ public class OClassTrigger extends ODocumentHookAbstract implements ORecordHook.
                 func = database.getMetadata().getFunctionLibrary().getFunction((String) funcDoc.field("name"));
               }
             } catch (Exception ex) {
-              OLogManager.instance().error(this, "illegal record id : ", ex.getMessage());
+              OLogManager.instance().error(this, "illegal record id : ", ex);
             }
           }
         }
@@ -252,7 +252,7 @@ public class OClassTrigger extends ODocumentHookAbstract implements ORecordHook.
       Method method = clz.getMethod(methodName, ODocument.class);
       return new Object[] { clz, method };
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "illegal class or method : " + clzName + "/" + methodName);
+      OLogManager.instance().error(this, "illegal class or method : " + clzName + "/" + methodName, ex);
       return null;
     }
   }

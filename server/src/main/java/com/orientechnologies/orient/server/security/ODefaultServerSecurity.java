@@ -56,52 +56,51 @@ import java.util.concurrent.ConcurrentHashMap;
  * Provides an implementation of OServerSecurity.
  *
  * @author S. Colin Leister
- *
  */
 public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycleListener, OServerSecurity {
-  private boolean                             enabled                = false;                                    // Defaults to not
-                                                                                                                 // enabled at
-                                                                                                                 // first.
-  private boolean                             debug                  = false;
+  private boolean enabled = false;                                    // Defaults to not
+  // enabled at
+  // first.
+  private boolean debug   = false;
 
-  private boolean                             storePasswords         = true;
+  private boolean storePasswords = true;
 
   // OServerSecurity (via OSecurityAuthenticator)
   // Some external security implementations may permit falling back to a
   // default authentication mode if external authentication fails.
-  private boolean                             allowDefault           = true;
+  private boolean allowDefault = true;
 
-  private final Object                        passwordValidatorSynch = new Object();
-  private OPasswordValidator                  passwordValidator;
+  private final Object passwordValidatorSynch = new Object();
+  private OPasswordValidator passwordValidator;
 
-  private final Object                        importLDAPSynch        = new Object();
-  private OSecurityComponent                  importLDAP;
+  private final Object importLDAPSynch = new Object();
+  private OSecurityComponent importLDAP;
 
-  private final Object                        auditingSynch          = new Object();
-  private OAuditingService                    auditingService;
+  private final Object auditingSynch = new Object();
+  private OAuditingService auditingService;
 
-  private ODocument                           configDoc;                                                         // Holds the
-                                                                                                                 // current JSON
-                                                                                                                 // configuration.
-  private OServer                             server;
-  private OServerConfigurationManager         serverConfig;
+  private ODocument                   configDoc;                                                         // Holds the
+  // current JSON
+  // configuration.
+  private OServer                     server;
+  private OServerConfigurationManager serverConfig;
 
-  private ODocument                           auditingDoc;
-  private ODocument                           serverDoc;
-  private ODocument                           authDoc;
-  private ODocument                           passwdValDoc;
-  private ODocument                           ldapImportDoc;
+  private ODocument auditingDoc;
+  private ODocument serverDoc;
+  private ODocument authDoc;
+  private ODocument passwdValDoc;
+  private ODocument ldapImportDoc;
 
   // The SuperUser is now only used by the ODefaultServerSecurity for self-authentication.
-  private final String                        superUser              = "OSecurityModuleSuperUser";
-  private String                              superUserPassword;
-  private OServerUserConfiguration            superUserCfg;
+  private final String superUser = "OSecurityModuleSuperUser";
+  private String                   superUserPassword;
+  private OServerUserConfiguration superUserCfg;
 
   // We use a list because the order indicates priority of method.
-  private final List<OSecurityAuthenticator>  authenticatorsList     = new ArrayList<OSecurityAuthenticator>();
+  private final List<OSecurityAuthenticator> authenticatorsList = new ArrayList<OSecurityAuthenticator>();
 
-  private ConcurrentHashMap<String, Class<?>> securityClassMap       = new ConcurrentHashMap<String, Class<?>>();
-  private OSyslog                             sysLog;
+  private ConcurrentHashMap<String, Class<?>> securityClassMap = new ConcurrentHashMap<String, Class<?>>();
+  private OSyslog sysLog;
 
   public ODefaultServerSecurity(final OServer oServer, final OServerConfigurationManager serverCfg) {
     server = oServer;
@@ -111,7 +110,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     OSecurityManager.instance().setSecurityFactory(this);
   }
 
-  public void shutdown(){
+  public void shutdown() {
     server.unregisterLifecycleListener(this);
   }
 
@@ -170,7 +169,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate()", ex);
     }
 
     return null; // Indicates authentication failed.
@@ -275,6 +274,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   }
 
   // OServerSecurity
+
   /**
    * Returns the "System User" associated with 'username' from the system database. If not found, returns null. dbName is used to
    * filter the assigned roles. It may be null.
@@ -561,8 +561,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
                 }
               } catch (Exception ex) {
                 OLogManager.instance().error(this, "securityRecordChange() Exception: ", ex);
-              }
-              finally {
+              } finally {
                 cc.release();
               }
             }
@@ -627,17 +626,17 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
                     authenticatorsList.add(authPlugin);
                   } else {
-                    OLogManager.instance().error(this,
-                        "ODefaultServerSecurity.loadAuthenticators() class is not an OSecurityAuthenticator");
+                    OLogManager.instance()
+                        .error(this, "ODefaultServerSecurity.loadAuthenticators() class is not an OSecurityAuthenticator", null);
                   }
                 } else {
-                  OLogManager.instance().error(this,
-                      "ODefaultServerSecurity.loadAuthenticators() authentication class is null for %s", name);
+                  OLogManager.instance()
+                      .error(this, "ODefaultServerSecurity.loadAuthenticators() authentication class is null for %s", null, name);
                 }
               }
             } else {
-              OLogManager.instance().error(this,
-                  "ODefaultServerSecurity.loadAuthenticators() authentication object is missing name");
+              OLogManager.instance()
+                  .error(this, "ODefaultServerSecurity.loadAuthenticators() authentication object is missing name", null);
             }
           } catch (Throwable ex) {
             OLogManager.instance().error(this, "ODefaultServerSecurity.loadAuthenticators() Exception: ", ex);
@@ -671,7 +670,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   // OServerLifecycleListener Interface
   public void onAfterActivate() {
-  	 // Does nothing now.
+    // Does nothing now.
   }
 
   // OServerSecurity
@@ -769,10 +768,10 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
           sectionDoc = configDoc.field(section);
         }
       } else {
-        OLogManager.instance().error(this, "ODefaultServerSecurity.getSection(%s) Configuration document is null", section);
+        OLogManager.instance().error(this, "ODefaultServerSecurity.getSection(%s) Configuration document is null", null, section);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.getSection(%s) Exception: %s", section, ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultServerSecurity.getSection(%s)", ex, section);
     }
 
     return sectionDoc;
@@ -802,7 +801,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
       }
     } catch (Exception ex) {
       configDoc.field(section, oldSection);
-      OLogManager.instance().error(this, "ODefaultServerSecurity.setSection(%s) Exception: %s", section, ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultServerSecurity.setSection(%s)", ex, section);
     }
 
   }
@@ -833,14 +832,14 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
               fis.close();
           }
         } else {
-          OLogManager.instance().error(this, "ODefaultServerSecurity.loadConfig() Could not access the security JSON file: %s",
-              jsonFile);
+          OLogManager.instance()
+              .error(this, "ODefaultServerSecurity.loadConfig() Could not access the security JSON file: %s", null, jsonFile);
         }
       } else {
-        OLogManager.instance().error(this, "ODefaultServerSecurity.loadConfig() Configuration file path is null");
+        OLogManager.instance().error(this, "ODefaultServerSecurity.loadConfig() Configuration file path is null", null);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.loadConfig() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultServerSecurity.loadConfig()", ex);
     }
 
     return securityDoc;
@@ -869,7 +868,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         enabled = sectionDoc.field("enabled");
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.isEnabled() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultServerSecurity.isEnabled()", ex);
     }
 
     return enabled;
@@ -888,10 +887,10 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
           debug = configDoc.field("debug");
         }
       } else {
-        OLogManager.instance().error(this, "ODefaultServerSecurity.loadSecurity() jsonConfig is null");
+        OLogManager.instance().error(this, "ODefaultServerSecurity.loadSecurity() jsonConfig is null", null);
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.loadSecurity() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultServerSecurity.loadSecurity()", ex);
     }
   }
 
@@ -909,7 +908,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.loadServer() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultServerSecurity.loadServer()", ex);
     }
   }
 
@@ -940,17 +939,17 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
               passwordValidator.config(server, serverConfig, passwdValDoc);
               passwordValidator.active();
             } else {
-              OLogManager.instance().error(this,
-                  "ODefaultServerSecurity.reloadPasswordValidator() class is not an OPasswordValidator");
+              OLogManager.instance()
+                  .error(this, "ODefaultServerSecurity.reloadPasswordValidator() class is not an OPasswordValidator", null);
             }
           } else {
-            OLogManager.instance().error(this,
-                "ODefaultServerSecurity.reloadPasswordValidator() PasswordValidator class property is missing");
+            OLogManager.instance()
+                .error(this, "ODefaultServerSecurity.reloadPasswordValidator() PasswordValidator class property is missing", null);
           }
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.reloadPasswordValidator() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultServerSecurity.reloadPasswordValidator()", ex);
     }
   }
 
@@ -971,15 +970,17 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
               importLDAP.config(server, serverConfig, ldapImportDoc);
               importLDAP.active();
             } else {
-              OLogManager.instance().error(this, "ODefaultServerSecurity.reloadImportLDAP() class is not an OSecurityComponent");
+              OLogManager.instance()
+                  .error(this, "ODefaultServerSecurity.reloadImportLDAP() class is not an OSecurityComponent", null);
             }
           } else {
-            OLogManager.instance().error(this, "ODefaultServerSecurity.reloadImportLDAP() ImportLDAP class property is missing");
+            OLogManager.instance()
+                .error(this, "ODefaultServerSecurity.reloadImportLDAP() ImportLDAP class property is missing", null);
           }
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.reloadImportLDAP() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultServerSecurity.reloadImportLDAP()", ex);
     }
   }
 
@@ -1000,16 +1001,18 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
               auditingService.config(server, serverConfig, auditingDoc);
               auditingService.active();
             } else {
-              OLogManager.instance().error(this, "ODefaultServerSecurity.reloadAuditingService() class is not an OAuditingService");
+              OLogManager.instance()
+                  .error(this, "ODefaultServerSecurity.reloadAuditingService() class is not an OAuditingService", null);
             }
           } else {
-            OLogManager.instance().error(this, "ODefaultServerSecurity.reloadAuditingService() Auditing class property is missing");
+            OLogManager.instance()
+                .error(this, "ODefaultServerSecurity.reloadAuditingService() Auditing class property is missing", null);
           }
         }
 
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.reloadAuditingService() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "ODefaultServerSecurity.reloadAuditingService()", ex);
     }
   }
 
@@ -1028,11 +1031,11 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         // Register the REST API Command.
         // listener.registerStatelessCommand(new OServerCommandPostSecurityReload(this));
       } else {
-        OLogManager.instance().error(this,
-            "ODefaultServerSecurity.registerRESTCommands() unable to retrieve Network Protocol listener.");
+        OLogManager.instance()
+            .error(this, "ODefaultServerSecurity.registerRESTCommands() unable to retrieve Network Protocol listener.", null);
       }
     } catch (Throwable th) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.registerRESTCommands() Throwable: " + th.getMessage());
+      OLogManager.instance().error(this, "ODefaultServerSecurity.registerRESTCommands()", th);
     }
   }
 
@@ -1043,11 +1046,11 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
       if (listener != null) {
         // listener.unregisterStatelessCommand(OServerCommandPostSecurityReload.class);
       } else {
-        OLogManager.instance().error(this,
-            "ODefaultServerSecurity.unregisterRESTCommands() unable to retrieve Network Protocol listener.");
+        OLogManager.instance()
+            .error(this, "ODefaultServerSecurity.unregisterRESTCommands() unable to retrieve Network Protocol listener.", null);
       }
     } catch (Throwable th) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.unregisterRESTCommands() Throwable: " + th.getMessage());
+      OLogManager.instance().error(this, "ODefaultServerSecurity.unregisterRESTCommands()", th);
     }
   }
 }

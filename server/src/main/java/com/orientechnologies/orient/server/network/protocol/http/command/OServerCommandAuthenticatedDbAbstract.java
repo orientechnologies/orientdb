@@ -43,19 +43,18 @@ import java.util.List;
 /**
  * Database based authenticated command. Authenticates against the database taken as second parameter of the URL. The URL must be in
  * this format:
- *
+ * <p>
  * <pre>
  * <command>/<database>[/...]
  * </pre>
  *
  * @author Luca Garulli
- *
  */
 public abstract class OServerCommandAuthenticatedDbAbstract extends OServerCommandAbstract {
 
-  public static final char       DBNAME_DIR_SEPARATOR   = '$';
-  public static final String     SESSIONID_UNAUTHORIZED = "-";
-  public static final String     SESSIONID_LOGOUT       = "!";
+  public static final char   DBNAME_DIR_SEPARATOR   = '$';
+  public static final String SESSIONID_UNAUTHORIZED = "-";
+  public static final String SESSIONID_LOGOUT       = "!";
   private volatile OTokenHandler tokenHandler;
 
   @Override
@@ -68,7 +67,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (urlParts.length < 2)
       throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
 
-    iRequest.databaseName = URLDecoder.decode(urlParts[1],"UTF-8");
+    iRequest.databaseName = URLDecoder.decode(urlParts[1], "UTF-8");
     if (iRequest.bearerTokenRaw != null) {
       // Bearer authentication
       try {
@@ -89,8 +88,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       if (iRequest.bearerToken.getIsValid() == false) {
 
         // SECURITY PROBLEM: CROSS DATABASE REQUEST!
-        OLogManager.instance().warn(this, "Token '%s' is not valid for database '%s'", iRequest.bearerTokenRaw,
-            iRequest.databaseName);
+        OLogManager.instance()
+            .warn(this, "Token '%s' is not valid for database '%s'", iRequest.bearerTokenRaw, iRequest.databaseName);
         sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
         return false;
 
@@ -99,8 +98,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       return iRequest.bearerToken.getIsValid();
     } else {
       // HTTP basic authentication
-      final List<String> authenticationParts = iRequest.authorization != null ? OStringSerializerHelper.split(
-          iRequest.authorization, ':') : null;
+      final List<String> authenticationParts =
+          iRequest.authorization != null ? OStringSerializerHelper.split(iRequest.authorization, ':') : null;
 
       OHttpSession currentSession;
       if (iRequest.sessionId != null && iRequest.sessionId.length() > 1) {
@@ -170,15 +169,15 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       iRequest.data.currentUserId = db.getUser() == null ? "<server user>" : db.getUser().getIdentity().toString();
 
       // AUTHENTICATED: CREATE THE SESSION
-      iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0),
-          iAuthenticationParts.get(1));
+      iRequest.sessionId = OHttpSessionManager.getInstance()
+          .createSession(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1));
       iResponse.sessionId = iRequest.sessionId;
       return true;
 
     } catch (OSecurityAccessException e) {
       // WRONG USER/PASSWD
     } catch (OLockException e) {
-      OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
+      OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", e);
     } finally {
       if (db == null) {
         // WRONG USER/PASSWD
@@ -202,8 +201,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       sendJsonError(iResponse, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
           "401 Unauthorized.", header);
     } else {
-      iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          "401 Unauthorized.", header);
+      iResponse
+          .send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.",
+              header);
     }
   }
 
@@ -245,8 +245,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
     if (localDatabase == null) {
-      localDatabase = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, session.getUserName(),
-          session.getUserPassword());
+      localDatabase = (ODatabaseDocumentTx) server
+          .openDatabase(iRequest.databaseName, session.getUserName(), session.getUserPassword());
     } else {
 
       String currentUserId = iRequest.data.currentUserId;

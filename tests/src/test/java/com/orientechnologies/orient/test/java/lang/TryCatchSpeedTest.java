@@ -33,7 +33,7 @@ public class TryCatchSpeedTest extends SpeedTestMonoThread {
 	public void cycle() throws IOException {
 		try {
 		} catch (Throwable t) {
-			OLogManager.instance().error(this, "test");
+			OLogManager.instance().error(this, "test", t);
 		} finally {
 		}
 	}

@@ -124,7 +124,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
             }
 
           if (!saved)
-            OLogManager.instance().error(this, "failed to save the index manager configuration after 10 retries");
+            OLogManager.instance().error(this, "failed to save the index manager configuration after 10 retries", null);
 
           return null;
 
@@ -514,7 +514,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     OStorageConfiguration configuration = storage.getConfiguration();
     return configuration.getLocaleInstance();
   }
-
 
   private Map<OMultiKey, Set<OIndex<?>>> getIndexOnProperty(final String className) {
     final Locale locale = getServerLocale();

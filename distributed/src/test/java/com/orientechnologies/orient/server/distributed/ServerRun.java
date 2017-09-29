@@ -100,10 +100,13 @@ public class ServerRun {
     final String currentServerName = server.getDistributedManager().getLocalNodeName();
 
     OLogManager.instance()
-        .error(this, "**********************************************************************************************************");
-    OLogManager.instance().error(this, "SIMULATING ISOLATION BETWEEN %s AND %s...", currentServerName, Arrays.asList(serverIds));
+        .error(this, "**********************************************************************************************************",
+            null);
     OLogManager.instance()
-        .error(this, "**********************************************************************************************************");
+        .error(this, "SIMULATING ISOLATION BETWEEN %s AND %s...", null, currentServerName, Arrays.asList(serverIds));
+    OLogManager.instance()
+        .error(this, "**********************************************************************************************************",
+            null);
 
     final Node currentNode = getHazelcastNode(((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
     for (ServerRun s : serverIds) {
@@ -124,10 +127,13 @@ public class ServerRun {
     final String currentServerName = server.getDistributedManager().getLocalNodeName();
 
     OLogManager.instance()
-        .error(this, "**********************************************************************************************************");
-    OLogManager.instance().error(this, "REMOVING ISOLATION BETWEEN %s AND %s...", currentServerName, Arrays.asList(serverIds));
+        .error(this, "**********************************************************************************************************",
+            null);
     OLogManager.instance()
-        .error(this, "**********************************************************************************************************");
+        .error(this, "REMOVING ISOLATION BETWEEN %s AND %s...", null, currentServerName, Arrays.asList(serverIds));
+    OLogManager.instance()
+        .error(this, "**********************************************************************************************************",
+            null);
 
     final Node currentNode = getHazelcastNode(((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
     for (ServerRun s : serverIds) {

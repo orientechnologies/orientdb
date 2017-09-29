@@ -580,7 +580,7 @@ public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPool
         if (release != null)
           builder.append("released from: ").append('\n').append(getStackTraceAsString(release)).append('\n');
 
-        OLogManager.instance().error(this, builder.toString());
+        OLogManager.instance().error(this, builder.toString(), null);
       }
     }
   }

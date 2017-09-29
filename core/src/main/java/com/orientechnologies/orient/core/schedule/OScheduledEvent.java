@@ -68,12 +68,12 @@ public class OScheduledEvent extends ODocumentWrapper {
     @Override
     public void run() {
       if (isRunning) {
-        OLogManager.instance().error(this, "Error: The scheduled event '" + getName() + "' is already running");
+        OLogManager.instance().error(this, "Error: The scheduled event '" + getName() + "' is already running", null);
         return;
       }
 
       if (function == null) {
-        OLogManager.instance().error(this, "Error: The scheduled event '" + getName() + "' has no configured function");
+        OLogManager.instance().error(this, "Error: The scheduled event '" + getName() + "' has no configured function", null);
         return;
       }
 
@@ -101,7 +101,7 @@ public class OScheduledEvent extends ODocumentWrapper {
     try {
       cron = new OCronExpression(getRule());
     } catch (ParseException e) {
-      OLogManager.instance().error(this, "Error on compiling cron expression " + getRule());
+      OLogManager.instance().error(this, "Error on compiling cron expression " + getRule(), e);
     }
   }
 
@@ -184,7 +184,7 @@ public class OScheduledEvent extends ODocumentWrapper {
     try {
       cron.buildExpression(getRule());
     } catch (ParseException e) {
-      OLogManager.instance().error(this, "Error on compiling cron expression " + getRule());
+      OLogManager.instance().error(this, "Error on compiling cron expression " + getRule(), e);
     }
   }
 
