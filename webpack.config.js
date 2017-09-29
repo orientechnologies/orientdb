@@ -21,7 +21,7 @@ module.exports = function (options) {
   return {
 
     entry: {
-      'main': './src/main.browser.ts'
+      'main': ['babel-polyfill','./src/main.browser.ts']
 
     },
     resolve: {
