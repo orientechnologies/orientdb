@@ -31,7 +31,7 @@ import java.io.IOException;
 public class OServerCommandPostSecurityReload extends OServerCommandAuthenticatedServerAbstract {
   private static final String[] NAMES = { "POST|security/reload" };
 
-  private OServerSecurity       serverSecurity;
+  private OServerSecurity serverSecurity;
 
   @Override
   public String[] getNames() {
@@ -98,7 +98,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 
   protected void writeError(final OHttpResponse iResponse, final String method, final String reason) {
     try {
-      OLogManager.instance().error(this, "%s %s", method, reason);
+      OLogManager.instance().error(this, "%s %s", null, method, reason);
 
       final StringBuilder json = new StringBuilder();
 
@@ -108,15 +108,16 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 
       iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Error", OHttpUtils.CONTENT_JSON, json.toString(), null);
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "OServerCommandPostSecurityReload.WriteJSON() Exception: " + ex);
+      OLogManager.instance().error(this, "OServerCommandPostSecurityReload.WriteJSON()", ex);
     }
   }
 
   protected void writeJSON(final OHttpResponse iResponse, final String json) {
     try {
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, new ODocument().field("message",json).toJSON(), null);
+      iResponse
+          .send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, new ODocument().field("message", json).toJSON(), null);
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "OServerCommandPostSecurityReload.WriteJSON() Exception: " + ex);
+      OLogManager.instance().error(this, "OServerCommandPostSecurityReload.WriteJSON", ex);
     }
   }
 }

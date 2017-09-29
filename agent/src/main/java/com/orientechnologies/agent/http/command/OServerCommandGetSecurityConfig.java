@@ -113,7 +113,7 @@ public class OServerCommandGetSecurityConfig extends OServerCommandAuthenticated
 	{
 		try
 		{
-			OLogManager.instance().error(this, "%s %s", method, reason);
+			OLogManager.instance().error(this, "%s %s", null, method, reason);
 			
 			final StringBuilder json = new StringBuilder();
 			
@@ -125,7 +125,7 @@ public class OServerCommandGetSecurityConfig extends OServerCommandAuthenticated
 		}
 		catch(Exception ex)
 		{
-			OLogManager.instance().error(this, "OServerCommandGetSecurityConfig.WriteJSON() Exception: " + ex);
+			OLogManager.instance().error(this, "OServerCommandGetSecurityConfig.WriteJSON() ", ex);
 		}
 	}
 
@@ -137,7 +137,7 @@ public class OServerCommandGetSecurityConfig extends OServerCommandAuthenticated
 		}
 		catch(Exception ex)
 		{
-			OLogManager.instance().error(this, "OServerCommandGetSecurityConfig.WriteJSON() Exception: " + ex);
+			OLogManager.instance().error(this, "OServerCommandGetSecurityConfig.WriteJSON()" , ex);
 		}
 	}
 }

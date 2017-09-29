@@ -50,12 +50,12 @@ import java.util.Map;
 import java.util.UUID;
 
 public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener, OPluginLifecycleListener {
-  public static final String  EE                         = "ee.";
+  public static final  String EE                         = "ee.";
   private static final String ORIENDB_ENTERPRISE_VERSION = "2.2"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
-  public OServer              server;
-  private String              license;
-  private boolean             enabled                    = false;
-  public static final String  TOKEN;
+  public  OServer server;
+  private String  license;
+  private boolean enabled = false;
+  public static final String TOKEN;
 
   static {
     String t = null;
@@ -289,14 +289,15 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     OLogManager.instance().info(this, "*****************************************************************************");
     OLogManager.instance().info(this, "");
 
-    Orient.instance().getProfiler().registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.agentVersion"),
-        "Enterprise License", OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
+    Orient.instance().getProfiler()
+        .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.agentVersion"), "Enterprise License",
+            OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
 
-          @Override
-          public Object getValue() {
-            return ORIENDB_ENTERPRISE_VERSION;
-          }
-        });
+              @Override
+              public Object getValue() {
+                return ORIENDB_ENTERPRISE_VERSION;
+              }
+            });
 
     return true;
   }
@@ -354,22 +355,26 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   private void registerSecurityComponents() {
     try {
       if (server.getSecurity() != null) {
-        server.getSecurity().registerSecurityClass(com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth.class);
-        server.getSecurity().registerSecurityClass(com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth.class);
+        server.getSecurity()
+            .registerSecurityClass(com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth.class);
+        server.getSecurity()
+            .registerSecurityClass(com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth.class);
       }
     } catch (Throwable th) {
-      OLogManager.instance().error(this, "registerSecurityComponents() Throwable: " + th);
+      OLogManager.instance().error(this, "registerSecurityComponents()", th);
     }
   }
 
   private void unregisterSecurityComponents() {
     try {
       if (server.getSecurity() != null) {
-        server.getSecurity().unregisterSecurityClass(com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth.class);
-        server.getSecurity().unregisterSecurityClass(com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth.class);
+        server.getSecurity()
+            .unregisterSecurityClass(com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth.class);
+        server.getSecurity()
+            .unregisterSecurityClass(com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth.class);
       }
     } catch (Throwable th) {
-      OLogManager.instance().error(this, "unregisterSecurityComponents() Throwable: " + th);
+      OLogManager.instance().error(this, "unregisterSecurityComponents()", th);
     }
   }
 }

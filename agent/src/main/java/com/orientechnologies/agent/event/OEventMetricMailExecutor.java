@@ -56,12 +56,8 @@ public class OEventMetricMailExecutor extends OEventMetricExecutor {
       OLogManager.instance().debug(this, "EMAIL sending email: %s", configuration);
 
       mailPlugin.send(configuration);
-    } catch (MessagingException e) {
-
-      OLogManager.instance().error(this, "Error sending  email with configuration: %s", configuration);
-
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error sending  email with configuration: %s", configuration);
+      OLogManager.instance().error(this, "Error sending  email with configuration: %s", e, configuration);
     }
 
   }

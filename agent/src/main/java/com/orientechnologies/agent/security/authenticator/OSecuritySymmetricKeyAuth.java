@@ -55,7 +55,7 @@ public class OSecuritySymmetricKeyAuth extends ODefaultPasswordAuthenticator {
     try {
     	userCfg = new OSecuritySymmetricKeyUser(userDoc);
     } catch (Exception ex) {
-    	OLogManager.instance().error(this, "createServerUser() Exception: %s", ex.getMessage());
+    	OLogManager.instance().error(this, "createServerUser()", ex);
     }
 
     return userCfg;
@@ -80,7 +80,7 @@ public class OSecuritySymmetricKeyAuth extends ODefaultPasswordAuthenticator {
           principal = username; // user.name;
         }        
       } catch (Exception ex) {
-        OLogManager.instance().error(this, "authenticate() Exception: %s", ex.getMessage());
+        OLogManager.instance().error(this, "authenticate()", ex);
       }      
     }
   

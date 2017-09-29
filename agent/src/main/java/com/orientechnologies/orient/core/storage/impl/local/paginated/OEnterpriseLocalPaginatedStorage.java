@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.agent.OL;
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OErrorCode;
@@ -51,11 +52,11 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
-  public static final  String IBU_EXTENSION         = ".ibu";
-  public static final  String CONF_ENTRY_NAME       = "database.ocf";
-  public static final String        INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
-  private static final String CONF_UTF_8_ENTRY_NAME = "database_utf8.ocf";
-  private final       AtomicBoolean backupInProgress              = new AtomicBoolean(false);
+  public static final  String        IBU_EXTENSION                 = ".ibu";
+  public static final  String        CONF_ENTRY_NAME               = "database.ocf";
+  public static final  String        INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
+  private static final String        CONF_UTF_8_ENTRY_NAME         = "database_utf8.ocf";
+  private final        AtomicBoolean backupInProgress              = new AtomicBoolean(false);
 
   public OEnterpriseLocalPaginatedStorage(String name, String filePath, String mode, int id, OReadCache readCache,
       OClosableLinkedContainer<Long, OFileClassic> files) throws IOException {
@@ -128,7 +129,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         rndIBUFile.close();
 
         if (!ibuFile.delete()) {
-          OLogManager.instance().error(this, ibuFile.getAbsolutePath() + " is closed but can not be deleted");
+          OLogManager.instance().error(this, ibuFile.getAbsolutePath() + " is closed but can not be deleted", null);
         }
 
         throw e;
@@ -140,7 +141,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         if (rndIBUFile != null)
           rndIBUFile.close();
       } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
+        OLogManager.instance().error(this, "Can not close %s file", e, fileName);
       }
     }
 
@@ -567,7 +568,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
       if (walTempDir != null) {
         if (!walTempDir.delete()) {
-          OLogManager.instance().error(this, "Can not remove temporary backup directory " + walTempDir.getAbsolutePath());
+          OLogManager.instance().error(this, "Can not remove temporary backup directory " + walTempDir.getAbsolutePath(), null);
         }
       }
 

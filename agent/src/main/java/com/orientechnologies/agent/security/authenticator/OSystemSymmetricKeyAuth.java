@@ -73,7 +73,7 @@ public class OSystemSymmetricKeyAuth extends OSystemUserAuthenticator {
     	  }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "authenticate() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "authenticate()", ex);
     }
 
     return principal;
