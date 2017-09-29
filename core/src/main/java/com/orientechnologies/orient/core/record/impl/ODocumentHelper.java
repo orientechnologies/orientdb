@@ -640,7 +640,7 @@ public class ODocumentHelper {
     for (String s : list) {
       try {
         Integer.parseInt(s);
-      } catch (NumberFormatException e) {
+      } catch (NumberFormatException ignore) {
         return false;
       }
     }

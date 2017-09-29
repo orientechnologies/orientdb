@@ -168,6 +168,7 @@ public enum OType {
    * Return the type by ID.
    *
    * @param iId The id to search
+   *
    * @return The type if any, otherwise null
    */
   public static OType getById(final byte iId) {
@@ -189,6 +190,7 @@ public enum OType {
    * Return the correspondent type by checking the "assignability" of the class received as parameter.
    *
    * @param iClass Class to check
+   *
    * @return OType instance if found, otherwise null
    */
   public static OType getTypeByClass(final Class<?> iClass) {
@@ -285,9 +287,11 @@ public enum OType {
    *
    * @param iValue       Value to convert
    * @param iTargetClass Expected class
+   *
    * @return The converted value or the original if no conversion was applied
    */
-  @SuppressWarnings({ "unchecked", "rawtypes" }) public static Object convert(final Object iValue, final Class<?> iTargetClass) {
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  public static Object convert(final Object iValue, final Class<?> iTargetClass) {
     if (iValue == null)
       return null;
 
@@ -429,7 +433,7 @@ public enum OType {
           try {
             return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
                 .parse((String) iValue);
-          } catch (ParseException e) {
+          } catch (ParseException ignore) {
             return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
                 .parse((String) iValue);
           }
@@ -444,9 +448,10 @@ public enum OType {
               result.add((OIdentifiable) o);
             } else if (o instanceof String) {
               try {
-                result.add(new ORecordId((String) iValue));
+                result.add(new ORecordId(iValue.toString()));
               } catch (Exception e) {
-                OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", iValue, iTargetClass);
+                OLogManager.instance()
+                    .debug(OType.class, "Error in conversion of value '%s' to type '%s'", e, iValue, iTargetClass);
               }
             }
           }
@@ -455,7 +460,7 @@ public enum OType {
           try {
             return new ORecordId((String) iValue);
           } catch (Exception e) {
-            OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", iValue, iTargetClass);
+            OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", e, iValue, iTargetClass);
           }
         }
       }
@@ -463,7 +468,7 @@ public enum OType {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", iValue, iTargetClass);
+      OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", e, iValue, iTargetClass);
       return null;
     }
 
@@ -654,6 +659,7 @@ public enum OType {
    * Convert the input object to an integer.
    *
    * @param iValue Any type supported
+   *
    * @return The integer value if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   public int asInt(final Object iValue) {
@@ -671,6 +677,7 @@ public enum OType {
    * Convert the input object to a long.
    *
    * @param iValue Any type supported
+   *
    * @return The long value if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   public long asLong(final Object iValue) {
@@ -688,6 +695,7 @@ public enum OType {
    * Convert the input object to a float.
    *
    * @param iValue Any type supported
+   *
    * @return The float value if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   public float asFloat(final Object iValue) {
@@ -703,6 +711,7 @@ public enum OType {
    * Convert the input object to a double.
    *
    * @param iValue Any type supported
+   *
    * @return The double value if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   public double asDouble(final Object iValue) {
@@ -718,9 +727,11 @@ public enum OType {
    * Convert the input object to a string.
    *
    * @param iValue Any type supported
+   *
    * @return The string if the conversion succeed, otherwise the IllegalArgumentException exception
    */
-  @Deprecated public String asString(final Object iValue) {
+  @Deprecated
+  public String asString(final Object iValue) {
     return iValue.toString();
   }
 
@@ -745,7 +756,8 @@ public enum OType {
     return castable;
   }
 
-  @Deprecated public Class<?>[] getJavaTypes() {
+  @Deprecated
+  public Class<?>[] getJavaTypes() {
     return null;
   }
 }

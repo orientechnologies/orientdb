@@ -146,7 +146,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
         final String clusterName = db.getClusterNameById(clusterId);
         db.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, clusterName);
         listOfReadableIds.add(clusterId);
-      } catch (OSecurityAccessException securityException) {
+      } catch (OSecurityAccessException ignore) {
         all = false;
         // if the cluster is inaccessible it's simply not processed in the list.add
       }
@@ -1839,7 +1839,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     if (!stringValue.isEmpty() && Character.isDigit(stringValue.charAt(0)))
       try {
         clId = Integer.parseInt(stringValue);
-      } catch (NumberFormatException e) {
+      } catch (NumberFormatException ignore) {
         clId = getDatabase().getClusterIdByName(stringValue);
       }
     else

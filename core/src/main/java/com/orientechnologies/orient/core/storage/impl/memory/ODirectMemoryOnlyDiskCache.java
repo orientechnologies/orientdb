@@ -538,7 +538,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
         try {
           return content.lastKey() + 1;
-        } catch (NoSuchElementException e) {
+        } catch (NoSuchElementException ignore) {
           return 0;
         }
 

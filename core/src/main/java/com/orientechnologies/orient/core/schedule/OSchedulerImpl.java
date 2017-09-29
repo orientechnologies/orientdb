@@ -62,7 +62,7 @@ public class OSchedulerImpl  {
 
       try {
         event.getDocument().reload();
-      } catch (ORecordNotFoundException e) {
+      } catch (ORecordNotFoundException ignore) {
         // ALREADY DELETED, JUST RETURN
         return;
       }

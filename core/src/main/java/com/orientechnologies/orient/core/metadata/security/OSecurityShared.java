@@ -244,7 +244,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
         // WAIT A BIT TO AVOID BRUTE FORCE
         try {
           Thread.sleep(200);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignore) {
           Thread.currentThread().interrupt();
         }
         throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");

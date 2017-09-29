@@ -56,7 +56,7 @@ public class OLiveQueryQueueThreadV2 extends Thread {
       OLiveQueryHookV2.OLiveQueryOp next = null;
       try {
         next = queue.take();
-      } catch (InterruptedException e) {
+      } catch (InterruptedException ignore) {
         break;
       }
       if (next == null) {

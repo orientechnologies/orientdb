@@ -39,7 +39,7 @@ public class OSchemaEmbedded extends OSchemaShared {
       try {
         result = doCreateClass(database, className, clusterIds, retry, superClasses);
         break;
-      } catch (ClusterIdsAreEmptyException e) {
+      } catch (ClusterIdsAreEmptyException ignore) {
         classes.remove(className.toLowerCase(Locale.ENGLISH));
         clusterIds = createClusters(database, className);
         retry++;
@@ -231,7 +231,7 @@ public class OSchemaEmbedded extends OSchemaShared {
           releaseSchemaWriteLock(database);
         }
         break;
-      } catch (ClusterIdsAreEmptyException e) {
+      } catch (ClusterIdsAreEmptyException ignore) {
         clusterIds = createClusters(database, iClassName);
         retry++;
       }

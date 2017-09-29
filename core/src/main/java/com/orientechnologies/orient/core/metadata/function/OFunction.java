@@ -206,10 +206,7 @@ public class OFunction extends ODocumentWrapper {
         result = command.execute(iArgs);
         break;
 
-      } catch (ONeedRetryException e) {
-        continue;
-      } catch (ORetryQueryException e) {
-        continue;
+      } catch (ONeedRetryException | ORetryQueryException ignore) {
       }
     }
 

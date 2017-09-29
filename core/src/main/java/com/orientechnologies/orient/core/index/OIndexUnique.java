@@ -69,7 +69,7 @@ public class OIndexUnique extends OIndexOneValue {
         try {
           storage.validatedPutIndexValue(indexId, key, iSingleValue, UNIQUE_VALIDATOR);
           break;
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       return this;
@@ -88,7 +88,7 @@ public class OIndexUnique extends OIndexOneValue {
     while (true)
       try {
         return storage.hasIndexRangeQuerySupport(indexId);
-      } catch (OInvalidIndexEngineIdException e) {
+      } catch (OInvalidIndexEngineIdException ignore) {
         doReloadIndexEngine();
       }
   }

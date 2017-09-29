@@ -231,12 +231,13 @@ public class OScheduledEvent extends ODocumentWrapper {
             break;
 
           OLogManager.instance()
-              .info(this, "Cannot change the status of the scheduled event '%s' executionId=%d, retry %d", getName(),
+              .info(this, "Cannot change the status of the scheduled event '%s' executionId=%d, retry %d", e, getName(),
                   nextExecutionId, retry);
 
         } catch (ORecordNotFoundException e) {
           OLogManager.instance()
-              .info(this, "Scheduled event '%s' executionId=%d not found on database, removing event", getName(), nextExecutionId);
+              .info(this, "Scheduled event '%s' executionId=%d not found on database, removing event", e, getName(),
+                  nextExecutionId);
 
           timer = null;
           break;

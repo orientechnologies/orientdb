@@ -1970,7 +1970,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final int fileId = (int) buffer.getLong();
 
       return new NameFileIdEntry(name, fileId);
-    } catch (EOFException eof) {
+    } catch (EOFException ignore) {
       return null;
     }
   }
@@ -2005,7 +2005,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       return new NameFileIdEntry(name, fileId, fileName);
 
-    } catch (EOFException eof) {
+    } catch (EOFException ignore) {
       return null;
     }
   }

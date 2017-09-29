@@ -324,7 +324,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           recreateIndexesThread.join();
           OLogManager.instance().info(this, "Indexes restore after crash was finished.");
         } catch (InterruptedException e) {
-          OLogManager.instance().info(this, "Index rebuild task was interrupted.");
+          OLogManager.instance().info(this, "Index rebuild task was interrupted.", e);
         }
     }
   }
@@ -591,7 +591,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
             engine.deleteWithoutLoad(index.getName());
           } catch (Exception e2) {
-            // do nothing
+            OLogManager.instance().error(this, "Error during deletion of index engine %s", e2, index.getName());
           }
         }
       }

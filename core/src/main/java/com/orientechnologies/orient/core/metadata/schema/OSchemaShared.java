@@ -796,7 +796,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     int clId;
     try {
       clId = Integer.parseInt(stringValue);
-    } catch (NumberFormatException e) {
+    } catch (NumberFormatException ignore) {
       clId = database.getClusterIdByName(stringValue);
     }
     return clId;
@@ -810,7 +810,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       try {
         clId = Integer.parseInt(parts[0]);
         throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
-      } catch (NumberFormatException e) {
+      } catch (NumberFormatException ignore) {
         clId = database.addCluster(parts[0]);
       }
     }

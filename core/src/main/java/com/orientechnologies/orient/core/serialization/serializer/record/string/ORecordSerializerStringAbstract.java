@@ -311,7 +311,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
               try{
                 Double.parseDouble(iValue);
                 return  OType.DOUBLE;
-              }catch (Exception e){
+              } catch (Exception ignore) {
                 return OType.STRING;
               }
             }
@@ -492,7 +492,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     if (integer) {
       try {
         return new Integer(iValue);
-      } catch (NumberFormatException e) {
+      } catch (NumberFormatException ignore) {
         return new Long(iValue);
       }
     } else if ("NaN".equals(iValue) || "Infinity".equals(iValue))

@@ -351,7 +351,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     try {
       //noinspection ResultOfMethodCallIgnored
       Integer.parseInt(walOrder);
-    } catch (NumberFormatException e) {
+    } catch (NumberFormatException ignore) {
       return false;
     }
 
@@ -379,7 +379,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     try {
       //noinspection ResultOfMethodCallIgnored
       Integer.parseInt(walOrder);
-    } catch (NumberFormatException e) {
+    } catch (NumberFormatException ignore) {
       return false;
     }
 
@@ -1076,7 +1076,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       return new OLogSequenceNumber(segment, position);
     } catch (EOFException eofException) {
-      OLogManager.instance().debug(this, "Cannot restore %d WAL master record for storage %s", index, storageName);
+      OLogManager.instance().debug(this, "Cannot restore %d WAL master record for storage %s", eofException, index, storageName);
       return null;
     }
   }

@@ -45,7 +45,7 @@ public class OIndexNotUnique extends OIndexMultiValues {
     while (true)
       try {
         return storage.hasIndexRangeQuerySupport(indexId);
-      } catch (OInvalidIndexEngineIdException e) {
+      } catch (OInvalidIndexEngineIdException ignore) {
         doReloadIndexEngine();
       }
   }

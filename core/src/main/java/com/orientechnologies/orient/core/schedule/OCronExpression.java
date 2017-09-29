@@ -372,7 +372,7 @@ public final class OCronExpression implements Serializable, Cloneable {
 
     try {
       new OCronExpression(cronExpression);
-    } catch (ParseException pe) {
+    } catch (ParseException ignore) {
       return false;
     }
 

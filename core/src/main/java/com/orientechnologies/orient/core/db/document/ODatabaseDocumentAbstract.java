@@ -2178,7 +2178,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         // OK
         break;
 
-      } catch (ONeedRetryException e) {
+      } catch (ONeedRetryException ignore) {
         // RETRY
         if (!outDocumentModified)
           outDocument.reload();
@@ -3020,7 +3020,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         if (waitBetweenRetry > 0)
           try {
             Thread.sleep(waitBetweenRetry);
-          } catch (InterruptedException e1) {
+          } catch (InterruptedException ignore) {
             Thread.currentThread().interrupt();
             break;
           }

@@ -857,7 +857,7 @@ public class OFileClassic implements OFile, OClosableItem {
       builder.append(" os-size=");
       try {
         builder.append(channel.size());
-      } catch (IOException e) {
+      } catch (IOException ignore) {
         builder.append("?");
       }
     }
