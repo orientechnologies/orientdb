@@ -103,6 +103,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         break;
       }
       ORecordInternal.setIdentity(record, (ORecordId) req.getId());
+      ORecordInternal.setVersion(record,req.getVersion());
       ORecordOperation op = new ORecordOperation(record, type);
       ops.add(op);
 
