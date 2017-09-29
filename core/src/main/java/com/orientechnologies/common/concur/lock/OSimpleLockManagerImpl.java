@@ -2,6 +2,7 @@ package com.orientechnologies.common.concur.lock;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -10,6 +11,11 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
 
   private final Lock              lock = new ReentrantLock();
   private final Map<T, Condition> map  = new HashMap<>();
+  private final long timeout;
+
+  public OSimpleLockManagerImpl(long timeout) {
+    this.timeout = timeout;
+  }
 
   @Override
   public void lock(T key) {
@@ -21,9 +27,11 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
         c = map.get(key);
         if (c != null) {
           try {
-            c.await();
+            if (!c.await(timeout, TimeUnit.MILLISECONDS)) {
+              throw new OLockException(String.format("Time out acquire lock for resource: '%s' ", key));
+            }
           } catch (InterruptedException e) {
-            Thread.interrupted();
+            Thread.currentThread().interrupt();
           }
         }
       } while (c != null);
