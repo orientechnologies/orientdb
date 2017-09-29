@@ -1,5 +1,3 @@
-
-
 describe("HomePage", function () {
 
 
@@ -17,6 +15,17 @@ describe("HomePage", function () {
     browser.url("/");
     var title = browser.getTitle();
     expect(title).to.equal("OrientDB Studio");
+  });
+
+
+  it("It should login to the default database", function (done) {
+    browser.url("/")
+      .waitForExist(".ologin", true);
+    
+    browser.setValue('#user', "admin")
+      .setValue('#password', "admin")
+      .click("#database-connect")
+      .waitForExist(".browse-container", true);
   });
 
 });
