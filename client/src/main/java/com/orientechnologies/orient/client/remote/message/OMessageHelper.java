@@ -245,7 +245,7 @@ public class OMessageHelper {
     result.setId(new ORecordId(clusterId, clusterPosition));
     result.setRecordType(iNetwork.readByte());
 
-    switch (result.getRecordType()) {
+    switch (result.getType()) {
     case ORecordOperation.CREATED:
       int length = iNetwork.readInt();
       byte[] record = new byte[length];

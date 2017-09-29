@@ -43,7 +43,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public ODistributedResponse getFinalResponse() {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   @Override
@@ -76,7 +76,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public Set<String> getExpectedNodes() {
-    return null;
+    return nodesConcurToTheQuorum;
   }
 
   @Override

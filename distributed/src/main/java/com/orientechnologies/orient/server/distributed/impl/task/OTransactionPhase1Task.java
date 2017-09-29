@@ -67,7 +67,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       OTransactionOptimistic tx) {
     OTransactionResultPayload payload;
     try {
-      (database).beginDistributedTx(requestId, tx);
+      database.beginDistributedTx(requestId, tx);
       payload = new OTxSuccess();
     } catch (OConcurrentModificationException ex) {
       payload = new OTxConcurrentModification((ORecordId) ex.getRid(), ex.getEnhancedDatabaseVersion());
@@ -98,9 +98,11 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       switch (type) {
       case ORecordOperation.CREATED:
       case ORecordOperation.UPDATED:
+      case ORecordOperation.DELETED:
         record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
         break;
       }
+      ORecordInternal.setIdentity(record, (ORecordId) req.getId());
       ORecordOperation op = new ORecordOperation(record, type);
       ops.add(op);
 
@@ -124,6 +126,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       switch (txEntry.type) {
       case ORecordOperation.CREATED:
       case ORecordOperation.UPDATED:
+      case ORecordOperation.DELETED:
         request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false));
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;

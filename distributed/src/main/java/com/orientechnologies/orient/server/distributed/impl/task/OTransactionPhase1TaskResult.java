@@ -61,6 +61,7 @@ public class OTransactionPhase1TaskResult implements OStreamable {
     case OTxException.ID:
       OTxException pl2 = (OTxException) resultPayload;
       OStreamableHelper.toStream(out, pl2.getException());
+      break;
     case OTxUniqueIndex.ID:
       OTxUniqueIndex pl3 = (OTxUniqueIndex) resultPayload;
       //RID
@@ -77,6 +78,7 @@ public class OTransactionPhase1TaskResult implements OStreamable {
       byte[] keyBytes = ORecordSerializerNetworkV37.INSTANCE.serializeValue(pl3.getKey(), type);
       out.writeInt(keyBytes.length);
       out.write(keyBytes);
+      break;
     }
   }
 

@@ -3,16 +3,14 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -35,20 +33,20 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void lockIndexKey(Object key) {
-    shared.getIndexKeyLockManager().acquireExclusiveLock(key);
+    shared.getIndexKeyLockManager().lock(key);
     lockedKeys.add(key);
   }
 
   @Override
   public void lock(ORID rid) {
-    shared.getRecordLockManager().acquireExclusiveLock(rid);
+    shared.getRecordLockManager().lock(rid);
     lockedRids.add(rid);
   }
 
   @Override
   public void lock(ORID rid, long timeout) {
     //TODO: the timeout is only in the lock manager, this implementation may need evolution
-    shared.getRecordLockManager().acquireExclusiveLock(rid);
+    shared.getRecordLockManager().lock(rid);
     lockedRids.add(rid);
   }
 
@@ -75,7 +73,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public Set<ORecordId> rollback(ODatabaseDocumentInternal database) {
-    return null;
+    return new HashSet<>();
   }
 
   @Override
@@ -91,11 +89,13 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   @Override
   public void unlock() {
     for (ORID lockedRid : lockedRids) {
-      shared.getRecordLockManager().releaseExclusiveLock(lockedRid);
+      shared.getRecordLockManager().unlock(lockedRid);
     }
+    lockedRids.clear();
     for (Object lockedKey : lockedKeys) {
-      shared.getIndexKeyLockManager().releaseExclusiveLock(lockedKey);
+      shared.getIndexKeyLockManager().unlock(lockedKey);
     }
+    lockedKeys.clear();
   }
 
   @Override

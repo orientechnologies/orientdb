@@ -27,6 +27,10 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
     this.success = success;
   }
 
+  public OTransactionPhase2Task() {
+    
+  }
+
   @Override
   public String getName() {
     return "TxPhase2";

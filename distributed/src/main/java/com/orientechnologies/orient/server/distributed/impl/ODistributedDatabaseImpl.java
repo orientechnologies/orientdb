@@ -22,6 +22,8 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
+import com.orientechnologies.common.concur.lock.OSimpleLockManager;
+import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -94,14 +96,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final    AtomicReference<ODistributedMomentum> filterByMomentum      = new AtomicReference<ODistributedMomentum>();
 
   private String localNodeName;
-  private OLockManager<ORID>   recordLockManager   = new OOneEntryPerKeyLockManager<>(true, -1, 1000);
-  private OLockManager<Object> indexKeyLockManager = new OOneEntryPerKeyLockManager<>(true, -1, 1000);
+  private OSimpleLockManager<ORID>   recordLockManager   = new OSimpleLockManagerImpl<>();
+  private OSimpleLockManager<Object> indexKeyLockManager = new OSimpleLockManagerImpl<>();
 
-  public OLockManager<ORID> getRecordLockManager() {
+  public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
   }
 
-  public OLockManager<Object> getIndexKeyLockManager() {
+  public OSimpleLockManager<Object> getIndexKeyLockManager() {
     return indexKeyLockManager;
   }
 
@@ -1276,8 +1278,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       }
     };
 
-    Orient.instance().scheduleTask(txTimeoutTask, OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong(),
-        OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong() / 2);
+//    Orient.instance().scheduleTask(txTimeoutTask, OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong(),
+//        OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong() / 2);
   }
 
   private boolean isRunning() {
