@@ -50,17 +50,30 @@ public class OServerCommandETL extends OServerCommandAuthenticatedServerAbstract
       ODocument cfg = new ODocument().fromJSON(iRequest.content);
       handler.executeImport(cfg, super.server);
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
-
     }
-//    else if ("test".equalsIgnoreCase(parts[1])) {
-//      ODocument cfg = new ODocument().fromJSON(iRequest.content);
-//      try {
-//        handler.checkConnection(cfg);
-//      } catch (Exception e) {
-//        throw new IllegalArgumentException(e);
-//      }
-//      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
-//    }
+    else if ("save-config".equalsIgnoreCase(parts[1])) {
+      ODocument args = new ODocument().fromJSON(iRequest.content);
+      try {
+        handler.saveConfiguration(args, super.server);
+      } catch (IOException e) {
+        throw new IOException(e);
+      } catch (Exception e) {
+        throw new IllegalArgumentException(e);
+      }
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
+    } else if ("list-configs".equalsIgnoreCase(parts[1])) {
+      try {
+        ODocument configsInfo = handler.listConfigurations(super.server);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, configsInfo.toJSON("prettyPrint"), null);
+      } catch (IOException e) {
+        throw new IOException(e);
+      } catch (Exception e) {
+        throw new IllegalArgumentException(e);
+      }
+    } else {
+      throw new IllegalArgumentException("");
+    }
+
   }
 
   @Override

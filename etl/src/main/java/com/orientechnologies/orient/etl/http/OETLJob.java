@@ -2,8 +2,10 @@ package com.orientechnologies.orient.etl.http;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLPlugin;
+import com.orientechnologies.orient.etl.context.OETLContext;
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import com.orientechnologies.orient.etl.context.OETLMessageHandler;
+import com.orientechnologies.orient.etl.util.OMigrationConfigManager;
 import com.orientechnologies.orient.output.OPluginMessageHandler;
 import com.orientechnologies.orient.server.OServer;
 
@@ -39,22 +41,35 @@ public class OETLJob implements Runnable {
   @Override
   public void run() {
 
-    final String jsonConfig = cfg.field("jsonConfig");
+    final ODocument jsonConfig = new ODocument().fromJSON((String) cfg.field("jsonConfig"), "noMap");
     int logLevel = cfg.field("logLevel");
+    final  String configName = cfg.field("configName");
+    final  String outDBName = cfg.field("outDBName");
 
-    // disabling debug level
-    if(logLevel > 0) {
-      logLevel++;
-    }
+    // fetching the server orientdb home and updating coherently the target database URL
+    String outOrientGraphUri = this.currentServerInstance.getDatabaseDirectory() + outDBName;
+    String dbURL = "plocal:" + outOrientGraphUri;
+    ((ODocument) ((ODocument) jsonConfig
+        .field("loader"))
+        .field("orientdb"))
+        .field("dbURL", dbURL);
 
-    status = Status.RUNNING;
+        status = Status.RUNNING;
     this.messageHandler = new OETLMessageHandler(this.stream, logLevel);
 
     final OETLPlugin etlPlugin = new OETLPlugin();
-    String[] args = {jsonConfig};
+
+    String outDBConfigPath = null;
+    try {
+      outDBConfigPath = OMigrationConfigManager.writeConfigurationInTargetDB(jsonConfig, outOrientGraphUri, configName);
+    } catch(Exception e) {
+      ((OETLContext) OETLContextWrapper.getInstance().getContext()).printExceptionMessage(e, "Impossible to write etl configuration in the specified path.", "error");
+      ((OETLContext) OETLContextWrapper.getInstance().getContext()).printExceptionStackTrace(e, "error");
+    }
 
     try {
-      etlPlugin.executeJob(args, messageHandler);
+      String finalJsonConfig = jsonConfig.toJSON("prettyPrint");
+      etlPlugin.executeJob(finalJsonConfig, outDBConfigPath, messageHandler);
     } catch (Exception e) {
       e.printStackTrace();
     }
