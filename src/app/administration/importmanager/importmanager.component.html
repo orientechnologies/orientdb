@@ -11,8 +11,8 @@
     <li [ngClass]="isActive('neo4jImporter')">
       <a (click)="setTab('neo4jImporter')">Neo4j Importer</a>
     </li>
-    <li>
-      <a class="not-allowed">ETL</a>
+    <li [ngClass]="isActive('etl')">
+      <a (click)="setTab('etl')">ETL</a>
     </li>
   </ul>
 </div>
@@ -68,10 +68,10 @@
         </li>
 
         <li class="importer-description">
-          <a class="not-allowed"><b>ETL</b></a>
+          <a class="pointer" (click)="setTab('etl')"><b>ETL</b></a>
           <div class="row">
             <div class="col-md-2">
-              <img class="not-allowed pointer" src="../../../img/cogs.png"/>
+              <img class="pointer" src="../../../img/cogs.png" (click)="setTab('etl')"/>
             </div>
             <div class="col-md-10">
               <p>

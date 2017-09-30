@@ -1,9 +1,8 @@
-import * as $ from "jquery"
-
-import {Component, ElementRef, NgZone, OnDestroy, ViewChild} from '@angular/core';
-
+import * as $ from "jquery";
+import {Component, ElementRef, NgZone, OnDestroy, ViewChild} from "@angular/core";
 import {downgradeComponent} from "@angular/upgrade/static";
 import {EtlService} from "../../core/services";
+import {NotificationService} from "../../core/services/notification.service";
 import {AgentService} from "../../core/services/agent.service";
 import {ObjectKeysPipe} from "../../core/pipes";
 import "../../util/draggable-sortable/jquery-sortable.js";
@@ -13,7 +12,8 @@ declare const angular:any;
 @Component({
   selector: 'etl',
   templateUrl: "./etl.component.html",
-  styleUrls: []
+  styles: [
+    '.dropdown-menu-center {max-width: 400px; max-height: 350px; width: 100%; height: auto; overflow: auto; left: 50%; right: auto; transform: translate(-50%, 0);}']
 })
 
 class EtlComponent implements OnDestroy {
@@ -33,15 +33,15 @@ class EtlComponent implements OnDestroy {
   private configName;
   private config;
   private source;
-
   private extractor;
-
   private currentTransformer;
   private transformers = [];
-
   private loader;
   private classes;
   private indexes;
+
+  // DBs to saved configs
+  private configsInfo;
 
   // Types needed for controls
   private extractorType;
@@ -60,12 +60,22 @@ class EtlComponent implements OnDestroy {
   private finalJson;
   private job;
   private jobRunning;
+  private outDBName;
+
+  // blocks counter
+  private extractorPresent = false;
+  private numberOfTransformers = 0;
+  private loaderPresent = false;
+  private blocksAlreadyLoaded = false;
 
   // Misc
   private step;
   private hints;
+  private connectionProtocol;
+  private protocols;
 
-  constructor(private agentService: AgentService, private etlService: EtlService, private zone: NgZone, private objectKeys: ObjectKeysPipe) {
+  constructor(private agentService: AgentService, private etlService: EtlService, private notification: NotificationService,
+              private zone: NgZone, private objectKeys: ObjectKeysPipe) {
 
     this.objectKeys = objectKeys;
     this.init();
@@ -78,7 +88,13 @@ class EtlComponent implements OnDestroy {
 
   init() {
 
+    // init database2configs
+    this.initDatabase2Configs();
+
     this.configName = "";
+
+    this.protocols = ["plocal", "memory"];
+    this.connectionProtocol = "plocal";
 
     // todo: levelName2levelNumber map
     this.level2levelCode = {
@@ -461,7 +477,7 @@ class EtlComponent implements OnDestroy {
 
       orientdb: {
         dbURL: {
-          mandatory: true,
+          mandatory: false,  // it's built just at the 'execution' or 'save-configuration' time.
           value: undefined
         },
         dbUser: {
@@ -517,7 +533,7 @@ class EtlComponent implements OnDestroy {
         },
         dbType: {
           mandatory: false,
-          value: "document",
+          value: "graph",
           types: ["document", "graph"]
         },
         class: {
@@ -595,12 +611,17 @@ class EtlComponent implements OnDestroy {
     this.importReady = false;
     this.oldConfigJquery = false;
     this.job = {};
+
+    // initialising job info
+    this.initJobInfo();
     this.jobRunning = false;
-    this.step = 0;
+    this.step = 1;
+
     this.hints = {
       // Main hints
       configNameHint: "This name will be used to save the configuration you are going to specify. " +
       "In the future you will be able to load the current configuration by this specific name.",
+      targetDBURLHint: "This is the database name of the target database for your migration, where your current configuration will be saved.",
       sourceHint: "This is the source on which the etl is applied. You can use different sources, such as an URL, a local file or a JDBC connection.",
       extractorHint: "The extractor manages how the data are handled from the provided source.",
       transformerHint: "The transformer modules are executed in a pipeline and modify the input data.",
@@ -666,6 +687,9 @@ class EtlComponent implements OnDestroy {
         command: "Defines the command to execute"
       },
       loader: {
+        connectionProtocol: "The protocol to use during the migration in order to connect to OrientDB:<br>" +
+        "<li><b>plocal</b>: the dabase will run locally in the same JVM of your application.</li>" +
+        "<li><b>remote</b>: the database will be accessed via TCP/IP connection.</li>",
         dbURL: "Defines the database URL",
         dbUser: "Defines the user name",
         dbPassword: "Defines the user password",
@@ -695,21 +719,32 @@ class EtlComponent implements OnDestroy {
     }
   }
 
+  initJobInfo() {
+    this.job = {cfg: undefined, status: undefined, log: ""};
+  }
+
+  goToEditModules() {
+    this.sourceInit();
+  }
+
   // Dynamic creations
 
   sourceInit() {
-    this.setStep(2);
+    this.setStep(3);
 
-    if (this.sourcePrototype.source.value === "jdbc") this.source = null;
+    if (this.sourcePrototype.source.value === "jdbc") {
+      this.source = null;
+    }
 
-    if (this.sourcePrototype.source.value === "file")
+    if (this.sourcePrototype.source.value === "file") {
       this.source = {
         file: {
           path: this.sourcePrototype.filePath,
           lock: this.sourcePrototype.fileLock,
           encoding: "UTF-8"
         }
-      };
+      }
+    }
 
     if (this.sourcePrototype.source.value === "http") {
       this.source = {
@@ -1023,6 +1058,7 @@ class EtlComponent implements OnDestroy {
     $("#eCanvas").fadeOut(1000);
 
     this.readyForExecution();
+    this.extractorPresent = false;
   }
 
   deleteTransformer() {
@@ -1046,6 +1082,7 @@ class EtlComponent implements OnDestroy {
     if (this.transformers.length == 0) $("#pleaseTransformer").show();
 
     this.readyForExecution();
+    this.numberOfTransformers--;
   }
 
   deleteLoader() {
@@ -1060,15 +1097,47 @@ class EtlComponent implements OnDestroy {
     $("#lCanvas").fadeOut(1000);
 
     this.readyForExecution();
+    this.loaderPresent = false;
+  }
+
+  loadConfigFromDB(oldConfig, configName) {
+    this.oldConfig = oldConfig;
+    this.configName = configName;
+    this.oldConfigInit(oldConfig);
   }
 
   oldConfigInit(oldConfig, direct = 0) {
+
     let etl = JSON.parse(oldConfig);
 
+    if(!this.config) {
+      this.initAdvanced();
+    }
+
+    // loading the target database url from the orientdb loader (if we got an orientdb loader)
+    if(etl.loader.orientdb) {
+      if (etl.loader.orientdb.dbURL) {
+        this.outDBName = etl.loader.orientdb.dbURL;
+      }
+    }
+
+    if(this.outDBName) {
+      var index = this.outDBName.lastIndexOf('/');
+      if (index > -1) {
+        this.outDBName = this.outDBName.substring(index + 1);
+      }
+    }
+
     // Set types needed
-    this.extractorType = Object.getOwnPropertyNames(etl.extractor)[0];
-    this.currentTransformer = etl.transformers[etl.transformers.length -1];
-    this.loaderType = Object.getOwnPropertyNames(etl.loader)[0];
+    if(etl.extractor) {
+      this.extractorType = Object.getOwnPropertyNames(etl.extractor)[0];
+    }
+    if(etl.transformers.length > 0) {
+      this.currentTransformer = etl.transformers[etl.transformers.length - 1];
+    }
+    if(etl.loader) {
+      this.loaderType = Object.getOwnPropertyNames(etl.loader)[0];
+    }
 
     // Initialize the advanced config if exists
     if(etl.config) {
@@ -1080,9 +1149,18 @@ class EtlComponent implements OnDestroy {
 
     // Regenerate the modules
     this.extractor = etl.extractor;
+    if(this.extractor) {
+      this.extractorPresent = true;
+    }
     this.transformers = etl.transformers;
-    this.reverseBlockFix();
+    this.numberOfTransformers = this.transformers.length;
+
     this.loader = etl.loader;
+    if(this.loader) {
+      this.loaderPresent = true;
+    }
+
+    this.reverseBlockFix();
 
     // Initialize the inner objects
     if(this.loaderType === 'orientdb') {
@@ -1121,7 +1199,7 @@ class EtlComponent implements OnDestroy {
         this.launch();
         return;
       }
-      this.setStep(1);
+      this.setStep(2);
     }
     else {
       this.sourcePrototype.source.value = "jdbc";
@@ -1145,7 +1223,7 @@ class EtlComponent implements OnDestroy {
     canvas.style.height = 80 + "px";
     canvas.style.position = "relative";
     canvas.style.top = "70px";
-    canvas.style.left = "20px";
+    canvas.style.left = "0px";
 
     let ctx = canvas.getContext("2d");
     ctx.beginPath();
@@ -1163,6 +1241,8 @@ class EtlComponent implements OnDestroy {
     ctx.fillText("click to configure",50,85);
 
     (<any>$("#eCanvas")).slideDown(1000); // Canvas animation
+
+    this.extractorPresent = true;
   }
 
   drawTransformerCanvas() {
@@ -1204,6 +1284,8 @@ class EtlComponent implements OnDestroy {
         this.selectTransformer(Number(canvas.id))
       });
     }
+
+    this.numberOfTransformers++;
   }
 
   drawLoaderCanvas() {
@@ -1214,7 +1296,7 @@ class EtlComponent implements OnDestroy {
     canvas.style.height = 80 + "px";
     canvas.style.position = "relative";
     canvas.style.top = "70px";
-    canvas.style.left = "20px";
+    canvas.style.left = "0px";
 
     let ctx = canvas.getContext("2d");
     ctx.beginPath();
@@ -1234,11 +1316,17 @@ class EtlComponent implements OnDestroy {
     let lCanvas = $('#lCanvas');
     (<any>lCanvas).slideDown(1000); // Canvas animation
 
+    this.loaderPresent = true;
   }
 
   // Core Functions
 
   readyForExecution() {
+
+    if(this.step == 3 && !this.outDBName) {
+      this.ready = false;
+      return;
+    }
 
     // If one module for every type exists (source excluded)
     if (this.extractor && this.transformers.length > 0 && this.loader) {
@@ -1307,12 +1395,72 @@ class EtlComponent implements OnDestroy {
     }
   }
 
+  saveConfiguration() {
+
+    this.prepareConfiguration();
+
+    var params = {
+      migrationConfig: this.finalJson,
+      configName: this.configName,
+      outDBName: this.outDBName,
+      protocol: this.connectionProtocol
+    };
+    this.etlService.saveConfiguration(params).then(() => {
+      this.notification.push({content: "Configuration correctly saved.", autoHide: true});
+    }).catch((error) => {
+      this.notification.push({content: error.json(), error: true, autoHide: true});
+    });
+  }
+
+
   launch() {
+
+    this.prepareConfiguration();
+
+    var executionParams = {
+      jsonConfig: this.finalJson,
+      logLevel: this.level2levelCode[this.config.log],
+      configName: this.configName,
+      outDBName: this.outDBName,
+      protocol: this.connectionProtocol
+    }
+
+    this.initJobInfo();
+
+    this.step = 'running';
+    this.jobRunning = true;
+    this.etlService.launch(executionParams).then(() => {
+      this.status();
+    }).catch(function (error) {
+      alert("Error during migration!")
+    });
+  }
+
+  prepareConfiguration() {
+
     (<any>$("#transformerList")).sortable("destroy");
     let etl = {};
 
-    this.sortTransformers(); // Sort transformers starting from the indexes
+    var index = this.outDBName.lastIndexOf('/');
+    if(index > -1) {
+      this.outDBName = this.outDBName.substring(index + 1);
+    }
+
+    if(this.transformers.length > 0)
+      this.sortTransformers(); // Sort transformers starting from the indexes
+
     this.blockFix(); // Fixes the different behavior of block transformers
+
+    // always overwrite this.loader.orientdb.dbURL. In this way if you loaded a config and then you changed the url (via this.loaderPrototype.orientdb.dbURL.value)
+    // the change will be applied during the migration
+    if(!this.loader) {
+      this.loaderInit("orientdb");
+    }
+    else {
+      if(this.loader.orientdb) {
+        this.loader.orientdb.dbURL = this.outDBName;
+      }
+    }
 
     if(this.source) {
       etl = {
@@ -1334,18 +1482,6 @@ class EtlComponent implements OnDestroy {
     }
 
     this.finalJson = JSON.stringify(etl);
-    var executionParams = {
-      "jsonConfig": this.finalJson,
-      "logLevel": this.level2levelCode[this.config.log]
-    }
-
-    this.step = 'running';
-    this.jobRunning = true;
-    this.etlService.launch(executionParams).then(() => {
-      this.status();
-    }).catch(function (error) {
-      alert("Error during migration!")
-    });
   }
 
   status() {
@@ -1378,52 +1514,56 @@ class EtlComponent implements OnDestroy {
     }
   }
 
+  initDatabase2Configs() {
+
+    this.etlService.initDatabase2Configs().then((data) => {
+      this.configsInfo = data;
+    }).catch(function (error) {
+      alert("Error during configs fetching!");
+    });
+  }
+
   reset(fromStep) {
     // Useful assignations to reset the configuration when clicking 'back' the parameter is the current step
     if(!confirm('Every progress in this step will be lost.\nProceed anyway?')) return;
 
-    if(fromStep == 1 || fromStep == 3) {
-      this.transformers = [];
-      this.currentTransformer = undefined;
-      this.config = undefined;
-      this.extractor = undefined;
-      this.loader = undefined;
-      this.source = undefined;
-      this.sourcePrototype.source.value = undefined;
-      this.sourcePrototype.headers = undefined;
-      this.sourcePrototype.fileLock = undefined;
-      this.sourcePrototype.filePath = undefined;
-      this.sourcePrototype.fileURL = undefined;
-      this.sourcePrototype.URLMethod.value = undefined;
-      this.extractorType = undefined;
-      this.loaderType = undefined;
-      this.ready = false;
-      this.classReady = false;
-      this.indexReady = false;
-      this.importReady = false;
-      this.oldConfigJquery = false;
-      this.oldConfig = undefined;
-      this.sourcePrototype.source.types = ["jdbc", "file", "http"];
+    this.config = undefined;
+    this.configName = undefined;
+    this.outDBName = undefined;
 
-      this.setStep(0);
+    this.transformers = [];
+    this.numberOfTransformers = this.transformers.length;
 
-    }
+    this.currentTransformer = undefined;
 
-    if(fromStep == 2) {
-      this.transformers = [];
-      this.currentTransformer = undefined;
-      this.extractor = undefined;
-      this.loader = undefined;
-      this.extractorType = undefined;
-      this.loaderType = undefined;
-      this.ready = false;
-      this.classReady = false;
-      this.indexReady = false;
-      this.oldConfigJquery = false;
+    this.extractor = undefined;
+    this.extractorPresent = false;
 
-      (<any>$("#transformerList")).sortable("destroy");
-      this.setStep(1);
-    }
+    this.loader = undefined;
+    this.loaderPresent = false;
+
+    this.source = undefined;
+    this.sourcePrototype.source.value = undefined;
+    this.sourcePrototype.headers = undefined;
+    this.sourcePrototype.fileLock = undefined;
+    this.sourcePrototype.filePath = undefined;
+    this.sourcePrototype.fileURL = undefined;
+    this.sourcePrototype.URLMethod.value = undefined;
+    this.extractorType = undefined;
+    this.loaderType = undefined;
+    this.ready = false;
+    this.classReady = false;
+    this.indexReady = false;
+    this.importReady = false;
+    this.oldConfigJquery = false;
+    this.oldConfig = undefined;
+    this.sourcePrototype.source.types = ["jdbc", "file", "http"];
+
+    // blocks must be loaded again in the future
+    this.blocksAlreadyLoaded = false;
+    (<any>$("#transformerList")).sortable("destroy");
+
+    this.setStep(1);
   }
 
   blockFix() {
@@ -1497,7 +1637,33 @@ class EtlComponent implements OnDestroy {
     return this.step;
   }
 
-  setStep(step) {
+  setStep(step, fromStepThree = false) {
+
+    this.closePopovers();
+    this.enablePopovers();
+
+    if(step == 1) {
+      this.initDatabase2Configs();
+    }
+
+    if(step == 2 && !this.config) {   // used in case of reset of a previous migration job, that sets this.config = undefined. So it must be initialized again for the step 2.
+      this.initAdvanced();
+    }
+
+    if(fromStepThree) {
+      (<any>$(this.switchRef.nativeElement.querySelector('#transformerList'))).sortable("destroy");
+
+      // updating number of transformers according to the config array present in memory
+      this.numberOfTransformers = this.transformers.length;
+
+      // blocks must be loaded again in the future
+      this.blocksAlreadyLoaded = false;
+
+      // sorting transformers order, so when we come back to the edit step transformers will be consistent
+      this.sortTransformers();
+
+    }
+
     this.step = step;
   }
 
@@ -1520,6 +1686,13 @@ class EtlComponent implements OnDestroy {
   separeCaps(string) {
     string = string.split(/(?=[A-Z])/).join(" ");
     return string;
+  }
+
+  configsFound() {
+    if(this.objectKeys.transform(this.configsInfo).length > 0)
+      return true;
+    else
+      return false;
   }
 
   previewFile() {
@@ -1592,27 +1765,82 @@ class EtlComponent implements OnDestroy {
   ngAfterViewChecked() {
     this.enablePopovers();
 
-    if(this.step === 2) {
+    if(this.step === 3) {
       this.initSortableLib();
     }
 
     // Execute the Jquery part just one time
-    if(this.oldConfig && this.step == 2 && this.oldConfigJquery) {
+    if(this.oldConfig && this.step == 3 && this.oldConfigJquery) {
       // Jquery
-      $(document).ready(function () {
-        $("#pleaseExtractor").hide();
-        $("#pleaseTransformer").hide();
-        $("#pleaseLoader").hide();
-        $("#createExtractor").hide();
-        $("#createLoader").hide();
+      $(document).ready(() => {
+
+        if(this.extractorPresent) {
+          $("#pleaseExtractor").hide();
+          $("#createExtractor").hide();
+        }
+
+        if(this.numberOfTransformers > 0)
+          $("#pleaseTransformer").hide();
+
+        if(this.loaderPresent) {
+          $("#pleaseLoader").hide();
+          $("#createLoader").hide();
+        }
+
         $("#panelPlaceholder").show();
       });
 
-      this.drawExtractorCanvas();
-      this.drawTransformerCanvas();
-      this.drawLoaderCanvas();
+      if(!this.blocksAlreadyLoaded) {
+        this.drawBlocks();
+      }
       this.oldConfigJquery = false;
     }
+
+    if(this.step == 3 && this.isAnyBlockPresent()) {
+      // Jquery
+      $(document).ready(() => {
+
+        if(this.extractorPresent) {
+          $("#pleaseExtractor").hide();
+          $("#createExtractor").hide();
+        }
+
+        if(this.numberOfTransformers > 0)
+          $("#pleaseTransformer").hide();
+
+        if(this.loaderPresent) {
+          $("#pleaseLoader").hide();
+          $("#createLoader").hide();
+        }
+
+        $("#panelPlaceholder").show();
+      });
+
+      if(!this.blocksAlreadyLoaded) {
+        this.drawBlocks();
+      }
+      this.oldConfigJquery = false;
+    }
+  }
+
+  isAnyBlockPresent() {
+    if(this.extractorPresent || this.numberOfTransformers > 0 || this.loaderPresent) {
+      return true;
+    }
+    else return false;
+  }
+
+  drawBlocks() {
+    if(this.extractorPresent) {
+      this.drawExtractorCanvas();
+    }
+    if(this.numberOfTransformers > 0) {
+      this.drawTransformerCanvas();
+    }
+    if(this.loaderPresent) {
+      this.drawLoaderCanvas();
+    }
+    this.blocksAlreadyLoaded = true;
   }
 
   initSortableLib() {
@@ -1657,6 +1885,10 @@ class EtlComponent implements OnDestroy {
       placement: 'right',
       trigger: 'hover'
     });
+  }
+
+  closePopovers() {
+    (<any>$('[data-toggle="popover"]')).popover('hide');
   }
 }
 

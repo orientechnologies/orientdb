@@ -26,6 +26,20 @@ class EtlService {
     });
   }
 
+  saveConfiguration(params) {
+    let url = API + 'etl/save-config';
+    return this.http.post(url, params).toPromise().then((data) => {
+      return data.json();
+    });
+  }
+
+  initDatabase2Configs() {
+    let url = API + 'etl/list-configs';
+    return this.http.post(url, undefined).toPromise().then((data) => {
+      return data.json();
+    });
+  }
+
 }
 
 

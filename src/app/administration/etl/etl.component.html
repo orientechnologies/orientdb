@@ -1,59 +1,134 @@
 <div class="row">
 
-  <!-- <div *ngIf="!agentService.agent.active">
-    <div class="col-md-12 studio-well-tips">
-      <h4>This feature is available in OrientDB Enterprise Edition. To download OrientDB Enterprise Edition click <a href="http://orientdb.com/orientdb-enterprise/?#matrix" target='_blank'>here</a>.</h4>
-    </div>
-  </div> --> <!-- TODO reactivate the enterprise check -->
-
   <div>
     <form class="form-horizontal" id="etlForm" name="etlForm" #form="ngForm">
       <div id="stepSwitch" #stepSwitch [ngSwitch]="getStep()">
 
-        <!-- Step 0 - welcome screen and choice between new config and existing one -->
-        <div class="stepZero" *ngSwitchCase="'0'">
+        <!-- Step 1 - welcome screen and choice between new config and existing one -->
+        <div class="stepZero" *ngSwitchCase="'1'">
           <h3 align="center"><b>EXTRACT - TRANSFORM - LOAD</b></h3><br>
-          <div style="height:500px">
-            <div class="etl-intro">
-              <div style="height: 150px"></div>
-              <div class="col-md-6 text-center">
-                <button class="btn btn-lg" (click)="setStep(1)" style="border-radius: 40px;">New Configuration</button>
-              </div>
-              <div class="col-md-6 text-center">
-                <button class="btn btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
-                        aria-expanded="false" id="loadOldConfigs" style="border-radius: 40px;">
-                  Load Existing json
-                </button>
-                <!-- Dropdown menu -->
-                <div class="dropdown-menu">
-                  <div id="page-wrapper"><br>
-                    <div class="text-center">
-                      <h4>Select a valid json file:</h4><br>
-                      <div class="col-sm-5 col-sm-offset-1">
-                        <input type="file" id="fileInput" (click)=previewFile()>
-                      </div><br><br>
 
-                      <textarea id="fileDisplayArea" style="height: 160px; width: 450px" class="form-control" readonly></textarea><br>
-                      <div class="col-md-12 text-center">
-                        <button class="btn btn-default btn-sm" (click)="oldConfigInit(oldConfig)"
-                                style="border-radius: 40px;" [disabled]="!importReady">Modify Selected</button>
-                        <button class="btn btn-default btn-sm" (click)="oldConfigInit(oldConfig, 1)"
-                                style="border-radius: 40px;" [disabled]="!importReady">Direct Run</button><br><br>
+          <!-- ETL LOGO -->
+          <div class="row" name="etl-logo">
+            <div class="col-md-2 col-md-offset-5">
+              <img class="pointer" src="../../../img/cogs.png" width="70%" height="70%" style="display: block; margin: auto;"/>
+            </div>
+          </div>
+
+
+          <div class="row">
+            <!-- Configs quick fetching -->
+            <div class="col-md-4">
+
+              <div class="text-center" style="margin-top: 15%">
+                <button class="btn btn-md btn-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                        aria-expanded="false" id="loadDB2Configs">
+                  Existing DB Configurations
+                </button>
+
+                <!-- Dropdown menu -->
+                <div class="dropdown-menu dropdown-menu-center col-md-12">
+                  <div id="db2configs">
+                    <div class="row" *ngIf="configsFound()" style="margin: 7%;"><br>
+                      <ul style="padding-left: 0%;">
+                        <div id="liContainerOuter" *ngFor="let databaseName of objectKeys.transform(configsInfo)">
+                          <li style="text-align: left; display: inline-block; white-space: nowrap;">
+                            <span style="position: relative; left: 5px;">
+                            <b>&bull; &nbsp;&nbsp;{{databaseName}}</b>
+                            </span>
+                            <ul style="margin: 10px; margin-bottom: 20px;">
+                              <div id="liContainerInner" *ngFor="let configuration of configsInfo[databaseName]">
+                                <li style="text-align: left; display: inline-block; white-space: nowrap;">
+                                <span style="position: relative; left: 5px; display:block; width: 100px;">
+                                <a (click)="loadConfigFromDB(configuration.config, configuration.configName)" style="cursor: pointer;" data-toggle="popover" data-trigger="hover"
+                                   data-content="Load configuration" data-container="body">
+                                  &bull; &nbsp;&nbsp;{{configuration.configName}}
+                                </a>
+                                </span>
+                                </li>
+                                <br/>
+                              </div>
+                            </ul>
+                          </li><br/>
+                        </div>
+                      </ul>
+                    </div>
+                    <div class="row" *ngIf="!configsFound()" style="margin: 5%; text-align: center; ">
+                      <h5>No configurations were found in any OrientDB database.</h5>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="col-md-4">
+
+              <div style="margin-top: 15%">
+
+                <div class="text-center">
+                  <button class="btn btn-md btn-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                          aria-expanded="false" id="loadOldConfigs">
+                    Load json
+                  </button>
+                  <!-- Dropdown menu -->
+                  <div class="dropdown-menu" style="max-height: 350px;">
+                    <div id="page-wrapper"><br>
+                      <div class="text-center">
+                        <h4>Select a valid json file:</h4><br>
+                        <div class="col-sm-5 col-sm-offset-1">
+                          <input type="file" id="fileInput" (click)=previewFile()>
+                        </div><br><br>
+
+                        <textarea id="fileDisplayArea" style="height: 160px; width: 450px" class="form-control" readonly></textarea><br>
+                        <div class="col-md-12 text-center">
+                          <button class="btn btn-default btn-sm" (click)="oldConfigInit(oldConfig)"
+                                  [disabled]="!importReady">Open</button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            <div class="col-md-4">
+              <div style="margin-top: 15%">
+                <div class="text-center">
+                  <button class="btn btn-md btn-primary" type="button" id="newConfig" (click)="setStep(2)">
+                    New Configuration
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        <!-- Step 1 - source configuration, advanced parameters configuration -->
-        <div class="stepOne" *ngSwitchCase="'1'">
-          <h3 align="center">Step 1: Configuration and Source</h3><br/>
+        <!-- Step 2 - source configuration -->
+        <div class="stepOne" *ngSwitchCase="'2'">
+
+          <div class="row">
+            <div class="form-group">
+              <div class="col-sm-offset-5 col-sm-7">
+                <div class="btn-toolbar">
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-primary" (click)="reset(1)">Home</button>
+                  </div>
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-primary" (click)="goToEditModules()" [disabled]="!form.valid">Edit modules</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-offset-1 col-md-11">
+            <h4>Configuration</h4><br>
+          </div>
 
           <div class="form-group">
-            <label class="col-md-4 control-label">Configuration name</label>
+            <label class="col-md-4 control-label">Configuration Name</label>
             <div class="col-md-4">
               <input type="text" id="configName" class="form-control" name="configName" [(ngModel)]="configName"
                      placeholder="Name for your configuration file" required/>
@@ -63,6 +138,23 @@
                       [attr.data-content]="hints.configNameHint"><i class="fa fa-question-circle"></i>
               </button>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-md-4 control-label">Database Name</label>
+            <div class="col-md-4">
+              <input type="text" id="dbName" class="form-control" name="dbName" [(ngModel)]="outDBName"
+                     placeholder="Database Name" required/>
+            </div>
+            <div class="col-md-4">
+              <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.targetDBURLHint"><i class="fa fa-question-circle"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-offset-1 col-md-11">
+            <h4>Source</h4><br>
           </div>
 
           <div class="form-group">
@@ -79,11 +171,9 @@
             </div>
           </div>
 
-          <br><br><br>
-
           <!-- URL configuration -->
           <div class="form-group" *ngIf="sourcePrototype.source.value == 'http'">
-            <label class="col-md-4 control-label">File URL</label>
+            <label class="col-md-4 control-label">Source File URL</label>
             <div class="col-md-4">
               <input type="url" id="fileURL" class="form-control" name="fileURL" [(ngModel)]="sourcePrototype.fileURL"
                      placeholder="URL of your file" pattern="https?://.+" required/>
@@ -93,7 +183,7 @@
                       [attr.data-content]="hints.URLHint"><i class="fa fa-question-circle"></i>
               </button>
             </div>
-            <br><br>
+            <br><br><br>
             <label class="col-md-4 control-label">HTTP Method</label>
             <div class="col-md-4">
               <select class="form-control" name="URLMethod" [(ngModel)]="sourcePrototype.URLMethod.value" required>
@@ -105,7 +195,7 @@
                       [attr.data-content]="hints.URLMethodHint"><i class="fa fa-question-circle"></i>
               </button>
             </div>
-            <br><br>
+            <br><br><br>
             <label class="col-md-4 control-label">HTTP Header</label>
             <div class="col-md-4">
               <input type="url" id="headers" class="form-control" name="headers" [(ngModel)]="sourcePrototype.headers.userAgent"
@@ -133,8 +223,8 @@
             <br><br>
             <label class="col-md-4 control-label">File Locking</label>
             <div class="col-md-4">
-              <label>
-                <input type="checkbox" name="fileLock" id="fileLock" class="checkbox" [(ngModel)]="sourcePrototype.fileLock">
+              <label class="control-label">
+                <input type="checkbox" name="fileLock" id="fileLock" class="checkbox" [(ngModel)]="sourcePrototype.fileLock" style="vertical-align: middle">
               </label>
             </div>
             <div class="col-md-4">
@@ -144,102 +234,119 @@
             </div>
           </div>
 
-          <br>
+          <div class="col-md-offset-1 col-md-11">
+            <h4>Advanced Settings</h4><br>
+          </div>
 
-          <!-- Advanced preliminary configuration -->
-          <div class="row">
-            <div class="text-center">
-              <h4>Advanced preliminary configuration
-                <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
-                        [attr.data-content]="hints.advancedHint"><i class="fa fa-question-circle"></i>
-                </button></h4><br>
-              <div class="col-md-offset-2 col-md-4">
-                <label class="col-md-6 control-label">Max Retries</label>
-                <div class="col-md-3">
-                  <input type="number" min="0" step="1" id="maxRetries" class="form-control" name="maxRetries"
-                         [(ngModel)]="config.maxRetries"/>
-                </div><br><br><br>
-                <label class="col-md-6 control-label">Log Level</label>
-                <div class="col-md-4">
-                  <select class="form-control" name="logLevel" [(ngModel)]="config.log" required>
-                    <option *ngFor="let logLevel of configPrototype.config.log.types" [value]="logLevel"> {{logLevel}} </option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="col-md-4">
-                <label class="col-md-6 control-label">Halt on Error</label>
-                <div class="col-md-4">
-                  <input type="checkbox" name="haltOnError" id="haltOnError" class="checkbox" [(ngModel)]="config.haltOnError">
-                </div><br><br><br>
-                <label class="col-md-6 control-label">Parallel Execution</label>
-                <div class="col-md-4">
-                  <input type="checkbox" name="parallel" id="parallel" class="checkbox" [(ngModel)]="config.parallel">
-                </div>
-              </div>
+          <div class="form-group">
+            <label class="col-md-4 control-label">Max Retries</label>
+            <div class="col-md-4">
+              <input type="number" min="0" step="1" id="maxRetries" class="form-control" name="maxRetries"
+                     [(ngModel)]="config.maxRetries"/>
             </div>
           </div>
 
-          <br><br><br><br><br>
+          <div class="form-group">
+            <label class="col-md-4 control-label">Log Level</label>
+            <div class="col-md-4">
+              <select class="form-control" name="logLevel" [(ngModel)]="config.log" required>
+                <option *ngFor="let logLevel of configPrototype.config.log.types" [value]="logLevel"> {{logLevel}} </option>
+              </select>
+            </div>
+          </div>
 
-          <div class="row">
-            <div class="form-group">
-              <div class="col-sm-offset-4 col-sm-8">
-                <div class="btn-toolbar" style="height:80px">
-                  <div class="btn-group">
-                    <button type="button" class="btn btn-md btn-primary" (click)="reset(1)">Back</button>
-                  </div>
-                  <div class="btn-group">
-                    <button type="button" class="btn btn-md btn-primary" (click)="sourceInit()" [disabled]="!form.valid">Create modules</button>
-                  </div>
-                </div>
-              </div>
+          <div class="form-group">
+            <label class="col-md-4 control-label">Halt on Error</label>
+            <div class="col-md-1 control-label">
+              <input type="checkbox" name="haltOnError" id="haltOnError" class="checkbox" [(ngModel)]="config.haltOnError">
+            </div>
+            <label class="col-md-2 control-label">Parallel Execution</label>
+            <div class="col-md-1 control-label">
+              <input type="checkbox" name="parallel" id="parallel" class="checkbox" [(ngModel)]="config.parallel">
             </div>
           </div>
 
         </div>
 
-        <!-- Step 2 - Etl modules creation, configuration and sorting -->
-        <div class="stepTwo" *ngSwitchCase="'2'">
-          <h3 align="center">Step 2: Configure the ETL Parameters</h3><br>
+        <!-- Step 3 - Etl modules creation, configuration and sorting -->
+        <div class="stepTwo" *ngSwitchCase="'3'">
+
+          <div class="form-group">
+
+            <div class="col-sm-offset-2 col-sm-3">
+              <div class="btn-toolbar">
+                <div class="btn-group">
+                  <button *ngIf="outDBName" type="button" class="btn btn-sm btn-primary" (click)="saveConfiguration()">
+                    Save Config
+                  </button>
+                  <div *ngIf="!outDBName" style="display: inline-block;"
+                       data-toggle="popover" data-content="Add an OrientDB Loader in order to save the current ETL configuration."
+                       data-container="body" data-trigger="hover" data-animation="am-fade-and-scale" data-placement="left">
+                    <button type="button" class="btn btn-sm btn-primary" (click)="saveConfiguration()" style="pointer-events: none;" disabled>
+                      Save Config
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-sm-offset-1 col-sm-3">
+              <div class="btn-toolbar">
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary" (click)="reset(3);">Home</button>
+                </div>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary" (click)="setStep(2, true)">Back</button>
+                </div>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary" (click)="launch()" [disabled]="!ready">Run Etl</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
           <div class="col-md-8">
-            <div class="panel panel-default" style="height:500px">
+            <div class="panel panel-default" style="height:590px">
               <div class="panel-heading" align="center"><b>ETL OVERVIEW - CHOSEN SOURCE: {{sourcePrototype.source.value.toUpperCase()}}</b></div>
               <div class="panel-body">
                 <div class="row">
 
                   <div class="col-sm-3">
-                    <h4 align="center"><b>Extractor</b>
-                      <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
-                              [attr.data-content]="hints.extractorHint"><i class="fa fa-question-circle"></i>
-                      </button>
-                    </h4>
-                    <div class="row" style="text-align: center;">
-                      <div class="btn-group">
-
-                        <button class="btn btn-primary btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
-                                aria-expanded="false" id="createExtractor" style="border-radius: 50px;">
-                          <b>+</b>
+                    <div class="col-sm-9" style="padding: 0px;">
+                      <h4 align="left"><b>Extractor</b>
+                        <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                                [attr.data-content]="hints.extractorHint" style="padding: 10px;"><i class="fa fa-question-circle"></i>
                         </button>
-                        <!-- Dropdown menu, jdbc is shown only if selected as source -->
-                        <div class="dropdown-menu">
-                          <div class="list-group-item list-group-item-info">Extractor Type</div>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('jdbc')" *ngIf="sourcePrototype.source.value == 'jdbc'">jdbc</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('csv')" *ngIf="sourcePrototype.source.value != 'jdbc'">csv</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('json')" *ngIf="sourcePrototype.source.value != 'jdbc'">json</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('row')" *ngIf="sourcePrototype.source.value != 'jdbc'">row</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('xml')" *ngIf="sourcePrototype.source.value != 'jdbc'">xml</button>
-                          <a class="list-group-item list-group-item-action flex-column align-items-start disabled" *ngIf="sourcePrototype.source.value == 'jdbc'">
-                            <div class="d-flex w-100 justify-content-between">
-                              <small>Hint:</small>
-                            </div>
-                            <p class="mb-1">You selected jdbc previously. You have to use a jdbc extractor.</p>
-                            <small>Please make sure that your jdbc driver is in classpath or in lib folder.</small>
-                          </a>
-                        </div>
+                      </h4>
+                    </div>
+
+                    <div class="col-sm-3 btn-group" style="margin-top: 10px;">
+                      <button class="btn btn-primary btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                              aria-expanded="false" id="createExtractor" style="border-radius: 15px;">
+                        <b>+</b>
+                      </button>
+                      <!-- Dropdown menu, jdbc is shown only if selected as source -->
+                      <div class="dropdown-menu">
+                        <div class="list-group-item list-group-item-info">Extractor Type</div>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('jdbc')" *ngIf="sourcePrototype.source.value == 'jdbc'">jdbc</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('csv')" *ngIf="sourcePrototype.source.value != 'jdbc'">csv</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('json')" *ngIf="sourcePrototype.source.value != 'jdbc'">json</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('row')" *ngIf="sourcePrototype.source.value != 'jdbc'">row</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="extractorInit('xml')" *ngIf="sourcePrototype.source.value != 'jdbc'">xml</button>
+                        <a class="list-group-item list-group-item-action flex-column align-items-start disabled" *ngIf="sourcePrototype.source.value == 'jdbc'">
+                          <div class="d-flex w-100 justify-content-between">
+                            <small>Hint:</small>
+                          </div>
+                          <p class="mb-1">You selected jdbc previously. You have to use a jdbc extractor.</p>
+                          <small>Please make sure that your jdbc driver is in classpath or in lib folder.</small>
+                        </a>
                       </div>
-                      <br><br><br>
-                      <div class="row">
+                    </div>
+
+                    <div class="row" style="text-align:center;">
+                      <br><br>
+                      <div class="col-md-12" style="text-align: center;">
                         <h5 id="pleaseExtractor" align="center"><b>Please create an extractor</b></h5>
                         <div id="extractorSpace" style="height: 300px">
                           <canvas id="eCanvas" style="display:none" (click)="selectExtractor()">
@@ -251,42 +358,44 @@
                   </div>
 
                   <div class="col-sm-6 etl-transformers">
-                    <h4 align="center"><b>Transformers</b>
-                      <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
-                              [attr.data-content]="hints.transformerHint"><i class="fa fa-question-circle"></i>
-                      </button>
-                    </h4>
-                    <div class="row" style="text-align:center;">
-                      <div class="btn-group">
-
-                        <button class="btn btn-primary btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
-                                aria-expanded="false" id="createTransformer" style="border-radius: 50px;">
-                          <b>+</b>
+                    <div class="col-sm-10">
+                      <h4 align="center"><b>Transformers</b>
+                        <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                                [attr.data-content]="hints.transformerHint"><i class="fa fa-question-circle"></i>
                         </button>
-                        <!-- Dropdown menu -->
-                        <div class="dropdown-menu">
-                          <div class="list-group-item list-group-item-info">Transformer Type</div>
+                      </h4>
+                    </div>
+                    <div class="col-sm-2 btn-group" style="margin-top: 10px;">
+                      <button class="btn btn-primary btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                              aria-expanded="false" id="createTransformer" style="border-radius: 15px;">
+                        <b>+</b>
+                      </button>
+                      <!-- Dropdown menu -->
+                      <div class="dropdown-menu">
+                        <div class="list-group-item list-group-item-info">Transformer Type</div>
 
-                          <!-- Csv transformer is deprecated -->
-                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('let')">let block</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('console')">console block</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('code')">code</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('command')">command</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('edge')">edge</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('flow')">flow</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('field')">field</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('link')">link</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('log')">log</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('merge')">merge</button>
-                          <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('vertex')">vertex</button>
-                        </div>
+                        <!-- Csv transformer is deprecated -->
+                        <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('let')">let block</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('console')">console block</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('code')">code</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('command')">command</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('edge')">edge</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('flow')">flow</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('field')">field</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('link')">link</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('log')">log</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('merge')">merge</button>
+                        <button type="button" class="list-group-item list-group-item-action" (click)="transformerInit('vertex')">vertex</button>
                       </div>
-                      <br><br><br>
+                    </div>
+
+                    <div class="row" style="text-align:center;">
+                      <br><br>
 
                       <!-- Canvas list generation area -->
                       <div class="col-md-12" style="overflow-y:auto; overflow-x: hidden">
                         <h5 id="pleaseTransformer" align="center"><b>Please create at least one transformer</b></h5>
-                        <div id="transformerSpace" style="height: 300px">
+                        <div id="transformerSpace" style="height: 450px">
                           <ol id="transformerList" #transformerList class="transformer-list list-unstyled">
                           </ol>
                         </div>
@@ -295,16 +404,20 @@
                   </div>
 
                   <div class="col-sm-3">
-                    <h4 align="center"><b>Loader</b>
-                      <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
-                              [attr.data-content]="hints.loaderHint"><i class="fa fa-question-circle"></i>
-                      </button>
-                    </h4>
-                    <div class="row" style="text-align: center;">
+
+                    <div class="col-sm-9" style="padding: 0px;">
+                      <h4 align="center"><b>Loader</b>
+                        <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                                [attr.data-content]="hints.loaderHint"><i class="fa fa-question-circle"></i>
+                        </button>
+                      </h4>
+                    </div>
+
+                    <div class="col-sm-3 btn-group" style="margin-top: 10px;">
                       <div class="btn-group">
 
                         <button class="btn btn-primary btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
-                                aria-expanded="false" id="createLoader" style="border-radius: 50px;">
+                                aria-expanded="false" id="createLoader" style="border-radius: 15px;">
                           <b>+</b>
                         </button>
                         <!-- Dropdown menu -->
@@ -316,8 +429,8 @@
                         </div>
                       </div>
                     </div>
-                    <br><br>
-                    <div class="row">
+
+                    <div class="col-md-12" style="text-align: center; padding-left: 0px;">
                       <h5 id="pleaseLoader" align="center"><b>Please create a loader</b></h5>
                       <div id="loaderSpace" style="height: 300px">
                         <canvas id="lCanvas" style="display:none" (click)="selectLoader()">
@@ -325,6 +438,7 @@
                         </canvas>
                       </div>
                     </div>
+                    <br><br>
                   </div>
                 </div>
               </div>
@@ -332,7 +446,7 @@
           </div>
 
           <div class="col-md-4">
-            <div class="panel panel-info" style="overflow:auto; height:500px">
+            <div class="panel panel-info" style="overflow:auto; height:590px">
               <div class="panel-heading" align="center"><b>PARAMETER CONFIGURATION</b></div>
               <div class="panel-body">
                 <div id="panelPlaceholder" class="etl-panel"></div>
@@ -441,100 +555,128 @@
                       <br><br><br><h6 align="center" style="color:red;">This module hasn't configurable parameters!</h6>
                     </div>
 
-                    <div *ngFor="let lParameter of objectKeys.transform(loaderPrototype[loaderType])">
+                    <div *ngIf="loaderType==='orientdb'">
                       <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
-                              [attr.data-content]="hints.loader[lParameter]"><i class="fa fa-question-circle"></i>
+                              [attr.data-content]="hints.loader.connectionProtocol"><i class="fa fa-question-circle"></i>
                       </button>
-                      <label *ngIf="loaderPrototype[loaderType][lParameter]['mandatory'] == true">
-                        &emsp;{{separeCaps(lParameter).toUpperCase()}} <b style="color:red;">*</b>
+                      <label>
+                        &emsp;CONNECTION PROTOCOL <b style="color:red;">*</b>
                       </label>
-                      <label *ngIf="loaderPrototype[loaderType][lParameter]['mandatory'] == false">
-                        &emsp;{{separeCaps(lParameter).toUpperCase()}}
-                      </label>
-
-                      <select *ngIf="loaderPrototype[loaderType][lParameter]['types']"
-                              class="form-control" name="lTypeConfig-{{lParameter}}" [(ngModel)]="loader[loaderType][lParameter]">
-                        <option *ngFor="let lType of loaderPrototype[loaderType][lParameter]['types']" [value]="lType" (ngModelChange)="readyForExecution()">
-                          {{lType}}
-                        </option>
+                      <select class="form-control" [(ngModel)]="connectionProtocol" name="protocol" required>
+                        <option *ngFor="let protocol of protocols" [value]="protocol"> {{protocol}} </option>
                       </select>
+                    </div>
 
-                      <input *ngIf="loaderPrototype[loaderType][lParameter]['number']"
-                             type="number" min="0" step="1" class="form-control" name="lTextConfig-{{lParameter}}"
-                             [(ngModel)]="loader[loaderType][lParameter]" placeholder="enter a number" (ngModelChange)="readyForExecution()"/>
+                    <div *ngIf="loaderType==='orientdb'">
+                      <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                              [attr.data-content]="hints.loader.connectionProtocol"><i class="fa fa-question-circle"></i>
+                      </button>
+                      <label>
+                        &emsp;DATABASE NAME <b style="color:red;">*</b>
+                      </label>
+                      <input type="text" id="outDBName" class="form-control" name="outDBName" [(ngModel)]="outDBName" (ngModelChange)="readyForExecution()"
+                             placeholder="Database Name" required ngControl="hostControl"/>
+                    </div>
 
-                      <input *ngIf="!loaderPrototype[loaderType][lParameter]['types'] && !loaderPrototype[loaderType][lParameter]['object']
+                    <br>
+
+                    <div *ngFor="let lParameter of objectKeys.transform(loaderPrototype[loaderType])">
+
+                      <div *ngIf="lParameter !== 'dbURL'">
+
+                        <button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                                [attr.data-content]="hints.loader[lParameter]"><i class="fa fa-question-circle"></i>
+                        </button>
+                        <label *ngIf="loaderPrototype[loaderType][lParameter]['mandatory'] == true">
+                          &emsp;{{separeCaps(lParameter).toUpperCase()}} <b style="color:red;">*</b>
+                        </label>
+                        <label *ngIf="loaderPrototype[loaderType][lParameter]['mandatory'] == false">
+                          &emsp;{{separeCaps(lParameter).toUpperCase()}}
+                        </label>
+
+                        <select *ngIf="loaderPrototype[loaderType][lParameter]['types']"
+                                class="form-control" name="lTypeConfig-{{lParameter}}" [(ngModel)]="loader[loaderType][lParameter]">
+                          <option *ngFor="let lType of loaderPrototype[loaderType][lParameter]['types']" [value]="lType" (ngModelChange)="readyForExecution()">
+                            {{lType}}
+                          </option>
+                        </select>
+
+                        <input *ngIf="loaderPrototype[loaderType][lParameter]['number']"
+                               type="number" min="0" step="1" class="form-control" name="lTextConfig-{{lParameter}}"
+                               [(ngModel)]="loader[loaderType][lParameter]" placeholder="enter a number" (ngModelChange)="readyForExecution()"/>
+
+                        <input *ngIf="!loaderPrototype[loaderType][lParameter]['types'] && !loaderPrototype[loaderType][lParameter]['object']
                              && !loaderPrototype[loaderType][lParameter]['number']"
-                             type="text" class="form-control" name="lTextConfig-{{lParameter}}" [(ngModel)]="loader[loaderType][lParameter]"
-                             placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
+                               type="text" class="form-control" name="lTextConfig-{{lParameter}}" [(ngModel)]="loader[loaderType][lParameter]"
+                               placeholder="enter your value" (ngModelChange)="readyForExecution()"/>
 
-                      <!-- Objects creation (classes and indexes) -->
-                      <div *ngIf="loaderPrototype[loaderType][lParameter]['object']">
-                        <h6 style="color:grey;"><b>Created {{lParameter}}: {{loader[loaderType][lParameter].length}}</b>
+                        <!-- Objects creation (classes and indexes) -->
+                        <div *ngIf="loaderPrototype[loaderType][lParameter]['object']">
+                          <h6 style="color:grey;"><b>Created {{lParameter}}: {{loader[loaderType][lParameter].length}}</b>
 
-                          <!-- Lists every object in both the arrays -->
-                          <div class="btn-group">
-                            <button class="btn btn-trasparent btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
-                                    aria-expanded="false" id="show{{lParameter}}"><i class="fa fa-chevron-down"></i>
-                            </button>
-                            <!-- Dropdown list -->
-                            <div class="dropdown-menu" style="width: 200px">
-                              <div class="list-group-item" *ngFor="let object of loader[loaderType][lParameter]">
-                                <div *ngFor="let property of objectKeys.transform(object)">
-                                  <b>{{property}}:</b> {{object[property]}} <br>
+                            <!-- Lists every object in both the arrays -->
+                            <div class="btn-group">
+                              <button class="btn btn-trasparent btn-md dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                                      aria-expanded="false" id="show{{lParameter}}"><i class="fa fa-chevron-down"></i>
+                              </button>
+                              <!-- Dropdown list -->
+                              <div class="dropdown-menu" style="width: 200px">
+                                <div class="list-group-item" *ngFor="let object of loader[loaderType][lParameter]">
+                                  <div *ngFor="let property of objectKeys.transform(object)">
+                                    <b>{{property}}:</b> {{object[property]}} <br>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </h6>
+                          </h6>
 
-                        <div *ngFor="let oParameter of objectKeys.transform(loaderPrototype[loaderType][lParameter]['value'])">
-                          &emsp;&emsp;<button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
-                                              [attr.data-content]="hints.loader[oParameter]"><i class="fa fa-question-circle"></i>
-                        </button>
-                          <label *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['mandatory'] == true">
-                            &emsp;{{oParameter}} <b style="color:red;">*</b>
-                          </label>
-                          <label *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['mandatory'] == false">
-                            &emsp;{{oParameter}}
-                          </label>
-                          <div class="col-md-offset-1 col-md-11">
-                            <input *ngIf="!loaderPrototype[loaderType][lParameter]['value'][oParameter]['array'] &&
+                          <div *ngFor="let oParameter of objectKeys.transform(loaderPrototype[loaderType][lParameter]['value'])">
+                            &emsp;&emsp;<button type="button" class="btn btn-trasparent" data-toggle="popover" data-html="true"
+                                                [attr.data-content]="hints.loader[oParameter]"><i class="fa fa-question-circle"></i>
+                          </button>
+                            <label *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['mandatory'] == true">
+                              &emsp;{{oParameter}} <b style="color:red;">*</b>
+                            </label>
+                            <label *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['mandatory'] == false">
+                              &emsp;{{oParameter}}
+                            </label>
+                            <div class="col-md-offset-1 col-md-11">
+                              <input *ngIf="!loaderPrototype[loaderType][lParameter]['value'][oParameter]['array'] &&
                              !loaderPrototype[loaderType][lParameter]['value'][oParameter]['number']"
-                                   type="text" class="form-control" name="lTextConfig-{{lParameter}}-{{oParameter}}"
-                                   [(ngModel)]="this[lParameter][oParameter]" placeholder="enter your value"
-                                   (ngModelChange)="subReadyForExecution()"/>
+                                     type="text" class="form-control" name="lTextConfig-{{lParameter}}-{{oParameter}}"
+                                     [(ngModel)]="this[lParameter][oParameter]" placeholder="enter your value"
+                                     (ngModelChange)="subReadyForExecution()"/>
 
-                            <input *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['number']"
-                                   type="number" min="0" step="1" class="form-control" name="lTextConfig-{{lParameter}}"
-                                   [(ngModel)]="this[lParameter][oParameter]" placeholder="enter a number" (ngModelChange)="subReadyForExecution()"/>
+                              <input *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['number']"
+                                     type="number" min="0" step="1" class="form-control" name="lTextConfig-{{lParameter}}"
+                                     [(ngModel)]="this[lParameter][oParameter]" placeholder="enter a number" (ngModelChange)="subReadyForExecution()"/>
 
-                            <tag-input *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
-                                       name="lTextConfig-{{lParameter}}-{{oParameter}}" [(ngModel)]="this[lParameter][oParameter]"
-                                       (onAdd)="subReadyForExecution()" (onRemove)="subReadyForExecution()" placeholder="new item"
-                                       secondaryPlaceholder="enter new item" modelAsStrings="true" [separatorKeys]="[188]">
-                            </tag-input>
+                              <tag-input *ngIf="loaderPrototype[loaderType][lParameter]['value'][oParameter]['array']"
+                                         name="lTextConfig-{{lParameter}}-{{oParameter}}" [(ngModel)]="this[lParameter][oParameter]"
+                                         (onAdd)="subReadyForExecution()" (onRemove)="subReadyForExecution()" placeholder="new item"
+                                         secondaryPlaceholder="enter new item" modelAsStrings="true" [separatorKeys]="[188]">
+                              </tag-input>
+                            </div>
                           </div>
+                          <br><br><br>
+                          <div class="btn-group-xs">
+                            &emsp;&emsp;&emsp;
+                            <button type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderDeleteLast(lParameter)">
+                              Remove last
+                            </button>
+                            &emsp;
+                            <button *ngIf="lParameter === 'classes'" type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderAddTo(lParameter)"
+                                    [disabled]="!classReady" [ngClass]="{'btn-danger': classReady}">
+                              Add to {{lParameter}}
+                            </button>
+                            <button *ngIf="lParameter === 'indexes'" type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderAddTo(lParameter)"
+                                    [disabled]="!indexReady" [ngClass]="{'btn-danger': indexReady}">
+                              Add to {{lParameter}}
+                            </button>
+                          </div><br>
                         </div>
-                        <br><br><br>
-                        <div class="btn-group-xs">
-                          &emsp;&emsp;&emsp;
-                          <button type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderDeleteLast(lParameter)">
-                            Remove last
-                          </button>
-                          &emsp;
-                          <button *ngIf="lParameter === 'classes'" type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderAddTo(lParameter)"
-                                  [disabled]="!classReady">
-                            Add to {{lParameter}}
-                          </button>
-                          <button *ngIf="lParameter === 'indexes'" type="button" class="btn btn-xs btn-info" style="border-radius: 40px;" (click)="loaderAddTo(lParameter)"
-                                  [disabled]="!indexReady">
-                            Add to {{lParameter}}
-                          </button>
-                        </div><br>
+                        <br>
                       </div>
-                      <br>
-
                     </div>
                   </div><br><br>
                   <div class="col-md-12 text-center">
@@ -548,31 +690,9 @@
             </div>
           </div>
 
-          <br><br><br><br>
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-3">
-              <div class="btn-toolbar">
-                <div class="btn-group">
-                  <button type="button" class="btn btn-md btn-primary" (click)="reset(2);">Back</button>
-                </div>
-                <div class="btn-group">
-                  <button type="button" class="btn btn-md btn-primary" (click)="launch()" [disabled]="!true">Run Etl</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Quick tips panel -->
-            <div class="col-sm-7">
-              <div class="panel panel-default text-center">
-                <b style="color:red;">*</b><b style="color:grey;"> means that the parameter is mandatory for a correct configuration.
-                An empty parameter when importing means that it wasn't in the imported configuration, so the default value will be used.<br>
-                For any doubt during the configuration, please refer to the
-                <a href="http://orientdb.com/docs/last/ETL-Introduction.html" target="_blank">official documentation</a>.</b></div>
-            </div>
-          </div>
         </div>
 
-        <!-- Step 3 - execution, logging and source inspection -->
+        <!-- Step 4 - execution, logging and source inspection -->
         <div class="stepThree" *ngSwitchCase="'running'">
           <h4>
             <div class="row">
@@ -591,8 +711,14 @@
             </span>
                 </h5>
                 <h5>
-            <span class="tab">
-               <b>From</b>: {{ job.cfg.jurl }}
+            <span *ngIf="source.file" class="tab">
+               <b>From File</b>: {{ source.file.path }}
+            </span>
+                  <span *ngIf="source.http" class="tab">
+               <b>From HTTP URL</b>: {{ source.http.url }}
+            </span>
+                  <span *ngIf="!source && extractor.jdbc" class="tab">
+               <b>From JDBC</b>: {{ extractor.jdbc.url }}
             </span>
                 </h5>
                 <h5>
@@ -604,7 +730,7 @@
             </div>
             <div class="col-md-2">
               <div class="btn-group">
-                <button type="button" class="btn btn-md btn-primary" (click)="switchConfigStep('1')" [disabled]="jobRunning">New Migration</button>
+                <button type="button" class="btn btn-md btn-primary" (click)="reset(4)" [disabled]="jobRunning">New Migration</button>
               </div>
             </div>
           </div>

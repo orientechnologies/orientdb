@@ -28,7 +28,7 @@ import edge = require("selenium-webdriver/edge");
     '.OneNRelTableLabel {width: 150px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: inline-block;}',
     '.NNRelTableLabel {width: 100px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: inline-block;}',
     '.OneNRelInfoTable ul, .NNRelInfoTable ul {padding-left: 2px;}',
-    '.OneNRelInfoTable li, .NNRelInfoTable li {padding-left: 2px;list-style-type: disc; list-style-position: inside; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }',
+    '.OneNRelInfoTable li, .NNRelInfoTable li {padding-left: 2px; list-style-type: disc; list-style-position: inside; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }',
 
     '.actions-dropdown-item:hover {cursor: pointer}',
     'modal .control-label {text-align: right}'

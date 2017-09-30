@@ -7,6 +7,7 @@ import {Pipe} from '@angular/core'
 class ObjectKeysPipe {
 
   transform(input)  {
+
     let keys = [];
     for (let key in input) {
       keys.push(key);
