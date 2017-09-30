@@ -119,7 +119,7 @@ public class OOutputStreamManager {
   public synchronized void error(String format, Object... args) {
     if (!(this.level == BLANK_LEVEL) && format != null) {
       if (this.level <= ERROR_LEVEL)
-        this.outputStream.printf(format, "\nERROR: ", args);
+        this.outputStream.printf("\nERROR: " + format, args);
     }
   }
 

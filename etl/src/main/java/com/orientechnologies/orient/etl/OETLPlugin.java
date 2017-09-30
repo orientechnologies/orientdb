@@ -22,8 +22,10 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.etl.context.OETLContext;
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import com.orientechnologies.orient.etl.http.OServerCommandETL;
+import com.orientechnologies.orient.etl.util.OMigrationConfigManager;
 import com.orientechnologies.orient.output.OPluginMessageHandler;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -44,13 +46,14 @@ public class OETLPlugin extends OServerPluginAbstract {
 
   public OETLPlugin() {}
 
-  public void executeJob(String[] args, OPluginMessageHandler messageHandler) {
+  public void executeJob(String jsonConfig, String outDBConfigPath, OPluginMessageHandler messageHandler) {
 
     System.out.println("OrientDB etl v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
-    if (args.length == 0) {
+    if (jsonConfig == null) {
       System.out.println("Syntax error, missing configuration file.");
     }
     else {
+      String[] args = {outDBConfigPath};
       final OETLProcessor processor = new OETLProcessorConfigurator().parseConfigAndParameters(args);
 
       // overriding default message handler if the chosen verbosity level is different from the default one

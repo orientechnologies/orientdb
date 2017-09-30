@@ -23,6 +23,10 @@ package com.orientechnologies.orient.etl.context;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.output.OPluginMessageHandler;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+
 /**
  * OETLContext extends OBasicCommandContext, in order to handle the following additional elements:
  * - message handler for application messages
@@ -51,6 +55,75 @@ public class OETLContext extends OBasicCommandContext {
 
   public void setMessageHandler(OPluginMessageHandler messageHandler) {
     this.messageHandler = messageHandler;
+  }
+
+  /**
+   * Prints the error message for a caught exception according to a level passed as argument. It's composed of:
+   * - defined error message
+   * - exception message
+   *
+   * @param e
+   * @param message
+   * @param level
+   *
+   * @return printedMessage
+   */
+  public String printExceptionMessage(Exception e, String message, String level) {
+
+    if (e.getMessage() != null)
+      message += "\n" + e.getClass().getName() + " - " + e.getMessage();
+    else
+      message += "\n" + e.getClass().getName();
+
+    switch (level) {
+    case "debug":
+      this.messageHandler.debug(this, message);
+      break;
+    case "info":
+      this.messageHandler.info(this, message);
+      break;
+    case "warn":
+      this.messageHandler.warn(this, message);
+      break;
+    case "error":
+      this.messageHandler.error(this, message);
+      break;
+    }
+
+    return message;
+  }
+
+  /**
+   * Builds the exception stack trace and prints it according to a level passed as argument.
+   *
+   * @param e
+   * @param level
+   *
+   * @return printedMessage
+   */
+  public String printExceptionStackTrace(Exception e, String level) {
+
+    // copying the exception stack trace in the string
+    Writer writer = new StringWriter();
+    e.printStackTrace(new PrintWriter(writer));
+    String s = writer.toString();
+
+    switch (level) {
+    case "debug":
+      this.messageHandler.debug(this, "\n" + s + "\n");
+      break;
+    case "info":
+      this.messageHandler.info(this, "\n" + s + "\n");
+      break;
+    case "warn":
+      this.messageHandler.warn(this, "\n" + s + "\n");
+      break;
+    case "error":
+      this.messageHandler.error(this, "\n" + s + "\n");
+      break;
+    }
+
+    return s;
   }
 
 }
