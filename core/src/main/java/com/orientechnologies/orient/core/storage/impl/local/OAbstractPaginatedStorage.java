@@ -1497,15 +1497,23 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           for (ORecordOperation txEntry : newRecords) {
             ORecord rec = txEntry.getRecord();
-
-            if (rec.isDirty()) {
-              ORecordId rid = (ORecordId) rec.getIdentity().copy();
-              ORecordId oldRID = rid.copy();
+            if (!rec.getIdentity().isPersistent()) {
+              if (rec.isDirty()) {
+                ORecordId rid = (ORecordId) rec.getIdentity().copy();
+                ORecordId oldRID = rid.copy();
+                final OCluster cluster = getClusterById(rid.getClusterId());
+                OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+                rid.setClusterId(cluster.getId());
+                rid.setClusterPosition(ppos.clusterPosition);
+                clientTx.updateIdentityAfterCommit(oldRID, rid);
+              }
+            } else {
+              ORecordId rid = (ORecordId) rec.getIdentity();
               final OCluster cluster = getClusterById(rid.getClusterId());
               OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
-              rid.setClusterId(cluster.getId());
-              rid.setClusterPosition(ppos.clusterPosition);
-              clientTx.updateIdentityAfterCommit(oldRID, rid);
+              if (ppos.clusterPosition != rid.getClusterPosition()) {
+                throw new OConcurrentCreateException(rid, new ORecordId(rid.getClusterId(), ppos.clusterPosition));
+              }
             }
           }
           atomicOperationsManager.endAtomicOperation(false, null);
@@ -5036,15 +5044,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   /**
-   * Method which is called before any data modification operation to check alarm conditions such as:
-   * <ol>
-   * <li>Low disk space</li>
-   * <li>Exception during data flush in background threads</li>
-   * <li>Broken files</li>
-   * </ol>
+   * Method which is called before any data modification operation to check alarm conditions such as: <ol> <li>Low disk space</li>
+   * <li>Exception during data flush in background threads</li> <li>Broken files</li> </ol>
    * <p>
-   * If one of those conditions are satisfied data modification operation is aborted and
-   * storage is switched in "read only" mode.
+   * If one of those conditions are satisfied data modification operation is aborted and storage is switched in "read only" mode.
    */
   private void checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages() {
     if (transaction.get() != null)

@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -65,6 +66,43 @@ public class TransactionRidAllocationTest {
     ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
     assertNotNull(db1.load(generated));
     db1.close();
+
+  }
+
+  @Test
+  public void testMultipleDbAllocationAndCommit() {
+    ODatabaseDocumentInternal second;
+    orientDB.create("secondTest", ODatabaseType.MEMORY);
+    second = (ODatabaseDocumentInternal) orientDB.open("secondTest", "admin", "admin");
+
+    db.activateOnCurrentThread();
+    db.begin();
+    OVertex v = db.newVertex("V");
+    db.save(v);
+
+    ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids(db.getTransaction());
+    ORID generated = v.getIdentity();
+    OTransaction transaction = db.getTransaction();
+    second.activateOnCurrentThread();
+    second.begin();
+    OTransactionOptimistic transactionOptimistic = (OTransactionOptimistic) second.getTransaction();
+    for (ORecordOperation operation : transaction.getAllRecordEntries()) {
+      transactionOptimistic.addRecord(operation.getRecord().copy(), operation.getType(), null);
+    }
+    ((OAbstractPaginatedStorage) second.getStorage()).preallocateRids(transactionOptimistic);
+    db.activateOnCurrentThread();
+    ((OAbstractPaginatedStorage) db.getStorage()).commitPreAllocated(db.getTransaction());
+
+    ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
+    assertNotNull(db1.load(generated));
+
+    db1.close();
+    second.activateOnCurrentThread();
+    ((OAbstractPaginatedStorage) second.getStorage()).commitPreAllocated(second.getTransaction());
+    second.close();
+    ODatabaseDocument db2 = orientDB.open("secondTest", "admin", "admin");
+    assertNotNull(db2.load(generated));
+    db2.close();
 
   }
 
