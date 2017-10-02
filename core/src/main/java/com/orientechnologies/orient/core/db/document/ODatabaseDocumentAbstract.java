@@ -2557,13 +2557,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         listener.onBeforeTxCommit(this);
       } catch (Exception e) {
         OLogManager.instance()
-            .error(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()", e,
-                listener.getClass().getName());
+            .error(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit() `%08X`", e,
+                listener.getClass().getName(), System.identityHashCode(e));
 
         try {
           rollback(force);
         } catch (Exception re) {
-          OLogManager.instance().error(this, "Exception during rollback", re);
+          OLogManager.instance().error(this, "Exception during rollback `%08X`", re, System.identityHashCode(re));
         }
 
         throw OException.wrapException(new OTransactionException(
@@ -2576,23 +2576,23 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     } catch (RuntimeException e) {
 
       if (e instanceof OHighLevelException)
-        OLogManager.instance().debug(this, "Error on transaction commit", e);
+        OLogManager.instance().debug(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));
       else
-        OLogManager.instance().error(this, "Error on transaction commit", e);
+        OLogManager.instance().error(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));
 
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onBeforeTxRollback(this);
         } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error before transaction rollback", t);
+          OLogManager.instance().error(this, "Error before transaction rollback `%08X`", t, System.identityHashCode(t));
         }
 
       try {
         // ROLLBACK TX AT DB LEVEL
         ((OTransactionAbstract) currentTx).internalRollback();
       } catch (Exception re) {
-        OLogManager.instance().error(this, "Error during transaction rollback", re);
+        OLogManager.instance().error(this, "Error during transaction rollback `%08X`", re, System.identityHashCode(re));
       }
 
       getLocalCache().clear();
@@ -2602,7 +2602,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         try {
           listener.onAfterTxRollback(this);
         } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error after transaction rollback", t);
+          OLogManager.instance().error(this, "Error after transaction rollback `%08X`", t, System.identityHashCode(t));
         }
       throw e;
     }
@@ -2614,9 +2614,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       } catch (Exception e) {
         final String message =
             "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of "
-                + listener.getClass() + ".onAfterTxCommit()";
+                + listener.getClass() + ".onAfterTxCommit() `%08X`";
 
-        OLogManager.instance().error(this, message, e);
+        OLogManager.instance().error(this, message, e, System.identityHashCode(e));
 
         throw OException.wrapException(new OTransactionBlockedException(message), e);
 
