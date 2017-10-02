@@ -21,11 +21,28 @@ describe("HomePage", function () {
   it("It should login to the default database", function (done) {
     browser.url("/")
       .waitForExist(".ologin", true);
-    
+
     browser.setValue('#user', "admin")
       .setValue('#password', "admin")
       .click("#database-connect")
       .waitForExist(".browse-container", true);
+  });
+
+  it("It should login to the default database and then logout", function (done) {
+    browser.url("/")
+      .waitForExist(".ologin", true);
+
+    browser.setValue('#user', "admin")
+      .setValue('#password', "admin")
+      .click("#database-connect")
+      .waitForExist(".browse-container", true);
+
+    browser.waitForVisible("#user-dropdown", true);
+    browser.click("#user-dropdown")
+      .waitForVisible("#logout-button", true);
+
+    browser.click("#logout-button")
+      .waitForVisible(".ologin");
   });
 
 });
