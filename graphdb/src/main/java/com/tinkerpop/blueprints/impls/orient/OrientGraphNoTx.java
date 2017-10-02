@@ -27,6 +27,8 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Direction;
@@ -34,9 +36,11 @@ import com.tinkerpop.blueprints.Features;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import org.apache.commons.configuration.Configuration;
 
+import java.util.Collection;
+
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
- * 
+ *
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientGraphNoTx extends OrientBaseGraph {
@@ -44,9 +48,8 @@ public class OrientGraphNoTx extends OrientBaseGraph {
 
   /**
    * Constructs a new object using an existent database instance.
-   * 
-   * @param iDatabase
-   *          Underlying database object to attach
+   *
+   * @param iDatabase Underlying database object to attach
    */
   public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase, null, null, null);
@@ -143,12 +146,32 @@ public class OrientGraphNoTx extends OrientBaseGraph {
     OrientEdge edge = null;
     ODocument outDocument = null;
     ODocument inDocument = null;
-    boolean outDocumentModified = false;
 
     final Settings settings = graph != null ? graph.settings : new Settings();
 
     final int maxRetries = graph != null ? graph.getMaxRetries() : 1;
+
+    label = OrientBaseGraph.encodeClassName(label);
+    if (label == null && iClassName != null)
+      // RETRO-COMPATIBILITY WITH THE SYNTAX CLASS:<CLASS-NAME>
+      label = OrientBaseGraph.encodeClassName(iClassName);
+
+    if (graph != null && graph.isUseClassForEdgeLabel()) {
+      final OrientEdgeType edgeType = graph.getEdgeType(label);
+      if (edgeType == null)
+        // AUTO CREATE CLASS
+        graph.createEdgeType(label);
+      else
+        // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
+        label = edgeType.getName();
+    }
+
+    final String outFieldName = currentVertex
+        .getConnectionFieldName(Direction.OUT, label, settings.isUseVertexFieldsForEdgeLabels());
+    final String inFieldName = currentVertex.getConnectionFieldName(Direction.IN, label, settings.isUseVertexFieldsForEdgeLabels());
+
     for (int retry = 0; retry < maxRetries; ++retry) {
+
       try {
         // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
         if (outDocument == null) {
@@ -172,26 +195,6 @@ public class OrientGraphNoTx extends OrientBaseGraph {
         OIdentifiable to;
         OIdentifiable from;
 
-        label = OrientBaseGraph.encodeClassName(label);
-        if (label == null && iClassName != null)
-          // RETRO-COMPATIBILITY WITH THE SYNTAX CLASS:<CLASS-NAME>
-          label = OrientBaseGraph.encodeClassName(iClassName);
-
-        if (graph != null && graph.isUseClassForEdgeLabel()) {
-          final OrientEdgeType edgeType = graph.getEdgeType(label);
-          if (edgeType == null)
-            // AUTO CREATE CLASS
-            graph.createEdgeType(label);
-          else
-            // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
-            label = edgeType.getName();
-        }
-
-        final String outFieldName = currentVertex.getConnectionFieldName(Direction.OUT, label,
-            settings.isUseVertexFieldsForEdgeLabels());
-        final String inFieldName = currentVertex.getConnectionFieldName(Direction.IN, label,
-            settings.isUseVertexFieldsForEdgeLabels());
-
         // since the label for the edge can potentially get re-assigned
         // before being pushed into the OrientEdge, the
         // null check has to go here.
@@ -209,7 +212,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
             if (settings.isKeepInMemoryReferences())
               edge = graph.getEdgeInstance(from.getIdentity(), to.getIdentity(), label);
             else
-              edge = graph.getEdgeInstance( from, to, label);
+              edge = graph.getEdgeInstance(from, to, label);
           }
           edgeRecord = null;
         } else {
@@ -220,11 +223,12 @@ public class OrientGraphNoTx extends OrientBaseGraph {
             edgeRecord = edge.getRecord();
 
             if (settings.isKeepInMemoryReferences())
-              edgeRecord.fields(OrientBaseGraph.CONNECTION_OUT, currentVertex.rawElement.getIdentity(),
-                  OrientBaseGraph.CONNECTION_IN, inDocument.getIdentity());
+              edgeRecord
+                  .fields(OrientBaseGraph.CONNECTION_OUT, currentVertex.rawElement.getIdentity(), OrientBaseGraph.CONNECTION_IN,
+                      inDocument.getIdentity());
             else
-              edgeRecord.fields(OrientBaseGraph.CONNECTION_OUT, currentVertex.rawElement, OrientBaseGraph.CONNECTION_IN,
-                  inDocument);
+              edgeRecord
+                  .fields(OrientBaseGraph.CONNECTION_OUT, currentVertex.rawElement, OrientBaseGraph.CONNECTION_IN, inDocument);
           } else
             edgeRecord = edge.getRecord();
 
@@ -241,14 +245,11 @@ public class OrientGraphNoTx extends OrientBaseGraph {
         if (graph != null && edgeRecord != null)
           edgeRecord.save(iClusterName);
 
-        if (!outDocumentModified) {
-          // OUT-VERTEX ---> IN-VERTEX/EDGE
-          currentVertex.createLink(graph, outDocument, to, outFieldName);
+        // OUT-VERTEX ---> IN-VERTEX/EDGE
+        currentVertex.createLink(graph, outDocument, to, outFieldName);
 
-          if (graph != null) {
-            outDocument.save();
-            outDocumentModified = true;
-          }
+        if (graph != null) {
+          outDocument.save();
         }
 
         // IN-VERTEX ---> OUT-VERTEX/EDGE
@@ -262,10 +263,52 @@ public class OrientGraphNoTx extends OrientBaseGraph {
 
       } catch (ONeedRetryException e) {
         // RETRY
-        if (!outDocumentModified)
-          outDocument.reload();
-        else if (inDocument != null)
-          inDocument.reload();
+        ORID edgeRid = edge.getIdentity();
+        try {
+          if (edge.rawElement != null) {
+            edge.removeRecord();
+          }
+        } catch (Exception ex) {
+          ex.printStackTrace();
+        }
+
+        edge = null;
+        if (edgeRid != null) {
+          for (int i = 0; i < 50; i++) {
+            try {
+              outDocument.reload();
+              Object coll = outDocument.field(outFieldName);
+              if (coll instanceof Collection) {
+                ((Collection) coll).remove(edgeRid);
+              } else if (coll instanceof ORidBag) {
+                ((ORidBag) coll).remove(edgeRid);
+              }
+              outDocument.save();
+              break;
+            } catch (ONeedRetryException ex) {
+            }
+          }
+          for (int i = 0; i < 50; i++) {
+            try {
+              if (inDocument != null) {
+                inDocument.reload();
+                Object coll = inDocument.field(inFieldName);
+                if (coll instanceof Collection) {
+                  ((Collection) coll).remove(edgeRid);
+                } else if (coll instanceof ORidBag) {
+                  ((ORidBag) coll).remove(edgeRid);
+                }
+                inDocument.save();
+              }
+              break;
+            } catch (ONeedRetryException ex) {
+            }
+          }
+        }
+
+        if (retry == maxRetries - 1) {
+          throw e;
+        }
       } catch (RuntimeException e) {
         // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
         try {
@@ -315,10 +358,10 @@ public class OrientGraphNoTx extends OrientBaseGraph {
         if (outVertex != null) {
           outVertexRecord = outVertex.getRecord();
           if (outVertexRecord != null) {
-            final String outFieldName = OrientVertex.getConnectionFieldName(Direction.OUT, edgeClassName,
-                useVertexFieldsForEdgeLabels);
-            outVertexChanged = edge.dropEdgeFromVertex(inVertexEdge, outVertexRecord, outFieldName,
-                outVertexRecord.field(outFieldName));
+            final String outFieldName = OrientVertex
+                .getConnectionFieldName(Direction.OUT, edgeClassName, useVertexFieldsForEdgeLabels);
+            outVertexChanged = edge
+                .dropEdgeFromVertex(inVertexEdge, outVertexRecord, outFieldName, outVertexRecord.field(outFieldName));
           } else
             OLogManager.instance().debug(graph,
                 "Found broken link to outgoing vertex " + outVertex.getIdentity() + " while removing edge " + edge.getId());
@@ -335,10 +378,10 @@ public class OrientGraphNoTx extends OrientBaseGraph {
         if (inVertex != null) {
           inVertexRecord = inVertex.getRecord();
           if (inVertexRecord != null) {
-            final String inFieldName = OrientVertex.getConnectionFieldName(Direction.IN, edgeClassName,
-                useVertexFieldsForEdgeLabels);
-            inVertexChanged = edge.dropEdgeFromVertex(outVertexEdge, inVertexRecord, inFieldName,
-                inVertexRecord.field(inFieldName));
+            final String inFieldName = OrientVertex
+                .getConnectionFieldName(Direction.IN, edgeClassName, useVertexFieldsForEdgeLabels);
+            inVertexChanged = edge
+                .dropEdgeFromVertex(outVertexEdge, inVertexRecord, inFieldName, inVertexRecord.field(inFieldName));
           } else
             OLogManager.instance().debug(graph,
                 "Found broken link to incoming vertex " + inVertex.getIdentity() + " while removing edge " + edge.getId());
@@ -349,20 +392,27 @@ public class OrientGraphNoTx extends OrientBaseGraph {
         if (inVertexChanged)
           inVertexRecord.save();
 
-        if (edge.rawElement != null)
+        if (edge.rawElement != null) {
           // NON-LIGHTWEIGHT EDGE
           edge.removeRecord();
+          edge.rawElement = null;
+        }
 
         // OK
         break;
 
       } catch (ONeedRetryException e) {
+        if (edge.rawElement != null)
+          edge.removeRecord();
+
         // RETRY
         if (outVertexChanged)
           outVertexRecord.reload();
-        else if (inVertexChanged)
+        if (inVertexChanged)
           inVertexRecord.reload();
-
+        if (retry == maxRetries - 1) {
+          throw e;
+        }
       } catch (RuntimeException e) {
         // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
         // TODO
@@ -409,11 +459,8 @@ public class OrientGraphNoTx extends OrientBaseGraph {
       // CANNOT REVERT CHANGES, RETRY
       throw (RuntimeException) lastException;
 
-    throw OException
-        .wrapException(
-            new OrientGraphModificationException(
-                "Error on removing edges after vertex (" + iVertex.getIdentity() + ") delete in non tx environment"),
-            lastException);
+    throw OException.wrapException(new OrientGraphModificationException(
+        "Error on removing edges after vertex (" + iVertex.getIdentity() + ") delete in non tx environment"), lastException);
   }
 
 }
