@@ -73,5 +73,34 @@ describe("HomePage", function () {
     expect(inputUser).to.equal(message);
 
   });
-  
+
+
+  it("It should login with root/root to the default database and op succeed", function (done) {
+    browser.url("/")
+      .waitForExist(".ologin", true);
+
+    browser.setValue('#user', "root")
+      .setValue('#password', "root")
+      .click("#database-connect")
+      .waitForExist(".browse-container", true);
+
+
+    var query = "insert into v set name = 'Test'";
+
+    browser.execute(function () {
+
+      var query = "insert into v set name = 'Test'";
+      var codemirror = document.querySelector('.CodeMirror').CodeMirror;
+      codemirror.setValue(query);
+    });
+
+    browser.click("#button-run")
+      .waitForVisible('.query-container');
+
+
+    var innerQuery = browser.getHTML(".query-container .query-header h5 a", false);
+
+    expect(innerQuery).to.equal(query);
+  });
+
 });
