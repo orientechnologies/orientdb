@@ -182,6 +182,12 @@ public class OMatchStatementTest {
 
   }
 
+  @Test
+  public void testSkip() {
+    checkRightSyntax("MATCH {class: 'V', as: foo}-->{as:bar} RETURN foo.name, bar.name skip 10 limit 10");
+  }
+
+
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());
     OrientSql osql = new OrientSql(is);

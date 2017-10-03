@@ -104,6 +104,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   protected OGroupBy groupBy;
   protected OOrderBy orderBy;
   protected OUnwind  unwind;
+  protected OSkip    skip;
   protected OLimit   limit;
 
   // post-parsing generated data
@@ -315,6 +316,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     if (unwind != null) {
       throw new OCommandExecutionException("UNWIND is not supported in MATCH on the legacy API");
     }
+    if (skip != null) {
+      throw new OCommandExecutionException("SKIP is not supported in MATCH on the legacy API");
+    }
+
     Map<Object, Object> iArgs = context.getInputParameters();
     try {
 
@@ -1375,6 +1380,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       builder.append(" ");
       unwind.toString(params, builder);
     }
+    if (skip != null) {
+      builder.append(" ");
+      skip.toString(params, builder);
+    }
     if (limit != null) {
       builder.append(" ");
       limit.toString(params, builder);
@@ -1402,6 +1411,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     result.groupBy = groupBy == null ? null : groupBy.copy();
     result.orderBy = orderBy == null ? null : orderBy.copy();
     result.unwind = unwind == null ? null : unwind.copy();
+    result.skip = skip == null ? null : skip.copy();
     result.limit = limit == null ? null : limit.copy();
     result.returnDistinct = this.returnDistinct;
     result.buildPatterns();
@@ -1433,6 +1443,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       return false;
     if (unwind != null ? !unwind.equals(that.unwind) : that.unwind != null)
       return false;
+    if (skip != null ? !skip.equals(that.skip) : that.skip != null)
+      return false;
     if (limit != null ? !limit.equals(that.limit) : that.limit != null)
       return false;
 
@@ -1451,6 +1463,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     result = 31 * result + (groupBy != null ? groupBy.hashCode() : 0);
     result = 31 * result + (orderBy != null ? orderBy.hashCode() : 0);
     result = 31 * result + (unwind != null ? unwind.hashCode() : 0);
+    result = 31 * result + (skip != null ? skip.hashCode() : 0);
     result = 31 * result + (limit != null ? limit.hashCode() : 0);
     return result;
   }
@@ -1517,6 +1530,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   public void setUnwind(OUnwind unwind) {
     this.unwind = unwind;
+  }
+
+  public OSkip getSkip() {
+    return skip;
+  }
+
+  public void setSkip(OSkip skip) {
+    this.skip = skip;
   }
 }
 /* JavaCC - OriginalChecksum=6ff0afbe9d31f08b72159fcf24070c9f (do not edit this line) */

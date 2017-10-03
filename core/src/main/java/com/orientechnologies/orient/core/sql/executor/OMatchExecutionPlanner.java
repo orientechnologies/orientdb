@@ -50,7 +50,7 @@ public class OMatchExecutionPlanner {
     this.returnNestedProjections = stm.getReturnNestedProjections().stream().map(x -> x == null ? null : x.copy())
         .collect(Collectors.toList());
     this.limit = stm.getLimit() == null ? null : stm.getLimit().copy();
-    //    this.skip = stm.getSkip() == null ? null : stm.getSkip().copy();
+    this.skip = stm.getSkip() == null ? null : stm.getSkip().copy();
 
     this.returnElements = stm.returnsElements();
     this.returnPaths = stm.returnsPaths();

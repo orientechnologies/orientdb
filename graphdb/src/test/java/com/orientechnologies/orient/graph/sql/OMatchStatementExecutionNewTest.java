@@ -1780,6 +1780,33 @@ public class OMatchStatementExecutionNewTest {
     Assert.assertEquals(10, sum);
   }
 
+  @Test
+  public void testSkip() {
+    String clazz = "testSkip";
+    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ccc'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ddd'")).execute();
+
+    String query = "MATCH { class: " + clazz + ", as:a} RETURN a.name as name skip 1 limit 2";
+
+    OResultSet result = db.query(query);
+
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertEquals("bbb", item.getProperty("name"));
+
+    Assert.assertTrue(result.hasNext());
+    item = result.next();
+    Assert.assertEquals("ccc", item.getProperty("name"));
+
+    Assert.assertFalse(result.hasNext());
+
+    result.close();
+  }
+
   private OResultSet getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");
