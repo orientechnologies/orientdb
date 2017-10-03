@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -154,7 +155,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     try {
       // TODO check this!
       execDb.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, ((ODocument) value.getRecord()).getClassName());
-    } catch (OSecurityException e) {
+    } catch (OSecurityException ignore) {
       return false;
     }
     return ORestrictedAccessHook.isAllowed(execDb, (ODocument) value.getRecord(), ORestrictedOperation.ALLOW_READ, false);

@@ -153,7 +153,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
             ORecordInternal.track(sourceRecord, record);
           }
           entry.setValue(record);
-        } catch (ORecordNotFoundException e) {
+        } catch (ORecordNotFoundException ignore) {
           // IGNORE THIS
         }
       }
@@ -187,7 +187,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
             all.remove();
             removed = true;
           }
-        } catch (ORecordNotFoundException e) {
+        } catch (ORecordNotFoundException ignore) {
           all.remove();
           removed = true;
         }

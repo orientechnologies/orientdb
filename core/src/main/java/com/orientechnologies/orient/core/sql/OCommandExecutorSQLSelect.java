@@ -616,7 +616,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           try {
             applyGroupBy(record, iContext);
             resultQueue.put(new AsyncResult(record, iContext));
-          } catch (InterruptedException e) {
+          } catch (InterruptedException ignore) {
             Thread.currentThread().interrupt();
             return false;
           }
@@ -1761,7 +1761,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
         }
 
-      } catch (InterruptedException e) {
+      } catch (InterruptedException ignore) {
         Thread.currentThread().interrupt();
         cancelQuery = true;
         break;
@@ -1781,7 +1781,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         try {
           jobs.get(i).get();
           context.merge(contexts[i]);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignore) {
           Thread.currentThread().interrupt();
           break;
         } catch (final ExecutionException e) {

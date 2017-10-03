@@ -274,7 +274,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           record = loadedRecord;
       }
 
-    } catch (ORecordNotFoundException e) {
+    } catch (ORecordNotFoundException ignore) {
       return null;
     }
 

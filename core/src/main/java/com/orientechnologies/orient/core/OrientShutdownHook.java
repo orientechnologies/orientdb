@@ -25,7 +25,7 @@ public class OrientShutdownHook extends Thread {
   protected OrientShutdownHook() {
     try {
       Runtime.getRuntime().addShutdownHook(this);
-    } catch (IllegalStateException e)
+    } catch (IllegalStateException ignore)
     {
       // we may be asked to initialize the runtime and install the hook from another shutdown hook during the shutdown
     }
@@ -46,7 +46,7 @@ public class OrientShutdownHook extends Thread {
   public void cancel() {
     try {
       Runtime.getRuntime().removeShutdownHook(this);
-    } catch (IllegalStateException e) {
+    } catch (IllegalStateException ignore) {
     }
   }
 }

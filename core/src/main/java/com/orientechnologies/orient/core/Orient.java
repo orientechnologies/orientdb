@@ -223,7 +223,7 @@ public class Orient extends OListenerManger<OOrientListener> {
           try {
             put(e);
             return true;
-          } catch (InterruptedException ie) {
+          } catch (InterruptedException ignore) {
             Thread.currentThread().interrupt();
           }
           return false;
@@ -311,7 +311,9 @@ public class Orient extends OListenerManger<OOrientListener> {
         registerEngine(engine);
       } catch (IllegalArgumentException e) {
         if (engine != null)
-          OLogManager.instance().debug(this, "Failed to replace engine " + engine.getName());
+          OLogManager.instance().debug(this, "Failed to replace engine " + engine.getName(), e);
+        else
+          OLogManager.instance().debug(this, "Failed to replace engine ", e);
       }
     }
   }
@@ -515,7 +517,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (registerDatabaseByPath && !engine.getName().equals("remote")) {
         try {
           dbPath = new File(dbPath).getCanonicalPath();
-        } catch (IOException e) {
+        } catch (IOException ignore) {
           // IGNORE IT
         }
       }
@@ -910,7 +912,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       workers.shutdown();
       try {
         workers.awaitTermination(2, TimeUnit.MINUTES);
-      } catch (InterruptedException e) {
+      } catch (InterruptedException ignore) {
         Thread.currentThread().interrupt();
       }
     }

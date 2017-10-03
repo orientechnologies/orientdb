@@ -95,17 +95,17 @@ public class OSignalHandler implements SignalHandler {
 
     try {
       listenTo("INT", iListener);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException ignore) {
       // NOT AVAILABLE
     }
     try {
       listenTo("TERM", iListener);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException ignore) {
       // NOT AVAILABLE
     }
     try {
       listenTo("TRAP", iListener);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException ignore) {
       // NOT AVAILABLE
     }
   }
@@ -117,6 +117,7 @@ public class OSignalHandler implements SignalHandler {
         Signal.handle(entry.getKey(), entry.getValue());
       } catch (IllegalStateException e) {
         // not expected as we were able to redefine it earlier, but just in case
+        OLogManager.instance().debug(this, "Error during handler replacement", e);
       }
     }
     redefinedHandlers.clear();

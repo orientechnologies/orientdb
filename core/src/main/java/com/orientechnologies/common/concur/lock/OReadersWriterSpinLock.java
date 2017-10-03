@@ -144,7 +144,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
       if (System.currentTimeMillis() - beginTime > 1000)
         try {
           Thread.sleep(1);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignore) {
           Thread.currentThread().interrupt();
           break;
         }

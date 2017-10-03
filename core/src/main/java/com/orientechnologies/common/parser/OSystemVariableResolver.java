@@ -19,6 +19,8 @@
   */
 package com.orientechnologies.common.parser;
 
+import com.orientechnologies.common.log.OLogManager;
+
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,15 +28,14 @@ import java.util.Map;
 
 /**
  * Resolve system variables embedded in a String.
- * 
+ *
  * @author Luca Garulli (luca.garulli--at--assetdata.it)
- * 
  */
 public class OSystemVariableResolver implements OVariableParserListener {
-  public static final String             VAR_BEGIN = "${";
-  public static final String             VAR_END   = "}";
+  public static final String VAR_BEGIN = "${";
+  public static final String VAR_END   = "}";
 
-  private static OSystemVariableResolver instance  = new OSystemVariableResolver();
+  private static OSystemVariableResolver instance = new OSystemVariableResolver();
 
   public static String resolveSystemVariables(final String iPath) {
     return resolveSystemVariables(iPath, null);
@@ -82,7 +83,7 @@ public class OSystemVariableResolver implements OVariableParserListener {
       theCaseInsensitiveEnvironmentField.setAccessible(true);
       Map<String, String> cienv = (Map<String, String>) theCaseInsensitiveEnvironmentField.get(null);
       cienv.putAll(newenv);
-    } catch (NoSuchFieldException e) {
+    } catch (NoSuchFieldException ignore) {
       try {
         Class[] classes = Collections.class.getDeclaredClasses();
         Map<String, String> env = System.getenv();
@@ -97,10 +98,10 @@ public class OSystemVariableResolver implements OVariableParserListener {
           }
         }
       } catch (Exception e2) {
-        e2.printStackTrace();
+        OLogManager.instance().error(OSystemVariableResolver.class, "", e2);
       }
     } catch (Exception e1) {
-      e1.printStackTrace();
+      OLogManager.instance().error(OSystemVariableResolver.class, "", e1);
     }
   }
 }

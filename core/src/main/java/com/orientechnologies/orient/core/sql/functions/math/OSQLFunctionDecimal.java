@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql.functions.math;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -28,13 +29,12 @@ import java.util.List;
 
 /**
  * Evaluates a complex expression.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OSQLFunctionDecimal extends OSQLFunctionMathAbstract {
   public static final String NAME = "decimal";
-  private Object             result;
+  private Object result;
 
   public OSQLFunctionDecimal() {
     super(NAME, 1, 1);
@@ -49,13 +49,13 @@ public class OSQLFunctionDecimal extends OSQLFunctionMathAbstract {
 
     if (inputValue instanceof BigDecimal) {
       result = inputValue;
-    }else if (inputValue instanceof BigInteger) {
+    } else if (inputValue instanceof BigInteger) {
       result = new BigDecimal((BigInteger) inputValue);
-    }else if (inputValue instanceof Integer) {
+    } else if (inputValue instanceof Integer) {
       result = new BigDecimal(((Integer) inputValue));
-    }else if (inputValue instanceof Long) {
+    } else if (inputValue instanceof Long) {
       result = new BigDecimal(((Long) inputValue));
-    }else if (inputValue instanceof Number) {
+    } else if (inputValue instanceof Number) {
       result = new BigDecimal(((Number) inputValue).doubleValue());
     }
 
@@ -65,6 +65,7 @@ public class OSQLFunctionDecimal extends OSQLFunctionMathAbstract {
       }
 
     } catch (Exception e) {
+      OLogManager.instance().debug(this, "Error in SQL function '" + NAME + "'", e);
       result = null;
     }
     return getResult();

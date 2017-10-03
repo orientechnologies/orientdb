@@ -264,6 +264,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       writer.close();
       writer = null;
     } catch (IOException e) {
+      OLogManager.instance().error(this, "Error during closing of write stream", e);
     }
   }
 

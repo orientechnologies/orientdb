@@ -117,7 +117,7 @@ public class OSharedResourceAdaptive {
                 Thread.currentThread().interrupt();
                 return;
               }
-            } catch (InterruptedException e2) {
+            } catch (InterruptedException ignore) {
               Thread.currentThread().interrupt();
             }
           }
@@ -153,7 +153,7 @@ public class OSharedResourceAdaptive {
                 Thread.currentThread().interrupt();
                 return;
               }
-            } catch (InterruptedException e2) {
+            } catch (InterruptedException ignore) {
               Thread.currentThread().interrupt();
             }
           }
@@ -214,15 +214,15 @@ public class OSharedResourceAdaptive {
 
       printWriter.flush();
       return stringWriter.toString();
-    } catch (RuntimeException e) {
+    } catch (RuntimeException ignore) {
       return null;
-    } catch (NoSuchFieldException e) {
+    } catch (NoSuchFieldException ignore) {
       return null;
-    } catch (IllegalAccessException e) {
+    } catch (IllegalAccessException ignore) {
       return null;
-    } catch (NoSuchMethodException e) {
+    } catch (NoSuchMethodException ignore) {
       return null;
-    } catch (InvocationTargetException e) {
+    } catch (InvocationTargetException ignore) {
       return null;
     }
 

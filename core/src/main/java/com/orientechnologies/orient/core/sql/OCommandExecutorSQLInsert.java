@@ -99,7 +99,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
         try {
           int clusterId = Integer.parseInt(clusterName);
           clusterName = database.getClusterNameById(clusterId);
-        } catch (Exception e) {
+        } catch (NumberFormatException ignore) {
           //not an integer
         }
       } else if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX))

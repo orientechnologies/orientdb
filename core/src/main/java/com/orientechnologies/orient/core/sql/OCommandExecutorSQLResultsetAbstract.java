@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -339,8 +340,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   /**
    * Parses the limit keyword if found.
    *
-   * @param w
-   *
    * @return the limit found as integer, or -1 if no limit is found. -1 means no limits.
    *
    * @throws OCommandSQLParsingException if no valid limit has been found
@@ -353,7 +352,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     try {
       limit = Integer.parseInt(word);
-    } catch (Exception e) {
+    } catch (NumberFormatException e) {
+      OLogManager.instance().debug(this, "Invalid limit value", e);
       throwParsingException("Invalid LIMIT value setted to '" + word + "' but it should be a valid integer. Example: LIMIT 10");
     }
 
@@ -366,8 +366,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   /**
    * Parses the skip keyword if found.
-   *
-   * @param w
    *
    * @return the skip found as integer, or -1 if no skip is found. -1 means no skip.
    *
@@ -382,7 +380,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     try {
       skip = Integer.parseInt(word);
 
-    } catch (Exception e) {
+    } catch (NumberFormatException e) {
+      OLogManager.instance().debug(this, "Invalid skip value", e);
       throwParsingException(
           "Invalid SKIP value setted to '" + word + "' but it should be a valid positive integer. Example: SKIP 10");
     }
@@ -455,7 +454,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
             varValue = f.execute(iRecord, iRecord, null, context);
         } else if (letValue instanceof String) {
           OSQLPredicate pred = new OSQLPredicate(((String) letValue).trim());
-          varValue = pred.evaluate(iRecord, (ODocument)iRecord, context);
+          varValue = pred.evaluate(iRecord, (ODocument) iRecord, context);
 //          varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim(), context);
         } else
           varValue = letValue;
@@ -564,8 +563,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   /**
    * Check function arguments and pre calculate it if possible
-   *
-   * @param function
    *
    * @return optimized function, same function if no change
    */

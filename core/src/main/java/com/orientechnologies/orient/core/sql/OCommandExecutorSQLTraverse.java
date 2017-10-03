@@ -45,7 +45,7 @@ import java.util.*;
  * <p>
  * <code>SELECT FROM (TRAVERSE children FROM #5:23 WHERE $depth BETWEEN 1 AND 3) WHERE city.name = 'Rome'</code>
  * </p>
- * 
+ *
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
@@ -56,7 +56,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
   public static final String KEYWORD_MAXDEPTH = "MAXDEPTH";
 
   // HANDLES ITERATION IN LAZY WAY
-  private OTraverse          traverse         = new OTraverse();
+  private OTraverse traverse = new OTraverse();
 
   /**
    * Compile the filter conditions only the first time.
@@ -96,13 +96,14 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
 
         if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE) || parserGetLastWord().equalsIgnoreCase(KEYWORD_WHILE)) {
 
-          compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition),
-              getContext(), KEYWORD_WHILE);
+          compiledFilter = OSQLEngine.getInstance()
+              .parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition), getContext(), KEYWORD_WHILE);
 
           traverse.predicate(compiledFilter);
           optimize();
-          parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition
-              : compiledFilter.parserGetCurrentPosition() + parserGetCurrentPosition());
+          parserSetCurrentPosition(compiledFilter.parserIsEnded() ?
+              endPosition :
+              compiledFilter.parserGetCurrentPosition() + parserGetCurrentPosition());
         } else
           parserGoBack();
       }
@@ -147,8 +148,10 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     try {
       traverse.setMaxDepth(Integer.parseInt(word));
     } catch (Exception e) {
-      throwParsingException("Invalid " + KEYWORD_MAXDEPTH + " value set to '" + word + "' but it should be a valid long. Example: "
-          + KEYWORD_MAXDEPTH + " 3000");
+      OLogManager.instance().debug(this, "Error during setting of max depth", e);
+      throwParsingException(
+          "Invalid " + KEYWORD_MAXDEPTH + " value set to '" + word + "' but it should be a valid long. Example: " + KEYWORD_MAXDEPTH
+              + " 3000");
     }
 
     if (traverse.getMaxDepth() < 0)
@@ -258,6 +261,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     try {
       traverse.setStrategy(OTraverse.STRATEGY.valueOf(strategyWord.toUpperCase(Locale.ENGLISH)));
     } catch (IllegalArgumentException e) {
+      OLogManager.instance().debug(this, "Error during setting of traverse strategy", e);
       throwParsingException("Invalid " + KEYWORD_STRATEGY + ". Use one between " + Arrays.toString(OTraverse.STRATEGY.values()));
     }
     return true;

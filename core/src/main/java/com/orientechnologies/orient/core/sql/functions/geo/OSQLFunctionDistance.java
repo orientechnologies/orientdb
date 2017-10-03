@@ -26,12 +26,11 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
  * Haversine formula to compute the distance between 2 gro points.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OSQLFunctionDistance extends OSQLFunctionAbstract {
-  public static final String  NAME         = "distance";
+  public static final String NAME = "distance";
 
   private final static double EARTH_RADIUS = 6371;
 
@@ -41,46 +40,42 @@ public class OSQLFunctionDistance extends OSQLFunctionAbstract {
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    try {
-      double distance;
+    double distance;
 
-      final double[] values = new double[4];
+    final double[] values = new double[4];
 
-      for (int i = 0; i < iParams.length && i < 4; ++i) {
-        if (iParams[i] == null)
-          return null;
+    for (int i = 0; i < iParams.length && i < 4; ++i) {
+      if (iParams[i] == null)
+        return null;
 
-        values[i] = ((Double) OType.convert(iParams[i], Double.class)).doubleValue();
-      }
-
-      final double deltaLat = Math.toRadians(values[2] - values[0]);
-      final double deltaLon = Math.toRadians(values[3] - values[1]);
-
-      final double a = Math.pow(Math.sin(deltaLat / 2), 2) + Math.cos(Math.toRadians(values[0]))
-          * Math.cos(Math.toRadians(values[2])) * Math.pow(Math.sin(deltaLon / 2), 2);
-      distance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * EARTH_RADIUS;
-
-      if (iParams.length > 4) {
-        final String unit = iParams[4].toString();
-        if (unit.equalsIgnoreCase("km"))
-          // ALREADY IN KM
-          ;
-        else if (unit.equalsIgnoreCase("mi"))
-          // MILES
-          distance *= 0.621371192;
-        else if (unit.equalsIgnoreCase("nmi"))
-          // NAUTICAL MILES
-          distance *= 0.539956803;
-        else
-          throw new IllegalArgumentException("Unsupported unit '" + unit + "'. Use km, mi and nmi. Default is km.");
-      }
-
-      return distance;
-    } catch (IllegalArgumentException e) {
-      throw e;
-    } catch (Exception e) {
-      return null;
+      values[i] = ((Double) OType.convert(iParams[i], Double.class)).doubleValue();
     }
+
+    final double deltaLat = Math.toRadians(values[2] - values[0]);
+    final double deltaLon = Math.toRadians(values[3] - values[1]);
+
+    final double a =
+        Math.pow(Math.sin(deltaLat / 2), 2) + Math.cos(Math.toRadians(values[0])) * Math.cos(Math.toRadians(values[2])) * Math
+            .pow(Math.sin(deltaLon / 2), 2);
+    distance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * EARTH_RADIUS;
+
+    if (iParams.length > 4) {
+      final String unit = iParams[4].toString();
+      if (unit.equalsIgnoreCase("km"))
+        // ALREADY IN KM
+        ;
+      else if (unit.equalsIgnoreCase("mi"))
+        // MILES
+        distance *= 0.621371192;
+      else if (unit.equalsIgnoreCase("nmi"))
+        // NAUTICAL MILES
+        distance *= 0.539956803;
+      else
+        throw new IllegalArgumentException("Unsupported unit '" + unit + "'. Use km, mi and nmi. Default is km.");
+    }
+
+    return distance;
+
   }
 
   public String getSyntax() {

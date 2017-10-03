@@ -113,7 +113,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     bf.mark(1024);
     try {
       inStream = new GZIPInputStream(bf, 16384); // 16KB
-    } catch (Exception e) {
+    } catch (Exception ignore) {
       bf.reset();
       inStream = bf;
     }

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -118,7 +119,9 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
     try {
       timeoutMs = Long.parseLong(word);
-    } catch (Exception e) {
+    } catch (NumberFormatException e) {
+      OLogManager.instance().debug(this, "Invalid value of time out", e);
+
       throwParsingException(
           "Invalid " + KEYWORD_TIMEOUT + " value set to '" + word + "' but it should be a valid long. Example: " + KEYWORD_TIMEOUT
               + " 3000");

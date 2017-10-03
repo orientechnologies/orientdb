@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
@@ -56,22 +55,23 @@ public class OSQLMethodField extends OAbstractSQLMethod {
         try {
           ioResult = new ODocument(new ORecordId((String) ioResult));
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
+          OLogManager.instance().error(this, "Error on reading rid with value '%s'", e, ioResult);
           ioResult = null;
         }
       } else if (ioResult instanceof OIdentifiable) {
         ioResult = ((OIdentifiable) ioResult).getRecord();
-      } else if (ioResult instanceof Collection<?> || ioResult instanceof OMultiCollectionIterator<?>
-          || ioResult.getClass().isArray()) {
+      } else if (ioResult instanceof Collection<?> || ioResult instanceof OMultiCollectionIterator<?> || ioResult.getClass()
+          .isArray()) {
         final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(ioResult));
         for (Object o : OMultiValue.getMultiValueIterable(ioResult, false)) {
           Object newlyAdded = ODocumentHelper.getFieldValue(o, paramAsString);
           if (OMultiValue.isMultiValue(newlyAdded)) {
-            if(newlyAdded instanceof Map || newlyAdded instanceof OIdentifiable){
+            if (newlyAdded instanceof Map || newlyAdded instanceof OIdentifiable) {
               result.add(newlyAdded);
-            }else for (Object item : OMultiValue.getMultiValueIterable(newlyAdded)) {
-              result.add(item);
-            }
+            } else
+              for (Object item : OMultiValue.getMultiValueIterable(newlyAdded)) {
+                result.add(item);
+              }
           } else {
             result.add(newlyAdded);
           }

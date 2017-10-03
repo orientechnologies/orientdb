@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -96,6 +97,8 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       }
       return iLeft.equals(right);
     } catch (Exception e) {
+      OLogManager.instance().debug(OQueryOperatorEquals.class, "Error on SQL operator `equals`", e);
+
       return false;
     }
   }

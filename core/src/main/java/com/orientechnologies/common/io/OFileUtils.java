@@ -43,7 +43,7 @@ public class OFileUtils {
 
     try {
       Class.forName("java.nio.file.FileSystemException");
-    } catch (ClassNotFoundException e) {
+    } catch (ClassNotFoundException ignore) {
       oldAPI = true;
     }
 

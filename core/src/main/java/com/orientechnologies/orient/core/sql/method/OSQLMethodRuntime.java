@@ -105,7 +105,7 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
           } else if (configuredParameters[i] instanceof OCommandSQL) {
             try {
               runtimeParameters[i] = ((OCommandSQL) configuredParameters[i]).setContext(iContext).execute();
-            } catch (OCommandExecutorNotFoundException e) {
+            } catch (OCommandExecutorNotFoundException ignore) {
               // TRY WITH SIMPLE CONDITION
               final String text = ((OCommandSQL) configuredParameters[i]).getText();
               final OSQLPredicate pred = new OSQLPredicate(text);

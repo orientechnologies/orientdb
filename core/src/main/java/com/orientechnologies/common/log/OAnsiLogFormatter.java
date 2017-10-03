@@ -21,6 +21,7 @@
 package com.orientechnologies.common.log;
 
 import java.util.Date;
+import java.util.IllegalFormatException;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
@@ -72,7 +73,7 @@ public class OAnsiLogFormatter extends OLogFormatter {
         buffer.append(String.format(message, additionalArgs));
       else
         buffer.append(message);
-    } catch (Exception e) {
+    } catch (IllegalFormatException ignore) {
       buffer.append(message);
     }
 

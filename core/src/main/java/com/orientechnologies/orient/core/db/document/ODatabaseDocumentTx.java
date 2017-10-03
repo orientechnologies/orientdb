@@ -492,7 +492,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       try {
         internalDrop();
       } catch (Exception ex) {
-        // IGNORE IT
+        OLogManager.instance().debug(this, "Error during database drop", ex);
       }
 
       // DELETE THE STORAGE TOO
@@ -501,7 +501,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           storage = Orient.instance().loadStorage(url);
         storage.delete();
       } catch (Exception ex) {
-        // IGNORE IT
+        OLogManager.instance().debug(this, "Error during storage deletion", ex);
       }
 
       status = STATUS.CLOSED;
@@ -3492,7 +3492,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         if (waitBetweenRetry > 0)
           try {
             Thread.sleep(waitBetweenRetry);
-          } catch (InterruptedException e1) {
+          } catch (InterruptedException ignore) {
             Thread.currentThread().interrupt();
             break;
           }

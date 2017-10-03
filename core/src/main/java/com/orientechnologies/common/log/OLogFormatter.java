@@ -25,6 +25,7 @@ import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.IllegalFormatException;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -91,7 +92,7 @@ public class OLogFormatter extends Formatter {
         buffer.append(String.format(message, additionalArgs));
       else
         buffer.append(message);
-    } catch (Exception e) {
+    } catch (IllegalFormatException ignore) {
       buffer.append(message);
     }
 

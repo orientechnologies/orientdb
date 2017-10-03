@@ -340,7 +340,7 @@ public class OSQLFilterCondition {
 
     try {
       return formatter.parse(stringValue);
-    } catch (ParseException pe) {
+    } catch (ParseException ignore) {
       try {
         return new Date(new Double(stringValue).longValue());
       } catch (Exception pe2) {
@@ -363,7 +363,7 @@ public class OSQLFilterCondition {
       if (iCurrentRecord != null && ((ORecord) iCurrentRecord).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
         try {
           iCurrentRecord = iCurrentRecord.getRecord().load();
-        } catch (ORecordNotFoundException e) {
+        } catch (ORecordNotFoundException ignore) {
           return null;
         }
       }
@@ -483,7 +483,7 @@ public class OSQLFilterCondition {
           result = new Object[] { l, new ORecordId((String) r) };
         }
       }
-    } catch (Exception e) {
+    } catch (Exception ignore) {
       // JUST IGNORE CONVERSION ERRORS
     }
 

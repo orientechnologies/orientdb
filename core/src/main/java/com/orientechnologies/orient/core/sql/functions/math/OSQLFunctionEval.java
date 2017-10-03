@@ -19,6 +19,7 @@
   */
 package com.orientechnologies.orient.core.sql.functions.math;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -28,14 +29,13 @@ import java.util.List;
 
 /**
  * Evaluates a complex expression.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
   public static final String NAME = "eval";
 
-  private OSQLPredicate      predicate;
+  private OSQLPredicate predicate;
 
   public OSQLFunctionEval() {
     super(NAME, 1, 1);
@@ -49,10 +49,11 @@ public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
     final ODocument currentResult = iCurrentResult instanceof ODocument ? (ODocument) iCurrentResult : null;
     try {
       return predicate.evaluate(iRecord != null ? iRecord.getRecord() : null, currentResult, iContext);
-    } catch (ArithmeticException e) {
+    } catch (ArithmeticException ignore) {
       // DIVISION BY 0
       return 0;
     } catch (Exception e) {
+      OLogManager.instance().debug(this, "Error in SQL function '" + NAME + "'", e);
       return null;
     }
   }

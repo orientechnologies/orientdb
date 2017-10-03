@@ -287,11 +287,11 @@ public class TTYConsoleReader implements OConsoleReader {
             cachedConsoleWidth = Integer.parseInt(line);
           } else
             cachedConsoleWidth = -2;
-        } catch (IOException e) {
+        } catch (IOException ignore) {
           cachedConsoleWidth = -2;
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignore) {
           cachedConsoleWidth = -2;
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException ignore) {
           cachedConsoleWidth = -2;
         }
       }

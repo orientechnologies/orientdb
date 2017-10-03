@@ -106,20 +106,19 @@ public class OMemory {
         break;
       }
 
-    if(maxDirectMemorySize == -1) {
+    if (maxDirectMemorySize == -1) {
       try {
         maxDirectMemorySize = (Long) Class.forName("sun.misc.VM").getMethod("maxDirectMemory").invoke(null);
       } catch (IllegalAccessException e) {
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of MaxDirectMemorySize.");
+        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of MaxDirectMemorySize.", e);
       } catch (InvocationTargetException e) {
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of MaxDirectMemorySize.");
+        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of MaxDirectMemorySize.", e);
       } catch (NoSuchMethodException e) {
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of MaxDirectMemorySize.");
+        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of MaxDirectMemorySize.", e);
       } catch (ClassNotFoundException e) {
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of MaxDirectMemorySize.");
+        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of MaxDirectMemorySize.", e);
       }
     }
-
 
     return maxDirectMemorySize;
   }
@@ -249,7 +248,7 @@ public class OMemory {
     int size = 64;
     try {
       size = Integer.parseInt(dataModel);
-    } catch (Throwable t) {
+    } catch (NumberFormatException ignore) {
       // Ignore
     }
     return size;

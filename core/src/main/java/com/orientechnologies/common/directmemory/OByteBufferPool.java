@@ -171,13 +171,13 @@ public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPool
       cleanerClass = Class.forName("sun.misc.Cleaner");
       cleanMethod = cleanerClass.getDeclaredMethod("clean");
       cleanMethod.setAccessible(true);
-    } catch (ClassNotFoundException e) {
+    } catch (ClassNotFoundException ignore) {
       cleanerClass = null;
       cleanMethod = null;
-    } catch (NoSuchMethodException e) {
+    } catch (NoSuchMethodException ignore) {
       cleanerClass = null;
       cleanMethod = null;
-    } catch (SecurityException e) {
+    } catch (SecurityException ignore) {
       cleanerClass = null;
       cleanMethod = null;
     }
@@ -189,13 +189,13 @@ public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPool
 
       attachmentMethod = directBufferClass.getDeclaredMethod("attachment");
       attachmentMethod.setAccessible(true);
-    } catch (ClassNotFoundException e) {
+    } catch (ClassNotFoundException ignore) {
       directBufferClass = null;
       getCleanerMethod = null;
-    } catch (NoSuchMethodException e) {
+    } catch (NoSuchMethodException ignore) {
       directBufferClass = null;
       getCleanerMethod = null;
-    } catch (SecurityException e) {
+    } catch (SecurityException ignore) {
       directBufferClass = null;
       getCleanerMethod = null;
     }
@@ -591,7 +591,7 @@ public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPool
     try {
       for (ByteBuffer byteBuffer : pool)
         clean(byteBuffer, cleaned);
-    } catch (Throwable t) {
+    } catch (Throwable ignore) {
       return;
     }
 
@@ -633,9 +633,9 @@ public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPool
 
       try {
         cleaner = getCleaner.invoke(directByteBufferWithCleaner);
-      } catch (IllegalAccessException e) {
+      } catch (IllegalAccessException ignore) {
         return;
-      } catch (InvocationTargetException e) {
+      } catch (InvocationTargetException ignore) {
         return;
       }
 
@@ -644,9 +644,9 @@ public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPool
 
       try {
         clean.invoke(cleaner);
-      } catch (IllegalAccessException e) {
+      } catch (IllegalAccessException ignore) {
         return;
-      } catch (InvocationTargetException e) {
+      } catch (InvocationTargetException ignore) {
         return;
       }
 
@@ -670,9 +670,9 @@ public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPool
     final Object cleaner;
     try {
       cleaner = getCleaner.invoke(buffer);
-    } catch (IllegalAccessException e) {
+    } catch (IllegalAccessException ignore) {
       return null;
-    } catch (InvocationTargetException e) {
+    } catch (InvocationTargetException ignore) {
       return null;
     }
 
@@ -685,9 +685,9 @@ public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPool
     final Object att;
     try {
       att = attachment.invoke(buffer);
-    } catch (IllegalAccessException e) {
+    } catch (IllegalAccessException ignore) {
       return null;
-    } catch (InvocationTargetException e) {
+    } catch (InvocationTargetException ignore) {
       return null;
     }
 

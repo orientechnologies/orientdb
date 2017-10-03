@@ -38,7 +38,7 @@ public class ODefaultConsoleReader implements OConsoleReader {
       System.out.print("\010*");
       try {
         Thread.sleep(1);
-      } catch (InterruptedException ie) {
+      } catch (InterruptedException ignore) {
         // om nom nom
       }
     }
@@ -48,7 +48,7 @@ public class ODefaultConsoleReader implements OConsoleReader {
   public String readLine() {
     try {
       return reader.readLine();
-    } catch (IOException e) {
+    } catch (IOException ignore) {
       return null;
     }
   }
@@ -66,7 +66,7 @@ public class ODefaultConsoleReader implements OConsoleReader {
 
     try {
       return reader.readLine();
-    } catch (IOException e) {
+    } catch (IOException ignore) {
       return null;
     } finally {
       et.sendShutdown();

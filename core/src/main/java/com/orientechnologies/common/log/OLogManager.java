@@ -103,7 +103,7 @@ public class OLogManager {
           if (dbName != null)
             iMessage = "$ANSI{green {db=" + dbName + "}} " + iMessage;
         }
-      } catch (Throwable e) {
+      } catch (Throwable ignore) {
       }
 
       final String requesterName;
@@ -301,7 +301,7 @@ public class OLogManager {
     try {
       if (LogManager.getLogManager() instanceof ShutdownLogManager)
         ((ShutdownLogManager) LogManager.getLogManager()).shutdown();
-    } catch (NoClassDefFoundError e) {
+    } catch (NoClassDefFoundError ignore) {
       // Om nom nom. Some custom class loaders, like Tomcat's one, cannot load classes while in shutdown hooks, since their
       // runtime is already shutdown. Ignoring the exception, if ShutdownLogManager is not loaded at this point there are no instances
       // of it anyway and we have nothing to shutdown.
