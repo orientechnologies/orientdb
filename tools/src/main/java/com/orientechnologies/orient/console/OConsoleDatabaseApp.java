@@ -2763,7 +2763,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @Override
   protected boolean isCollectingCommands(final String iLine) {
-    return iLine.startsWith("js") || iLine.startsWith("script");
+    return iLine.trim().equalsIgnoreCase("js") ||  iLine.trim().equalsIgnoreCase("jss") || iLine.toLowerCase().startsWith("script");
   }
 
   @Override
