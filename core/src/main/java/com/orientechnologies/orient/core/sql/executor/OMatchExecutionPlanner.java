@@ -32,6 +32,7 @@ public class OMatchExecutionPlanner {
   protected     OSkip    skip;
   private final OGroupBy groupBy;
   private final OOrderBy orderBy;
+  private final OUnwind  unwind;
   protected     OLimit   limit;
 
   //post-parsing
@@ -58,6 +59,7 @@ public class OMatchExecutionPlanner {
     this.returnDistinct = stm.isReturnDistinct();
     this.groupBy = stm.getGroupBy() == null ? null : stm.getGroupBy().copy();
     this.orderBy = stm.getOrderBy() == null ? null : stm.getOrderBy().copy();
+    this.unwind = stm.getUnwind() == null ? null : stm.getUnwind().copy();
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext context, boolean enableProfiling) {
@@ -109,6 +111,10 @@ public class OMatchExecutionPlanner {
         result.chain(new OrderByStep(orderBy, context, enableProfiling));
       }
 
+      if (this.unwind != null) {
+        result.chain(new UnwindStep(unwind, context, enableProfiling));
+      }
+
       if (this.skip != null && skip.getValue(context) >= 0) {
         result.chain(new SkipExecutionStep(skip, context, enableProfiling));
       }
@@ -132,10 +138,9 @@ public class OMatchExecutionPlanner {
 
       info.groupBy = this.groupBy;
       info.orderBy = this.orderBy;
-      info.unwind = null;//TODO
+      info.unwind = this.unwind;
       info.skip = this.skip;
       info.limit = this.limit;
-
 
       OSelectExecutionPlanner.optimizeQuery(info);
       OSelectExecutionPlanner.handleProjectionsBlock(result, info, context, enableProfiling);

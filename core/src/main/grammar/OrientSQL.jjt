@@ -1277,6 +1277,7 @@ OMatchStatement MatchStatement():
         )*
         [ jjtThis.groupBy = GroupBy() ]
         [ jjtThis.orderBy = OrderBy() ]
+        [ jjtThis.unwind = Unwind() ]
         [ jjtThis.limit = Limit() ]
     ){ return jjtThis; }
 }
