@@ -68,11 +68,10 @@ describe("HomePage", function () {
 
     var inputUser = browser.getHTML('.noty_text', false);
 
-    var message = 'The command has not been executed';
-    // var message = `com.orientechnologies.orient.core.exception.OSecurityAccessException: User 'reader' does not have permission to execute the operation 'Create' against the resource: ResourceGeneric [name=CLASS, legacyName=database.class].V DB name="${config.defaultDB}"`
+    var message = `com.orientechnologies.orient.core.exception.OSecurityAccessException: User 'reader' does not have permission to execute the operation 'Create' against the resource: ResourceGeneric [name=CLASS, legacyName=database.class].V\n\tDB name="${config.defaultDB}"`
 
     expect(inputUser).to.equal(message);
 
   });
-
+  
 });
