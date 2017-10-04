@@ -3964,16 +3964,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return new OStorageOperationResult<Integer>(recordVersion);
       }
 
-      if (callback != null)
-        callback.call(rid, ppos.recordVersion);
-
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance()
-            .debug(this, "Updated record %s v.%s size=%d (thread=%d tx=%s)", rid, ppos.recordVersion, content.length,
-                Thread.currentThread().getId(), getStorageTransaction() != null);
-
-      recordUpdated.incrementAndGet();
-
       //if we do not update content of the record we should keep version of the record the same
       //otherwise we would have issues when two records may have the same version but different content
       int newRecordVersion;
@@ -3982,6 +3972,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } else {
         newRecordVersion = version;
       }
+
+      if (callback != null)
+        callback.call(rid, newRecordVersion);
+
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance()
+            .debug(this, "Updated record %s v.%s size=%d (thread=%d tx=%s)", rid, newRecordVersion, content.length,
+                Thread.currentThread().getId(), getStorageTransaction() != null);
+
+      recordUpdated.incrementAndGet();
+
 
       if (contentModified)
         return new OStorageOperationResult<Integer>(newRecordVersion, content, false);
