@@ -299,13 +299,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage);
     database.init(config);
-    String user;
-    if (getUser() != null) {
-      user = getUser().getName();
-    } else {
-      user = null;
-    }
-    database.internalOpen(user, null, false);
+    database.internalOpen(getUser().getName(), null, false);
     database.callOnOpenListeners();
     this.activateOnCurrentThread();
     return database;
@@ -358,7 +352,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     }
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
+    this.queryStarted(result.getQueryId(),result);
     result.addLifecycleListener(this);
     return result;
   }
@@ -371,7 +365,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     }
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
+    this.queryStarted(result.getQueryId(),result);
     result.addLifecycleListener(this);
     return result;
   }
@@ -381,7 +375,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OStatement statement = OSQLEngine.parse(query, this);
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
+    this.queryStarted(result.getQueryId(),result);
     result.addLifecycleListener(this);
     return result;
   }
@@ -391,7 +385,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OStatement statement = OSQLEngine.parse(query, this);
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
+    this.queryStarted(result.getQueryId(),result);
     result.addLifecycleListener(this);
     return result;
   }
@@ -401,7 +395,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
     OResultSet original = executor.execute(this, script, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
+    this.queryStarted(result.getQueryId(),result);
     result.addLifecycleListener(this);
     return result;
   }
@@ -411,7 +405,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
     OResultSet original = executor.execute(this, script, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
+    this.queryStarted(result.getQueryId(),result);
     result.addLifecycleListener(this);
     return result;
   }
@@ -423,7 +417,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     OLocalResultSet result = new OLocalResultSet((OInternalExecutionPlan) plan);
     OLocalResultSetLifecycleDecorator decorator = new OLocalResultSetLifecycleDecorator(result);
-    this.queryStarted(decorator.getQueryId(), decorator);
+    this.queryStarted(decorator.getQueryId(),decorator);
     decorator.addLifecycleListener(this);
 
     return decorator;
