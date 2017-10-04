@@ -1548,6 +1548,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    *
    * @return The list of operations applied by the transaction
    */
+  @SuppressWarnings("UnusedReturnValue")
   public List<ORecordOperation> commitPreAllocated(final OTransaction clientTx) {
     return commit(clientTx, true);
   }
@@ -4065,18 +4066,27 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return new OStorageOperationResult<>(recordVersion);
       }
 
+      //if we do not update content of the record we should keep version of the record the same
+      //otherwise we would have issues when two records may have the same version but different content
+      int newRecordVersion;
+      if (updateContent) {
+        newRecordVersion = ppos.recordVersion;
+      } else {
+        newRecordVersion = version;
+      }
+
       if (callback != null)
-        callback.call(rid, ppos.recordVersion);
+        callback.call(rid, newRecordVersion);
 
       if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Updated record %s v.%s size=%d", rid, ppos.recordVersion, content.length);
+        OLogManager.instance().debug(this, "Updated record %s v.%s size=%d", rid, newRecordVersion, content.length);
 
       recordUpdated.incrementAndGet();
 
       if (contentModified)
-        return new OStorageOperationResult<>(ppos.recordVersion, content, false);
+        return new OStorageOperationResult<>(newRecordVersion, content, false);
       else
-        return new OStorageOperationResult<>(ppos.recordVersion);
+        return new OStorageOperationResult<>(newRecordVersion);
     } catch (OConcurrentModificationException e) {
       recordConflict.incrementAndGet();
       throw e;
