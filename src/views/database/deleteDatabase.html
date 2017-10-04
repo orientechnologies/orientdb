@@ -7,13 +7,13 @@
         <h3>Drop database {{name}} ? </h3>
       </div>
       <div class="modal-body edge">
-        <form id="signin" name="newDB" class="form-horizontal" novalidate="">
+        <form id="delete-db-form" name="newDB" class="form-horizontal" novalidate="">
           <fieldset>
             <div class="form-group">
               <label class="control-label col-md-2">Server User</label>
 
               <div class="col-md-10">
-                <input id="user" class="form-control" type="text" required ng-model="username"
+                <input id="serverUser" class="form-control" type="text" required ng-model="username"
                        value=""/>
               </div>
             </div>
@@ -21,7 +21,7 @@
               <label class="control-label col-md-2">Password</label>
 
               <div class="col-md-10">
-                <input id="password" type="password" class="form-control" required ng-model="password"
+                <input id="serverPassword" type="password" class="form-control" required ng-model="password"
                        value=""/>
               </div>
 
@@ -41,7 +41,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn" ng-click="$hide()">Close</button>
-        <button class="btn btn-primary" ng-disabled="!sso && newDB.$invalid" ng-click="delete(username,password)">Drop
+        <button id="database-delete-confirm-button" class="btn btn-primary" ng-disabled="!sso && newDB.$invalid" ng-click="delete(username,password)">Drop
           database
         </button>
       </div>

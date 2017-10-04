@@ -7,7 +7,7 @@
             <label class="control-label col-md-2 col-sm-2">Database</label>
 
             <div class="col-md-4 col-sm-4">
-              <select ng-model="database" class="form-control" required
+              <select id="database-selection" ng-model="database" class="form-control" required
                       ng-options="i for i in databases">
               </select>
             </div>
@@ -37,7 +37,9 @@
                 </i>
                 </a>
                 -->
-                <a class="btn btn-danger btn-sm" ng-click="deleteDb()"
+
+                <a id="database-drop-button" class="btn btn-danger btn-sm" ng-click="deleteDb()"
+
                    data-title="{{ 'login.deleteDb' | translate }}"
                    data-animation="am-fade-and-scale" data-container="body"
                    bs-tooltip>

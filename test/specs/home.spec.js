@@ -1,5 +1,10 @@
 'use strict';
-var config = require('./config');
+const config = require('./config');
+
+const logout = require('./util').logout;
+const enter = require('./util').enter;
+const createDatabase = require('./util').createDatabase;
+const dropDatabase = require('./util').dropDatabase;
 
 describe("HomePage", function () {
 
@@ -40,12 +45,8 @@ describe("HomePage", function () {
       .click("#database-connect")
       .waitForExist(".browse-container", true);
 
-    browser.waitForVisible("#user-dropdown", true);
-    browser.click("#user-dropdown")
-      .waitForVisible("#logout-button", true);
+    logout(browser);
 
-    browser.click("#logout-button")
-      .waitForVisible(".ologin");
   });
 
   it("It should login with reader/reader to the default database and op fail", function (done) {
@@ -103,22 +104,25 @@ describe("HomePage", function () {
     expect(innerQuery).to.equal(query);
   });
 
-  it("It should create a new database and auto-login", function (done) {
-    browser.url("/")
-      .waitForExist(".ologin", true);
-
-    browser
-      .click("#new-database-button")
-      .waitForExist("#signin", true);
+  it("It should create a new database, auto-login and then drop it", function (done) {
 
 
-    browser
-      .setValue('#new-db-name', "test")
-      .setValue('#serverUser', "root")
-      .setValue('#serverPassword', "root")
-      .click('#new-database-create-button')
-      .waitForExist(".browse-container", true);
+    enter(browser);
 
+    createDatabase(browser, "test")
+
+    logout(browser);
+
+    dropDatabase(browser, "test", 1000);
+
+    var value = browser.elements("#database-selection > option")
+      .getValue()
+      .map(function (val) {
+        return val.split(":")[1];
+      });
+
+    expect(value).to.not.contains("test");
   });
+
 
 });
