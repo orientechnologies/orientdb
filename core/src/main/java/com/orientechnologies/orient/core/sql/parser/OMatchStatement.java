@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -29,6 +30,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 public class OMatchStatement extends OStatement implements OCommandExecutor, OIterableRecordSource {
@@ -151,7 +153,20 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
     // please, do not look at this... refactor this ASAP with new executor structure
     final InputStream is = new ByteArrayInputStream(queryText.getBytes());
-    final OrientSql osql = new OrientSql(is);
+    OrientSql osql = null;
+    try {
+      ODatabaseDocumentInternal db = getDatabase();
+      if (db == null) {
+        osql = new OrientSql(is);
+      } else {
+        osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
+      }
+    } catch (UnsupportedEncodingException e) {
+      OLogManager.instance().warn(this,
+          "Invalid charset for database " + getDatabase() + " " + getDatabase().getStorage().getConfiguration().getCharset());
+      osql = new OrientSql(is);
+    }
+
     try {
       OMatchStatement result = (OMatchStatement) osql.parse();
       this.matchExpressions = result.matchExpressions;
@@ -913,9 +928,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
         Object executed = item.execute(mapDoc, ctx);
         // Force Embedded Document
-        if(executed instanceof ODocument && !((ODocument) executed).getIdentity().isValid()){
+        if (executed instanceof ODocument && !((ODocument) executed).getIdentity().isValid()) {
           doc.field(returnAlias.getStringValue(), executed, OType.EMBEDDED);
-        }else {
+        } else {
           doc.field(returnAlias.getStringValue(), executed);
         }
         i++;
@@ -1052,11 +1067,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       return null;
     }
 
-    if(targetResult instanceof OCommandExecutorSQLSelect){
+    if (targetResult instanceof OCommandExecutorSQLSelect) {
       ((OCommandExecutorSQLSelect) targetResult).getContext().setRecordingMetrics(ctx.isRecordingMetrics());
-    }else if(targetResult instanceof OCommandExecutorSQLResultsetDelegate){
+    } else if (targetResult instanceof OCommandExecutorSQLResultsetDelegate) {
       OCommandExecutor delegate = ((OCommandExecutorSQLResultsetDelegate) targetResult).getDelegate();
-      if(delegate instanceof OCommandExecutorSQLSelect){
+      if (delegate instanceof OCommandExecutorSQLSelect) {
         delegate.getContext().setRecordingMetrics(ctx.isRecordingMetrics());
       }
     }

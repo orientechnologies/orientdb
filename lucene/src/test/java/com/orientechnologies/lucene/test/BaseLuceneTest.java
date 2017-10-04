@@ -54,7 +54,7 @@ public abstract class BaseLuceneTest {
 
       db.create();
 
-      db.command(new OCommandSQL("ALTER DATABASE CHARSET UTF-8")).execute();
+      db.command(new OCommandSQL("ALTER DATABASE CHARSET 'UTF-8'")).execute();
     }
 
     @Override
