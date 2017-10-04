@@ -3974,10 +3974,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       recordUpdated.incrementAndGet();
 
+      //if we do not update content of the record we should keep version of the record the same
+      //otherwise we would have issues when two records may have the same version but different content
+      int newRecordVersion;
+      if (updateContent) {
+        newRecordVersion = ppos.recordVersion;
+      } else {
+        newRecordVersion = version;
+      }
+
       if (contentModified)
-        return new OStorageOperationResult<Integer>(ppos.recordVersion, content, false);
+        return new OStorageOperationResult<Integer>(newRecordVersion, content, false);
       else
-        return new OStorageOperationResult<Integer>(ppos.recordVersion);
+        return new OStorageOperationResult<Integer>(newRecordVersion);
+
     } catch (OConcurrentModificationException e) {
       recordConflict.incrementAndGet();
       throw e;
