@@ -1,10 +1,13 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -33,6 +36,7 @@ public class OStatementCache {
 
   /**
    * @param statement an SQL statement
+   *
    * @return true if the corresponding executor is present in the cache
    */
   public boolean contains(String statement) {
@@ -47,6 +51,7 @@ public class OStatementCache {
    *
    * @param statement the SQL statement
    * @param db        the current DB instance. If null, cache is ignored and a new executor is created through statement parsing
+   *
    * @return a statement executor from the cache
    */
   public static OStatement get(String statement, ODatabaseDocumentInternal db) {
@@ -60,6 +65,7 @@ public class OStatementCache {
 
   /**
    * @param statement an SQL statement
+   *
    * @return the corresponding executor, taking it from the internal cache, if it exists
    */
   public OStatement get(String statement) {
@@ -84,17 +90,27 @@ public class OStatementCache {
    * parses an SQL statement and returns the corresponding executor
    *
    * @param statement the SQL statement
+   *
    * @return the corresponding executor
+   *
    * @throws OCommandSQLParsingException if the input parameter is not a valid SQL statement
    */
   protected static OStatement parse(String statement) throws OCommandSQLParsingException {
     try {
       final InputStream is = new ByteArrayInputStream(statement.getBytes());
-      final OrientSql osql = new OrientSql(is);
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      OrientSql osql = null;
+      if (db == null) {
+        osql = new OrientSql(is);
+      } else {
+        osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
+      }
       OStatement result = osql.parse();
       return result;
     } catch (ParseException e) {
       throwParsingException(e, statement);
+    } catch (UnsupportedEncodingException e2) {
+      OException.wrapException(new OCommandSQLParsingException(statement), e2);
     }
     return null;
   }

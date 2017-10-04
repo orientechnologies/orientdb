@@ -4,9 +4,11 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -29,6 +31,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -203,7 +206,20 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
     // please, do not look at this... refactor this ASAP with new executor structure
     final InputStream is = new ByteArrayInputStream(queryText.getBytes());
-    final OrientSql osql = new OrientSql(is);
+    OrientSql osql = null;
+    try {
+      ODatabaseDocumentInternal db = getDatabase();
+      if (db == null) {
+        osql = new OrientSql(is);
+      } else {
+        osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
+      }
+    } catch (UnsupportedEncodingException e) {
+      OLogManager.instance().warn(this,
+          "Invalid charset for database " + getDatabase() + " " + getDatabase().getStorage().getConfiguration().getCharset());
+      osql = new OrientSql(is);
+    }
+
     try {
       OMatchStatement result = (OMatchStatement) osql.parse();
       this.matchExpressions = result.matchExpressions;

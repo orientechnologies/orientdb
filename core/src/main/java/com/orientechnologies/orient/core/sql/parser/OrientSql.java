@@ -17,6 +17,10 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
       this(new JavaCharStream(stream));
     }
 
+    public OrientSql(InputStream stream, String charset) throws java.io.UnsupportedEncodingException {
+      this(new JavaCharStream(stream, charset));
+    }
+
   final public ORid Rid() throws ParseException {
  /*@bgen(jjtree) Rid */
   ORid jjtn000 = new ORid(JJTRID);
@@ -19919,12 +19923,6 @@ Token token;
     finally { jj_save(147, xla); }
   }
 
-  private boolean jj_3R_860() {
-    if (jj_scan_token(COMMA)) return true;
-    if (jj_3R_148()) return true;
-    return false;
-  }
-
   private boolean jj_3R_448() {
     if (jj_3R_428()) return true;
     return false;
@@ -27775,6 +27773,12 @@ Token token;
 
   private boolean jj_3R_449() {
     if (jj_scan_token(RECORD)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_860() {
+    if (jj_scan_token(COMMA)) return true;
+    if (jj_3R_148()) return true;
     return false;
   }
 

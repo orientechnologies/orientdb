@@ -15,6 +15,7 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -31,6 +32,7 @@ import com.orientechnologies.orient.core.sql.parser.ParseException;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
@@ -48,6 +50,7 @@ public class OrientJdbcResultSet implements ResultSet {
   private       List<OResult>               records;
   private       OrientJdbcStatement         statement;
   private       OResult                     result;
+
   private int cursor   = -1;
   private int rowCount = 0;
   private int type;
@@ -104,7 +107,25 @@ public class OrientJdbcResultSet implements ResultSet {
     List<String> fields = new ArrayList<>();
     if (statement.sql != null && !statement.sql.isEmpty()) {
       try {
-        OrientSql osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
+
+        OrientSql osql = null;
+        ODatabaseDocumentInternal db = null;
+        try {
+          db = (ODatabaseDocumentInternal) ((OrientJdbcConnection) statement.getConnection()).getDatabase();
+          if (db == null) {
+            osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
+          } else {
+            osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()),
+                db.getStorage().getConfiguration().getCharset());
+          }
+        } catch (UnsupportedEncodingException e) {
+          OLogManager.instance()
+              .warn(this, "Invalid charset for database " + db + " " + db.getStorage().getConfiguration().getCharset());
+          osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+
 
         final OSelectStatement select = osql.SelectStatement();
         if (select.getProjection() != null) {

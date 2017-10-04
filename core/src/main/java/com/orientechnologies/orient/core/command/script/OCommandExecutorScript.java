@@ -112,7 +112,19 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
     if (strict) {
       parserText = addSemicolons(parserText);
       InputStream is = new ByteArrayInputStream(parserText.getBytes());
-      OrientSql osql = new OrientSql(is);
+      OrientSql osql = null;
+      try {
+        ODatabaseDocumentInternal db = getDatabase();
+        if (db == null) {
+          osql = new OrientSql(is);
+        } else {
+          osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
+        }
+      } catch (UnsupportedEncodingException e) {
+        OLogManager.instance().warn(this,
+            "Invalid charset for database " + getDatabase() + " " + getDatabase().getStorage().getConfiguration().getCharset());
+        osql = new OrientSql(is);
+      }
       List<OStatement> statements = osql.parseScript();
       StringBuilder result = new StringBuilder();
       for (OStatement stm : statements) {

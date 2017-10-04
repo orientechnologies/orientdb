@@ -13,6 +13,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +31,8 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
 
   @Test(enabled = false)
   public void testCreateVertexByContent() {
+    System.out.println(System.getProperty("file.encoding"));
+    System.out.println(Charset.defaultCharset());
     OrientGraph graph = new OrientGraph(database, false);
     graph.shutdown();
     database.open("admin", "admin");
