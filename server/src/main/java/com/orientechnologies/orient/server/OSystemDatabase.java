@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 public class OSystemDatabase {
   public static final String SYSTEM_DB_NAME = "OSystem";
 
-  private final OServer      server;
+  private final OServer server;
 
   public OSystemDatabase(final OServer server) {
     this.server = server;
@@ -87,7 +87,7 @@ public class OSystemDatabase {
    * ThreadLocal-stored database before openSystemDatabase() is called and restoring it after the database is closed.
    */
   public ODatabaseDocumentInternal openSystemDatabase() {
-    return server.openDatabase(getSystemDatabaseName(), "OSuperUser", "", null, true);
+    return server.getDatabases().openNoAuthorization(getSystemDatabaseName());
   }
 
   public Object execute(final OCallable<Object, Object> callback, final String sql, final Object... args) {

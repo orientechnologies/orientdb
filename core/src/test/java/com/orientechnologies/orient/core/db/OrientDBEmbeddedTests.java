@@ -267,4 +267,11 @@ public class OrientDBEmbeddedTests {
     orientDB.close();
   }
 
+  @Test(expected = ODatabaseException.class)
+  public void testOpenNotExistDatabase() {
+    try (OrientDB orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig())) {
+      orientDB.open("one", "two", "three");
+    }
+  }
+
 }

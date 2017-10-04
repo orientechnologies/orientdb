@@ -323,4 +323,9 @@ public class OrientDBRemote implements OrientDBInternal {
       OCommandOutputListener iListener) {
     throw new UnsupportedOperationException("raw restore is not supported in remote");
   }
+
+  @Override
+  public ODatabaseDocumentInternal openNoAuthorization(String name) {
+    throw new UnsupportedOperationException("impossible skip authentication and authorization in remote");
+  }
 }
