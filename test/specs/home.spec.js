@@ -103,4 +103,22 @@ describe("HomePage", function () {
     expect(innerQuery).to.equal(query);
   });
 
+  it("It should create a new database and auto-login", function (done) {
+    browser.url("/")
+      .waitForExist(".ologin", true);
+
+    browser
+      .click("#new-database-button")
+      .waitForExist("#signin", true);
+
+
+    browser
+      .setValue('#new-db-name', "test")
+      .setValue('#serverUser', "root")
+      .setValue('#serverPassword', "root")
+      .click('#new-database-create-button')
+      .waitForExist(".browse-container", true);
+
+  });
+
 });

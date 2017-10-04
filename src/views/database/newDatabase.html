@@ -13,7 +13,7 @@
               <label class="control-label col-md-2">Name</label>
 
               <div class="col-md-10">
-                <input type="text" class="form-control" required ng-model="name"
+                <input id="new-db-name" type="text" class="form-control" required ng-model="name"
                        placeholder="Database name" focus="true"/>
               </div>
             </div>
@@ -88,7 +88,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn" ng-click="$hide()">Close</button>
-        <button class="btn btn-primary" ng-disabled="!sso && newDB.$invalid"
+        <button id="new-database-create-button" class="btn btn-primary" ng-disabled="!sso && newDB.$invalid"
                 ng-click="createNew(name, type, stype, username, password, lightweight)">Create database
         </button>
       </div>
