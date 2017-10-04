@@ -22,21 +22,22 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
 
     lock.lock();
     try {
-      Condition c;
-      do {
-        c = map.get(key);
-        if (c != null) {
-          try {
+      try {
+
+        Condition c;
+        do {
+          c = map.get(key);
+          if (c != null) {
             if (!c.await(timeout, TimeUnit.MILLISECONDS)) {
               throw new OLockException(String.format("Time out acquire lock for resource: '%s' ", key));
             }
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
           }
-        }
-      } while (c != null);
-      c = lock.newCondition();
-      map.put(key, c);
+        } while (c != null);
+        c = lock.newCondition();
+        map.put(key, c);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     } finally {
       lock.unlock();
     }
