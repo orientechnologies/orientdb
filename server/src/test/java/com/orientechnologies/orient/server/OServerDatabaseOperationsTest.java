@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -54,6 +55,7 @@ public class OServerDatabaseOperationsTest {
   @After
   public void after() {
     server.shutdown();
+    Orient.instance().startup();
   }
 
   @Test
