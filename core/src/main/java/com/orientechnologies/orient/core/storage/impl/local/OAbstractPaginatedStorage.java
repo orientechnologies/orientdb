@@ -1590,12 +1590,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * <bold>other node commit</bold> is the commit that happen when a node execute a transaction of another node where all the rids
    * are already allocated in the other node.
    *
-   * @param clientTx  the transaction to commit
+   * @param transaction  the transaction to commit
    * @param allocated true if the operation is pre-allocated commit
    *
    * @return The list of operations applied by the transaction
    */
-  private List<ORecordOperation> commit(final OTransactionInternal clientTx, boolean allocated) {
+  private List<ORecordOperation> commit(final OTransactionInternal transaction, boolean allocated) {
     // XXX: At this moment, there are two implementations of the commit method. One for regular client transactions and one for
     // implicit micro-transactions. The implementations are quite identical, but operate on slightly different data. If you change
     // this method don't forget to change its counterpart:
@@ -1608,33 +1608,32 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       txBegun.incrementAndGet();
 
-      final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
-      final OIndexManager indexManager = databaseRecord.getMetadata().getIndexManager();
-      final TreeMap<String, OTransactionIndexChanges> indexesToCommit = getSortedIndexOperations(clientTx);
+      final ODatabaseDocumentInternal database = transaction.getDatabase();
+      final OIndexManager indexManager = database.getMetadata().getIndexManager();
+      final TreeMap<String, OTransactionIndexChanges> indexOperations = getSortedIndexOperations(transaction);
 
-      databaseRecord.getMetadata().makeThreadLocalSchemaSnapshot();
+      database.getMetadata().makeThreadLocalSchemaSnapshot();
 
-      @SuppressWarnings("unchecked")
-      final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getRecordOperations();
+      final Collection<ORecordOperation> recordOperations = transaction.getRecordOperations();
       final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<>();
       final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<>();
 
       final Set<ORecordOperation> newRecords = new TreeSet<>(COMMIT_RECORD_OPERATION_COMPARATOR);
 
-      for (ORecordOperation txEntry : entries) {
-        if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
-          final ORecord record = txEntry.getRecord();
+      for (ORecordOperation recordOperation : recordOperations) {
+        if (recordOperation.type == ORecordOperation.CREATED || recordOperation.type == ORecordOperation.UPDATED) {
+          final ORecord record = recordOperation.getRecord();
           if (record instanceof ODocument)
             ((ODocument) record).validate();
         }
 
-        if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.DELETED) {
-          final int clusterId = txEntry.getRecord().getIdentity().getClusterId();
+        if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
+          final int clusterId = recordOperation.getRecord().getIdentity().getClusterId();
           clustersToLock.put(clusterId, getClusterById(clusterId));
-        } else if (txEntry.type == ORecordOperation.CREATED) {
-          newRecords.add(txEntry);
+        } else if (recordOperation.type == ORecordOperation.CREATED) {
+          newRecords.add(recordOperation);
 
-          final ORecord record = txEntry.getRecord();
+          final ORecord record = recordOperation.getRecord();
           final ORID rid = record.getIdentity();
 
           int clusterId = rid.getClusterId();
@@ -1645,7 +1644,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
             if (class_ != null) {
               clusterId = class_.getClusterForNewInstance((ODocument) record);
-              clusterOverrides.put(txEntry, clusterId);
+              clusterOverrides.put(recordOperation, clusterId);
             }
           }
 
@@ -1662,17 +1661,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             checkOpenness();
 
             makeStorageDirty();
-            startStorageTx(clientTx);
+            startStorageTx(transaction);
 
             lockClusters(clustersToLock);
 
             Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<>();
-            for (ORecordOperation txEntry : newRecords) {
-              ORecord rec = txEntry.getRecord();
+            for (ORecordOperation recordOperation : newRecords) {
+              ORecord rec = recordOperation.getRecord();
 
               if (allocated) {
                 if (rec.getIdentity().isPersistent()) {
-                  positions.put(txEntry, new OPhysicalPosition(rec.getIdentity().getClusterPosition()));
+                  positions.put(recordOperation, new OPhysicalPosition(rec.getIdentity().getClusterPosition()));
                 } else {
                   throw new OStorageException("Impossible to commit a transaction with not valid rid in pre-allocated commit");
                 }
@@ -1680,47 +1679,47 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 ORecordId rid = (ORecordId) rec.getIdentity().copy();
                 ORecordId oldRID = rid.copy();
 
-                final Integer clusterOverride = clusterOverrides.get(txEntry);
+                final Integer clusterOverride = clusterOverrides.get(recordOperation);
                 final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
 
                 final OCluster cluster = getClusterById(clusterId);
-                OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+                OPhysicalPosition physicalPosition = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
                 rid.setClusterId(cluster.getId());
 
                 if (rid.getClusterPosition() > -1) {
                   // CREATE EMPTY RECORDS UNTIL THE POSITION IS REACHED. THIS IS THE CASE WHEN A SERVER IS OUT OF SYNC
                   // BECAUSE A TRANSACTION HAS BEEN ROLLED BACK BEFORE TO SEND THE REMOTE CREATES. SO THE OWNER NODE DELETED
                   // RECORD HAVING A HIGHER CLUSTER POSITION
-                  while (rid.getClusterPosition() > ppos.clusterPosition) {
-                    ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+                  while (rid.getClusterPosition() > physicalPosition.clusterPosition) {
+                    physicalPosition = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
                   }
 
-                  if (rid.getClusterPosition() != ppos.clusterPosition)
-                    throw new OConcurrentCreateException(rid, new ORecordId(rid.getClusterId(), ppos.clusterPosition));
+                  if (rid.getClusterPosition() != physicalPosition.clusterPosition)
+                    throw new OConcurrentCreateException(rid, new ORecordId(rid.getClusterId(), physicalPosition.clusterPosition));
                 }
-                positions.put(txEntry, ppos);
+                positions.put(recordOperation, physicalPosition);
 
-                rid.setClusterPosition(ppos.clusterPosition);
+                rid.setClusterPosition(physicalPosition.clusterPosition);
 
-                clientTx.updateIdentityAfterCommit(oldRID, rid);
+                transaction.updateIdentityAfterCommit(oldRID, rid);
               }
             }
 
-            lockRidBags(clustersToLock, indexesToCommit, indexManager);
+            lockRidBags(clustersToLock, indexOperations, indexManager);
 
-            for (ORecordOperation txEntry : entries) {
-              commitEntry(txEntry, positions.get(txEntry), databaseRecord.getSerializer());
-              result.add(txEntry);
+            for (ORecordOperation recordOperation : recordOperations) {
+              commitEntry(recordOperation, positions.get(recordOperation), database.getSerializer());
+              result.add(recordOperation);
             }
 
-            lockIndexes(indexesToCommit);
+            lockIndexes(indexOperations);
 
-            commitIndexes(indexesToCommit);
+            commitIndexes(indexOperations);
 
             final OLogSequenceNumber lsn = endStorageTx();
             final DataOutputStream journaledStream = OAbstractPaginatedStorage.journaledStream;
             if (journaledStream != null) { // send event to journaled tx stream if the streaming is on
-              final int txId = clientTx.getClientTransactionId();
+              final int txId = transaction.getClientTransactionId();
               if (lsn == null || writeAheadLog == null) // if tx is not journaled
                 try {
                   journaledStream.writeInt(txId);
@@ -1737,17 +1736,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 });
             }
 
-            OTransactionAbstract.updateCacheFromEntries(clientTx.getDatabase(), entries, true);
+            OTransactionAbstract.updateCacheFromEntries(transaction.getDatabase(), recordOperations, true);
 
             txCommit.incrementAndGet();
 
-          } catch (IOException | RuntimeException ioe) {
-            makeRollback(clientTx, ioe);
+          } catch (IOException | RuntimeException e) {
+            makeRollback(transaction, e);
           } finally {
-            transaction.set(null);
+            this.transaction.set(null);
           }
         } finally {
-          databaseRecord.getMetadata().clearThreadLocalSchemaSnapshot();
+          database.getMetadata().clearThreadLocalSchemaSnapshot();
         }
       } finally {
         stateLock.releaseReadLock();
@@ -1756,7 +1755,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance()
             .debug(this, "%d Committed transaction %d on database '%s' (result=%s)", Thread.currentThread().getId(),
-                clientTx.getId(), databaseRecord.getName(), result);
+                transaction.getId(), database.getName(), result);
 
       return result;
     } catch (RuntimeException ee) {
@@ -1771,9 +1770,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * Commits the given micro-transaction.
    *
-   * @param microTransaction the micro-transaction to commit.
+   * @param transaction the micro-transaction to commit.
    */
-  public void commit(OMicroTransaction microTransaction) {
+  public void commit(OMicroTransaction transaction) {
     // XXX: At this moment, there are two implementations of the commit method. One for regular client transactions and one for
     // implicit micro-transactions. The implementations are quite identical, but operate on slightly different data. If you change
     // this method don't forget to change its counterpart:
@@ -1786,13 +1785,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       txBegun.incrementAndGet();
 
-      final ODatabaseDocumentInternal database = microTransaction.getDatabase();
+      final ODatabaseDocumentInternal database = transaction.getDatabase();
       final OIndexManager indexManager = database.getMetadata().getIndexManager();
-      final TreeMap<String, OTransactionIndexChanges> indexOperations = getSortedIndexOperations(microTransaction);
+      final TreeMap<String, OTransactionIndexChanges> indexOperations = getSortedIndexOperations(transaction);
 
       database.getMetadata().makeThreadLocalSchemaSnapshot();
 
-      final Iterable<ORecordOperation> recordOperations = microTransaction.getRecordOperations();
+      final Collection<ORecordOperation> recordOperations = transaction.getRecordOperations();
       final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<>();
       final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<>();
 
@@ -1838,7 +1837,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             checkOpenness();
 
             makeStorageDirty();
-            startStorageTx(microTransaction);
+            startStorageTx(transaction);
 
             lockClusters(clustersToLock);
 
@@ -1872,14 +1871,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
                 rid.setClusterPosition(physicalPosition.clusterPosition);
 
-                microTransaction.updateIdentityAfterCommit(oldRID, rid);
+                transaction.updateIdentityAfterCommit(oldRID, rid);
               }
             }
 
             lockRidBags(clustersToLock, indexOperations, indexManager);
 
-            for (ORecordOperation recordOperation : recordOperations)
+            for (ORecordOperation recordOperation : recordOperations) {
               commitEntry(recordOperation, positions.get(recordOperation), database.getSerializer());
+            }
 
             lockIndexes(indexOperations);
 
@@ -1887,14 +1887,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             endStorageTx();
 
-            OTransactionAbstract.updateCacheFromEntries(microTransaction.getDatabase(), microTransaction.getRecordOperations(), true);
+            OTransactionAbstract.updateCacheFromEntries(transaction.getDatabase(), recordOperations, true);
 
             txCommit.incrementAndGet();
 
           } catch (IOException | RuntimeException e) {
-            makeRollback(microTransaction, e);
+            makeRollback(transaction, e);
           } finally {
-            transaction.set(null);
+            this.transaction.set(null);
           }
         } finally {
           database.getMetadata().clearThreadLocalSchemaSnapshot();

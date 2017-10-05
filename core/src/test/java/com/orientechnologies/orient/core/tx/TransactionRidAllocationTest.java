@@ -121,7 +121,7 @@ public class TransactionRidAllocationTest {
     OVertex v = db.newVertex("V");
     db.save(v);
 
-    ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids(db.getTransaction());
+    ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids((OTransactionOptimistic) db.getTransaction());
     OTransaction transaction = db.getTransaction();
     second.activateOnCurrentThread();
     second.begin();
