@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -105,27 +105,37 @@ public class OStatementCache {
   protected static OStatement parse(String statement) throws OCommandSQLParsingException {
     try {
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      final InputStream is;
+      InputStream is;
 
       if (db == null) {
         is = new ByteArrayInputStream(statement.getBytes());
       } else {
-        is = new ByteArrayInputStream(statement.getBytes(db.getStorage().getConfiguration().getCharset()));
+        try {
+          is = new ByteArrayInputStream(statement.getBytes(db.getStorage().getConfiguration().getCharset()));
+        } catch (UnsupportedEncodingException e2) {
+          OLogManager.instance()
+              .warn(null, "Unsupported charset for database " + db + " " + db.getStorage().getConfiguration().getCharset());
+          is = new ByteArrayInputStream(statement.getBytes());
+        }
       }
 
       OrientSql osql = null;
       if (db == null) {
         osql = new OrientSql(is);
       } else {
-        osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
+        try {
+          osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
+        } catch (UnsupportedEncodingException e2) {
+          OLogManager.instance()
+              .warn(null, "Unsupported charset for database " + db + " " + db.getStorage().getConfiguration().getCharset());
+          osql = new OrientSql(is);
+        }
       }
       OStatement result = osql.parse();
 
       return result;
     } catch (ParseException e) {
       throwParsingException(e, statement);
-    } catch (UnsupportedEncodingException e2) {
-      throw OException.wrapException(new OCommandSQLParsingException(statement), e2);
     }
     return null;
   }
