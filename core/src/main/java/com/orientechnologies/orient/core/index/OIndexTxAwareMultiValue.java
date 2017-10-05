@@ -306,7 +306,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     if (indexChanges == null) {
       Set<OIdentifiable> res = super.get(key);
       //In case of active transaction we use to return null instead of empty list, make check to be backward compatible
-      if (database.getTransaction().isActive() && ((OTransactionOptimistic) database.getTransaction()).getIndexEntries().size() != 0
+      if (database.getTransaction().isActive() && ((OTransactionOptimistic) database.getTransaction()).getIndexOperations().size() != 0
           && res.isEmpty())
         return null;
       return res;

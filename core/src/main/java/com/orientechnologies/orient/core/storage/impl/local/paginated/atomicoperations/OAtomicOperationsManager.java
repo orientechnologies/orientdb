@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTx
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
-import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import javax.management.*;
 import java.io.IOException;
@@ -554,7 +554,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (storageTransaction == null)
       return true;
 
-    final OTransaction clientTx = storageTransaction.getClientTx();
+    final OTransactionInternal clientTx = storageTransaction.getClientTx();
     return clientTx == null || clientTx.isUsingLog();
 
   }

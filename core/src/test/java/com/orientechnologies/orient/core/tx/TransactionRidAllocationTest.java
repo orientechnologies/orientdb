@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -62,7 +61,7 @@ public class TransactionRidAllocationTest {
 
     ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids(db.getTransaction());
     ORID generated = v.getIdentity();
-    ((OAbstractPaginatedStorage) db.getStorage()).commitPreAllocated(db.getTransaction());
+    ((OAbstractPaginatedStorage) db.getStorage()).commitPreAllocated((OTransactionInternal) db.getTransaction());
 
     ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
     assertNotNull(db1.load(generated));
@@ -87,19 +86,19 @@ public class TransactionRidAllocationTest {
     second.activateOnCurrentThread();
     second.begin();
     OTransactionOptimistic transactionOptimistic = (OTransactionOptimistic) second.getTransaction();
-    for (ORecordOperation operation : transaction.getAllRecordEntries()) {
+    for (ORecordOperation operation : transaction.getRecordOperations()) {
       transactionOptimistic.addRecord(operation.getRecord().copy(), operation.getType(), null);
     }
     ((OAbstractPaginatedStorage) second.getStorage()).preallocateRids(transactionOptimistic);
     db.activateOnCurrentThread();
-    ((OAbstractPaginatedStorage) db.getStorage()).commitPreAllocated(db.getTransaction());
+    ((OAbstractPaginatedStorage) db.getStorage()).commitPreAllocated((OTransactionInternal) db.getTransaction());
 
     ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
     assertNotNull(db1.load(generated));
 
     db1.close();
     second.activateOnCurrentThread();
-    ((OAbstractPaginatedStorage) second.getStorage()).commitPreAllocated(second.getTransaction());
+    ((OAbstractPaginatedStorage) second.getStorage()).commitPreAllocated((OTransactionInternal) second.getTransaction());
     second.close();
     ODatabaseDocument db2 = orientDB.open("secondTest", "admin", "admin");
     assertNotNull(db2.load(generated));
@@ -127,7 +126,7 @@ public class TransactionRidAllocationTest {
     second.activateOnCurrentThread();
     second.begin();
     OTransactionOptimistic transactionOptimistic = (OTransactionOptimistic) second.getTransaction();
-    for (ORecordOperation operation : transaction.getAllRecordEntries()) {
+    for (ORecordOperation operation : transaction.getRecordOperations()) {
       transactionOptimistic.addRecord(operation.getRecord().copy(), operation.getType(), null);
     }
     ((OAbstractPaginatedStorage) second.getStorage()).preallocateRids(transactionOptimistic);
@@ -152,7 +151,7 @@ public class TransactionRidAllocationTest {
     for (ORecord rec : orecords) {
       allocated.add(rec.getIdentity());
     }
-    ((OAbstractPaginatedStorage) db.getStorage()).commitPreAllocated(db.getTransaction());
+    ((OAbstractPaginatedStorage) db.getStorage()).commitPreAllocated((OTransactionInternal) db.getTransaction());
 
     ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
     for (ORID id : allocated) {

@@ -62,7 +62,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageCom
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
@@ -1393,7 +1393,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public List<ORecordOperation> commit(final OTransaction iTx, final Runnable callback) {
+  public List<ORecordOperation> commit(final OTransactionInternal iTx, final Runnable callback) {
     resetLastValidBackup();
 
     if (isLocalEnv()) {
@@ -1538,7 +1538,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public void rollback(final OTransaction iTx) {
+  public void rollback(final OTransactionInternal iTx) {
     wrapped.rollback(iTx);
   }
 

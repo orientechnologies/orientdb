@@ -93,21 +93,12 @@ public interface OTransaction extends OBasicTransaction {
   ORecord loadRecordIfVersionIsNotLatest(ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException;
 
-  int getId();
-
-  /**
-   * @return this transaction ID as seen by the client of this transaction.
-   */
-  default int getClientTransactionId() {
-    return getId();
-  }
-
   TXSTATUS getStatus();
 
   @Deprecated
   Iterable<? extends ORecordOperation> getCurrentRecordEntries();
 
-  Iterable<? extends ORecordOperation> getAllRecordEntries();
+  Iterable<? extends ORecordOperation> getRecordOperations();
 
   List<ORecordOperation> getNewRecordEntriesByClass(OClass iClass, boolean iPolymorphic);
 

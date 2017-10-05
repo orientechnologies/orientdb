@@ -42,7 +42,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
 import java.util.*;
 import java.util.Map.Entry;
 
-public abstract class OTransactionRealAbstract extends OTransactionAbstract {
+public abstract class OTransactionRealAbstract extends OTransactionAbstract implements OTransactionInternal {
   protected Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
   protected Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
   protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
@@ -81,7 +81,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   public void close() {
     super.close();
 
-    for (final ORecordOperation recordOperation : getAllRecordEntries()) {
+    for (final ORecordOperation recordOperation : getRecordOperations()) {
       final ORecord record = recordOperation.getRecord();
       if (record instanceof ODocument) {
         final ODocument document = (ODocument) record;
@@ -130,7 +130,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return allEntries.values();
   }
 
-  public Collection<ORecordOperation> getAllRecordEntries() {
+  public Collection<ORecordOperation> getRecordOperations() {
     return allEntries.values();
   }
 
@@ -256,7 +256,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return result;
   }
 
-  public Map<String, OTransactionIndexChanges> getIndexEntries() {
+  public Map<String, OTransactionIndexChanges> getIndexOperations() {
     return indexEntries;
   }
 

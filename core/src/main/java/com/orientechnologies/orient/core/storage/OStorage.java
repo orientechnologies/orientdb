@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.util.OBackupable;
 
 import java.io.IOException;
@@ -102,10 +102,10 @@ public interface OStorage extends OBackupable, OSharedContainer {
   boolean cleanOutRecord(ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
-  List<ORecordOperation> commit(OTransaction iTx, Runnable callback);
+  List<ORecordOperation> commit(OTransactionInternal iTx, Runnable callback);
 
   // TX OPERATIONS
-  void rollback(OTransaction iTx);
+  void rollback(OTransactionInternal iTx);
 
   // MISC
   OStorageConfiguration getConfiguration();

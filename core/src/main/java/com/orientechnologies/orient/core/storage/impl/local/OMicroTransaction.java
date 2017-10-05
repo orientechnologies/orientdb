@@ -46,9 +46,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import com.orientechnologies.orient.core.tx.OTransactionRecordIndexOperation;
+import com.orientechnologies.orient.core.tx.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,7 +57,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Sergey Sitnikov
  */
-public final class OMicroTransaction implements OBasicTransaction {
+public final class OMicroTransaction implements OBasicTransaction, OTransactionInternal {
 
   private static final AtomicInteger transactionSerial = new AtomicInteger(0);
 
@@ -113,6 +111,16 @@ public final class OMicroTransaction implements OBasicTransaction {
     return id;
   }
 
+  @Override
+  public int getClientTransactionId() {
+    return -1;
+  }
+
+  @Override
+  public void updateIdentityAfterCommit(ORID oldRID, ORID rid) {
+    updateIdentityAfterRecordCommit(oldRID, rid);
+  }
+
   /**
    * @return the micro-transaction's database.
    */
@@ -123,7 +131,7 @@ public final class OMicroTransaction implements OBasicTransaction {
   /**
    * @return the record operations done in the context of this micro-transaction.
    */
-  public Iterable<ORecordOperation> getRecordOperations() { // ordered by operation time
+  public Collection<ORecordOperation> getRecordOperations() { // ordered by operation time
     return recordOperations.values();
   }
 
@@ -266,20 +274,6 @@ public final class OMicroTransaction implements OBasicTransaction {
         if (keyChanges != null)
           updateChangesIdentity(oldRid, newRid, keyChanges);
       }
-    }
-  }
-
-  /**
-   * Updates the record cache after successful micro-transaction commit.
-   */
-  public void updateRecordCacheAfterCommit() {
-    final OLocalRecordCache databaseLocalCache = database.getLocalCache();
-
-    for (ORecordOperation recordOperation : recordOperations.values()) {
-      if (recordOperation.type == ORecordOperation.DELETED)
-        databaseLocalCache.deleteRecord(recordOperation.getRecord().getIdentity());
-      else if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.CREATED)
-        databaseLocalCache.updateRecord(recordOperation.getRecord());
     }
   }
 
@@ -711,6 +705,11 @@ public final class OMicroTransaction implements OBasicTransaction {
     return dependency == Dependency.Unknown || dependency == null;
   }
 
+  @Override
+  public void setStatus(OTransaction.TXSTATUS iStatus) {
+    //IGNORE
+  }
+
   private enum Dependency {
     Unknown, Yes, No
   }
@@ -725,4 +724,13 @@ public final class OMicroTransaction implements OBasicTransaction {
     }
   }
 
+  @Override
+  public boolean isUsingLog() {
+    return true;
+  }
+
+  @Override
+  public ORecordOperation getRecordEntry(ORID currentRid) {
+    return recordOperations.get(currentRid);
+  }
 }

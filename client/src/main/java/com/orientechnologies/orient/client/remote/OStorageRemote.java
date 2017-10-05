@@ -61,8 +61,8 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -901,11 +901,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     rs.fetched(response.getResult(), response.isHasNextPage(), response.getExecutionPlan(), response.getQueryStats());
   }
 
-  public List<ORecordOperation> commit(final OTransaction iTx, final Runnable callback) {
+  public List<ORecordOperation> commit(final OTransactionInternal iTx, final Runnable callback) {
     OCommit37Request request;
     if (((OTransactionOptimistic) iTx).isChanged()) {
-      request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), (Iterable<ORecordOperation>) iTx.getAllRecordEntries(),
-          ((OTransactionOptimistic) iTx).getIndexEntries());
+      request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), (Iterable<ORecordOperation>) iTx.getRecordOperations(),
+          ((OTransactionOptimistic) iTx).getIndexOperations());
     } else {
       request = new OCommit37Request(iTx.getId(), false, iTx.isUsingLog(), null, null);
     }
@@ -933,15 +933,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     updateCollectionsFromChanges(((OTransactionOptimistic) iTx).getDatabase().getSbTreeCollectionManager(),
         response.getCollectionChanges());
     // SET ALL THE RECORDS AS UNDIRTY
-    for (ORecordOperation txEntry : iTx.getAllRecordEntries())
+    for (ORecordOperation txEntry : iTx.getRecordOperations())
       ORecordInternal.unsetDirty(txEntry.getRecord());
 
     // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT. 
-    OTransactionAbstract.updateCacheFromEntries(iTx, iTx.getAllRecordEntries(), true);
+    OTransactionAbstract.updateCacheFromEntries(iTx.getDatabase(), iTx.getRecordOperations(), true);
     return null;
   }
 
-  public void rollback(OTransaction iTx) {
+  public void rollback(OTransactionInternal iTx) {
     if (((OTransactionOptimistic) iTx).isAlreadyCleared()) {
       ORollbackTransactionRequest request = new ORollbackTransactionRequest(iTx.getId());
       ORollbackTransactionResponse response = networkOperation(request, "Error on fetching next page for statment: " + request);
@@ -1823,7 +1823,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public void beginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
     OBeginTransactionRequest request = new OBeginTransactionRequest(transaction.getId(), true, transaction.isUsingLog(),
-        transaction.getAllRecordEntries(), transaction.getIndexEntries());
+        transaction.getRecordOperations(), transaction.getIndexOperations());
     OBeginTransactionResponse response = networkOperationNoRetry(request, "Error on remote treansaction begin");
     for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
       transaction.updateIdentityAfterCommit(entry.getKey(), entry.getValue());
@@ -1832,7 +1832,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public void reBeginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
     ORebeginTransactionRequest request = new ORebeginTransactionRequest(transaction.getId(), transaction.isUsingLog(),
-        transaction.getAllRecordEntries(), transaction.getIndexEntries());
+        transaction.getRecordOperations(), transaction.getIndexOperations());
     OBeginTransactionResponse response = networkOperationNoRetry(request, "Error on remote treansaction begin");
     for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
       transaction.updateIdentityAfterCommit(entry.getKey(), entry.getValue());

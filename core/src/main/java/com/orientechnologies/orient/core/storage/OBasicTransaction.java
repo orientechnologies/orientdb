@@ -136,4 +136,13 @@ public interface OBasicTransaction {
    */
   void setCustomData(String name, Object value);
 
+  /**
+   * @return this transaction ID as seen by the client of this transaction.
+   */
+  default int getClientTransactionId() {
+    return getId();
+  }
+
+  int getId();
+
 }
