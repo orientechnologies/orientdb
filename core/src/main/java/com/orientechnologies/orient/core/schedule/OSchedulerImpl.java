@@ -65,7 +65,7 @@ public class OSchedulerImpl implements OScheduler {
 
       try {
         event.getDocument().reload();
-      } catch (ORecordNotFoundException e) {
+      } catch (ORecordNotFoundException ignore) {
         // ALREADY DELETED, JUST RETURN
         return;
       }
@@ -77,7 +77,7 @@ public class OSchedulerImpl implements OScheduler {
           OLogManager.instance().debug(this, "Deleting scheduled event '%s' rid=%s...", event, event.getDocument().getIdentity());
           try {
             event.getDocument().delete();
-          } catch (ORecordNotFoundException e) {
+          } catch (ORecordNotFoundException ignore) {
             // ALREADY DELETED: IGNORE IT
           }
           return null;

@@ -1035,22 +1035,22 @@ public class OBase64Utils {
       try {
         if (oos != null)
           oos.close();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
       try {
         if (gzos != null)
           gzos.close();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
       try {
         if (b64os != null)
           b64os.close();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
       try {
         if (baos != null)
           baos.close();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
     } // end finally
 
@@ -1058,7 +1058,7 @@ public class OBase64Utils {
     try {
       return new String(baos.toByteArray(), PREFERRED_ENCODING);
     } // end try
-    catch (java.io.UnsupportedEncodingException uue) {
+    catch (java.io.UnsupportedEncodingException ignore) {
       // Fall back to some Java default
       return new String(baos.toByteArray());
     } // end catch
@@ -1240,7 +1240,7 @@ public class OBase64Utils {
     try {
       return new String(encoded, PREFERRED_ENCODING);
     } // end try
-    catch (java.io.UnsupportedEncodingException uue) {
+    catch (java.io.UnsupportedEncodingException ignore) {
       return new String(encoded);
     } // end catch
 
@@ -1336,15 +1336,15 @@ public class OBase64Utils {
       finally {
         try {
           gzos.close();
-        } catch (Exception e) {
+        } catch (Exception ignore) {
         }
         try {
           b64os.close();
-        } catch (Exception e) {
+        } catch (Exception ignore) {
         }
         try {
           baos.close();
-        } catch (Exception e) {
+        } catch (Exception ignore) {
         }
       } // end finally
 
@@ -1631,7 +1631,7 @@ public class OBase64Utils {
     try {
       bytes = s.getBytes(PREFERRED_ENCODING);
     } // end try
-    catch (java.io.UnsupportedEncodingException uee) {
+    catch (java.io.UnsupportedEncodingException ignore) {
       bytes = s.getBytes();
     } // end catch
     // </change>
@@ -1672,15 +1672,15 @@ public class OBase64Utils {
         finally {
           try {
             baos.close();
-          } catch (Exception e) {
+          } catch (Exception ignore) {
           }
           try {
             gzis.close();
-          } catch (Exception e) {
+          } catch (Exception ignore) {
           }
           try {
             bais.close();
-          } catch (Exception e) {
+          } catch (Exception ignore) {
           }
         } // end finally
 
@@ -1772,11 +1772,11 @@ public class OBase64Utils {
     finally {
       try {
         bais.close();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
       try {
         ois.close();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
     } // end finally
 
@@ -1818,7 +1818,7 @@ public class OBase64Utils {
     finally {
       try {
         bos.close();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
     } // end finally
 
@@ -1853,7 +1853,7 @@ public class OBase64Utils {
     finally {
       try {
         bos.close();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
     } // end finally
 
@@ -1910,7 +1910,7 @@ public class OBase64Utils {
     finally {
       try {
         bis.close();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
     } // end finally
 
@@ -1962,7 +1962,7 @@ public class OBase64Utils {
     finally {
       try {
         bis.close();
-      } catch (Exception e) {
+      } catch (Exception ignore) {
       }
     } // end finally
 
@@ -1996,7 +1996,7 @@ public class OBase64Utils {
     finally {
       try {
         out.close();
-      } catch (Exception ex) {
+      } catch (Exception ignore) {
       }
     } // end finally
   } // end encodeFileToFile
@@ -2028,7 +2028,7 @@ public class OBase64Utils {
     finally {
       try {
         out.close();
-      } catch (Exception ex) {
+      } catch (Exception ignore) {
       }
     } // end finally
   } // end decodeFileToFile

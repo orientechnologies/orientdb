@@ -56,7 +56,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ORecordHook
       queueThread.stopExecution();
       try {
         queueThread.join();
-      } catch (InterruptedException e) {
+      } catch (InterruptedException ignore) {
         Thread.currentThread().interrupt();
       }
       pendingOps.clear();
@@ -120,7 +120,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ORecordHook
         ops.queueThread.unsubscribe(id);
       }
     } catch (Exception e) {
-      OLogManager.instance().warn(OLiveQueryHook.class, "Error on unsubscribing client");
+      OLogManager.instance().warn(OLiveQueryHook.class, "Error on unsubscribing client", e);
     }
   }
 

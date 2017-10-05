@@ -683,7 +683,7 @@ public class OFileClassic implements OFile, OClosableItem {
           if (!osFile.getParentFile().mkdirs())
             try {
               Thread.sleep(OPEN_DELAY_RETRY);
-            } catch (InterruptedException e1) {
+            } catch (InterruptedException ignore) {
               Thread.currentThread().interrupt();
             }
         }
@@ -846,7 +846,7 @@ public class OFileClassic implements OFile, OClosableItem {
       builder.append(" os-size=");
       try {
         builder.append(accessFile.length());
-      } catch (IOException e) {
+      } catch (IOException ignore) {
         builder.append("?");
       }
     }

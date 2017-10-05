@@ -57,7 +57,7 @@ public class OIndexDictionary extends OIndexOneValue {
           try {
             storage.putIndexValue(indexId, key, value);
             return this;
-          } catch (OInvalidIndexEngineIdException e) {
+          } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
         }

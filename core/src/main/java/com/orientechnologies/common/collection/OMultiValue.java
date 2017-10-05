@@ -115,9 +115,9 @@ public class OMultiValue {
         return ((Map<?, Object>) iObject).values().iterator().next();
       else if (iObject.getClass().isArray())
         return Array.get(iObject, 0);
-    } catch (RuntimeException ignore) {
+    } catch (RuntimeException e) {
       // IGNORE IT
-      OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", ignore, iObject);
+      OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", e, iObject);
     }
 
     return null;
@@ -152,9 +152,9 @@ public class OMultiValue {
         return last;
       } else if (iObject.getClass().isArray())
         return Array.get(iObject, Array.getLength(iObject) - 1);
-    } catch (RuntimeException ignore) {
+    } catch (RuntimeException e) {
       // IGNORE IT
-      OLogManager.instance().debug(iObject, "Error on reading the last item of the Multi-value field '%s'", ignore, iObject);
+      OLogManager.instance().debug(iObject, "Error on reading the last item of the Multi-value field '%s'", e, iObject);
     }
 
     return null;
@@ -215,9 +215,9 @@ public class OMultiValue {
         if (it instanceof OResettable)
           ((OResettable) it).reset();
       }
-    } catch (RuntimeException ignore) {
+    } catch (RuntimeException e) {
       // IGNORE IT
-      OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", ignore, iObject);
+      OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", e, iObject);
     }
     return null;
   }

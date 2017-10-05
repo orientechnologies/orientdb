@@ -236,7 +236,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
           releaseSchemaWriteLock();
         }
 
-      } catch (ClusterIdsAreEmptyException e) {
+      } catch (ClusterIdsAreEmptyException ignore) {
         clusterIds = createClusters(clazz.getSimpleName());
         retry++;
       }
@@ -306,7 +306,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
           releaseSchemaWriteLock();
         }
         break;
-      } catch (ClusterIdsAreEmptyException e) {
+      } catch (ClusterIdsAreEmptyException ignore) {
         clusterIds = createClusters(iClassName);
         retry++;
       }
@@ -336,7 +336,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
         }
 
         break;
-      } catch (ClusterIdsAreEmptyException e) {
+      } catch (ClusterIdsAreEmptyException ignore) {
         clusterIds = createClusters(iClass.getSimpleName());
         retry++;
       }
@@ -378,7 +378,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       try {
         result = doCreateClass(className, clusterIds, retry, superClasses);
         break;
-      } catch (ClusterIdsAreEmptyException e) {
+      } catch (ClusterIdsAreEmptyException ignore) {
         classes.remove(className.toLowerCase(Locale.ENGLISH));
         clusterIds = (int[]) OScenarioThreadLocal.executeAsDefault(new Callable<int[]>() {
           @Override
@@ -1422,7 +1422,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     int clId;
     try {
       clId = Integer.parseInt(stringValue);
-    } catch (NumberFormatException e) {
+    } catch (NumberFormatException ignore) {
       clId = getDatabase().getClusterIdByName(stringValue);
     }
     return clId;
@@ -1436,7 +1436,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       try {
         clId = Integer.parseInt(parts[0]);
         throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
-      } catch (NumberFormatException e) {
+      } catch (NumberFormatException ignore) {
         clId = getDatabase().addCluster(parts[0]);
       }
     }

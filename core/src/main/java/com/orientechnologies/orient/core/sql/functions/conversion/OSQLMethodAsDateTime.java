@@ -16,6 +16,7 @@
  */
 package com.orientechnologies.orient.core.sql.functions.conversion;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -26,7 +27,7 @@ import java.util.Date;
 
 /**
  * Transforms a value to datetime. If the conversion is not possible, null is returned.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
@@ -52,9 +53,10 @@ public class OSQLMethodAsDateTime extends OAbstractSQLMethod {
         return new Date(((Number) iThis).longValue());
       } else {
         try {
-          return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iThis.toString());
+          return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
+              .parse(iThis.toString());
         } catch (ParseException e) {
-          // IGNORE IT: RETURN NULL
+          OLogManager.instance().error(this, "Error during execution a method '%s'", e, NAME);
         }
       }
     }

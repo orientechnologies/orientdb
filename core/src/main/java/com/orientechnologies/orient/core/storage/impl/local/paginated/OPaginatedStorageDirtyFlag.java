@@ -89,7 +89,7 @@ public class OPaginatedStorageDirtyFlag {
     try {
       fileLock = channel.tryLock();
     } catch (OverlappingFileLockException e) {
-      OLogManager.instance().warn(this, "Database is open by another process");
+      OLogManager.instance().warn(this, "Database is open by another process", e);
     }
 
     if (fileLock == null)

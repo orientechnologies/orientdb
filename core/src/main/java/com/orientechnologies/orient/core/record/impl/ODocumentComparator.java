@@ -91,7 +91,7 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
             partialResult = collator.compare(fieldValue1, fieldValue2);
           else
             partialResult = ((Comparable<Object>) fieldValue1).compareTo(fieldValue2);
-        } catch (Exception x) {
+        } catch (Exception ignore) {
           context.incrementVariable(OBasicCommandContext.INVALID_COMPARE_COUNT);
           partialResult = collator.compare("" + fieldValue1, "" + fieldValue2);
         }

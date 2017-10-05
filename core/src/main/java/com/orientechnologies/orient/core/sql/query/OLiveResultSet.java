@@ -75,7 +75,7 @@ public class OLiveResultSet<T> extends OConcurrentResultSet<T> {
 
           T result = queue.take();
           return result;
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignore) {
           Thread.currentThread().interrupt();
           setCompleted();
           return null;
@@ -207,7 +207,7 @@ public class OLiveResultSet<T> extends OConcurrentResultSet<T> {
       if (!completed)
         try {
           waitForCompletion.wait();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignore) {
           Thread.currentThread().interrupt();
         }
     }
@@ -217,7 +217,7 @@ public class OLiveResultSet<T> extends OConcurrentResultSet<T> {
     synchronized (waitForNextItem) {
       try {
         waitForNextItem.wait();
-      } catch (InterruptedException e) {
+      } catch (InterruptedException ignore) {
         Thread.currentThread().interrupt();
       }
     }

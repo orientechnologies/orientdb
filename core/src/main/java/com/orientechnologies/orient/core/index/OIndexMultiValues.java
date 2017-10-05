@@ -66,7 +66,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           try {
             values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
             break;
-          } catch (OInvalidIndexEngineIdException e) {
+          } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
         }
@@ -102,7 +102,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           try {
             values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
             break;
-          } catch (OInvalidIndexEngineIdException e) {
+          } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
         }
@@ -156,7 +156,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           try {
             values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
             break;
-          } catch (OInvalidIndexEngineIdException e) {
+          } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
         }
@@ -186,7 +186,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           try {
             storage.updateIndexEntry(indexId, key, creator);
             return this;
-          } catch (OInvalidIndexEngineIdException e) {
+          } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
         }
@@ -218,7 +218,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           try {
             values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
             break;
-          } catch (OInvalidIndexEngineIdException e) {
+          } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
         }
@@ -235,7 +235,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           try {
             storage.updateIndexEntry(indexId, key, creator);
             break;
-          } catch (OInvalidIndexEngineIdException e) {
+          } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
 
@@ -274,7 +274,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         try {
           return storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder,
               MultiValuesTransformer.INSTANCE);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
     } finally {
@@ -291,7 +291,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       while (true) {
         try {
           return storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, MultiValuesTransformer.INSTANCE);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }
@@ -309,7 +309,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       while (true) {
         try {
           return storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, MultiValuesTransformer.INSTANCE);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }
@@ -353,7 +353,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
                 try {
                   result = (Collection<OIdentifiable>) storage.getIndexValue(indexId, key);
                   break;
-                } catch (OInvalidIndexEngineIdException e) {
+                } catch (OInvalidIndexEngineIdException ignore) {
                   doReloadIndexEngine();
                 }
 
@@ -399,7 +399,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       while (true)
         try {
           return storage.getIndexSize(indexId, MultiValuesTransformer.INSTANCE);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
     } finally {
@@ -414,7 +414,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       while (true) {
         try {
           return storage.getIndexSize(indexId, null);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }
@@ -430,7 +430,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       while (true) {
         try {
           return storage.getIndexCursor(indexId, MultiValuesTransformer.INSTANCE);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }
@@ -447,7 +447,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       while (true)
         try {
           return storage.getIndexDescCursor(indexId, MultiValuesTransformer.INSTANCE);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
     } finally {

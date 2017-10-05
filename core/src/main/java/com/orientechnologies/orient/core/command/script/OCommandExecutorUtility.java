@@ -24,27 +24,30 @@ import java.util.*;
 
 /**
  * Script utility class
- * 
- * @see OCommandScript
+ *
  * @author Luca Garulli
- * 
+ * @see OCommandScript
  */
 public class OCommandExecutorUtility {
   private static Method java8MethodIsArray;
+
   static {
-   try {
-     java8MethodIsArray = Class.forName("jdk.nashorn.api.scripting.JSObject").getDeclaredMethod("isArray",null);
-   } catch(Exception e) {}
+    try {
+      java8MethodIsArray = Class.forName("jdk.nashorn.api.scripting.JSObject").getDeclaredMethod("isArray", null);
+    } catch (LinkageError ignore) {
+    } catch (ClassNotFoundException ignore) {
+    } catch (NoSuchMethodException ignore) {
+    } catch (SecurityException ignore) {
+    }
   }
+
   /**
    * Manages cross compiler compatibility issues.
-   * 
-   * @param result
-   *          Result to transform
-   * @return
+   *
+   * @param result Result to transform
    */
   public static Object transformResult(Object result) {
-    if (java8MethodIsArray == null || !(result instanceof Map)) { 
+    if (java8MethodIsArray == null || !(result instanceof Map)) {
       return result;
     }
     // PATCH BY MAT ABOUT NASHORN RETURNING VALUE FOR ARRAYS.
@@ -64,7 +67,8 @@ public class OCommandExecutorUtility {
         }
         return mapResult;
       }
-    } catch (Exception e) {}
+    } catch (Exception ignore) {
+    }
     return result;
   }
 }

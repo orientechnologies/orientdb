@@ -137,7 +137,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         final String clusterName = iDatabase.getClusterNameById(clusterId);
         iDatabase.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, clusterName);
         listOfReadableIds.add(clusterId);
-      } catch (OSecurityAccessException securityException) {
+      } catch (OSecurityAccessException ignore) {
         all = false;
         // if the cluster is inaccessible it's simply not processed in the list.add
       }
@@ -1517,8 +1517,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   /**
    * Truncates all the clusters the class uses.
-   *
-   * @throws IOException
    */
   public void truncate() throws IOException {
 
@@ -1795,6 +1793,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         try {
           c.set(OCluster.ATTRIBUTES.ENCRYPTION, iValue);
         } catch (IOException e) {
+          OLogManager.instance().warn(this, "Can not set encryption '%s' for cluster '%s'", e, iValue, name);
         }
     }
   }
@@ -2616,20 +2615,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void validatePropertyName(final String propertyName) {
-  }
-
-  private int getClusterId(final String stringValue) {
-    int clId;
-    if (!stringValue.isEmpty() && Character.isDigit(stringValue.charAt(0)))
-      try {
-        clId = Integer.parseInt(stringValue);
-      } catch (NumberFormatException e) {
-        clId = getDatabase().getClusterIdByName(stringValue);
-      }
-    else
-      clId = getDatabase().getClusterIdByName(stringValue);
-
-    return clId;
   }
 
   private void addClusterIdToIndexes(int iId) {

@@ -81,7 +81,7 @@ public class OCommandScript extends OCommandRequestTextAbstract {
     final String value = buffer.getAsString();
     try {
       executionMode = OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.valueOf(value);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException ignore) {
       // OLD VERSION: RESET TO THE OLD POSITION
       buffer.setPosition(currPosition);
     }

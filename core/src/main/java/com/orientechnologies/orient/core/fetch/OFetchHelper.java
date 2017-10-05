@@ -148,16 +148,14 @@ public class OFetchHelper {
         depthLevel = iFieldDepthLevel;
 
       fieldValue = record.rawField(fieldName);
-      if (fieldValue == null || !(fieldValue instanceof OIdentifiable)
-          && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext()
-              || !(((ORecordLazyMultiValue) fieldValue).rawIterator().next() instanceof OIdentifiable))
-          && (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0
-              || !(((Collection<?>) fieldValue).iterator().next() instanceof OIdentifiable))
-          && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0
-              || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
-          && (!(fieldValue instanceof OMultiCollectionIterator<?>))
-          && (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0
-              || !(((Map<?, ?>) fieldValue).values().iterator().next() instanceof OIdentifiable))) {
+      if (fieldValue == null || !(fieldValue instanceof OIdentifiable) && (!(fieldValue instanceof ORecordLazyMultiValue)
+          || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue).rawIterator()
+          .next() instanceof OIdentifiable)) && (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0
+          || !(((Collection<?>) fieldValue).iterator().next() instanceof OIdentifiable)) && (!(fieldValue.getClass().isArray())
+          || Array.getLength(fieldValue) == 0 || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
+          && (!(fieldValue instanceof OMultiCollectionIterator<?>)) && (!(fieldValue instanceof Map<?, ?>)
+          || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values().iterator()
+          .next() instanceof OIdentifiable))) {
         continue;
       } else {
         try {
@@ -302,8 +300,9 @@ public class OFetchHelper {
       fieldValue = record.rawField(fieldName);
       OType fieldType = record.fieldType(fieldName);
 
-      boolean fetch = !iFormat.contains("shallow") && (!(fieldValue instanceof OIdentifiable) || depthLevel == -1
-          || iCurrentLevel <= depthLevel || (iFetchPlan != null && iFetchPlan.has(fieldPath, iCurrentLevel)));
+      boolean fetch =
+          !iFormat.contains("shallow") && (!(fieldValue instanceof OIdentifiable) || depthLevel == -1 || iCurrentLevel <= depthLevel
+              || (iFetchPlan != null && iFetchPlan.has(fieldPath, iCurrentLevel)));
 
       final boolean isEmbedded = isEmbedded(fieldValue);
 
@@ -312,12 +311,10 @@ public class OFetchHelper {
         fetch = true;
 
       if (iFormat.contains("shallow") || fieldValue == null || (!fetch && fieldValue instanceof OIdentifiable)
-          || !(fieldValue instanceof OIdentifiable)
-              && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext()
-                  || !(((ORecordLazyMultiValue) fieldValue).rawIterator().next() instanceof OIdentifiable))
-              && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0
-                  || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
-              && !containsIdentifiers(fieldValue)) {
+          || !(fieldValue instanceof OIdentifiable) && (!(fieldValue instanceof ORecordLazyMultiValue)
+          || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue).rawIterator()
+          .next() instanceof OIdentifiable)) && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0 || !(Array
+          .get(fieldValue, 0) instanceof OIdentifiable)) && !containsIdentifiers(fieldValue)) {
         iContext.onBeforeStandardField(fieldValue, fieldName, iUserObject, fieldType);
         iListener.processStandardField(record, fieldValue, fieldName, iContext, iUserObject, iFormat, fieldType);
         iContext.onAfterStandardField(fieldValue, fieldName, iUserObject, fieldType);
@@ -357,20 +354,17 @@ public class OFetchHelper {
   }
 
   public static boolean isEmbedded(Object fieldValue) {
-    boolean isEmbedded = fieldValue instanceof ODocument
-        && (((ODocument) fieldValue).isEmbedded() || !((ODocument) fieldValue).getIdentity().isPersistent());
+    boolean isEmbedded =
+        fieldValue instanceof ODocument && (((ODocument) fieldValue).isEmbedded() || !((ODocument) fieldValue).getIdentity()
+            .isPersistent());
 
     // ridbag can contain only edges no embedded documents are allowed.
     if (fieldValue instanceof ORidBag)
       return false;
     if (!isEmbedded) {
-      try {
-        final Object f = OMultiValue.getFirstValue(fieldValue);
-        isEmbedded = f != null
-            && (f instanceof ODocument && (((ODocument) f).isEmbedded() || !((ODocument) f).getIdentity().isPersistent()));
-      } catch (Exception e) {
-        // IGNORE IT
-      }
+      final Object f = OMultiValue.getFirstValue(fieldValue);
+      isEmbedded =
+          f != null && (f instanceof ODocument && (((ODocument) f).isEmbedded() || !((ODocument) f).getIdentity().isPersistent()));
     }
     return isEmbedded;
   }
@@ -420,7 +414,7 @@ public class OFetchHelper {
         ORecord r = null;
         try {
           r = ((OIdentifiable) o).getRecord();
-        } catch (ORecordNotFoundException notFound) {
+        } catch (ORecordNotFoundException ignore) {
         }
         if (r != null) {
           if (r instanceof ODocument) {
@@ -430,8 +424,8 @@ public class OFetchHelper {
             if (!d.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
               removeParsedFromMap(parsedRecords, d);
               iContext.onBeforeDocument(iRootRecord, d, key.toString(), iUserObject);
-              final Object userObject = iListener.fetchLinkedMapEntry(iRootRecord, iUserObject, fieldName, key.toString(), d,
-                  iContext);
+              final Object userObject = iListener
+                  .fetchLinkedMapEntry(iRootRecord, iUserObject, fieldName, key.toString(), d, iContext);
               processRecord(d, userObject, iFetchPlan, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
                   iFieldPathFromRoot, iListener, iContext, "");
               iContext.onAfterDocument(iRootRecord, d, key.toString(), iUserObject);
@@ -441,7 +435,7 @@ public class OFetchHelper {
           } else
             iListener.parseLinked(iRootRecord, r, iUserObject, key.toString(), iContext);
 
-        }else {
+        } else {
           iListener.processStandardField(iRootRecord, o, key.toString(), iContext, iUserObject, "", null);
         }
       } else if (o instanceof Map) {
@@ -528,8 +522,8 @@ public class OFetchHelper {
               iListener.processStandardField(null, d, fieldName, iContext, iUserObject, "", null);
             } else {
               iContext.onBeforeDocument(iRootRecord, (ODocument) d, fieldName, iUserObject);
-              final Object userObject = iListener.fetchLinkedCollectionValue(iRootRecord, iUserObject, fieldName, (ODocument) d,
-                  iContext);
+              final Object userObject = iListener
+                  .fetchLinkedCollectionValue(iRootRecord, iUserObject, fieldName, (ODocument) d, iContext);
               processRecord((ODocument) d, userObject, iFetchPlan, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
                   iFieldPathFromRoot, iListener, iContext, "");
               iContext.onAfterDocument(iRootRecord, (ODocument) d, fieldName, iUserObject);

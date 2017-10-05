@@ -56,7 +56,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
         while (true)
           try {
             return (OIdentifiable) storage.getIndexValue(indexId, iKey);
-          } catch (OInvalidIndexEngineIdException e) {
+          } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
       } finally {
@@ -83,7 +83,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
         while (true)
           try {
             return storage.indexContainsKey(indexId, iKey) ? 1 : 0;
-          } catch (OInvalidIndexEngineIdException e) {
+          } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
       } finally {
@@ -158,7 +158,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
               try {
                 result = (OIdentifiable) storage.getIndexValue(indexId, key);
                 break;
-              } catch (OInvalidIndexEngineIdException e) {
+              } catch (OInvalidIndexEngineIdException ignore) {
                 doReloadIndexEngine();
               }
           } finally {
@@ -203,7 +203,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
       while (true)
         try {
           return storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
     } finally {
@@ -219,7 +219,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
       while (true)
         try {
           return storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
     } finally {
@@ -235,7 +235,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
       while (true) {
         try {
           return storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }
@@ -251,7 +251,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
       while (true) {
         try {
           return storage.getIndexSize(indexId, null);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }
@@ -266,7 +266,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
       while (true) {
         try {
           return storage.getIndexSize(indexId, null);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }
@@ -282,7 +282,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
       while (true) {
         try {
           return storage.getIndexCursor(indexId, null);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }
@@ -298,7 +298,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
       while (true) {
         try {
           return storage.getIndexDescCursor(indexId, null);
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }

@@ -224,7 +224,7 @@ public class OScheduledEvent extends ODocumentWrapper {
           executeEvent = true;
           break;
 
-        } catch (ONeedRetryException e) {
+        } catch (ONeedRetryException ignore) {
 
           // CONCURRENT UPDATE, PROBABLY EXECUTED BY ANOTHER SERVER
           if (isEventAlreadyExecuted())
@@ -234,7 +234,7 @@ public class OScheduledEvent extends ODocumentWrapper {
               .info(this, "Cannot change the status of the scheduled event '%s' executionId=%d, retry %d", getName(),
                   nextExecutionId, retry);
 
-        } catch (ORecordNotFoundException e) {
+        } catch (ORecordNotFoundException ignore) {
           OLogManager.instance()
               .info(this, "Scheduled event '%s' executionId=%d not found on database, removing event", getName(), nextExecutionId);
 

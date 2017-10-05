@@ -859,7 +859,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         final ORecord real = link.getRecord();
         if (real != null)
           link = real;
-      } catch (ORecordNotFoundException ex) {
+      } catch (ORecordNotFoundException ignore) {
         // IGNORE IT WILL FAIL THE ASSERT IN CASE
       }
     }

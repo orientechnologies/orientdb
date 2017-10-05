@@ -514,7 +514,7 @@ public class OSymmetricKey {
       encodedJSON = convertToBase64(sb.toString().getBytes("UTF8"));
 
     } catch (Exception ex) {
-
+      OLogManager.instance().error(this, "Error of conversion to base64", ex);
     }
 
     return encodedJSON;

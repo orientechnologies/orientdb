@@ -145,7 +145,7 @@ public class OSocketFactory {
         // This resolves an issue on Windows with relative paths not working correctly.
         path = new java.io.File(path).getAbsolutePath();      	
         input = new FileInputStream(path);
-      } catch (FileNotFoundException e) {
+      } catch (FileNotFoundException ignore) {
         input = null;
       }
     }

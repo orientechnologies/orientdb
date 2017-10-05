@@ -103,7 +103,7 @@ public class OIndexFullText extends OIndexMultiValues {
             try {
               refs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
               break;
-            } catch (OInvalidIndexEngineIdException e) {
+            } catch (OInvalidIndexEngineIdException ignore) {
               doReloadIndexEngine();
             }
           }
@@ -143,7 +143,7 @@ public class OIndexFullText extends OIndexMultiValues {
               });
 
               break;
-            } catch (OInvalidIndexEngineIdException e) {
+            } catch (OInvalidIndexEngineIdException ignore) {
               doReloadIndexEngine();
             }
           }
@@ -193,7 +193,7 @@ public class OIndexFullText extends OIndexMultiValues {
             try {
               recs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
               break;
-            } catch (OInvalidIndexEngineIdException e) {
+            } catch (OInvalidIndexEngineIdException ignore) {
               doReloadIndexEngine();
             }
           }
@@ -203,7 +203,7 @@ public class OIndexFullText extends OIndexMultiValues {
               try {
                 storage.updateIndexEntry(indexId, word, new EntityRemover(recs, value, removed));
                 break;
-              } catch (OInvalidIndexEngineIdException e) {
+              } catch (OInvalidIndexEngineIdException ignore) {
                 doReloadIndexEngine();
               }
 

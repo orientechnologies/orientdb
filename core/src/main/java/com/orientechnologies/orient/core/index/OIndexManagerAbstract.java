@@ -143,6 +143,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       try {
         save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
       } catch (Exception e) {
+        OLogManager.instance().error(this, "Can not save index metadata will try to allocate new one", e);
+
         // RESET RID TO ALLOCATE A NEW ONE
         if (ORecordId.isPersistent(document.getIdentity().getClusterPosition())) {
           document.getIdentity().reset();

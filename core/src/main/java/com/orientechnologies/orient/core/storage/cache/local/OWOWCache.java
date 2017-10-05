@@ -1440,7 +1440,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final int fileId = (int) nameIdMapHolder.readLong();
 
       return new NameFileIdEntry(name, fileId);
-    } catch (EOFException eof) {
+    } catch (EOFException ignore) {
       return null;
     }
   }

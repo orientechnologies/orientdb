@@ -57,7 +57,7 @@ public class OLiveQueryQueueThread extends Thread {
       ORecordOperation next = null;
       try {
         next = queue.take();
-      } catch (InterruptedException e) {
+      } catch (InterruptedException ignore) {
         break;
       }
       if (next == null) {

@@ -67,10 +67,8 @@ public class OSecurityExternal extends OSecurityShared
 					try
 					{
 						Thread.sleep(200);
-					}
-					catch(InterruptedException e)
-					{
-						Thread.currentThread().interrupt();
+          } catch (InterruptedException ignore) {
+            Thread.currentThread().interrupt();
 					}
 			
 					throw new OSecurityAccessException(dbName, "User or password not valid for username: " + iUsername + ", database: '" + dbName + "'");

@@ -296,7 +296,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           status = STATUS.OPEN;
           close(true, false);
         } catch (RuntimeException re) {
-          OLogManager.instance().error(this, "Error during storage close", e);
+          OLogManager.instance().error(this, "Error during storage close", re);
         }
 
         status = STATUS.CLOSED;
@@ -365,7 +365,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
         } catch (FileNotFoundException e) {
           OLogManager.instance().warn(this, "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i
-              + "): file not found. It will be excluded from current database '" + getName() + "'.");
+              + "): file not found. It will be excluded from current database '" + getName() + "'.", e);
 
           clusterMap.remove(clusters.get(i).getName().toLowerCase(configuration.getLocaleInstance()));
 
@@ -3276,7 +3276,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           executor.parse(iCommand);
 
           return executeCommand(iCommand, executor);
-        } catch (ORetryQueryException e) {
+        } catch (ORetryQueryException ignore) {
 
           if (iCommand instanceof OQueryAbstract) {
             final OQueryAbstract query = (OQueryAbstract) iCommand;
@@ -3983,7 +3983,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       recordUpdated.incrementAndGet();
 
-
       if (contentModified)
         return new OStorageOperationResult<Integer>(newRecordVersion, content, false);
       else
@@ -4577,6 +4576,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       lastCheckPoint = writeAheadLog.getLastCheckpoint();
     } catch (OWALPageBrokenException e) {
+      OLogManager.instance().warn(this, "WAL page is broken", e);
       lastCheckPoint = null;
     }
 
@@ -4589,6 +4589,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkPointRecord = writeAheadLog.read(lastCheckPoint);
     } catch (OWALPageBrokenException e) {
+      OLogManager.instance().warn(this, "WAL page is broken", e);
       checkPointRecord = null;
     }
 
@@ -4659,6 +4660,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         lsn = writeAheadLog.next(lsn);
       }
     } catch (OWALPageBrokenException e) {
+      OLogManager.instance().warn(this, "WAL page is broken", e);
       return false;
     }
 
@@ -4687,6 +4689,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         lsn = writeAheadLog.next(lsn);
       }
     } catch (OWALPageBrokenException e) {
+      OLogManager.instance().warn(this, "WAL page is broken", e);
       return false;
     }
 

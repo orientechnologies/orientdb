@@ -19,33 +19,34 @@
   */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
  * Returns different values based on the condition. If it's true the first value is returned, otherwise the second one.
- * 
+ * <p>
  * <p>
  * Syntax: <blockquote>
- * 
+ * <p>
  * <pre>
  * if(&lt;field|value|expression&gt;, &lt;return_value_if_true&gt; [,&lt;return_value_if_false&gt;])
  * </pre>
- * 
+ * <p>
  * </blockquote>
- * 
+ * <p>
  * <p>
  * Examples: <blockquote>
- * 
+ * <p>
  * <pre>
  * SELECT <b>if(rich, 'rich', 'poor')</b> FROM ...
  * <br>
  * SELECT <b>if( eval( 'salary > 1000000' ), 'rich', 'poor')</b> FROM ...
  * </pre>
- * 
+ * <p>
  * </blockquote>
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 
@@ -77,6 +78,8 @@ public class OSQLFunctionIf extends OSQLFunctionAbstract {
       return result ? iParams[1] : iParams[2];
 
     } catch (Exception e) {
+      OLogManager.instance().error(this, "Error during execution a function '%s'", e, NAME);
+
       return null;
     }
   }

@@ -352,7 +352,7 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
       if (!completed)
         try {
           waitForCompletion.wait();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignore) {
           Thread.currentThread().interrupt();
         }
     }
@@ -363,7 +363,7 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
       if (!completed)
         try {
           waitForNextItem.wait();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignore) {
           Thread.currentThread().interrupt();
         }
     }
