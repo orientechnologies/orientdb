@@ -17,6 +17,8 @@
  */
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -29,6 +31,7 @@ import com.orientechnologies.orient.core.sql.parser.*;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
@@ -44,7 +47,6 @@ public class OrientJdbcResultSet implements ResultSet {
   private final List<String>                fieldNames;
   private List<ODocument> records = null;
   private OrientJdbcStatement statement;
-
 
   private ODocument document;
   private int cursor   = -1;
@@ -95,7 +97,23 @@ public class OrientJdbcResultSet implements ResultSet {
     List<String> fields = new ArrayList<String>();
     if (statement.sql != null && !statement.sql.isEmpty()) {
       try {
-        final OrientSql osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
+        OrientSql osql = null;
+        ODatabaseDocumentInternal db = null;
+        try {
+          db = (ODatabaseDocumentInternal) ((OrientJdbcConnection) statement.getConnection()).getDatabase();
+          if (db == null) {
+            osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
+          } else {
+            osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()),
+                db.getStorage().getConfiguration().getCharset());
+          }
+        } catch (UnsupportedEncodingException e) {
+          OLogManager.instance()
+              .warn(this, "Invalid charset for database " + db + " " + db.getStorage().getConfiguration().getCharset());
+          osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
 
         final OSelectStatement select = osql.SelectStatement();
 
@@ -152,7 +170,6 @@ public class OrientJdbcResultSet implements ResultSet {
     }
     return fields;
   }
-
 
   protected ODocument getDocument() {
     return document;

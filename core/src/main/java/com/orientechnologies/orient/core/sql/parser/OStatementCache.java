@@ -1,11 +1,14 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -35,6 +38,7 @@ public class OStatementCache {
 
   /**
    * @param statement an SQL statement
+   *
    * @return true if the corresponding executor is present in the cache
    */
   public boolean contains(String statement) {
@@ -49,6 +53,7 @@ public class OStatementCache {
    *
    * @param statement the SQL statement
    * @param db        the current DB instance. If null, cache is ignored and a new executor is created through statement parsing
+   *
    * @return a statement executor from the cache
    */
   public static OStatement get(String statement, ODatabaseDocumentInternal db) {
@@ -57,7 +62,8 @@ public class OStatementCache {
     }
 
     OStatementCache resource = db.getStorage().getResource(OStatementCache.class.getSimpleName(), new Callable<OStatementCache>() {
-      @Override public OStatementCache call() throws Exception {
+      @Override
+      public OStatementCache call() throws Exception {
         return new OStatementCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
       }
     });
@@ -66,6 +72,7 @@ public class OStatementCache {
 
   /**
    * @param statement an SQL statement
+   *
    * @return the corresponding executor, taking it from the internal cache, if it exists
    */
   public OStatement get(String statement) {
@@ -90,14 +97,42 @@ public class OStatementCache {
    * parses an SQL statement and returns the corresponding executor
    *
    * @param statement the SQL statement
+   *
    * @return the corresponding executor
+   *
    * @throws OCommandSQLParsingException if the input parameter is not a valid SQL statement
    */
   protected static OStatement parse(String statement) throws OCommandSQLParsingException {
     try {
-      final InputStream is = new ByteArrayInputStream(statement.getBytes());
-      final OrientSql osql = new OrientSql(is);
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      InputStream is;
+
+      if (db == null) {
+        is = new ByteArrayInputStream(statement.getBytes());
+      } else {
+        try {
+          is = new ByteArrayInputStream(statement.getBytes(db.getStorage().getConfiguration().getCharset()));
+        } catch (UnsupportedEncodingException e2) {
+          OLogManager.instance()
+              .warn(null, "Unsupported charset for database " + db + " " + db.getStorage().getConfiguration().getCharset());
+          is = new ByteArrayInputStream(statement.getBytes());
+        }
+      }
+
+      OrientSql osql = null;
+      if (db == null) {
+        osql = new OrientSql(is);
+      } else {
+        try {
+          osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
+        } catch (UnsupportedEncodingException e2) {
+          OLogManager.instance()
+              .warn(null, "Unsupported charset for database " + db + " " + db.getStorage().getConfiguration().getCharset());
+          osql = new OrientSql(is);
+        }
+      }
       OStatement result = osql.parse();
+
       return result;
     } catch (ParseException e) {
       throwParsingException(e, statement);

@@ -50,6 +50,11 @@ public class OrientSql {
       this(new JavaCharStream(stream));
     }
 
+    public OrientSql(InputStream stream, String charset) throws java.io.UnsupportedEncodingException {
+      this(new JavaCharStream(stream, charset));
+    }
+
+
 }
 
 PARSER_END(OrientSql)
