@@ -143,7 +143,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   }
 
   public void init(OTransactionOptimistic operations) {
-    this.ops = new ArrayList<>(operations.getAllRecordEntries());
+    this.ops = new ArrayList<>(operations.getRecordOperations());
   }
 
   public void setLastLSN(OLogSequenceNumber lastLSN) {

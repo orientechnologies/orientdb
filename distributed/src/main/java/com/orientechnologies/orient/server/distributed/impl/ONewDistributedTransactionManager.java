@@ -63,7 +63,7 @@ public class ONewDistributedTransactionManager {
       final ODistributedStorageEventListener eventListener) {
     final String localNodeName = dManager.getLocalNodeName();
 
-    OTransactionInternal.setStatus(iTx, OTransaction.TXSTATUS.BEGUN);
+    iTx.setStatus(OTransaction.TXSTATUS.BEGUN);
 
     final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(storage.getName());
 
@@ -73,7 +73,7 @@ public class ONewDistributedTransactionManager {
     final ODistributedRequestId requestId = new ODistributedRequestId(dManager.getLocalNodeId(),
         dManager.getNextMessageIdCounter());
 
-    final Set<String> involvedClusters = getInvolvedClusters(iTx.getAllRecordEntries());
+    final Set<String> involvedClusters = getInvolvedClusters(iTx.getRecordOperations());
     Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
     final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(iTx, nodes) : null;
 
@@ -95,7 +95,7 @@ public class ONewDistributedTransactionManager {
     //TODO:check the lsn
     txTask.setLastLSN(((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN());
 
-    OTransactionInternal.setStatus(iTx, OTransaction.TXSTATUS.COMMITTING);
+    iTx.setStatus(OTransaction.TXSTATUS.COMMITTING);
 
     // SYNCHRONOUS CALL: REPLICATE IT
     ((ODistributedAbstractPlugin) dManager)
@@ -179,7 +179,7 @@ public class ONewDistributedTransactionManager {
   }
 
   protected void checkForClusterIds(final OTransaction iTx) {
-    for (ORecordOperation op : iTx.getAllRecordEntries()) {
+    for (ORecordOperation op : iTx.getRecordOperations()) {
       final ORecordId rid = (ORecordId) op.getRecord().getIdentity();
       switch (op.type) {
       case ORecordOperation.CREATED:
