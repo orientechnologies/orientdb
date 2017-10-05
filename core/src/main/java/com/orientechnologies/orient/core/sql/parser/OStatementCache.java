@@ -97,8 +97,15 @@ public class OStatementCache {
    */
   protected static OStatement parse(String statement) throws OCommandSQLParsingException {
     try {
-      final InputStream is = new ByteArrayInputStream(statement.getBytes());
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final InputStream is;
+
+      if (db == null) {
+        is = new ByteArrayInputStream(statement.getBytes());
+      } else {
+        is = new ByteArrayInputStream(statement.getBytes(db.getStorage().getConfiguration().getCharset()));
+      }
+
       OrientSql osql = null;
       if (db == null) {
         osql = new OrientSql(is);
@@ -106,11 +113,12 @@ public class OStatementCache {
         osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
       }
       OStatement result = osql.parse();
+
       return result;
     } catch (ParseException e) {
       throwParsingException(e, statement);
     } catch (UnsupportedEncodingException e2) {
-      OException.wrapException(new OCommandSQLParsingException(statement), e2);
+      throw OException.wrapException(new OCommandSQLParsingException(statement), e2);
     }
     return null;
   }
