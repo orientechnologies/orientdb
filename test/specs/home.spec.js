@@ -5,6 +5,7 @@ const logout = require('./util').logout;
 const enter = require('./util').enter;
 const createDatabase = require('./util').createDatabase;
 const dropDatabase = require('./util').dropDatabase;
+const loginDatabase = require('./util').loginDatabase;
 
 describe("HomePage", function () {
 
@@ -115,13 +116,44 @@ describe("HomePage", function () {
 
     dropDatabase(browser, "test", 1000);
 
-    var value = browser.elements("#database-selection > option")
-      .getValue()
+    var value = browser.elements("#database-selection > option").getValue();
+
+    if (typeof  value === 'string') {
+      value = [value];
+    }
+
+    value
       .map(function (val) {
         return val.split(":")[1];
       });
 
     expect(value).to.not.contains("test");
+  });
+
+
+  it("It should download a database from cloud", function (done) {
+
+
+    enter(browser);
+
+
+    browser
+      .click("#download-from-cloud")
+      .waitForExist("#cloud-form", true);
+
+
+    browser.setValue('#serverUser', "root")
+      .setValue('#serverPassword', "root")
+      .click("#cloud-database-VehicleHistoryGraph")
+      .waitForVisible('.noty_text');
+
+    var inputUser = browser.getHTML('.noty_text', false);
+
+    expect(inputUser).to.equal("Database VehicleHistoryGraph imported.");
+
+    loginDatabase(browser, "VehicleHistoryGraph");
+
+
   });
 
 

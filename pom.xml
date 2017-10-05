@@ -96,14 +96,16 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <version>2.8</version>
+
         <executions>
           <execution>
             <id>unzip-community</id>
-            <phase>generate-sources</phase>
+            <phase>pre-integration-test</phase>
             <goals>
               <goal>unpack</goal>
             </goals>
             <configuration>
+              <skip>${skipTests}</skip>
               <outputDirectory>${project.build.directory}</outputDirectory>
               <stripVersion>true</stripVersion>
               <artifactItems>
@@ -166,6 +168,7 @@
             </goals>
             <phase>pre-integration-test</phase>
             <configuration>
+              <skip>${skipTests}</skip>
               <executable>test/scripts/run.sh</executable>
               <arguments>
                 <argument>${project.build.directory}/orientdb-community-${project.version}/bin/server.sh</argument>
@@ -180,6 +183,7 @@
             </goals>
             <phase>post-integration-test</phase>
             <configuration>
+              <skip>${skipTests}</skip>
               <executable>test/scripts/stop.sh</executable>
               <arguments>
                 <argument>${project.build.directory}/orientdb-community-${project.version}/bin/shutdown.sh</argument>
@@ -193,6 +197,7 @@
             </goals>
             <phase>integration-test</phase>
             <configuration>
+              <skip>${skipTests}</skip>
               <executable>test/scripts/test.sh</executable>
             </configuration>
           </execution>

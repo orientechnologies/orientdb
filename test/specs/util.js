@@ -33,6 +33,16 @@ exports.createDatabase = function (browser, name) {
 }
 
 
+exports.loginDatabase = function (browser, name) {
+
+  browser
+    .selectByValue('#database-selection', "string:" + name)
+  browser.setValue('#user', "root")
+    .setValue('#password', "root")
+    .click("#database-connect")
+    .waitForExist(".browse-container", true);
+}
+
 exports.dropDatabase = function (browser, name, wait) {
 
 

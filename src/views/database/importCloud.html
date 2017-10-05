@@ -1,70 +1,70 @@
 <div class="modal">
-    <div class="modal-dialog  modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
-                </button>
-                <h3>Import Public Databases</h3>
-            </div>
-            <div class="modal-body ">
+  <div class="modal-dialog  modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
+        </button>
+        <h3>Import Public Databases</h3>
+      </div>
+      <div class="modal-body ">
 
-                <form class="form-horizontal">
-                    <fieldset>
-                        <div class="form-group">
-                            <label class="control-label col-md-2">Server User</label>
+        <form id="cloud-form" class="form-horizontal">
+          <fieldset>
+            <div class="form-group">
+              <label class="control-label col-md-2">Server User</label>
 
-                            <div class="col-md-10">
-                                <input id="serverUser" class="form-control" type="text" required ng-model="username"
-                                       value=""/>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-md-2">Server Password</label>
+              <div class="col-md-10">
+                <input id="serverUser" class="form-control" type="text" required ng-model="username"
+                       value=""/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-md-2">Server Password</label>
 
-                            <div class="col-md-10">
-                                <input id="serverPassword" type="password" class="form-control" required
-                                       ng-model="password"
-                                       value=""/>
-                            </div>
-                        </div>
-                    </fieldset>
-                </form>
-                <table class="table">
-                    <thead>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>License</th>
-                    <th>Download</th>
-                    </thead>
-                    <tbody>
-                    <tr ng-repeat="(key,value) in databases">
-                        <td>{{key}}</td>
-                        <td>{{value.description}}</td>
-                        <td>{{value.license}}</td>
-                        <td><a href="javascript:void(0)" ng-click="import(key,value,username,password)"><i
-                                class="fa fa-cloud-download fa-lg"></i></a></td>
-                    </tr>
-                    </tbody>
-                </table>
-                <div class="progress progress-striped active" ng-show="creating">
-                    <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0"
-                         aria-valuemax="100" style="width: 100%">
-                        <span class="progress-value">Importing database {{ name }}</span>
-                    </div>
-                </div>
-                <div class="alerts">
-                    <div class="alert alert-danger" ng-show="error">
-                        <button type="button" class="close" ng-click="error = null">×</button>
-                        {{error}}
-                    </div>
-                </div>
+              <div class="col-md-10">
+                <input id="serverPassword" type="password" class="form-control" required
+                       ng-model="password"
+                       value=""/>
+              </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn" ng-click="$hide()">Close</button>
-                </button>
-            </div>
+          </fieldset>
+        </form>
+        <table class="table">
+          <thead>
+          <th>Name</th>
+          <th>Description</th>
+          <th>License</th>
+          <th>Download</th>
+          </thead>
+          <tbody>
+          <tr ng-repeat="(key,value) in databases">
+            <td>{{key}}</td>
+            <td>{{value.description}}</td>
+            <td>{{value.license}}</td>
+            <td><a id="cloud-database-{{key}}" href="javascript:void(0)" ng-click="import(key,value,username,password)"><i
+              class="fa fa-cloud-download fa-lg"></i></a></td>
+          </tr>
+          </tbody>
+        </table>
+        <div class="progress progress-striped active" ng-show="creating">
+          <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0"
+               aria-valuemax="100" style="width: 100%">
+            <span class="progress-value">Importing database {{ name }}</span>
+          </div>
         </div>
+        <div class="alerts">
+          <div class="alert alert-danger" ng-show="error">
+            <button type="button" class="close" ng-click="error = null">×</button>
+            {{error}}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" ng-click="$hide()">Close</button>
+        </button>
+      </div>
     </div>
+  </div>
 </div>
 
 
