@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import org.junit.Assert;
-import org.junit.Test;
 
 /*
  *
@@ -36,7 +35,7 @@ public class HaSetTest extends AbstractServerClusterTest {
     return "HaSetTest";
   }
 
-  @Test
+//  @Test
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
