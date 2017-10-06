@@ -386,7 +386,7 @@ public class OSQLFilterCondition {
       return f.execute(iCurrentRecord, iCurrentRecord, iCurrentResult, iContext);
     }
 
-    if (OMultiValue.isMultiValue(iValue)) {
+    if (OMultiValue.isMultiValue(iValue) && !Map.class.isAssignableFrom(iValue.getClass())) {
       final Iterable<?> multiValue = OMultiValue.getMultiValueIterable(iValue, false);
 
       // MULTI VALUE: RETURN A COPY
