@@ -647,7 +647,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
 
     if (cmd.equalsIgnoreCase("NULL") || cmd.startsWith("$") || (cmd.startsWith("[") && cmd.endsWith("]")) || (cmd.startsWith("{")
         && cmd.endsWith("}")) || (cmd.startsWith("\"") && cmd.endsWith("\"") || cmd.startsWith("'") && cmd.endsWith("'")) || (
-        cmd.startsWith("(") && cmd.endsWith(")")))
+        cmd.startsWith("(") && cmd.endsWith(")")) || cmd.startsWith("#"))
       lastResult = getValue(cmd, db);
     else
       lastResult = executeCommand(cmd, db);
