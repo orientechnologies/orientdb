@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -30,6 +31,9 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Remote server channel.
@@ -231,17 +235,18 @@ public class ORemoteServerChannel {
           "Reached %d consecutive errors on connection, remove the server '%s' from the cluster", totalConsecutiveErrors, server);
 
       // REMOVE THE SERVER ASYNCHRONOUSLY
-      Executors.newSingleThreadExecutor().execute(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            manager.removeServer(server, true);
-          } catch (Throwable e) {
-            ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-                "Error on removing server '%s' from the cluster", server);
-          }
-        }
-      });
+      new OThreadPoolExecutorWithLogging(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>())
+          .execute(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                manager.removeServer(server, true);
+              } catch (Throwable e) {
+                ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+                    "Error on removing server '%s' from the cluster", server);
+              }
+            }
+          });
 
       throw new OIOException("Reached " + totalConsecutiveErrors + " consecutive errors on connection, remove the server '" + server
           + "' from the cluster");

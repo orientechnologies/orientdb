@@ -26,6 +26,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -179,9 +180,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * create a physical document per edge. Documents are created only when they have properties</td> <td>true</td> </tr> <tr>
    * <td>blueprints.orientdb.autoScaleEdgeType</td> <td>Set auto scale of edge type. True means one edge is managed as LINK, 2 or
    * more are managed with a LINKBAG</td> <td>false</td> </tr> <tr> <td>blueprints.orientdb.edgeContainerEmbedded2TreeThreshold</td>
-   * <td>Changes the minimum number of edges for edge containers to transform the underlying structure from embedded to tree. Use -1
+   * <td>Changes the minimum number of edges for edge containers to transform the underlying structure from embedded to tree. Use
+   * -1
    * to disable transformation</td> <td>-1</td> </tr> <tr> <td>blueprints.orientdb.edgeContainerTree2EmbeddedThreshold</td>
-   * <td>Changes the minimum number of edges for edge containers to transform the underlying structure from tree to embedded. Use -1
+   * <td>Changes the minimum number of edges for edge containers to transform the underlying structure from tree to embedded. Use
+   * -1
    * to disable transformation</td> <td>-1</td> </tr> </table>
    *
    * @param configuration of graph
@@ -232,12 +235,14 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
       final OrientBaseGraph g = this;
 
-      new Thread(new Runnable() {
+      Thread t = new Thread(new Runnable() {
         @Override
         public void run() {
           new OGraphRepair().repair(g, OLogManager.instance().getCommandOutputListener(this, Level.INFO), null);
         }
-      }).start();
+      });
+      t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+      t.start();
     }
   }
 
@@ -572,8 +577,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param outVertex Source vertex
    * @param inVertex  Destination vertex
    * @param label     Edge's label
-   *
-   * @return
    */
   @Override
   public OrientEdge addEdge(final Object id, Vertex outVertex, Vertex inVertex, final String label) {

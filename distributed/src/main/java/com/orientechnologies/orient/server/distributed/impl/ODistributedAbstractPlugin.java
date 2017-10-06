@@ -35,6 +35,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -1477,7 +1478,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final AtomicReference<ODistributedMomentum> momentum = new AtomicReference<ODistributedMomentum>();
 
     try {
-      new Thread(new Runnable() {
+      Thread t = new Thread(new Runnable() {
         @Override
         public void run() {
           try {
@@ -1531,7 +1532,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
           }
         }
-      }).start();
+      });
+      t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+      t.start();
 
     } catch (Exception e) {
       ODistributedServerLog

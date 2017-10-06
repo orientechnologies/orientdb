@@ -29,6 +29,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -306,6 +307,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
       });
 
       t.start();
+      t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       return (RET) future;
     } else {
       throw new RuntimeException("cannot run non blocking query with non tx db");// TODO

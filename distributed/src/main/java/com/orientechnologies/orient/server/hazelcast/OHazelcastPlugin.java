@@ -33,6 +33,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -1107,7 +1108,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       publishLocalNodeConfiguration();
 
       // TEMPORARY PATCH TO FIX HAZELCAST'S BEHAVIOUR THAT ENQUEUES THE MERGING ITEM EVENT WITH THIS AND ACTIVE NODES MAP COULD BE STILL NOT FILLED
-      new Thread(new Runnable() {
+      Thread t = new Thread(new Runnable() {
         @Override
         public void run() {
           try {
@@ -1149,7 +1150,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             setNodeStatus(NODE_STATUS.ONLINE);
           }
         }
-      }).start();
+      });
+      t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+      t.start();
     }
   }
 

@@ -1,28 +1,28 @@
 package com.orientechnologies.orient.etl.http;
 
+import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.util.OMigrationConfigManager;
 import com.orientechnologies.orient.server.OServer;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 /**
  * Created by gabriele on 27/02/17.
  */
 public class OETLHandler {
 
-  private ExecutorService pool       = Executors.newFixedThreadPool(1);
+  private ExecutorService pool       = new OThreadPoolExecutorWithLogging(1, 1, 0L, TimeUnit.MILLISECONDS,
+      new LinkedBlockingQueue<Runnable>());
   private OETLJob         currentJob = null;
 
-  public OETLHandler() {}
+  public OETLHandler() {
+  }
 
   /**
    * Executes import with configuration;
-   *
-   * @param cfg
    */
   public void executeImport(ODocument cfg, OServer server) {
 
@@ -42,15 +42,10 @@ public class OETLHandler {
 
   /**
    * Checks If the connection with given parameters is alive
-   *
-   * @param args
-   *
-   * @throws Exception
    */
   public void checkConnection(ODocument args) throws Exception {
 
   }
-
 
   /**
    * Status of the Running Jobs
@@ -69,8 +64,6 @@ public class OETLHandler {
     return status;
   }
 
-
-
   public void saveConfiguration(ODocument args, OServer server) throws Exception {
 
     final String outDBName = args.field("outDBName");
@@ -78,7 +71,7 @@ public class OETLHandler {
     final String configName = args.field("configName");
     final String protocol = args.field("protocol");
 
-    if(outDBName == null) {
+    if (outDBName == null) {
       throw new IllegalArgumentException("target database name is null.");
     }
 
@@ -86,11 +79,11 @@ public class OETLHandler {
     String outOrientGraphUri = server.getDatabaseDirectory() + outDBName;
     String dbURL = protocol + ":" + outOrientGraphUri;
     ODocument loader = migrationConfig.field("loader");
-    if(loader.field("orientdb") != null) {
+    if (loader.field("orientdb") != null) {
       ((ODocument) loader.field("orientdb")).field("dbURL", dbURL);
     }
 
-    if(migrationConfig == null) {
+    if (migrationConfig == null) {
       throw new IllegalArgumentException("Migration config is null.");
     }
 
@@ -104,20 +97,20 @@ public class OETLHandler {
     File serverDBHome = new File(server.getDatabaseDirectory());
     File[] dbDirectories = serverDBHome.listFiles();
 
-    for(int i=0; i<dbDirectories.length; i++) {
+    for (int i = 0; i < dbDirectories.length; i++) {
 
       String dbName = dbDirectories[i].getName();
       File currentETLConfigDir = new File(dbDirectories[i].getAbsolutePath() + "/etl-config/");
 
-      if(currentETLConfigDir.exists()) {
+      if (currentETLConfigDir.exists()) {
         List<ODocument> configs = new LinkedList<ODocument>();
         File[] currentDBConfigs = currentETLConfigDir.listFiles();
 
-        for(int k = 0; k < currentDBConfigs.length; k++) {
+        for (int k = 0; k < currentDBConfigs.length; k++) {
 
           String currentConfigName = currentDBConfigs[k].getName();
 
-          if(currentConfigName.endsWith(".json")) {   // checking if the current file is a json configuration
+          if (currentConfigName.endsWith(".json")) {   // checking if the current file is a json configuration
             ODocument currentConfig = new ODocument();
             currentConfig.field("configName", currentConfigName);
 

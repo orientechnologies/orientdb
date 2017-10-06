@@ -23,6 +23,7 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCollections;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
@@ -118,7 +119,7 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
           if (completedFile.exists())
             completedFile.delete();
 
-          new Thread(new Runnable() {
+          Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
               Thread.currentThread().setName(
@@ -160,7 +161,9 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
                 }
               }
             }
-          }).start();
+          });
+          t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+          t.start();
 
           // TODO: SUPPORT BACKUP ON CLUSTER
           final long fileSize = backupFile.length();

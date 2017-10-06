@@ -28,6 +28,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -116,7 +117,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
-  private final ScheduledThreadPoolExecutor autoFileCloser = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
+  private final ScheduledThreadPoolExecutor autoFileCloser = new OScheduledThreadPoolExecutorWithLogging(1, new ThreadFactory() {
     @SuppressWarnings("NullableProblems")
     @Override
     public Thread newThread(Runnable r) {
@@ -128,7 +129,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   });
 
-  private final ScheduledThreadPoolExecutor commitExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
+  private final ScheduledThreadPoolExecutor commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new ThreadFactory() {
     @SuppressWarnings("NullableProblems")
     @Override
     public Thread newThread(Runnable r) {

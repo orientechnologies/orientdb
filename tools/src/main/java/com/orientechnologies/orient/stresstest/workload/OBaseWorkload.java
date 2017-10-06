@@ -21,6 +21,7 @@ package com.orientechnologies.orient.stresstest.workload;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -214,6 +215,7 @@ public abstract class OBaseWorkload implements OWorkload {
 
     // START ALL THE THREADS
     for (int t = 0; t < concurrencyLevel; ++t) {
+      thread[t].setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       thread[t].start();
     }
 
