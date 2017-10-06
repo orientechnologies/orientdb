@@ -1706,6 +1706,24 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
+  @Test
+  public void testEmbeddedMapOfMapsContainsValue() {
+    //issue #7793
+    String className = "testEmbeddedMapOfMapsContainsValue";
+
+    db.command(new OCommandSQL("create class " + className)).execute();
+    db.command(new OCommandSQL("create property " + className + ".embedded_map EMBEDDEDMAP")).execute();
+    db.command(new OCommandSQL("create property " + className + ".id INTEGER")).execute();
+    db.command(new OCommandSQL(
+        "INSERT INTO " + className + " SET id = 0, embedded_map = {\"key_2\" : {\"name\" : \"key_2\", \"id\" : \"0\"}}")).execute();
+    db.command(new OCommandSQL(
+        "INSERT INTO " + className + " SET id = 1, embedded_map = {\"key_1\" : {\"name\" : \"key_1\", \"id\" : \"1\" }}")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>(
+        "select from " + className + " where embedded_map CONTAINSVALUE {\"name\":\"key_2\", \"id\":\"0\"}"));
+    Assert.assertEquals(results.size(), 1);
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

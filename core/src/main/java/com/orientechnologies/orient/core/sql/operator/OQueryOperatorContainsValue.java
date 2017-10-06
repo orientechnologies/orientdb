@@ -40,9 +40,8 @@ import java.util.Map;
 
 /**
  * CONTAINS KEY operator.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls {
 
@@ -68,8 +67,8 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
       return null;
 
     if (indexDefinition.getParamCount() == 1) {
-      if (!((indexDefinition instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) indexDefinition)
-          .getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
+      if (!((indexDefinition instanceof OPropertyMapIndexDefinition)
+          && ((OPropertyMapIndexDefinition) indexDefinition).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
         return null;
 
       final Object key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
@@ -87,8 +86,9 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
       // using part of composite key stored in index.
       final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
 
-      if (!((compositeIndexDefinition.getMultiValueDefinition() instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) compositeIndexDefinition
-          .getMultiValueDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
+      if (!((compositeIndexDefinition.getMultiValueDefinition() instanceof OPropertyMapIndexDefinition)
+          && ((OPropertyMapIndexDefinition) compositeIndexDefinition.getMultiValueDefinition()).getIndexBy()
+          == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
         return null;
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
@@ -169,8 +169,21 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
           if ((Boolean) condition.evaluate((ODocument) o, null, iContext))
             return true;
         }
-      } else
-        return map.containsValue(right);
+      } else {
+        for (Object val : map.values()) {
+          Object convertedRight = iRight;
+          if(val instanceof ODocument && iRight instanceof Map){
+            val = ((ODocument) val).toMap();
+          }
+          if(val instanceof Map && iRight instanceof ODocument){
+            convertedRight = ((ODocument) iRight).toMap();
+          }
+          if (OQueryOperatorEquals.equals(val, convertedRight)) {
+            return true;
+          }
+        }
+        return false;
+      }
 
     } else if (iRight instanceof Map<?, ?>) {
       final Map<String, ?> map = (Map<String, ?>) iRight;
@@ -193,7 +206,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
     final ORecord record = (ORecord) o;
     if (record.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
       try {
-        o = record.<ORecord> load();
+        o = record.<ORecord>load();
       } catch (ORecordNotFoundException e) {
         throw OException.wrapException(new ODatabaseException("Error during loading record with id : " + record.getIdentity()), e);
       }
