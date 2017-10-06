@@ -554,11 +554,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
-  public void beginDistributedTx(ODistributedRequestId requestId, OTransactionOptimistic tx) {
+  public void beginDistributedTx(ODistributedRequestId requestId, OTransactionOptimistic tx, boolean local) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.registerTxContext(requestId, tx);
     try {
       acquireLocksForTx(tx, txContext);
+
+      if (!local) {
+        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(tx);
+      }
 
       for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexOperations().entrySet()) {
         OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
@@ -587,7 +591,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
 
     } catch (Throwable t) {
-      // I GUESS DESTROY FREE THE LOCKS, TO DOUBLE CHECK
       txContext.unlock();
       throw t;
     }
@@ -616,7 +619,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     try {
       OTransactionOptimistic tx = txContext.getTransaction();
       //This bypass the distributed layer and do a low level commit
-      super.internalCommit(tx);
+      ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
     } finally {
       txContext.destroy();
     }

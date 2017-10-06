@@ -60,14 +60,14 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
-    return new OTransactionPhase1TaskResult(executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx));
+    return new OTransactionPhase1TaskResult(executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false));
   }
 
   public static OTransactionResultPayload executeTransaction(ODistributedRequestId requestId, ODatabaseDocumentDistributed database,
-      OTransactionOptimistic tx) {
+    OTransactionOptimistic tx, boolean local) {
     OTransactionResultPayload payload;
     try {
-      database.beginDistributedTx(requestId, tx);
+      database.beginDistributedTx(requestId, tx, local);
       payload = new OTxSuccess();
     } catch (OConcurrentModificationException ex) {
       payload = new OTxConcurrentModification((ORecordId) ex.getRid(), ex.getEnhancedDatabaseVersion());
@@ -103,7 +103,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         break;
       }
       ORecordInternal.setIdentity(record, (ORecordId) req.getId());
-      ORecordInternal.setVersion(record,req.getVersion());
+      ORecordInternal.setVersion(record, req.getVersion());
       ORecordOperation op = new ORecordOperation(record, type);
       ops.add(op);
 
