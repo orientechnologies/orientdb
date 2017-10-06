@@ -144,14 +144,14 @@ describe("HomePage", function () {
 
     browser.setValue('#serverUser', "root")
       .setValue('#serverPassword', "root")
-      .click("#cloud-database-VehicleHistoryGraph")
-      .waitForVisible('.noty_text');
+      .click(`#cloud-database-${config.cloudDB}`)
+      .waitForVisible('.noty_text',10000);
 
     var inputUser = browser.getHTML('.noty_text', false);
 
-    expect(inputUser).to.equal("Database VehicleHistoryGraph imported.");
+    expect(inputUser).to.equal(`Database ${config.cloudDB} imported.`);
 
-    loginDatabase(browser, "VehicleHistoryGraph");
+    loginDatabase(browser,  config.cloudDB);
 
 
   });
