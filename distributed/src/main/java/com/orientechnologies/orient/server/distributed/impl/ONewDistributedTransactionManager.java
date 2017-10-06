@@ -59,7 +59,7 @@ public class ONewDistributedTransactionManager {
     this.localDistributedDatabase = iDDatabase;
   }
 
-  public List<ORecordOperation> commit(final ODatabaseDocumentDistributed database, final OTransactionOptimistic iTx,
+  public List<ORecordOperation> commit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx,
       final ODistributedStorageEventListener eventListener) {
     final String localNodeName = dManager.getLocalNodeName();
 
@@ -178,7 +178,7 @@ public class ONewDistributedTransactionManager {
         EXECUTION_MODE.NO_RESPONSE, null, null, null);
   }
 
-  protected void checkForClusterIds(final OTransaction iTx) {
+  protected void checkForClusterIds(final OTransactionInternal iTx) {
     for (ORecordOperation op : iTx.getRecordOperations()) {
       final ORecordId rid = (ORecordId) op.getRecord().getIdentity();
       switch (op.type) {
@@ -207,7 +207,7 @@ public class ONewDistributedTransactionManager {
     return involvedClusters;
   }
 
-  protected OTransactionPhase1Task createTxTask(final OTransactionOptimistic uResult, final Set<String> nodes) {
+  protected OTransactionPhase1Task createTxTask(final OTransactionInternal uResult, final Set<String> nodes) {
     final OTransactionPhase1Task txTask = (OTransactionPhase1Task) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
         .createTask(OTransactionPhase1Task.FACTORYID);
     txTask.init(uResult);

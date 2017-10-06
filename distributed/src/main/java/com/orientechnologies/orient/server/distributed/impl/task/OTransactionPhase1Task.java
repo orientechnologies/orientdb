@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -64,7 +65,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   }
 
   public static OTransactionResultPayload executeTransaction(ODistributedRequestId requestId, ODatabaseDocumentDistributed database,
-    OTransactionOptimistic tx, boolean local) {
+      OTransactionInternal tx, boolean local) {
     OTransactionResultPayload payload;
     try {
       database.beginDistributedTx(requestId, tx, local);
@@ -142,7 +143,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     return FACTORYID;
   }
 
-  public void init(OTransactionOptimistic operations) {
+  public void init(OTransactionInternal operations) {
     this.ops = new ArrayList<>(operations.getRecordOperations());
   }
 

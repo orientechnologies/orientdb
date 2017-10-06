@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -64,6 +65,6 @@ public interface ODistributedTxContext {
 
   boolean isCanceled();
 
-  OTransactionOptimistic getTransaction();
+  OTransactionInternal getTransaction();
 
 }

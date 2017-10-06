@@ -482,53 +482,45 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return rid.getClusterId();
   }
 
-  protected OMicroTransaction beginMicroTransaction() {
-    if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed())
-      return null;
-    return super.beginMicroTransaction();
-  }
-
   @Override
-  protected boolean supportsMicroTransactions(ORecord record) {
-    return OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
-  }
-
-  @Override
-  public void internalCommit(OTransactionOptimistic iTx) {
-    //This is future may handle a retry
-    try {
-      for (ORecordOperation txEntry : iTx.getRecordOperations()) {
-        if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
-          final ORecord record = txEntry.getRecord();
-          if (record instanceof ODocument)
-            ((ODocument) record).validate();
+  public void internalCommit(OTransactionInternal iTx) {
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+      //Exclusive for handling schema manipulation, remove after refactor for distributed schema
+      super.internalCommit(iTx);
+    } else {
+      //This is future may handle a retry
+      try {
+        for (ORecordOperation txEntry : iTx.getRecordOperations()) {
+          if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+            final ORecord record = txEntry.getRecord();
+            if (record instanceof ODocument)
+              ((ODocument) record).validate();
+          }
         }
+        final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
+        ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
+        final String localNodeName = dManager.getLocalNodeName();
+        getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
+        ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
+            getStorageDistributed().getLocalDistributedDatabase());
+        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(iTx);
+
+        txManager.commit(this, iTx, getStorageDistributed().getEventListener());
+        return;
+      } catch (OValidationException e) {
+        throw e;
+      } catch (HazelcastInstanceNotActiveException e) {
+        throw new OOfflineNodeException("Hazelcast instance is not available");
+
+      } catch (HazelcastException e) {
+        throw new OOfflineNodeException("Hazelcast instance is not available");
+      } catch (Exception e) {
+        getStorageDistributed().handleDistributedException("Cannot route TX operation against distributed node", e);
       }
-      final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
-      ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
-      final String localNodeName = dManager.getLocalNodeName();
-      getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
-      ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
-          getStorageDistributed().getLocalDistributedDatabase());
-      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(iTx);
-
-      txManager.commit(this, iTx, getStorageDistributed().getEventListener());
-      return;
-    } catch (OValidationException e) {
-      throw e;
-    } catch (HazelcastInstanceNotActiveException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
-
-    } catch (HazelcastException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
-    } catch (Exception e) {
-      getStorageDistributed().handleDistributedException("Cannot route TX operation against distributed node", e);
     }
-
-    return;
   }
 
-  public void acquireLocksForTx(OTransactionRealAbstract tx, ODistributedTxContext txContext) {
+  public void acquireLocksForTx(OTransactionInternal tx, ODistributedTxContext txContext) {
     //Sort and lock transaction entry in distributed environment
     Set<ORID> rids = new TreeSet<>();
     for (ORecordOperation entry : tx.getRecordOperations()) {
@@ -554,7 +546,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
-  public void beginDistributedTx(ODistributedRequestId requestId, OTransactionOptimistic tx, boolean local) {
+  public void beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.registerTxContext(requestId, tx);
     try {
@@ -606,7 +598,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
     try {
-      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).commitPreAllocated((OTransactionInternal) getTransaction());
+      if (microTransaction != null) {
+        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).commitPreAllocated(microTransaction);
+      } else {
+        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).commitPreAllocated((OTransactionInternal) getTransaction());
+      }
     } finally {
       txContext.destroy();
     }
@@ -617,7 +613,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
     try {
-      OTransactionOptimistic tx = txContext.getTransaction();
+      OTransactionInternal tx = txContext.getTransaction();
       //This bypass the distributed layer and do a low level commit
       ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
     } finally {

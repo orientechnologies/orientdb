@@ -3,6 +3,8 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -18,12 +20,12 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   private final ODistributedDatabaseImpl shared;
   private final ODistributedRequestId    id;
-  private final OTransactionOptimistic   tx;
+  private final OTransactionInternal   tx;
   private final long                     startedOn;
   private final List<ORID>   lockedRids = new ArrayList<>();
   private final List<Object> lockedKeys = new ArrayList<>();
 
-  public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransactionOptimistic tx) {
+  public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransactionInternal tx) {
     this.shared = shared;
     this.id = reqId;
     this.tx = tx;
@@ -62,7 +64,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void commit(ODatabaseDocumentInternal database) {
-    database.rawBegin(tx);
+    database.rawBegin((OTransaction) tx);
     database.commit();
   }
 
@@ -114,7 +116,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public OTransactionOptimistic getTransaction() {
+  public OTransactionInternal getTransaction() {
     return tx;
   }
 }
