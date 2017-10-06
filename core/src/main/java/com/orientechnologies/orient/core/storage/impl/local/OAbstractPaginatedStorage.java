@@ -3897,16 +3897,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       return new OStorageOperationResult<OPhysicalPosition>(ppos);
     } catch (IOException ioe) {
-      try {
-        if (ppos.clusterPosition != ORID.CLUSTER_POS_INVALID)
-          cluster.deleteRecord(ppos.clusterPosition);
-      } catch (IOException e) {
-        OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, e);
-      }
-
-      OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, ioe);
-
-      throw OException.wrapException(new OStorageException("Error during record deletion"), ioe);
+      throw OException.wrapException(
+          new OStorageException("Error during record deletion in cluster " + (cluster != null ? cluster.getName() : "")), ioe);
     }
   }
 
@@ -3992,13 +3984,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       recordConflict.incrementAndGet();
       throw e;
     } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", ioe);
-
-      final int recordVersion = -1;
-      if (callback != null)
-        callback.call(rid, recordVersion);
-
-      return new OStorageOperationResult<Integer>(recordVersion);
+      throw OException
+          .wrapException(new OStorageException("Error on updating record " + rid + " (cluster: " + cluster.getName() + ")"), ioe);
     }
   }
 
@@ -4086,8 +4073,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return new OStorageOperationResult<Boolean>(true);
 
     } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
-      throw OException.wrapException(new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")"), ioe);
+      throw OException
+          .wrapException(new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster.getName() + ")"), ioe);
     }
   }
 
