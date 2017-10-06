@@ -1499,15 +1499,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             ORecord rec = txEntry.getRecord();
             if (!rec.getIdentity().isPersistent()) {
               if (rec.isDirty()) {
+                //This allocate a position for a new record
                 ORecordId rid = (ORecordId) rec.getIdentity().copy();
                 ORecordId oldRID = rid.copy();
                 final OCluster cluster = getClusterById(rid.getClusterId());
                 OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
-                rid.setClusterId(cluster.getId());
                 rid.setClusterPosition(ppos.clusterPosition);
                 clientTx.updateIdentityAfterCommit(oldRID, rid);
               }
             } else {
+              //This allocate position starting from a valid rid, used in distributed for allocate the same position on other nodes
               ORecordId rid = (ORecordId) rec.getIdentity();
               final OCluster cluster = getClusterById(rid.getClusterId());
               OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
@@ -1517,8 +1518,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
           }
           atomicOperationsManager.endAtomicOperation(false, null);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
           atomicOperationsManager.endAtomicOperation(true, e);
+          throw e;
         }
 
       } catch (IOException | RuntimeException ioe) {
