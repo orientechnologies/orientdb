@@ -28,6 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.AtomicLongOProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OPair;
@@ -144,6 +145,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
         });
         serverThread.setDaemon(true);
+        serverThread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
         serverThread.start();
       }
     }
@@ -253,7 +255,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (!exists())
           throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
-        fuzzyCheckpointExecutor = Executors.newScheduledThreadPool(1, new FuzzyCheckpointThreadFactory());
+        fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
         transaction = new ThreadLocal<>();
         configuration.load(contextConfiguration);
 
