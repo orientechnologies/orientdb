@@ -111,7 +111,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
         ret = queryContext.getSearcher().doc(score.doc);
 
       } catch (IOException e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error during conversion to document", e);
       }
       return ret;
     }

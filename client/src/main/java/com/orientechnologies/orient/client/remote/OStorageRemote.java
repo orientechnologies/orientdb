@@ -2595,7 +2595,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       dest.activateOnCurrentThread();
       openRemoteDatabase();
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Can not open remote database", e);
     } finally {
       ODatabaseRecordThreadLocal.INSTANCE.set(origin);
     }

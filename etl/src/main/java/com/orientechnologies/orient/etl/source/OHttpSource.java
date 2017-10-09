@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.source;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,9 +35,9 @@ import java.net.URL;
  * Extracts data from HTTP endpoint.
  */
 public class OHttpSource extends OAbstractSource {
-  protected BufferedReader    reader;
-  protected String            url;
-  protected String            method = "GET";
+  protected BufferedReader reader;
+  protected String         url;
+  protected String method = "GET";
   protected HttpURLConnection conn;
   protected ODocument         headers;
 
@@ -98,7 +99,7 @@ public class OHttpSource extends OAbstractSource {
       try {
         reader.close();
       } catch (IOException e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error during closing of reader", e);
       }
 
     if (conn != null)

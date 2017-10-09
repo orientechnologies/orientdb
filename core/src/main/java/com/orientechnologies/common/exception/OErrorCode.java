@@ -10,7 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * Enumeration with the error managed by OrientDB. This class has been introduced in v.2.2 and little by little will contain all the
  * OrientDB managed errors.
- * 
+ *
  * @author Luigi Dell'Aquila
  */
 @OApi(maturity = OApi.MATURITY.NEW)
@@ -54,26 +54,17 @@ public enum OErrorCode {
   }
 
   public void throwException(String message, Throwable parent) {
-    final String fullMessage = String.format("%1$06d_%2$06d - %s", category.code, code, message);
     try {
       OException exc = OException.wrapException(exceptionClass.getConstructor(String.class).newInstance(message), parent);
       throw exc;
     } catch (InstantiationException e) {
-      OLogManager.instance().warn(this, "Cannot instantiate exception "+exceptionClass);
-      e.printStackTrace();
-      parent.printStackTrace();
+      OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass, e);
     } catch (IllegalAccessException e) {
-      OLogManager.instance().warn(this, "Cannot instantiate exception "+exceptionClass);
-      e.printStackTrace();
-      parent.printStackTrace();
+      OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass, e);
     } catch (NoSuchMethodException e) {
-      OLogManager.instance().warn(this, "Cannot instantiate exception "+exceptionClass);
-      e.printStackTrace();
-      parent.printStackTrace();
+      OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass, e);
     } catch (InvocationTargetException e) {
-      OLogManager.instance().warn(this, "Cannot instantiate exception "+exceptionClass);
-      e.printStackTrace();
-      parent.printStackTrace();
+      OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass, e);
     }
 
   }

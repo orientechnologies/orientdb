@@ -387,7 +387,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       try {
         listener.onOpen(getDatabaseOwner());
       } catch (Throwable t) {
-        t.printStackTrace();
+        OLogManager.instance().error(this, "Error during call of database listener", t);
       }
   }
 
@@ -612,7 +612,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       try {
         listener.onClose(getDatabaseOwner());
       } catch (Throwable t) {
-        t.printStackTrace();
+        OLogManager.instance().error(this, "Error during call of database listener", t);
       }
   }
 
@@ -629,7 +629,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         activateOnCurrentThread();
         listener.onDelete(getDatabaseOwner());
       } catch (Throwable t) {
-        t.printStackTrace();
+        OLogManager.instance().error(this, "Error during call of database listener", t);
       }
   }
 

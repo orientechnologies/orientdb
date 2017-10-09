@@ -308,7 +308,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
         try {
           transactionChanges.put(key, singleValue, luceneDoc);
         } catch (IOException e) {
-          e.printStackTrace();
+          OLogManager.instance().error(this, "Error during recording of transaction changes", e);
         }
 
       } else {

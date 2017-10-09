@@ -340,7 +340,7 @@ public class OHttpResponse {
               writeRecordsOnStream(iFetchPlan, sendFormat, iAdditionalProperties, it, writer);
               writer.flush();
             } catch (IOException e) {
-              e.printStackTrace();
+              OLogManager.instance().error(this, "Error during writing of records to HTTP response", e);
             }
             return null;
           }

@@ -246,14 +246,14 @@ public class OrientGraphNoTx extends OrientBaseGraph {
           edgeRecord.save(iClusterName);
 
         // OUT-VERTEX ---> IN-VERTEX/EDGE
-        currentVertex.createLink(graph, outDocument, to, outFieldName);
+        OrientVertex.createLink(graph, outDocument, to, outFieldName);
 
         if (graph != null) {
           outDocument.save();
         }
 
         // IN-VERTEX ---> OUT-VERTEX/EDGE
-        currentVertex.createLink(graph, inDocument, from, inFieldName);
+        OrientVertex.createLink(graph, inDocument, from, inFieldName);
 
         if (graph != null)
           inDocument.save();
@@ -269,7 +269,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
             edge.removeRecord();
           }
         } catch (Exception ex) {
-          ex.printStackTrace();
+          OLogManager.instance().error(OrientGraphNoTx.class, "Error during edge removal", ex);
         }
 
         edge = null;
@@ -314,6 +314,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
         try {
           edge.remove();
         } catch (Exception ex) {
+          OLogManager.instance().error(OrientGraphNoTx.class, "Error during edge removal", ex);
         }
         throw e;
       } catch (Throwable e) {
@@ -321,6 +322,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
         try {
           edge.remove();
         } catch (Exception ex) {
+          OLogManager.instance().error(OrientGraphNoTx.class, "Error during edge removal", ex);
         }
         throw OException.wrapException(new OrientGraphModificationException("Error on addEdge in non tx environment"), e);
       }

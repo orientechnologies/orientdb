@@ -640,11 +640,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (currentLock != null)
       throw new ODistributedRecordLockedException(manager.getLocalNodeName(), rid, currentLock.reqId, timeout);
 
-    // DUMP STACK TRACE
-    // OException.dumpStackTrace(String.format("Distributed transaction: %s locked record %s in database '%s' (thread=%d)",
-    // requestId,
-    // iRecord, databaseName, Thread.currentThread().getId()));
-
     return newLock;
   }
 
@@ -661,11 +656,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             databaseName, owner.reqId, requestId, Thread.currentThread().getId());
         return;
       }
-
-      // DUMP STACK TRACE
-      // OException
-      // .dumpStackTrace(String.format("Distributed transaction: %s unlocked record %s in database '%s' (owner=%s, thread=%d)",
-      // requestId, iRecord, databaseName, owner != null ? owner.reqId : "null", Thread.currentThread().getId()));
 
       lockManager.remove(iRecord.getIdentity());
 

@@ -86,7 +86,7 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
         engine.onRecordAddedToResultSet(queryContext, res, ret, score);
       } catch (IOException e) {
         //TODO handle in a proper way
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error during iteration of result set", e);
       }
       index++;
       return res;
@@ -103,10 +103,11 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, pageSize);
           break;
         case FILTER_SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query,queryContext.filter, pageSize, queryContext.sort);
+          topDocs = queryContext.getSearcher()
+              .searchAfter(array[array.length - 1], query, queryContext.filter, pageSize, queryContext.sort);
           break;
         case FILTER:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query,queryContext.filter, pageSize);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, pageSize);
           break;
         case SORT:
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, pageSize, queryContext.sort);

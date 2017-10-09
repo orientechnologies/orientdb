@@ -652,8 +652,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   /**
    * Handles the record in result.
    *
-   * @param iRecord  Record to handle
-   * @param iContext
+   * @param iRecord Record to handle
    *
    * @return false if limit has been reached, otherwise true
    */
@@ -682,8 +681,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   /**
    * Returns the temporary RID counter assuring it's unique per query tree.
-   *
-   * @param iContext
    *
    * @return Serial as integer
    */
@@ -881,8 +878,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   /**
    * Report the tip to the profiler and collect it in context to be reported by tools like Studio
-   *
-   * @param iMessage
    */
   protected void reportTip(final String iMessage) {
     Orient.instance().getProfiler().reportTip(iMessage);
@@ -1724,7 +1719,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             if (exceptions[current] == null) {
               exceptions[current] = new RuntimeException(e);
             }
-            e.printStackTrace();
+
+            OLogManager.instance().error(this, "Error during cluster scan", e);
           }
         }
       };

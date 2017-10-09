@@ -67,10 +67,4 @@ public abstract class OException extends RuntimeException {
     return iRootException;
   }
 
-  public static void dumpStackTrace(final String message) {
-    // DUMP CONTEXT
-    OLogManager.instance().flush();
-    new Exception(message).printStackTrace();
-    System.err.flush();
-  }
 }

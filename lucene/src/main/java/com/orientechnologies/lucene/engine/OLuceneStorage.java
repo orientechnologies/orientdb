@@ -70,12 +70,12 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   protected     OLuceneFacetManager facetManager;
   protected     TimerTask           commitTask;
   protected AtomicBoolean closed = new AtomicBoolean(true);
-  protected TrackingIndexWriter                   mgrWriter;
-  protected SearcherManager                       searcherManager;
-  protected ControlledRealTimeReopenThread        nrt;
-  private   OLuceneDocumentBuilder                builder;
-  private   OLuceneQueryBuilder                   queryBuilder;
-  private   long                                  reopenToken;
+  protected TrackingIndexWriter            mgrWriter;
+  protected SearcherManager                searcherManager;
+  protected ControlledRealTimeReopenThread nrt;
+  private   OLuceneDocumentBuilder         builder;
+  private   OLuceneQueryBuilder            queryBuilder;
+  private   long                           reopenToken;
 
   private Analyzer indexAnalyzer;
   private Analyzer queryAnalyzer;
@@ -221,7 +221,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     try {
       return searcher().getIndexReader().numDocs();
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Can not calculate amount of documents", e);
     }
     return mgrWriter.getIndexWriter().maxDoc();
   }

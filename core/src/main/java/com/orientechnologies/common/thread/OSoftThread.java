@@ -20,6 +20,7 @@
 
 package com.orientechnologies.common.thread;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OService;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 
@@ -82,7 +83,7 @@ public abstract class OSoftThread extends Thread implements OService {
         afterExecution();
       } catch (Throwable t) {
         if (dumpExceptions)
-          t.printStackTrace();
+          OLogManager.instance().error(this, "Error during thread execution", t);
       }
     }
 

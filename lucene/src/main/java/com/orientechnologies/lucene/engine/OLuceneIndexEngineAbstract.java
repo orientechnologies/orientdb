@@ -364,7 +364,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       try {
         mgrWriter.getIndexWriter().deleteUnusedFiles();
       } catch (IOException e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error during deletion of unused files", e);
       }
       close();
     }

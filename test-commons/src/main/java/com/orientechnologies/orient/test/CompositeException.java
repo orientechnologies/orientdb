@@ -33,6 +33,7 @@ public class CompositeException extends RuntimeException {
     this.causes.addAll(causes);
   }
 
+  @SuppressWarnings("CallToPrintStackTrace")
   @Override
   public void printStackTrace() {
     if (causes.isEmpty()) {

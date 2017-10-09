@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server;
 
+import com.orientechnologies.common.log.OLogManager;
+
 public class OServerMain {
   private static OServer instance;
 
@@ -46,7 +48,7 @@ public class OServerMain {
           instance.startup().activate();
           instance.waitForShutdown();
         } catch (Exception e) {
-          e.printStackTrace();
+          OLogManager.instance().error(this, "Error during server execution", e);
         }
       }
     };

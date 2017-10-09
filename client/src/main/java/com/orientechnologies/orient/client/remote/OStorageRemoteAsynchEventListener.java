@@ -54,15 +54,16 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
 
   public void onRequest(final byte iRequestCode, final Object obj) {
     //Using get status to avoid to check the session.
-    if(storage.getStatus() == STATUS.CLOSED)
+    if (storage.getStatus() == STATUS.CLOSED)
       return;
-   
+
     if (iRequestCode == OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG) {
       storage.updateClusterConfiguration(null, (byte[]) obj);
 
       if (OLogManager.instance().isDebugEnabled()) {
         synchronized (storage.getClusterConfiguration()) {
-          OLogManager.instance().debug(this, "Received new cluster configuration: %s", storage.getClusterConfiguration().toJSON("prettyPrint"));
+          OLogManager.instance()
+              .debug(this, "Received new cluster configuration: %s", storage.getClusterConfiguration().toJSON("prettyPrint"));
         }
       }
     } else if (iRequestCode == OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY) {
@@ -101,7 +102,7 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
             listener.onError(id);
           }
         }
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error during request processing", e);
       }
 
     }

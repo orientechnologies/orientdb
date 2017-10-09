@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -29,7 +30,7 @@ public class ODatabaseImportRemote extends ODatabaseImpExpAbstract {
     try {
       importDatabase();
     } catch (Exception e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Can not import database", e);
     }
   }
 
