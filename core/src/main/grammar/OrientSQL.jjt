@@ -4763,6 +4763,7 @@ ODropSequenceStatement DropSequenceStatement():
     (
         <DROP> <SEQUENCE>
         jjtThis.name = Identifier()
+        [ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
     )
     { return jjtThis; }
 }
