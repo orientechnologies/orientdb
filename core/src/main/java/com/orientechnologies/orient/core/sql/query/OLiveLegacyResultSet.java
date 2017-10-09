@@ -79,7 +79,7 @@ public class OLiveLegacyResultSet<T> extends OConcurrentLegacyResultSet<T> {
           return result;
         } catch (InterruptedException e) {
           setCompleted();
-          e.printStackTrace();
+          Thread.currentThread().interrupt();
           return null;
         }
       }

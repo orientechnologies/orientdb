@@ -647,8 +647,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   /**
    * Handles the record in result.
    *
-   * @param iRecord  Record to handle
-   * @param iContext
+   * @param iRecord Record to handle
    *
    * @return false if limit has been reached, otherwise true
    */
@@ -677,8 +676,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   /**
    * Returns the temporary RID counter assuring it's unique per query tree.
-   *
-   * @param iContext
    *
    * @return Serial as integer
    */
@@ -852,8 +849,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   /**
    * Report the tip to the profiler and collect it in context to be reported by tools like Studio
-   *
-   * @param iMessage
    */
   protected void reportTip(final String iMessage) {
     Orient.instance().getProfiler().reportTip(iMessage);
@@ -1541,7 +1536,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         ((ORecordIteratorClusters) iTarget).getClusterIds() :
         null;
 
-    parallel = (parallel || getDatabase().getConfiguration().getValueAsBoolean(OGlobalConfiguration.QUERY_PARALLEL_AUTO)) && canRunParallel(clusterIds, iTarget);
+    parallel = (parallel || getDatabase().getConfiguration().getValueAsBoolean(OGlobalConfiguration.QUERY_PARALLEL_AUTO))
+        && canRunParallel(clusterIds, iTarget);
 
     try {
       if (parallel)
@@ -1601,7 +1597,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private boolean serialIterator(Iterator<? extends OIdentifiable> iTarget) {
-    int queryScanThresholdWarning = getDatabase().getConfiguration().getValueAsInteger(OGlobalConfiguration.QUERY_SCAN_THRESHOLD_TIP);
+    int queryScanThresholdWarning = getDatabase().getConfiguration()
+        .getValueAsInteger(OGlobalConfiguration.QUERY_SCAN_THRESHOLD_TIP);
 
     boolean tipActivated = queryScanThresholdWarning > 0 && iTarget instanceof OIdentifiableIterator && compiledFilter != null;
 
@@ -1660,49 +1657,48 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     for (int i = 0; i < jobNumbers; ++i) {
       final int current = i;
 
-      final Runnable job = new Runnable() {
-        @Override
-        public void run() {
+      final Runnable job = () -> {
+        try {
+          ODatabaseDocumentInternal localDatabase = null;
           try {
-            ODatabaseDocumentInternal localDatabase = null;
-            try {
-              exceptions[current] = null;
-              results[current] = true;
+            exceptions[current] = null;
+            results[current] = true;
 
-              final OCommandContext threadContext = context.copy();
-              contexts[current] = threadContext;
+            final OCommandContext threadContext = context.copy();
+            contexts[current] = threadContext;
 
-              localDatabase = db.copy();
-              localDatabase.activateOnCurrentThread();
+            localDatabase = db.copy();
+            localDatabase.activateOnCurrentThread();
 
-              // CREATE A SNAPSHOT TO AVOID DEADLOCKS
-              db.getMetadata().getSchema().makeSnapshot();
+            // CREATE A SNAPSHOT TO AVOID DEADLOCKS
+            db.getMetadata().getSchema().makeSnapshot();
 
-              scanClusterWithIterator(localDatabase, threadContext, clusterIds[current], current, results);
+            scanClusterWithIterator(localDatabase, threadContext, clusterIds[current], current, results);
 
-            } catch (RuntimeException t) {
-              exceptions[current] = t;
-            } finally {
-              runningJobs.decrementAndGet();
-              resultQueue.offer(PARALLEL_END_EXECUTION_THREAD);
+          } catch (RuntimeException t) {
+            exceptions[current] = t;
+          } finally {
+            runningJobs.decrementAndGet();
+            resultQueue.offer(PARALLEL_END_EXECUTION_THREAD);
 
-              if (localDatabase != null)
-                localDatabase.close();
+            if (localDatabase != null)
+              localDatabase.close();
 
-            }
-          } catch (Exception e) {
-            if (exceptions[current] == null) {
-              exceptions[current] = new RuntimeException(e);
-            }
-            e.printStackTrace();
           }
+        } catch (Exception e) {
+          if (exceptions[current] == null) {
+            exceptions[current] = new RuntimeException(e);
+          }
+
+          OLogManager.instance().error(this, "Error during command execution", e);
         }
       };
 
       jobs.add(Orient.instance().submit(job));
     }
 
-    final int maxQueueSize = getDatabase().getConfiguration().getValueAsInteger(OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE) - 1;
+    final int maxQueueSize =
+        getDatabase().getConfiguration().getValueAsInteger(OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE) - 1;
 
     boolean cancelQuery = false;
     boolean tipProvided = false;
@@ -2160,7 +2156,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               context.setVariable("$limit", limit);
 
               cursor = operator.executeIndexQuery(context, index, keyParams, ascSortOrder);
-              if(cursor!=null){
+              if (cursor != null) {
                 metricRecorder.recordInvolvedIndexesMetric(index);
               }
 

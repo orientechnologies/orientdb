@@ -20,8 +20,6 @@
 
 package com.orientechnologies.common.exception;
 
-import com.orientechnologies.common.log.OLogManager;
-
 public abstract class OException extends RuntimeException {
 
   private static final long serialVersionUID = 3882447822497861424L;
@@ -46,31 +44,4 @@ public abstract class OException extends RuntimeException {
     super(exception.getMessage(), exception.getCause());
   }
 
-  /**
-   * Passing of root exceptions directly is prohibited use {@link #wrapException(OException, Throwable)} instead.
-   */
-  private OException(final Throwable cause) {
-    super(cause);
-  }
-
-  /**
-   * Passing of root exceptions directly is prohibited use {@link #wrapException(OException, Throwable)} instead.
-   */
-  private OException(final String message, final Throwable cause) {
-    super(message, cause);
-  }
-
-  public static Throwable getFirstCause(Throwable iRootException) {
-    while (iRootException.getCause() != null)
-      iRootException = iRootException.getCause();
-
-    return iRootException;
-  }
-
-  public static void dumpStackTrace(final String message) {
-    // DUMP CONTEXT
-    OLogManager.instance().flush();
-    new Exception(message).printStackTrace();
-    System.err.flush();
-  }
 }

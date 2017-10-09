@@ -337,20 +337,16 @@ public class OHttpResponse {
 
       final String sendFormat = iFormat;
       if (streaming) {
-        sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, null,
-            new OCallable<Void, OChunkedResponse>() {
-              @Override
-              public Void call(OChunkedResponse iArgument) {
-                try {
-                  OutputStreamWriter writer = new OutputStreamWriter(iArgument);
-                  writeRecordsOnStream(iFetchPlan, sendFormat, iAdditionalProperties, it, writer);
-                  writer.flush();
-                } catch (IOException e) {
-                  e.printStackTrace();
-                }
-                return null;
-              }
-            });
+        sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, null, iArgument -> {
+          try {
+            OutputStreamWriter writer = new OutputStreamWriter(iArgument);
+            writeRecordsOnStream(iFetchPlan, sendFormat, iAdditionalProperties, it, writer);
+            writer.flush();
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "Error during writing of records to the HTTP response", e);
+          }
+          return null;
+        });
       } else {
         final StringWriter buffer = new StringWriter();
         writeRecordsOnStream(iFetchPlan, iFormat, iAdditionalProperties, it, buffer);
@@ -564,8 +560,6 @@ public class OHttpResponse {
 
   /**
    * Stores additional headers to send
-   *
-   * @param iHeader
    */
   public void setHeader(final String iHeader) {
     headers = iHeader;

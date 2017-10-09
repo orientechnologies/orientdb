@@ -16,6 +16,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.statistic;
 
+import com.orientechnologies.common.log.OLogManager;
+
 import javax.management.*;
 import javax.management.modelmbean.ModelMBeanAttributeInfo;
 import java.util.ArrayList;
@@ -163,8 +165,7 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
   public Object getAttribute(String attribute) throws AttributeNotFoundException, MBeanException, ReflectionException {
     if (attribute == null) {
       throw new RuntimeOperationsException(new IllegalArgumentException("Attribute name cannot be null"),
-          "Cannot invoke a getter of " + getClass().getSimpleName() +
-              " with null attribute name");
+          "Cannot invoke a getter of " + getClass().getSimpleName() + " with null attribute name");
     }
 
     final int separatorIndex = attribute.indexOf(COMPONENT_SEPARATOR);
@@ -336,8 +337,7 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
         Object value = getAttribute(attribute);
         resultList.add(new Attribute(attribute, value));
       } catch (Exception e) {
-        // print debug info but continue processing list
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error during fetching of value attribute '" + attribute + "'", e);
       }
     }
 
@@ -367,8 +367,8 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
       return null;
     }
 
-    throw new ReflectionException(new NoSuchMethodException(actionName), "Cannot find the operation " + actionName +
-        " in " + getClass().getSimpleName());
+    throw new ReflectionException(new NoSuchMethodException(actionName),
+        "Cannot find the operation " + actionName + " in " + getClass().getSimpleName());
   }
 
   @Override

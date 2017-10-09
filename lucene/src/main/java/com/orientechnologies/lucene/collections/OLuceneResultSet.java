@@ -68,24 +68,19 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
     fetchFirstBatch();
     deletedMatchCount = calculateDeletedMatch();
 
-    Map<String, Object> highlight = Optional.ofNullable(metadata.<Map>getProperty("highlight"))
-        .orElse(Collections.emptyMap());
+    Map<String, Object> highlight = Optional.ofNullable(metadata.<Map>getProperty("highlight")).orElse(Collections.emptyMap());
 
-    highlighted = Optional.ofNullable((List<String>) highlight.get("fields"))
-        .orElse(Collections.emptyList());
+    highlighted = Optional.ofNullable((List<String>) highlight.get("fields")).orElse(Collections.emptyList());
 
-    String startElement = (String) Optional.ofNullable(highlight.get("start"))
-        .orElse("<B>");
+    String startElement = (String) Optional.ofNullable(highlight.get("start")).orElse("<B>");
 
-    String endElement = (String) Optional.ofNullable(highlight.get("end"))
-        .orElse("</B>");
+    String endElement = (String) Optional.ofNullable(highlight.get("end")).orElse("</B>");
 
     Scorer scorer = new QueryTermScorer(queryContext.getQuery());
     Formatter formatter = new SimpleHTMLFormatter(startElement, endElement);
     highlighter = new Highlighter(formatter, scorer);
 
-    maxNumFragments = (int) Optional.ofNullable(highlight.get("maxNumFragments"))
-        .orElse(2);
+    maxNumFragments = (int) Optional.ofNullable(highlight.get("maxNumFragments")).orElse(2);
   }
 
   protected void fetchFirstBatch() {
@@ -234,7 +229,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
         ret = queryContext.getSearcher().doc(score.doc);
 
       } catch (IOException e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error during conversion to document", e);
       }
       return ret;
     }

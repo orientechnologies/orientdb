@@ -72,25 +72,11 @@ public enum OErrorCode {
   }
 
   public OException newException(String message, Throwable parent) {
-    final String fullMessage = String.format("%1$06d_%2$06d - %s", category.code, code, message);
+    final String fullMessage = String.format("%1$06d_%2$06d - %3$s", category.code, code, message);
     try {
       return OException.wrapException(exceptionClass.getConstructor(String.class).newInstance(fullMessage), parent);
-    } catch (InstantiationException e) {
+    } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass);
-      e.printStackTrace();
-      parent.printStackTrace();
-    } catch (IllegalAccessException e) {
-      OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass);
-      e.printStackTrace();
-      parent.printStackTrace();
-    } catch (NoSuchMethodException e) {
-      OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass);
-      e.printStackTrace();
-      parent.printStackTrace();
-    } catch (InvocationTargetException e) {
-      OLogManager.instance().warn(this, "Cannot instantiate exception " + exceptionClass);
-      e.printStackTrace();
-      parent.printStackTrace();
     }
     return null;
   }
