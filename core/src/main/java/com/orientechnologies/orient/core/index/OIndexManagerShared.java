@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -294,6 +295,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
       Runnable recreateIndexesTask = new RecreateIndexesTask(database.getStorage());
       recreateIndexesThread = new Thread(recreateIndexesTask, "OrientDB rebuild indexes");
+      recreateIndexesThread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       recreateIndexesThread.start();
     } finally {
       releaseExclusiveLock();

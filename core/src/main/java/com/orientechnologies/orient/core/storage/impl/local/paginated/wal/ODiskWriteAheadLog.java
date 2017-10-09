@@ -27,6 +27,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -114,7 +115,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final List<WeakReference<OLowDiskSpaceListener>>      lowDiskSpaceListeners   = new CopyOnWriteArrayList<>();
   private final List<WeakReference<OCheckpointRequestListener>> fullCheckpointListeners = new CopyOnWriteArrayList<>();
 
-  private final ScheduledThreadPoolExecutor autoFileCloser = new ScheduledThreadPoolExecutor(1, r -> {
+  private final ScheduledThreadPoolExecutor autoFileCloser = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
     final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
     thread.setDaemon(true);
     thread.setName("WAL Closer Task (" + getStorage().getName() + ")");
@@ -122,7 +123,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return thread;
   });
 
-  private final ScheduledThreadPoolExecutor commitExecutor = new ScheduledThreadPoolExecutor(1, r -> {
+  private final ScheduledThreadPoolExecutor commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
     final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
     thread.setDaemon(true);
     thread.setName("OrientDB WAL Flush Task (" + getStorage().getName() + ")");

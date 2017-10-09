@@ -39,6 +39,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerStub;
+import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactory;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactoryImpl;
@@ -219,7 +220,8 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       final int cores = Runtime.getRuntime().availableProcessors();
 
-      workers = new ThreadPoolExecutor(cores, cores * 3, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(cores * 500) {
+      workers = new OThreadPoolExecutorWithLogging(cores, cores * 3, 10, TimeUnit.SECONDS,
+          new LinkedBlockingQueue<Runnable>(cores * 500) {
         @Override
         public boolean offer(Runnable e) {
           // turn offer() and add() into a blocking calls (unless interrupted)
