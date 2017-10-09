@@ -17,6 +17,9 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
   public static final int TYPE_ORDERED = 1;
 
   OIdentifier name;
+
+  public boolean ifNotExists = false;
+
   int         type;
   OExpression start;
   OExpression increment;
@@ -30,8 +33,17 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeSimple(OCommandContext ctx) {
-    checkNotExisting(ctx);
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
+    OSequence seq = ctx.getDatabase().getMetadata().getSequenceLibrary().getSequence(this.name.getStringValue());
+    if (seq != null) {
+      if (ifNotExists) {
+        return new OInternalResultSet();
+      } else {
+        throw new OCommandExecutionException("Sequence " + name.getStringValue() + " already exists");
+      }
+
+    }
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create sequence");
     result.setProperty("name", name.getStringValue());
@@ -41,13 +53,6 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     OInternalResultSet rs = new OInternalResultSet();
     rs.add(result);
     return rs;
-  }
-
-  private void checkNotExisting(OCommandContext ctx) {
-    OSequence seq = ctx.getDatabase().getMetadata().getSequenceLibrary().getSequence(this.name.getStringValue());
-    if (seq != null) {
-      throw new OCommandExecutionException("Sequence " + name.getStringValue() + " already exists");
-    }
   }
 
   private void executeInternal(OCommandContext ctx, OResultInternal result) {
@@ -89,9 +94,13 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     return params;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE SEQUENCE ");
     name.toString(params, builder);
+    if (ifNotExists) {
+      builder.append(" IF NOT EXISTS");
+    }
     builder.append(" TYPE ");
     switch (type) {
     case TYPE_CACHED:
@@ -118,9 +127,11 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     }
   }
 
-  @Override public OCreateSequenceStatement copy() {
+  @Override
+  public OCreateSequenceStatement copy() {
     OCreateSequenceStatement result = new OCreateSequenceStatement(-1);
     result.name = name == null ? null : name.copy();
+    result.ifNotExists = this.ifNotExists;
     result.type = type;
     result.start = start == null ? null : start.copy();
     result.increment = increment == null ? null : increment.copy();
@@ -128,7 +139,8 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -136,6 +148,8 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
 
     OCreateSequenceStatement that = (OCreateSequenceStatement) o;
 
+    if (ifNotExists != that.ifNotExists)
+      return false;
     if (type != that.type)
       return false;
     if (name != null ? !name.equals(that.name) : that.name != null)
@@ -150,8 +164,10 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (ifNotExists ? 0 : 1);
     result = 31 * result + type;
     result = 31 * result + (start != null ? start.hashCode() : 0);
     result = 31 * result + (increment != null ? increment.hashCode() : 0);

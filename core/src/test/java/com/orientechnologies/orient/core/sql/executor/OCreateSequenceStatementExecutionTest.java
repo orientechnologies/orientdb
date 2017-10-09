@@ -114,5 +114,15 @@ public class OCreateSequenceStatementExecutionTest {
 
   }
 
+  @Test public void testCreateSequenceIfNotExists() {
+    db.command("CREATE SEQUENCE SequenceIfNotExists if not exists TYPE ORDERED").close();
+
+    OResultSet result = db.command("CREATE SEQUENCE SequenceIfNotExists if not exists TYPE ORDERED");
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+
+  }
+
 
 }

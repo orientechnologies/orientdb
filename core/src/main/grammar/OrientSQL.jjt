@@ -4720,6 +4720,7 @@ OCreateSequenceStatement CreateSequenceStatement():
     (
         <CREATE> <SEQUENCE>
         jjtThis.name = Identifier()
+        [ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; } ]
         <TYPE>
         lastIdentifier = Identifier(){
             if(lastIdentifier.getStringValue().equalsIgnoreCase("cached")){
