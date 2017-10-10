@@ -4399,6 +4399,7 @@ ODropClusterStatement DropClusterStatement():
 		|
 		jjtThis.id = Integer()
 	)
+	[ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
 	{ return jjtThis; }
 }
 

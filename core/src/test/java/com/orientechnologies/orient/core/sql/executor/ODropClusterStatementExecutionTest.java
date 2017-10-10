@@ -43,4 +43,24 @@ public class ODropClusterStatementExecutionTest {
   }
 
 
+  @Test public void testDropClusterIfExists() {
+    String cluster = "testDropClusterIfExists";
+    ((ODatabaseDocumentTx) db).getStorage().addCluster(cluster, false);
+
+    Assert.assertTrue(db.getClusterIdByName(cluster) > 0);
+    OResultSet result = db.command("drop cluster " + cluster+" IF EXISTS");
+    Assert.assertTrue(result.hasNext());
+    OResult next = result.next();
+    Assert.assertEquals("drop cluster", next.getProperty("operation"));
+    Assert.assertFalse(result.hasNext());
+    result.close();
+
+    Assert.assertTrue(db.getClusterIdByName(cluster) < 0);
+    
+    result = db.command("drop cluster " + cluster+" IF EXISTS");
+    Assert.assertFalse(result.hasNext());
+    result.close();
+
+  }
+
 }

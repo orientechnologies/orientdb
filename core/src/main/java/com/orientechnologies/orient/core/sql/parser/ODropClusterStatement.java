@@ -16,6 +16,7 @@ import java.util.Map;
 public class ODropClusterStatement extends ODDLStatement {
   protected OIdentifier name;
   protected OInteger    id;
+  protected boolean ifExists = false;
 
   public ODropClusterStatement(int id) {
     super(id);
@@ -35,7 +36,11 @@ public class ODropClusterStatement extends ODDLStatement {
     } else {
       clusterId = database.getStorage().getClusterIdByName(name.getStringValue());
       if (clusterId < 0) {
-        throw new OCommandExecutionException("Cluster not found: " + name);
+        if (ifExists) {
+          return new OInternalResultSet();
+        } else {
+          throw new OCommandExecutionException("Cluster not found: " + name);
+        }
       }
     }
     for (OClass iClass : database.getMetadata().getSchema().getClasses()) {
@@ -51,7 +56,11 @@ public class ODropClusterStatement extends ODDLStatement {
     // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
     String clusterName = database.getClusterNameById(clusterId);
     if (clusterName == null) {
-      throw new OCommandExecutionException("Cluster not found: " + clusterId);
+      if (ifExists) {
+        return new OInternalResultSet();
+      } else {
+        throw new OCommandExecutionException("Cluster not found: " + clusterId);
+      }
     }
     ((OMetadataInternal) database.getMetadata()).getCommandCache().invalidateResultsOfCluster(clusterName);
 
@@ -73,6 +82,9 @@ public class ODropClusterStatement extends ODDLStatement {
     } else {
       id.toString(params, builder);
     }
+    if (ifExists) {
+      builder.append(" IF EXISTS");
+    }
   }
 
   @Override
@@ -80,6 +92,7 @@ public class ODropClusterStatement extends ODDLStatement {
     ODropClusterStatement result = new ODropClusterStatement(-1);
     result.name = name == null ? null : name.copy();
     result.id = id == null ? null : id.copy();
+    result.ifExists = this.ifExists;
     return result;
   }
 
@@ -92,18 +105,18 @@ public class ODropClusterStatement extends ODDLStatement {
 
     ODropClusterStatement that = (ODropClusterStatement) o;
 
+    if (ifExists != that.ifExists)
+      return false;
     if (name != null ? !name.equals(that.name) : that.name != null)
       return false;
-    if (id != null ? !id.equals(that.id) : that.id != null)
-      return false;
-
-    return true;
+    return id != null ? id.equals(that.id) : that.id == null;
   }
 
   @Override
   public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (id != null ? id.hashCode() : 0);
+    result = 31 * result + (ifExists ? 1 : 0);
     return result;
   }
 }
