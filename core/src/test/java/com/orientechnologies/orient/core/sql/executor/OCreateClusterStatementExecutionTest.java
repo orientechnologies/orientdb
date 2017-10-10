@@ -68,5 +68,24 @@ public class OCreateClusterStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testIfNotExists() {
+    String clusterName = "testIfNotExists";
+    OResultSet result = db.command("create cluster " + clusterName + " IF NOT EXISTS id 2000");
+    Assert.assertTrue(db.getClusterIdByName(clusterName) > 0);
+    Assert.assertNotNull(db.getClusterNameById(2000));
+
+    Assert.assertTrue(result.hasNext());
+    OResult next = result.next();
+    Assert.assertFalse(result.hasNext());
+    Assert.assertNotNull(next);
+    Assert.assertEquals((Object) 2000, next.getProperty("requestedId"));
+    result.close();
+
+    result = db.command("create cluster " + clusterName + " IF NOT EXISTS id 1000");
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+
 
 }

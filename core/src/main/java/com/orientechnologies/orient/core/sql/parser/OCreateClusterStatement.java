@@ -18,6 +18,8 @@ public class OCreateClusterStatement extends ODDLStatement {
    */
   protected OIdentifier name;
 
+  protected boolean ifNotExists = false;
+
   protected OInteger id;
 
   protected boolean blob = false;
@@ -30,9 +32,28 @@ public class OCreateClusterStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
-    checkNotExistsCluster(ctx);
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     ODatabase db = ctx.getDatabase();
+    int existingId = db.getClusterIdByName(name.getStringValue());
+    if (existingId >= 0) {
+      if (ifNotExists) {
+        return new OInternalResultSet();
+      } else {
+        throw new OCommandExecutionException("Cluster " + name.getStringValue() + " already exists");
+      }
+    }
+    if (id != null) {
+      String existingName = db.getClusterNameById(id.getValue().intValue());
+      if (existingName != null) {
+        if (ifNotExists) {
+          return new OInternalResultSet();
+        } else {
+          throw new OCommandExecutionException("Cluster " + id.getValue() + " already exists");
+        }
+      }
+    }
+
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create cluster");
     result.setProperty("clusterName", name.getStringValue());
@@ -61,42 +82,35 @@ public class OCreateClusterStatement extends ODDLStatement {
     return rs;
   }
 
-  private void checkNotExistsCluster(OCommandContext ctx) {
-    ODatabase db = ctx.getDatabase();
-    int existingId = db.getClusterIdByName(name.getStringValue());
-    if (existingId >= 0) {
-      throw new OCommandExecutionException("Cluster " + name.getStringValue() + " already exists");
-    }
-    if (id != null) {
-      String existingName = db.getClusterNameById(id.getValue().intValue());
-      if (existingName != null) {
-        throw new OCommandExecutionException("Cluster " + id.getValue() + " already exists");
-      }
-    }
-  }
-
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE ");
     if (blob) {
       builder.append("BLOB ");
     }
     builder.append("CLUSTER ");
     name.toString(params, builder);
+    if (ifNotExists) {
+      builder.append(" IF NOT EXISTS");
+    }
     if (id != null) {
       builder.append(" ID ");
       id.toString(params, builder);
     }
   }
 
-  @Override public OCreateClusterStatement copy() {
+  @Override
+  public OCreateClusterStatement copy() {
     OCreateClusterStatement result = new OCreateClusterStatement(-1);
     result.name = name == null ? null : name.copy();
+    result.ifNotExists = this.ifNotExists;
     result.id = id == null ? null : id.copy();
     result.blob = blob;
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -104,18 +118,19 @@ public class OCreateClusterStatement extends ODDLStatement {
 
     OCreateClusterStatement that = (OCreateClusterStatement) o;
 
+    if (ifNotExists != that.ifNotExists)
+      return false;
     if (blob != that.blob)
       return false;
     if (name != null ? !name.equals(that.name) : that.name != null)
       return false;
-    if (id != null ? !id.equals(that.id) : that.id != null)
-      return false;
-
-    return true;
+    return id != null ? id.equals(that.id) : that.id == null;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (ifNotExists ? 1 : 0);
     result = 31 * result + (id != null ? id.hashCode() : 0);
     result = 31 * result + (blob ? 1 : 0);
     return result;

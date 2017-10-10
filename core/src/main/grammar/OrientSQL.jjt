@@ -4371,6 +4371,7 @@ OCreateClusterStatement CreateClusterStatement():
             ( <BLOB> <CLUSTER> { jjtThis.blob = true; } )
         )
         jjtThis.name = Identifier()
+        [ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; } ]
         [ <ID> jjtThis.id = Integer() ]
 	)
 	{ return jjtThis; }
