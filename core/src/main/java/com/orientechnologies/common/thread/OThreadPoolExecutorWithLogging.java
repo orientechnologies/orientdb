@@ -38,7 +38,7 @@ public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
       try {
         future.get();
       } catch (CancellationException ce) {
-        t = ce;
+        //ignore it we cancel tasks on shutdown that is normal
       } catch (ExecutionException ee) {
         t = ee.getCause();
       } catch (InterruptedException ie) {
