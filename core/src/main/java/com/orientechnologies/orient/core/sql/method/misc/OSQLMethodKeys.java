@@ -18,24 +18,31 @@ package com.orientechnologies.orient.core.sql.method.misc;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Arrays;
 import java.util.Map;
 
 /**
- *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
 public class OSQLMethodKeys extends OAbstractSQLMethod {
 
-    public static final String NAME = "keys";
+  public static final String NAME = "keys";
 
-    public OSQLMethodKeys() {
-        super(NAME);
-    }
+  public OSQLMethodKeys() {
+    super(NAME);
+  }
 
-    @Override
-    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-        ioResult = ioResult != null && ioResult instanceof Map<?, ?> ? ((Map<?, ?>) ioResult).keySet() : null;
-        return ioResult;
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (ioResult instanceof Map) {
+      return ((Map<?, ?>) ioResult).keySet();
     }
+    if (ioResult instanceof ODocument) {
+      return Arrays.asList(((ODocument) ioResult).fieldNames());
+    }
+    return null;
+  }
 }
