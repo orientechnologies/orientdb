@@ -29,7 +29,6 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
     super(url);
   }
 
-  @Test(enabled = false)
   public void testCreateVertexByContent() {
     System.out.println(System.getProperty("file.encoding"));
     System.out.println(Charset.defaultCharset());
