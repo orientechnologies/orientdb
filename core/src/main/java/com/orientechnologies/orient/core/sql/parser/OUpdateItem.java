@@ -3,9 +3,15 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OUpdateItem extends SimpleNode {
   public static final int OPERATOR_EQ          = 0;
@@ -69,7 +75,8 @@ public class OUpdateItem extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -89,7 +96,8 @@ public class OUpdateItem extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = left != null ? left.hashCode() : 0;
     result = 31 * result + (leftModifier != null ? leftModifier.hashCode() : 0);
     result = 31 * result + operator;
@@ -111,7 +119,7 @@ public class OUpdateItem extends SimpleNode {
 
     switch (operator) {
     case OPERATOR_EQ:
-      doc.setProperty(attrName.getStringValue(), rightValue);
+      doc.setProperty(attrName.getStringValue(), convertResultToDocument(rightValue));
       break;
     case OPERATOR_MINUSASSIGN:
       doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.MINUS));
@@ -126,6 +134,26 @@ public class OUpdateItem extends SimpleNode {
       doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.STAR));
       break;
     }
+  }
+
+  private Object convertResultToDocument(Object value) {
+    if (value instanceof OResult) {
+      return ((OResult) value).toElement();
+    }
+    if (value instanceof OIdentifiable) {
+      return value;
+    }
+    if (value instanceof List && containsOResult((Collection) value)) {
+      return ((List) value).stream().map(x -> convertResultToDocument(x)).collect(Collectors.toList());
+    }
+    if (value instanceof Set && containsOResult((Collection) value)) {
+      return ((Set) value).stream().map(x -> convertResultToDocument(x)).collect(Collectors.toSet());
+    }
+    return value;
+  }
+
+  private boolean containsOResult(Collection value) {
+    return value.stream().anyMatch(x -> x instanceof OResult);
   }
 
   private Object calculateNewValue(OResultInternal doc, OCommandContext ctx, OMathExpression.Operator explicitOperator) {
