@@ -45,6 +45,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  * Created by tglman on 30/03/17.
@@ -549,44 +550,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public void beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.registerTxContext(requestId, tx);
-    try {
-      acquireLocksForTx(tx, txContext);
-
-      if (!local) {
-        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(tx);
-      }
-
-      for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexOperations().entrySet()) {
-        OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
-        if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
-            .equals(index.getType())) {
-          for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
-            OIdentifiable old = (OIdentifiable) index.get(changesPerKey.key);
-            Object newValue = changesPerKey.entries.get(changesPerKey.entries.size() - 1).value;
-            if (old != null && !old.equals(newValue)) {
-              throw new ORecordDuplicatedException(String
-                  .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                      newValue, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity());
-            }
-          }
-        }
-      }
-
-      for (ORecordOperation entry : tx.getRecordOperations()) {
-        if (entry.getType() != ORecordOperation.CREATED) {
-          int changeVersion = entry.getRecord().getVersion();
-          int persistentVersion = getStorage().getRecordMetadata(entry.getRID()).getVersion();
-          if (changeVersion != persistentVersion) {
-            throw new OConcurrentModificationException(entry.getRID(), persistentVersion, changeVersion, entry.getType());
-          }
-        }
-      }
-
-    } catch (Throwable t) {
-      txContext.unlock();
-      throw t;
-    }
-
+    txContext.begin(this, local);
   }
 
   /**
@@ -595,36 +559,72 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @param transactionId
    */
   public void commit2pcLocal(ODistributedRequestId transactionId) {
-    ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
-    ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
-    try {
-      if (microTransaction != null) {
-        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).commitPreAllocated(microTransaction);
-      } else {
-        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).commitPreAllocated((OTransactionInternal) getTransaction());
-      }
-    } finally {
-      txContext.destroy();
-    }
+    commit2pc(transactionId);
   }
 
   public void commit2pc(ODistributedRequestId transactionId) {
 
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
-    ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
-    try {
-      OTransactionInternal tx = txContext.getTransaction();
-      //This bypass the distributed layer and do a low level commit
-      ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
-    } finally {
-      txContext.destroy();
-    }
+    ODistributedTxContext txContext = localDistributedDatabase.getTxContext(transactionId);
+    txContext.commit(this);
+    localDistributedDatabase.popTxContext(transactionId);
   }
 
   public void rollback2pc(ODistributedRequestId transactionId) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
-    if (txContext != null)
+    synchronized (txContext) {
+      if (txContext != null)
+        txContext.destroy();
+    }
+  }
+
+  public void internalCommit2pc(ONewDistributedTxContextImpl txContext) {
+    ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
+    try {
+      OTransactionInternal tx = txContext.getTransaction();
+      ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
+    } finally {
       txContext.destroy();
+    }
+
+  }
+
+  public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean local) {
+    acquireLocksForTx(txContext.getTransaction(), txContext);
+
+    for (Map.Entry<String, OTransactionIndexChanges> change : txContext.getTransaction().getIndexOperations().entrySet()) {
+      OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
+      if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
+          .equals(index.getType())) {
+        for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
+          OIdentifiable old = (OIdentifiable) index.get(changesPerKey.key);
+          Object newValue = changesPerKey.entries.get(changesPerKey.entries.size() - 1).value;
+          if (old != null && !old.equals(newValue)) {
+            throw new ORecordDuplicatedException(String
+                .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                    newValue, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity());
+          }
+        }
+      }
+    }
+
+    for (ORecordOperation entry : txContext.getTransaction().getRecordOperations()) {
+      if (entry.getType() != ORecordOperation.CREATED) {
+        int changeVersion = entry.getRecord().getVersion();
+        int persistentVersion = getStorage().getRecordMetadata(entry.getRID()).getVersion();
+        if (changeVersion != persistentVersion) {
+          throw new OConcurrentModificationException(entry.getRID(), persistentVersion, changeVersion, entry.getType());
+        }
+      }
+    }
+
+    //This has to be the last one because does persistent opertations
+    if (!local) {
+      List<ORID> list = txContext.getTransaction().getRecordOperations().stream().map((x) -> x.getRID())
+          .collect(Collectors.toList());
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(txContext.getTransaction());
+    }
+
   }
 }

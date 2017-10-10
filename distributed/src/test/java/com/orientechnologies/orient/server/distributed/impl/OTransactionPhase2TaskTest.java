@@ -61,7 +61,8 @@ public class OTransactionPhase2TaskTest {
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
     OTransactionPhase1Task task = new OTransactionPhase1Task(operations);
     task.execute(new ODistributedRequestId(10, 20), server, null, (ODatabaseDocumentInternal) session);
-    OTransactionPhase2Task task2 = new OTransactionPhase2Task(new ODistributedRequestId(10, 20), true);
+    OTransactionPhase2Task task2 = new OTransactionPhase2Task(new ODistributedRequestId(10, 20), true,
+        new int[] { rec1.getIdentity().getClusterId() });
     task2.execute(new ODistributedRequestId(10, 21), server, null, (ODatabaseDocumentInternal) session);
 
     assertEquals(2, session.load(id.getIdentity()).getVersion());

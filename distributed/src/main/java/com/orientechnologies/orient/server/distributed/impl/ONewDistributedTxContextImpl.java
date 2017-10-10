@@ -1,11 +1,13 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
@@ -20,10 +22,11 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   private final ODistributedDatabaseImpl shared;
   private final ODistributedRequestId    id;
-  private final OTransactionInternal   tx;
+  private final OTransactionInternal     tx;
   private final long                     startedOn;
-  private final List<ORID>   lockedRids = new ArrayList<>();
-  private final List<Object> lockedKeys = new ArrayList<>();
+  private final    List<ORID>   lockedRids = new ArrayList<>();
+  private final    List<Object> lockedKeys = new ArrayList<>();
+  private volatile boolean      began      = true;
 
   public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransactionInternal tx) {
     this.shared = shared;
@@ -63,9 +66,23 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void commit(ODatabaseDocumentInternal database) {
-    database.rawBegin((OTransaction) tx);
-    database.commit();
+  public synchronized void begin(ODatabaseDocumentInternal database, boolean local) {
+    try {
+      ((ODatabaseDocumentDistributed) database).internalBegin2pc(this, local);
+      began = true;
+    } catch (RuntimeException e) {
+      began = false;
+      unlock();
+      throw e;
+    }
+  }
+
+  @Override
+  public synchronized void commit(ODatabaseDocumentInternal database) {
+    if (!began) {
+      begin(database, false);
+    }
+    ((ODatabaseDocumentDistributed) database).internalCommit2pc(this);
   }
 
   @Override

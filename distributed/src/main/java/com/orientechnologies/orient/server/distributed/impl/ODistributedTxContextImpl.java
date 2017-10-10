@@ -214,4 +214,9 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   public OTransactionOptimistic getTransaction() {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void begin(ODatabaseDocumentInternal distributed, boolean local) {
+    throw new UnsupportedOperationException();
+  }
 }

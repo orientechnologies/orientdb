@@ -120,6 +120,8 @@ public interface ODistributedDatabase {
 
   ODistributedTxContext popTxContext(ODistributedRequestId requestId);
 
+  ODistributedTxContext getTxContext(ODistributedRequestId requestId);
+
   ODistributedServerManager getManager();
 
   ODatabaseDocumentInternal getDatabaseInstance();

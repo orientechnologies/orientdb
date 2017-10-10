@@ -5,6 +5,7 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -29,6 +30,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -70,6 +72,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     try {
       database.beginDistributedTx(requestId, tx, local);
       payload = new OTxSuccess();
+    } catch (OConcurrentCreateException  ex) {
+      payload = new OTxConcurrentCreate((ORecordId) ex.getExpectedRid());
     } catch (OConcurrentModificationException ex) {
       payload = new OTxConcurrentModification((ORecordId) ex.getRid(), ex.getEnhancedDatabaseVersion());
     } catch (ODistributedLockException ex) {
@@ -149,5 +153,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
   public void setLastLSN(OLogSequenceNumber lastLSN) {
     this.lastLSN = lastLSN;
+  }
+
+  @Override
+  public int[] getPartitionKey() {
+    return ops.stream().mapToInt((x) -> x.getRID().getClusterId()).toArray();
   }
 }

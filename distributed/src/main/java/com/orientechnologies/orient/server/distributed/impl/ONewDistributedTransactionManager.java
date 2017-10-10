@@ -117,6 +117,13 @@ public class ONewDistributedTransactionManager {
 
   private void handleResponse(ODistributedRequestId requestId, ONewDistributedResponseManager responseManager,
       Set<String> involvedClusters, Set<String> nodes, ODatabaseDocumentDistributed database) {
+
+    int[] involvedClustersIds = new int[involvedClusters.size()];
+    int i = 0;
+    for (String involvedCluster : involvedClusters) {
+      involvedClustersIds[i++] = database.getClusterIdByName(involvedCluster);
+    }
+
     if (responseManager.isQuorumReached()) {
       List<OTransactionResultPayload> results = (List<OTransactionResultPayload>) responseManager.getGenericFinalResponse();
       assert results.size() > 0;
@@ -125,17 +132,17 @@ public class ONewDistributedTransactionManager {
       case OTxSuccess.ID:
         //Success send ok
         localOk(requestId, database);
-        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, true));
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, true, involvedClustersIds));
         break;
       case OTxException.ID:
         //Exception send ko and throws the exception
         localKo(requestId, database);
-        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false));
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
         throw ((OTxException) resultPayload).getException();
       case OTxUniqueIndex.ID: {
         //Unique index quorum error send ko and throw unique index exception
         localKo(requestId, database);
-        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false));
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
         ORID id = ((OTxUniqueIndex) resultPayload).getRecordId();
         String index = ((OTxUniqueIndex) resultPayload).getIndex();
         Object key = ((OTxUniqueIndex) resultPayload).getKey();
@@ -146,19 +153,21 @@ public class ONewDistributedTransactionManager {
       case OTxConcurrentModification.ID: {
         //Concurrent modification exception quorum send ko and throw cuncurrent modification exception
         localKo(requestId, database);
-        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false));
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
         ORID id = ((OTxConcurrentModification) resultPayload).getRecordId();
         int version = ((OTxConcurrentModification) resultPayload).getVersion();
         //TODO include all paramenter in response
         throw new OConcurrentModificationException(id, version, 0, 0);
       }
+      case OTxConcurrentCreate.ID:
+        break;
       case OTxLockTimeout.ID:
         //TODO: probably a retry
         break;
       }
     } else {
       localKo(requestId, database);
-      sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false));
+      sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
       throw new ODistributedOperationException("quorum not reached");
     }
 

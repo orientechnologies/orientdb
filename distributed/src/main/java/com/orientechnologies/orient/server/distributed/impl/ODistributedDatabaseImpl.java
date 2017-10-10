@@ -877,6 +877,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             requestId, databaseName, ctx);
     return ctx;
   }
+  @Override
+  public ODistributedTxContext getTxContext(final ODistributedRequestId requestId) {
+    final ODistributedTxContext ctx = activeTxContexts.get(requestId);
+    ODistributedServerLog
+        .debug(this, localNodeName, null, DIRECTION.NONE, "Distributed transaction: pop request %s for database %s -> %s",
+            requestId, databaseName, ctx);
+    return ctx;
+  }
+
 
   @Override
   public ODistributedServerManager getManager() {
