@@ -3,12 +3,14 @@ package com.orientechnologies.orient.server;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.config.*;
+import com.orientechnologies.orient.server.config.OServerConfiguration;
+import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
+import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +50,7 @@ public class OServerDatabaseOperationsTest {
     server.startup(conf);
     server.activate();
     ODocument securityConfig = new ODocument();
-    securityConfig.fromJSON(OIOUtils.readStreamAsString(this.getClass().getClassLoader().getResourceAsStream("security.json")));
+    securityConfig.fromJSON(OIOUtils.readStreamAsString(this.getClass().getClassLoader().getResourceAsStream("security.json")),"noMap");
     server.getSecurity().reload(securityConfig);
   }
 
