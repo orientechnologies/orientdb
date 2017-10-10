@@ -23,6 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
+import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.RuntimeMXBean;
@@ -59,22 +60,49 @@ public class OMemory {
   public static long getPhysicalMemorySize() {
     long osMemory = -1;
 
-    final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
     try {
-      final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
-      memorySize.setAccessible(true);
-      osMemory = (Long) memorySize.invoke(mxBean);
-    } catch (NoSuchMethodException e) {
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      Object attribute = mBeanServer
+          .getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), "TotalPhysicalMemorySize");
+
+      if (attribute != null) {
+        if (attribute instanceof Number) {
+          osMemory = ((Number) attribute).longValue();
+        } else {
+          try {
+            osMemory = Long.parseLong(attribute.toString());
+          } catch (NumberFormatException e) {
+            if (!OLogManager.instance().isDebugEnabled())
+              OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+            else
+              OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+          }
+        }
+      } else {
+        if (!OLogManager.instance().isDebugEnabled())
+          OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+      }
+    } catch (MalformedObjectNameException e) {
       if (!OLogManager.instance().isDebugEnabled())
         OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
       else
         OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
-    } catch (InvocationTargetException e) {
+    } catch (AttributeNotFoundException e) {
       if (!OLogManager.instance().isDebugEnabled())
         OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
       else
         OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
-    } catch (IllegalAccessException e) {
+    } catch (InstanceNotFoundException e) {
+      if (!OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+      else
+        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+    } catch (MBeanException e) {
+      if (!OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+      else
+        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+    } catch (ReflectionException e) {
       if (!OLogManager.instance().isDebugEnabled())
         OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
       else

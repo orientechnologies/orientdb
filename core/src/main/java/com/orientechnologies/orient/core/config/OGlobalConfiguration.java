@@ -1114,7 +1114,7 @@ public enum OGlobalConfiguration {
       try {
         changeCallback.change(oldValue == nullValue ? null : oldValue, value == nullValue ? null : value);
       } catch (Exception e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error during call of 'change callback'", e);
       }
     }
   }

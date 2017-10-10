@@ -20,6 +20,7 @@
 
 package com.orientechnologies.common.thread;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OService;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 
@@ -49,7 +50,6 @@ public abstract class OSoftThread extends Thread implements OService {
     setDaemon(true);
     setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
-
 
   protected abstract void execute() throws Exception;
 
@@ -83,7 +83,7 @@ public abstract class OSoftThread extends Thread implements OService {
         afterExecution();
       } catch (Throwable t) {
         if (dumpExceptions)
-          t.printStackTrace();
+          OLogManager.instance().error(this, "Error during thread execution", t);
       }
     }
 
@@ -93,12 +93,11 @@ public abstract class OSoftThread extends Thread implements OService {
   /**
    * Pauses current thread until iTime timeout or a wake up by another thread.
    *
-   * @param iTime
    * @return true if timeout has reached, otherwise false. False is the case of wake-up by another thread.
    */
   public static boolean pauseCurrentThread(long iTime) {
     try {
-      if (iTime<=0)
+      if (iTime <= 0)
         iTime = Long.MAX_VALUE;
 
       Thread.sleep(iTime);

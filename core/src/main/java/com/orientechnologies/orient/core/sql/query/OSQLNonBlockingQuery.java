@@ -29,6 +29,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -270,37 +271,34 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
         ODatabaseRecordThreadLocal.INSTANCE.set(null);
       }
 
-      Thread t = new Thread(new Runnable() {
-        @Override
-        public void run() {
-          db.activateOnCurrentThread();
-          try {
-            OSQLAsynchQuery<T> query = new OSQLAsynchQuery<T>(OSQLNonBlockingQuery.this.getText(),
-                OSQLNonBlockingQuery.this.getResultListener());
-            query.setFetchPlan(OSQLNonBlockingQuery.this.getFetchPlan());
-            query.setLimit(OSQLNonBlockingQuery.this.getLimit());
-            query.execute(iArgs);
-          } catch (RuntimeException e) {
-            if (getResultListener() != null) {
-              getResultListener().end();
-            }
-            throw e;
-          } finally {
-            if (db != null) {
-              try {
-                db.close();
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
-            }
+      Thread t = new Thread(() -> {
+        db.activateOnCurrentThread();
+        try {
+          OSQLAsynchQuery<T> query = new OSQLAsynchQuery<T>(OSQLNonBlockingQuery.this.getText(),
+              OSQLNonBlockingQuery.this.getResultListener());
+          query.setFetchPlan(OSQLNonBlockingQuery.this.getFetchPlan());
+          query.setLimit(OSQLNonBlockingQuery.this.getLimit());
+          query.execute(iArgs);
+        } catch (RuntimeException e) {
+          if (getResultListener() != null) {
+            getResultListener().end();
+          }
+          throw e;
+        } finally {
+          if (db != null) {
             try {
-              synchronized (future) {
-                future.finished = true;
-                future.notifyAll();
-              }
+              db.close();
             } catch (Exception e) {
-              e.printStackTrace();
+              OLogManager.instance().error(this, "Error during database close", e);
             }
+          }
+          try {
+            synchronized (future) {
+              future.finished = true;
+              future.notifyAll();
+            }
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "", e);
           }
         }
       });

@@ -546,7 +546,6 @@ public class OrientJdbcResultSet implements ResultSet {
       final Long r = result.getProperty(columnLabel);
       return r != null ? r : 0;
     } catch (Exception e) {
-      e.printStackTrace();
       throw new SQLException("An error occurred during the retrieval of the long value at column '" + columnLabel + "'", e);
     }
   }

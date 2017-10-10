@@ -82,7 +82,7 @@ public class OScheduledEvent extends ODocumentWrapper {
         executeFunction();
 
       } catch (Exception e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error during execution of scheduled function", e);
       } finally {
         if (timer != null) {
           // RE-SCHEDULE THE NEXT EVENT
