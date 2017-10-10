@@ -15,6 +15,8 @@ import java.util.Map;
 public class ODropSequenceStatement extends ODDLStatement {
   OIdentifier name;
 
+  boolean ifExists = false;
+
   public ODropSequenceStatement(int id) {
     super(id);
   }
@@ -27,7 +29,11 @@ public class ODropSequenceStatement extends ODDLStatement {
     final ODatabase database = ctx.getDatabase();
     OSequence sequence = database.getMetadata().getSequenceLibrary().getSequence(this.name.getStringValue());
     if (sequence == null) {
-      throw new OCommandExecutionException("Sequence not found: " + name);
+      if(ifExists){
+        return new OInternalResultSet();
+      }else {
+        throw new OCommandExecutionException("Sequence not found: " + name);
+      }
     }
 
     database.getMetadata().getSequenceLibrary().dropSequence(name.getStringValue());
@@ -43,11 +49,15 @@ public class ODropSequenceStatement extends ODDLStatement {
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DROP SEQUENCE ");
     name.toString(params, builder);
+    if(ifExists){
+      builder.append(" IF EXISTS");
+    }
   }
 
   @Override public ODropSequenceStatement copy() {
     ODropSequenceStatement result = new ODropSequenceStatement(-1);
     result.name = name == null ? null : name.copy();
+    result.ifExists = this.ifExists;
     return result;
   }
 
@@ -59,6 +69,9 @@ public class ODropSequenceStatement extends ODDLStatement {
 
     ODropSequenceStatement that = (ODropSequenceStatement) o;
 
+    if(this.ifExists!= that.ifExists){
+      return false;
+    }
     if (name != null ? !name.equals(that.name) : that.name != null)
       return false;
 

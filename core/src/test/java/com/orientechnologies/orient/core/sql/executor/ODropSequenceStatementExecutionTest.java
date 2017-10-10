@@ -16,16 +16,19 @@ import org.junit.Test;
 public class ODropSequenceStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:ODropSequenceStatementExecutionTest");
     db.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testPlain() {
+  @Test
+  public void testPlain() {
     String name = "testPlain";
     db.getMetadata().getSequenceLibrary().createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
 
@@ -40,7 +43,8 @@ public class ODropSequenceStatementExecutionTest {
     Assert.assertNull(db.getMetadata().getSequenceLibrary().getSequence(name));
   }
 
-  @Test public void testNonExisting() {
+  @Test
+  public void testNonExisting() {
     String name = "testNonExisting";
     OSequenceLibrary lib = db.getMetadata().getSequenceLibrary();
     Assert.assertNull(lib.getSequence(name));
@@ -52,6 +56,28 @@ public class ODropSequenceStatementExecutionTest {
     } catch (Exception ex1) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void testNonExistingWithIfExists() {
+    String name = "testNonExistingWithIfExists";
+    OSequenceLibrary lib = db.getMetadata().getSequenceLibrary();
+    Assert.assertNull(lib.getSequence(name));
+
+    OResultSet result = db.command("drop sequence " + name + " if exists");
+    Assert.assertFalse(result.hasNext());
+
+    db.getMetadata().getSequenceLibrary().createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
+
+    Assert.assertNotNull(db.getMetadata().getSequenceLibrary().getSequence(name));
+    result = db.command("drop sequence " + name + " if exists");
+    Assert.assertTrue(result.hasNext());
+    OResult next = result.next();
+    Assert.assertEquals("drop sequence", next.getProperty("operation"));
+    Assert.assertFalse(result.hasNext());
+    result.close();
+
+    Assert.assertNull(db.getMetadata().getSequenceLibrary().getSequence(name));
   }
 
 }
