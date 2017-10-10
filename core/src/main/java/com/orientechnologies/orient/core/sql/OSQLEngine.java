@@ -471,6 +471,8 @@ public class OSQLEngine {
       pos = OStringSerializerHelper.getLowerIndexOf(candidate, pos + 1, " ", "\n", "\r", "\t", "(", "[");
       if (pos > -1) {
         commandName = candidate.substring(0, pos);
+        //remove double spaces
+        commandName = commandName.replaceAll("  ", " ");
         found = names.contains(commandName);
       } else {
         break;
