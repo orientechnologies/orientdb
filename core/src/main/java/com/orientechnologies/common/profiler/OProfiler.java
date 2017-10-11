@@ -111,5 +111,7 @@ public interface OProfiler extends OService {
 
   String threadDump();
 
+  String getStatsAsJson();
+
   boolean isEnterpriseEdition();
 }

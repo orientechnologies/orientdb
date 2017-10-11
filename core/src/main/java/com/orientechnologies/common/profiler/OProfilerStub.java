@@ -33,9 +33,13 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PROF
 
 public class OProfilerStub extends OAbstractProfiler {
 
-  protected volatile ConcurrentMap<String, Long>                    counters;
-  private volatile   ConcurrentLinkedHashMap<String, AtomicInteger> tips;
-  private volatile   ConcurrentLinkedHashMap<String, Long>          tipsTimestamp;
+
+  protected ConcurrentMap<String, Long>                    counters      = new ConcurrentLinkedHashMap.Builder()
+      .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private   ConcurrentLinkedHashMap<String, AtomicInteger> tips          = new ConcurrentLinkedHashMap.Builder()
+      .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private   ConcurrentLinkedHashMap<String, Long>          tipsTimestamp = new ConcurrentLinkedHashMap.Builder()
+      .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
 
   public OProfilerStub() {
   }
@@ -249,6 +253,11 @@ public class OProfilerStub extends OAbstractProfiler {
 
   @Override
   public void resetRealtime(String iText) {
+  }
+
+  @Override
+  public String getStatsAsJson() {
+    return null;
   }
 
   /**

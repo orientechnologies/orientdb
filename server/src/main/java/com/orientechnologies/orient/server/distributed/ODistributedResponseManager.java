@@ -25,6 +25,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -924,13 +925,16 @@ public class ODistributedResponseManager {
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, DIRECTION.OUT,
           "Executing the fix locally (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
+      ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       final ODatabaseDocumentInternal database = dManager.getMessageService().getDatabase(getDatabaseName()).getDatabaseInstance();
       try {
+        database.activateOnCurrentThread();
         dManager
             .executeOnLocalNode(new ODistributedRequestId(dManager.getLocalNodeId(), dManager.getNextMessageIdCounter()), fixTask,
                 database);
       } finally {
         database.close();
+        ODatabaseRecordThreadLocal.INSTANCE.set(oldDb);
       }
     } else {
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, DIRECTION.OUT,

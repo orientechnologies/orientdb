@@ -144,6 +144,21 @@ public interface OWriteCache {
   Map<String, Long> files();
 
   /**
+   * DO NOT DELETE THIS METHOD IT IS USED IN ENTERPRISE STORAGE
+   *
+   * @return Size of page inside of cache.
+   */
+  int pageSize();
+
+  /**
+   * DO NOT DELETE THIS METHOD IT IS USED IN ENTERPRISE STORAGE
+   * <p>
+   * Takes two ids and checks whether they are equal from point of view of write cache. In other words
+   * methods checks whether two ids in reality contain the same internal ids.
+   */
+  boolean fileIdsAreEqual(long firsId, long secondId);
+
+  /**
    * Finds if there was file in write cache with given id which is deleted right now.
    * If such file exists it creates new file with the same name at it was in deleted file.
    *
