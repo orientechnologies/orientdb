@@ -1205,10 +1205,6 @@ public class OCommandExecutorSQLSelectTest {
     results = db.query(sql);
     assertEquals(results.size(), 1);
 
-    sql = new OSQLSynchQuery("SELECT expand(collection[1-3]) FROM ComplexFilterInSquareBrackets2");
-    results = db.query(sql);
-    assertEquals(results.size(), 3);
-
   }
 
   @Test

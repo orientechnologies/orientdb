@@ -2047,7 +2047,7 @@ OArrayNumberSelector ArrayNumberSelector():
         |
         LOOKAHEAD( Integer() )
         tokenVal = <INTEGER_LITERAL> { jjtThis.integer = Integer.parseInt(tokenVal.image); }
-        /* TODO for 3.0
+        /*
         |
         LOOKAHEAD( MathExpression() )
     	jjtThis.expressionValue = MathExpression()
@@ -2098,8 +2098,6 @@ OArrayRangeSelector ArrayRangeSelector():
         (
             jjtThis.fromSelector = ArrayNumberSelector()
             (
-              (<MINUS>)
-              |
               (<RANGE> {jjtThis.newRange = true;})
               |
               (<ELLIPSIS> {jjtThis.newRange = true; jjtThis.included = true;})

@@ -1283,7 +1283,7 @@ public class OMatchStatementExecutionNewTest {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-    query.append("return friend1.out('TriangleE')[0-1] as foo");
+    query.append("return friend1.out('TriangleE')[0..1] as foo");
 
     OResultSet result = db.query(query.toString());
     Assert.assertTrue(result.hasNext());
@@ -1302,7 +1302,7 @@ public class OMatchStatementExecutionNewTest {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-    query.append("return friend1.out('TriangleE')[0-2] as foo");
+    query.append("return friend1.out('TriangleE')[0..2] as foo");
 
     OResultSet result = db.query(query.toString());
     Assert.assertTrue(result.hasNext());
@@ -1321,7 +1321,7 @@ public class OMatchStatementExecutionNewTest {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-    query.append("return friend1.out('TriangleE')[0-3] as foo");
+    query.append("return friend1.out('TriangleE')[0..3] as foo");
 
     OResultSet result = db.query(query.toString());
     Assert.assertTrue(result.hasNext());

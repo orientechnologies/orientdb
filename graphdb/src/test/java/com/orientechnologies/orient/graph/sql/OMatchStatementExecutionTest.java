@@ -1113,7 +1113,7 @@ public class OMatchStatementExecutionTest {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-    query.append("return friend1.out('TriangleE')[0-1] as foo");
+    query.append("return friend1.out('TriangleE')[0..1] as foo");
 
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
@@ -1129,7 +1129,7 @@ public class OMatchStatementExecutionTest {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-    query.append("return friend1.out('TriangleE')[0-2] as foo");
+    query.append("return friend1.out('TriangleE')[0..2] as foo");
 
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
@@ -1145,7 +1145,7 @@ public class OMatchStatementExecutionTest {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-    query.append("return friend1.out('TriangleE')[0-3] as foo");
+    query.append("return friend1.out('TriangleE')[0..3] as foo");
 
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
