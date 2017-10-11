@@ -436,7 +436,7 @@ public class OSQLEngine {
       if (pos > -1) {
         commandName = candidate.substring(0, pos);
         //remove double spaces
-        commandName = commandName.replaceAll("  ", " ");
+        commandName = commandName.replaceAll(" +", " ");
         found = names.contains(commandName);
       } else {
         break;
