@@ -52,11 +52,6 @@ public class OTransactionPhase1TaskResult implements OStreamable {
     case OTxSuccess.ID:
     case OTxLockTimeout.ID:
       break;
-    case OTxConcurrentCreate.ID:
-      OTxConcurrentCreate cc = (OTxConcurrentCreate) resultPayload;
-      out.writeInt(cc.getRecordId().getClusterId());
-      out.writeLong(cc.getRecordId().getClusterPosition());
-      break;
     case OTxConcurrentModification.ID:
       OTxConcurrentModification pl = (OTxConcurrentModification) resultPayload;
       out.writeInt(pl.getRecordId().getClusterId());
@@ -102,10 +97,6 @@ public class OTransactionPhase1TaskResult implements OStreamable {
       ORecordId rid = new ORecordId(in.readInt(), in.readLong());
       int version = in.readInt();
       this.resultPayload = new OTxConcurrentModification(rid, version);
-      break;
-    case OTxConcurrentCreate.ID:
-      ORecordId failedRid = new ORecordId(in.readInt(), in.readLong());
-      this.resultPayload = new OTxConcurrentCreate(failedRid);
       break;
     case OTxException.ID:
       RuntimeException exception = (RuntimeException) OStreamableHelper.fromStream(in);

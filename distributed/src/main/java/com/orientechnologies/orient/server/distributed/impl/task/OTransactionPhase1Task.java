@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -16,6 +18,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
@@ -38,8 +41,9 @@ import java.util.stream.Collectors;
 public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 43;
 
-  private OLogSequenceNumber     lastLSN;
-  private List<ORecordOperation> ops;
+  private volatile boolean                hasResponse;
+  private          OLogSequenceNumber     lastLSN;
+  private          List<ORecordOperation> ops;
 
   public OTransactionPhase1Task() {
     ops = new ArrayList<>();
@@ -63,20 +67,34 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
-    return new OTransactionPhase1TaskResult(executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false));
+    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false);
+    if (res1 == null) {
+      ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
+          .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this);
+      hasResponse = false;
+      return null;
+    }
+    hasResponse = true;
+    return new OTransactionPhase1TaskResult(res1);
+  }
+
+  @Override
+  public boolean hasResponse() {
+    return hasResponse;
   }
 
   public static OTransactionResultPayload executeTransaction(ODistributedRequestId requestId, ODatabaseDocumentDistributed database,
       OTransactionInternal tx, boolean local) {
     OTransactionResultPayload payload;
     try {
-      database.beginDistributedTx(requestId, tx, local);
-      payload = new OTxSuccess();
-    } catch (OConcurrentCreateException  ex) {
-      payload = new OTxConcurrentCreate((ORecordId) ex.getExpectedRid());
+      if (database.beginDistributedTx(requestId, tx, local)) {
+        payload = new OTxSuccess();
+      } else {
+        return null;
+      }
     } catch (OConcurrentModificationException ex) {
       payload = new OTxConcurrentModification((ORecordId) ex.getRid(), ex.getEnhancedDatabaseVersion());
-    } catch (ODistributedLockException ex) {
+    } catch (ODistributedLockException | OLockException ex) {
       payload = new OTxLockTimeout();
     } catch (ORecordDuplicatedException ex) {
       //TODO:Check if can get out the key

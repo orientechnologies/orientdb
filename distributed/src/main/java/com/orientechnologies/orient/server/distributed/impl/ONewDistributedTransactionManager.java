@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
@@ -159,11 +160,10 @@ public class ONewDistributedTransactionManager {
         //TODO include all paramenter in response
         throw new OConcurrentModificationException(id, version, 0, 0);
       }
-      case OTxConcurrentCreate.ID:
-        break;
       case OTxLockTimeout.ID:
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
         //TODO: probably a retry
-        break;
+        throw new ODistributedLockException("DeadLock");
       }
     } else {
       localKo(requestId, database);

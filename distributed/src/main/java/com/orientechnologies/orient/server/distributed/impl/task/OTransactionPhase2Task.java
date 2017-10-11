@@ -26,6 +26,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   private ODistributedRequestId transactionId;
   private boolean               success;
   private int[]                 involvedClusters;
+  private boolean hasResponse = false;
 
   public OTransactionPhase2Task(ODistributedRequestId transactionId, boolean success, int[] involvedClusters) {
     this.transactionId = transactionId;
@@ -74,17 +75,23 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   @Override
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
-    try {
-      if (success) {
-        ((ODatabaseDocumentDistributed) database).commit2pc(transactionId);
-      } else {
-        ((ODatabaseDocumentDistributed) database).rollback2pc(transactionId);
-      }
-    } catch (OConcurrentCreateException | OConcurrentModificationException | ORecordDuplicatedException e) {
-      ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase().processRequest(
-          new ODistributedRequest(iManager, requestId.getNodeId(), requestId.getMessageId(), database.getName(), this), false);
+    if (success) {
+      if (!((ODatabaseDocumentDistributed) database).commit2pc(transactionId)) {
+        ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
+            .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this);
+        hasResponse = false;
+      } else
+        hasResponse = true;
+    } else {
+      ((ODatabaseDocumentDistributed) database).rollback2pc(transactionId);
+      hasResponse = true;
     }
     return null; //TODO
+  }
+
+  @Override
+  public boolean hasResponse() {
+    return hasResponse;
   }
 
   @Override

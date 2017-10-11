@@ -8,6 +8,7 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -164,7 +165,14 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public boolean collectResponse(ODistributedResponse response) {
-    return collectResponse((OTransactionPhase1TaskResult) response.getPayload());
+    if (response.getPayload() instanceof OTransactionPhase1TaskResult) {
+      return collectResponse((OTransactionPhase1TaskResult) response.getPayload());
+    } else if (response.getPayload() instanceof RuntimeException) {
+      return collectResponse(new OTransactionPhase1TaskResult(new OTxException((RuntimeException) response.getPayload())));
+    } else {
+      return collectResponse(new OTransactionPhase1TaskResult(
+          new OTxException(new ODistributedException("unknown payload:" + response.getPayload()))));
+    }
   }
 
   public synchronized boolean isQuorumReached() {

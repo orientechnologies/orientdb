@@ -211,6 +211,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
+  public void reEnqueue(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload) {
+    new Thread(() -> {
+      processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false);
+    }).start();
+  }
+
   /**
    * Distributed requests against the available workers by using one queue per worker. This guarantee the sequence of the operations
    * against the same record cluster.
@@ -848,10 +854,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, OTransactionInternal tx) {
-    return registerTxContext(reqId, new ONewDistributedTxContextImpl(this, reqId, tx));
-  }
-
   public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx) {
     final ODistributedTxContext prevCtx = activeTxContexts.putIfAbsent(reqId, ctx);
     if (prevCtx != null) {
@@ -877,6 +879,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             requestId, databaseName, ctx);
     return ctx;
   }
+
   @Override
   public ODistributedTxContext getTxContext(final ODistributedRequestId requestId) {
     final ODistributedTxContext ctx = activeTxContexts.get(requestId);
@@ -885,7 +888,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             requestId, databaseName, ctx);
     return ctx;
   }
-
 
   @Override
   public ODistributedServerManager getManager() {

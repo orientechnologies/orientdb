@@ -25,11 +25,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
-import com.orientechnologies.orient.core.tx.*;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
@@ -547,10 +550,34 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
-  public void beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local) {
+  public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
-    ODistributedTxContext txContext = localDistributedDatabase.registerTxContext(requestId, tx);
-    txContext.begin(this, local);
+    ODistributedTxContext txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
+        requestId, tx);
+    try {
+      txContext.begin(this, local);
+//      System.out.println(
+//          "began:" + requestId + " node:" + ((ODistributedDatabaseImpl) localDistributedDatabase).getLocalNodeName() + " " + tx
+//              .getRecordOperations().stream().map((x) -> x.getRID()).collect(Collectors.toList()).toString());
+    } catch (OConcurrentCreateException ex) {
+      if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
+//        System.out.println(
+//            "retry-fail:" + requestId + " node:" + ((ODistributedDatabaseImpl) localDistributedDatabase).getLocalNodeName()
+//                + " expected " + ex.getExpectedRid() + " actual:" + ex.getActualRid());
+        return false;
+      }
+      throw ex;
+    } catch (OConcurrentModificationException ex) {
+      if (ex.getEnhancedRecordVersion() > ex.getEnhancedDatabaseVersion()) {
+//        System.out.println(
+//            "retry-fail:" + requestId + " node:" + ((ODistributedDatabaseImpl) localDistributedDatabase).getLocalNodeName()
+//                + " version record:" + ex.getEnhancedRecordVersion() + " db:" + ex.getEnhancedDatabaseVersion());
+        return false;
+      }
+      throw ex;
+    }
+    localDistributedDatabase.registerTxContext(requestId, txContext);
+    return true;
   }
 
   /**
@@ -562,25 +589,38 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     commit2pc(transactionId);
   }
 
-  public void commit2pc(ODistributedRequestId transactionId) {
-
+  public boolean commit2pc(ODistributedRequestId transactionId) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.getTxContext(transactionId);
-    txContext.commit(this);
-    localDistributedDatabase.popTxContext(transactionId);
+    if (txContext != null) {
+//      System.out.println(
+//          "committed:" + transactionId + " node:" + ((ODistributedDatabaseImpl) localDistributedDatabase).getLocalNodeName() + " "
+//              + txContext.getTransaction().getRecordOperations().stream().map((x) -> x.getRID()).collect(Collectors.toList())
+//              .toString());
+      txContext.commit(this);
+      localDistributedDatabase.popTxContext(transactionId);
+      return true;
+    }
+//    System.out
+//        .println("missed:" + transactionId + " node:" + ((ODistributedDatabaseImpl) localDistributedDatabase).getLocalNodeName());
+    return false;
   }
 
   public void rollback2pc(ODistributedRequestId transactionId) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
-    synchronized (txContext) {
-      if (txContext != null)
+    if (txContext != null) {
+//      System.out.println(
+//          "rollbacked:" + transactionId + " node:" + ((ODistributedDatabaseImpl) localDistributedDatabase).getLocalNodeName() + " "
+//              + txContext.getTransaction().getRecordOperations().stream().map((x) -> x.getRID()).collect(Collectors.toList())
+//              .toString());
+      synchronized (txContext) {
         txContext.destroy();
+      }
     }
   }
 
   public void internalCommit2pc(ONewDistributedTxContextImpl txContext) {
-    ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     try {
       OTransactionInternal tx = txContext.getTransaction();
       ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
@@ -612,7 +652,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     for (ORecordOperation entry : txContext.getTransaction().getRecordOperations()) {
       if (entry.getType() != ORecordOperation.CREATED) {
         int changeVersion = entry.getRecord().getVersion();
-        int persistentVersion = getStorage().getRecordMetadata(entry.getRID()).getVersion();
+        ORecordMetadata metadata = getStorage().getRecordMetadata(entry.getRID());
+        if (metadata == null) {
+          //don't exist i get -1, -1 rid that put the operation in queue for retry.
+          throw new OConcurrentCreateException(new ORecordId(-1, -1), entry.getRID());
+        }
+        int persistentVersion = metadata.getVersion();
         if (changeVersion != persistentVersion) {
           throw new OConcurrentModificationException(entry.getRID(), persistentVersion, changeVersion, entry.getType());
         }
