@@ -45,7 +45,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
 
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
-    return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
   }
 
   @Override
@@ -86,7 +86,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
       ((ODatabaseDocumentDistributed) database).rollback2pc(transactionId);
       hasResponse = true;
     }
-    return null; //TODO
+    return "OK"; //TODO
   }
 
   @Override

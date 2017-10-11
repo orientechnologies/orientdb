@@ -556,23 +556,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         requestId, tx);
     try {
       txContext.begin(this, local);
-//      System.out.println(
-//          "began:" + requestId + " node:" + ((ODistributedDatabaseImpl) localDistributedDatabase).getLocalNodeName() + " " + tx
-//              .getRecordOperations().stream().map((x) -> x.getRID()).collect(Collectors.toList()).toString());
     } catch (OConcurrentCreateException ex) {
       if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
-//        System.out.println(
-//            "retry-fail:" + requestId + " node:" + ((ODistributedDatabaseImpl) localDistributedDatabase).getLocalNodeName()
-//                + " expected " + ex.getExpectedRid() + " actual:" + ex.getActualRid());
         return false;
       }
       throw ex;
     } catch (OConcurrentModificationException ex) {
       if (ex.getEnhancedRecordVersion() > ex.getEnhancedDatabaseVersion()) {
-//        System.out.println(
-//            "retry-fail:" + requestId + " node:" + ((ODistributedDatabaseImpl) localDistributedDatabase).getLocalNodeName()
-//                + " version record:" + ex.getEnhancedRecordVersion() + " db:" + ex.getEnhancedDatabaseVersion());
         return false;
+
       }
       throw ex;
     }
@@ -593,16 +585,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.getTxContext(transactionId);
     if (txContext != null) {
-//      System.out.println(
-//          "committed:" + transactionId + " node:" + ((ODistributedDatabaseImpl) localDistributedDatabase).getLocalNodeName() + " "
-//              + txContext.getTransaction().getRecordOperations().stream().map((x) -> x.getRID()).collect(Collectors.toList())
-//              .toString());
       txContext.commit(this);
       localDistributedDatabase.popTxContext(transactionId);
       return true;
     }
-//    System.out
-//        .println("missed:" + transactionId + " node:" + ((ODistributedDatabaseImpl) localDistributedDatabase).getLocalNodeName());
     return false;
   }
 
@@ -610,10 +596,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
     if (txContext != null) {
-//      System.out.println(
-//          "rollbacked:" + transactionId + " node:" + ((ODistributedDatabaseImpl) localDistributedDatabase).getLocalNodeName() + " "
-//              + txContext.getTransaction().getRecordOperations().stream().map((x) -> x.getRID()).collect(Collectors.toList())
-//              .toString());
       synchronized (txContext) {
         txContext.destroy();
       }

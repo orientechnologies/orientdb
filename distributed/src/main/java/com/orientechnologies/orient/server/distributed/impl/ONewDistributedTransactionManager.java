@@ -184,7 +184,7 @@ public class ONewDistributedTransactionManager {
 
   private void sendPhase2Task(Set<String> involvedClusters, Set<String> nodes, OTransactionPhase2Task task) {
     dManager.sendRequest(storage.getName(), involvedClusters, nodes, task, dManager.getNextMessageIdCounter(),
-        EXECUTION_MODE.NO_RESPONSE, null, null, null);
+        EXECUTION_MODE.RESPONSE, null, null, null);
   }
 
   protected void checkForClusterIds(final OTransactionInternal iTx) {
