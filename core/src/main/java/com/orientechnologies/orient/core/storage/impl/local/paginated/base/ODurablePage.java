@@ -88,6 +88,36 @@ public class ODurablePage {
     return new OLogSequenceNumber(segment, position);
   }
 
+  /**
+   * DO NOT DELETE THIS METHOD IT IS USED IN ENTERPRISE STORAGE
+   * <p>
+   * Copies content of page into passed in byte array.
+   *
+   * @param buffer Buffer from which data will be copied
+   * @param data   Byte array to which data will be copied
+   * @param offset Offset of data inside page
+   * @param length Length of data to be copied
+   */
+  public static void getPageData(ByteBuffer buffer, byte[] data, int offset, int length) {
+    buffer.position(0);
+    buffer.get(data, offset, length);
+  }
+
+  /**
+   * DO NOT DELETE THIS METHOD IT IS USED IN ENTERPRISE STORAGE
+   * <p>
+   * Get value of LSN from the passed in offset in byte array.
+   *
+   * @param offset Offset inside of byte array from which LSN value will be read.
+   * @param data   Byte array from which LSN value will be read.
+   */
+  public static OLogSequenceNumber getLogSequenceNumber(int offset, byte[] data) {
+    final long segment = OLongSerializer.INSTANCE.deserializeNative(data, offset + WAL_SEGMENT_OFFSET);
+    final long position = OLongSerializer.INSTANCE.deserializeNative(data, offset + WAL_POSITION_OFFSET);
+
+    return new OLogSequenceNumber(segment, position);
+  }
+
   protected int getIntValue(int pageOffset) {
     assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
