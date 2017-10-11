@@ -198,7 +198,6 @@ public abstract class AbstractServerClusterTest {
       Orient.setRegisterDatabaseByPath(false);
       deleteServers();
 
-      Orient.instance().closeAllStorages();
     }
 
   }
@@ -228,10 +227,10 @@ public abstract class AbstractServerClusterTest {
 
   protected void banner(final String iMessage) {
     OLogManager.instance().error(this,
-        "\n**********************************************************************************************************");
-    OLogManager.instance().error(this, iMessage);
+        "\n**********************************************************************************************************",null);
+    OLogManager.instance().error(this, iMessage,null);
     OLogManager.instance().error(this,
-        "**********************************************************************************************************\n");
+        "**********************************************************************************************************\n",null);
   }
 
   protected void log(final String iMessage) {
@@ -368,7 +367,7 @@ public abstract class AbstractServerClusterTest {
     while (serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
+        OLogManager.instance().error(this, "TIMEOUT on waitForDatabaseIsOffline condition (timeout=" + timeout + ")",null);
         break;
       }
 
@@ -386,7 +385,7 @@ public abstract class AbstractServerClusterTest {
     while (!serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
+        OLogManager.instance().error(this, "TIMEOUT on waitForDatabaseIsOnLine (timeout=" + timeout + ")",null);
         break;
       }
 
@@ -412,7 +411,7 @@ public abstract class AbstractServerClusterTest {
           }
 
           if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-            OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
+            OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")",null);
             break;
           }
 
