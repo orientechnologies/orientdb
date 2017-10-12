@@ -91,6 +91,7 @@ public class ONewDistributedTransactionManager {
 
     if (nodes.isEmpty()) {
       // NO FURTHER NODES TO INVOLVE
+      localOk(requestId, database);
       return null;
     }
     //TODO:check the lsn
