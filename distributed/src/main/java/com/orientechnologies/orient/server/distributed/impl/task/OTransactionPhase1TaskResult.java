@@ -73,11 +73,15 @@ public class OTransactionPhase1TaskResult implements OStreamable {
       out.writeInt(indexNameBytes.length);
       out.write(indexNameBytes);
       //index key
-      OType type = OType.getTypeByValue(pl3.getKey());
-      out.writeInt(type.getId());
-      byte[] keyBytes = ORecordSerializerNetworkV37.INSTANCE.serializeValue(pl3.getKey(), type);
-      out.writeInt(keyBytes.length);
-      out.write(keyBytes);
+      if (pl3.getKey() == null) {
+        out.writeInt(-1);
+      } else {
+        OType type = OType.getTypeByValue(pl3.getKey());
+        out.writeInt(type.getId());
+        byte[] keyBytes = ORecordSerializerNetworkV37.INSTANCE.serializeValue(pl3.getKey(), type);
+        out.writeInt(keyBytes.length);
+        out.write(keyBytes);
+      }
       break;
 
     }
@@ -111,11 +115,16 @@ public class OTransactionPhase1TaskResult implements OStreamable {
       String indexName = new String(indexNameBytes);
       //index key
       int type2Id = in.readInt();
-      OType type2 = OType.getById((byte) type2Id);
-      int keySize = in.readInt();
-      byte[] keyBytes = new byte[keySize];
-      in.readFully(keyBytes);
-      Object keyValue = ORecordSerializerNetworkV37.INSTANCE.deserializeValue(keyBytes, type2);
+      Object keyValue;
+      if (type2Id == -1) {
+        keyValue = null;
+      } else {
+        OType type2 = OType.getById((byte) type2Id);
+        int keySize = in.readInt();
+        byte[] keyBytes = new byte[keySize];
+        in.readFully(keyBytes);
+        keyValue = ORecordSerializerNetworkV37.INSTANCE.deserializeValue(keyBytes, type2);
+      }
       this.resultPayload = new OTxUniqueIndex(rid2, indexName, keyValue);
     }
   }
