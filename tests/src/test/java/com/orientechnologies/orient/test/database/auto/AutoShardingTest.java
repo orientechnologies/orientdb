@@ -25,7 +25,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;

@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.

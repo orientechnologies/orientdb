@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.Iterator;

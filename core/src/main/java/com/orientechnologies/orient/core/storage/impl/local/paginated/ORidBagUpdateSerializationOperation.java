@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**

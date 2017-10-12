@@ -4,7 +4,7 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;

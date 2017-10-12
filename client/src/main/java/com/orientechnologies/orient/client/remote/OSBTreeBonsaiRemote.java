@@ -38,8 +38,8 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.Change;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 
 /**

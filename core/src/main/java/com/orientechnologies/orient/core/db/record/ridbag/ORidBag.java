@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;

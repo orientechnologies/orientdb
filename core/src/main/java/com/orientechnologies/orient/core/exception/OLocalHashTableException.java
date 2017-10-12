@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.

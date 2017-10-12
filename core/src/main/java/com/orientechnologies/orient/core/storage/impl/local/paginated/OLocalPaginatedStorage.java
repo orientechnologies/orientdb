@@ -35,8 +35,8 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContai
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
-import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
+import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
+import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;

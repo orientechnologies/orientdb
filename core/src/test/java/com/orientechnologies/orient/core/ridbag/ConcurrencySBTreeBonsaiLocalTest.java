@@ -14,7 +14,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 

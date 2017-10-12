@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 
 import java.util.Map;
 import java.util.UUID;
