@@ -68,7 +68,11 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   private final      AtomicLong version = new AtomicLong();
   protected volatile STATUS     status  = STATUS.CLOSED;
 
-  private final OSharedContainerImpl sharedContainer = new OSharedContainerImpl();
+  /**
+   * This field is used in EE version, do not make it private
+   */
+  @SuppressWarnings("WeakerAccess")
+  protected final OSharedContainerImpl sharedContainer = new OSharedContainerImpl();
 
   public OStorageAbstract(final String name, final String iURL, final String mode) {
     this.name = normalizeName(name);
