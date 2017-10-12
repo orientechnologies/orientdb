@@ -33,13 +33,13 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
    */
   long timeRecordCreation;
 
-  long createRecordPages;
+  private long createRecordPages;
 
-  long createRecordFilePages;
+  private long createRecordFilePages;
 
-  long createRecordPageReadTime;
+  private long createRecordPageReadTime;
 
-  long createRecordFilePageReadTime;
+  private long createRecordFilePageReadTime;
 
   /**
    * Amount of all deleted records
@@ -51,13 +51,13 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
    */
   long timeRecordDeletion;
 
-  long deleteRecordPages;
+  private long deleteRecordPages;
 
-  long deleteRecordFilePages;
+  private long deleteRecordFilePages;
 
-  long deleteRecordPageReadTime = 0;
+  private long deleteRecordPageReadTime = 0;
 
-  long deleteRecordFilePageReadTime = 0;
+  private long deleteRecordFilePageReadTime = 0;
 
   /**
    * Amount of all updated records
@@ -69,13 +69,13 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
    */
   long timeRecordUpdate;
 
-  long updateRecordPages;
+  private long updateRecordPages;
 
-  long updateRecordFilePages;
+  private long updateRecordFilePages;
 
-  long updateRecordPageReadTime;
+  private long updateRecordPageReadTime;
 
-  long updateRecordFilePageReadTime;
+  private long updateRecordFilePageReadTime;
 
   /**
    * Amount of all read records
@@ -87,13 +87,13 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
    */
   long timeRecordRead;
 
-  long readRecordPages;
+  private long readRecordPages;
 
-  long readRecordFilePages;
+  private long readRecordFilePages;
 
-  long readRecordPageReadTime;
+  private long readRecordPageReadTime;
 
-  long readRecordFilePageReadTime;
+  private long readRecordFilePageReadTime;
 
   @Override
   public OClusterCountersHolder newInstance() {
@@ -304,6 +304,7 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
     return document;
   }
 
+  @SuppressWarnings("unused")
   public class CreateRecordOperation extends OOperation {
     @Override
     void incrementOperationsCounter(int pages, int filePages) {
@@ -312,6 +313,7 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
     }
   }
 
+  @SuppressWarnings("unused")
   public class UpdateRecordOperation extends OOperation {
     @Override
     void incrementOperationsCounter(int pages, int filePages) {
@@ -320,6 +322,7 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
     }
   }
 
+  @SuppressWarnings("unused")
   public class DeleteRecordPages extends OOperation {
     @Override
     void incrementOperationsCounter(int pages, int filePages) {
@@ -328,6 +331,7 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
     }
   }
 
+  @SuppressWarnings("unused")
   public class ReadRecordPages extends OOperation {
     @Override
     void incrementOperationsCounter(int pages, int filePages) {

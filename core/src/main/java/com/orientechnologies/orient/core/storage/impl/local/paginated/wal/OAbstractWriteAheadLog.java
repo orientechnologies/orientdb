@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.orient.core.exception.OStorageException;
 
 import java.io.IOException;
-import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -32,11 +31,12 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 6/25/14
  */
 public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
-  protected boolean            closed;
+  boolean closed;
 
-  protected final Lock         syncObject = new ReentrantLock();
-  protected OLogSequenceNumber lastCheckpoint;
+  final Lock syncObject = new ReentrantLock();
+  OLogSequenceNumber lastCheckpoint;
 
+  @Override
   public OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn) throws IOException {
     syncObject.lock();
     try {
@@ -50,6 +50,7 @@ public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
     }
   }
 
+  @Override
   public OLogSequenceNumber logFuzzyCheckPointEnd() throws IOException {
     syncObject.lock();
     try {
@@ -63,10 +64,12 @@ public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
     }
   }
 
+  @Override
   public OLogSequenceNumber logFullCheckpointStart() throws IOException {
     return log(new OFullCheckpointStartRecord(lastCheckpoint));
   }
 
+  @Override
   public OLogSequenceNumber logFullCheckpointEnd() throws IOException {
     syncObject.lock();
     try {
@@ -78,6 +81,7 @@ public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
     }
   }
 
+  @Override
   public OLogSequenceNumber getLastCheckpoint() {
     syncObject.lock();
     try {

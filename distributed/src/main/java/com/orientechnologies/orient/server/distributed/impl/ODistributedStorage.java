@@ -1564,7 +1564,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public int addCluster(final String iClusterName, boolean forceListBased, final Object... iParameters) {
+  public int addCluster(final String iClusterName, final Object... iParameters) {
     for (int retry = 0; retry < 10; ++retry) {
       final AtomicInteger clId = new AtomicInteger();
 
@@ -1582,7 +1582,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                   new OCallable<Object, OModifiableDistributedConfiguration>() {
                     @Override
                     public Object call(OModifiableDistributedConfiguration iArgument) {
-                      clId.set(wrapped.addCluster(iClusterName, false, iParameters));
+                      clId.set(wrapped.addCluster(iClusterName, iParameters));
 
                       final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
                       commandSQL.addExcludedNode(getNodeId());
@@ -1626,7 +1626,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           continue;
         }
       } else
-        clId.set(wrapped.addCluster(iClusterName, false, iParameters));
+        clId.set(wrapped.addCluster(iClusterName, iParameters));
 
       return clId.get();
     }
@@ -1636,8 +1636,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public int addCluster(String iClusterName, int iRequestedId, boolean forceListBased, Object... iParameters) {
-    return wrapped.addCluster(iClusterName, iRequestedId, forceListBased, iParameters);
+  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+    return wrapped.addCluster(iClusterName, iRequestedId, iParameters);
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {

@@ -49,7 +49,7 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber end();
 
-  void flush() throws IOException;
+  void flush();
 
   OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) throws IOException;
 
@@ -88,7 +88,7 @@ public interface OWriteAheadLog {
 
   void moveLsnAfter(OLogSequenceNumber lsn) throws IOException;
 
-  void preventCutTill(OLogSequenceNumber lsn) throws IOException;
+  void preventCutTill(OLogSequenceNumber lsn);
 
   File[] nonActiveSegments(long fromSegment);
 

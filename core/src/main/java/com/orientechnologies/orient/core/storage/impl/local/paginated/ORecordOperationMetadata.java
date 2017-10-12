@@ -35,7 +35,7 @@ import java.util.Set;
 public class ORecordOperationMetadata implements OAtomicOperationMetadata<Set<ORID>> {
   public static final String RID_METADATA_KEY = "cluster.record.rid";
 
-  private final Set<ORID> rids = new HashSet<ORID>();
+  private final Set<ORID> rids = new HashSet<>();
 
   public void addRid(ORID rid) {
     rids.add(rid);

@@ -114,6 +114,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private static final Comparator<ORecordOperation> COMMIT_RECORD_OPERATION_COMPARATOR = Comparator
       .comparing(o -> o.getRecord().getIdentity());
 
+  @SuppressWarnings("CanBeFinal")
   private static volatile DataOutputStream journaledStream = null;
 
   static {
@@ -589,7 +590,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public int addCluster(String clusterName, boolean forceListBased, final Object... parameters) {
+  public int addCluster(String clusterName, final Object... parameters) {
     try {
       checkOpenness();
       checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
@@ -616,7 +617,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public int addCluster(String clusterName, int requestedId, boolean forceListBased, Object... parameters) {
+  public int addCluster(String clusterName, int requestedId, Object... parameters) {
     try {
       checkOpenness();
       checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
@@ -3777,7 +3778,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  protected void makeFullCheckpoint() throws IOException {
+  protected void makeFullCheckpoint() {
     final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     if (statistic != null)
       statistic.startFullCheckpointTimer();
@@ -3842,7 +3843,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected void clearStorageDirty() throws IOException {
   }
 
-  protected boolean isDirty() throws IOException {
+  protected boolean isDirty() {
     return false;
   }
 

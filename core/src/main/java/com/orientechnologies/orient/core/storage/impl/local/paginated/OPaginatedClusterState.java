@@ -24,8 +24,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
-import java.io.IOException;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 20.08.13
@@ -39,7 +37,7 @@ public class OPaginatedClusterState extends ODurablePage {
     super(cacheEntry);
   }
 
-  public void setSize(long size) throws IOException {
+  public void setSize(long size) {
     setLongValue(SIZE_OFFSET, size);
   }
 
@@ -47,7 +45,7 @@ public class OPaginatedClusterState extends ODurablePage {
     return getLongValue(SIZE_OFFSET);
   }
 
-  public void setRecordsSize(long recordsSize) throws IOException {
+  public void setRecordsSize(long recordsSize) {
     setLongValue(RECORDS_SIZE_OFFSET, recordsSize);
   }
 
@@ -55,7 +53,7 @@ public class OPaginatedClusterState extends ODurablePage {
     return getLongValue(RECORDS_SIZE_OFFSET);
   }
 
-  public void setFreeListPage(int index, long pageIndex) throws IOException {
+  public void setFreeListPage(int index, long pageIndex) {
     setLongValue(FREE_LIST_OFFSET + index * OLongSerializer.LONG_SIZE, pageIndex);
   }
 

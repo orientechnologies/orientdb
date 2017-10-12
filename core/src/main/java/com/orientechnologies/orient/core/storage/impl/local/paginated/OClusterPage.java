@@ -29,8 +29,6 @@ import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
-import java.io.IOException;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 19.03.13
@@ -62,7 +60,7 @@ public class OClusterPage extends ODurablePage {
   private static final int ENTRY_KIND_UNKNOWN = 0;
   private static final int ENTRY_KIND_DATA    = +1;
 
-  public OClusterPage(OCacheEntry cacheEntry, boolean newPage) throws IOException {
+  public OClusterPage(OCacheEntry cacheEntry, boolean newPage) {
     super(cacheEntry);
 
     if (newPage) {
@@ -74,7 +72,7 @@ public class OClusterPage extends ODurablePage {
     }
   }
 
-  public int appendRecord(final int recordVersion, final byte[] record) throws IOException {
+  public int appendRecord(final int recordVersion, final byte[] record) {
     int freePosition = getIntValue(FREE_POSITION_OFFSET);
     final int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
 
@@ -146,7 +144,7 @@ public class OClusterPage extends ODurablePage {
     return entryIndex;
   }
 
-  public int replaceRecord(int entryIndex, byte[] record, final int recordVersion) throws IOException {
+  public int replaceRecord(int entryIndex, byte[] record, final int recordVersion) {
     int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
 
     if (recordVersion != -1) {
@@ -196,7 +194,7 @@ public class OClusterPage extends ODurablePage {
     return true;
   }
 
-  public boolean deleteRecord(int position) throws IOException {
+  public boolean deleteRecord(int position) {
     int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
     if (position >= indexesLength)
       return false;
@@ -319,7 +317,7 @@ public class OClusterPage extends ODurablePage {
     return getLongValue(NEXT_PAGE_OFFSET);
   }
 
-  public void setNextPage(final long nextPage) throws IOException {
+  public void setNextPage(final long nextPage) {
     setLongValue(NEXT_PAGE_OFFSET, nextPage);
   }
 
@@ -327,11 +325,11 @@ public class OClusterPage extends ODurablePage {
     return getLongValue(PREV_PAGE_OFFSET);
   }
 
-  public void setPrevPage(final long prevPage) throws IOException {
+  public void setPrevPage(final long prevPage) {
     setLongValue(PREV_PAGE_OFFSET, prevPage);
   }
 
-  public void setRecordLongValue(final int recordPosition, final int offset, final long value) throws IOException {
+  public void setRecordLongValue(final int recordPosition, final int offset, final long value) {
     assert isPositionInsideInterval(recordPosition);
 
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + recordPosition * INDEX_ITEM_SIZE;
@@ -365,7 +363,7 @@ public class OClusterPage extends ODurablePage {
     }
   }
 
-  public byte[] getRecordBinaryValue(final int recordPosition, final int offset, final int size) throws IOException {
+  public byte[] getRecordBinaryValue(final int recordPosition, final int offset, final int size) {
     assert isPositionInsideInterval(recordPosition);
 
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + recordPosition * INDEX_ITEM_SIZE;
@@ -463,11 +461,11 @@ public class OClusterPage extends ODurablePage {
     return offset >= 0 && offset + contentSize <= recordSize;
   }
 
-  private void incrementEntriesCount() throws IOException {
+  private void incrementEntriesCount() {
     setIntValue(ENTRIES_COUNT_OFFSET, getRecordsCount() + 1);
   }
 
-  private void decrementEntriesCount() throws IOException {
+  private void decrementEntriesCount() {
     setIntValue(ENTRIES_COUNT_OFFSET, getRecordsCount() - 1);
   }
 

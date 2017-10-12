@@ -37,8 +37,8 @@ import java.io.IOException;
 public class OOfflineCluster implements OCluster {
 
   private final String                    name;
-  private       int                       id;
-  private       OAbstractPaginatedStorage storageLocal;
+  private final int                       id;
+  private final OAbstractPaginatedStorage storageLocal;
 
   public OOfflineCluster(final OAbstractPaginatedStorage iStorage, final int iId, final String iName) {
     storageLocal = iStorage;
@@ -113,7 +113,7 @@ public class OOfflineCluster implements OCluster {
 
   @Override
   public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
-    throw new OOfflineClusterException("Cannot allocat a new position on offline cluster '" + name + "'");
+    throw new OOfflineClusterException("Cannot allocate a new position on offline cluster '" + name + "'");
   }
 
   @Override

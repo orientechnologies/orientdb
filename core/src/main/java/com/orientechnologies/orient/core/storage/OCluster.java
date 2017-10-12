@@ -28,7 +28,7 @@ import java.io.IOException;
 public interface OCluster {
 
   enum ATTRIBUTES {
-    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, CONFLICTSTRATEGY, STATUS, ENCRYPTION
+    NAME, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, CONFLICTSTRATEGY, STATUS, ENCRYPTION
   }
 
   void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
@@ -54,7 +54,6 @@ public interface OCluster {
   /**
    * Truncates the cluster content. All the entries will be removed.
    *
-   * @throws IOException
    */
   void truncate() throws IOException;
 
@@ -64,8 +63,6 @@ public interface OCluster {
    * @param recordType the type of record of which allocate the position.
    *
    * @return the allocated position.
-   *
-   * @throws IOException
    */
   OPhysicalPosition allocatePosition(byte recordType) throws IOException;
 
@@ -78,8 +75,6 @@ public interface OCluster {
    * @param allocatedPosition the eventual allocated position or null if there is no allocated position.
    *
    * @return the position where the record si created.
-   *
-   * @throws IOException
    */
   OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
       throws IOException;
@@ -101,8 +96,6 @@ public interface OCluster {
 
   /**
    * Fills and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
-   *
-   * @throws IOException
    */
   OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
 
@@ -124,8 +117,6 @@ public interface OCluster {
 
   /**
    * Returns the size of the records contained in the cluster in bytes.
-   *
-   * @return
    */
   long getRecordsSize() throws IOException;
 

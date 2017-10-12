@@ -468,7 +468,7 @@ public final class OMicroTransaction implements OBasicTransaction {
         if (result == ORecordHook.RESULT.RECORD_CHANGED && record instanceof ODocument)
           ((ODocument) record).validate();
         if (result == ORecordHook.RESULT.RECORD_CHANGED)
-          resave(record);
+          reSave(record);
       }
       break;
 
@@ -478,7 +478,7 @@ public final class OMicroTransaction implements OBasicTransaction {
         if (result == ORecordHook.RESULT.RECORD_CHANGED && record instanceof ODocument)
           ((ODocument) record).validate();
         if (result == ORecordHook.RESULT.RECORD_CHANGED)
-          resave(record);
+          reSave(record);
       }
       break;
 
@@ -602,7 +602,7 @@ public final class OMicroTransaction implements OBasicTransaction {
       changedDocuments.add(document);
   }
 
-  private void resave(ORecord record) {
+  private void reSave(ORecord record) {
     final ODirtyManager manager = ORecordInternal.getDirtyManager(record);
     final Set<ORecord> newRecords = manager.getNewRecords();
     final Set<ORecord> updatedRecords = manager.getUpdateRecords();
@@ -716,8 +716,8 @@ public final class OMicroTransaction implements OBasicTransaction {
   }
 
   private static class KeyChangesUpdateRecord {
-    public final OTransactionIndexChangesPerKey keyChanges;
-    public final OTransactionIndexChanges       indexChanges;
+    final OTransactionIndexChangesPerKey keyChanges;
+    final OTransactionIndexChanges       indexChanges;
 
     public KeyChangesUpdateRecord(OTransactionIndexChangesPerKey keyChanges, OTransactionIndexChanges indexChanges) {
       this.keyChanges = keyChanges;

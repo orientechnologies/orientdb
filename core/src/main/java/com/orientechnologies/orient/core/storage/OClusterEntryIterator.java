@@ -47,6 +47,7 @@ public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
     positionsIndex = -1;
   }
 
+  @Override
   public boolean hasNext() {
     if (min == ORID.CLUSTER_POS_INVALID)
       return false;
@@ -57,6 +58,7 @@ public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
     return positionsToProcess.length != 0;
   }
 
+  @Override
   public OPhysicalPosition next() {
     try {
       if (positionsIndex == -1) {
@@ -81,6 +83,7 @@ public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
     }
   }
 
+  @Override
   public void remove() {
     throw new UnsupportedOperationException("remove");
   }

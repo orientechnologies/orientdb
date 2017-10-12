@@ -11,11 +11,11 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPa
  */
 public class OCacheEntryChanges implements OCacheEntry {
 
-  protected OCacheEntry delegate;
-  protected OWALChanges changes = new OWALPageChangesPortion();
-  protected OLogSequenceNumber lsn     = null;
-  protected boolean            isNew   = false;
-  protected boolean            pinPage = false;
+  OCacheEntry delegate;
+  final OWALChanges changes = new OWALPageChangesPortion();
+  OLogSequenceNumber lsn     = null;
+  boolean            isNew   = false;
+  boolean            pinPage = false;
 
   public OCacheEntryChanges(OCacheEntry entry) {
     delegate = entry;
@@ -104,6 +104,7 @@ public class OCacheEntryChanges implements OCacheEntry {
     delegate.decrementUsages();
   }
 
+  @Override
   public OWALChanges getChanges() {
     return changes;
   }

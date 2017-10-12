@@ -295,8 +295,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
       try {
         readCache.closeFile(fileId, flush, writeCache);
-      } catch (IOException e) {
-        throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during close of index " + getName(), this), e);
       } finally {
         lock.unlock();
       }

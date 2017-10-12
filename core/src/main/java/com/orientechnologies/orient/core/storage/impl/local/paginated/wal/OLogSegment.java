@@ -73,7 +73,7 @@ public interface OLogSegment extends Comparable<OLogSegment> {
   /**
    * Writes buffer of the segment to the disk and performs <code>fsync</code> of data.
    */
-  void flush() throws IOException;
+  void flush();
 
   /**
    * Clears the buffer and deletes file content.
@@ -84,7 +84,7 @@ public interface OLogSegment extends Comparable<OLogSegment> {
    * Stop background task which writes data from log segments buffer to the disk and writes the rest of the buffer
    * to the disk. Performs <code>fsync</code> if necessary.
    */
-  void stopBackgroundWrite(boolean flush) throws IOException;
+  void stopBackgroundWrite(boolean flush);
 
   /**
    * Start background task which performs periodical write of background buffer to the disk.

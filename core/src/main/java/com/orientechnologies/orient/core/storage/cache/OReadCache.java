@@ -74,7 +74,7 @@ public interface OReadCache {
 
   void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache);
 
-  void pinPage(OCacheEntry cacheEntry) throws IOException;
+  void pinPage(OCacheEntry cacheEntry);
 
   OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums) throws IOException;
 
@@ -84,7 +84,7 @@ public interface OReadCache {
 
   void truncateFile(long fileId, OWriteCache writeCache) throws IOException;
 
-  void closeFile(long fileId, boolean flush, OWriteCache writeCache) throws IOException;
+  void closeFile(long fileId, boolean flush, OWriteCache writeCache);
 
   void deleteFile(long fileId, OWriteCache writeCache) throws IOException;
 

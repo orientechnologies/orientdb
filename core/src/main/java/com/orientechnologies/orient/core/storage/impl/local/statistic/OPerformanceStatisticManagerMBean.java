@@ -35,122 +35,122 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
   /**
    * Name of "pagesPerOperation" performance attribute
    */
-  public static final String PAGES_PER_OPERATION = "pagesPerOperation";
+  private static final String PAGES_PER_OPERATION = "pagesPerOperation";
 
   /**
    * Name of "cacheHits" performance attribute
    */
-  public static final String CACHE_HITS = "cacheHits";
+  private static final String CACHE_HITS = "cacheHits";
 
   /**
    * Separator in property name between component name and name of performance attribute
    */
-  public static final String COMPONENT_SEPARATOR = "_";
+  private static final String COMPONENT_SEPARATOR = "_";
 
   /**
    * Name of "commitTime" performance attribute
    */
-  public static final String COMMIT_TIME = "commitTime";
+  private static final String COMMIT_TIME = "commitTime";
 
   /**
    * Name of "readSpeedFromCache" performance attribute
    */
-  public static final String READ_SPEED_FROM_CACHE = "readSpeedFromCache";
+  private static final String READ_SPEED_FROM_CACHE = "readSpeedFromCache";
 
   /**
    * Name of "readSpeedFromFile" performance attribute
    */
-  public static final String READ_SPEED_FROM_FILE = "readSpeedFromFile";
+  private static final String READ_SPEED_FROM_FILE = "readSpeedFromFile";
 
   /**
    * Name of "writeSpeedInCache" performance attribute
    */
-  public static final String WRITE_SPEED_IN_CACHE = "writeSpeedInCache";
+  private static final String WRITE_SPEED_IN_CACHE = "writeSpeedInCache";
 
   /**
    * Name of "startMonitoring" method
    */
-  public static final String START_MONITORING = "startMonitoring";
+  private static final String START_MONITORING = "startMonitoring";
 
   /**
    * Name of "stopMonitoring" method
    */
-  public static final String STOP_MONITORING = "stopMonitoring";
+  private static final String STOP_MONITORING = "stopMonitoring";
 
   /**
    * Name of "writeCachePagesPerFlush" performance attribute
    */
-  public static final String WRITE_CACHE_PAGES_PER_FLUSH = "writeCachePagesPerFlush";
+  private static final String WRITE_CACHE_PAGES_PER_FLUSH = "writeCachePagesPerFlush";
 
   /**
    * Name of "writeCacheFlushOperationsTime" performance attribute
    */
-  public static final String WRITE_CACHE_FLUSH_OPERATION_TIME = "writeCacheFlushOperationTime";
+  private static final String WRITE_CACHE_FLUSH_OPERATION_TIME = "writeCacheFlushOperationTime";
 
   /**
    * Name of "writeCacheFuzzyCheckpointTime" performance attribute
    */
-  public static final String WRITE_CACHE_FUZZY_CHECKPOINT_TIME = "writeCacheFuzzyCheckpointTime";
+  private static final String WRITE_CACHE_FUZZY_CHECKPOINT_TIME = "writeCacheFuzzyCheckpointTime";
 
   /**
    * Name of "fullCheckpointTime" performance attribute
    */
-  public static final String FULL_CHECKPOINT_TIME = "fullCheckpointTime";
+  private static final String FULL_CHECKPOINT_TIME = "fullCheckpointTime";
 
   /**
    * Name of "fullCheckpointCount" performance attribute
    */
-  public static final String FULL_CHECKPOINT_COUNT = "fullCheckpointCount";
+  private static final String FULL_CHECKPOINT_COUNT = "fullCheckpointCount";
 
   /**
    * Name of "readCacheSize" performance attribute
    */
-  public static final String READ_CACHE_SIZE = "readCacheSize";
+  private static final String READ_CACHE_SIZE = "readCacheSize";
 
   /**
    * Name of "writeCacheSize" performance attribute
    */
-  public static final String WRITE_CACHE_SIZE = "writeCacheSize";
+  private static final String WRITE_CACHE_SIZE = "writeCacheSize";
 
   /**
    * Name of "exclusiveWriteCacheSize" performance attribute
    */
-  public static final String EXCLUSIVE_WRITE_CACHE_SIZE = "exclusiveWriteCacheSize";
+  private static final String EXCLUSIVE_WRITE_CACHE_SIZE = "exclusiveWriteCacheSize";
 
   /**
    * Name of "writeCacheOverflowCount" performance attribute
    */
-  public static final String WRITE_CACHE_OVERFLOW_COUNT = "writeCacheOverflowCount";
+  private static final String WRITE_CACHE_OVERFLOW_COUNT = "writeCacheOverflowCount";
 
   /**
    * Name of "walSize" performance attribute
    */
-  public static final String WAL_SIZE = "walSize";
+  private static final String WAL_SIZE = "walSize";
 
   /**
    * Name of "walCacheOverflowCount" performance attribute
    */
-  public static final String WAL_CACHE_OVERFLOW_COUNT = "walCacheOverflowCount";
+  private static final String WAL_CACHE_OVERFLOW_COUNT = "walCacheOverflowCount";
 
   /**
    * Name of "walLogTime" performance attribute
    */
-  public static final String WAL_LOG_TIME = "walLogTime";
+  private static final String WAL_LOG_TIME = "walLogTime";
 
   /**
    * Name of "walStartAOLogTime" performance attribute
    */
-  public static final String WAL_START_AO_LOG_TIME = "walStartAOLogTime";
+  private static final String WAL_START_AO_LOG_TIME = "walStartAOLogTime";
 
   /**
    * Name of "walEndAOLogTime" performance attribute
    */
-  public static final String WAL_END_AO_LOG_TIME = "walEndAOLogTime";
+  private static final String WAL_END_AO_LOG_TIME = "walEndAOLogTime";
 
   /**
    * Name of "walFlushTime" performance attribute
    */
-  public static final String WAL_FLUSH_TIME = "walFlushTime";
+  private static final String WAL_FLUSH_TIME = "walFlushTime";
 
   /**
    * Reference to related performance manager
@@ -192,113 +192,129 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
     }
 
     //if attribute name does not include component name it is system wide not component wide attribute
-    if (attributeName.equals(CACHE_HITS)) {
+    switch (attributeName) {
+    case CACHE_HITS:
       if (componentName == null)
         return manager.getCacheHits();
       else {
         return manager.getCacheHits(componentName);
       }
-    } else if (attributeName.equals(COMMIT_TIME)) {
+    case COMMIT_TIME:
       if (componentName == null)
         return manager.getCommitTime();
       else
         return throwComponentsAreNotSupported(COMMIT_TIME);
-    } else if (attributeName.equals(READ_SPEED_FROM_CACHE)) {
+    case READ_SPEED_FROM_CACHE:
       if (componentName == null)
         return manager.getReadSpeedFromCacheInPages();
       else
         return manager.getReadSpeedFromCacheInPages(componentName);
-    } else if (attributeName.equals(READ_SPEED_FROM_FILE)) {
+    case READ_SPEED_FROM_FILE:
       if (componentName == null)
         return manager.getReadSpeedFromFileInPages();
       else
         return manager.getReadSpeedFromFileInPages(componentName);
-    } else if (attributeName.equals(WRITE_SPEED_IN_CACHE)) {
+    case WRITE_SPEED_IN_CACHE:
       if (componentName == null)
         return manager.getWriteSpeedInCacheInPages();
       else
         return manager.getWriteSpeedInCacheInPages(componentName);
-    } else if (attributeName.equals(PAGES_PER_OPERATION)) {
+    case PAGES_PER_OPERATION:
       if (componentName == null)
         throw new RuntimeOperationsException(new IllegalArgumentException("Unknown attribute"),
             "Amount of pages per operation is measured only on component level");
 
       return manager.getAmountOfPagesPerOperation(componentName);
-    } else if (attributeName.equals(WRITE_CACHE_PAGES_PER_FLUSH)) {
+    case WRITE_CACHE_PAGES_PER_FLUSH:
       if (componentName == null)
         return manager.getWriteCachePagesPerFlush();
       else
         throwComponentsAreNotSupported(WRITE_CACHE_PAGES_PER_FLUSH);
-    } else if (attributeName.equals(WRITE_CACHE_FLUSH_OPERATION_TIME)) {
+      break;
+    case WRITE_CACHE_FLUSH_OPERATION_TIME:
       if (componentName == null)
         return manager.getWriteCacheFlushOperationsTime();
       else
         throwComponentsAreNotSupported(WRITE_CACHE_FLUSH_OPERATION_TIME);
-    } else if (attributeName.equals(WRITE_CACHE_FUZZY_CHECKPOINT_TIME)) {
+      break;
+    case WRITE_CACHE_FUZZY_CHECKPOINT_TIME:
       if (componentName == null)
         return manager.getWriteCacheFuzzyCheckpointTime();
       else
         throwComponentsAreNotSupported(WRITE_CACHE_FUZZY_CHECKPOINT_TIME);
-    } else if (attributeName.equals(FULL_CHECKPOINT_TIME)) {
+      break;
+    case FULL_CHECKPOINT_TIME:
       if (componentName == null)
         return manager.getFullCheckpointTime();
       else
         throwComponentsAreNotSupported(FULL_CHECKPOINT_TIME);
-    } else if (attributeName.equals(FULL_CHECKPOINT_COUNT)) {
+      break;
+    case FULL_CHECKPOINT_COUNT:
       if (componentName == null)
         return manager.getFullCheckpointCount();
       else
         throwComponentsAreNotSupported(FULL_CHECKPOINT_COUNT);
-    } else if (attributeName.equals(READ_CACHE_SIZE)) {
+      break;
+    case READ_CACHE_SIZE:
       if (componentName == null)
         return manager.getReadCacheSize();
       else
         throwComponentsAreNotSupported(READ_CACHE_SIZE);
-    } else if (attributeName.equals(WRITE_CACHE_SIZE)) {
+      break;
+    case WRITE_CACHE_SIZE:
       if (componentName == null)
         return manager.getWriteCacheSize();
       else
         throwComponentsAreNotSupported(WRITE_CACHE_SIZE);
-    } else if (attributeName.equals(EXCLUSIVE_WRITE_CACHE_SIZE)) {
+      break;
+    case EXCLUSIVE_WRITE_CACHE_SIZE:
       if (componentName == null)
         return manager.getExclusiveWriteCacheSize();
       else
         throwComponentsAreNotSupported(EXCLUSIVE_WRITE_CACHE_SIZE);
-    } else if (attributeName.equals(WRITE_CACHE_OVERFLOW_COUNT)) {
+      break;
+    case WRITE_CACHE_OVERFLOW_COUNT:
       if (componentName == null)
         return manager.getWriteCacheOverflowCount();
       else
         throwComponentsAreNotSupported(WAL_CACHE_OVERFLOW_COUNT);
-    } else if (attributeName.equals(WAL_SIZE)) {
+      break;
+    case WAL_SIZE:
       if (componentName == null)
         return manager.getWALSize();
       else
         throwComponentsAreNotSupported(WAL_SIZE);
-    } else if (attributeName.equals(WAL_CACHE_OVERFLOW_COUNT)) {
+      break;
+    case WAL_CACHE_OVERFLOW_COUNT:
       if (componentName == null)
         return manager.getWALCacheOverflowCount();
       else
         throwComponentsAreNotSupported(WAL_CACHE_OVERFLOW_COUNT);
-    } else if (attributeName.equals(WAL_LOG_TIME)) {
+      break;
+    case WAL_LOG_TIME:
       if (componentName == null)
         return manager.getWALLogRecordTime();
       else
         throwComponentsAreNotSupported(WAL_LOG_TIME);
-    } else if (attributeName.equals(WAL_START_AO_LOG_TIME)) {
+      break;
+    case WAL_START_AO_LOG_TIME:
       if (componentName == null)
         return manager.getWALStartAOLogRecordTime();
       else
         throwComponentsAreNotSupported(WAL_START_AO_LOG_TIME);
-    } else if (attributeName.equals(WAL_END_AO_LOG_TIME)) {
+      break;
+    case WAL_END_AO_LOG_TIME:
       if (componentName == null)
         return manager.getWALStopAOLogRecordTime();
       else
         throwComponentsAreNotSupported(WAL_END_AO_LOG_TIME);
-    } else if (attributeName.equals(WAL_FLUSH_TIME)) {
+      break;
+    case WAL_FLUSH_TIME:
       if (componentName == null)
         return manager.getWALFlushTime();
       else
         throwComponentsAreNotSupported(WAL_FLUSH_TIME);
+      break;
     }
 
     throw new AttributeNotFoundException("Cannot find " + attribute + " attribute in " + getClass().getSimpleName());
@@ -373,10 +389,10 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
 
   @Override
   public MBeanInfo getMBeanInfo() {
-    final List<MBeanAttributeInfo> performanceAttributes = new ArrayList<MBeanAttributeInfo>();
+    final List<MBeanAttributeInfo> performanceAttributes = new ArrayList<>();
     populatePerformanceAttributes(performanceAttributes);
 
-    final List<MBeanOperationInfo> operations = new ArrayList<MBeanOperationInfo>();
+    final List<MBeanOperationInfo> operations = new ArrayList<>();
 
     final MBeanOperationInfo startMonitoring = new MBeanOperationInfo(START_MONITORING,
         "Starts monitoring OrientDB performance characteristics", new MBeanParameterInfo[0], void.class.getName(),

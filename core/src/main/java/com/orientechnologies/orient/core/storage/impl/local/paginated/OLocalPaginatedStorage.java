@@ -463,7 +463,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected boolean isDirty() throws IOException {
+  protected boolean isDirty() {
     return dirtyFlag.isDirty();
   }
 

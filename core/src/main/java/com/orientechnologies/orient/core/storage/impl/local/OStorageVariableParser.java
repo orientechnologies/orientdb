@@ -25,11 +25,10 @@ import com.orientechnologies.common.parser.OVariableParserListener;
 import java.nio.file.Path;
 
 public class OStorageVariableParser implements OVariableParserListener {
-  public static final String STORAGE_PATH = "STORAGE_PATH";
-  private Path dbPath;
-  public static final String VAR_BEGIN        = "${";
-  public static final String VAR_END          = "}";
-  public static final String DB_PATH_VARIABLE = VAR_BEGIN + STORAGE_PATH + VAR_END;
+  private static final String STORAGE_PATH = "STORAGE_PATH";
+  private final Path dbPath;
+  private static final String VAR_BEGIN = "${";
+  private static final String VAR_END   = "}";
 
   public OStorageVariableParser(Path dbPath) {
     this.dbPath = dbPath;

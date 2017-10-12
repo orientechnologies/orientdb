@@ -82,9 +82,9 @@ public class OPerformanceStatisticManager {
   /**
    * Prefix of name of JMX bean.
    */
-  public static final String MBEAN_PREFIX = "com.orientechnologies.orient.core.storage.impl.local.statistic:type=OPerformanceStatisticManagerMXBean";
+  private static final String MBEAN_PREFIX = "com.orientechnologies.orient.core.storage.impl.local.statistic:type=OPerformanceStatisticManagerMXBean";
 
-  /**
+  /*
    * Class consist of three key fields:
    * <p>
    * <ol>
@@ -128,17 +128,12 @@ public class OPerformanceStatisticManager {
   /**
    * Indicates whether gathering of performance data for single thread is switched on/off.
    */
-  private final ThreadLocal<Boolean> enabledForCurrentThread = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return false;
-    }
-  };
+  private final ThreadLocal<Boolean> enabledForCurrentThread = ThreadLocal.withInitial(() -> false);
 
   /**
    * Map which bounds performance statistic for currently running threads.
    */
-  private final ConcurrentHashMap<Thread, OSessionStoragePerformanceStatistic> statistics = new ConcurrentHashMap<Thread, OSessionStoragePerformanceStatistic>();
+  private final ConcurrentHashMap<Thread, OSessionStoragePerformanceStatistic> statistics = new ConcurrentHashMap<>();
 
   /**
    * Accumulated statistic for threads which were active during early stages of performance measurement and are died now.
@@ -163,7 +158,7 @@ public class OPerformanceStatisticManager {
   /**
    * List of all components which registered itself as participating in performance monitoring.
    */
-  private final List<String> componentNames = new CopyOnWriteArrayList<String>();
+  private final List<String> componentNames = new CopyOnWriteArrayList<>();
 
   /**
    * Amount of full checkpoints are done for current storage.
@@ -384,7 +379,7 @@ public class OPerformanceStatisticManager {
       enabled = false;
 
       final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
-      final Map<String, PerformanceCountersHolder> componentCountersHolder = new HashMap<String, PerformanceCountersHolder>();
+      final Map<String, PerformanceCountersHolder> componentCountersHolder = new HashMap<>();
 
       WritCacheCountersHolder writCacheCountersHolder = deadThreadsStatistic.writCacheCountersHolder;
       StorageCountersHolder storageCountersHolder = deadThreadsStatistic.storageCountersHolder;
@@ -435,13 +430,7 @@ public class OPerformanceStatisticManager {
                   + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
         }
 
-      } catch (MalformedObjectNameException e) {
-        throw OException.wrapException(new OStorageException("Error during registration of profiler MBean"), e);
-      } catch (InstanceAlreadyExistsException e) {
-        throw OException.wrapException(new OStorageException("Error during registration of profiler MBean"), e);
-      } catch (MBeanRegistrationException e) {
-        throw OException.wrapException(new OStorageException("Error during registration of profiler MBean"), e);
-      } catch (NotCompliantMBeanException e) {
+      } catch (MalformedObjectNameException | InstanceAlreadyExistsException | NotCompliantMBeanException | MBeanRegistrationException e) {
         throw OException.wrapException(new OStorageException("Error during registration of profiler MBean"), e);
       }
     }
@@ -466,11 +455,7 @@ public class OPerformanceStatisticManager {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName mbeanName = new ObjectName(getMBeanName(storageName, storageId));
         server.unregisterMBean(mbeanName);
-      } catch (MalformedObjectNameException e) {
-        throw OException.wrapException(new OStorageException("Error during unregistration of profiler MBean"), e);
-      } catch (InstanceNotFoundException e) {
-        throw OException.wrapException(new OStorageException("Error during unregistration of profiler MBean"), e);
-      } catch (MBeanRegistrationException e) {
+      } catch (MalformedObjectNameException | InstanceNotFoundException | MBeanRegistrationException e) {
         throw OException.wrapException(new OStorageException("Error during unregistration of profiler MBean"), e);
       }
     }
@@ -489,7 +474,7 @@ public class OPerformanceStatisticManager {
    * @return Set of names of components for which performance statistic is gathered.
    */
   public Set<String> getComponentNames() {
-    return new HashSet<String>(componentNames);
+    return new HashSet<>(componentNames);
   }
 
   /**
@@ -1191,15 +1176,14 @@ public class OPerformanceStatisticManager {
 
     //To decrease inter thread communication delay we fetch snapshots first
     //and only after that we aggregate data from immutable snapshots
-    final Collection<ORawPair<Thread, PerformanceSnapshot>> snapshots = new ArrayList<ORawPair<Thread, PerformanceSnapshot>>(
-        statistics.size());
+    final Collection<ORawPair<Thread, PerformanceSnapshot>> snapshots = new ArrayList<>(statistics.size());
 
-    final Collection<Thread> threadsToRemove = new ArrayList<Thread>();
+    final Collection<Thread> threadsToRemove = new ArrayList<>();
     for (Map.Entry<Thread, OSessionStoragePerformanceStatistic> entry : statistics.entrySet()) {
       final Thread thread = entry.getKey();
 
       final OSessionStoragePerformanceStatistic statistic = entry.getValue();
-      snapshots.add(new ORawPair<Thread, PerformanceSnapshot>(thread, statistic.getSnapshot()));
+      snapshots.add(new ORawPair<>(thread, statistic.getSnapshot()));
     }
 
     WritCacheCountersHolder holder = null;
@@ -1252,15 +1236,14 @@ public class OPerformanceStatisticManager {
 
     //To decrease inter thread communication delay we fetch snapshots first
     //and only after that we aggregate data from immutable snapshots
-    final Collection<ORawPair<Thread, PerformanceSnapshot>> snapshots = new ArrayList<ORawPair<Thread, PerformanceSnapshot>>(
-        statistics.size());
+    final Collection<ORawPair<Thread, PerformanceSnapshot>> snapshots = new ArrayList<>(statistics.size());
 
-    final Collection<Thread> threadsToRemove = new ArrayList<Thread>();
+    final Collection<Thread> threadsToRemove = new ArrayList<>();
     for (Map.Entry<Thread, OSessionStoragePerformanceStatistic> entry : statistics.entrySet()) {
       final Thread thread = entry.getKey();
 
       final OSessionStoragePerformanceStatistic statistic = entry.getValue();
-      snapshots.add(new ORawPair<Thread, PerformanceSnapshot>(thread, statistic.getSnapshot()));
+      snapshots.add(new ORawPair<>(thread, statistic.getSnapshot()));
     }
 
     StorageCountersHolder holder = null;
@@ -1313,15 +1296,14 @@ public class OPerformanceStatisticManager {
 
     //To decrease inter thread communication delay we fetch snapshots first
     //and only after that we aggregate data from immutable snapshots
-    final Collection<ORawPair<Thread, PerformanceSnapshot>> snapshots = new ArrayList<ORawPair<Thread, PerformanceSnapshot>>(
-        statistics.size());
+    final Collection<ORawPair<Thread, PerformanceSnapshot>> snapshots = new ArrayList<>(statistics.size());
 
-    final Collection<Thread> threadsToRemove = new ArrayList<Thread>();
+    final Collection<Thread> threadsToRemove = new ArrayList<>();
     for (Map.Entry<Thread, OSessionStoragePerformanceStatistic> entry : statistics.entrySet()) {
       final Thread thread = entry.getKey();
 
       final OSessionStoragePerformanceStatistic statistic = entry.getValue();
-      snapshots.add(new ORawPair<Thread, PerformanceSnapshot>(thread, statistic.getSnapshot()));
+      snapshots.add(new ORawPair<>(thread, statistic.getSnapshot()));
     }
 
     WALCountersHolder holder = null;
@@ -1374,14 +1356,13 @@ public class OPerformanceStatisticManager {
 
     //To decrease inter thread communication delay we fetch snapshots first
     //and only after that we aggregate data from immutable snapshots
-    final Collection<ORawPair<Thread, PerformanceSnapshot>> snapshots = new ArrayList<ORawPair<Thread, PerformanceSnapshot>>(
-        statistics.size());
+    final Collection<ORawPair<Thread, PerformanceSnapshot>> snapshots = new ArrayList<>(statistics.size());
 
-    final Collection<Thread> threadsToRemove = new ArrayList<Thread>();
+    final Collection<Thread> threadsToRemove = new ArrayList<>();
     for (Map.Entry<Thread, OSessionStoragePerformanceStatistic> entry : statistics.entrySet()) {
       final Thread thread = entry.getKey();
       final OSessionStoragePerformanceStatistic statistic = entry.getValue();
-      snapshots.add(new ORawPair<Thread, PerformanceSnapshot>(thread, statistic.getSnapshot()));
+      snapshots.add(new ORawPair<>(thread, statistic.getSnapshot()));
     }
 
     for (ORawPair<Thread, PerformanceSnapshot> pair : snapshots) {
@@ -1421,14 +1402,13 @@ public class OPerformanceStatisticManager {
 
     //To decrease inter thread communication delay we fetch snapshots first
     //and only after that we aggregate data from immutable snapshots
-    final Collection<ORawPair<Thread, PerformanceSnapshot>> snapshots = new ArrayList<ORawPair<Thread, PerformanceSnapshot>>(
-        statistics.size());
+    final Collection<ORawPair<Thread, PerformanceSnapshot>> snapshots = new ArrayList<>(statistics.size());
 
-    final List<Thread> threadsToRemove = new ArrayList<Thread>();
+    final List<Thread> threadsToRemove = new ArrayList<>();
     for (Map.Entry<Thread, OSessionStoragePerformanceStatistic> entry : statistics.entrySet()) {
       final Thread thread = entry.getKey();
       final OSessionStoragePerformanceStatistic statistic = entry.getValue();
-      snapshots.add(new ORawPair<Thread, PerformanceSnapshot>(thread, statistic.getSnapshot()));
+      snapshots.add(new ORawPair<>(thread, statistic.getSnapshot()));
     }
 
     for (ORawPair<Thread, PerformanceSnapshot> pair : snapshots) {
@@ -1468,7 +1448,7 @@ public class OPerformanceStatisticManager {
       //results in #deadThreadsStatistic field to preserve thread safety features
       final ImmutableStatistic oldDS = deadThreadsStatistic;
       final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
-      final Map<String, PerformanceCountersHolder> countersByComponents = new HashMap<String, PerformanceCountersHolder>();
+      final Map<String, PerformanceCountersHolder> countersByComponents = new HashMap<>();
 
       WritCacheCountersHolder writeCacheCountersHolder = null;
       StorageCountersHolder storageCountersHolder = null;

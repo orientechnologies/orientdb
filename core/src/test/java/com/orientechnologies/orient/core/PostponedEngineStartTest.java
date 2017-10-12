@@ -358,12 +358,12 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public int addCluster(String iClusterName, boolean forceListBased, Object... iParameters) {
+        public int addCluster(String iClusterName, Object... iParameters) {
           return 0;
         }
 
         @Override
-        public int addCluster(String iClusterName, int iRequestedId, boolean forceListBased, Object... iParameters) {
+        public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
           return 0;
         }
 

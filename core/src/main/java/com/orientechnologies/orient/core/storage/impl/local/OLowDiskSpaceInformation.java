@@ -5,8 +5,8 @@ package com.orientechnologies.orient.core.storage.impl.local;
 * @since 05/02/15
 */
 public class OLowDiskSpaceInformation {
-public long freeSpace;
-public long requiredSpace;
+  public final long freeSpace;
+  public final long requiredSpace;
 
 public OLowDiskSpaceInformation(long freeSpace, long requiredSpace) {
 this.freeSpace = freeSpace;

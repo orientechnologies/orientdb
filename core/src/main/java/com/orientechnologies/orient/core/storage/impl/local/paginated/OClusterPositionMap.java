@@ -83,7 +83,7 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public void flush() throws IOException {
+  public void flush() {
     startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
@@ -305,11 +305,7 @@ public class OClusterPositionMap extends ODurableComponent {
         }
 
         endAtomicOperation(false, null);
-      } catch (IOException e) {
-        endAtomicOperation(true, e);
-        throw OException.wrapException(
-            new OClusterPositionMapException("Error of update of mapping between logical adn physical record position", this), e);
-      } catch (RuntimeException e) {
+      } catch (IOException | RuntimeException e) {
         endAtomicOperation(true, e);
         throw OException.wrapException(
             new OClusterPositionMapException("Error of update of mapping between logical adn physical record position", this), e);
@@ -344,12 +340,7 @@ public class OClusterPositionMap extends ODurableComponent {
         }
 
         endAtomicOperation(false, null);
-      } catch (IOException e) {
-        endAtomicOperation(true, e);
-        throw OException.wrapException(
-            new OClusterPositionMapException("Error of resurrecting mapping between logical adn physical record position", this),
-            e);
-      } catch (RuntimeException e) {
+      } catch (IOException | RuntimeException e) {
         endAtomicOperation(true, e);
         throw OException.wrapException(
             new OClusterPositionMapException("Error of resurrecting mapping between logical adn physical record position", this),
@@ -395,7 +386,7 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public OClusterPositionMapBucket.PositionEntry remove(final long clusterPosition) throws IOException {
+  public void remove(final long clusterPosition) throws IOException {
     startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
@@ -410,7 +401,7 @@ public class OClusterPositionMap extends ODurableComponent {
         try {
           final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
 
-          return bucket.remove(index);
+          bucket.remove(index);
         } catch (Exception e) {
           exception = e;
           throw OException.wrapException(
@@ -737,18 +728,15 @@ public class OClusterPositionMap extends ODurableComponent {
           OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
           final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
 
-          for (long pageIndex = filledUpTo - 1; pageIndex >= 0; pageIndex--) {
-            OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
-            try {
-              OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
-              final int bucketSize = bucket.getSize();
-              return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + bucketSize;
-            } finally {
-              releasePageFromRead(atomicOperation, cacheEntry);
-            }
+          final long pageIndex = filledUpTo - 1;
+          OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
+          try {
+            OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
+            final int bucketSize = bucket.getSize();
+            return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + bucketSize;
+          } finally {
+            releasePageFromRead(atomicOperation, cacheEntry);
           }
-
-          return ORID.CLUSTER_POS_INVALID;
         } finally {
           releaseSharedLock();
         }

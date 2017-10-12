@@ -38,17 +38,19 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class ConcurrentLRUList implements LRUList {
 
+  @SuppressWarnings("CanBeFinal")
   private static boolean assertionsEnabled;
 
   static {
+    //noinspection AssertWithSideEffects,ConstantConditions
     assert assertionsEnabled = true;
   }
 
-  private final ConcurrentHashMap<CacheKey, LRUEntry> cache         = new ConcurrentHashMap<CacheKey, LRUEntry>();
+  private final ConcurrentHashMap<CacheKey, LRUEntry> cache         = new ConcurrentHashMap<>();
   private final ListNode                              headReference = new ListNode(null, true);
-  private final AtomicReference<ListNode>             tailReference = new AtomicReference<ListNode>(headReference);
+  private final AtomicReference<ListNode>             tailReference = new AtomicReference<>(headReference);
 
-  private final ConcurrentLinkedQueue<ListNode> trash = new ConcurrentLinkedQueue<ListNode>();
+  private final ConcurrentLinkedQueue<ListNode> trash = new ConcurrentLinkedQueue<>();
 
   private final int           minTrashSize    = Runtime.getRuntime().availableProcessors() * 4;
   private final AtomicBoolean purgeInProgress = new AtomicBoolean();
@@ -426,7 +428,7 @@ public class ConcurrentLRUList implements LRUList {
   }
 
   private static class LRUEntry {
-    private final AtomicReference<ListNode> listNode = new AtomicReference<ListNode>();
+    private final AtomicReference<ListNode> listNode = new AtomicReference<>();
     private final    CacheKey    key;
     private volatile OCacheEntry entry;
 
@@ -441,8 +443,8 @@ public class ConcurrentLRUList implements LRUList {
 
   private static class ListNode {
     private volatile LRUEntry entry;
-    private final AtomicReference<ListNode> next     = new AtomicReference<ListNode>();
-    private final AtomicReference<ListNode> previous = new AtomicReference<ListNode>();
+    private final AtomicReference<ListNode> next     = new AtomicReference<>();
+    private final AtomicReference<ListNode> previous = new AtomicReference<>();
 
     private final boolean isDummy;
 

@@ -29,7 +29,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public class OPhysicalPosition implements OSerializableStream, Externalizable {
-  public static final int binarySize    = OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE + OBinaryProtocol.SIZE_INT
+  private static final int binarySize = OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE + OBinaryProtocol.SIZE_INT
       + OBinaryProtocol.SIZE_INT;
   public long             clusterPosition;
   public byte             recordType;
@@ -52,11 +52,7 @@ public class OPhysicalPosition implements OSerializableStream, Externalizable {
     recordVersion = iVersion;
   }
 
-  public static int binarySize() {
-    return binarySize;
-  }
-
-  public void copyTo(final OPhysicalPosition iDest) {
+  private void copyTo(final OPhysicalPosition iDest) {
     iDest.clusterPosition = clusterPosition;
     iDest.recordType = recordType;
     iDest.recordVersion = recordVersion;
@@ -72,6 +68,7 @@ public class OPhysicalPosition implements OSerializableStream, Externalizable {
     return "rid(?:" + clusterPosition + ") record(type:" + recordType + " size:" + recordSize + " v:" + recordVersion + ")";
   }
 
+  @Override
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
     int pos = 0;
 
@@ -89,8 +86,9 @@ public class OPhysicalPosition implements OSerializableStream, Externalizable {
     return this;
   }
 
+  @Override
   public byte[] toStream() throws OSerializationException {
-    final byte[] buffer = new byte[binarySize()];
+    final byte[] buffer = new byte[binarySize];
     int pos = 0;
 
     OBinaryProtocol.long2bytes(clusterPosition, buffer, pos);
@@ -126,6 +124,7 @@ public class OPhysicalPosition implements OSerializableStream, Externalizable {
     return result;
   }
 
+  @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeLong(clusterPosition);
     out.writeByte(recordType);
@@ -133,6 +132,7 @@ public class OPhysicalPosition implements OSerializableStream, Externalizable {
     out.writeInt(recordVersion);
   }
 
+  @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     clusterPosition = in.readLong();
     recordType = in.readByte();

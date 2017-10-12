@@ -64,7 +64,7 @@ public interface OWALChanges {
    * Read changes from a stream.
    * Needed from restore from WAL.
    *
-   * @param offset the offest in the buffer where start to read.
+   * @param offset the offset in the buffer where start to read.
    * @param stream the buffer to read.
    * @return the offset+read bytes.
    */

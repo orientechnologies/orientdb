@@ -440,8 +440,6 @@ public class OSBTree<K, V> extends ODurableComponent {
         if (nullPointerSupport)
           readCache.closeFile(nullBucketFileId, flush, writeCache);
 
-      } catch (IOException e) {
-        throw OException.wrapException(new OSBTreeException("Error during close of index " + getName(), this), e);
       } finally {
         releaseExclusiveLock();
       }

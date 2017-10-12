@@ -31,51 +31,35 @@ import java.nio.file.Path;
 public interface OFile {
   /**
    * Opens the file.
-   *
-   * @return
-   *
-   * @throws IOException
    */
   void open();
 
   /**
    * Creates the file.
-   *
-   * @throws IOException
    */
   void create() throws IOException;
 
   /**
    * Closes the file.
-   *
-   * @throws IOException
    */
   void close();
 
   /**
    * Deletes the file.
-   *
-   * @throws IOException
    */
   void delete() throws IOException;
 
-  boolean synch() throws IOException;
+  void synch();
 
   void read(long iOffset, byte[] iDestBuffer, int iLength) throws IOException;
-
-  short readShort(long iLogicalPosition) throws IOException;
 
   int readInt(long iLogicalPosition) throws IOException;
 
   long readLong(long iOffset) throws IOException;
 
-  byte readByte(long iOffset) throws IOException;
-
   void writeInt(long iOffset, int iValue) throws IOException;
 
   void writeLong(long iOffset, long iValue) throws IOException;
-
-  void writeShort(long iOffset, short iValue) throws IOException;
 
   void writeByte(long iOffset, byte iValue) throws IOException;
 
@@ -83,10 +67,6 @@ public interface OFile {
 
   /**
    * Shrink the file content (filledUpTo attribute only)
-   *
-   * @param iSize
-   *
-   * @throws IOException
    */
   void shrink(final long iSize) throws IOException;
 

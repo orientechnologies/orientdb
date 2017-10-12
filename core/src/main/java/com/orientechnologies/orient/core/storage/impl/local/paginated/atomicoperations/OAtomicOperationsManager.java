@@ -61,7 +61,8 @@ import java.util.concurrent.locks.LockSupport;
  * @since 12/3/13
  */
 public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
-  public static final String MBEAN_NAME = "com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations:type=OAtomicOperationsMangerMXBean";
+  @SuppressWarnings("SpellCheckingInspection")
+  private static final String MBEAN_NAME = "com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations:type=OAtomicOperationsMangerMXBean";
 
   private volatile boolean trackAtomicOperations = OGlobalConfiguration.TX_TRACK_ATOMIC_OPERATIONS.getValueAsBoolean();
 
@@ -131,7 +132,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * operation.
    * <p>
    * <p>In current implementation of atomic operation, each component which is participated in atomic operation is hold under
-   * exclusive lock till atomic operation will not be completed (committed or rollbacked).
+   * exclusive lock till atomic operation will not be completed (committed or rolled back).
    * <p>
    * <p>If other thread is going to read data from component it has to acquire read lock inside of atomic operation manager {@link
    * #acquireReadLock(ODurableComponent)}, otherwise data consistency will be compromised.

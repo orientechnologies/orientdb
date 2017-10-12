@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
