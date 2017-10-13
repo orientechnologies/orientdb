@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -11,7 +12,7 @@ import org.junit.Test;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.*;
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
@@ -229,6 +230,35 @@ public class OInsertStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     result.close();
+  }
+
+  @Test
+  public void testLinkConversion() {
+    String className1 = "testLinkConversion1";
+    String className2 = "testLinkConversion2";
+
+
+    db.command("CREATE CLASS " + className1).close();
+    db.command("INSERT INTO " + className1 + " SET name='Active';").close();
+    db.command("INSERT INTO " + className1 + " SET name='Inactive';").close();
+
+    db.command("CREATE CLASS " + className2 + ";").close();
+    db.command("CREATE PROPERTY " + className2 + ".processingType LINK "+className1+";").close();
+
+    db.command("INSERT INTO " + className2 + " SET name='Active', processingType = (SELECT FROM " + className1
+        + " WHERE name = 'Active') ;").close();
+    db.command("INSERT INTO " + className2 + " SET name='Inactive', processingType = (SELECT FROM " + className1
+        + " WHERE name = 'Inactive') ;").close();
+
+
+    OResultSet result = db.query("SELECT FROM "+className2);
+    for (int i = 0; i < 2; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult row = result.next();
+      Object val = row.getProperty("processingType");
+      Assert.assertNotNull(val);
+      Assert.assertTrue(val instanceof OIdentifiable);
+    }
   }
 
 }

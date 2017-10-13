@@ -4,13 +4,15 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OUpdateItem extends SimpleNode {
@@ -119,7 +121,9 @@ public class OUpdateItem extends SimpleNode {
 
     switch (operator) {
     case OPERATOR_EQ:
-      doc.setProperty(attrName.getStringValue(), convertResultToDocument(rightValue));
+      Object newValue = convertResultToDocument(rightValue);
+      newValue = convertToPropertyType(doc, attrName, newValue);
+      doc.setProperty(attrName.getStringValue(), newValue);
       break;
     case OPERATOR_MINUSASSIGN:
       doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.MINUS));
@@ -134,6 +138,31 @@ public class OUpdateItem extends SimpleNode {
       doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.STAR));
       break;
     }
+  }
+
+  private Object convertToPropertyType(OResultInternal res, OIdentifier attrName, Object newValue) {
+    OElement doc = res.toElement();
+    Optional<OClass> optSchema = doc.getSchemaType();
+    if (!optSchema.isPresent()) {
+      return newValue;
+    }
+    OProperty prop = optSchema.get().getProperty(attrName.getStringValue());
+    if (prop == null) {
+      return newValue;
+    }
+
+    if (newValue instanceof Collection) {
+      if (prop.getType() == OType.LINK) {
+        if (((Collection) newValue).size() == 0) {
+          newValue = null;
+        } else if (((Collection) newValue).size() == 1) {
+          newValue = ((Collection) newValue).iterator().next();
+        } else {
+          throw new OCommandExecutionException("Cannot assign a collection to a LINK property");
+        }
+      }
+    }
+    return newValue;
   }
 
   private Object convertResultToDocument(Object value) {
