@@ -41,9 +41,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 5/6/14
  */
 public class OPaginatedStorageDirtyFlag {
-  private Path        dirtyFilePath;
-  private FileChannel channel;
-  private FileLock    fileLock;
+  private final Path        dirtyFilePath;
+  private       FileChannel channel;
+  private       FileLock    fileLock;
 
   private volatile boolean dirtyFlag;
 

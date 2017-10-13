@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexFactory;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexFactory;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;

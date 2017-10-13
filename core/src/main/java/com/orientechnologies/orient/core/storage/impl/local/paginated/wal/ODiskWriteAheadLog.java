@@ -445,7 +445,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void flush() throws IOException {
+  public void flush() {
     OLogSegment last;
 
     syncObject.lock();
@@ -984,7 +984,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void preventCutTill(OLogSequenceNumber lsn) throws IOException {
+  public void preventCutTill(OLogSequenceNumber lsn) {
     preventCutTill = lsn;
   }
 
@@ -995,7 +995,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return logSegments.remove(0);
   }
 
-  private void recalculateLogSize() throws IOException {
+  private void recalculateLogSize() {
     logSize = 0;
 
     for (OLogSegment segment : logSegments)

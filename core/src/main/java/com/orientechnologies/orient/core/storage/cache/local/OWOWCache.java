@@ -670,7 +670,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   @Override
-  public long bookFileId(String fileName) throws IOException {
+  public long bookFileId(String fileName) {
     filesLock.acquireWriteLock();
     try {
       final Integer fileId = nameIdMap.get(fileName);
@@ -828,7 +828,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   @Override
-  public void updateDirtyPagesTable(OCachePointer pointer) throws IOException {
+  public void updateDirtyPagesTable(OCachePointer pointer) {
     if (writeAheadLog == null)
       return;
 
@@ -1269,7 +1269,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   @Override
-  public long getFilledUpTo(long fileId) throws IOException {
+  public long getFilledUpTo(long fileId) {
     final int intId = extractFileId(fileId);
     fileId = composeFileId(id, intId);
 
@@ -1470,7 +1470,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   @Override
-  public void close(long fileId, boolean flush) throws IOException {
+  public void close(long fileId, boolean flush) {
     final int intId = extractFileId(fileId);
     fileId = composeFileId(id, intId);
 
@@ -1652,14 +1652,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
     }
 
-    final long[] fids = new long[result.size()];
+    final long[] fIds = new long[result.size()];
     int n = 0;
     for (Long fid : result) {
-      fids[n] = fid;
+      fIds[n] = fid;
       n++;
     }
 
-    return fids;
+    return fIds;
   }
 
   @Override
@@ -2417,10 +2417,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
 
     private void flushExclusivePagesIfNeeded() throws IOException, InterruptedException {
-      long ewcs = exclusiveWriteCacheSize.get();
+      long ewcSize = exclusiveWriteCacheSize.get();
 
-      assert ewcs >= 0;
-      double exclusiveWriteCacheThreshold = ((double) ewcs) / exclusiveWriteCacheMaxSize;
+      assert ewcSize >= 0;
+      double exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
       if (exclusiveWriteCacheThreshold > EXCLUSIVE_PAGES_BOUNDARY) {
         flushExclusiveWriteCache();
@@ -2505,10 +2505,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
 
     private int flushExclusivePagesIfNeeded(int flushedPages) throws IOException, InterruptedException {
-      long ewcs = exclusiveWriteCacheSize.get();
+      long ewcSize = exclusiveWriteCacheSize.get();
 
-      assert ewcs >= 0;
-      double exclusiveWriteCacheThreshold = ((double) ewcs) / exclusiveWriteCacheMaxSize;
+      assert ewcSize >= 0;
+      double exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
       if (exclusiveWriteCacheThreshold > EXCLUSIVE_PAGES_BOUNDARY) {
         if (!flushMode.equals(FLUSH_MODE.EXCLUSIVE)) {
@@ -2516,8 +2516,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
           flushedPages += flushExclusiveWriteCache();
 
-          ewcs = exclusiveWriteCacheSize.get();
-          exclusiveWriteCacheThreshold = ((double) ewcs) / exclusiveWriteCacheMaxSize;
+          ewcSize = exclusiveWriteCacheSize.get();
+          exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
           if (exclusiveWriteCacheThreshold <= EXCLUSIVE_PAGES_BOUNDARY) {
             flushMode = FLUSH_MODE.IDLE;
@@ -2525,8 +2525,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         } else {
           flushedPages += flushExclusiveWriteCache();
 
-          ewcs = exclusiveWriteCacheSize.get();
-          exclusiveWriteCacheThreshold = ((double) ewcs) / exclusiveWriteCacheMaxSize;
+          ewcSize = exclusiveWriteCacheSize.get();
+          exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
           if (exclusiveWriteCacheThreshold <= EXCLUSIVE_PAGES_BOUNDARY) {
             flushMode = FLUSH_MODE.IDLE;
@@ -2719,8 +2719,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private void releaseExclusiveLatch() {
-    final long ewcs = exclusiveWriteCacheSize.get();
-    double exclusiveWriteCacheThreshold = ((double) ewcs) / exclusiveWriteCacheMaxSize;
+    final long ewcSize = exclusiveWriteCacheSize.get();
+    double exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
     if (exclusiveWriteCacheThreshold <= EXCLUSIVE_BOUNDARY_UNLOCK_LIMIT) {
       final CountDownLatch latch = exclusivePagesLimitLatch.get();
@@ -2807,8 +2807,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     int flushedPages = 0;
 
-    long ewcs = exclusiveWriteCacheSize.get();
-    double exclusiveWriteCacheThreshold = ((double) ewcs) / exclusiveWriteCacheMaxSize;
+    long ewcSize = exclusiveWriteCacheSize.get();
+    double exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
     double flushThreshold = exclusiveWriteCacheThreshold - EXCLUSIVE_PAGES_BOUNDARY;
 

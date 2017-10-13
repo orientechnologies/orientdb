@@ -19,17 +19,16 @@
   */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.util.Map;
-import java.util.NavigableMap;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
+
+import java.util.Map;
+import java.util.NavigableMap;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -38,9 +37,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 public class ORidBagUpdateSerializationOperation implements ORecordSerializationOperation {
   private final NavigableMap<OIdentifiable, Change> changedValues;
 
-  private final OBonsaiCollectionPointer collectionPointer;
+  private final OBonsaiCollectionPointer                          collectionPointer;
 
-  private final OSBTreeCollectionManager collectionManager;
+  private final OSBTreeCollectionManager                          collectionManager;
 
   public ORidBagUpdateSerializationOperation(final NavigableMap<OIdentifiable, Change> changedValues,
       OBonsaiCollectionPointer collectionPointer) {
@@ -58,17 +57,13 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
     OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
     try {
       for (Map.Entry<OIdentifiable, Change> entry : changedValues.entrySet()) {
-        OIdentifiable link = entry.getKey();
-        if (link.getIdentity().getClusterId() < 0 || link.getIdentity().getClusterPosition() < 0)
-          throw new ODatabaseException("Impossible to serialize invalid link " + link.getIdentity());
-
-        Integer storedCounter = tree.get(link);
+        Integer storedCounter = tree.get(entry.getKey());
 
         storedCounter = entry.getValue().applyTo(storedCounter);
         if (storedCounter <= 0)
-          tree.remove(link);
+          tree.remove(entry.getKey());
         else
-          tree.put(link, storedCounter);
+          tree.put(entry.getKey(), storedCounter);
       }
     } finally {
       releaseTree();

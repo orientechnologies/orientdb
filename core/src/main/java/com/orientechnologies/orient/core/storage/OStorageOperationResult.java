@@ -26,7 +26,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
 
 /**
  * This class represent CRUD operation result RET is the actual result Stores addition information about command execution process

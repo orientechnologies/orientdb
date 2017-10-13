@@ -22,7 +22,7 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
+import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;

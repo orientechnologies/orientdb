@@ -25,8 +25,6 @@ import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
-import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
@@ -67,9 +65,13 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   protected volatile OStorageConfiguration            configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
   protected          String                           name;
-  protected          AtomicLong version = new AtomicLong();
+  private final      AtomicLong version = new AtomicLong();
   protected volatile STATUS     status  = STATUS.CLOSED;
 
+  /**
+   * This field is used in EE version, do not make it private
+   */
+  @SuppressWarnings("WeakerAccess")
   protected final OSharedContainerImpl sharedContainer = new OSharedContainerImpl();
 
   public OStorageAbstract(final String name, final String iURL, final String mode) {
@@ -105,36 +107,45 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     }
   }
 
+  @Override
   public abstract OCluster getClusterByName(final String iClusterName);
 
+  @Override
   public OStorage getUnderlying() {
     return this;
   }
 
+  @Override
   public OStorageConfiguration getConfiguration() {
     return configuration;
   }
 
+  @Override
   public boolean isClosed() {
     return status == STATUS.CLOSED;
   }
 
+  @Override
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
     return ppos != null && !ORecordVersionHelper.isTombstone(ppos.recordVersion);
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public String getURL() {
     return url;
   }
 
+  @Override
   public void close() {
     close(false, false);
   }
 
+  @Override
   public void close(final boolean iForce, boolean onDelete) {
     sharedContainer.clearResources();
   }
@@ -157,14 +168,17 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   /**
    * Returns current storage's version as serial.
    */
+  @Override
   public long getVersion() {
     return version.get();
   }
 
+  @Override
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     return dropCluster(getClusterIdByName(iClusterName), iTruncate);
   }
 
+  @Override
   public long countRecords() {
     long tot = 0;
 
@@ -175,6 +189,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     return tot;
   }
 
+  @Override
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     stateLock.acquireReadLock();
     try {
@@ -195,6 +210,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     return url != null ? url : "?";
   }
 
+  @Override
   public STATUS getStatus() {
     return status;
   }

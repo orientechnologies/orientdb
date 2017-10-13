@@ -25,8 +25,8 @@ import java.security.SecureRandom;
 public class OSnowFlakeIdGen implements OWriteCacheIdGen {
   private long               lastTs;
   private final SecureRandom rnd;
-  private int                sequenceCounter = 1;
-  private byte[]             rndBytes        = new byte[2];
+  private       int    sequenceCounter = 1;
+  private final byte[] rndBytes        = new byte[2];
 
   public OSnowFlakeIdGen() {
     rnd = new SecureRandom();

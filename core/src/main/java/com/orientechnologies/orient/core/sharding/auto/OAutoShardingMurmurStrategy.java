@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.sharding.auto;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 
 import static java.lang.Math.abs;
 

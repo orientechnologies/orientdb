@@ -28,23 +28,20 @@ import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 public class OSingleFileSegment {
-  protected OLocalPaginatedStorage    storage;
-  protected OFile                     file;
-  protected OStorageFileConfiguration config;
-  private boolean wasSoftlyClosedAtPreviousTime = true;
+  private final OFile                     file;
+  private final OStorageFileConfiguration config;
 
-  public OSingleFileSegment(final OLocalPaginatedStorage iStorage, final OStorageFileConfiguration iConfig) throws IOException {
+  public OSingleFileSegment(final OLocalPaginatedStorage iStorage, final OStorageFileConfiguration iConfig) {
     this(iStorage, iConfig, iConfig.type);
   }
 
   public OSingleFileSegment(final OLocalPaginatedStorage iStorage, final OStorageFileConfiguration iConfig, final String iType)
        {
     config = iConfig;
-    storage = iStorage;
-    file = new OFileClassic(Paths.get(iStorage.getVariableParser().resolveVariables(iConfig.path)));
+         file = new OFileClassic(Paths.get(iStorage.getVariableParser().resolveVariables(iConfig.path)));
   }
 
-  public void open() throws IOException {
+  public void open() {
     file.open();
   }
 
@@ -52,7 +49,7 @@ public class OSingleFileSegment {
     file.create();
   }
 
-  public void close() throws IOException {
+  public void close() {
     if (file != null)
       file.close();
   }

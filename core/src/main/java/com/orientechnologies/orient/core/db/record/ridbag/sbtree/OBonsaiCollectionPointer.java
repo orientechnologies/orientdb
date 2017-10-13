@@ -21,7 +21,7 @@
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
 /**
  * The pointer to a bonsai collection.

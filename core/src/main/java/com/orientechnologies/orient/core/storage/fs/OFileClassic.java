@@ -114,6 +114,7 @@ public class OFileClassic implements OFile, OClosableItem {
     return size;
   }
 
+  @Override
   public void read(long offset, byte[] iData, int iLength, int iArrayOffset) throws IOException {
     int attempts = 0;
 
@@ -238,6 +239,7 @@ public class OFileClassic implements OFile, OClosableItem {
     }
   }
 
+  @Override
   public void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException {
     int attempts = 0;
 
@@ -316,50 +318,6 @@ public class OFileClassic implements OFile, OClosableItem {
   }
 
   @Override
-  public short readShort(long iOffset) throws IOException {
-    int attempts = 0;
-
-    while (true) {
-      try {
-        acquireReadLock();
-        try {
-          iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
-          return readData(iOffset, OBinaryProtocol.SIZE_SHORT).getShort();
-        } finally {
-          releaseReadLock();
-          attempts++;
-        }
-      } catch (IOException e) {
-        OLogManager.instance()
-            .error(this, "Error during read of short data for file '" + getName() + "' " + attempts + "-th attempt", e);
-        reopenFile(attempts, e);
-      }
-    }
-  }
-
-  @Override
-  public byte readByte(long iOffset) throws IOException {
-    int attempts = 0;
-
-    while (true) {
-      try {
-        acquireReadLock();
-        try {
-          iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
-          return readData(iOffset, OBinaryProtocol.SIZE_BYTE).get();
-        } finally {
-          releaseReadLock();
-          attempts++;
-        }
-      } catch (IOException e) {
-        OLogManager.instance()
-            .error(this, "Error during read of byte data for file '" + getName() + "' " + attempts + "-th attempt", e);
-        reopenFile(attempts, e);
-      }
-    }
-  }
-
-  @Override
   public void writeInt(long iOffset, final int iValue) throws IOException {
     int attempts = 0;
 
@@ -408,32 +366,6 @@ public class OFileClassic implements OFile, OClosableItem {
       } catch (IOException e) {
         OLogManager.instance()
             .error(this, "Error during write of long data for file '" + getName() + "' " + attempts + "-th attempt", e);
-        reopenFile(attempts, e);
-      }
-    }
-  }
-
-  @Override
-  public void writeShort(long iOffset, final short iValue) throws IOException {
-    int attempts = 0;
-
-    while (true) {
-      try {
-        acquireWriteLock();
-        try {
-          iOffset += HEADER_SIZE;
-          final ByteBuffer buffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_SHORT);
-          buffer.putShort(iValue);
-          writeBuffer(buffer, iOffset);
-          setDirty();
-          break;
-        } finally {
-          releaseWriteLock();
-          attempts++;
-        }
-      } catch (IOException e) {
-        OLogManager.instance()
-            .error(this, "Error during write of short data for file '" + getName() + "' " + attempts + "-th attempt", e);
         reopenFile(attempts, e);
       }
     }
@@ -493,17 +425,16 @@ public class OFileClassic implements OFile, OClosableItem {
    * Synchronizes the buffered changes to disk.
    */
   @Override
-  public boolean synch() throws IOException {
+  public void synch() {
     acquireWriteLock();
     try {
       flushHeader();
-      return true;
     } finally {
       releaseWriteLock();
     }
   }
 
-  private void flushHeader() throws IOException {
+  private void flushHeader() {
     acquireWriteLock();
     try {
       if (headerDirty || dirty) {
@@ -599,6 +530,7 @@ public class OFileClassic implements OFile, OClosableItem {
    * 
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#open()
    */
+  @Override
   public void open() {
     acquireWriteLock();
     try {
@@ -626,6 +558,7 @@ public class OFileClassic implements OFile, OClosableItem {
    * 
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#close()
    */
+  @Override
   public void close() {
     int attempts = 0;
 
@@ -661,6 +594,7 @@ public class OFileClassic implements OFile, OClosableItem {
    * 
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#delete()
    */
+  @Override
   public void delete() throws IOException {
     int attempts = 0;
 
@@ -735,6 +669,7 @@ public class OFileClassic implements OFile, OClosableItem {
    * 
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#isOpen()
    */
+  @Override
   public boolean isOpen() {
     acquireReadLock();
     try {
@@ -750,6 +685,7 @@ public class OFileClassic implements OFile, OClosableItem {
    * 
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#exists()
    */
+  @Override
   public boolean exists() {
     acquireReadLock();
     try {
@@ -779,6 +715,7 @@ public class OFileClassic implements OFile, OClosableItem {
     }
   }
 
+  @Override
   public String getName() {
     acquireReadLock();
     try {
@@ -791,6 +728,7 @@ public class OFileClassic implements OFile, OClosableItem {
     }
   }
 
+  @Override
   public String getPath() {
     acquireReadLock();
     try {
@@ -800,6 +738,7 @@ public class OFileClassic implements OFile, OClosableItem {
     }
   }
 
+  @Override
   public void renameTo(final Path newFile) throws IOException {
     acquireWriteLock();
     try {

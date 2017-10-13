@@ -36,10 +36,12 @@ public abstract class OAbstractWALRecord implements OWALRecord {
     this.lsn = previousCheckpoint;
   }
 
+  @Override
   public OLogSequenceNumber getLsn() {
     return lsn;
   }
 
+  @Override
   public void setLsn(final OLogSequenceNumber lsn) {
     this.lsn = lsn;
   }

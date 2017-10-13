@@ -116,7 +116,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void preventCutTill(OLogSequenceNumber lsn) throws IOException {
+  public void preventCutTill(OLogSequenceNumber lsn) {
   }
 
   @Override

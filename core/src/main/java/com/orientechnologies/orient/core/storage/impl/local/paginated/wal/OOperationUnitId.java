@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -30,8 +29,8 @@ import com.orientechnologies.orient.core.Orient;
 public class OOperationUnitId {
   private static final AtomicLong                      sharedId        = new AtomicLong();
 
-  private static volatile ThreadLocal<OModifiableLong> localId         = new ThreadLocal<OModifiableLong>();
-  private static volatile ThreadLocal<Long>            sharedIdCopy    = new ThreadLocal<Long>();
+  private static volatile ThreadLocal<OModifiableLong> localId      = new ThreadLocal<>();
+  private static volatile ThreadLocal<Long>            sharedIdCopy = new ThreadLocal<>();
 
   public static final int                              SERIALIZED_SIZE = 2 * OLongSerializer.LONG_SIZE;
 
@@ -40,10 +39,10 @@ public class OOperationUnitId {
       @Override
       public void onStartup() {
         if (localId == null)
-          localId = new ThreadLocal<OModifiableLong>();
+          localId = new ThreadLocal<>();
 
         if (sharedIdCopy == null)
-          sharedIdCopy = new ThreadLocal<Long>();
+          sharedIdCopy = new ThreadLocal<>();
       }
 
       @Override

@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.db.record.ridbag;
 
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
 public class DoubleReferenceItem {
   private ORidBag              ridBagOne;

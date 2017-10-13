@@ -28,12 +28,11 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainerSBTree;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;

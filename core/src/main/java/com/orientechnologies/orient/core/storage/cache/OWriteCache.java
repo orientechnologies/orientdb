@@ -49,7 +49,7 @@ public interface OWriteCache {
 
   void removeLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
-  long bookFileId(String fileName) throws IOException;
+  long bookFileId(String fileName);
 
   /**
    * Registers new file in write cache and returns file id assigned to this file.
@@ -100,7 +100,7 @@ public interface OWriteCache {
 
   void flush();
 
-  long getFilledUpTo(long fileId) throws IOException;
+  long getFilledUpTo(long fileId);
 
   long getExclusiveWriteCachePagesSize();
 
@@ -120,7 +120,7 @@ public interface OWriteCache {
 
   long[] close() throws IOException;
 
-  void close(long fileId, boolean flush) throws IOException;
+  void close(long fileId, boolean flush);
 
   OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener);
 
@@ -214,7 +214,7 @@ public interface OWriteCache {
 
   OLogSequenceNumber getMinimalNotFlushedLSN();
 
-  void updateDirtyPagesTable(OCachePointer pointer) throws IOException;
+  void updateDirtyPagesTable(OCachePointer pointer);
 
   OPerformanceStatisticManager getPerformanceStatisticManager();
 }

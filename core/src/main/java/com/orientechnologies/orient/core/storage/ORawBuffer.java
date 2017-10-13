@@ -48,8 +48,6 @@ public class ORawBuffer extends OBuffer {
 
   /**
    * Creates a new object by the record received.
-   * 
-   * @param iRecord
    */
   public ORawBuffer(final ORecord iRecord) {
     this.buffer = iRecord.toStream();
@@ -57,12 +55,14 @@ public class ORawBuffer extends OBuffer {
     this.recordType = ORecordInternal.getRecordType(iRecord);
   }
 
+  @Override
   public void readExternal(final ObjectInput iInput) throws IOException, ClassNotFoundException {
     super.readExternal(iInput);
     version = iInput.readInt();
     recordType = iInput.readByte();
   }
 
+  @Override
   public void writeExternal(final ObjectOutput iOutput) throws IOException {
     super.writeExternal(iOutput);
     iOutput.writeInt(version);

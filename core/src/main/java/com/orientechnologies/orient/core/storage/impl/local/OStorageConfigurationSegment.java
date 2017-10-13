@@ -50,7 +50,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   private static final long ENCODING_FLAG_2 = 587138568122547L;
   private static final long ENCODING_FLAG_3 = 812587836547249L;
 
-  public OStorageConfigurationSegment(final OLocalPaginatedStorage iStorage) throws IOException {
+  public OStorageConfigurationSegment(final OLocalPaginatedStorage iStorage) {
     super(iStorage, Charset.forName("UTF-8"));
 
     segment = new OSingleFileSegment((OLocalPaginatedStorage) storage,

@@ -252,7 +252,7 @@ final class OLogSegmentV2 implements OLogSegment {
    * {@inheritDoc}
    */
   @Override
-  public void stopBackgroundWrite(boolean flush) throws IOException {
+  public void stopBackgroundWrite(boolean flush) {
     if (flush)
       flush();
 
@@ -667,7 +667,7 @@ final class OLogSegmentV2 implements OLogSegment {
    * {@inheritDoc}
    */
   @Override
-  public void flush() throws IOException {
+  public void flush() {
     writeData();
     syncData();
   }

@@ -52,8 +52,8 @@ import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
-import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
+import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
+import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -114,6 +114,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private static final Comparator<ORecordOperation> COMMIT_RECORD_OPERATION_COMPARATOR = Comparator
       .comparing(o -> o.getRecord().getIdentity());
 
+  @SuppressWarnings("CanBeFinal")
   private static volatile DataOutputStream journaledStream = null;
 
   static {
@@ -589,7 +590,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public int addCluster(String clusterName, boolean forceListBased, final Object... parameters) {
+  public int addCluster(String clusterName, final Object... parameters) {
     try {
       checkOpenness();
       checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
@@ -616,7 +617,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public int addCluster(String clusterName, int requestedId, boolean forceListBased, Object... parameters) {
+  public int addCluster(String clusterName, int requestedId, Object... parameters) {
     try {
       checkOpenness();
       checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
@@ -3777,7 +3778,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  protected void makeFullCheckpoint() throws IOException {
+  protected void makeFullCheckpoint() {
     final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     if (statistic != null)
       statistic.startFullCheckpointTimer();
@@ -3842,7 +3843,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected void clearStorageDirty() throws IOException {
   }
 
-  protected boolean isDirty() throws IOException {
+  protected boolean isDirty() {
     return false;
   }
 

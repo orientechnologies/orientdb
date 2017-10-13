@@ -16,9 +16,9 @@ import java.nio.ByteBuffer;
 public class OWALPageChangesPortion implements OWALChanges {
   private static final int PAGE_SIZE = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
-  public static final int CHUNK_SIZE    = 32;
-  public static final int PORTION_SIZE  = 32;
-  public static final int PORTION_BYTES = PORTION_SIZE * CHUNK_SIZE;
+  private static final int CHUNK_SIZE    = 32;
+  private static final int PORTION_SIZE  = 32;
+  static final         int PORTION_BYTES = PORTION_SIZE * CHUNK_SIZE;
 
   private       byte[][][] pageChunks;
   private final int        pageSize;
@@ -34,6 +34,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     }
   }
 
+  @Override
   public void setLongValue(ByteBuffer pointer, long value, int offset) {
     byte[] data = new byte[OLongSerializer.LONG_SIZE];
     OLongSerializer.INSTANCE.serializeNative(value, data, 0);
@@ -41,6 +42,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     updateData(pointer, offset, data);
   }
 
+  @Override
   public void setIntValue(ByteBuffer pointer, int value, int offset) {
     byte[] data = new byte[OIntegerSerializer.INT_SIZE];
     OIntegerSerializer.INSTANCE.serializeNative(value, data, 0);
@@ -55,22 +57,26 @@ public class OWALPageChangesPortion implements OWALChanges {
     updateData(pointer, offset, data);
   }
 
+  @Override
   public void setByteValue(ByteBuffer pointer, byte value, int offset) {
     byte[] data = new byte[] { value };
 
     updateData(pointer, offset, data);
   }
 
+  @Override
   public void setBinaryValue(ByteBuffer pointer, byte[] value, int offset) {
     updateData(pointer, offset, value);
   }
 
+  @Override
   public void moveData(ByteBuffer pointer, int from, int to, int len) {
     byte[] buff = new byte[len];
     readData(pointer, from, buff);
     updateData(pointer, to, buff);
   }
 
+  @Override
   public long getLongValue(ByteBuffer pointer, int offset) {
     byte[] data = new byte[OLongSerializer.LONG_SIZE];
 
@@ -79,6 +85,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     return OLongSerializer.INSTANCE.deserializeNative(data, 0);
   }
 
+  @Override
   public int getIntValue(ByteBuffer pointer, int offset) {
     byte[] data = new byte[OIntegerSerializer.INT_SIZE];
 
@@ -87,6 +94,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     return OIntegerSerializer.INSTANCE.deserializeNative(data, 0);
   }
 
+  @Override
   public short getShortValue(ByteBuffer pointer, int offset) {
     byte[] data = new byte[OShortSerializer.SHORT_SIZE];
 
@@ -95,6 +103,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     return OShortSerializer.INSTANCE.deserializeNative(data, 0);
   }
 
+  @Override
   public byte getByteValue(ByteBuffer pointer, int offset) {
     byte[] data = new byte[1];
 
@@ -103,6 +112,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     return data[0];
   }
 
+  @Override
   public byte[] getBinaryValue(ByteBuffer pointer, int offset, int len) {
     byte[] data = new byte[len];
     readData(pointer, offset, data);
@@ -110,6 +120,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     return data;
   }
 
+  @Override
   public void applyChanges(ByteBuffer pointer) {
     if (pageChunks == null)
       return;
@@ -126,15 +137,16 @@ public class OWALPageChangesPortion implements OWALChanges {
     }
   }
 
+  @Override
   public int serializedSize() {
     if (pageChunks == null) {
       return OShortSerializer.SHORT_SIZE;
     }
     int offset = OShortSerializer.SHORT_SIZE;
-    for (int i = 0; i < pageChunks.length; i++) {
-      if (pageChunks[i] != null) {
+    for (byte[][] pageChunk : pageChunks) {
+      if (pageChunk != null) {
         for (int j = 0; j < PORTION_SIZE; j++) {
-          if (pageChunks[i][j] != null) {
+          if (pageChunk[j] != null) {
             offset += OByteSerializer.BYTE_SIZE;
             offset += OByteSerializer.BYTE_SIZE;
             offset += CHUNK_SIZE;
@@ -145,6 +157,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     return offset;
   }
 
+  @Override
   public int toStream(int offset, byte[] stream) {
     if (pageChunks == null) {
       OShortSerializer.INSTANCE.serializeNative((short) 0, stream, offset);
@@ -172,6 +185,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     return offset;
   }
 
+  @Override
   public int fromStream(int offset, byte[] stream) {
     int chunkLength = OShortSerializer.INSTANCE.deserializeNative(stream, offset);
     offset += OShortSerializer.SHORT_SIZE;

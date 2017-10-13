@@ -28,8 +28,8 @@ import java.util.Map;
  * @since 25.04.13
  */
 public class OWALRecordsFactory {
-  private Map<Byte, Class>               idToTypeMap = new HashMap<Byte, Class>();
-  private Map<Class, Byte>               typeToIdMap = new HashMap<Class, Byte>();
+  private final Map<Byte, Class> idToTypeMap = new HashMap<>();
+  private final Map<Class, Byte> typeToIdMap = new HashMap<>();
 
   public static final OWALRecordsFactory INSTANCE    = new OWALRecordsFactory();
 
@@ -109,9 +109,7 @@ public class OWALRecordsFactory {
       if (idToTypeMap.containsKey(content[0]))
         try {
           walRecord = (OWALRecord) idToTypeMap.get(content[0]).newInstance();
-        } catch (InstantiationException e) {
-          throw new IllegalStateException("Cannot deserialize passed in record", e);
-        } catch (IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException e) {
           throw new IllegalStateException("Cannot deserialize passed in record", e);
         }
       else

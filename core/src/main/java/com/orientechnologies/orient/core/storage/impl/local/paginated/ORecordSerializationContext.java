@@ -21,8 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
@@ -51,7 +49,8 @@ public class ORecordSerializationContext {
       }
     });
   }
-  private final Deque<ORecordSerializationOperation>                      operations                  = new ArrayDeque<ORecordSerializationOperation>();
+
+  private final Deque<ORecordSerializationOperation> operations = new ArrayDeque<>();
 
   public static int getDepth() {
     return ORecordSerializationContext.SERIALIZATION_CONTEXT_STACK.get().size();
@@ -94,7 +93,7 @@ public class ORecordSerializationContext {
   private static class SerializationContextThreadLocal extends ThreadLocal<Deque<ORecordSerializationContext>> {
     @Override
     protected Deque<ORecordSerializationContext> initialValue() {
-      return new ArrayDeque<ORecordSerializationContext>();
+      return new ArrayDeque<>();
     }
   }
 }

@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.After;
 import org.junit.Before;

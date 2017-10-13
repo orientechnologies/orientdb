@@ -20,6 +20,7 @@ package com.orientechnologies.orient.core.storage.impl.local.statistic;
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  */
+@SuppressWarnings("unused")
 public abstract class OOperation {
   abstract void incrementOperationsCounter(int pages, int filePages);
 }

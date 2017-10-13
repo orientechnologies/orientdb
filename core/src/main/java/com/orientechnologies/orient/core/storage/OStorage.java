@@ -123,15 +123,14 @@ public interface OStorage extends OBackupable, OSharedContainer {
    *
    * @param iClusterName name of the cluster
    */
-  int addCluster(String iClusterName, boolean forceListBased, Object... iParameters);
+  int addCluster(String iClusterName, Object... iParameters);
 
   /**
    * Add a new cluster into the storage.
-   *
-   * @param iClusterName name of the cluster
+   *  @param iClusterName name of the cluster
    * @param iRequestedId requested id of the cluster
    */
-  int addCluster(String iClusterName, int iRequestedId, boolean forceListBased, Object... iParameters);
+  int addCluster(String iClusterName, int iRequestedId, Object... iParameters);
 
   boolean dropCluster(String iClusterName, final boolean iTruncate);
 

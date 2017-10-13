@@ -66,7 +66,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   private volatile String name;
   private volatile String fullName;
 
-  protected final String extension;
+  private final String extension;
 
   private volatile String lockName;
 
@@ -106,17 +106,12 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return extension;
   }
 
-  @Override
-  protected void acquireExclusiveLock() {
-    super.acquireExclusiveLock();
-  }
-
   protected void endAtomicOperation(boolean rollback, Exception e) throws IOException {
     atomicOperationsManager.endAtomicOperation(rollback, e);
   }
 
   /**
-   * @see OAtomicOperationsManager#startAtomicOperation(com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent, * boolean)
+   * @see OAtomicOperationsManager#startAtomicOperation(com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent, boolean)
    */
   protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
     return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
@@ -155,7 +150,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, pageCount);
   }
 
-  protected void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) throws IOException {
+  protected void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) {
     if (atomicOperation == null)
       readCache.pinPage(cacheEntry);
     else

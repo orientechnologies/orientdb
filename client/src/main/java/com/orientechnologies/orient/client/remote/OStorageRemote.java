@@ -82,7 +82,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -977,12 +976,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     this.defaultClusterId = defaultClusterId;
   }
 
-  public int addCluster(final String iClusterName, boolean forceListBased, final Object... iArguments) {
-    return addCluster(iClusterName, -1, forceListBased, iArguments);
+  public int addCluster(final String iClusterName, final Object... iArguments) {
+    return addCluster(iClusterName, -1, iArguments);
   }
 
-  public int addCluster(final String iClusterName, final int iRequestedId, final boolean forceListBased,
-      final Object... iParameters) {
+  public int addCluster(final String iClusterName, final int iRequestedId, final Object... iParameters) {
     OAddClusterRequest request = new OAddClusterRequest(iRequestedId, iClusterName);
     OAddClusterResponse response = networkOperationNoRetry(request, "Error on add new cluster");
     addNewClusterToConfiguration(response.getClusterId(), iClusterName);

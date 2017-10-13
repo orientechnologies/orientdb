@@ -25,10 +25,10 @@ package com.orientechnologies.orient.core.storage.cache;
  * @since 25.04.13
  */
 public class OPageDataVerificationError {
-  public final boolean incorrectMagicNumber;
-  public final boolean incorrectCheckSum;
-  public final long    pageIndex;
-  public final String  fileName;
+  private final boolean incorrectMagicNumber;
+  private final boolean incorrectCheckSum;
+  private final long    pageIndex;
+  private final String  fileName;
 
   public OPageDataVerificationError(boolean incorrectMagicNumber, boolean incorrectCheckSum, long pageIndex, String fileName) {
     this.incorrectMagicNumber = incorrectMagicNumber;

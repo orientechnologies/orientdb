@@ -42,8 +42,6 @@ public interface OAutoshardedStorage {
 
   /**
    * Check if the distributed need to run only as local env
-   *
-   * @return
    */
   boolean isLocalEnv();
 }

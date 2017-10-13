@@ -34,7 +34,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.IllegalCharsetNameException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -178,12 +177,12 @@ public class StorageNamingTests {
     }
 
     @Override
-    public int addCluster(String iClusterName, boolean forceListBased, Object... iParameters) {
+    public int addCluster(String iClusterName, Object... iParameters) {
       return 0;
     }
 
     @Override
-    public int addCluster(String iClusterName, int iRequestedId, boolean forceListBased, Object... iParameters) {
+    public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
       return 0;
     }
 

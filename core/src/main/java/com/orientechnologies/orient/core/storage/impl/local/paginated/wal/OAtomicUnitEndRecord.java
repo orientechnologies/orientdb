@@ -20,9 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -42,13 +40,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   private boolean                                  rollback;
 
-  private Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap = new LinkedHashMap<String, OAtomicOperationMetadata<?>>();
+  private Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap = new LinkedHashMap<>();
 
   public OAtomicUnitEndRecord() {
   }
 
   OAtomicUnitEndRecord(final OOperationUnitId operationUnitId, final boolean rollback,
-      final Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap) throws IOException {
+      final Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap) {
     super(operationUnitId);
 
     this.rollback = rollback;
@@ -107,7 +105,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
     rollback = content[offset] > 0;
     offset++;
 
-    atomicOperationMetadataMap = new LinkedHashMap<String, OAtomicOperationMetadata<?>>();
+    atomicOperationMetadataMap = new LinkedHashMap<>();
 
     final int metadataId = content[offset];
     offset++;

@@ -96,7 +96,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  public void makeFullCheckpoint() throws IOException {
+  public void makeFullCheckpoint() {
   }
 
   @Override

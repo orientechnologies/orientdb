@@ -312,7 +312,7 @@ public class O2QCache implements OReadCache {
   }
 
   @Override
-  public void pinPage(final OCacheEntry cacheEntry) throws IOException {
+  public void pinPage(final OCacheEntry cacheEntry) {
     Lock fileLock;
     Lock pageLock;
 
@@ -548,6 +548,7 @@ public class O2QCache implements OReadCache {
     }
   }
 
+  @Override
   public void clear() {
     cacheLock.acquireWriteLock();
     try {
@@ -626,7 +627,7 @@ public class O2QCache implements OReadCache {
   }
 
   @Override
-  public void closeFile(long fileId, boolean flush, OWriteCache writeCache) throws IOException {
+  public void closeFile(long fileId, boolean flush, OWriteCache writeCache) {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 
     Lock fileLock;
@@ -705,6 +706,7 @@ public class O2QCache implements OReadCache {
    *
    * @see #closeStorage(OWriteCache)
    */
+  @Override
   public void loadCacheState(final OWriteCache writeCache) {
     if (!OGlobalConfiguration.STORAGE_KEEP_DISK_CACHE_STATE.getValueAsBoolean()) {
       return;
@@ -744,9 +746,9 @@ public class O2QCache implements OReadCache {
 
         }
       }
-    } catch (OLoadCacheStateException lcse) {
+    } catch (OLoadCacheStateException lcsException) {
       OLogManager.instance()
-          .warn(this, "Cannot restore state of cache for storage placed under " + writeCache.getRootDirectory(), lcse);
+          .warn(this, "Cannot restore state of cache for storage placed under " + writeCache.getRootDirectory(), lcsException);
     } catch (Exception e) {
       throw OException.wrapException(
           new OStorageException("Cannot restore state of cache for storage placed under " + writeCache.getRootDirectory()), e);
@@ -791,8 +793,7 @@ public class O2QCache implements OReadCache {
    * @param queue           Queue, state of which should be restored.
    * @param writeCache      Write cache is used to load data from disk if needed.
    */
-  private void restoreQueueWithoutPageLoad(OWriteCache writeCache, LRUList queue, DataInputStream dataInputStream)
-      throws IOException {
+  private void restoreQueueWithoutPageLoad(OWriteCache writeCache, LRUList queue, DataInputStream dataInputStream) {
 
     //this set is only needed to rollback changes in case of IO Exception
     final Set<PageKey> addedPages = new HashSet<>();
@@ -955,6 +956,7 @@ public class O2QCache implements OReadCache {
    *
    * @param writeCache Write cache which manages files cache state of which is going to be stored.
    */
+  @Override
   public void storeCacheState(OWriteCache writeCache) {
     if (!OGlobalConfiguration.STORAGE_KEEP_DISK_CACHE_STATE.getValueAsBoolean()) {
       return;
@@ -1542,12 +1544,8 @@ public class O2QCache implements OReadCache {
       if (fileId < other.fileId)
         return -1;
 
-      if (pageIndex > other.pageIndex)
-        return 1;
-      if (pageIndex < other.pageIndex)
-        return -1;
+      return Long.compare(pageIndex, other.pageIndex);
 
-      return 0;
     }
   }
 
@@ -1584,12 +1582,8 @@ public class O2QCache implements OReadCache {
       if (fileId < other.fileId)
         return -1;
 
-      if (pageIndex > other.pageIndex)
-        return 1;
-      if (pageIndex < other.pageIndex)
-        return -1;
+      return Long.compare(pageIndex, other.pageIndex);
 
-      return 0;
     }
 
     @Override

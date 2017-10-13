@@ -6,12 +6,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
  * Created by tglman on 23/06/16.
  */
 public class OCacheEntryImpl implements OCacheEntry{
-  OCachePointer dataPointer;
-  final long    fileId;
-  final long    pageIndex;
+  private       OCachePointer dataPointer;
+  private final long          fileId;
+  private final long          pageIndex;
 
-  boolean       dirty;
-  int           usagesCount;
+  private boolean dirty;
+  private int     usagesCount;
 
   public OCacheEntryImpl(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty) {
     this.fileId = fileId;
@@ -21,58 +21,72 @@ public class OCacheEntryImpl implements OCacheEntry{
     this.dirty = dirty;
   }
 
+  @Override
   public void markDirty() {
     this.dirty = true;
   }
 
+  @Override
   public void clearDirty() {
     this.dirty = false;
   }
 
+  @Override
   public boolean isDirty() {
     return dirty;
   }
 
+  @Override
   public OCachePointer getCachePointer() {
     return dataPointer;
   }
 
+  @Override
   public void clearCachePointer() {
     dataPointer = null;
   }
 
+  @Override
   public void setCachePointer(OCachePointer cachePointer) {
     this.dataPointer = cachePointer;
   }
 
+  @Override
   public long getFileId() {
     return fileId;
   }
 
+  @Override
   public long getPageIndex() {
     return pageIndex;
   }
 
+  @Override
   public void acquireExclusiveLock() {
     dataPointer.acquireExclusiveLock();
   }
 
+  @Override
   public void releaseExclusiveLock() {
     dataPointer.releaseExclusiveLock();
   }
 
+  @Override
   public void acquireSharedLock() {
     dataPointer.acquireSharedLock();
   }
 
+  @Override
   public void releaseSharedLock() {
     dataPointer.releaseSharedLock();
   }
 
+  @Override
   public int getUsagesCount() {
     return usagesCount;
   }
 
+  @Override
   public void incrementUsages() {
     usagesCount++;
   }
@@ -82,10 +96,12 @@ public class OCacheEntryImpl implements OCacheEntry{
    *
    * @return Whether lock acquired on current entry
    */
+  @Override
   public boolean isLockAcquiredByCurrentThread() {
     return dataPointer.isLockAcquiredByCurrentThread();
   }
 
+  @Override
   public void decrementUsages() {
     usagesCount--;
   }

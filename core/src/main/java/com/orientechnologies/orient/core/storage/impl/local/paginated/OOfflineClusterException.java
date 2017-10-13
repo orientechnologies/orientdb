@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.exception.OCoreException;
 
 /**

@@ -655,7 +655,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void updateDirtyPagesTable(OCachePointer pointer) throws IOException {
+  public void updateDirtyPagesTable(OCachePointer pointer) {
   }
 
   @Override
@@ -723,7 +723,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void closeFile(long fileId, boolean flush, OWriteCache writeCache) throws IOException {
+  public void closeFile(long fileId, boolean flush, OWriteCache writeCache) {
     close(fileId, flush);
   }
 
