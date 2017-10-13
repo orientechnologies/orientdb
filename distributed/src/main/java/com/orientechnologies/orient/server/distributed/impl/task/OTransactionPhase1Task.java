@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -156,6 +157,9 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         break;
       case ORecordOperation.DELETED:
         record = database.getRecord(req.getId());
+        if(record == null) {
+          record = Orient.instance().getRecordFactoryManager().newInstance(req.getRecordType());
+        }
         break;
       }
       ORecordInternal.setIdentity(record, (ORecordId) req.getId());
