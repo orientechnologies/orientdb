@@ -163,6 +163,14 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     return this.finished;
   }
 
+  public synchronized List<OTransactionResultPayload> getAllResponses() {
+    List<OTransactionResultPayload> allResults = new ArrayList<>();
+    for (List<OTransactionResultPayload> res : resultsByType.values()) {
+      allResults.addAll(res);
+    }
+    return allResults;
+  }
+
   @Override
   public boolean collectResponse(ODistributedResponse response) {
     if (response.getPayload() instanceof OTransactionPhase1TaskResult) {

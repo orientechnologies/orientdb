@@ -163,10 +163,18 @@ public class ONewDistributedTransactionManager {
       }
       case OTxLockTimeout.ID:
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
-        //TODO: probably a retry
-        throw new ODistributedLockException("DeadLock");
+        throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, 0);
       }
     } else {
+      List<OTransactionResultPayload> results = responseManager.getAllResponses();
+      //If quorum is not reached is enough on a Lock timeout to trigger a deadlock retry.
+      for (OTransactionResultPayload result : results) {
+        switch (result.getResponseType()) {
+        case OTxLockTimeout.ID:
+          sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
+          throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, 0);
+        }
+      }
       localKo(requestId, database);
       sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
       throw new ODistributedOperationException("quorum not reached");
@@ -184,8 +192,9 @@ public class ONewDistributedTransactionManager {
   }
 
   private void sendPhase2Task(Set<String> involvedClusters, Set<String> nodes, OTransactionPhase2Task task) {
-    dManager.sendRequest(storage.getName(), involvedClusters, nodes, task, dManager.getNextMessageIdCounter(),
-        EXECUTION_MODE.RESPONSE, null, null, null);
+    dManager
+        .sendRequest(storage.getName(), involvedClusters, nodes, task, dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE,
+            null, null, null);
   }
 
   protected void checkForClusterIds(final OTransactionInternal iTx) {
