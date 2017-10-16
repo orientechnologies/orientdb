@@ -1555,21 +1555,21 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into " + className + " SET name = \"2\"")).execute();
 
     List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT * FROM " + className + " WHERE name >= \"0\""));
-    Assert.assertEquals(results.size(), 2);
+    assertEquals(results.size(), 2);
 
     results = db.query(new OSQLSynchQuery<ODocument>("SELECT * FROM " + className + " WHERE \"0\" <= name"));
-    Assert.assertEquals(results.size(), 2);
+    assertEquals(results.size(), 2);
 
     db.command(new OCommandSQL("CREATE INDEX " + className + ".name on " + className + " (name) UNIQUE")).execute();
 
     results = db.query(new OSQLSynchQuery<ODocument>("SELECT * FROM " + className + " WHERE \"0\" <= name"));
-    Assert.assertEquals(results.size(), 2);
+    assertEquals(results.size(), 2);
 
     results = db.query(new OSQLSynchQuery<ODocument>("SELECT * FROM " + className + " WHERE \"2\" <= name"));
-    Assert.assertEquals(results.size(), 1);
+    assertEquals(results.size(), 1);
 
     results = db.query(new OSQLSynchQuery<ODocument>("SELECT * FROM " + className + " WHERE name >= \"0\""));
-    Assert.assertEquals(results.size(), 2);
+    assertEquals(results.size(), 2);
 
   }
 
