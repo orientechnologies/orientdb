@@ -16,26 +16,6 @@
 
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
@@ -43,10 +23,19 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import org.testng.Assert;
+import org.testng.annotations.*;
+import org.testng.annotations.Optional;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -162,9 +151,9 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   }
 
   public void testIteratorOverAfterRemove() {
-    ODocument scuti = new ODocument().field("name", "UY Scuti").save();
-    ODocument cygni = new ODocument().field("name", "NML Cygni").save();
-    ODocument scorpii = new ODocument().field("name", "AH Scorpii").save();
+    ODocument scuti = new ODocument().field("name", "UY Scuti").save(database.getClusterNameById(database.getDefaultClusterId()));
+    ODocument cygni = new ODocument().field("name", "NML Cygni").save(database.getClusterNameById(database.getDefaultClusterId()));
+    ODocument scorpii = new ODocument().field("name", "AH Scorpii").save(database.getClusterNameById(database.getDefaultClusterId()));
 
     HashSet<ODocument> expectedResult = new HashSet<ODocument>();
     expectedResult.addAll(Arrays.asList(scuti, scorpii));
@@ -176,7 +165,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
 
     ODocument doc = new ODocument();
     doc.field("ridBag", bag);
-    doc.save();
+    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     bag.remove(cygni);
 
@@ -193,16 +182,16 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
 
     ODocument doc_1 = new ODocument();
-    doc_1.save();
+    doc_1.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument doc_2 = new ODocument();
-    doc_2.save();
+    doc_2.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument doc_3 = new ODocument();
-    doc_3.save();
+    doc_3.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument doc_4 = new ODocument();
-    doc_4.save();
+    doc_4.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument doc = new ODocument();
 
@@ -213,15 +202,15 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     bag.add(doc_4);
 
     doc.field("ridBag", bag);
-    doc.save();
+    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     doc.reload();
 
     ODocument doc_5 = new ODocument();
-    doc_5.save();
+    doc_5.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument doc_6 = new ODocument();
-    doc_6.save();
+    doc_6.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     bag = doc.field("ridBag");
     bag.add(doc_5);
@@ -267,7 +256,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     }
 
     assertEmbedded(realDocRidBag.isEmbedded());
-    realDoc.save();
+    realDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final int clusterId = database.addCluster("ridBagDeleteTest");
 

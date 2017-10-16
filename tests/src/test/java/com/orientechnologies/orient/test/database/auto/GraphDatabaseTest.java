@@ -322,10 +322,11 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
         return iArgument.getRawGraph().getMetadata().getSchema().createClass("NonVertex");
       }
     });
-    Vertex vertex = database.addVertex(null, "name", "vertexWithEmbedded");
+    Vertex vertex = database.addVertex("class:V", "name", "vertexWithEmbedded");
     ODocument doc = new ODocument();
     doc.field("foo", "bar");
     vertex.setProperty("emb1", doc);
+    doc.save(database.getRawGraph().getClusterNameById(database.getRawGraph().getDefaultClusterId()));
 
     ODocument doc2 = new ODocument("V");
     doc2.field("foo", "bar");

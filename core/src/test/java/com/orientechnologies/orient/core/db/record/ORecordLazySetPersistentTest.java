@@ -37,9 +37,9 @@ public class ORecordLazySetPersistentTest {
       doc1.field("linkset", new HashSet<ODocument>());
       Set<ODocument> linkset = doc1.field("linkset");
       ODocument doc2 = new ODocument();
-      orid2 = doc2.save().getIdentity();
+      orid2 = doc2.save(db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
       linkset.add(doc2);
-      orid1 = doc1.save().getIdentity();
+      orid1 = doc1.save(db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
       assertNotNull(orid1);
     }
     db.commit();
@@ -76,9 +76,9 @@ public class ORecordLazySetPersistentTest {
       doc1.field("linkset", new HashSet<OIdentifiable>());
       Set<OIdentifiable> linkset = doc1.field("linkset");
       ODocument doc2 = new ODocument();
-      orid2 = doc2.save().getIdentity();
+      orid2 = doc2.save(db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
       linkset.add(doc2);
-      orid1 = doc1.save().getIdentity();
+      orid1 = doc1.save(db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
       assertNotNull(orid1);
     }
     db.commit();

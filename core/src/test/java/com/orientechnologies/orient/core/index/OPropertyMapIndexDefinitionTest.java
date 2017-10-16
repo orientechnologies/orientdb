@@ -205,7 +205,7 @@ public class OPropertyMapIndexDefinitionTest {
         OPropertyMapIndexDefinition.INDEX_BY.KEY);
 
     final ODocument docToStore = propertyIndexByKey.toStream();
-    database.save(docToStore);
+    database.save(docToStore, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docToLoad = database.load(docToStore.getIdentity());
 
@@ -225,7 +225,7 @@ public class OPropertyMapIndexDefinitionTest {
         OPropertyMapIndexDefinition.INDEX_BY.VALUE);
 
     final ODocument docToStore = propertyIndexByValue.toStream();
-    database.save(docToStore);
+    database.save(docToStore, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docToLoad = database.load(docToStore.getIdentity());
 

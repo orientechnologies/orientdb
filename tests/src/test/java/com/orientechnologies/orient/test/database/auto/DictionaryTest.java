@@ -15,17 +15,16 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import java.io.IOException;
 
 @Test(groups = "dictionary")
 public class DictionaryTest extends DocumentDBBaseTest {
@@ -39,8 +38,9 @@ public class DictionaryTest extends DocumentDBBaseTest {
 
   public void testDictionaryCreate() throws IOException {
     ODocument record = new ODocument();
-
-    database.getDictionary().put("key1", record.field("test", "Dictionary test!"));
+    record.field("test", "Dictionary test!");
+    record.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.getDictionary().put("key1", record);
   }
 
   @Test(dependsOnMethods = "testDictionaryCreate")
@@ -52,8 +52,9 @@ public class DictionaryTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testDictionaryLookup")
   public void testDictionaryUpdate() throws IOException {
     final long originalSize = database.getDictionary().size();
-
-    database.getDictionary().put("key1", new ODocument().field("test", "Text changed"));
+    ODocument doc = new ODocument().field("test", "Text changed");
+    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.getDictionary().put("key1", doc);
 
     database.close();
     database.open("admin", "admin");
@@ -81,7 +82,9 @@ public class DictionaryTest extends DocumentDBBaseTest {
     final int total = 1000;
 
     for (int i = total; i > 0; --i) {
-      database.getDictionary().put("key-" + (originalSize + i), new ODocument().field("test", "test-dictionary-" + i));
+      ODocument doc = new ODocument().field("test", "test-dictionary-" + i);
+      doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+      database.getDictionary().put("key-" + (originalSize + i), doc);
     }
 
     for (int i = total; i > 0; --i) {
@@ -95,7 +98,9 @@ public class DictionaryTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testDictionaryMassiveCreate")
   public void testDictionaryInTx() throws IOException {
     database.begin();
-    database.getDictionary().put("tx-key", new ODocument().field("test", "tx-test-dictionary"));
+    ODocument doc = new ODocument().field("test", "tx-test-dictionary");
+    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.getDictionary().put("tx-key", doc);
     database.commit();
 
     Assert.assertNotNull(database.getDictionary().get("tx-key"));
@@ -139,10 +144,12 @@ public class DictionaryTest extends DocumentDBBaseTest {
     ODatabaseDocumentTx database2 = new ODatabaseDocumentTx(url);
     database2.open("admin", "admin");
     database2.getMetadata().getIndexManager().reload();
-    database2.getDictionary().put("testReloadKey", new ODocument().field("testField", "a"));
+    ODocument doc = new ODocument().field("testField", "a");
+    doc.save(database2.getClusterNameById(database2.getDefaultClusterId()));
+    database2.getDictionary().put("testReloadKey", doc);
 
     database1.activateOnCurrentThread();
-    Assert.assertEquals(database1.getDictionary().<ODocument> get("testReloadKey").field("testField"), "a");
+    Assert.assertEquals(database1.getDictionary().<ODocument>get("testReloadKey").field("testField"), "a");
     database1.close();
 
     database2.activateOnCurrentThread();

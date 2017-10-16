@@ -98,6 +98,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     // CREATE BASE VERTEX AND EDGE CLASSES
     schema.createClass(database, "V");
     schema.createClass(database, "E");
+    database.addBlobCluster("default_blob");
     loaded = true;
   }
 

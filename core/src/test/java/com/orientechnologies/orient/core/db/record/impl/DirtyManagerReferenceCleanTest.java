@@ -64,7 +64,7 @@ public class DirtyManagerReferenceCleanTest {
     doc.field("ref", doc1);
     doc.field("bb");
 
-    OIdentifiable id = doc.save();
+    OIdentifiable id = doc.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     doc = db.load(id.getIdentity());
     doc1 = doc.field("ref");

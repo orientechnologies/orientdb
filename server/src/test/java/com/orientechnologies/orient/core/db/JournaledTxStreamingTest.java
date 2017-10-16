@@ -103,7 +103,7 @@ public class JournaledTxStreamingTest {
     for (int i = 0; i < ITERATIONS; ++i) {
       db.begin();
       txs.addLast(db.getTransaction().getClientTransactionId());
-      db.newInstance().save();
+      db.newInstance().save(db.getClusterNameById(db.getDefaultClusterId()));
       db.commit();
     }
 

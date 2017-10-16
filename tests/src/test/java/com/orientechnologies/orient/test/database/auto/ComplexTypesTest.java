@@ -50,7 +50,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     newDoc.field("integer", new BigInteger("10"));
     newDoc.field("decimal_integer", new BigDecimal(10));
     newDoc.field("decimal_float", new BigDecimal("10.34"));
-    database.save(newDoc);
+    database.save(newDoc, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid = newDoc.getIdentity();
 
@@ -72,7 +72,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     list.add(new ODocument().field("name", "Luca"));
     list.add(new ODocument("Account").field("name", "Marcus"));
 
-    database.save(newDoc);
+    database.save(newDoc, database.getClusterNameById(database.getDefaultClusterId()));
     final ORID rid = newDoc.getIdentity();
 
     database.close();
@@ -96,10 +96,10 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
 
     final ArrayList<ODocument> list = new ArrayList<ODocument>();
     newDoc.field("linkedList", list, OType.LINKLIST);
-    list.add(new ODocument().field("name", "Luca"));
+    list.add(new ODocument().field("name", "Luca").save(database.getClusterNameById(database.getDefaultClusterId())));
     list.add(new ODocument("Account").field("name", "Marcus"));
 
-    database.save(newDoc);
+    database.save(newDoc, database.getClusterNameById(database.getDefaultClusterId()));
     final ORID rid = newDoc.getIdentity();
 
     database.close();
@@ -127,7 +127,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     set.add(new ODocument().field("name", "Luca"));
     set.add(new ODocument("Account").field("name", "Marcus"));
 
-    database.save(newDoc);
+    database.save(newDoc, database.getClusterNameById(database.getDefaultClusterId()));
     final ORID rid = newDoc.getIdentity();
 
     database.close();
@@ -159,10 +159,10 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
 
     final Set<ODocument> set = new HashSet<ODocument>();
     newDoc.field("linkedSet", set, OType.LINKSET);
-    set.add(new ODocument().field("name", "Luca"));
+    set.add(new ODocument().field("name", "Luca").save(database.getClusterNameById(database.getDefaultClusterId())));
     set.add(new ODocument("Account").field("name", "Marcus"));
 
-    database.save(newDoc);
+    database.save(newDoc, database.getClusterNameById(database.getDefaultClusterId()));
     final ORID rid = newDoc.getIdentity();
 
     database.close();
@@ -198,7 +198,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     map.put("Marcus", new ODocument().field("name", "Marcus"));
     map.put("Cesare", new ODocument("Account").field("name", "Cesare"));
 
-    database.save(newDoc);
+    database.save(newDoc, database.getClusterNameById(database.getDefaultClusterId()));
     final ORID rid = newDoc.getIdentity();
 
     database.close();
@@ -227,7 +227,7 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     final Map<String, ODocument> map = new HashMap<String, ODocument>();
     newDoc.field("embeddedMap", map, OType.EMBEDDEDMAP);
 
-    database.save(newDoc);
+    database.save(newDoc, database.getClusterNameById(database.getDefaultClusterId()));
     final ORID rid = newDoc.getIdentity();
 
     database.close();
@@ -248,11 +248,11 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
 
     final Map<String, ODocument> map = new HashMap<String, ODocument>();
     newDoc.field("linkedMap", map, OType.LINKMAP);
-    map.put("Luca", new ODocument().field("name", "Luca"));
-    map.put("Marcus", new ODocument().field("name", "Marcus"));
+    map.put("Luca", new ODocument().field("name", "Luca").save(database.getClusterNameById(database.getDefaultClusterId())));
+    map.put("Marcus", new ODocument().field("name", "Marcus").save(database.getClusterNameById(database.getDefaultClusterId())));
     map.put("Cesare", new ODocument("Account").field("name", "Cesare"));
 
-    database.save(newDoc);
+    database.save(newDoc, database.getClusterNameById(database.getDefaultClusterId()));
     final ORID rid = newDoc.getIdentity();
 
     database.close();

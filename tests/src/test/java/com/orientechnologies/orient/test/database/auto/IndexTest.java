@@ -1145,7 +1145,7 @@ public class IndexTest extends ObjectDBBaseTest {
       final Integer key = (int) Math.log(i);
 
       final ODocument doc = new ODocument();
-      doc.save();
+      doc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
       idx.put(key, doc);
 
@@ -1174,7 +1174,7 @@ public class IndexTest extends ObjectDBBaseTest {
       final Integer key = (int) Math.log(i);
 
       final ODocument doc = new ODocument();
-      doc.save();
+      doc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
       idx.put(key, doc);
 
@@ -1195,7 +1195,7 @@ public class IndexTest extends ObjectDBBaseTest {
       final Integer key = (int) Math.log(i);
 
       final ODocument doc = new ODocument();
-      doc.save();
+      doc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
       idx.put(key, doc);
     }
@@ -1783,13 +1783,13 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testMultikeyWithoutFieldAndNullSupport() {
     //generates stubs for index
     ODocument doc1 = new ODocument();
-    doc1.save();
+    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc2 = new ODocument();
-    doc2.save();
+    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc3 = new ODocument();
-    doc3.save();
+    doc3.save(database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc4 = new ODocument();
-    doc4.save();
+    doc4.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid1 = doc1.getIdentity();
     final ORID rid2 = doc2.getIdentity();
@@ -1915,13 +1915,13 @@ public class IndexTest extends ObjectDBBaseTest {
   public void testMultikeyWithoutFieldAndNoNullSupport() {
     //generates stubs for index
     ODocument doc1 = new ODocument();
-    doc1.save();
+    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc2 = new ODocument();
-    doc2.save();
+    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc3 = new ODocument();
-    doc3.save();
+    doc3.save(database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc4 = new ODocument();
-    doc4.save();
+    doc4.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid1 = doc1.getIdentity();
     final ORID rid2 = doc2.getIdentity();

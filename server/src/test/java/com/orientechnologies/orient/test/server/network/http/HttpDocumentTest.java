@@ -16,9 +16,9 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
   @Test
   public void create() throws IOException {
-    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:99, \"@version\":100}", CONTENT.JSON).exec();
+    post("document/" + getDatabaseName()).payload("{@class:'V', name:'Jay', surname:'Miner',age:99, \"@version\":100}", CONTENT.JSON).exec();
 
-    Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
+    Assert.assertEquals(201, getResponse().getStatusLine().getStatusCode());
 
     final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
 
@@ -31,7 +31,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
   @Test
   public void read() throws IOException {
-    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:99}", CONTENT.JSON).exec();
+    post("document/" + getDatabaseName()).payload("{@class:'V', name:'Jay', surname:'Miner',age:99}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
     final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
 
@@ -52,7 +52,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
   @Test
   public void updateFull() throws IOException {
-    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
+    post("document/" + getDatabaseName()).payload("{@class:'V', name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
     final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
 
@@ -78,7 +78,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
   @Test
   public void updateFullNoVersion() throws IOException {
-    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
+    post("document/" + getDatabaseName()).payload("{@class:'V', name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
     final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
 
@@ -100,7 +100,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
   @Test
   public void updateFullBadVersion() throws IOException {
-    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
+    post("document/" + getDatabaseName()).payload("{@class:'V', name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
     final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
 
@@ -116,7 +116,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
   @Test
   public void updatePartial() throws IOException {
-    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
+    post("document/" + getDatabaseName()).payload("{@class:'V', name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
     final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
 
@@ -138,29 +138,29 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
   @Test
   public void patchPartial() throws IOException {
-    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
+    post("document/" + getDatabaseName()).payload("{@class:'V', name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
     final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
 
     Assert.assertEquals(created.field("name"), "Jay");
     Assert.assertEquals(created.field("surname"), "Miner");
-    Assert.assertEquals(created.field("age"), (Integer)0);
+    Assert.assertEquals(created.field("age"), (Integer) 0);
     Assert.assertEquals(created.getVersion(), 1);
 
-    patch("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1)).payload("{age:1,@version:1}", CONTENT.JSON)
-        .exec();
+    patch("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1))
+        .payload("{age:1,@version:1}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 200);
     final ODocument updated = new ODocument().fromJSON(getResponse().getEntity().getContent());
 
     Assert.assertEquals(updated.field("name"), "Jay");
     Assert.assertEquals(updated.field("surname"), "Miner");
-    Assert.assertEquals(updated.field("age"), (Integer)1);
+    Assert.assertEquals(updated.field("age"), (Integer) 1);
     Assert.assertEquals(updated.getVersion(), 2);
   }
 
   @Test
   public void deleteByRid() throws IOException {
-    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
+    post("document/" + getDatabaseName()).payload("{@class:'V', name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
     final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
 
@@ -178,7 +178,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
   @Test
   public void deleteWithMVCC() throws IOException {
-    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
+    post("document/" + getDatabaseName()).payload("{@class:'V', name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
     final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
 

@@ -15,18 +15,15 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class BinaryTest extends DocumentDBBaseTest {
   private ORID rid;
@@ -41,7 +38,7 @@ public class BinaryTest extends DocumentDBBaseTest {
     ODocument doc = new ODocument();
     doc.field("binary", "Binary data".getBytes());
 
-    doc.save();
+    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     doc.reload();
     Assert.assertEquals(new String((byte[]) doc.field("binary", OType.BINARY)), "Binary data");
@@ -66,7 +63,7 @@ public class BinaryTest extends DocumentDBBaseTest {
     ODocument doc = new ODocument();
     doc.field("binary", new ORecordBytes(database, "Binary data".getBytes()));
 
-    doc.save();
+    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
     rid = doc.getIdentity();
   }
 

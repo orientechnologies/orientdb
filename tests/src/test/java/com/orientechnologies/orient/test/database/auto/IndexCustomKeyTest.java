@@ -213,11 +213,13 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
     ComparableBinary key1 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
         3, 4, 5, 6, 7, 8, 9, 0, 1 });
     ODocument doc1 = new ODocument().field("k", "key1");
+    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key1, doc1);
 
     ComparableBinary key2 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
         3, 4, 5, 6, 7, 8, 9, 0, 2 });
     ODocument doc2 = new ODocument().field("k", "key1");
+    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key2, doc2);
 
     Assert.assertEquals(index.get(key1), doc1);
@@ -230,6 +232,7 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
     ComparableBinary key3 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
         3, 4, 5, 6, 7, 8, 9, 0, 3 });
     ODocument doc1 = new ODocument().field("k", "key3");
+    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final OIndex index = getIndex();
     index.put(key3, doc1);
@@ -237,6 +240,7 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
     ComparableBinary key4 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
         3, 4, 5, 6, 7, 8, 9, 0, 4 });
     ODocument doc2 = new ODocument().field("k", "key4");
+    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key4, doc2);
 
     database.commit();
@@ -252,11 +256,13 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
     ComparableBinary key5 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
         3, 4, 5, 6, 7, 8, 9, 0, 5 });
     ODocument doc1 = new ODocument().field("k", "key5");
+    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key5, doc1);
 
     ComparableBinary key6 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
         3, 4, 5, 6, 7, 8, 9, 0, 6 });
     ODocument doc2 = new ODocument().field("k", "key6");
+    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key6, doc2);
 
     database.commit();
@@ -272,11 +278,13 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
     ComparableBinary key7 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
         3, 4, 5, 6, 7, 8, 9, 0, 7 });
     ODocument doc1 = new ODocument().field("k", "key7");
+    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key7, doc1);
 
     ComparableBinary key8 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
         3, 4, 5, 6, 7, 8, 9, 0, 8 });
     ODocument doc2 = new ODocument().field("k", "key8");
+    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key8, doc2);
 
     database.commit();

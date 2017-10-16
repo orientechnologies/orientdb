@@ -67,10 +67,10 @@ public class ODeleteStatementTest {
     final ODocument doc3 = new ODocument().field("k", "key2");
     final ODocument doc4 = new ODocument().field("k", "key2");
 
-    doc1.save();
-    doc2.save();
-    doc3.save();
-    doc4.save();
+    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
+    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
+    doc3.save(database.getClusterNameById(database.getDefaultClusterId()));
+    doc4.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     index.put(key1, doc1);
     index.put(key1, doc2);

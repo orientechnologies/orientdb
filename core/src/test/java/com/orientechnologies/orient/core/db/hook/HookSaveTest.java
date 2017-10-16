@@ -44,7 +44,7 @@ public class HookSaveTest {
         ODocument doc = (ODocument) iRecord;
         if (doc.containsField("test"))
           return RESULT.RECORD_NOT_CHANGED;
-        ODocument doc1 = new ODocument();
+        ODocument doc1 = new ODocument("test");
         doc1.field("test", "value");
         doc.field("testNewLinkedRecord", doc1);
         return RESULT.RECORD_CHANGED;
@@ -78,7 +78,7 @@ public class HookSaveTest {
         ODocument doc = (ODocument) iRecord;
         if (doc.containsField("test"))
           return RESULT.RECORD_NOT_CHANGED;
-        ODocument doc1 = new ODocument();
+        ODocument doc1 = new ODocument("test");
         doc1.field("test", "value");
         doc.field("testNewLinkedRecord", doc1);
         doc1.field("backLink", doc);

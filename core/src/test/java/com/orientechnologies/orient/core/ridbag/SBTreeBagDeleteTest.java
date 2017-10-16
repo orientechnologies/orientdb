@@ -44,7 +44,7 @@ public class SBTreeBagDeleteTest {
       bag.add(new ORecordId(10, i));
     doc.field("bag", bag);
 
-    ORID id = db.save(doc).getIdentity();
+    ORID id = db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
 
     bag = doc.field("bag");
     OBonsaiCollectionPointer pointer = bag.getPointer();
@@ -71,7 +71,7 @@ public class SBTreeBagDeleteTest {
       bag.add(new ORecordId(10, i));
     doc.field("bag", bag);
 
-    ORID id = db.save(doc).getIdentity();
+    ORID id = db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
 
     bag = doc.field("bag");
     OBonsaiCollectionPointer pointer = bag.getPointer();

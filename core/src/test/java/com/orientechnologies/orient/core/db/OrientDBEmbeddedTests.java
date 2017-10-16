@@ -2,23 +2,17 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by tglman on 08/04/16.
@@ -46,7 +40,7 @@ public class OrientDBEmbeddedTests {
       orientDb.create("test", ODatabaseType.MEMORY);
 
     ODatabaseDocument db = orientDb.open("test", "admin", "admin");
-    db.save(new ODocument());
+    db.save(new ODocument(), db.getClusterNameById(db.getDefaultClusterId()));
     db.close();
     orientDb.close();
 
@@ -85,7 +79,7 @@ public class OrientDBEmbeddedTests {
 
     ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
-    db.save(new ODocument());
+    db.save(new ODocument(), db.getClusterNameById(db.getDefaultClusterId()));
     db.close();
     pool.close();
     orientDb.close();
@@ -243,7 +237,7 @@ public class OrientDBEmbeddedTests {
 
     orientDb.create("test", ODatabaseType.MEMORY);
     ODatabaseDocument db = orientDb.open("test", "admin", "admin");
-    db.save(new ODocument());
+    db.save(new ODocument(), db.getClusterNameById(db.getDefaultClusterId()));
     db.close();
     orientDb.close();
   }

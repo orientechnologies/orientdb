@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -35,6 +28,12 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
 
 @Test(groups = "dictionary")
 public class TransactionAtomicTest extends DocumentDBBaseTest {
@@ -52,7 +51,7 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
     db2.open("admin", "admin");
 
     ODocument record1 = new ODocument();
-    record1.field("value", "This is the first version").save();
+    record1.field("value", "This is the first version").save(db2.getClusterNameById(db2.getDefaultClusterId()));
 
     // RE-READ THE RECORD
     record1.reload();
@@ -97,7 +96,7 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
   @Test
   public void testTransactionPreListenerRollback() throws IOException {
     ODocument record1 = new ODocument();
-    record1.field("value", "This is the first version").save();
+    record1.field("value", "This is the first version").save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODatabaseListener listener = new ODatabaseListener() {
 

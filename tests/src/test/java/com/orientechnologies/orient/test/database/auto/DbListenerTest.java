@@ -210,7 +210,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, baseOnBeforeTxBegin + 1);
 
-    database.newInstance().save();
+    database.newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
     database.commit();
     Assert.assertEquals(onBeforeTxCommit, baseOnBeforeTxCommit + 1);
     Assert.assertEquals(onAfterTxCommit, baseOnAfterTxCommit + 1);
@@ -218,7 +218,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, baseOnBeforeTxBegin + 2);
 
-    database.newInstance().save();
+    database.newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
     database.rollback();
     Assert.assertEquals(onBeforeTxRollback, 1);
     Assert.assertEquals(onAfterTxRollback, 1);
@@ -246,7 +246,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, 1);
 
-    database.newInstance().save();
+    database.newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
     database.commit();
     Assert.assertEquals(onBeforeTxCommit, 1);
     Assert.assertEquals(onAfterTxCommit, 1);
@@ -254,7 +254,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, 2);
 
-    database.newInstance().save();
+    database.newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
     database.rollback();
     Assert.assertEquals(onBeforeTxRollback, 1);
     Assert.assertEquals(onAfterTxRollback, 1);
@@ -277,7 +277,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.open("admin", "admin");
 
     database.begin(TXTYPE.OPTIMISTIC);
-    ODocument rec = database.newInstance().field("name", "Jay").save();
+    ODocument rec = database.newInstance().field("name", "Jay").save(database.getClusterNameById(database.getDefaultClusterId()));
     database.commit();
 
     final DocumentChangeListener cl = new DocumentChangeListener(database);

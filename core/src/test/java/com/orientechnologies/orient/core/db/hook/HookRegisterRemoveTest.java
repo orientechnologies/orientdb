@@ -38,10 +38,10 @@ public class HookRegisterRemoveTest {
     };
     db.registerHook(iHookImpl);
 
-    db.save(new ODocument().field("test", "test"));
+    db.save(new ODocument().field("test", "test"), db.getClusterNameById(db.getDefaultClusterId()));
     assertEquals(3, integer.get());
     db.unregisterHook(iHookImpl);
-    db.save(new ODocument());
+    db.save(new ODocument(), db.getClusterNameById(db.getDefaultClusterId()));
     assertEquals(3, integer.get());
     db.drop();
   }

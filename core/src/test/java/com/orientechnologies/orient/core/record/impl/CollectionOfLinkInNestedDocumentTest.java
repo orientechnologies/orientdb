@@ -47,7 +47,7 @@ public class CollectionOfLinkInNestedDocumentTest {
 
     ODocument base = new ODocument();
     base.field("nested", nested, OType.EMBEDDED);
-    OIdentifiable id = db.save(base);
+    OIdentifiable id = db.save(base, db.getClusterNameById(db.getDefaultClusterId()));
     db.getLocalCache().clear();
     ODocument base1 = db.load(id.getIdentity());
     ODocument nest1 = base1.field("nested");
@@ -71,7 +71,7 @@ public class CollectionOfLinkInNestedDocumentTest {
 
     ODocument base = new ODocument();
     base.field("nested", nested, OType.EMBEDDED);
-    OIdentifiable id = db.save(base);
+    OIdentifiable id = db.save(base, db.getClusterNameById(db.getDefaultClusterId()));
     db.getLocalCache().clear();
     ODocument base1 = db.load(id.getIdentity());
     ODocument nest1 = base1.field("nested");
@@ -94,7 +94,7 @@ public class CollectionOfLinkInNestedDocumentTest {
 
     ODocument base = new ODocument();
     base.field("nested", nested, OType.EMBEDDED);
-    OIdentifiable id = db.save(base);
+    OIdentifiable id = db.save(base, db.getClusterNameById(db.getDefaultClusterId()));
     db.getLocalCache().clear();
     ODocument base1 = db.load(id.getIdentity());
     ODocument nest1 = base1.field("nested");

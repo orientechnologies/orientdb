@@ -33,7 +33,7 @@ public class OMultithreadConflictManagementTest {
       bag.add(new ORecordId(30, 20));
       ODocument doc = new ODocument();
       doc.field("bag", bag);
-      doc = db.save(doc);
+      doc = db.save(doc, db.getClusterNameById(db.getDefaultClusterId()));
       db.commit();
       final ORID id;
       id = doc.getIdentity();

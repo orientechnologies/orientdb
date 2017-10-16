@@ -76,7 +76,7 @@ public class OTraverseTest {
     c3.field("c3b", c3b);
     rootDocument.field("c", new ArrayList<ODocument>(Arrays.asList(c1, c2, c3)));
 
-    rootDocument.save();
+    rootDocument.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     final List<ODocument> expectedResult = Arrays
         .asList(rootDocument, a, aa, ab, b, ba, bb, c1, c1a, c1b, c2, c2a, c2b, c3, c3a, c3b);
@@ -121,7 +121,7 @@ public class OTraverseTest {
     c3.field("c3b", c3b);
     rootDocument.field("c", new ArrayList<ODocument>(Arrays.asList(c1, c2, c3)));
 
-    rootDocument.save();
+    rootDocument.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     final List<ODocument> expectedResult = Arrays
         .asList(rootDocument, a, b, aa, ab, ba, bb, c1, c2, c3, c1a, c1b, c2a, c2b, c3a, c3b);

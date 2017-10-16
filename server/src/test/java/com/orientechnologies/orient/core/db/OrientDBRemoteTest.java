@@ -12,15 +12,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by tglman on 06/07/16.
@@ -47,7 +44,7 @@ public class OrientDBRemoteTest {
       factory.create("test", ODatabaseType.MEMORY);
 
     ODatabaseDocument db = factory.open("test", "admin", "admin");
-    db.save(new ODocument());
+    db.save(new ODocument(), db.getClusterNameById(db.getDefaultClusterId()));
     db.close();
     factory.close();
   }
@@ -87,7 +84,7 @@ public class OrientDBRemoteTest {
 
     ODatabasePool pool = new ODatabasePool(factory, "test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
-    db.save(new ODocument());
+    db.save(new ODocument(), db.getClusterNameById(db.getDefaultClusterId()));
     db.close();
     pool.close();
     factory.close();

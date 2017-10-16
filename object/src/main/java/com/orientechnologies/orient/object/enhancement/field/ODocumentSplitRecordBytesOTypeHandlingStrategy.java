@@ -13,12 +13,6 @@
  */
 package com.orientechnologies.orient.object.enhancement.field;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -28,6 +22,12 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * {@link ODocumentFieldOTypeHandlingStrategy} that stores each {@link OType#BINARY} object split in several {@link ORecordBytes}.
@@ -88,7 +88,11 @@ public class ODocumentSplitRecordBytesOTypeHandlingStrategy implements ODocument
           nextChunkLength = bytes.length - offset;
         }
 
-        chunks.add(database.save(new ORecordBytes(Arrays.copyOfRange(bytes, offset, offset + nextChunkLength))).getIdentity());
+        int clusterId = iRecord.getIdentity().getClusterId();
+        if(clusterId<0){
+          clusterId = database.getBlobClusterIds().iterator().next();
+        }
+        chunks.add(database.save(new ORecordBytes(Arrays.copyOfRange(bytes, offset, offset + nextChunkLength)), database.getClusterNameById(clusterId)).getIdentity());
         offset += nextChunkLength;
       }
 

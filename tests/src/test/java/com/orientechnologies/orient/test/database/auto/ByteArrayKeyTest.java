@@ -1,20 +1,16 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Arrays;
-import java.util.Collection;
-
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
+import java.util.Collection;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -76,10 +72,12 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     OIndex<?> index = getManualIndex();
     byte[] key1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 };
     ODocument doc1 = new ODocument().field("k", "key1");
+    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key1, doc1);
 
     byte[] key2 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2 };
     ODocument doc2 = new ODocument().field("k", "key1");
+    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key2, doc2);
 
     Assert.assertEquals(index.get(key1), doc1);
@@ -166,10 +164,10 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     final ODocument doc3 = new ODocument().field("k", "key2");
     final ODocument doc4 = new ODocument().field("k", "key2");
 
-    doc1.save();
-    doc2.save();
-    doc3.save();
-    doc4.save();
+    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
+    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
+    doc3.save(database.getClusterNameById(database.getDefaultClusterId()));
+    doc4.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     index.put(key1, doc1);
     index.put(key1, doc2);
@@ -207,10 +205,12 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     byte[] key3 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 3 };
     ODocument doc1 = new ODocument().field("k", "key3");
+    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
     manualIndex.put(key3, doc1);
 
     byte[] key4 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 4 };
     ODocument doc2 = new ODocument().field("k", "key4");
+    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
     manualIndex.put(key4, doc2);
 
     database.commit();
@@ -228,10 +228,12 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     OIndex<?> index = getManualIndex();
     byte[] key5 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 5 };
     ODocument doc1 = new ODocument().field("k", "key5");
+    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key5, doc1);
 
     byte[] key6 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 6 };
     ODocument doc2 = new ODocument().field("k", "key6");
+    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key6, doc2);
 
     database.commit();
@@ -249,10 +251,12 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     byte[] key7 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 7 };
     ODocument doc1 = new ODocument().field("k", "key7");
+    doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key7, doc1);
 
     byte[] key8 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 8 };
     ODocument doc2 = new ODocument().field("k", "key8");
+    doc2.save(database.getClusterNameById(database.getDefaultClusterId()));
     index.put(key8, doc2);
 
     database.commit();

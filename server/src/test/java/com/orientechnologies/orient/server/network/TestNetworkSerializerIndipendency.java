@@ -4,7 +4,6 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -47,7 +46,7 @@ public class TestNetworkSerializerIndipendency {
       ODocument document = new ODocument();
       document.field("name", "something");
       document.field("surname", "something-else");
-      document = dbTx.save(document);
+      document = dbTx.save(document, dbTx.getClusterNameById(dbTx.getDefaultClusterId()));
       dbTx.commit();
       ODocument doc = dbTx.load(document.getIdentity());
       assertEquals(doc.fields(), document.fields());
@@ -90,7 +89,7 @@ public class TestNetworkSerializerIndipendency {
       ODocument document = new ODocument();
       document.field("name", "something");
       document.field("surname", "something-else");
-      document = dbTx.save(document);
+      document = dbTx.save(document, dbTx.getClusterNameById(dbTx.getDefaultClusterId()));
       dbTx.commit();
       ODocument doc = dbTx.load(document.getIdentity());
       assertEquals(doc.fields(), document.fields());

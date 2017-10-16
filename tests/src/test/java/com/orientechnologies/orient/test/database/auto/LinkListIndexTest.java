@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -58,10 +57,10 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollection() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -83,10 +82,10 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionInTx() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     try {
       database.begin();
@@ -115,13 +114,13 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionUpdate() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -146,13 +145,13 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionUpdateInTx() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -184,13 +183,13 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionUpdateInTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -217,13 +216,13 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionUpdateAddItem() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -249,13 +248,13 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionUpdateAddItemInTx() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -289,13 +288,13 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionUpdateAddItemInTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -323,10 +322,10 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionUpdateRemoveItemInTx() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -359,10 +358,10 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionUpdateRemoveItemInTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -390,10 +389,10 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionUpdateRemoveItem() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -418,10 +417,10 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionRemove() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -436,10 +435,10 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionRemoveInTx() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -461,10 +460,10 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionRemoveInTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
@@ -490,10 +489,10 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionSQL() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field("linkCollection", new ArrayList<ORID>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));

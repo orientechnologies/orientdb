@@ -24,7 +24,7 @@ public class ODocumentValidationTest {
     db.create();
     try {
       ODocument doc = new ODocument();
-      OIdentifiable id = db.save(doc).getIdentity();
+      OIdentifiable id = db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
 
       OClass embeddedClazz = db.getMetadata().getSchema().createClass("EmbeddedValidation");
       embeddedClazz.createProperty("int", OType.INTEGER).setMandatory(true);
@@ -415,7 +415,7 @@ public class ODocumentValidationTest {
     db.create();
     try {
       ODocument doc = new ODocument();
-      OIdentifiable id = db.save(doc).getIdentity();
+      OIdentifiable id = db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
       OClass clazz = db.getMetadata().getSchema().createClass("Validation");
       clazz.createProperty("int", OType.INTEGER).setMin("11");
       clazz.createProperty("long", OType.LONG).setMin("11");
@@ -514,7 +514,7 @@ public class ODocumentValidationTest {
     db.create();
     try {
       ODocument doc = new ODocument();
-      OIdentifiable id = db.save(doc).getIdentity();
+      OIdentifiable id = db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
       OClass clazz = db.getMetadata().getSchema().createClass("Validation");
       clazz.createProperty("int", OType.INTEGER).setNotNull(true);
       clazz.createProperty("long", OType.LONG).setNotNull(true);

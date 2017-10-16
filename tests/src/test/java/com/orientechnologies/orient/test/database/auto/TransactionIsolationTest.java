@@ -50,7 +50,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     db1.open("admin", "admin");
 
     ODocument record1 = new ODocument();
-    record1.field("name", "This is the first version").save();
+    record1.field("name", "This is the first version").save(db1.getClusterNameById(db1.getDefaultClusterId()));
 
     db1.begin();
     try {
@@ -87,7 +87,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     db1.open("admin", "admin");
 
     ODocument record1 = new ODocument();
-    record1.field("name", "This is the first version").save();
+    record1.field("name", "This is the first version").save(db1.getClusterNameById(db1.getDefaultClusterId()));
 
     db1.begin();
     db1.getTransaction().setIsolationLevel(OTransaction.ISOLATION_LEVEL.READ_COMMITTED);
@@ -119,7 +119,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     db1.open("admin", "admin");
 
     final ODocument record1 = new ODocument();
-    record1.field("name", "This is the first version").save();
+    record1.field("name", "This is the first version").save(db1.getClusterNameById(db1.getDefaultClusterId()));
 
     Future<List<OIdentifiable>> txFuture = Orient.instance().submit(new Callable<List<OIdentifiable>>() {
       @Override
@@ -165,7 +165,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     db1.open("admin", "admin");
 
     final ODocument record1 = new ODocument();
-    record1.field("name", "This is the first version").save();
+    record1.field("name", "This is the first version").save(db1.getClusterNameById(db1.getDefaultClusterId()));
 
     Future<List<OIdentifiable>> txFuture = Orient.instance().submit(new Callable<List<OIdentifiable>>() {
       @Override

@@ -159,7 +159,7 @@ public class HookTxTest extends ORecordHookAbstract {
     });
 
     Assert.assertFalse(exc.get());
-    new ODocument().field("test-hook", true).save();
+    new ODocument().field("test-hook", true).save(database.getClusterNameById(database.getDefaultClusterId()));
     Assert.assertTrue(exc.get());
 
     database.activateOnCurrentThread();

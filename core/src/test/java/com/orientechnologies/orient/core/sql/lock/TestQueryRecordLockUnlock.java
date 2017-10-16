@@ -25,7 +25,7 @@ public class TestQueryRecordLockUnlock {
       db.create();
       ODocument doc = new ODocument();
       doc.field("count", 0);
-      doc = db.save(doc);
+      doc = db.save(doc, db.getClusterNameById(db.getDefaultClusterId()));
       id = doc.getIdentity();
       db.commit();
     } finally {
@@ -87,7 +87,7 @@ public class TestQueryRecordLockUnlock {
       db.create();
       ODocument doc = new ODocument();
       doc.field("count", 0);
-      doc = db.save(doc);
+      doc = db.save(doc, db.getClusterNameById(db.getDefaultClusterId()));
       id = doc.getIdentity();
       db.commit();
     } finally {
@@ -147,7 +147,7 @@ public class TestQueryRecordLockUnlock {
       db.create();
       ODocument doc = new ODocument();
       doc.field("count", 0);
-      doc = db.save(doc);
+      doc = db.save(doc, db.getClusterNameById(db.getDefaultClusterId()));
       id = doc.getIdentity();
       db.commit();
     } finally {

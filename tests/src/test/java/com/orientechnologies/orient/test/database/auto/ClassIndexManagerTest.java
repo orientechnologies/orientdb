@@ -233,11 +233,11 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     final ODocument docOne = new ODocument();
     docOne.field("prop1", "a");
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
     docTwo.field("prop1", "a");
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final Collection<? extends OIndex<?>> afterIndexes = database.getMetadata().getIndexManager().getIndexes();
     for (final OIndex<?> index : afterIndexes)
@@ -253,11 +253,11 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     final ODocument docOne = new ODocument();
     docOne.field("prop1", "a");
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
     docTwo.field("prop1", "b");
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     docOne.field("prop1", "a");
     docOne.save();
@@ -270,7 +270,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   public void testDeleteDocumentWithoutClass() {
     final ODocument docOne = new ODocument();
     docOne.field("prop1", "a");
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     docOne.delete();
   }
@@ -278,7 +278,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
   public void testDeleteModifiedDocumentWithoutClass() {
     final ODocument docOne = new ODocument();
     docOne.field("prop1", "a");
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     docOne.field("prop1", "b");
 

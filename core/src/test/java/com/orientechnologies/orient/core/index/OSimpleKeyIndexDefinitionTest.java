@@ -136,7 +136,7 @@ public class OSimpleKeyIndexDefinitionTest {
     databaseDocumentTx.create();
 
     final ODocument storeDocument = simpleKeyIndexDefinition.toStream();
-    storeDocument.save();
+    storeDocument.save(databaseDocumentTx.getClusterNameById(databaseDocumentTx.getDefaultClusterId()));
 
     final ODocument loadDocument = databaseDocumentTx.load(storeDocument.getIdentity());
     final OSimpleKeyIndexDefinition loadedKeyIndexDefinition = new OSimpleKeyIndexDefinition();

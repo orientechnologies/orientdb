@@ -29,11 +29,11 @@ public class ORecordLazySetTest {
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + ORecordLazySet.class.getSimpleName());
     db.create();
-    doc1 = db.save(new ODocument().field("doc1", "doc1"));
+    doc1 = db.save(new ODocument().field("doc1", "doc1"), db.getClusterNameById(db.getDefaultClusterId()));
     rid1 = doc1.getIdentity();
-    doc2 = db.save(new ODocument().field("doc2", "doc2"));
+    doc2 = db.save(new ODocument().field("doc2", "doc2"), db.getClusterNameById(db.getDefaultClusterId()));
     rid2 = doc2.getIdentity();
-    doc3 = db.save(new ODocument().field("doc3", "doc3"));
+    doc3 = db.save(new ODocument().field("doc3", "doc3"), db.getClusterNameById(db.getDefaultClusterId()));
     rid3 = doc3.getIdentity();
   }
 

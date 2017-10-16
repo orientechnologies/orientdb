@@ -71,7 +71,7 @@ public class NonDurableTxTest {
   public void testChangesStored() {
     db.begin();
     db.getTransaction().setUsingLog(false);
-    final ODocument doc1 = db.newInstance().field("tx-key", "tx-value").save();
+    final ODocument doc1 = db.newInstance().field("tx-key", "tx-value").save(db.getClusterNameById(db.getDefaultClusterId()));
     db.commit();
 
     doc1.field("non-tx-key", "non-tx-value").save();
@@ -91,7 +91,7 @@ public class NonDurableTxTest {
     try {
       db.begin();
       db.getTransaction().setUsingLog(false);
-      final ODocument doc1 = db.newInstance().field("tx-key", "tx-value").save();
+      final ODocument doc1 = db.newInstance().field("tx-key", "tx-value").save(db.getClusterNameById(db.getDefaultClusterId()));
       db.commit();
 
       doc1.field("non-tx-key", "non-tx-value").save();
@@ -108,14 +108,14 @@ public class NonDurableTxTest {
 
   @Test
   public void testWalNotGrowingWhileWalDisabledInTx() throws Exception {
-    db.newInstance().field("some-unrelated-key", "some-unrelated-value").save();
+    db.newInstance().field("some-unrelated-key", "some-unrelated-value").save(db.getClusterNameById(db.getDefaultClusterId()));
 
     wal.flush();
     final OLogSequenceNumber startLsn = wal.getFlushedLsn();
 
     db.begin();
     db.getTransaction().setUsingLog(false);
-    db.newInstance().field("tx-key", "tx-value").save();
+    db.newInstance().field("tx-key", "tx-value").save(db.getClusterNameById(db.getDefaultClusterId()));
     db.commit();
 
     wal.flush();

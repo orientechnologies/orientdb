@@ -5,14 +5,11 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.After;
@@ -20,7 +17,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -65,9 +63,9 @@ public class IndexChangesQueryTest {
 
     final int clusterId = database.getDefaultClusterId();
     ODocument doc = new ODocument();
-    database.save(doc);
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
     ODocument doc1 = new ODocument();
-    database.save(doc1);
+    database.save(doc1, database.getClusterNameById(database.getDefaultClusterId()));
     index.put(1, doc.getIdentity());
     index.put(1, doc.getIdentity());
     index.put(2, doc1.getIdentity());
@@ -84,9 +82,9 @@ public class IndexChangesQueryTest {
   @Test
   public void testClearAndPut() {
 
-    OIdentifiable id1 = database.save(new ODocument());
-    OIdentifiable id2 = database.save(new ODocument());
-    OIdentifiable id3 = database.save(new ODocument());
+    OIdentifiable id1 = database.save(new ODocument(), database.getClusterNameById(database.getDefaultClusterId()));
+    OIdentifiable id2 = database.save(new ODocument(), database.getClusterNameById(database.getDefaultClusterId()));
+    OIdentifiable id3 = database.save(new ODocument(), database.getClusterNameById(database.getDefaultClusterId()));
 
     database.begin();
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
@@ -111,7 +109,7 @@ public class IndexChangesQueryTest {
     index.clear();
     index.put(2, id3.getIdentity());
     ODocument doc = new ODocument();
-    database.save(doc);
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
     index.put(2, doc.getIdentity());
 
     res = database.query("select from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1, 2);

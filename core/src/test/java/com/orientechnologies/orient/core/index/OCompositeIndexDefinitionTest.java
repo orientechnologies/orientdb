@@ -592,7 +592,7 @@ public class OCompositeIndexDefinitionTest {
     emptyCompositeIndex.addIndex(new OPropertyIndexDefinition("testClass", "fTwo", OType.STRING));
 
     final ODocument docToStore = emptyCompositeIndex.toStream();
-    database.save(docToStore);
+    database.save(docToStore, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docToLoad = database.load(docToStore.getIdentity());
 
@@ -630,7 +630,7 @@ public class OCompositeIndexDefinitionTest {
     Assert.assertEquals(emptyCompositeIndex, emptyCompositeIndexTwo);
 
     final ODocument docToStore = emptyCompositeIndex.toStream();
-    database.save(docToStore);
+    database.save(docToStore, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docToLoad = database.load(docToStore.getIdentity());
 

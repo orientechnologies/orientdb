@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -53,10 +52,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMap() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -97,10 +96,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapInTx() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     try {
       database.begin();
@@ -148,13 +147,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapUpdateOne() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> mapOne = new HashMap<String, ORID>();
 
@@ -202,10 +201,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapUpdateOneTx() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     database.begin();
     try {
@@ -254,13 +253,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapUpdateOneTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> mapOne = new HashMap<String, ORID>();
 
@@ -311,13 +310,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapAddItem() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -362,13 +361,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapAddItemTx() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -421,13 +420,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapAddItemTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -474,13 +473,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapUpdateItem() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -524,13 +523,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapUpdateItemInTx() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -581,13 +580,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapUpdateItemInTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -634,13 +633,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapRemoveItem() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -684,13 +683,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapRemoveItemInTx() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -743,13 +742,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapRemoveItemInTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -798,13 +797,13 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapRemove() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save();
+    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -830,10 +829,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapRemoveInTx() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -867,10 +866,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapRemoveInTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 
@@ -915,10 +914,10 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   public void testIndexMapSQL() {
     final ODocument docOne = new ODocument();
-    docOne.save();
+    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save();
+    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     Map<String, ORID> map = new HashMap<String, ORID>();
 

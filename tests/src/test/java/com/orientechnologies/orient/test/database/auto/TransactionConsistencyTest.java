@@ -68,12 +68,12 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     // Create docA.
     ODocument vDocA_db1 = database1.newInstance();
     vDocA_db1.field(NAME, "docA");
-    database1.save(vDocA_db1);
+    database1.save(vDocA_db1, database1.getClusterNameById(database1.getDefaultClusterId()));
 
     // Create docB.
     ODocument vDocB_db1 = database1.newInstance();
     vDocB_db1.field(NAME, "docB");
-    database1.save(vDocB_db1);
+    database1.save(vDocB_db1, database1.getClusterNameById(database1.getDefaultClusterId()));
 
     database1.commit();
 
@@ -148,7 +148,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     // Create docA.
     ODocument vDocA_db1 = database1.newInstance();
     vDocA_db1.field(NAME, "docA");
-    database1.save(vDocA_db1);
+    database1.save(vDocA_db1, database1.getClusterNameById(database1.getDefaultClusterId()));
 
     // Keep the IDs.
     ORID vDocA_Rid = vDocA_db1.getIdentity().copy();
@@ -206,7 +206,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     // Create docA.
     ODocument vDocA_db1 = database1.newInstance();
     vDocA_db1.field(NAME, "docA");
-    database1.save(vDocA_db1);
+    database1.save(vDocA_db1, database1.getClusterNameById(database1.getDefaultClusterId()));
 
     // Keep the IDs.
     ORID vDocA_Rid = vDocA_db1.getIdentity().copy();
@@ -264,7 +264,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     database1.begin(TXTYPE.OPTIMISTIC);
     ODocument vDocA_db1 = database1.newInstance();
     vDocA_db1.field(NAME, "docA");
-    database1.save(vDocA_db1);
+    database1.save(vDocA_db1, database1.getClusterNameById(database1.getDefaultClusterId()));
     database1.commit();
 
     // Keep the ID.

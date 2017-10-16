@@ -16,7 +16,7 @@ public class HttpIndexTest extends BaseHttpDatabaseTest {
 
   @Test
   public void create() throws IOException {
-    put("index/" + getDatabaseName() + "/ManualIndex/luca").payload("{name:'Harry', surname:'Potter',age:18}", CONTENT.JSON).exec();
+    put("index/" + getDatabaseName() + "/ManualIndex/luca").payload("{@class:'V', name:'Harry', surname:'Potter',age:18}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
   }
 
@@ -48,11 +48,11 @@ public class HttpIndexTest extends BaseHttpDatabaseTest {
   @Test
 
   public void updateKey() throws IOException {
-    put("index/" + getDatabaseName() + "/ManualIndex/Harry2").payload("{name:'Harry', surname:'Potter',age:18}", CONTENT.JSON)
+    put("index/" + getDatabaseName() + "/ManualIndex/Harry2").payload("{@class:'V', name:'Harry', surname:'Potter',age:18}", CONTENT.JSON)
         .exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
 
-    put("index/" + getDatabaseName() + "/ManualIndex/Harry2").payload("{name:'Harry2', surname:'Potter2',age:182}", CONTENT.JSON)
+    put("index/" + getDatabaseName() + "/ManualIndex/Harry2").payload("{@class:'V', name:'Harry2', surname:'Potter2',age:182}", CONTENT.JSON)
         .exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
 
@@ -74,7 +74,7 @@ public class HttpIndexTest extends BaseHttpDatabaseTest {
   @Test
 
   public void updateValue() throws IOException {
-    put("index/" + getDatabaseName() + "/ManualIndex/Harry2").payload("{name:'Harry', surname:'Potter',age:18}", CONTENT.JSON)
+    put("index/" + getDatabaseName() + "/ManualIndex/Harry2").payload("{@class:'V', name:'Harry', surname:'Potter',age:18}", CONTENT.JSON)
         .exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
 
@@ -111,7 +111,7 @@ public class HttpIndexTest extends BaseHttpDatabaseTest {
   @Test
 
   public void updateValueMVCCError() throws IOException {
-    put("index/" + getDatabaseName() + "/ManualIndex/Harry2").payload("{name:'Harry', surname:'Potter',age:18}", CONTENT.JSON)
+    put("index/" + getDatabaseName() + "/ManualIndex/Harry2").payload("{@class:'V', name:'Harry', surname:'Potter',age:18}", CONTENT.JSON)
         .exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
 
@@ -136,7 +136,7 @@ public class HttpIndexTest extends BaseHttpDatabaseTest {
         post("command/" + getDatabaseName() + "/sql").payload("create index ManualIndex DICTIONARY STRING", CONTENT.TEXT)
             .getResponse().getStatusLine().getStatusCode(), 200);
 
-    put("index/" + getDatabaseName() + "/ManualIndex/jay").payload("{name:'Jay', surname:'Miner',age:99}", CONTENT.JSON).exec();
+    put("index/" + getDatabaseName() + "/ManualIndex/jay").payload("{@class:'V', name:'Jay', surname:'Miner',age:99}", CONTENT.JSON).exec();
     Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
   }
 

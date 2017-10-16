@@ -31,7 +31,7 @@ import org.junit.Test;
  */
 public class VersionedDeleteTest {
 
-  private ODatabaseDocumentTx      db;
+  private ODatabaseDocumentTx db;
 
   @Before
   public void before() {
@@ -53,7 +53,7 @@ public class VersionedDeleteTest {
   @Test(expected = OConcurrentModificationException.class)
   public void testDeleteFutureVersion() {
     final ODocument doc = new ODocument();
-    doc.save(); // version is 1
+    doc.save(db.getClusterNameById(db.getDefaultClusterId())); // version is 1
 
     db.delete(doc.getIdentity(), 2);
   }
@@ -61,20 +61,19 @@ public class VersionedDeleteTest {
   @Test(expected = OConcurrentModificationException.class)
   public void testDeletePreviousVersion() {
     final ODocument doc = new ODocument();
-    doc.save(); // version is 1
+    doc.save(db.getClusterNameById(db.getDefaultClusterId())); // version is 1
 
     doc.field("key", "value").save(); // version is 2
 
     db.delete(doc.getIdentity(), 1);
   }
 
-
   @Ignore // tx version support must be reworked to handle this
   @Test
   public void testDeleteFutureVersionTx() {
     db.begin();
     final ODocument doc = new ODocument();
-    doc.save(); // version is 1
+    doc.save(db.getClusterNameById(db.getDefaultClusterId())); // version is 1
 
     db.delete(doc.getIdentity(), 2);
     db.commit();
@@ -85,7 +84,7 @@ public class VersionedDeleteTest {
   public void testDeletePreviousVersionTx() {
     db.begin();
     final ODocument doc = new ODocument();
-    doc.save(); // version is 1
+    doc.save(db.getClusterNameById(db.getDefaultClusterId())); // version is 1
 
     doc.field("key", "value").save(); // version is 2
 

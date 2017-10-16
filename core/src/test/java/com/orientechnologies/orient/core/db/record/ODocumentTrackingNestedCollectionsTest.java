@@ -40,13 +40,13 @@ public class ODocumentTrackingNestedCollectionsTest {
     Set objects = new HashSet();
 
     document.field("objects", objects);
-    document.save();
+    document.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     objects = document.field("objects");
     Set subObjects = new HashSet();
     objects.add(subObjects);
 
-    document.save();
+    document.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     orid = document.getIdentity();
     objects = document.field("objects");
@@ -55,7 +55,7 @@ public class ODocumentTrackingNestedCollectionsTest {
     ODocument nestedDoc = new ODocument();
     subObjects.add(nestedDoc);
 
-    document.save();
+    document.save(db.getClusterNameById(db.getDefaultClusterId()));
     db.getLocalCache().clear();
 
     document = db.load(orid);
@@ -79,7 +79,7 @@ public class ODocumentTrackingNestedCollectionsTest {
     ODocument nestedDoc = new ODocument();
     subObjects.add(nestedDoc);
 
-    document.save();
+    document.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     objects = document.field("objects");
     subObjects = (Set) objects.iterator().next();
@@ -109,7 +109,7 @@ public class ODocumentTrackingNestedCollectionsTest {
     ODocument nestedDoc = new ODocument();
     subObjects.add(nestedDoc);
 
-    document.save();
+    document.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     objects = document.field("objects");
     subObjects = (List) objects.iterator().next();
@@ -143,7 +143,7 @@ public class ODocumentTrackingNestedCollectionsTest {
     ODocument nestedDoc = new ODocument();
     subObjects.put("one", nestedDoc);
 
-    document.save();
+    document.save(db.getClusterNameById(db.getDefaultClusterId()));
 
     objects = document.field("objects");
     subObjects = (Map) objects.values().iterator().next();
