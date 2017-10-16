@@ -45,7 +45,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
 
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
-    return OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   }
 
   @Override
