@@ -91,6 +91,7 @@ public class OFilterAnalyzer {
    * @param condition   to analyze
    * @param schemaClass the class that is scanned by query
    * @param context     of the query
+   *
    * @return list of OIndexSearchResult items
    */
   public List<OIndexSearchResult> analyzeCondition(OSQLFilterCondition condition, final OClass schemaClass,
@@ -200,6 +201,7 @@ public class OFilterAnalyzer {
    *
    * @param iCondition Condition item
    * @param iItem      Value to search
+   *
    * @return true if the property was indexed and found, otherwise false
    */
   private OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem, OCommandContext ctx) {
@@ -217,15 +219,24 @@ public class OFilterAnalyzer {
       return null;
     }
 
-    final Object origValue = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
+    boolean inverted = iCondition.getRight() == iItem;
+    final Object origValue = inverted ? iCondition.getLeft() : iCondition.getRight();
 
     OQueryOperator operator = iCondition.getOperator();
 
-    if (iCondition.getRight() == iItem) {
+    if (inverted) {
       if (operator instanceof OQueryOperatorIn) {
         operator = new OQueryOperatorContains();
       } else if (operator instanceof OQueryOperatorContains) {
         operator = new OQueryOperatorIn();
+      } else if (operator instanceof OQueryOperatorMajor) {
+        operator = new OQueryOperatorMinor();
+      } else if (operator instanceof OQueryOperatorMinor) {
+        operator = new OQueryOperatorMajor();
+      } else if (operator instanceof OQueryOperatorMajorEquals) {
+        operator = new OQueryOperatorMinorEquals();
+      } else if (operator instanceof OQueryOperatorMinorEquals) {
+        operator = new OQueryOperatorMajorEquals();
       }
     }
 
