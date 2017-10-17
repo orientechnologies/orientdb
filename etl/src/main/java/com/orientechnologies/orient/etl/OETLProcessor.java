@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.block.OBlock;
 import com.orientechnologies.orient.etl.context.OETLContext;
+import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import com.orientechnologies.orient.etl.extractor.OExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.source.OSource;
@@ -38,9 +39,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-
-import com.orientechnologies.orient.etl.context.OETLContextWrapper;
-
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -55,16 +53,17 @@ import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.INFO;
 public class OETLProcessor {
   protected final OETLComponentFactory factory = new OETLComponentFactory();
   protected final OETLProcessorStats   stats   = new OETLProcessorStats();
-  protected List<OBlock>       beginBlocks;
-  protected List<OBlock>       endBlocks;
-  protected OSource            source;
-  protected OExtractor         extractor;
-  protected OLoader            loader;
-  protected List<OTransformer> transformers;
-  protected OCommandContext    context;
-  protected long               startTime;
-  protected long               elapsed;
-  protected TimerTask          dumpTask;
+  protected List<OBlock>          beginBlocks;
+  protected List<OBlock>          endBlocks;
+  protected OSource               source;
+  protected OExtractor            extractor;
+  protected OLoader               loader;
+  protected List<OTransformer>    transformers;
+  protected Collection<ODocument> transformersRaw;
+  protected OCommandContext       context;
+  protected long                  startTime;
+  protected long                  elapsed;
+  protected TimerTask             dumpTask;
   protected LOG_LEVELS logLevel    = INFO;
   protected boolean    haltOnError = true;
   protected int        maxRetries  = 10;
@@ -200,7 +199,6 @@ public class OETLProcessor {
    * @param iLoader       Loader component configuration
    * @param iEndBlocks    List of Block configurations to execute at the end of processing
    * @param ctx           Execution Context
-   *
    * @return Current OETProcessor instance
    **/
   public OETLProcessor parse(final Collection<ODocument> iBeginBlocks, final ODocument iSource, final ODocument iExtractor,
@@ -229,7 +227,8 @@ public class OETLProcessor {
           aTransformer.field("cluster", iLoader.field("cluster"));
         }
       }
-      configureTransformers(iTransformers, ctx);
+      transformers = configureTransformers(iTransformers, ctx);
+      transformersRaw = iTransformers;
 
       configureEndBlocks(iEndBlocks, ctx);
 
@@ -270,9 +269,9 @@ public class OETLProcessor {
     }
   }
 
-  private void configureTransformers(Collection<ODocument> iTransformers, OCommandContext ctx)
+  private List<OTransformer> configureTransformers(Collection<ODocument> iTransformers, OCommandContext ctx)
       throws IllegalAccessException, InstantiationException {
-    transformers = new ArrayList<OTransformer>();
+    List<OTransformer> transformers = new ArrayList<OTransformer>();
     if (iTransformers != null) {
       for (ODocument t : iTransformers) {
         String name = t.fieldNames()[0];
@@ -281,6 +280,7 @@ public class OETLProcessor {
         configureComponent(tr, t.<ODocument>field(name), ctx);
       }
     }
+    return transformers;
   }
 
   private void configureLoader(ODocument iLoader, OCommandContext ctx) throws IllegalAccessException, InstantiationException {
@@ -388,7 +388,8 @@ public class OETLProcessor {
       List<Future<Boolean>> tasks = new ArrayList<Future<Boolean>>();
       for (int i = 0; i < workers; i++) {
 
-        final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, logLevel, maxRetries, haltOnError);
+        final OETLPipeline pipeline = new OETLPipeline(this, configureTransformers(transformersRaw, context), loader, logLevel,
+            maxRetries, haltOnError);
 
         pipeline.begin();
 
