@@ -23,13 +23,15 @@ package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
+import com.orientechnologies.orient.core.exception.OAccessToSBtreeCollectionManagerIsProhibitedException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,8 +42,22 @@ import java.util.UUID;
  */
 public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbstract
     implements OOrientStartupListener, OOrientShutdownListener {
+  /**
+   * Message which is provided during throwing of {@link OAccessToSBtreeCollectionManagerIsProhibitedException}.
+   */
+  private static final String PROHIBITED_EXCEPTION_MESSAGE = "Access to the manager of RidBags which are based on B-Tree "
+      + "implementation is prohibited. Typically it means that you use database under distributed cluster configuration. Please check "
+      + "that following setting in your server configuration " + OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
+      .getKey() + " is set to " + Integer.MAX_VALUE;
+
   private final OAbstractPaginatedStorage storage;
   private volatile ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> collectionPointerChanges = new CollectionPointerChangesThreadLocal();
+
+  /**
+   * If this flag is set to {@code true} then all access to the manager will be prohibited and exception
+   * {@link OAccessToSBtreeCollectionManagerIsProhibitedException} will be thrown.
+   */
+  private volatile boolean prohibitAccess = false;
 
   public OSBTreeCollectionManagerShared(OAbstractPaginatedStorage storage) {
     super(storage);
@@ -69,13 +85,48 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
       collectionPointerChanges = new CollectionPointerChangesThreadLocal();
   }
 
+  /**
+   * Once this method is called any attempt to load/create/delete b-tree will be resulted in exception thrown.
+   */
+  public void prohibitAccess() {
+    prohibitAccess = true;
+  }
+
+  private void checkAccess() {
+    if (prohibitAccess)
+      throw new OAccessToSBtreeCollectionManagerIsProhibitedException(PROHIBITED_EXCEPTION_MESSAGE);
+  }
+
+  @Override
+  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId) {
+    checkAccess();
+
+    return super.createAndLoadTree(clusterId);
+  }
+
+  @Override
+  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer) {
+    checkAccess();
+
+    return super.loadSBTree(collectionPointer);
+  }
+
+  @Override
+  public void delete(OBonsaiCollectionPointer collectionPointer) {
+    checkAccess();
+
+    super.delete(collectionPointer);
+  }
+
   @Override
   public OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) {
+    checkAccess();
+
     final OBonsaiCollectionPointer pointer = super.createSBTree(clusterId, ownerUUID);
 
     if (ownerUUID != null) {
       Map<UUID, OBonsaiCollectionPointer> changedPointers = collectionPointerChanges.get();
-      if(pointer != null && pointer.isValid())
+      if (pointer != null && pointer.isValid())
         changedPointers.put(ownerUUID, pointer);
     }
 
@@ -85,8 +136,8 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   @Override
   protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createTree(int clusterId) {
 
-    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(FILE_NAME_PREFIX + clusterId,
-        DEFAULT_EXTENSION, storage);
+    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId, DEFAULT_EXTENSION,
+        storage);
     tree.create(OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
 
     return tree;
@@ -102,7 +153,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
       fileName = atomicOperation.fileNameById(collectionPointer.getFileId());
     }
 
-    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(
+    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(
         fileName.substring(0, fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION, storage);
 
     if (tree.load(collectionPointer.getRootPointer()))
@@ -113,10 +164,6 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
 
   /**
    * Change UUID to null to prevent its serialization to disk.
-   *
-   * @param collection
-   *
-   * @return
    */
   @Override
   public UUID listenForChanges(ORidBag collection) {
@@ -125,7 +172,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
       final OBonsaiCollectionPointer pointer = collection.getPointer();
 
       Map<UUID, OBonsaiCollectionPointer> changedPointers = collectionPointerChanges.get();
-      if(pointer != null && pointer.isValid())
+      if (pointer != null && pointer.isValid())
         changedPointers.put(ownerUUID, pointer);
     }
 
@@ -140,10 +187,12 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   public void clearPendingCollections() {
   }
 
+  @Override
   public Map<UUID, OBonsaiCollectionPointer> changedIds() {
     return collectionPointerChanges.get();
   }
 
+  @Override
   public void clearChangedIds() {
     collectionPointerChanges.get().clear();
   }
@@ -151,7 +200,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   private static class CollectionPointerChangesThreadLocal extends ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> {
     @Override
     protected Map<UUID, OBonsaiCollectionPointer> initialValue() {
-      return new HashMap<UUID, OBonsaiCollectionPointer>();
+      return new HashMap<>();
     }
   }
 }

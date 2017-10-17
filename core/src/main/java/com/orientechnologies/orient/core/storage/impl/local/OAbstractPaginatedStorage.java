@@ -329,6 +329,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   /**
+   * This method is called by distributed storage during initialization to indicate that database is used in distributed
+   * cluster configuration
+   */
+  public void underDistributedStorage() {
+    sbTreeCollectionManager.prohibitAccess();
+  }
+
+  /**
    * @inheritDoc
    */
   @Override

@@ -36,7 +36,10 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
@@ -111,6 +114,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       return;
 
     this.wrapped = wrapped;
+    this.wrapped.underDistributedStorage();
     this.localDistributedDatabase = dManager.getMessageService().getDatabase(getName());
     this.txManager = new ODistributedTransactionManager(this, dManager, localDistributedDatabase);
 
