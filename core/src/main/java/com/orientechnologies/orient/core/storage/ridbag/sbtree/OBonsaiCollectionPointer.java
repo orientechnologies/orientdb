@@ -18,7 +18,7 @@
   *
   */
 
-package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
+package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;

@@ -18,19 +18,17 @@
  *
  */
 
-package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
+package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.storage.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,7 +41,7 @@ import java.util.Set;
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
-  public static final String INDEX_FILE_EXTENSION = ".irs";
+  private static final String INDEX_FILE_EXTENSION = ".irs";
 
   /**
    * Generates a lock name for the given index name.
@@ -56,9 +54,7 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
     return indexName + INDEX_FILE_EXTENSION;
   }
 
-  private OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree;
-
-  protected static final OProfiler PROFILER = Orient.instance().getProfiler();
+  private final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree;
 
   public OIndexRIDContainerSBTree(long fileId, OAbstractPaginatedStorage storage) {
     String fileName;
@@ -69,8 +65,8 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
     else
       fileName = atomicOperation.fileNameById(fileId);
 
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
-        INDEX_FILE_EXTENSION, storage);
+    tree = new OSBTreeBonsaiLocal<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()), INDEX_FILE_EXTENSION,
+        storage);
 
     tree.create(OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
   }
@@ -85,14 +81,14 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
     else
       fileName = atomicOperation.fileNameById(fileId);
 
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
-        INDEX_FILE_EXTENSION, storage);
+    tree = new OSBTreeBonsaiLocal<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()), INDEX_FILE_EXTENSION,
+        storage);
     tree.load(rootPointer);
   }
 
   public OIndexRIDContainerSBTree(String file, OBonsaiBucketPointer rootPointer, boolean durableMode,
       OAbstractPaginatedStorage storage) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(file, INDEX_FILE_EXTENSION, storage);
+    tree = new OSBTreeBonsaiLocal<>(file, INDEX_FILE_EXTENSION, storage);
     tree.load(rootPointer);
   }
 
@@ -128,24 +124,21 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   public Object[] toArray() {
     // TODO replace with more efficient implementation
 
-    final ArrayList<OIdentifiable> list = new ArrayList<OIdentifiable>(size());
+    final ArrayList<OIdentifiable> list = new ArrayList<>(size());
 
-    for (OIdentifiable identifiable : this) {
-      list.add(identifiable);
-    }
+    list.addAll(this);
 
     return list.toArray();
   }
 
+  @SuppressWarnings("SuspiciousToArrayCall")
   @Override
   public <T> T[] toArray(T[] a) {
     // TODO replace with more efficient implementation.
 
-    final ArrayList<OIdentifiable> list = new ArrayList<OIdentifiable>(size());
+    final ArrayList<OIdentifiable> list = new ArrayList<>(size());
 
-    for (OIdentifiable identifiable : this) {
-      list.add(identifiable);
-    }
+    list.addAll(this);
 
     return list.toArray(a);
   }
@@ -219,10 +212,10 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {
     private final boolean                                         autoConvertToRecord;
-    private       OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator;
+    private final OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator;
 
     public TreeKeyIterator(OTreeInternal<OIdentifiable, Boolean> tree, boolean autoConvertToRecord) {
-      entryIterator = new OSBTreeMapEntryIterator<OIdentifiable, Boolean>(tree);
+      entryIterator = new OSBTreeMapEntryIterator<>(tree);
       this.autoConvertToRecord = autoConvertToRecord;
     }
 

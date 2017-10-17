@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
+package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
+package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
@@ -36,7 +36,7 @@ public class ChangeSerializationHelper {
     final int count = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    final HashMap<OIdentifiable, Change> res = new HashMap<OIdentifiable, Change>();
+    final HashMap<OIdentifiable, Change> res = new HashMap<>();
     for (int i = 0; i < count; i++) {
       ORecordId rid = OLinkSerializer.INSTANCE.deserialize(stream, offset);
       offset += OLinkSerializer.RID_SIZE;
@@ -55,14 +55,16 @@ public class ChangeSerializationHelper {
     return res;
   }
 
-  public <K> void serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, byte[] stream, int offset) {
+  public <K extends OIdentifiable> void serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, byte[] stream, int offset) {
     OIntegerSerializer.INSTANCE.serializeLiteral(changes.size(), stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     for (Map.Entry<K, Change> entry : changes.entrySet()) {
       K key = entry.getKey();
-      if (((OIdentifiable) key).getIdentity().isTemporary())
-        key = ((OIdentifiable) key).getRecord();
+
+      if (key.getIdentity().isTemporary())
+        //noinspection unchecked
+        key = key.getRecord();
 
       keySerializer.serialize(key, stream, offset);
       offset += keySerializer.getObjectSize(key);

@@ -18,7 +18,7 @@
   *
   */
 
-package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
+package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.concur.resource.OCloseable;
@@ -27,10 +27,9 @@ import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 
-import java.util.Iterator;
 import java.util.UUID;
 
 /**
@@ -83,13 +82,13 @@ public abstract class OSBTreeCollectionManagerAbstract
     GLOBAL_LOCKS = locks;
   }
 
-  protected final int                                                      evictionThreshold;
-  protected final int                                                      cacheMaxSize;
-  protected final int                                                      shift;
-  protected final int                                                      mask;
-  protected final Object[]                                                 locks;
-  private final   ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache;
-  private final   OStorage                                                 storage;
+  private final int                                                      evictionThreshold;
+  private final int                                                      cacheMaxSize;
+  private final int                                                      shift;
+  private final int                                                      mask;
+  private final Object[]                                                 locks;
+  private final ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache;
+  private final OStorage                                                 storage;
 
   public OSBTreeCollectionManagerAbstract(OStorage storage) {
     this(GLOBAL_TREE_CACHE, storage, GLOBAL_EVICTION_THRESHOLD, GLOBAL_CACHE_MAX_SIZE, GLOBAL_LOCKS);
@@ -241,11 +240,7 @@ public abstract class OSBTreeCollectionManagerAbstract
   }
 
   public void clear() {
-    for (Iterator<CacheKey> i = treeCache.keySet().iterator(); i.hasNext(); ) {
-      final CacheKey cacheKey = i.next();
-      if (cacheKey.storage == storage)
-        i.remove();
-    }
+    treeCache.keySet().removeIf(cacheKey -> cacheKey.storage == storage);
   }
 
   protected abstract OSBTreeBonsai<OIdentifiable, Integer> createTree(int clusterId);

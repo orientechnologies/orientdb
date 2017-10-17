@@ -18,7 +18,7 @@
  *
  */
 
-package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
+package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -57,7 +57,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
    */
   public OIndexRIDContainer(String name, boolean durableNonTxMode) {
     fileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
-    underlying = new HashSet<OIdentifiable>();
+    underlying = new HashSet<>();
     isEmbedded = true;
     this.durableNonTxMode = durableNonTxMode;
   }
@@ -147,6 +147,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     return underlying.toArray();
   }
 
+  @SuppressWarnings("SuspiciousToArrayCall")
   @Override
   public <T> T[] toArray(T[] a) {
     return underlying.toArray(a);
@@ -197,7 +198,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     else {
       final OIndexRIDContainerSBTree tree = (OIndexRIDContainerSBTree) underlying;
       tree.delete();
-      underlying = new HashSet<OIdentifiable>();
+      underlying = new HashSet<>();
       isEmbedded = true;
     }
   }
@@ -227,7 +228,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private void convertToEmbedded() {
     final OIndexRIDContainerSBTree tree = (OIndexRIDContainerSBTree) underlying;
 
-    final Set<OIdentifiable> set = new HashSet<OIdentifiable>(tree);
+    final Set<OIdentifiable> set = new HashSet<>(tree);
 
     tree.delete();
     underlying = set;

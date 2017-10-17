@@ -2,11 +2,14 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.junit.Assert;import org.junit.After; import org.junit.Before; import org.junit.Test;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashSet;

@@ -18,7 +18,7 @@
   *
   */
 
-package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
+package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -28,15 +28,15 @@ import java.util.Map;
 import java.util.UUID;
 
 public interface OSBTreeCollectionManager {
-  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId);
+  OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId);
 
   OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID);
 
-  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer);
+  OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer);
 
-  public void releaseSBTree(OBonsaiCollectionPointer collectionPointer);
+  void releaseSBTree(OBonsaiCollectionPointer collectionPointer);
 
-  public void delete(OBonsaiCollectionPointer collectionPointer);
+  void delete(OBonsaiCollectionPointer collectionPointer);
 
   UUID listenForChanges(ORidBag collection);
 

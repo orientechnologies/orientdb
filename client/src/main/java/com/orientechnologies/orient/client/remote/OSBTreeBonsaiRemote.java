@@ -20,27 +20,20 @@
 
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.orient.client.remote.message.*;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.orient.client.remote.message.OSBTFetchEntriesMajorRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTFetchEntriesMajorResponse;
-import com.orientechnologies.orient.client.remote.message.OSBTFirstKeyRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTFirstKeyResponse;
-import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeResponse;
-import com.orientechnologies.orient.client.remote.message.OSBTGetRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTGetResponse;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.Change;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 
 /**
  * Implementation of {@link OSBTreeBonsai} for remote storage.

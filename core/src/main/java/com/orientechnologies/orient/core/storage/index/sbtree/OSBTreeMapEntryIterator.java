@@ -20,10 +20,10 @@
 
 package com.orientechnologies.orient.core.storage.index.sbtree;
 
-import java.util.*;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
+
+import java.util.*;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)

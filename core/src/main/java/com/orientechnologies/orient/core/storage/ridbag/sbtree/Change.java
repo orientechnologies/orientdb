@@ -1,10 +1,10 @@
-package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
+package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 
 public interface Change {
-  public static final int SIZE = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
+  int SIZE = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
 
   void increment();
 
