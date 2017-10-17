@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.distributed.*;
@@ -226,10 +227,10 @@ public class ONewDistributedTransactionManager {
     return involvedClusters;
   }
 
-  protected OTransactionPhase1Task createTxTask(final OTransactionInternal uResult, final Set<String> nodes) {
+  protected OTransactionPhase1Task createTxTask(final OTransactionInternal transaction, final Set<String> nodes) {
     final OTransactionPhase1Task txTask = (OTransactionPhase1Task) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
         .createTask(OTransactionPhase1Task.FACTORYID);
-    txTask.init(uResult);
+    txTask.init(transaction);
     return txTask;
   }
 

@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -32,6 +33,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -43,6 +45,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   private          OLogSequenceNumber            lastLSN;
   private          List<ORecordOperation>        ops;
   private          List<ORecordOperationRequest> operations;
+  private OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
 
   public OTransactionPhase1Task() {
     ops = new ArrayList<>();
@@ -84,7 +87,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
-    return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
+    return quorumType;
   }
 
   @Override
@@ -157,7 +160,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         break;
       case ORecordOperation.DELETED:
         record = database.getRecord(req.getId());
-        if(record == null) {
+        if (record == null) {
           record = Orient.instance().getRecordFactoryManager().newInstance(req.getRecordType());
         }
         break;
@@ -186,6 +189,13 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   }
 
   public void init(OTransactionInternal operations) {
+    for (Map.Entry<String, OTransactionIndexChanges> indexOp : operations.getIndexOperations().entrySet()) {
+      if (indexOp.getValue().resolveAssociatedIndex(indexOp.getKey(), operations.getDatabase().getMetadata().getIndexManager())
+          .isUnique()) {
+        quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
+        break;
+      }
+    }
     this.ops = new ArrayList<>(operations.getRecordOperations());
     genOps(this.ops);
   }
