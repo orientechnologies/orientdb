@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -16,7 +17,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
@@ -456,19 +456,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
           rid.setClusterId(schemaClass.getClusterForNewInstance((ODocument) record));
         } else
-          rid.setClusterId(getDefaultClusterId());
+          throw new ODatabaseException("Cannot save (4) document "+record+": no class or cluster defined");
       } else {
-        rid.setClusterId(getDefaultClusterId());
-        if (record instanceof OBlob && rid.getClusterId() != ORID.CLUSTER_ID_INVALID) {
-          // Set<Integer> blobClusters = getMetadata().getSchema().getBlobClusters();
-          // if (!blobClusters.contains(rid.clusterId) && rid.clusterId != getDefaultClusterId() && rid.clusterId != 0) {
-          // if (iClusterName == null)
-          // iClusterName = getClusterNameById(rid.clusterId);
-          // throw new IllegalArgumentException(
-          // "Cluster name '" + iClusterName + "' (id=" + rid.clusterId + ") is not configured to store blobs, valid are "
-          // + blobClusters.toString());
-          // }
-        }
+        throw new ODatabaseException("Cannot save (5) document "+record+": no class or cluster defined");
       }
     } else if (record instanceof ODocument)
       schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));

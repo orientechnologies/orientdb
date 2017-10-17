@@ -1,22 +1,17 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Test
 public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
@@ -131,7 +126,7 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     database.begin();
 
     index.clear();
-    index.put(2, new ORecordId(clusterId, 3));
+    index.put(2, new ORecordId(clusterId, positions.get(3)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetTest"));
     Assert.assertNull(index.get(1));
@@ -225,6 +220,8 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
 
     final int clusterId = database.getDefaultClusterId();
     index.put(1, new ORecordId(clusterId, 1));
+    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 1);
+
     index.put(1, new ORecordId(clusterId, 1));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetTest"));

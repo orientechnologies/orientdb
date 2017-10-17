@@ -118,7 +118,7 @@ public class LuceneManualIndexTest extends BaseLuceneTest {
     db.begin();
     ODocument document = db.newInstance();
     document.field("name","Rob");
-    db.save(document);
+    db.save(document, db.getClusterNameById(db.getDefaultClusterId()));
 
     index.put("Rob", document.getIdentity() );
     index.flush();

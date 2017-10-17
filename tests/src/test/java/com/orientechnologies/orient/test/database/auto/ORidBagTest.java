@@ -1634,27 +1634,32 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
       highLevelRidBag.add(new ODocument().save(database.getClusterNameById(database.getDefaultClusterId())));
 
     externalDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    testDocument.field("type", "testDocument");
     testDocument.field("ridBag", highLevelRidBag);
     testDocument.field("externalDoc", externalDoc);
+    testDocument.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final List<ODocument> embeddedList = new ArrayList<ODocument>();
     ODocument embeddedListDoc = new ODocument();
     ORidBag embeddedListDocRidBag = new ORidBag();
     for (int i = 0; i < 10; i++)
-      embeddedListDocRidBag.add(new ODocument());
+      embeddedListDocRidBag.add(new ODocument().field("type", "embeddedListDocRidBag"+i).save(database.getClusterNameById(database.getDefaultClusterId())));
 
+    embeddedListDoc.field("type", "embeddedListDoc");
     embeddedListDoc.field("ridBag", embeddedListDocRidBag);
     embeddedListDoc.field("externalDoc", externalDoc);
+    embeddedListDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
     embeddedList.add(embeddedListDoc);
 
     Set<ODocument> embeddedSet = new HashSet<ODocument>();
     ODocument embeddedSetDoc = new ODocument();
     ORidBag embeddedSetDocRidBag = new ORidBag();
     for (int i = 0; i < 10; i++)
-      embeddedSetDocRidBag.add(new ODocument());
+      embeddedSetDocRidBag.add(new ODocument().field("type", "embeddedSetDocRidBag"+i).save(database.getClusterNameById(database.getDefaultClusterId())));
 
     embeddedSetDoc.field("ridBag", embeddedSetDocRidBag);
     embeddedSetDoc.field("externalDoc", externalDoc);
+    embeddedSetDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
     embeddedSet.add(embeddedSetDoc);
 
     Map<String, ODocument> embeddedMap = new HashMap<String, ODocument>();

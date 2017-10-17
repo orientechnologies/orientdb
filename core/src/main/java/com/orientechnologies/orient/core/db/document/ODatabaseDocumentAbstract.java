@@ -1533,18 +1533,17 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
             throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
           rid.setClusterId(schemaClass.getClusterForNewInstance((ODocument) record));
         } else
-          rid.setClusterId(getDefaultClusterId());
+          throw new ODatabaseException("Cannot save (1) document "+record+": no class or cluster defined");
       } else {
-        rid.setClusterId(getDefaultClusterId());
-        if (record instanceof OBlob && rid.getClusterId() != ORID.CLUSTER_ID_INVALID) {
-          // Set<Integer> blobClusters = getMetadata().getSchema().getBlobClusters();
-          // if (!blobClusters.contains(rid.clusterId) && rid.clusterId != getDefaultClusterId() && rid.clusterId != 0) {
-          // if (iClusterName == null)
-          // iClusterName = getClusterNameById(rid.clusterId);
-          // throw new IllegalArgumentException(
-          // "Cluster name '" + iClusterName + "' (id=" + rid.clusterId + ") is not configured to store blobs, valid are "
-          // + blobClusters.toString());
-          // }
+        if (record instanceof ORecordBytes) {
+          Set<Integer> blobs = getBlobClusterIds();
+          if (blobs.size() == 0) {
+            throw new ODatabaseException("Cannot save (2) document "+record+": no class or cluster defined");
+          } else {
+            rid.setClusterId(blobs.iterator().next());
+          }
+        } else {
+          throw new ODatabaseException("Cannot save (3) document "+record+": no class or cluster defined");
         }
       }
     } else if (record instanceof ODocument)
