@@ -2800,10 +2800,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private void makeRollback(OTransaction clientTx, Exception e) {
-    // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
     OLogManager.instance()
         .debug(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e, clientTx.getId());
-    rollback(clientTx);
+
+    try {
+      rollback(clientTx);
+    } catch (Exception ex) {
+      OLogManager.instance().error(this, "Error during transaction rollback, `%08X`", ex, System.identityHashCode(ex));
+    }
+
     if (e instanceof OException)
       throw ((OException) e);
     else
