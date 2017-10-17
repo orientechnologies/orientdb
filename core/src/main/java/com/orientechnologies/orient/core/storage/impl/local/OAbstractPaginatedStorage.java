@@ -222,6 +222,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             new AtomicLongOProfilerHookValue(txRollback), "db.*.txRollback");
   }
 
+  /**
+   * This method is called by distributed storage during initialization to indicate that database is used in distributed
+   * cluster configuration
+   */
+  public void underDistributedStorage() {
+    sbTreeCollectionManager.prohibitAccess();
+  }
+
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
     try {
       stateLock.acquireReadLock();
