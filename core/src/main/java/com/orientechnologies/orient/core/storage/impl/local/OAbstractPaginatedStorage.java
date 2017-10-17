@@ -52,8 +52,6 @@ import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
-import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -81,6 +79,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
+import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
+import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -2918,7 +2918,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
     OLogManager.instance().debug(this, "Error during micro-transaction commit, micro-transaction will be rolled back (tx-id=%d)", e,
         microTransaction.getId());
-    rollback(microTransaction);
+
+    try {
+      rollback(microTransaction);
+    } catch (Exception ex) {
+      OLogManager.instance().error(this, "Exception during transaction rollback, `%08X`", ex, System.identityHashCode(ex));
+    }
+
     if (e instanceof RuntimeException)
       throw ((RuntimeException) e);
     else
