@@ -33,7 +33,6 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PROF
 
 public class OProfilerStub extends OAbstractProfiler {
 
-
   protected ConcurrentMap<String, Long>                    counters;
   private   ConcurrentLinkedHashMap<String, AtomicInteger> tips;
   private   ConcurrentLinkedHashMap<String, Long>          tipsTimestamp;
@@ -55,9 +54,16 @@ public class OProfilerStub extends OAbstractProfiler {
 
   @Override
   public void shutdown() {
-    counters.clear();
-    tips.clear();
-    tipsTimestamp.clear();
+
+    if (counters != null) {
+      counters.clear();
+    }
+    if (tips != null) {
+      tips.clear();
+    }
+    if (tipsTimestamp != null) {
+      tipsTimestamp.clear();
+    }
     super.shutdown();
   }
 
