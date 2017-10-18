@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -294,6 +295,10 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
         doc.setClassName(className);
         doc.setTrackingChanges(true);
       }
+    }
+
+    if(rec instanceof OElement){
+      OElement doc = (OElement) rec;
 
       if (oldClass!=null && oldClass.isSubClassOf("V")) {
         OLogManager.instance()
@@ -301,18 +306,18 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
         String[] fields = ((ODocument) rec).fieldNames();
         for (String field : fields) {
           if (field.startsWith("out_") || field.startsWith("in_")) {
-            Object edges = doc.field(field);
+            Object edges = doc.getProperty(field);
             if (edges instanceof OIdentifiable) {
               ODocument edgeRec = ((OIdentifiable) edges).getRecord();
               if (edgeRec.getSchemaClass() != null && edgeRec.getSchemaClass().isSubClassOf("E")) {
-                doc.removeField(field);
+                doc.removeProperty(field);
               }
             } else if (edges instanceof Iterable) {
               for (Object edge : (Iterable) edges) {
                 if (edge instanceof OIdentifiable) {
-                  ODocument edgeRec = ((OIdentifiable) edge).getRecord();
-                  if (edgeRec.getSchemaClass() != null && edgeRec.getSchemaClass().isSubClassOf("E")) {
-                    doc.removeField(field);
+                  OElement edgeRec = ((OIdentifiable) edge).getRecord();
+                  if (edgeRec.getSchemaType().isPresent() && edgeRec.getSchemaType().get().isSubClassOf("E")) {
+                    doc.removeProperty(field);
                     break;
                   }
                 }
