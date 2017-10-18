@@ -53,7 +53,8 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   }
 
   @Override
-  public void removeServerBecauseUnreachable(String node) {
+  public synchronized void removeServerBecauseUnreachable(String node) {
+    responseCount += 1;
     // ?? probably is more correct handle this case in collect response, to double check
   }
 
