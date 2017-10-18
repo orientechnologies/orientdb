@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -30,7 +31,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
@@ -282,14 +282,50 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
 
   @Override
   public boolean result(final Object iRecord) {
-    final ORecord rec = ((OIdentifiable) iRecord).getRecord().copy();
+    OClass oldClass = null;
+    ORecord oldRecord = ((OIdentifiable) iRecord).getRecord();
+    if (oldRecord instanceof ODocument) {
+      oldClass = ((ODocument) oldRecord).getSchemaClass();
+    }
+    final ORecord rec = oldRecord.copy();
 
     // RESET THE IDENTITY TO AVOID UPDATE
     rec.getIdentity().reset();
 
-    if (rec instanceof ODocument && className != null) {
-      ((ODocument) rec).setClassName(className);
-      ((ODocument) rec).setTrackingChanges(true);
+    if (rec instanceof ODocument) {
+
+      ODocument doc = (ODocument) rec;
+      if (className != null) {
+        doc.setClassName(className);
+        doc.setTrackingChanges(true);
+      }
+
+      if (oldClass!=null && oldClass.isSubClassOf("V")) {
+        OLogManager.instance()
+            .warn(this, "WARNING: copying vertex record " + doc + " with INSERT/SELECT, the edge pointers won't be copied");
+        String[] fields = ((ODocument) rec).fieldNames();
+        for (String field : fields) {
+          if (field.startsWith("out_") || field.startsWith("in_")) {
+            Object edges = doc.field(field);
+            if (edges instanceof OIdentifiable) {
+              ODocument edgeRec = ((OIdentifiable) edges).getRecord();
+              if (edgeRec.getSchemaClass() != null && edgeRec.getSchemaClass().isSubClassOf("E")) {
+                doc.removeField(field);
+              }
+            } else if (edges instanceof Iterable) {
+              for (Object edge : (Iterable) edges) {
+                if (edge instanceof OIdentifiable) {
+                  ODocument edgeRec = ((OIdentifiable) edge).getRecord();
+                  if (edgeRec.getSchemaClass() != null && edgeRec.getSchemaClass().isSubClassOf("E")) {
+                    doc.removeField(field);
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
     rec.setDirty();
     synchronized (this) {
