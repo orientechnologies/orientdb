@@ -106,6 +106,7 @@ public class OInsertExecutionPlanner {
     OInternalExecutionPlan subPlan = selectStatement.createExecutionPlan(ctx, profilingEnabled);
     result.chain(new SubQueryStep(subPlan, ctx, ctx, profilingEnabled));
     result.chain(new CopyDocumentStep(ctx, profilingEnabled));
+    result.chain(new RemoveEdgePointersStep(ctx, profilingEnabled));
   }
 
 }
