@@ -504,7 +504,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Truncate the class content in the current database")
   public void truncateClass(
       @ConsoleParameter(name = "text", description = "The name of the class to truncate") String iCommandText) {
-    sqlCommand("truncate", iCommandText, "\nTruncated %d record(s) in %f sec(s).\n", true);
+    sqlCommand("truncate", iCommandText, "\nClass truncated.\n", false);
   }
 
   @ConsoleCommand(splitInWords = false, description = "Truncate the cluster content in the current database")
