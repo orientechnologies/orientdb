@@ -321,49 +321,37 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
     // CREATE IT LOCALLY
     OPropertyImpl internalProp = sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, unsafe);
-    boolean toSave = false;
+    
     if (readonly) {
       internalProp.setReadonly(true);
-      toSave = true;
     }
 
     if (mandatory) {
       internalProp.setMandatory(true);
-      toSave = true;
     }
 
     if (notnull) {
       internalProp.setNotNull(true);
-      toSave = true;
     }
 
     if (max != null) {
       internalProp.setMax(max);
-      toSave = true;
     }
 
     if (min != null) {
       internalProp.setMin(min);
-      toSave = true;
     }
 
     if (defaultValue != null) {
       internalProp.setDefaultValue(defaultValue);
-      toSave = true;
     }
 
     if (collate != null) {
       internalProp.setCollate(collate);
-      toSave = true;
     }
 
     if (regex != null) {
       internalProp.setRegexp(regex);
-      toSave = true;
-    }
-
-    if (toSave) {
-      internalProp.save();
     }
 
     return sourceClass.properties().size();
