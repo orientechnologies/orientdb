@@ -34,7 +34,6 @@ public class OUpdateEdgeStatementExecutionTest {
     database.close();
   }
 
-  //TODO enable when CREATE EDGE is implemented
   @Test
   public void testUpdateEdge() {
 
@@ -94,8 +93,7 @@ public class OUpdateEdgeStatementExecutionTest {
     result.close();
 
   }
-
-  //TODO enable when CREATE EDGE is implemented
+  
   @Test
   public void testUpdateEdgeOfTypeE() {
     //issue #6378
