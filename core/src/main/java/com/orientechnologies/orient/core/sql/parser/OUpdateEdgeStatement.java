@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlanner;
 
 import java.util.stream.Collectors;
 
@@ -21,7 +22,8 @@ public class OUpdateEdgeStatement extends OUpdateStatement {
   }
 
   @Override public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
-    throw new UnsupportedOperationException();
+    OUpdateExecutionPlanner planner = new OUpdateExecutionPlanner(this);
+    return planner.createExecutionPlan(ctx, enableProfiling);
   }
 
   /**
