@@ -1538,7 +1538,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         if (record instanceof ORecordBytes) {
           Set<Integer> blobs = getBlobClusterIds();
           if (blobs.size() == 0) {
-            throw new ODatabaseException("Cannot save (2) document "+record+": no class or cluster defined");
+            rid.setClusterId(getDefaultClusterId());
           } else {
             rid.setClusterId(blobs.iterator().next());
           }

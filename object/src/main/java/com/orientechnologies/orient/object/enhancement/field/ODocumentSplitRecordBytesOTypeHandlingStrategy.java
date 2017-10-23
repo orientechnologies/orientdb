@@ -31,9 +31,9 @@ import java.util.List;
 
 /**
  * {@link ODocumentFieldOTypeHandlingStrategy} that stores each {@link OType#BINARY} object split in several {@link ORecordBytes}.
- * 
+ * <p>
  * Binary data optimization: http://orientdb.com/docs/2.2/Binary-Data.html
- * 
+ *
  * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
  */
 public class ODocumentSplitRecordBytesOTypeHandlingStrategy implements ODocumentFieldOTypeHandlingStrategy {
@@ -41,7 +41,7 @@ public class ODocumentSplitRecordBytesOTypeHandlingStrategy implements ODocument
   private static final int DEFAULT_CHUNK_SIZE = 64;
   private static final int BYTES_PER_KB       = 1024;
 
-  private final int        chunkSize;
+  private final int chunkSize;
 
   /**
    * Constuctor. Chunk size = {@value #DEFAULT_CHUNK_SIZE}
@@ -52,7 +52,7 @@ public class ODocumentSplitRecordBytesOTypeHandlingStrategy implements ODocument
 
   /**
    * Constructor
-   * 
+   *
    * @param chunkSizeInKb
    */
   public ODocumentSplitRecordBytesOTypeHandlingStrategy(int chunkSizeInKb) {
@@ -89,10 +89,15 @@ public class ODocumentSplitRecordBytesOTypeHandlingStrategy implements ODocument
         }
 
         int clusterId = iRecord.getIdentity().getClusterId();
-        if(clusterId<0){
-          clusterId = database.getBlobClusterIds().iterator().next();
+        if (clusterId < 0) {
+          if (database.getBlobClusterIds().size() > 0) {
+            clusterId = database.getBlobClusterIds().iterator().next();
+          } else {
+            clusterId = database.getDefaultClusterId();
+          }
         }
-        chunks.add(database.save(new ORecordBytes(Arrays.copyOfRange(bytes, offset, offset + nextChunkLength)), database.getClusterNameById(clusterId)).getIdentity());
+        chunks.add(database.save(new ORecordBytes(Arrays.copyOfRange(bytes, offset, offset + nextChunkLength)),
+            database.getClusterNameById(clusterId)).getIdentity());
         offset += nextChunkLength;
       }
 
