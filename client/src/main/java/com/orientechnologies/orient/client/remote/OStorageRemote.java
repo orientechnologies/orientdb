@@ -1612,25 +1612,22 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public OCluster getClusterById(int iClusterId) {
-    int retry = 0;
-    do {
-      stateLock.acquireReadLock();
-      try {
-        if (iClusterId >= clusters.length) {
+    stateLock.acquireReadLock();
+    try {
 
-          if (iClusterId == ORID.CLUSTER_ID_INVALID)
-            // GET THE DEFAULT CLUSTER
-            iClusterId = defaultClusterId;
+      if (iClusterId == ORID.CLUSTER_ID_INVALID)
+        // GET THE DEFAULT CLUSTER
+        iClusterId = defaultClusterId;
 
-          return clusters[iClusterId];
-        }
-      } finally {
-        stateLock.releaseReadLock();
+      if (iClusterId >= clusters.length) {
+        reload();
       }
-      reload();
-      retry++;
-    } while (retry < 2);
-    return null;
+
+      return clusters[iClusterId];
+
+    } finally {
+      stateLock.releaseReadLock();
+    }
   }
 
   @Override
