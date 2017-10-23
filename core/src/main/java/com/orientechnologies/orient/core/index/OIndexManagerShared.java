@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
@@ -226,8 +227,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     int[] clusterIdsToIndex = null;
 
     acquireExclusiveLock();
+
+    OIndex<?> idx = null;
     try {
-      final OIndex<?> idx = indexes.remove(iIndexName);
+      idx = indexes.remove(iIndexName);
       if (idx != null) {
         final Set<String> clusters = idx.getClusters();
         if (clusters != null && !clusters.isEmpty()) {
@@ -247,7 +250,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
         notifyInvolvedClasses(clusterIdsToIndex);
       }
-
+    } catch (OException e) {
+      indexes.put(iIndexName, idx);
+      reload();
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
