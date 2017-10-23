@@ -3,14 +3,11 @@ package com.orientechnologies.orient.server;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.server.network.protocol.binary.OLiveCommandResultListener;
@@ -22,12 +19,12 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.internal.verification.VerificationModeFactory;
 
 import java.io.IOException;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
 
 /**
  * Created by tglman on 07/06/16.
@@ -88,7 +85,7 @@ public class OLiveCommandResultListenerTest {
     OLiveCommandResultListener listener = new OLiveCommandResultListener(server, connection, new TestResultListener());
     ORecordOperation op = new ORecordOperation(new ODocument(), ORecordOperation.CREATED);
     listener.onLiveResult(10, op);
-    Mockito.verify(channelBinary, VerificationModeFactory.atLeastOnce()).writeBytes(Mockito.any(byte[].class));
+    Mockito.verify(channelBinary, atLeastOnce()).writeBytes(Mockito.any(byte[].class));
   }
 
   @Test

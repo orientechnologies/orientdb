@@ -5,7 +5,8 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.internal.verification.VerificationModeFactory;
+
+import static org.mockito.Mockito.only;
 
 /**
  * Created by tglman on 22/10/15.
@@ -22,7 +23,7 @@ public class ORemoteConnectionPushListenerTest {
     poolListener.addListener(pool, chann, listener);
     poolListener.onRequest((byte) 10, null);
 
-    Mockito.verify(listener, VerificationModeFactory.only()).onRequest(Mockito.anyByte(), Mockito.anyObject());
+    Mockito.verify(listener, only()).onRequest(Mockito.anyByte(), Mockito.anyObject());
   }
 
   @Test
@@ -35,7 +36,7 @@ public class ORemoteConnectionPushListenerTest {
     poolListener.addListener(pool, chann, listener);
     poolListener.onRequest((byte) 10, null);
 
-    Mockito.verify(listener, VerificationModeFactory.only()).onRequest(Mockito.anyByte(), Mockito.anyObject());
+    Mockito.verify(listener, only()).onRequest(Mockito.anyByte(), Mockito.anyObject());
 
   }
 
@@ -52,7 +53,7 @@ public class ORemoteConnectionPushListenerTest {
     poolListener.addListener(pool, chann, listener);
     captor.getValue().onChannelClose(chann);
 
-    Mockito.verify(listener, VerificationModeFactory.only()).onEndUsedConnections(pool);
+    Mockito.verify(listener, only()).onEndUsedConnections(pool);
 
   }
 

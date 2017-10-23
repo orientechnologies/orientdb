@@ -2,9 +2,13 @@ package com.orientechnologies.orient.test.server.network.http;
 
 import org.apache.http.HttpResponse;
 import org.junit.Test;
-import org.mockito.internal.util.io.IOUtil;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.LinkedList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -21,8 +25,20 @@ public class HttpImportTest extends BaseHttpDatabaseTest {
     HttpResponse response = getResponse();
     assertEquals(200, response.getStatusLine().getStatusCode());
 
-    System.out.println(IOUtil.readLines(response.getEntity().getContent()));
+    InputStream is = response.getEntity().getContent();
+    List<String> out = new LinkedList<>();
+    BufferedReader r = new BufferedReader(new InputStreamReader(is));
 
+    try {
+      String line;
+      while((line = r.readLine()) != null) {
+          out.add(line);
+      }
+
+      System.out.println(out);
+    } catch (IOException var5) {
+      throw new IllegalArgumentException("Problems reading from: " + is, var5);
+    }
   }
 
   @Override
