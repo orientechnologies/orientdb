@@ -46,7 +46,7 @@ import java.util.*;
  */
 @Deprecated
 public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
-  public static final String NAME = "shortestPath";
+  public static final String NAME            = "shortestPath";
   public static final String PARAM_MAX_DEPTH = "maxDepth";
 
   protected static final float DISTANCE = 1f;
@@ -123,7 +123,16 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
         if (iParams.length > 3) {
           ctx.edgeType = iParams[3] == null ? null : "" + iParams[3];
         }
-        ctx.edgeTypeParam = new String[] { ctx.edgeType };
+        if (iParams != null && iParams.length > 2 && iParams[3] instanceof Collection) {
+          ctx.edgeTypeParam = new String[((Collection) iParams[3]).size()];
+          Collection coll = (Collection) iParams[3];
+          int i = 0;
+          for (Object o : coll) {
+            ctx.edgeTypeParam[i++] = "" + o;
+          }
+        } else {
+          ctx.edgeTypeParam = new String[] { ctx.edgeType };
+        }
 
         if (iParams.length > 4) {
           bindAdditionalParams(iParams[4], ctx);
