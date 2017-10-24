@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.engine;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -76,7 +77,7 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
   }
 
   private void configureDefaultDiskCacheSize() {
-    final long osMemory = OMemory.getPhysicalMemorySize();
+    final long osMemory = ONative.instance().getMemoryLimit();
     final long jvmMaxMemory = OMemory.getCappedRuntimeMaxMemory(2L * 1024 * 1024 * 1024 /* 2GB */);
     final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
 

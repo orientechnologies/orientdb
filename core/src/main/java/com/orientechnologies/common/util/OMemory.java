@@ -19,16 +19,14 @@
 
 package com.orientechnologies.common.util;
 
+import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
-import javax.management.*;
 import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -49,69 +47,6 @@ public class OMemory {
   public static long getCappedRuntimeMaxMemory(long unlimitedCap) {
     final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
     return jvmMaxMemory == Long.MAX_VALUE ? unlimitedCap : jvmMaxMemory;
-  }
-
-  /**
-   * Obtains the total size in bytes of the installed physical memory on this machine. Note that on some VMs it's impossible to
-   * obtain the physical memory size, in this case the return value will {@code -1}.
-   *
-   * @return the total physical memory size in bytes or {@code -1} if the size can't be obtained.
-   */
-  public static long getPhysicalMemorySize() {
-    long osMemory = -1;
-
-    try {
-      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-      Object attribute = mBeanServer
-          .getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), "TotalPhysicalMemorySize");
-
-      if (attribute != null) {
-        if (attribute instanceof Long) {
-          osMemory = (Long) attribute;
-        } else {
-          try {
-            osMemory = Long.parseLong(attribute.toString());
-          } catch (NumberFormatException e) {
-            if (!OLogManager.instance().isDebugEnabled())
-              OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
-            else
-              OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
-          }
-        }
-      } else {
-        if (!OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
-      }
-    } catch (MalformedObjectNameException e) {
-      if (!OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
-      else
-        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
-    } catch (AttributeNotFoundException e) {
-      if (!OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
-      else
-        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
-    } catch (InstanceNotFoundException e) {
-      if (!OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
-      else
-        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
-    } catch (MBeanException e) {
-      if (!OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
-      else
-        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
-    } catch (ReflectionException e) {
-      if (!OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
-      else
-        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
-    } catch (RuntimeException e) {
-      OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.", e);
-    }
-
-    return osMemory;
   }
 
   /**
@@ -156,7 +91,7 @@ public class OMemory {
    *
    * @return the total maximum size of all OrientDB caches in bytes.
    */
-  public static long getMaxCacheMemorySize() {
+  private static long getMaxCacheMemorySize() {
     return OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
   }
 
@@ -164,7 +99,7 @@ public class OMemory {
    * Checks the direct memory configuration and emits a warning if configuration is invalid.
    */
   public static void checkDirectMemoryConfiguration() {
-    final long physicalMemory = getPhysicalMemorySize();
+    final long physicalMemory = ONative.instance().getMemoryLimit();
     final long maxDirectMemory = getConfiguredMaxDirectMemory();
 
     if (maxDirectMemory == -1) {
@@ -188,7 +123,7 @@ public class OMemory {
   public static void checkCacheMemoryConfiguration() {
     final long maxHeapSize = Runtime.getRuntime().maxMemory();
     final long maxCacheSize = getMaxCacheMemorySize();
-    final long physicalMemory = getPhysicalMemorySize();
+    final long physicalMemory = ONative.instance().getMemoryLimit();
     final long maxDirectMemory = getConfiguredMaxDirectMemory();
 
     if (maxDirectMemory != -1 && maxCacheSize > maxDirectMemory)
@@ -292,7 +227,7 @@ public class OMemory {
    *
    * @throws IllegalArgumentException if size specifier is not recognized as valid.
    */
-  public static long parseVmArgsSize(String text) throws IllegalArgumentException {
+  private static long parseVmArgsSize(String text) throws IllegalArgumentException {
     if (text == null)
       throw new IllegalArgumentException("text can't be null");
     if (text.length() == 0)
