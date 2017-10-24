@@ -2835,9 +2835,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           if (transaction.get() == null)
             return;
 
-          if (writeAheadLog == null)
-            throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
-
           if (transaction.get().getClientTx().getId() != clientTx.getId())
             throw new OStorageException(
                 "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
