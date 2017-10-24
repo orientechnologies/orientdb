@@ -124,11 +124,19 @@ public class OEdgeDelegate implements OEdge {
 
   public static void deleteLinks(OEdgeDelegate delegate) {
     OVertexDelegate from = ((OVertexDelegate) delegate.getFrom());
-    from.detachOutgointEdge(delegate);
+    if (from != null) {
+      from.detachOutgointEdge(delegate);
+    }
     OVertexDelegate to = ((OVertexDelegate) delegate.getTo());
-    to.detachIncomingEdge(delegate);
-    from.save();
-    to.save();
+    if (to != null) {
+      to.detachIncomingEdge(delegate);
+    }
+    if (from != null) {
+      from.save();
+    }
+    if (to != null) {
+      to.save();
+    }
   }
 
   @Override
