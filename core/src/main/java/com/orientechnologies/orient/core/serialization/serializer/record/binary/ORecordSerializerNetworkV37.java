@@ -329,7 +329,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   }
 
   private void writeRidBag(BytesContainer bytes, ORidBag bag) {
-    final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+    final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
     UUID uuid = null;
     if (sbTreeCollectionManager != null)
       uuid = sbTreeCollectionManager.listenForChanges(bag);

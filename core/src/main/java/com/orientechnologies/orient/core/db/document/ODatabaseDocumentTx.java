@@ -1187,7 +1187,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public void drop() {
     checkOpenness();
     internal.callOnDropListeners();
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
     factory.drop(this.getName(), null, null);
     this.internal = null;
     clearOwner();

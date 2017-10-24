@@ -336,7 +336,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
           db.activateOnCurrentThread();
           OStorage storage = db.getStorage();
           storage.close();
-          ODatabaseRecordThreadLocal.INSTANCE.remove();
+          ODatabaseRecordThreadLocal.instance().remove();
         }
       }
     }

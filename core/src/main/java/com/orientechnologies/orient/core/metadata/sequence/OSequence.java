@@ -216,7 +216,7 @@ public abstract class OSequence {
   }
 
   protected synchronized ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   public static String getSequenceName(final ODocument iDocument) {

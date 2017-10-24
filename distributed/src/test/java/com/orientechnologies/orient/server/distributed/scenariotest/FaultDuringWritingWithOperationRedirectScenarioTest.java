@@ -157,7 +157,7 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
         while (true) {
   
           // check inserted record amount
-  //        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+  //        ODatabaseRecordThreadLocal.instance().set(dbServer1);
           long insertedRecords = dbServer1.countClass("Person");
   
           if(insertedRecords > 2*totalNumberOfRecordsToInsert/3) {

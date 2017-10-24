@@ -140,7 +140,7 @@ public class OGraphSONReader {
           printStatus(jp, importedVertices, importedEdges);
 
           if (importedVertices % 1000 == 0)
-            ODatabaseRecordThreadLocal.INSTANCE.get().getLocalCache().invalidate();
+            ODatabaseRecordThreadLocal.instance().get().getLocalCache().invalidate();
         }
       } else if (fieldname.equals(GraphSONTokens.EDGES)) {
         jp.nextToken();
@@ -153,7 +153,7 @@ public class OGraphSONReader {
           printStatus(jp, importedVertices, importedEdges);
 
           if (importedEdges % 1000 == 0)
-            ODatabaseRecordThreadLocal.INSTANCE.get().getLocalCache().invalidate();
+            ODatabaseRecordThreadLocal.instance().get().getLocalCache().invalidate();
         }
       }
     }

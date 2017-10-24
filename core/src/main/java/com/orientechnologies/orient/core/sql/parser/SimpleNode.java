@@ -139,7 +139,7 @@ public class SimpleNode implements Node {
   }
 
   public static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

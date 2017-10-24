@@ -89,7 +89,7 @@ public final class OReadRecordResponse implements OBinaryResponse {
     buffer = new ORawBuffer(bytes, recVersion, type);
 
     // TODO: This should not be here, move it in a callback or similar
-    final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().getIfDefined();
     ORecord record;
     while (network.readByte() == 2) {
       record = (ORecord) OMessageHelper.readIdentifiable(network, serializer);

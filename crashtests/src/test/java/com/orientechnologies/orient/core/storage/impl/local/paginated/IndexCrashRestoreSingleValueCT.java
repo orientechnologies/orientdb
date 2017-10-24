@@ -162,7 +162,7 @@ public class IndexCrashRestoreSingleValueCT {
   }
 
   private void compareIndexes() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(baseDocumentTx);
     OIndexCursor cursor = baseDocumentTx.getMetadata().getIndexManager().getIndex("mi").cursor();
 
     long lastTs = 0;
@@ -172,7 +172,7 @@ public class IndexCrashRestoreSingleValueCT {
 
     Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
     while (entry != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+      ODatabaseRecordThreadLocal.instance().set(baseDocumentTx);
       Integer key = (Integer) entry.getKey();
 
       OIdentifiable identifiable = entry.getValue();
@@ -184,7 +184,7 @@ public class IndexCrashRestoreSingleValueCT {
 
       entry = cursor.nextEntry();
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+      ODatabaseRecordThreadLocal.instance().set(testDocumentTx);
       OIndex testIndex = testDocumentTx.getMetadata().getIndexManager().getIndex("mi");
 
       Set<OIdentifiable> result = (Set<OIdentifiable>) testIndex.get(key);
@@ -195,7 +195,7 @@ public class IndexCrashRestoreSingleValueCT {
         restoredRecords++;
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(baseDocumentTx);
     System.out.println(
         "Restored entries : " + restoredRecords + " out of : " + baseDocumentTx.getMetadata().getIndexManager().getIndex("mi")
             .getSize());
@@ -207,7 +207,7 @@ public class IndexCrashRestoreSingleValueCT {
   }
 
   private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(dbDocumentTx);
     dbDocumentTx.command(new OCommandSQL("create index mi notunique integer")).execute();
     dbDocumentTx.getMetadata().getIndexManager().reload();
   }
@@ -248,7 +248,7 @@ public class IndexCrashRestoreSingleValueCT {
           long id = idGen.getAndIncrement();
           long ts = System.currentTimeMillis();
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+          ODatabaseRecordThreadLocal.instance().set(baseDB);
 
           ODocument doc = new ODocument();
           doc.field("ts", ts);
@@ -257,7 +257,7 @@ public class IndexCrashRestoreSingleValueCT {
           baseDB.command(new OCommandSQL("insert into index:mi (key, rid) values (" + id + ", " + doc.getIdentity() + ")"))
               .execute();
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+          ODatabaseRecordThreadLocal.instance().set(testDB);
           doc = new ODocument();
           doc.field("ts", ts);
           doc.save();

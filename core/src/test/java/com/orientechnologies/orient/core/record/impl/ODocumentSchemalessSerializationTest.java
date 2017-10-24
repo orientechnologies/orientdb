@@ -26,7 +26,7 @@ public class ODocumentSchemalessSerializationTest {
     serializer = new ORecordSerializerSchemaAware2CSV();
     defaultSerializer = ODatabaseDocumentTx.getDefaultSerializer();
     ODatabaseDocumentTx.setDefaultSerializer(serializer);
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @After

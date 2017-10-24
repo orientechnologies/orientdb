@@ -68,7 +68,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
    */
   @SuppressWarnings("unchecked")
   public List<T> run(final Object... iArgs) {
-    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
     if (database == null)
       throw new OQueryParsingException("No database configured");
 

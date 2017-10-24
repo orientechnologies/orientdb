@@ -134,7 +134,7 @@ public abstract class ODocumentSchemafullSerializationTest {
 
   @Test
   public void testSimpleSerialization() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocument);
+    ODatabaseRecordThreadLocal.instance().set(databaseDocument);
     ODocument document = new ODocument(simple);
 
     document.field(STRING_FIELD, NAME);
@@ -167,7 +167,7 @@ public abstract class ODocumentSchemafullSerializationTest {
   @SuppressWarnings({ "rawtypes", "unchecked" })
   @Test
   public void testSimpleLiteralList() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocument);
+    ODatabaseRecordThreadLocal.instance().set(databaseDocument);
     ODocument document = new ODocument(embSimp);
     List<String> strings = new ArrayList<String>();
     strings.add("a");
@@ -257,7 +257,7 @@ public abstract class ODocumentSchemafullSerializationTest {
 
   @Test
   public void testSimpleMapStringLiteral() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocument);
+    ODatabaseRecordThreadLocal.instance().set(databaseDocument);
     ODocument document = new ODocument(embMapSimple);
 
     Map<String, String> mapString = new HashMap<String, String>();
@@ -313,7 +313,7 @@ public abstract class ODocumentSchemafullSerializationTest {
 
   @Test
   public void testSimpleEmbeddedDoc() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocument);
+    ODatabaseRecordThreadLocal.instance().set(databaseDocument);
     ODocument document = new ODocument(simple);
     ODocument embedded = new ODocument(address);
     embedded.field(NAME, "test");
@@ -333,7 +333,7 @@ public abstract class ODocumentSchemafullSerializationTest {
 
   @Test
   public void testUpdateBooleanWithPropertyTypeAny() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocument);
+    ODatabaseRecordThreadLocal.instance().set(databaseDocument);
     ODocument document = new ODocument(simple);
     document.field(ANY_FIELD, false);
 
@@ -353,7 +353,7 @@ public abstract class ODocumentSchemafullSerializationTest {
 
   @Test
   public void simpleTypeKeepingTest() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocument);
+    ODatabaseRecordThreadLocal.instance().set(databaseDocument);
     ODocument document = new ODocument();
     document.field("name", "test");
 

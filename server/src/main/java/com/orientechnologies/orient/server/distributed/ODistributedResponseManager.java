@@ -925,7 +925,7 @@ public class ODistributedResponseManager {
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, DIRECTION.OUT,
           "Executing the fix locally (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
-      ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
       final ODatabaseDocumentInternal database = dManager.getMessageService().getDatabase(getDatabaseName()).getDatabaseInstance();
       try {
         database.activateOnCurrentThread();
@@ -934,7 +934,7 @@ public class ODistributedResponseManager {
                 database);
       } finally {
         database.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(oldDb);
+        ODatabaseRecordThreadLocal.instance().set(oldDb);
       }
     } else {
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, DIRECTION.OUT,

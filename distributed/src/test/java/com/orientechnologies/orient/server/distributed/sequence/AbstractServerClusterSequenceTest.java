@@ -67,10 +67,10 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     Assert.assertEquals(seq1.getSequenceType(), seq2.getSequenceType());
     Assert.assertEquals(seq1.getSequenceType(), SEQUENCE_TYPE.CACHED);
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[0]);
+    ODatabaseRecordThreadLocal.instance().set(dbs[0]);
     long v1 = seq1.next();
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbs[1]);
+    ODatabaseRecordThreadLocal.instance().set(dbs[1]);
     long v2 = seq2.next();
 
     Assert.assertEquals((long) CACHE_SIZE, v2 - v1);
@@ -120,7 +120,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
         @Override
         public List<Long> call() throws Exception {
           final ODatabaseDocumentTx db = dbs[id];
-          ODatabaseRecordThreadLocal.INSTANCE.set(db);
+          ODatabaseRecordThreadLocal.instance().set(db);
 
           List<Long> res = new ArrayList<Long>(SEQ_RUN_COUNT);
 

@@ -37,7 +37,7 @@ public class ODatabaseDocumentPoolOpenCloseTest {
     try {
       ODatabaseDocument db = pool.acquire();
       db.close();
-      assertNull(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined());
+      assertNull(ODatabaseRecordThreadLocal.instance().getIfDefined());
     } finally {
       pool.close();
 

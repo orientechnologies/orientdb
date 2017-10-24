@@ -95,14 +95,14 @@ public class OFunctionLibraryImpl {
 
   public void droppedFunction(ODocument function) {
     functions.remove(function.field("name").toString());
-    onFunctionsChanged(ODatabaseRecordThreadLocal.INSTANCE.get());
+    onFunctionsChanged(ODatabaseRecordThreadLocal.instance().get());
   }
 
   public void createdFunction(ODocument function) {
     ODocument metadataCopy = function.copy();
     final OFunction f = new OFunction(metadataCopy);
     functions.put(metadataCopy.field("name").toString().toUpperCase(Locale.ENGLISH), f);
-    onFunctionsChanged(ODatabaseRecordThreadLocal.INSTANCE.get());
+    onFunctionsChanged(ODatabaseRecordThreadLocal.instance().get());
   }
 
   public Set<String> getFunctionNames() {

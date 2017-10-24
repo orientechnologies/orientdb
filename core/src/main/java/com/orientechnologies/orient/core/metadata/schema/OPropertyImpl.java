@@ -762,7 +762,7 @@ public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements O
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   protected void setNameInternal(final String name) {

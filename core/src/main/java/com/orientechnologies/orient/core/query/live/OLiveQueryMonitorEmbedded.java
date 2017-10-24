@@ -20,13 +20,13 @@ public class OLiveQueryMonitorEmbedded implements OLiveQueryMonitor {
 
   @Override
   public void unSubscribe() {
-    ODatabaseDocumentInternal prev = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal prev = ODatabaseRecordThreadLocal.instance().getIfDefined();
     db.activateOnCurrentThread();
     OLiveQueryHookV2.unsubscribe(token, db);
     if (prev != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.set(prev);
+      ODatabaseRecordThreadLocal.instance().set(prev);
     } else {
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
     }
   }
 

@@ -348,7 +348,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
   // ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
   //
   // // updating the record
-  // ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+  // ODatabaseRecordThreadLocal.instance().set(dbServer);
   // this.recordToUpdate.field("firstName",this.firstName);
   // this.recordToUpdate.field("lastName",this.lastName);
   // this.recordToUpdate.save();

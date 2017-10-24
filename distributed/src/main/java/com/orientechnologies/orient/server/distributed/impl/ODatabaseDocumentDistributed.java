@@ -328,7 +328,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
       OZIPCompressionUtil.uncompressDirectory(new FileInputStream(tempFile), tempDirectory.getAbsolutePath(), null);
 
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
       final boolean openDatabaseHere = db == null;
       if (db == null)
         db = serverInstance.openDatabase("plocal:" + dbPath, "", "", null, true);

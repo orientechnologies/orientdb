@@ -48,7 +48,7 @@ public class OSBTreeCollectionManagerRemoteTest {
   @Ignore
   public void testCreateTree() throws Exception {
     OSBTreeCollectionManagerRemote remoteManager = new OSBTreeCollectionManagerRemote(storageMock, networkSerializerMock);
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbMock);
+    ODatabaseRecordThreadLocal.instance().set(dbMock);
 
     when(dbMock.getStorage()).thenReturn(storageMock);
     when(storageMock.getUnderlying()).thenReturn(storageMock);

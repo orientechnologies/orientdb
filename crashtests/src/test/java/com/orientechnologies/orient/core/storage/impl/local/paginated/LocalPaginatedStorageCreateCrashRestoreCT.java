@@ -160,7 +160,7 @@ public class LocalPaginatedStorageCreateCrashRestoreCT {
   }
 
   private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(dbDocumentTx);
 
     OSchema schema = dbDocumentTx.getMetadata().getSchema();
     if (!schema.existsClass("TestClass")) {
@@ -286,7 +286,7 @@ public class LocalPaginatedStorageCreateCrashRestoreCT {
       document.save();
       baseDB.commit();
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+      ODatabaseRecordThreadLocal.instance().set(testDB);
       testDB.activateOnCurrentThread();
       testDB.begin();
       testDoc.save();

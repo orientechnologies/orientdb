@@ -32,17 +32,17 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 public class OScriptGraphOrientWrapper extends OScriptOrientWrapper {
 
   public OScriptGraphOrientWrapper() {
-    super(ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
+    super(ODatabaseRecordThreadLocal.instance().get().getDatabaseOwner());
   }
 
   public OScriptGraphWrapper getGraphNoTx() {
-    final ODatabaseDocumentInternal threadDatabase = (ODatabaseDocumentInternal) ODatabaseRecordThreadLocal.INSTANCE.get()
+    final ODatabaseDocumentInternal threadDatabase = (ODatabaseDocumentInternal) ODatabaseRecordThreadLocal.instance().get()
         .getDatabaseOwner();
     return new OScriptGraphWrapper(OrientGraphFactory.getNoTxGraphImplFactory().getGraph(threadDatabase));
   }
 
   public OScriptGraphWrapper getGraph() {
-    final ODatabaseDocumentInternal threadDatabase = (ODatabaseDocumentInternal) ODatabaseRecordThreadLocal.INSTANCE.get()
+    final ODatabaseDocumentInternal threadDatabase = (ODatabaseDocumentInternal) ODatabaseRecordThreadLocal.instance().get()
         .getDatabaseOwner();
     return new OScriptGraphWrapper(OrientGraphFactory.getTxGraphImplFactory().getGraph(threadDatabase));
   }

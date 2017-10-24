@@ -172,7 +172,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
 
     final Object result = graph.command(new OCommandSQL(
         "create vertex Provider content {'id': '" + UUID.randomUUID().toString() + "', 'name': 'Billy" + uniqueId
-            + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '" + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+            + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '" + ODatabaseRecordThreadLocal.instance().get().getStorage()
             .getConfiguration().getDateFormatInstance().format(new Date()) + "', 'children': '" + uniqueId + "', 'saved': 0}"))
         .execute();
         

@@ -69,7 +69,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public V get(K key) {
-    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
     final byte[] keyStream = new byte[keySerializer.getObjectSize(key)];
     keySerializer.serialize(key, keyStream, 0);
     final OBonsaiCollectionPointer collectionPointer = getCollectionPointer();
@@ -151,7 +151,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   private List<Map.Entry<K, V>> fetchEntriesMajor(final K key, final boolean inclusive) {
     final byte[] keyStream = new byte[keySerializer.getObjectSize(key)];
     keySerializer.serialize(key, keyStream, 0);
-    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
     OSBTFetchEntriesMajorRequest<K, V> request = new OSBTFetchEntriesMajorRequest<K, V>(inclusive, keyStream,
         getCollectionPointer(), keySerializer, valueSerializer);
     OSBTFetchEntriesMajorResponse<K, V> response = storage.networkOperation(request, "Cannot get first key from sb-tree bonsai");
@@ -167,7 +167,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public K firstKey() {
-    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
     final OBonsaiCollectionPointer collectionPointer = getCollectionPointer();
     OSBTFirstKeyRequest request = new OSBTFirstKeyRequest(collectionPointer);
     OSBTFirstKeyResponse response = storage.networkOperation(request, "Cannot get first key from sb-tree bonsai");
@@ -194,7 +194,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public int getRealBagSize(final Map<K, Change> changes) {
-    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+    final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
     final OBonsaiCollectionPointer collectionPointer = getCollectionPointer();
     OSBTGetRealBagSizeRequest request = new OSBTGetRealBagSizeRequest((OBinarySerializer<OIdentifiable>) keySerializer,
         collectionPointer, (Map<OIdentifiable, Change>) changes);

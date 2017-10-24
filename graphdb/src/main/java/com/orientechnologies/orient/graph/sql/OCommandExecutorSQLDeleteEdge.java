@@ -92,7 +92,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
         originalTemp = parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
 
       final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
-      ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+      ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.instance().get();
       final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
       try {
         while (temp != null) {
@@ -177,7 +177,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
       } finally {
         if (shutdownFlag.getValue())
           graph.shutdown(false, false);
-        ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
+        ODatabaseRecordThreadLocal.instance().set(curDb);
       }
     } finally {
       textRequest.setText(originalQuery);

@@ -80,7 +80,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
       databaseOwner = this;
     } catch (Exception t) {
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
 
       throw OException.wrapException(new ODatabaseException("Error on opening database "), t);
     }

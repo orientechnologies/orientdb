@@ -48,16 +48,16 @@ public class DatabaseThreadFactoryTest extends DocumentDBBaseTest {
   @BeforeClass
   public void init() {
     try {
-      ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
       db.close();
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
     } catch (ODatabaseException ode) {
     }
   }
 
   @Test(expectedExceptions = { ODatabaseException.class })
   public void testNoFactory() {
-    ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseRecordThreadLocal.instance().get();
     Assert.fail("Database Should not be set in Current Thread");
   }
 
@@ -70,7 +70,7 @@ public class DatabaseThreadFactoryTest extends DocumentDBBaseTest {
         return poolFactory.get(url, "admin", "admin").acquire();
       }
     });
-    ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     Assert.assertNotNull(db);
     db.close();
   }

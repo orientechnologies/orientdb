@@ -46,7 +46,7 @@ public abstract class OCoreException extends OException {
       this.componentName = null;
     }
 
-    final ODatabaseRecordThreadLocal instance = ODatabaseRecordThreadLocal.INSTANCE;
+    final ODatabaseRecordThreadLocal instance = ODatabaseRecordThreadLocal.instance();
 
     if (instance != null) {
       final ODatabaseDocumentInternal database = instance.getIfDefined();

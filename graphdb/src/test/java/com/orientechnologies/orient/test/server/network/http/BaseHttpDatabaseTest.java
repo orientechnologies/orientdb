@@ -36,7 +36,7 @@ public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
 
   @Before
   public void createDatabase() throws Exception {
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
 
     Assert.assertEquals(
         post("database/" + getDatabaseName() + "/memory").setUserName("root").setUserPassword("root").getResponse().getStatusLine()
