@@ -290,8 +290,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       return null;
 
     OClass klass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
-    if (klass == null && ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.getIfDefined().getMetadata().reload();
+    if (klass == null && ODatabaseRecordThreadLocal.instance().getIfDefined() != null) {
+      ODatabaseRecordThreadLocal.instance().getIfDefined().getMetadata().reload();
       klass = fieldRecord.getSchemaClass();
     }
 
@@ -1165,8 +1165,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     final ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
     OClass klass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
-    if (klass == null && ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.getIfDefined().getMetadata().reload();
+    if (klass == null && ODatabaseRecordThreadLocal.instance().getIfDefined() != null) {
+      ODatabaseRecordThreadLocal.instance().getIfDefined().getMetadata().reload();
       klass = fieldRecord.getSchemaClass();
     }
     if (klass.isVertexType()) {

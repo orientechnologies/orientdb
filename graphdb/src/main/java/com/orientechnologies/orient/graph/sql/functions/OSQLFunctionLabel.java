@@ -71,8 +71,8 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
     final ODocument rec = iCurrentRecord.getRecord();
 
     OClass klass = ODocumentInternal.getImmutableSchemaClass(rec);
-    if (klass == null && ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.getIfDefined().getMetadata().reload();
+    if (klass == null && ODatabaseRecordThreadLocal.instance().getIfDefined() != null) {
+      ODatabaseRecordThreadLocal.instance().getIfDefined().getMetadata().reload();
       klass = rec.getSchemaClass();
     }
     if (klass.isVertexType()) {

@@ -69,8 +69,8 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
     final OClass klass;
     if (ODocumentInternal.getImmutableSchemaClass(value) != null) {
       klass = ODocumentInternal.getImmutableSchemaClass(value);
-    } else if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.getIfDefined().getMetadata().reload();
+    } else if (ODatabaseRecordThreadLocal.instance().getIfDefined() != null) {
+      ODatabaseRecordThreadLocal.instance().getIfDefined().getMetadata().reload();
       klass = value.getSchemaClass();
     } else {
       throw new IllegalStateException("Invalid content found between connections: " + value);
@@ -150,8 +150,8 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
 
     final OIdentifiable v;
     OClass klass = ODocumentInternal.getImmutableSchemaClass(value);
-    if (klass == null && ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.getIfDefined().getMetadata().reload();
+    if (klass == null && ODatabaseRecordThreadLocal.instance().getIfDefined() != null) {
+      ODatabaseRecordThreadLocal.instance().getIfDefined().getMetadata().reload();
       klass = value.getSchemaClass();
     }
     if (klass.isVertexType()) {
