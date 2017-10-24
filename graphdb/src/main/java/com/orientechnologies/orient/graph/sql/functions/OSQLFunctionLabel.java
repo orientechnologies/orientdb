@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -71,8 +70,8 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
     final ODocument rec = iCurrentRecord.getRecord();
 
     OClass klass = ODocumentInternal.getImmutableSchemaClass(rec);
-    if (klass == null && ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.getIfDefined().getMetadata().reload();
+    if (klass == null && ODatabaseRecordThreadLocal.instance().getIfDefined() != null) {
+      ODatabaseRecordThreadLocal.instance().getIfDefined().getMetadata().reload();
       klass = rec.getSchemaClass();
     }
     if (klass.isVertexType()) {
