@@ -58,7 +58,7 @@ public class OClusterRepairInfoTask extends OAbstractReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
         "Repair cluster acquiring information about cluster '%s' db=%s (reqId=%s)...", clusterName, database.getName(), requestId);
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    ODatabaseRecordThreadLocal.instance().set(database);
 
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
 

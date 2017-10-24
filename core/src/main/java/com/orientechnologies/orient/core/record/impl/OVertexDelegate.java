@@ -322,7 +322,7 @@ public class OVertexDelegate implements OVertex {
       // DEFAULT CLASS, TREAT IT AS NO CLASS/LABEL
       iClassNames = null;
 
-    OSchema schema = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema();
+    OSchema schema = ODatabaseRecordThreadLocal.instance().get().getMetadata().getSchema();
 
     if (iDirection == ODirection.OUT || iDirection == ODirection.BOTH) {
       // FIELDS THAT STARTS WITH "out_"
@@ -414,7 +414,7 @@ public class OVertexDelegate implements OVertex {
     {
       return null;
     }
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db == null) {
       return null;
     }

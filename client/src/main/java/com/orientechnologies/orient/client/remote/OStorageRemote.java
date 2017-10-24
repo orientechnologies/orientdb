@@ -567,7 +567,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRid, final byte[] iContent,
       final int iRecordVersion, final byte iRecordType, final int iMode, final ORecordCallback<Long> iCallback) {
 
-    final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+    final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
     ORecordCallback<OCreateRecordResponse> realCallback = null;
     if (iCallback != null) {
       realCallback = (iRID, response) -> {
@@ -656,7 +656,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public OStorageOperationResult<Integer> updateRecord(final ORecordId iRid, final boolean updateContent, final byte[] iContent,
       final int iVersion, final byte iRecordType, final int iMode, final ORecordCallback<Integer> iCallback) {
 
-    final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+    final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
 
     ORecordCallback<OUpdateRecordResponse> realCallback = null;
     if (iCallback != null) {
@@ -831,7 +831,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public Object command(final OCommandRequestText iCommand) {
 
     final boolean live = iCommand instanceof OLiveQuery;
-    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
     final boolean asynch = iCommand instanceof OCommandRequestAsynch && ((OCommandRequestAsynch) iCommand).isAsynchronous();
 
     OCommandRequest request = new OCommandRequest(database, asynch, iCommand, live);
@@ -1743,8 +1743,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   protected OStorageRemoteSession getCurrentSession() {
     ODatabaseDocumentInternal db = null;
-    if (ODatabaseRecordThreadLocal.INSTANCE != null)
-      db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (ODatabaseRecordThreadLocal.instance() != null)
+      db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     ODatabaseDocumentRemote remote = (ODatabaseDocumentRemote) ODatabaseDocumentTxInternal.getInternal(db);
     if (remote == null)
       return null;
@@ -1769,8 +1769,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public OStorageRemote copy(final ODatabaseDocumentRemote source, final ODatabaseDocumentRemote dest) {
     ODatabaseDocumentInternal origin = null;
-    if (ODatabaseRecordThreadLocal.INSTANCE != null)
-      origin = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (ODatabaseRecordThreadLocal.instance() != null)
+      origin = ODatabaseRecordThreadLocal.instance().getIfDefined();
 
     origin = ODatabaseDocumentTxInternal.getInternal(origin);
 
@@ -1788,7 +1788,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error during database open", e);
     } finally {
-      ODatabaseRecordThreadLocal.INSTANCE.set(origin);
+      ODatabaseRecordThreadLocal.instance().set(origin);
     }
     return this;
   }

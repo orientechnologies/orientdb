@@ -94,7 +94,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
       databaseOwner = this;
     } catch (Exception t) {
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
 
       throw OException.wrapException(new ODatabaseException("Error on opening database "), t);
     }
@@ -138,10 +138,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
       initialized = true;
     } catch (OException e) {
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       throw e;
     } catch (Exception e) {
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       throw OException.wrapException(new ODatabaseException("Cannot open database url=" + getURL()), e);
     }
 
@@ -172,10 +172,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       }
 
     } catch (OException e) {
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       throw e;
     } catch (Exception e) {
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       throw OException.wrapException(new ODatabaseException("Cannot open database url=" + getURL()), e);
     }
   }

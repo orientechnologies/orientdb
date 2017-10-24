@@ -517,7 +517,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
             return value1 == value2;
           }
 
-          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
           try {
             final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateTimeFormatInstance()
                 : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
@@ -1023,7 +1023,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
             return (value1 < value2) ? -1 : ((value1 == value2) ? 0 : 1);
           }
 
-          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
           try {
             final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateTimeFormatInstance()
                 : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
@@ -1089,7 +1089,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
             return (value1 < value2) ? -1 : ((value1 == value2) ? 0 : 1);
           }
 
-          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
           try {
             final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateFormatInstance()
                 : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);

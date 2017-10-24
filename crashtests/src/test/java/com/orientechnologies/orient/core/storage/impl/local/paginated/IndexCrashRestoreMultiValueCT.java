@@ -288,7 +288,7 @@ public class IndexCrashRestoreMultiValueCT {
           long id = idGen.getAndIncrement();
           long ts = System.currentTimeMillis();
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+          ODatabaseRecordThreadLocal.instance().set(baseDB);
           ODocument doc = new ODocument();
           doc.field("ts", ts);
           doc.save();
@@ -299,7 +299,7 @@ public class IndexCrashRestoreMultiValueCT {
           baseDB.command(new OCommandSQL("insert into index:mi (key, rid) values (" + id + ", " + doc.getIdentity() + ")"))
               .execute();
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+          ODatabaseRecordThreadLocal.instance().set(testDB);
           for (int i = 0; i < 10; i++) {
             testDB.command(new OCommandSQL("insert into index:mi (key, rid) values (" + id + ", #0:" + i + ")")).execute();
           }

@@ -26,6 +26,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -287,8 +288,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (fieldRecord == null)
       return null;
 
-    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
-    if (immutableClass.isVertexType()) {
+    OClass klass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
+    if (klass == null && ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null) {
+      ODatabaseRecordThreadLocal.INSTANCE.getIfDefined().getMetadata().reload();
+      klass = fieldRecord.getSchemaClass();
+    }
+
+    if (klass.isVertexType()) {
       if (iTargetVertex != null && !iTargetVertex.equals(fieldValue))
         return null;
 
@@ -298,7 +304,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       else
         toAdd = graph.getEdgeInstance(fieldRecord, doc, connection.getValue());
 
-    } else if (immutableClass.isEdgeType()) {
+    } else if (klass.isEdgeType()) {
       // EDGE
       if (iTargetVertex != null) {
         Object targetVertex = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());
@@ -866,8 +872,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
   /**
    * (Blueprints Extension) Returns the Vertex's label. By default OrientDB binds the Blueprints Label concept to Vertex Class. To
-   * disable this feature execute this at database level <code>alter database custom useClassForVertexLabel=false
-   * </code>
+   * disable this feature execute this at database level <code>alter database custom useClassForVertexLabel=false </code>
    */
   @Override
   public String getLabel() {
@@ -1043,16 +1048,16 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
         for (String className : allClassNames) {
           switch (iDirection) {
-            case OUT:
-              result.add(new OTriple<String, Direction, String>(CONNECTION_OUT_PREFIX + className, Direction.OUT, className));
-              break;
-            case IN:
-              result.add(new OTriple<String, Direction, String>(CONNECTION_IN_PREFIX + className, Direction.IN, className));
-              break;
-            case BOTH:
-              result.add(new OTriple<String, Direction, String>(CONNECTION_OUT_PREFIX + className, Direction.OUT, className));
-              result.add(new OTriple<String, Direction, String>(CONNECTION_IN_PREFIX + className, Direction.IN, className));
-              break;
+          case OUT:
+            result.add(new OTriple<String, Direction, String>(CONNECTION_OUT_PREFIX + className, Direction.OUT, className));
+            break;
+          case IN:
+            result.add(new OTriple<String, Direction, String>(CONNECTION_IN_PREFIX + className, Direction.IN, className));
+            break;
+          case BOTH:
+            result.add(new OTriple<String, Direction, String>(CONNECTION_OUT_PREFIX + className, Direction.OUT, className));
+            result.add(new OTriple<String, Direction, String>(CONNECTION_IN_PREFIX + className, Direction.IN, className));
+            break;
           }
         }
       }
@@ -1142,11 +1147,15 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final OrientVertex toAdd;
 
     final ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
-    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
-    if (immutableClass.isVertexType()) {
+    OClass klass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
+    if (klass == null && ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null) {
+      ODatabaseRecordThreadLocal.INSTANCE.getIfDefined().getMetadata().reload();
+      klass = fieldRecord.getSchemaClass();
+    }
+    if (klass.isVertexType()) {
       // DIRECT VERTEX
       toAdd = graph.getVertex(fieldRecord);
-    } else if (immutableClass.isEdgeType()) {
+    } else if (klass.isEdgeType()) {
       // EDGE
       if (settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(fieldRecord), iLabels)) {
         OIdentifiable vertexDoc = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());

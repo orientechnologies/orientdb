@@ -485,7 +485,7 @@ public abstract class OrientConfigurableGraph {
      * Returns the current thread mode:
      * <ul>
      * <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
-     * ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());</li>
+     * ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());</li>
      * <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in the Thread Local only if no one
      * was set before</li>
      * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
@@ -507,7 +507,7 @@ public abstract class OrientConfigurableGraph {
      * Changes the thread mode:
      * <ul>
      * <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
-     * ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());</li>
+     * ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());</li>
      * <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in the Thread Local only if no one
      * was set before</li>
      * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
@@ -794,7 +794,7 @@ public abstract class OrientConfigurableGraph {
    * Returns the current thread mode:
    * <ul>
    * <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
-   * ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());</li>
+   * ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());</li>
    * <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in the Thread Local only if no one was
    * set before</li>
    * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
@@ -813,7 +813,7 @@ public abstract class OrientConfigurableGraph {
    * Changes the thread mode:
    * <ul>
    * <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
-   * ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());</li>
+   * ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());</li>
    * <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in the Thread Local only if no one was
    * set before</li>
    * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>

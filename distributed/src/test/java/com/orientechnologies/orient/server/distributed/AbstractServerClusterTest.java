@@ -538,7 +538,7 @@ public abstract class AbstractServerClusterTest {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
 
     final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
+    clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(rid.getClusterId()));
 
     ODistributedResponse response = dManager
         .sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OReadRecordTask().init(rid),
@@ -556,7 +556,7 @@ public abstract class AbstractServerClusterTest {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
 
     final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
+    clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(record.getIdentity().getClusterId()));
 
     return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OCreateRecordTask()
             .init((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(), ORecordInternal.getRecordType(record)),
@@ -567,7 +567,7 @@ public abstract class AbstractServerClusterTest {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
 
     final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
+    clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(record.getIdentity().getClusterId()));
 
     return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixUpdateRecordTask()
             .init((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(), ORecordInternal.getRecordType(record)),
@@ -578,7 +578,7 @@ public abstract class AbstractServerClusterTest {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
 
     final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
+    clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(rid.getClusterId()));
 
     return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixCreateRecordTask().init(rid, -1),
         dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);

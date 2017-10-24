@@ -59,7 +59,7 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
 
-    ODatabaseDocumentInternal prev = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal prev = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       ODatabaseDocumentInternal db = database.copy();
       db.activateOnCurrentThread();
@@ -86,9 +86,9 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
       return serialized;
     } finally {
       if (prev == null) {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
       } else {
-        ODatabaseRecordThreadLocal.INSTANCE.set(prev);
+        ODatabaseRecordThreadLocal.instance().set(prev);
       }
     }
   }

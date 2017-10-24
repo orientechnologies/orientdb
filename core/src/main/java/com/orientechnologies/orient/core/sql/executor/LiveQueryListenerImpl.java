@@ -197,14 +197,14 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
   }
 
   protected void execInSeparateDatabase(final OCallable iCallback) {
-    final ODatabaseDocumentInternal prevDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal prevDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       iCallback.call(null);
     } finally {
       if (prevDb != null) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(prevDb);
+        ODatabaseRecordThreadLocal.instance().set(prevDb);
       } else {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
       }
     }
   }

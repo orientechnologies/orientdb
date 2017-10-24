@@ -180,7 +180,7 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     OClass person = schema.getClass("Person");
     idx = person.createIndex("Person.name", OClass.INDEX_TYPE.UNIQUE, "name");
 
-    //    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    //    ODatabaseRecordThreadLocal.instance().set(null);
 
     // populating db
     try {

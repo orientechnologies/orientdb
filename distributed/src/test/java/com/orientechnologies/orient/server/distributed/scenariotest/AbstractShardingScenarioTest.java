@@ -325,9 +325,9 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     } finally {
 
       for (ODatabaseDocumentTx db : dbs) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+        ODatabaseRecordThreadLocal.instance().set(db);
         db.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
       }
     }
   }

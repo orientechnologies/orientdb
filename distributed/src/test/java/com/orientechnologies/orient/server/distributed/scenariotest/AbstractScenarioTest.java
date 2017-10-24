@@ -58,7 +58,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
     else if (result.size() > 1)
       assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
-//    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+//    ODatabaseRecordThreadLocal.instance().set(null);
     return result.get(0);
   }
 
@@ -281,9 +281,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       for (ODatabaseDocument db : dbs) {
         db.activateOnCurrentThread();
         db.close();
-//        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+//        ODatabaseRecordThreadLocal.instance().set(db);
 //        db.close();
-//        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+//        ODatabaseRecordThreadLocal.instance().set(null);
       }
     }
 
@@ -373,7 +373,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       OCallable<ODocument, ODocument> assertion) {
     ODatabaseDocument dbServer = getDatabase(serverRun);
     // dbServer.getLocalCache().invalidate();
-//    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+//    ODatabaseRecordThreadLocal.instance().set(dbServer);
 
     dbServer.getMetadata().getSchema().reload();
 
@@ -401,13 +401,13 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       return doc;
     } finally {
       dbServer.close();
-//      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+//      ODatabaseRecordThreadLocal.instance().set(null);
     }
   }
 
   private long selectCountInClass(ServerRun serverRun, String className) {
     ODatabaseDocument dbServer = getDatabase(serverRun);
-//    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+//    ODatabaseRecordThreadLocal.instance().set(dbServer);
     long numberOfRecords = 0L;
     try {
       List<ODocument> result = dbServer.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from " + className));
@@ -416,7 +416,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       e.printStackTrace();
     } finally {
       dbServer.close();
-//      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+//      ODatabaseRecordThreadLocal.instance().set(null);
     }
 
     return numberOfRecords;
@@ -524,9 +524,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         db.activateOnCurrentThread();
         db.close();
 
-//        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+//        ODatabaseRecordThreadLocal.instance().set(db);
 //        db.close();
-        //       ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        //       ODatabaseRecordThreadLocal.instance().set(null);
       }
     }
   }

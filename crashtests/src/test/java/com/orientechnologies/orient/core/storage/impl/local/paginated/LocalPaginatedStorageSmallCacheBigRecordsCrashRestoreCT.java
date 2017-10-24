@@ -162,7 +162,7 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreCT {
   }
 
   private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(dbDocumentTx);
 
     OSchema schema = dbDocumentTx.getMetadata().getSchema();
     if (!schema.existsClass("TestClass")) {

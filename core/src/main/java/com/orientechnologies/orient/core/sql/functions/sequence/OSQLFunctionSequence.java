@@ -30,7 +30,7 @@ public class OSQLFunctionSequence extends OSQLFunctionConfigurableAbstract {
     else
       seqName = "" + iParams[0];
 
-    OSequence result = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSequenceLibrary().getSequence(seqName);
+    OSequence result = ODatabaseRecordThreadLocal.instance().get().getMetadata().getSequenceLibrary().getSequence(seqName);
     if (result == null) {
       throw new OCommandExecutionException("Sequence not found: " + seqName);
     }

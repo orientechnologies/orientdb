@@ -1972,7 +1972,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   /**

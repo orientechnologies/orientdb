@@ -35,7 +35,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
       final Object[] iParameters, final OCommandContext iContext) {
 
-    ODatabase db = iContext != null ? iContext.getDatabase() : ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabase db = iContext != null ? iContext.getDatabase() : ODatabaseRecordThreadLocal.instance().getIfDefined();
 
 
     final String[] labels;

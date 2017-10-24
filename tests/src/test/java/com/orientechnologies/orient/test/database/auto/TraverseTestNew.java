@@ -301,7 +301,7 @@ import java.util.Map;
 
       String q = "traverse in('married')  from " + nicoleKidman.getIdentity() + "";
       ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.copy();
-      ODatabaseRecordThreadLocal.INSTANCE.set(db);
+      ODatabaseRecordThreadLocal.instance().set(db);
       OResultSet result1 = db.query(q);
       Assert.assertTrue(result1.hasNext());
       boolean found = false;
@@ -313,7 +313,7 @@ import java.util.Map;
       }
       Assert.assertEquals(i.intValue(), 2);
     } finally {
-      ODatabaseRecordThreadLocal.INSTANCE.set(database);
+      ODatabaseRecordThreadLocal.instance().set(database);
     }
 
   }

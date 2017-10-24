@@ -82,7 +82,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
     public OObjectProxyMethodHandler(ODocument iDocument) {
         doc = iDocument;
-        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
         if (db.getDatabaseOwner() instanceof ODatabaseObject
                 && !((ODatabaseObject) db.getDatabaseOwner()).isLazyLoading())
             doc.detach();
@@ -624,7 +624,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
                         OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
             }
         }
-        if (!((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner()).isLazyLoading())
+        if (!((ODatabaseObject) ODatabaseRecordThreadLocal.instance().get().getDatabaseOwner()).isLazyLoading())
             ((OObjectLazyMultivalueElement) value).detach(false);
         return value;
     }
@@ -922,7 +922,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     }
 
     private ODatabaseObject getDatabase() {
-        return (ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
+        return (ODatabaseObject) ODatabaseRecordThreadLocal.instance().get().getDatabaseOwner();
     }
 
     private Object getDefaultValueForField(Field field) {

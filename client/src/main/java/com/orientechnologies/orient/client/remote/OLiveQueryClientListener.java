@@ -29,7 +29,7 @@ public class OLiveQueryClientListener {
    * @return
    */
   public boolean onEvent(OLiveQueryPushRequest pushRequest) {
-    ODatabaseDocumentInternal old = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal old = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       database.activateOnCurrentThread();
       if (pushRequest.getStatus() == OLiveQueryPushRequest.ERROR) {
@@ -56,29 +56,29 @@ public class OLiveQueryClientListener {
       }
       return false;
     } finally {
-      ODatabaseRecordThreadLocal.INSTANCE.set(old);
+      ODatabaseRecordThreadLocal.instance().set(old);
     }
   }
 
   public void onError(OException e) {
-    ODatabaseDocumentInternal old = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal old = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       database.activateOnCurrentThread();
       listener.onError(database, e);
       database.close();
     } finally {
-      ODatabaseRecordThreadLocal.INSTANCE.set(old);
+      ODatabaseRecordThreadLocal.instance().set(old);
     }
   }
 
   public void onEnd() {
-    ODatabaseDocumentInternal old = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal old = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       database.activateOnCurrentThread();
       listener.onEnd(database);
       database.close();
     } finally {
-      ODatabaseRecordThreadLocal.INSTANCE.set(old);
+      ODatabaseRecordThreadLocal.instance().set(old);
     }
   }
 }

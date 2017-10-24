@@ -36,7 +36,7 @@ public class GraphNonBlockingQueryTest {
           resultCount++;
 
           ODocument odoc = ((ODocument) iRecord);
-          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
           System.out.println(db);
           for (String name : odoc.fieldNames()) {     //  <----------- PROBLEM
             System.out.println("Name:" + name);

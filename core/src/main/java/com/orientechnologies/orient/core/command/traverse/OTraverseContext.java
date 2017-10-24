@@ -224,7 +224,7 @@ public class OTraverseContext extends OBasicCommandContext {
     }
 
     public ODatabase getDatabase() {
-      return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      return ODatabaseRecordThreadLocal.instance().getIfDefined();
     }
   }
 }

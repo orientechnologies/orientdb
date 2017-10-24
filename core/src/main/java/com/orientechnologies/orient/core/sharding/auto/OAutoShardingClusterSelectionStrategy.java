@@ -53,7 +53,7 @@ public class OAutoShardingClusterSelectionStrategy implements OClusterSelectionS
       throw new OConfigurationException("Cannot use auto-sharding cluster strategy because class '" + clazz
           + "' has an auto-sharding index defined with multiple fields");
 
-    final OStorage stg = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+    final OStorage stg = ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
     if (!(stg instanceof OAbstractPaginatedStorage))
       throw new OConfigurationException("Cannot use auto-sharding cluster strategy because storage is not embedded");
 

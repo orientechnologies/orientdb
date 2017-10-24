@@ -153,7 +153,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         assertFalse(serverInstance.get(2).isActive());
 
         // writes on server1
-        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+        ODatabaseRecordThreadLocal.instance().set(dbServer1);
         try {
           new ODocument("Person").fields("name", "Jay", "surname", "Miner").save();
           new ODocument("Person").fields("name", "Luke", "surname", "Skywalker").save();
@@ -212,9 +212,9 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         fail(e.getMessage());
       } finally {
         if (dbServer1 != null) {
-          ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+          ODatabaseRecordThreadLocal.instance().set(dbServer1);
           dbServer1.close();
-          ODatabaseRecordThreadLocal.INSTANCE.set(null);
+          ODatabaseRecordThreadLocal.instance().set(null);
         }
       }
 
@@ -273,7 +273,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         assertFalse(serverInstance.get(2).isActive());
 
         // writes on server1
-        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+        ODatabaseRecordThreadLocal.instance().set(dbServer1);
         try {
           System.out.println("Inserting 3 record on server1...");
           new ODocument("Person").fields("name", "Darth", "surname", "Vader").save();
@@ -330,9 +330,9 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         fail(e.getMessage());
       } finally {
         if (dbServer1 != null) {
-          ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+          ODatabaseRecordThreadLocal.instance().set(dbServer1);
           dbServer1.close();
-          ODatabaseRecordThreadLocal.INSTANCE.set(null);
+          ODatabaseRecordThreadLocal.instance().set(null);
         }
       }
 

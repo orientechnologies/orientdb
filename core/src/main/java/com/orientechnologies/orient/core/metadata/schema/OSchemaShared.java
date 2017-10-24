@@ -524,7 +524,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
         blobClusters = document.field("blobClusters");
 
       if (!hasGlobalProperties) {
-        ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+        ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
         if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
           saveInternal(database);
       }

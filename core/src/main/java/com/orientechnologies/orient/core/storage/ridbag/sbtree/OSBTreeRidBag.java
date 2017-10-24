@@ -52,7 +52,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSBTreeRidBag implements ORidBagDelegate {
-  private final OSBTreeCollectionManager                           collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get()
+  private final OSBTreeCollectionManager                           collectionManager = ODatabaseRecordThreadLocal.instance().get()
       .getSbTreeCollectionManager();
   private final NavigableMap<OIdentifiable, Change>                changes           = new ConcurrentSkipListMap<>();
   /**
@@ -621,7 +621,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   @Override
   public int getSerializedSize() {
     int result = 2 * OLongSerializer.LONG_SIZE + 3 * OIntegerSerializer.INT_SIZE;
-    if (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy
+    if (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy
         || ORecordSerializationContext.getContext() == null)
       result += getChangesSerializedSize();
     return result;
@@ -637,7 +637,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     applyNewEntries();
 
     final ORecordSerializationContext context;
-    boolean remoteMode = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy;
+    boolean remoteMode = ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy;
     if (remoteMode) {
       context = null;
     } else
@@ -648,7 +648,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       if (context != null) {
         final int clusterId = getHighLevelDocClusterId();
         assert clusterId > -1;
-        collectionPointer = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager()
+        collectionPointer = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager()
             .createSBTree(clusterId, ownerUuid);
       }
     }
@@ -678,7 +678,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       ChangeSerializationHelper.INSTANCE.serializeChanges(changes, OLinkSerializer.INSTANCE, stream, offset);
     } else {
 
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
       for (Entry<OIdentifiable, Change> change : this.changes.entrySet()) {
         OIdentifiable key = change.getKey();
         if (db != null && db.getTransaction().isActive()) {

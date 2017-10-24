@@ -123,7 +123,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
         graphNoTx = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
         graphNoTx.open("admin", "admin");
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx);
+        ODatabaseRecordThreadLocal.instance().set(graphNoTx);
         final String uniqueId = "client_asia-s2-t10-v0";
         Iterable<OElement> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
         List<OVertex> result = new LinkedList<OVertex>();
@@ -135,7 +135,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
         assertEquals(0, result.size());
         System.out.println("Done");
         graphNoTx.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
       } catch (Exception e) {
         e.printStackTrace();
         fail();
@@ -160,7 +160,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
           graphNoTx.create();
         }
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx);
+        ODatabaseRecordThreadLocal.instance().set(graphNoTx);
         final String uniqueId = "client_asia-s2-t10-v0";
         Iterable<OElement> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
         List<OVertex> result = new LinkedList<OVertex>();
@@ -172,7 +172,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
 
         assertEquals(1, result.size());
         graphNoTx.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
       } catch (Exception e) {
         e.printStackTrace();
         fail(e.toString());
@@ -187,9 +187,9 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       fail(e.toString());
     } finally {
       if (!graphNoTx.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx);
+        ODatabaseRecordThreadLocal.instance().set(graphNoTx);
         graphNoTx.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
       }
 
     }

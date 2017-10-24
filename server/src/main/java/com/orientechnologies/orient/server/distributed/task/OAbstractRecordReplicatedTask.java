@@ -62,7 +62,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     this.rid = iRid;
     this.version = iVersion;
 
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null) {
       final OClass clazz = db.getMetadata().getSchema().getClassByClusterId(rid.getClusterId());
       if (clazz != null) {
@@ -130,14 +130,14 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   }
 
   public boolean checkForClusterAvailability(final String localNode, final ODistributedConfiguration cfg) {
-    final String clusterName = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId());
+    final String clusterName = ODatabaseRecordThreadLocal.instance().get().getClusterNameById(rid.getClusterId());
     return cfg.isServerContainingCluster(localNode, clusterName);
   }
 
   public ORecord prepareUndoOperation() {
     if (previousRecord == null) {
       // READ DIRECTLY FROM THE UNDERLYING STORAGE
-      final OStorageOperationResult<ORawBuffer> loaded = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying()
+      final OStorageOperationResult<ORawBuffer> loaded = ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying()
           .readRecord(rid, null, true, false, null);
 
       if (loaded == null || loaded.getResult() == null)

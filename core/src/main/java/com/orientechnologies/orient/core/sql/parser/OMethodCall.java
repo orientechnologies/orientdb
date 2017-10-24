@@ -157,7 +157,7 @@ public class OMethodCall extends SimpleNode {
   }
 
   public static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   public boolean needsAliases(Set<String> aliases) {

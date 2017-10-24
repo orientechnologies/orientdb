@@ -248,7 +248,7 @@ public class IndexConcurrencyTest {
           ODatabaseHelper.dropDatabase(db, url, "plocal");
         }
         ODatabaseHelper.createDatabase(db, url);
-        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+        ODatabaseRecordThreadLocal.instance().set(db);
         db.close();
       } catch (IOException ex) {
         System.out.println("Exception: " + ex);

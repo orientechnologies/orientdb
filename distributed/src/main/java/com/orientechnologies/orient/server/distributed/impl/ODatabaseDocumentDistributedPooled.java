@@ -23,7 +23,7 @@ public class ODatabaseDocumentDistributedPooled extends ODatabaseDocumentDistrib
   public void close() {
     closeActiveQueries();
     super.setStatus(STATUS.CLOSED);
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
     getLocalCache().clear();
     pool.release(this);
   }

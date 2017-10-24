@@ -51,7 +51,7 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
 
   public OQueryOperatorMinorEquals() {
     super("<=", 5, false);
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null)
       binaryEvaluate = db.getSerializer().getSupportBinaryEvaluate();
   }

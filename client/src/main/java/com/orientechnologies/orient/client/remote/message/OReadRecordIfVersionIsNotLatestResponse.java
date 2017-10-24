@@ -87,7 +87,7 @@ public class OReadRecordIfVersionIsNotLatestResponse implements OBinaryResponse 
     byte[] bytes = network.readBytes();
     ORawBuffer buffer = new ORawBuffer(bytes, recVersion, type);
 
-    final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().getIfDefined();
     ORecord record;
 
     while (network.readByte() == 2) {

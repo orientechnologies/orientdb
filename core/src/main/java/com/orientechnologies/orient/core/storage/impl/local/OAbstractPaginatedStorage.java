@@ -333,8 +333,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   /**
-   * This method is called by distributed storage during initialization to indicate that database is used in distributed
-   * cluster configuration
+   * This method is called by distributed storage during initialization to indicate that database is used in distributed cluster
+   * configuration
    */
   public void underDistributedStorage() {
     sbTreeCollectionManager.prohibitAccess();
@@ -2956,9 +2956,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           if (transaction.get() == null)
             return;
 
-          if (writeAheadLog == null)
-            throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
-
           if (transaction.get().getClientTx().getId() != clientTx.getId())
             throw new OStorageException(
                 "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
@@ -3002,9 +2999,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           if (transaction.get() == null)
             return;
-
-          if (writeAheadLog == null)
-            throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
 
           if (transaction.get().getMicroTransaction().getId() != microTransaction.getId())
             throw new OStorageException(
@@ -3467,7 +3461,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       try {
 
-        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
         // CALL BEFORE COMMAND
         Iterable<ODatabaseListener> listeners = db.getListeners();
@@ -3526,13 +3520,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       } finally {
         if (Orient.instance().getProfiler().isRecording()) {
-          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
           if (db != null) {
             final OSecurityUser user = db.getUser();
             final String userString = user != null ? user.toString() : null;
             //noinspection ResultOfMethodCallIgnored
             Orient.instance().getProfiler()
-                .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
+                .stopChrono("db." + ODatabaseRecordThreadLocal.instance().get().getName() + ".command." + iCommand.toString(),
                     "Command executed against the database", beginTime, "db.*.command.*", null, userString);
           }
         }

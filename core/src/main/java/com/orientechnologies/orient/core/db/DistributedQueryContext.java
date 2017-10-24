@@ -38,23 +38,23 @@ public class DistributedQueryContext {
   }
 
   public List<OResult> fetchNextPage() {
-    ODatabaseDocumentInternal prev = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal prev = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       db.activateOnCurrentThread();
       resultSet.close();
       db.close();
     } finally {
       if (prev == null) {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
       } else {
-        ODatabaseRecordThreadLocal.INSTANCE.set(prev);
+        ODatabaseRecordThreadLocal.instance().set(prev);
       }
     }
     return null;
   }
 
   public void close() {
-    ODatabaseDocumentInternal prev = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal prev = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       db.activateOnCurrentThread();
       resultSet.close();
@@ -62,9 +62,9 @@ public class DistributedQueryContext {
       ((OSharedContextEmbedded) ((ODatabaseInternal) db).getSharedContext()).getActiveDistributedQueries().remove(queryId);
     } finally {
       if (prev == null) {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
       } else {
-        ODatabaseRecordThreadLocal.INSTANCE.set(prev);
+        ODatabaseRecordThreadLocal.instance().set(prev);
       }
     }
   }

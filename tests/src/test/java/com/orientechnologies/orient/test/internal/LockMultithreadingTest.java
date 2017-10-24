@@ -47,7 +47,7 @@ public class LockMultithreadingTest {
     public Void call() throws Exception {
       Thread.currentThread().setName("Adder - " + Thread.currentThread().getId());
       countDownLatch.await();
-      ODatabaseRecordThreadLocal.INSTANCE.set(db);
+      ODatabaseRecordThreadLocal.instance().set(db);
       long value = createCounter.getAndIncrement();
       while (value < DOCUMENT_COUNT) {
         // because i like 7:)
@@ -77,7 +77,7 @@ public class LockMultithreadingTest {
           continue;
         }
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+        ODatabaseRecordThreadLocal.instance().set(db);
         List<ODocument> execute;
         System.out.println(Thread.currentThread() + " : before search cycle(update)" + updateCounter);
         do {
@@ -118,7 +118,7 @@ public class LockMultithreadingTest {
         //wait while necessary document will be created
         while (number > createCounter.get());
         try {
-          ODatabaseRecordThreadLocal.INSTANCE.set(db);
+          ODatabaseRecordThreadLocal.instance().set(db);
 
           List<ODocument> execute;
           System.out.println(Thread.currentThread() + " : before search cycle (delete) " + number);

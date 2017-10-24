@@ -144,7 +144,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OBinarySerializ
       final long pageIndex = LONG_SERIALIZER.deserializeNative(stream, offset + SBTREE_ROOTINDEX_OFFSET);
       final int pageOffset = INT_SERIALIZER.deserializeNative(stream, offset + SBTREE_ROOTOFFSET_OFFSET);
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
       final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable,
           (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
       return new OIndexRIDContainer(fileId, underlying, durable);
@@ -216,7 +216,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OBinarySerializ
       final int pageOffset = buffer.getInt();
 
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
       final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable,
           (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
       return new OIndexRIDContainer(fileId, underlying, durable);
@@ -260,7 +260,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OBinarySerializ
       final long pageIndex = walChanges.getLongValue(buffer, offset + SBTREE_ROOTINDEX_OFFSET);
       final int pageOffset = walChanges.getIntValue(buffer, offset + SBTREE_ROOTOFFSET_OFFSET);
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
       final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable,
           (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
       return new OIndexRIDContainer(fileId, underlying, durable);

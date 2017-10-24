@@ -1441,7 +1441,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           try {
 
             final List<ORecordOperation> result = txManager
-                .commit(ODatabaseRecordThreadLocal.INSTANCE.get(), iTx, callback, eventListener);
+                .commit(ODatabaseRecordThreadLocal.instance().get(), iTx, callback, eventListener);
 
             if (result != null) {
               for (ORecordOperation r : result) {
@@ -1974,7 +1974,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     if (OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError != null) {
 
       final OAsyncReplicationError subCallback = OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError;
-      final ODatabaseDocumentInternal currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocumentInternal currentDatabase = ODatabaseRecordThreadLocal.instance().get();
       final ODatabaseDocumentInternal copyDatabase = currentDatabase.copy();
       currentDatabase.activateOnCurrentThread();
 
@@ -2032,7 +2032,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
         @Override
         public Object call() throws Exception {
-          ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
           final boolean databaseAlreadyDefined;
 
           if (database == null) {
@@ -2104,7 +2104,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       return null;
 
     final OCluster cl = getClusterByName(clusterName);
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     final OClass cls = db.getMetadata().getSchema().getClassByClusterId(cl.getId());
     String newClusterName = null;
     if (cls != null) {

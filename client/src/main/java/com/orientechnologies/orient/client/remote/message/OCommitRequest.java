@@ -50,7 +50,7 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
-    ORecordSerializer serializer = ODatabaseRecordThreadLocal.INSTANCE.get().getSerializer();
+    ORecordSerializer serializer = ODatabaseRecordThreadLocal.instance().get().getSerializer();
     network.writeInt(txId);
     network.writeBoolean(usingLong);
 

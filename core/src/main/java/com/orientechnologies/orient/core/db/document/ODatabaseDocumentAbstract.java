@@ -823,7 +823,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     } finally {
       // ALWAYS RESET TL
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
     }
   }
 
@@ -2796,7 +2796,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public ODatabaseDocumentAbstract activateOnCurrentThread() {
-    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
+    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.instance();
     if (tl != null)
       tl.set(this);
     return this;
@@ -2804,7 +2804,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public boolean isActiveOnCurrentThread() {
-    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
+    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.instance();
     final ODatabaseDocumentInternal db = tl != null ? tl.getIfDefined() : null;
     return db == this;
   }
@@ -2927,7 +2927,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public void checkIfActive() {
-    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
+    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.instance();
     ODatabaseDocumentInternal currentDatabase = tl != null ? tl.get() : null;
     if (currentDatabase instanceof ODatabaseDocumentTx) {
       currentDatabase = ((ODatabaseDocumentTx) currentDatabase).internal;

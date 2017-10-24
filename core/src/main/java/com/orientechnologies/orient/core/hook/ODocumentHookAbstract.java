@@ -41,7 +41,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
 
   @Deprecated
   public ODocumentHookAbstract() {
-    this.database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    this.database = ODatabaseRecordThreadLocal.instance().get();
   }
 
   public ODocumentHookAbstract(ODatabaseDocument database) {

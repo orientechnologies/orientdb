@@ -90,7 +90,7 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
     final OEdge edge;
     if (value.isVertex()) {
       // DIRECT VERTEX, CREATE DUMMY EDGE
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
       OClass clazz = null;
       if (db != null && connection.getValue() != null) {
         clazz = db.getMetadata().getSchema().getClass(connection.getValue());

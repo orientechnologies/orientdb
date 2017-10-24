@@ -62,7 +62,7 @@ public class OHttpGraphResponse extends OHttpResponse {
     if (accept != null && accept.contains("text/csv"))
       throw new IllegalArgumentException("Graph mode cannot accept '" + accept + "'");
 
-    ODatabaseDocument graph = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocument graph = ODatabaseRecordThreadLocal.instance().get();
 
     try {
       // DIVIDE VERTICES FROM EDGES

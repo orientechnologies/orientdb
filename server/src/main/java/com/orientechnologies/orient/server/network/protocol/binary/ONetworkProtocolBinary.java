@@ -361,7 +361,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     } catch (RuntimeException e) {
       if (connection != null)
         server.getClientConnectionManager().disconnect(connection);
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       throw e;
     }
 
@@ -443,7 +443,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     } catch (RuntimeException e) {
       if (connection != null)
         server.getClientConnectionManager().disconnect(connection);
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       throw e;
     }
     return connection;
@@ -755,7 +755,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   public static byte[] getRecordBytes(OClientConnection connection, final ORecord iRecord) {
     final byte[] stream;
     String dbSerializerName = null;
-    if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
+    if (ODatabaseRecordThreadLocal.instance().getIfDefined() != null)
       dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
     String name = connection.getData().getSerializationImpl();
     if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
@@ -791,7 +791,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   protected static int trimCsvSerializedContent(OClientConnection connection, final byte[] stream) {
     int realLength = stream.length;
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null && db instanceof ODatabaseDocument) {
       if (ORecordSerializerSchemaAware2CSV.NAME.equals(connection.getData().getSerializationImpl())) {
         // TRIM TAILING SPACES (DUE TO OVERSIZE)

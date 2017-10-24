@@ -381,7 +381,7 @@ public class OEdgeDelegate implements OEdge {
     if (element != null) {
       return element.getDatabase();
     } else {
-      return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      return ODatabaseRecordThreadLocal.instance().getIfDefined();
     }
   }
 
