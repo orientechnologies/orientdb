@@ -188,7 +188,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     } catch (Exception t) {
       if (storage != null)
         Orient.instance().unregisterStorage(storage);
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
 
       throw OException.wrapException(new ODatabaseException("Error on opening database '" + iURL + "'"), t);
     }
@@ -543,7 +543,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       storage = null;
 
       status = STATUS.CLOSED;
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       clearOwner();
 
     } catch (OException e) {
@@ -559,7 +559,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * instance. The database copy is not set in thread local.
    */
   public ODatabaseDocumentTx copy() {
-    ODatabaseDocumentInternal dbInThreadLocal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal dbInThreadLocal = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (this.isClosed())
       throw new ODatabaseException("Cannot copy a closed db");
 
@@ -594,8 +594,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (dbInThreadLocal != null) {
       dbInThreadLocal.activateOnCurrentThread();
     } else {
-      if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+      if (ODatabaseRecordThreadLocal.instance().isDefined()) {
+        ODatabaseRecordThreadLocal.instance().remove();
       }
     }
 
@@ -1276,7 +1276,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     } finally {
       // ALWAYS RESET TL
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       clearOwner();
     }
   }
@@ -3165,7 +3165,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    */
   @Override
   public ODatabaseDocumentTx activateOnCurrentThread() {
-    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
+    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.instance();
     if (tl != null)
       tl.set(this);
     return this;
@@ -3173,7 +3173,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public boolean isActiveOnCurrentThread() {
-    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
+    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.instance();
     final ODatabaseDocumentInternal db = tl != null ? tl.getIfDefined() : null;
     return db == this;
   }
@@ -3418,7 +3418,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   public void checkIfActive() {
-    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
+    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.instance();
     final ODatabaseDocumentInternal currentDatabase = tl != null ? tl.getIfDefined() : null;
     if (currentDatabase != this)
       throw new IllegalStateException(

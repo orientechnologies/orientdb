@@ -53,7 +53,7 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
     ownerPool = (ODatabaseDocumentPool) iOwner;
     getLocalCache().invalidate();
     // getMetadata().reload();
-    ODatabaseRecordThreadLocal.INSTANCE.set(this);
+    ODatabaseRecordThreadLocal.instance().set(this);
 
     try {
       callOnOpenListeners();
@@ -138,7 +138,7 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
       localCopy.release(this);
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   public void forceClose() {

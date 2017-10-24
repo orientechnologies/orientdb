@@ -68,7 +68,7 @@ public class OHttpGraphResponse extends OHttpResponse {
       throw new IllegalArgumentException("Graph mode cannot accept '" + accept + "'");
 
     final OrientGraphNoTx graph = (OrientGraphNoTx) OrientGraphFactory.getNoTxGraphImplFactory()
-        .getGraph((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get());
+        .getGraph((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.instance().get());
 
     try {
       //all the edges in the result-set

@@ -621,7 +621,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         // USE THE EXISTENT
         lock.record = currentRecord;
       else if (rid.isPersistent()) {
-        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
         if (db != null)
           lock.record = db.getStorage().getUnderlying().readRecord((ORecordId) rid, null, false, false, null).getResult();
       }
@@ -704,7 +704,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         if (lockedCtx != null) {
           // CANCEL THE ENTIRE TX/CONTEXT/REQ-ID
 
-          lockedCtx.cancel(manager, ODatabaseRecordThreadLocal.INSTANCE.get());
+          lockedCtx.cancel(manager, ODatabaseRecordThreadLocal.instance().get());
 
         } else {
           // ABORT SINGLE REQUEST
@@ -723,7 +723,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         lock.record = currentRecord;
       else if (rid.isPersistent()) {
         // RELOAD IT
-        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
         if (db != null)
           lock.record = db.getStorage().getUnderlying().readRecord((ORecordId) rid, null, false, false, null).getResult();
       }

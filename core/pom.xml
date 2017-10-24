@@ -39,6 +39,8 @@
             com.sun.jna;resolution:=optional,
             org.xerial.snappy;resolution:=optional,
             sun.nio.ch;resolution:=optional,
+            com.orientechnologies.orient.server.distributed.impl;resolution:=optional,
+            com.orientechnologies.orient.server.distributed.impl.task;resolution:=optional,
             *
         </osgi.import>
         <osgi.export>com.orientechnologies.orient.core.*,

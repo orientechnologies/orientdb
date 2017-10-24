@@ -192,7 +192,7 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
   }
 
   private void createSchema(ODatabaseDocumentTx databaseDocumentTx) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(databaseDocumentTx);
 
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     OClass testOneClass = schema.createClass("TestOne");
@@ -229,7 +229,7 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
 
       Random random = new Random(seed);
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+      ODatabaseRecordThreadLocal.instance().set(baseDB);
 
       try {
         List<ORID> testTwoList = new ArrayList<ORID>();
@@ -305,19 +305,19 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
     }
 
     private void saveDoc(ODocument document) {
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+      ODatabaseRecordThreadLocal.instance().set(baseDB);
 
       ODocument testDoc = new ODocument();
       document.copyTo(testDoc);
       document.save();
 
       if (testDB != null) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+        ODatabaseRecordThreadLocal.instance().set(testDB);
         testDoc.save();
 
         Assert.assertEquals(testDoc.getIdentity(), document.getIdentity());
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+        ODatabaseRecordThreadLocal.instance().set(baseDB);
       }
     }
 
@@ -325,11 +325,11 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
       baseDB.delete(rid);
 
       if (testDB != null) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+        ODatabaseRecordThreadLocal.instance().set(testDB);
         Assert.assertNotNull(testDB.load(rid));
         testDB.delete(rid);
         Assert.assertNull(testDB.load(rid));
-        ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+        ODatabaseRecordThreadLocal.instance().set(baseDB);
       }
     }
   }

@@ -74,7 +74,7 @@ public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioTest extends
     ODatabaseDocumentTx dbServer0 = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
 
     // inserts record
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer0);
+    ODatabaseRecordThreadLocal.instance().set(dbServer0);
     ODocument recordServer0 = new ODocument("Person").fields("id", RECORD_ID, "firstName", "Han", "lastName", "Solo");
     recordServer0.save();
 

@@ -1992,7 +1992,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   @Override
   public OIndex<?> getAutoShardingIndex() {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     return db != null ? db.getMetadata().getIndexManager().getClassAutoShardingIndex(name) : null;
   }
 
@@ -2741,7 +2741,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   /**

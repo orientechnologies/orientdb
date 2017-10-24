@@ -46,7 +46,7 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
     this.changedValues = changedValues;
     this.collectionPointer = collectionPointer;
 
-    collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+    collectionManager = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
   }
 
   @Override

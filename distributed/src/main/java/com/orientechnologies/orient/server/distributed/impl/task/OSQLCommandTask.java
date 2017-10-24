@@ -180,7 +180,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
 
   @Override
   public ORemoteTask getUndoTask(ODistributedServerManager dManager, final ODistributedRequestId reqId, List<String> servers) {
-    final OCommandRequest cmd = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OCommandSQL(text));
+    final OCommandRequest cmd = ODatabaseRecordThreadLocal.instance().get().command(new OCommandSQL(text));
     OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) cmd);
     executor.parse(cmd);
 

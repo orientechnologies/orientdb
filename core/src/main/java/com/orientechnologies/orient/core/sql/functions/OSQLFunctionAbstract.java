@@ -102,6 +102,6 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
   }
 
   protected String getDistributedStorageId() {
-    return ((OAutoshardedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()).getStorageId();
+    return ((OAutoshardedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage()).getStorageId();
   }
 }

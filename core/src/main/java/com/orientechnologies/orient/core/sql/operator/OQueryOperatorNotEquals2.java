@@ -39,7 +39,7 @@ public class OQueryOperatorNotEquals2 extends OQueryOperatorEqualityNotNulls {
 
   public OQueryOperatorNotEquals2() {
     super("!=", 5, false);
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null)
       binaryEvaluate = db.getSerializer().getSupportBinaryEvaluate();
   }

@@ -312,9 +312,9 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     } finally {
 
       for (OrientBaseGraph db : dbs) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(db.getRawGraph());
+        ODatabaseRecordThreadLocal.instance().set(db.getRawGraph());
         db.getRawGraph().close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
       }
     }
   }

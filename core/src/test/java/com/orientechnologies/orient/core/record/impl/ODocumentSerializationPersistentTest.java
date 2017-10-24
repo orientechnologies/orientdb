@@ -78,7 +78,7 @@ public class ODocumentSerializationPersistentTest {
 
   @Test
   public void testRidBagInEmbeddedDocument() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument doc = new ODocument();
     ORidBag rids = new ORidBag();
     rids.add(new ORecordId(2, 3));

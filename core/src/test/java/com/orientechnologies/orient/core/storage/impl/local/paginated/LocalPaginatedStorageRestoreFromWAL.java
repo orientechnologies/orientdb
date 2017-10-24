@@ -196,7 +196,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
   }
 
   private void createSchema(ODatabaseDocumentTx databaseDocumentTx) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTx);
+    ODatabaseRecordThreadLocal.instance().set(databaseDocumentTx);
 
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     OClass testOneClass = schema.createClass("TestOne");

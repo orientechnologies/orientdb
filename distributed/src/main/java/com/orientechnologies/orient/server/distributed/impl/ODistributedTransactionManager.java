@@ -289,7 +289,7 @@ public class ODistributedTransactionManager {
         if (rid.getClusterId() < 1) {
           final String clusterName = ((OTransactionAbstract) iTx).getClusterName(op.getRecord());
           if (clusterName != null) {
-            newRid.setClusterId(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(clusterName));
+            newRid.setClusterId(ODatabaseRecordThreadLocal.instance().get().getClusterIdByName(clusterName));
             iTx.updateIdentityAfterCommit(rid, newRid);
           }
         }
@@ -625,7 +625,7 @@ public class ODistributedTransactionManager {
         OScenarioThreadLocal.executeAsDefault(new Callable<Object>() {
           @Override
           public Object call() throws Exception {
-            final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+            final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
             final ORecordOperation txEntry = db.getTransaction().getRecordEntry(rid);
 
             final ORecord record;

@@ -51,12 +51,12 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
 
   public ORecordBytes(final ODatabaseDocumentInternal iDatabase) {
     setup();
-    ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
+    ODatabaseRecordThreadLocal.instance().set(iDatabase);
   }
 
   public ORecordBytes(final ODatabaseDocumentInternal iDatabase, final byte[] iSource) {
     this(iSource);
-    ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
+    ODatabaseRecordThreadLocal.instance().set(iDatabase);
   }
 
   public ORecordBytes(final byte[] iSource) {

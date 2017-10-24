@@ -138,13 +138,13 @@ public class IsolatedNodeRejoinScenarioTest extends AbstractScenarioTest {
   @Override
   protected ODocument retrieveRecord(String dbUrl, String uniqueId) {
     ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+    ODatabaseRecordThreadLocal.instance().set(dbServer);
     List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Hero where id = '" + uniqueId + "'"));
     if (result.size() == 0)
       fail("No record found with id = '" + uniqueId + "'!");
     else if (result.size() > 1)
       fail(result.size() + " records found with id = '" + uniqueId + "'!");
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    ODatabaseRecordThreadLocal.instance().set(null);
     return result.get(0);
   }
 

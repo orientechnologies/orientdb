@@ -89,7 +89,7 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
 
       // writes on server3 (remote access) while a task is monitoring the inserted records amount and shutdown server
       // after 1/3 of total number of records to insert, and restarting it when 2/3 of records were inserted.
-      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      ODatabaseRecordThreadLocal.instance().set(null);
       Callable shutdownAndRestartTask = new ShutdownAndRestartServer(serverInstance.get(2), dbServerUrl1, "net-fault");
       final ExecutorService executor = Executors.newSingleThreadExecutor();
       Future f = executor.submit(shutdownAndRestartTask);
@@ -101,7 +101,7 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
       waitForMultipleInsertsInClassPropagation(500L, "Person", 5000L);
 
       // preliminar check
-      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
+      ODatabaseRecordThreadLocal.instance().set(dbServer3);
       result = dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
       assertEquals(500, result.size());
 
@@ -115,9 +115,9 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
     } finally {
 
       if(!dbServer3.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
+        ODatabaseRecordThreadLocal.instance().set(dbServer3);
         dbServer3.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
       }
     }
   }
@@ -159,7 +159,7 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
       while (true) {
 
         // check inserted record amount
-        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+        ODatabaseRecordThreadLocal.instance().set(dbServer1);
         long insertedRecords = dbServer1.countClass("Person");
 
         if(insertedRecords > 2*totalNumberOfRecordsToInsert/3) {

@@ -1164,7 +1164,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (status != NODE_STATUS.ONLINE)
       return;
 
-    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
 
       final String dbName = iDatabase.getName();
@@ -1230,7 +1230,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     } finally {
       // RESTORE ORIGINAL DATABASE INSTANCE IN TL
-      ODatabaseRecordThreadLocal.INSTANCE.set(currDb);
+      ODatabaseRecordThreadLocal.instance().set(currDb);
     }
   }
 

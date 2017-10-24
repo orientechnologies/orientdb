@@ -80,7 +80,7 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
         .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "%s transaction db=%s originalReqId=%s...",
             (success ? "Committing" : fixTasks.isEmpty() ? "Rolling back" : "Fixing"), database.getName(), requestId, requestId);
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    ODatabaseRecordThreadLocal.instance().set(database);
 
     // UNLOCK ALL LOCKS ACQUIRED IN TX
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());

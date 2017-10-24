@@ -61,7 +61,7 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
     Thread.sleep(1000);
 
     // checking the db was created both on server2 and server3
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    ODatabaseRecordThreadLocal.instance().set(null);
     ODatabaseDocumentTx dbServer2 = poolFactory.get(url2, "admin", "admin").acquire();
     try {
       assertNotNull(dbServer2);
@@ -74,7 +74,7 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
       dbServer2.close();
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    ODatabaseRecordThreadLocal.instance().set(null);
     ODatabaseDocumentTx dbServer3 = poolFactory.get(url3, "admin", "admin").acquire();
     try {
       assertNotNull(dbServer3);

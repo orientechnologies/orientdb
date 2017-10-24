@@ -569,7 +569,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         } catch (Exception ex) {
           OLogManager.instance().error(this, "securityRecordChange() Exception: ", ex);
         }
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
       }
     });
 

@@ -117,7 +117,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
 
     // inserting record r1 and checking consistency on server1 and server2
     System.out.print("Inserting record r1 and on server1 and checking consistency on both server1 and server2...");
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+    ODatabaseRecordThreadLocal.instance().set(dbServer1);
     ODocument r1onServer1 = new ODocument("Person").fields("id", "R001", "firstName", "Han", "lastName", "Solo");
     r1onServer1.save();
     Thread.sleep(200);
@@ -171,11 +171,11 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
     r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
     ODocument r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001");
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+    ODatabaseRecordThreadLocal.instance().set(dbServer1);
     r1onServer1.reload();
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer2);
+    ODatabaseRecordThreadLocal.instance().set(dbServer2);
     r1onServer2.reload();
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
+    ODatabaseRecordThreadLocal.instance().set(dbServer3);
     r1onServer3.reload();
 
     /**

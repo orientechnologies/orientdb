@@ -60,7 +60,7 @@ public class ORepairClusterTask extends OTxTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
         "Repair cluster: repairing cluster '%s' db=%s (reqId=%s)...", clusterName, database.getName(), requestId);
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    ODatabaseRecordThreadLocal.instance().set(database);
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
 
     // CREATE A CONTEXT OF TX

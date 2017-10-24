@@ -850,7 +850,7 @@ public abstract class OStringSerializerHelper {
         .indexOfOutsideStrings(iValue, OStringSerializerHelper.CLASS_SEPARATOR.charAt(0), 0, -1);
     if (classSeparatorPos > -1) {
       final String className = iValue.substring(0, classSeparatorPos);
-      final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().get();
       if (className != null && database != null)
         iLinkedClass = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
     }

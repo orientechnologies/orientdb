@@ -336,7 +336,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
         if (exec.involveSchema())
           // UPDATE THE SCHEMA
-          dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
+          dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.instance().get());
 
         break;
       }
@@ -1407,7 +1407,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           try {
 
             final List<ORecordOperation> result = txManager
-                .commit((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get(), iTx, callback, eventListener);
+                .commit((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.instance().get(), iTx, callback, eventListener);
 
             if (result != null) {
               for (ORecordOperation r : result) {
@@ -1946,7 +1946,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     if (OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError != null) {
 
       final OAsyncReplicationError subCallback = OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError;
-      final ODatabaseDocumentTx currentDatabase = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocumentTx currentDatabase = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.instance().get();
       final ODatabaseDocumentTx copyDatabase = currentDatabase.copy();
       currentDatabase.activateOnCurrentThread();
 
@@ -2004,7 +2004,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
         @Override
         public Object call() throws Exception {
-          ODatabaseDocumentTx database = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          ODatabaseDocumentTx database = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.instance().getIfDefined();
           final boolean databaseAlreadyDefined;
 
           if (database == null) {
@@ -2078,7 +2078,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       return null;
 
     final OCluster cl = getClusterByName(clusterName);
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     final OClass cls = db.getMetadata().getSchema().getClassByClusterId(cl.getId());
     String newClusterName = null;
     if (cls != null) {

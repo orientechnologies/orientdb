@@ -96,7 +96,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       final ODocument metadata, final int version, final OStorage storage) {
     acquireExclusiveLock();
     try {
-      databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
+      databaseName = ODatabaseRecordThreadLocal.instance().get().getName();
 
       this.version = version;
       this.name = name;
@@ -1016,7 +1016,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   protected long[] indexCluster(final String clusterName, final OProgressListener iProgressListener, long documentNum,

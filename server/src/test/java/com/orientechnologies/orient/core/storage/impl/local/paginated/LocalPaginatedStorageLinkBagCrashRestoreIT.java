@@ -181,14 +181,14 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
       for (OPhysicalPosition physicalPosition : physicalPositions) {
         rid.setClusterPosition(physicalPosition.clusterPosition);
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
+        ODatabaseRecordThreadLocal.instance().set(base_db);
         ODocument baseDocument = base_db.load(rid);
         baseDocument.setLazyLoad(false);
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
+        ODatabaseRecordThreadLocal.instance().set(test_db);
         ODocument testDocument = test_db.load(rid);
         if (testDocument == null) {
-          ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
+          ODatabaseRecordThreadLocal.instance().set(base_db);
           if (((Long) baseDocument.field("ts")) < minTs)
             minTs = baseDocument.field("ts");
         } else {
@@ -196,24 +196,24 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
           long baseTs;
           long testTs;
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
+          ODatabaseRecordThreadLocal.instance().set(base_db);
           baseTs = baseDocument.field("ts");
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
+          ODatabaseRecordThreadLocal.instance().set(test_db);
           testTs = testDocument.field("ts");
 
           boolean equals = baseTs == testTs;
 
           if (equals) {
             Set<ORID> baseRids = new HashSet<ORID>();
-            ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
+            ODatabaseRecordThreadLocal.instance().set(base_db);
             ORidBag baseRidBag = baseDocument.field("ridBag");
 
             for (OIdentifiable baseIdentifiable : baseRidBag)
               baseRids.add(baseIdentifiable.getIdentity());
 
             Set<ORID> testRids = new HashSet<ORID>();
-            ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
+            ODatabaseRecordThreadLocal.instance().set(test_db);
             ORidBag testRidBag = testDocument.field("ridBag");
 
             for (OIdentifiable testIdentifiable : testRidBag)

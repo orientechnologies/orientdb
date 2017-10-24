@@ -541,7 +541,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRid, final byte[] iContent,
       final int iRecordVersion, final byte iRecordType, final int iMode, final ORecordCallback<Long> iCallback) {
 
-    final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+    final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
     ORecordCallback<OPhysicalPosition> realCallback = null;
     if (iCallback != null) {
       realCallback = new ORecordCallback<OPhysicalPosition>() {
@@ -663,7 +663,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           byte[] bytes = network.readBytes();
           ORawBuffer buffer = new ORawBuffer(bytes, recVersion, type);
 
-          final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().getIfDefined();
           ORecord record;
 
           while (network.readByte() == 2) {
@@ -722,7 +722,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             buffer = new ORawBuffer(bytes, recVersion, type);
           }
 
-          final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().getIfDefined();
           ORecord record;
           while (network.readByte() == 2) {
             record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
@@ -772,7 +772,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   public OStorageOperationResult<Integer> updateRecord(final ORecordId iRid, final boolean updateContent, final byte[] iContent,
       final int iVersion, final byte iRecordType, final int iMode, final ORecordCallback<Integer> iCallback) {
-    final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+    final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
 
     Integer resVersion = asyncNetworkOperation(new OStorageRemoteOperationWrite() {
       @Override
@@ -1175,7 +1175,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     if (!(iCommand instanceof OSerializableStream))
       throw new OCommandExecutionException("Cannot serialize the command to be executed to the server side.");
     final boolean live = iCommand instanceof OLiveQuery;
-    final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().get();
 
     return networkOperation(new OStorageRemoteOperation<Object>() {
       @Override
@@ -1245,7 +1245,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                       OStorageRemote.this.asynchEventListener.unregisterLiveListener(token);
                   } else {
                     final OLiveResultListener listener = (OLiveResultListener) iCommand.getResultListener();
-                    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.INSTANCE.get();
+                    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().get();
                     final ODatabaseDocument dbCopy = current.copy();
                     ORemoteConnectionPool pool = OStorageRemote.this.connectionManager.getPool(network.getServerURL());
                     OStorageRemote.this.asynchEventListener.registerLiveListener(pool, token, new OLiveResultListener() {
@@ -1432,7 +1432,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             updatedRecordsMap.clear();
 
             if (collectionChanges != null)
-              updateCollection(collectionChanges, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+              updateCollection(collectionChanges, ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager());
 
           } finally {
             endResponse(network);
@@ -2557,7 +2557,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   protected OStorageRemoteSession getCurrentSession() {
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db == null)
       return null;
     OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(db);
@@ -2581,7 +2581,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   @Override
   public OStorageRemote copy(final ODatabaseDocumentTx source, final ODatabaseDocumentTx dest) {
-    ODatabaseDocumentInternal origin = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal origin = ODatabaseRecordThreadLocal.instance().getIfDefined();
 
     final OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(source);
     if (session != null) {
@@ -2597,7 +2597,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } catch (IOException e) {
       OLogManager.instance().error(this, "Can not open remote database", e);
     } finally {
-      ODatabaseRecordThreadLocal.INSTANCE.set(origin);
+      ODatabaseRecordThreadLocal.instance().set(origin);
     }
     return this;
   }

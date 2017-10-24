@@ -83,7 +83,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
 
       // inserting record r1 and checking consistency on all the servers
       try {
-        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+        ODatabaseRecordThreadLocal.instance().set(dbServer1);
 
         System.out.print("Inserting record r1...");
         new ODocument("Person").fields("id", "R001", "firstName", "Luke", "lastName", "Skywalker").save();

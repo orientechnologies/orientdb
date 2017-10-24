@@ -71,7 +71,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     init((ORecordId) record.getIdentity(), record.toStream(), record.getVersion() - 1, ORecordInternal.getRecordType(record));
 
     if (rid.getClusterId() == ORID.CLUSTER_ID_INVALID) {
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
       clusterId = db.assignAndCheckCluster(record, null);
       // RESETTING FOR AVOID DESERIALIZATION ISSUE.
       ((ORecordId) record.getIdentity()).setClusterId(ORID.CLUSTER_ID_INVALID);
@@ -110,7 +110,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     if (!rid.isPersistent())
       throw new ODistributedException("Record " + rid + " has not been saved on owner node first (temporary rid)");
 
-    final OPaginatedCluster cluster = (OPaginatedCluster) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+    final OPaginatedCluster cluster = (OPaginatedCluster) ODatabaseRecordThreadLocal.instance().get().getStorage()
         .getClusterById(rid.getClusterId());
     final OPaginatedCluster.RECORD_STATUS recordStatus = cluster.getRecordStatus(rid.getClusterPosition());
 
@@ -123,7 +123,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     case REMOVED: {
       // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
       getRecord();
-      ODatabaseRecordThreadLocal.INSTANCE.get().recycle(record);
+      ODatabaseRecordThreadLocal.instance().get().recycle(record);
     }
 
     case ALLOCATED:
@@ -222,7 +222,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             // SAME SERVER: LOAD THE RECORD FROM ANOTHER NODE
             final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(iRequest.getDatabaseName());
             final List<String> nodes = dCfg
-                .getServers(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(clusterId), dManager.getLocalNodeName());
+                .getServers(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(clusterId), dManager.getLocalNodeName());
 
             final OReadRecordTask task = (OReadRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
                 .createTask(OReadRecordTask.FACTORYID);
@@ -247,7 +247,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             try {
               new OFixUpdateRecordTask().init(toUpdateRid, toUpdateRecord.toStream(), toUpdateRecord.getVersion(),
                   ORecordInternal.getRecordType(toUpdateRecord))
-                  .execute(iRequest.getId(), dManager.getServerInstance(), dManager, ODatabaseRecordThreadLocal.INSTANCE.get());
+                  .execute(iRequest.getId(), dManager.getServerInstance(), dManager, ODatabaseRecordThreadLocal.instance().get());
             } catch (Exception e) {
               throw OException.wrapException(
                   new ODistributedOperationException("Cannot create record " + rid + " because assigned RID is different"), e);

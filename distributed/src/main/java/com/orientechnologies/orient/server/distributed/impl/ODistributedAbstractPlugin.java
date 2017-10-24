@@ -295,7 +295,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (status != NODE_STATUS.ONLINE && status != NODE_STATUS.STARTING)
       return;
 
-    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       final String dbName = iDatabase.getName();
 
@@ -333,7 +333,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     } finally {
       // RESTORE ORIGINAL DATABASE INSTANCE IN TL
-      ODatabaseRecordThreadLocal.INSTANCE.set(currDb);
+      ODatabaseRecordThreadLocal.instance().set(currDb);
     }
   }
 
@@ -560,7 +560,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     final ODistributedRequest req = new ODistributedRequest(this, nodeId, reqId, iDatabaseName, iTask);
 
-    final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (currentDatabase != null && currentDatabase.getUser() != null)
       // SET CURRENT DATABASE NAME
       req.setUserRID((ORecordId) currentDatabase.getUser().getIdentity().getIdentity());

@@ -83,7 +83,7 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
     if (!iClass.equals(cls))
       throw new IllegalArgumentException("Class '" + iClass + "' is different than the configured one: " + cls);
 
-    final OStorage storage = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage();
+    final OStorage storage = ODatabaseRecordThreadLocal.instance().get().getStorage();
     if (!(storage instanceof ODistributedStorage))
       throw new IllegalStateException("Storage is not distributed");
 
@@ -127,7 +127,7 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
     if (cls.isAbstract())
       throw new IllegalArgumentException("Cannot create a new instance of abstract class");
 
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
 
     int[] clusterIds = cls.getClusterIds();
     final List<String> clusterNames = new ArrayList<String>(clusterIds.length);

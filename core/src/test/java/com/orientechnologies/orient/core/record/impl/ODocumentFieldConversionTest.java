@@ -74,7 +74,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testDateToSchemaConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     Calendar calendare = Calendar.getInstance();
     calendare.set(Calendar.MILLISECOND, 0);
     Date date = calendare.getTime();
@@ -101,12 +101,12 @@ public class ODocumentFieldConversionTest {
     assertTrue(doc.field("date") instanceof Date);
     assertEquals(20304L, ((Date) doc.field("date")).getTime());
 
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testLiteralToSchemaConvertionInteger() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument doc = new ODocument(clazz);
     doc.field("integer", 2L);
     assertTrue(doc.field("integer") instanceof Integer);
@@ -131,13 +131,13 @@ public class ODocumentFieldConversionTest {
     // doc.field("integer", true);
     // assertTrue(doc.field("integer") instanceof Integer);
     // assertEquals(1, doc.field("integer"));
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
 
   }
 
   @Test
   public void testLiteralToSchemaConvertionString() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("string", 1);
@@ -163,12 +163,12 @@ public class ODocumentFieldConversionTest {
     doc.field("string", true);
     assertTrue(doc.field("string") instanceof String);
     assertEquals("true", doc.field("string"));
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testLiteralToSchemaConvertionFloat() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("float", 1);
@@ -194,12 +194,12 @@ public class ODocumentFieldConversionTest {
     // doc.field("float", true);
     // assertTrue(doc.field("float") instanceof Float);
     // assertEquals(1f, doc.field("float"));
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testLiteralToSchemaConvertionDouble() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("double", 1);
@@ -225,12 +225,12 @@ public class ODocumentFieldConversionTest {
     // doc.field("double", true);
     // assertTrue(doc.field("double") instanceof Double);
     // assertEquals(1d, doc.field("double"));
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testLiteralToSchemaConvertionLong() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("long", 1);
@@ -256,12 +256,12 @@ public class ODocumentFieldConversionTest {
     // doc.field("long", true);
     // assertTrue(doc.field("long") instanceof Long);
     // assertEquals(1, doc.field("long"));
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testLiteralToSchemaConvertionBoolean() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("boolean", 0);
@@ -287,12 +287,12 @@ public class ODocumentFieldConversionTest {
     doc.field("boolean", new BigDecimal("6"));
     assertTrue(doc.field("boolean") instanceof Boolean);
     assertEquals(true, doc.field("boolean"));
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testLiteralToSchemaConvertionDecimal() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("decimal", 0);
@@ -318,12 +318,12 @@ public class ODocumentFieldConversionTest {
     doc.field("boolean", new BigDecimal("6"));
     assertTrue(doc.field("boolean") instanceof Boolean);
     assertEquals(true, doc.field("boolean"));
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testConversionAlsoWithWrongType() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("float", 2, OType.INTEGER);
@@ -341,12 +341,12 @@ public class ODocumentFieldConversionTest {
     doc.field("long", 1d, OType.DOUBLE);
     assertTrue(doc.field("long") instanceof Long);
     assertEquals(1L, doc.field("long"));
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testLiteralConversionAfterSchemaSet() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     ODocument doc = new ODocument();
 
     doc.field("float", 1);
@@ -380,13 +380,13 @@ public class ODocumentFieldConversionTest {
     assertTrue(doc.field("date") instanceof Date);
     assertEquals(20304L, ((Date) doc.field("date")).getTime());
 
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @SuppressWarnings({ "rawtypes" })
   @Test
   public void testListByteCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("byteList", values);
@@ -409,13 +409,13 @@ public class ODocumentFieldConversionTest {
     for (int i = 1; i < 7; i++) {
       assertTrue(set.contains((byte) i));
     }
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   @SuppressWarnings({ "rawtypes" })
   public void testCollectionIntegerCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("integerList", values);
@@ -439,13 +439,13 @@ public class ODocumentFieldConversionTest {
       assertTrue(set.contains(i));
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   @SuppressWarnings({ "rawtypes" })
   public void testCollectionLongCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("longList", values);
@@ -469,13 +469,13 @@ public class ODocumentFieldConversionTest {
       assertTrue(set.contains((long) i));
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public void testCollectionBooleanCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("booleanList", values);
@@ -512,13 +512,13 @@ public class ODocumentFieldConversionTest {
     assertEquals(1, set.size());
     assertTrue(set.iterator().next() instanceof Boolean);
     assertTrue((Boolean) set.iterator().next());
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public void testCollectionStringCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("stringList", values);
@@ -553,7 +553,7 @@ public class ODocumentFieldConversionTest {
       }
       assertTrue(contain);
     }
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -571,7 +571,7 @@ public class ODocumentFieldConversionTest {
   @Test
   @SuppressWarnings({ "rawtypes" })
   public void testCollectionFloatCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("floatList", values);
@@ -596,7 +596,7 @@ public class ODocumentFieldConversionTest {
       assertTrue(set.contains(new Float(i)));
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -615,7 +615,7 @@ public class ODocumentFieldConversionTest {
   @Test
   @SuppressWarnings({ "rawtypes" })
   public void testCollectionDoubleCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("doubleList", values);
@@ -640,13 +640,13 @@ public class ODocumentFieldConversionTest {
       assertTrue(set.contains(new Double(i)));
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   @SuppressWarnings({ "rawtypes" })
   public void testCollectionDecimalCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("decimalList", values);
@@ -676,13 +676,13 @@ public class ODocumentFieldConversionTest {
       assertTrue(contain);
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public void testCollectionDateCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("dateList", values);
@@ -716,12 +716,12 @@ public class ODocumentFieldConversionTest {
       assertTrue(set.contains(new Date(i)));
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testMapIntegerConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("integerMap", values);
@@ -732,12 +732,12 @@ public class ODocumentFieldConversionTest {
       assertTrue(val instanceof Integer);
       assertEquals((Integer) 1, val);
     }
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testMapLongConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("longMap", values);
@@ -748,12 +748,12 @@ public class ODocumentFieldConversionTest {
       assertTrue(val instanceof Long);
       assertEquals((Long) 1L, val);
     }
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testMapByteConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("byteMap", values);
@@ -764,12 +764,12 @@ public class ODocumentFieldConversionTest {
       assertTrue(val instanceof Byte);
       assertEquals((byte) 1, val);
     }
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testMapFloatConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("floatMap", values);
@@ -780,12 +780,12 @@ public class ODocumentFieldConversionTest {
       assertTrue(val instanceof Float);
       assertEquals((Float) 1f, val);
     }
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testMapDoubleConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("doubleMap", values);
@@ -796,12 +796,12 @@ public class ODocumentFieldConversionTest {
       assertTrue(val instanceof Double);
       assertEquals((Double) 1d, val);
     }
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testMapDecimalConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("decimalMap", values);
@@ -812,12 +812,12 @@ public class ODocumentFieldConversionTest {
       assertTrue(val instanceof BigDecimal);
       assertTrue(val.toString().contains("1"));
     }
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testMapStringConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("stringMap", values);
@@ -828,12 +828,12 @@ public class ODocumentFieldConversionTest {
       assertTrue(val instanceof String);
       assertTrue(val.toString().contains("1"));
     }
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @Test
   public void testMapDateConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODatabaseRecordThreadLocal.instance().set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("dateMap", values);
@@ -850,7 +850,7 @@ public class ODocumentFieldConversionTest {
       assertTrue(val instanceof Date);
       assertEquals(1, ((Date) val).getTime());
     }
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   private void fillMap(Map<String, Object> values) {

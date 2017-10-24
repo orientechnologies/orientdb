@@ -122,7 +122,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
       return;
     }
-    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
 
     final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
     Directory dir = null;

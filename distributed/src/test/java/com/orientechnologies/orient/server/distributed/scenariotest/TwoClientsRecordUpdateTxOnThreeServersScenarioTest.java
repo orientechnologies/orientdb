@@ -87,7 +87,7 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioTest extends Abstract
     ODatabaseDocumentTx dbServer1 = poolFactory.get(getDatabaseURL(serverInstance.get(1)), "admin", "admin").acquire();
 
     // inserts record
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer0);
+    ODatabaseRecordThreadLocal.instance().set(dbServer0);
     ODocument recordServer0 = new ODocument("Person").fromMap(hanFields);
     recordServer0.save();
 

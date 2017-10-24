@@ -97,7 +97,7 @@ public class OLogManager {
     if (iMessage != null) {
       try {
         final ODatabaseDocumentInternal db =
-            ODatabaseRecordThreadLocal.INSTANCE != null ? ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() : null;
+            ODatabaseRecordThreadLocal.instance() != null ? ODatabaseRecordThreadLocal.instance().getIfDefined() : null;
         if (db != null && db.getStorage() != null && db.getStorage() instanceof OAbstractPaginatedStorage) {
           final String dbName = db.getStorage().getName();
           if (dbName != null)

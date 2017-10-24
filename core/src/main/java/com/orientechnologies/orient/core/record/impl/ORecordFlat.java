@@ -43,7 +43,7 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
 
   public ORecordFlat(ODatabaseDocumentInternal iDatabase) {
     this();
-    ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
+    ODatabaseRecordThreadLocal.instance().set(iDatabase);
   }
 
   public ORecordFlat() {

@@ -58,6 +58,6 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
   @Override
   protected void afterExecution() throws InterruptedException {
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 }

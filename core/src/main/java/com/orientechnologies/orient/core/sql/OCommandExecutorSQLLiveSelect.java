@@ -104,7 +104,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
 
   public void onLiveResult(final ORecordOperation iOp) {
 
-    ODatabaseDocumentInternal oldThreadLocal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal oldThreadLocal = ODatabaseRecordThreadLocal.instance().getIfDefined();
     execDb.activateOnCurrentThread();
 
     try {
@@ -121,9 +121,9 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
       }
     } finally {
       if (oldThreadLocal == null) {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
       } else {
-        ODatabaseRecordThreadLocal.INSTANCE.set(oldThreadLocal);
+        ODatabaseRecordThreadLocal.instance().set(oldThreadLocal);
       }
     }
     final OCommandResultListener listener = request.getResultListener();
@@ -139,14 +139,14 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
   }
 
   protected void execInSeparateDatabase(final OCallable iCallback) {
-    final ODatabaseDocumentInternal prevDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal prevDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       iCallback.call(null);
     } finally {
       if (prevDb != null) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(prevDb);
+        ODatabaseRecordThreadLocal.instance().set(prevDb);
       } else {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
       }
     }
   }
@@ -217,13 +217,13 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     }
 
     if (execDb != null) {
-      ODatabaseDocumentInternal oldThreadDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      ODatabaseDocumentInternal oldThreadDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
       execDb.activateOnCurrentThread();
       execDb.close();
       if (oldThreadDB == null) {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
       } else {
-        ODatabaseRecordThreadLocal.INSTANCE.set(oldThreadDB);
+        ODatabaseRecordThreadLocal.instance().set(oldThreadDB);
       }
     }
   }

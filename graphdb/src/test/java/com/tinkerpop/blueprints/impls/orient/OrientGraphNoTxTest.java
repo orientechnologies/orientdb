@@ -86,7 +86,7 @@ public class OrientGraphNoTxTest extends GraphTest {
       if (graph.isClosed())
         currentGraphs.remove(url);
       else {
-        ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());
+        ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());
         return graph;
       }
     }

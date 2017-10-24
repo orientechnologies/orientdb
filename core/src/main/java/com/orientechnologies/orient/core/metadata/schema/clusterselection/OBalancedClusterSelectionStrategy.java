@@ -37,7 +37,7 @@ public class OBalancedClusterSelectionStrategy implements OClusterSelectionStrat
       // ONLY ONE: RETURN THE FIRST ONE
       return clusters[0];
 
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db == null)
       return clusters[0];
 

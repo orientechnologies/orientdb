@@ -57,7 +57,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       final OCommandContext iContext) {
-    final ODatabaseDocumentTx db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+    final ODatabaseDocumentTx db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.instance().get());
 
     result = new ArrayList<Object>();
 

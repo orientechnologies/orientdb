@@ -653,7 +653,7 @@ public class ODocument extends ORecordAbstract
   }
 
   public boolean hasSameContentOf(final ODocument iOther) {
-    final ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     return ODocumentHelper.hasSameContentOf(this, currentDb, iOther, currentDb, null);
   }
 
@@ -731,8 +731,8 @@ public class ODocument extends ORecordAbstract
   public String[] fieldNames() {
     checkForLoading();
 
-    if (_status == ORecordElement.STATUS.LOADED && _source != null && ODatabaseRecordThreadLocal.INSTANCE.isDefined()
-        && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()) {
+    if (_status == ORecordElement.STATUS.LOADED && _source != null && ODatabaseRecordThreadLocal.instance().isDefined()
+        && !ODatabaseRecordThreadLocal.instance().get().isClosed()) {
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
       final String[] fieldNames = _recordFormat.getFieldNames(this, _source);
       if (fieldNames != null)
@@ -823,7 +823,7 @@ public class ODocument extends ORecordAbstract
     RET value = this.rawField(iFieldName);
 
     if (!iFieldName.startsWith("@") && _lazyLoad && value instanceof ORID && (((ORID) value).isPersistent() || ((ORID) value)
-        .isNew()) && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
+        .isNew()) && ODatabaseRecordThreadLocal.instance().isDefined()) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
       RET newValue = (RET) getDatabase().load((ORID) value);
       if (newValue != null) {
@@ -1563,7 +1563,7 @@ public class ODocument extends ORecordAbstract
    */
   @Override
   public ODocument reset() {
-    ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null && db.getTransaction().isActive())
       throw new IllegalStateException("Cannot reset documents during a transaction. Create a new one each time");
 
@@ -2028,7 +2028,7 @@ public class ODocument extends ORecordAbstract
 
     autoConvertValues();
 
-    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !getDatabase().isValidationEnabled())
+    if (ODatabaseRecordThreadLocal.instance().isDefined() && !getDatabase().isValidationEnabled())
       return;
 
     final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
@@ -2632,7 +2632,7 @@ public class ODocument extends ORecordAbstract
   protected void setup() {
     super.setup();
 
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null)
       _recordFormat = db.getSerializer();
 
@@ -2671,7 +2671,7 @@ public class ODocument extends ORecordAbstract
 
   private void fetchSchemaIfCan() {
     if (_schema == null) {
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
       if (db != null && !db.isClosed()) {
         OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
         _schema = metadata.getImmutableSchemaSnapshot();

@@ -14,7 +14,7 @@ import org.junit.Before;
 public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
   @Before
   public void createDatabase() throws Exception {
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
 
     super.startServer();
     Assert.assertEquals(

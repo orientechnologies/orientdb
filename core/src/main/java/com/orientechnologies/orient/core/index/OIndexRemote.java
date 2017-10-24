@@ -82,7 +82,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     this.indexDefinition = iIndexDefinition;
     this.configuration = iConfiguration;
     this.clustersToIndex = new HashSet<String>(clustersToIndex);
-    this.databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
+    this.databaseName = ODatabaseRecordThreadLocal.instance().get().getName();
   }
 
   public OIndexRemote<T> create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
@@ -479,6 +479,6 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 }

@@ -310,7 +310,7 @@ public class OLuceneIndexCrashRestoreIT {
           }
           int nameIdx = (int) (id % names.size());
 
-          ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+          ODatabaseRecordThreadLocal.instance().set(testDB);
           for (int i = 0; i < 10; i++) {
             String insert = "insert into person (name) values ('" + names.get(nameIdx) + "')";
             testDB.command(new OCommandSQL(insert)).execute();

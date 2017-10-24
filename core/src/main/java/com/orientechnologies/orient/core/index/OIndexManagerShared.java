@@ -352,7 +352,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     if (rebuildCompleted)
       return false;
 
-    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
     final OStorage storage = database.getStorage().getUnderlying();
     if (storage instanceof OAbstractPaginatedStorage) {
       OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
