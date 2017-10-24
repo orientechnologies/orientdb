@@ -599,83 +599,81 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     EdgeTraversal currentEdge = executionPlan.sortedEdges.get(matchContext.currentEdgeNumber);
     PatternNode rootNode = currentEdge.out ? currentEdge.edge.out : currentEdge.edge.in;
 
-    if (currentEdge.out) {
+    if (currentEdge.out || !currentEdge.edge.item.isBidirectional()) {
       PatternEdge outEdge = currentEdge.edge;
 
       if (!matchContext.matchedEdges.containsKey(outEdge)) {
 
-        OIdentifiable startingPoint = matchContext.matched.get(outEdge.out.alias);
-        if (startingPoint == null) {
-          //restart from candidates (disjoint patterns? optional? just could not proceed from last node?)
-          Iterable rightCandidates = matchContext.candidates.get(outEdge.out.alias);
-          if (rightCandidates != null) {
-            if (!processContextFromCandidates(pattern, executionPlan, matchContext, aliasClasses, aliasFilters, aliasRids,
-                iCommandContext, request, rightCandidates, outEdge.out.alias, matchContext.currentEdgeNumber)) {
+        String alias = outEdge.out.alias;
+        Iterable<OIdentifiable> startingElems = getPossibleIdentifiablesForAlias(matchContext, aliasClasses, aliasFilters,
+            aliasRids, iCommandContext, alias);
+
+        for (OIdentifiable elem : startingElems) {
+          Object rightValues = outEdge.executeTraversal(matchContext, iCommandContext, elem, 0);
+
+          if (outEdge.in.isOptionalNode() && (isEmptyResult(rightValues) || !contains(rightValues,
+              matchContext.matched.get(outEdge.in.alias)))) {
+            MatchContext childContext = matchContext.copy(outEdge.in.alias, null);
+            childContext.matched.put(alias, elem.getIdentity());
+            childContext.matched.put(outEdge.in.alias, null);
+            childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1; //TODO testOptional 3 match passa con +1
+            childContext.matchedEdges.put(outEdge, true);
+
+            if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+                request)) {
               return false;
             }
           }
-          return true;
-        }
-        Object rightValues = outEdge.executeTraversal(matchContext, iCommandContext, startingPoint, 0);
-
-        if (outEdge.in.isOptionalNode() && (isEmptyResult(rightValues) || !contains(rightValues,
-            matchContext.matched.get(outEdge.in.alias)))) {
-          MatchContext childContext = matchContext.copy(outEdge.in.alias, null);
-          childContext.matched.put(outEdge.in.alias, null);
-          childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1; //TODO testOptional 3 match passa con +1
-          childContext.matchedEdges.put(outEdge, true);
-
-          if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
-              request)) {
-            return false;
+          if (!(rightValues instanceof Iterable)) {
+            rightValues = Collections.singleton(rightValues);
           }
-        }
-        if (!(rightValues instanceof Iterable)) {
-          rightValues = Collections.singleton(rightValues);
-        }
-        String rightClassName = aliasClasses.get(outEdge.in.alias);
-        OClass rightClass = getDatabase().getMetadata().getSchema().getClass(rightClassName);
-        for (OIdentifiable rightValue : (Iterable<OIdentifiable>) rightValues) {
-          if (rightValue == null) {
-            continue; //broken graph?, null reference
-          }
-          if (rightClass != null && !matchesClass(rightValue, rightClass)) {
-            continue;
-          }
-          Iterable<OIdentifiable> prevMatchedRightValues = matchContext.candidates.get(outEdge.in.alias);
-
-          if (matchContext.matched.containsKey(outEdge.in.alias)) {
-            if (matchContext.matched.get(outEdge.in.alias).getIdentity().equals(rightValue.getIdentity())) {
-              MatchContext childContext = matchContext.copy(outEdge.in.alias, rightValue.getIdentity());
-              childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
-              childContext.matchedEdges.put(outEdge, true);
-              if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
-                  request)) {
-                return false;
-              }
-              break;
+          String rightClassName = aliasClasses.get(outEdge.in.alias);
+          OClass rightClass = getDatabase().getMetadata().getSchema().getClass(rightClassName);
+          for (OIdentifiable rightValue : (Iterable<OIdentifiable>) rightValues) {
+            if (rightValue == null) {
+              continue; //broken graph?, null reference
             }
-          } else if (prevMatchedRightValues != null && prevMatchedRightValues.iterator().hasNext()) {// just matching against
-            // known
-            // values
-            for (OIdentifiable id : prevMatchedRightValues) {
-              if (id.getIdentity().equals(rightValue.getIdentity())) {
-                MatchContext childContext = matchContext.copy(outEdge.in.alias, id);
+            if (rightClass != null && !matchesClass(rightValue, rightClass)) {
+              continue;
+            }
+            Iterable<OIdentifiable> prevMatchedRightValues = matchContext.candidates.get(outEdge.in.alias);
+
+            if (matchContext.matched.containsKey(outEdge.in.alias)) {
+              if (matchContext.matched.get(outEdge.in.alias).getIdentity().equals(rightValue.getIdentity())) {
+                MatchContext childContext = matchContext.copy(outEdge.in.alias, rightValue.getIdentity());
+                childContext.matched.put(alias, elem.getIdentity());
                 childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
                 childContext.matchedEdges.put(outEdge, true);
                 if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
                     request)) {
                   return false;
                 }
+                break;
               }
-            }
-          } else {// searching for neighbors
-            MatchContext childContext = matchContext.copy(outEdge.in.alias, rightValue.getIdentity());
-            childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
-            childContext.matchedEdges.put(outEdge, true);
-            if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
-                request)) {
-              return false;
+            } else if (prevMatchedRightValues != null && prevMatchedRightValues.iterator().hasNext()) {// just matching against
+              // known
+              // values
+              for (OIdentifiable id : prevMatchedRightValues) {
+                if (id.getIdentity().equals(rightValue.getIdentity())) {
+                  MatchContext childContext = matchContext.copy(outEdge.in.alias, id);
+                  childContext.matched.put(alias, elem.getIdentity());
+                  childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
+                  childContext.matchedEdges.put(outEdge, true);
+                  if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+                      request)) {
+                    return false;
+                  }
+                }
+              }
+            } else {// searching for neighbors
+              MatchContext childContext = matchContext.copy(outEdge.in.alias, rightValue.getIdentity());
+              childContext.matched.put(alias, elem.getIdentity());
+              childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
+              childContext.matchedEdges.put(outEdge, true);
+              if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+                  request)) {
+                return false;
+              }
             }
           }
         }
@@ -688,14 +686,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
         if (!matchContext.matchedEdges.containsKey(inEdge)) {
 
-          Object starting = matchContext.matched.get(inEdge.in.alias);
-          if (starting == null) {
-            starting = matchContext.candidates.get(inEdge.in.alias);
-          }
-
-          Iterable<OIdentifiable> startingElems = starting instanceof OIdentifiable ?
-              Collections.singleton((OIdentifiable) starting) :
-              (Iterable<OIdentifiable>) starting;
+          String alias = inEdge.in.alias;
+          Iterable<OIdentifiable> startingElems = getPossibleIdentifiablesForAlias(matchContext, aliasClasses, aliasFilters,
+              aliasRids, iCommandContext, alias);
 
           for (OIdentifiable elem : startingElems) {
             Object leftValues = inEdge.item.method.executeReverse(elem, iCommandContext);
@@ -703,7 +696,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
                 matchContext.matched.get(inEdge.out.alias)))) {
               MatchContext childContext = matchContext.copy(inEdge.out.alias, null);
 
-              childContext.matched.put(inEdge.in.alias, elem);
+              childContext.matched.put(alias, elem.getIdentity());
               childContext.matched.put(inEdge.out.alias, null);
               childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
               childContext.matchedEdges.put(inEdge, true);
@@ -726,7 +719,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
               if (leftClass != null && !matchesClass(leftValue, leftClass)) {
                 continue;
               }
-              if(matchContext.matched.get(inEdge.out.alias)!=null &&!matchContext.matched.get(inEdge.out.alias).getIdentity().equals(leftValue.getIdentity()) ){
+              if (matchContext.matched.get(inEdge.out.alias) != null && !matchContext.matched.get(inEdge.out.alias).getIdentity()
+                  .equals(leftValue.getIdentity())) {
                 continue;
               }
               Iterable<OIdentifiable> prevMatchedRightValues = matchContext.candidates.get(inEdge.out.alias);
@@ -734,6 +728,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
               if (matchContext.matched.containsKey(inEdge.out.alias)) {
                 if (matchContext.matched.get(inEdge.out.alias).getIdentity().equals(leftValue.getIdentity())) {
                   MatchContext childContext = matchContext.copy(inEdge.out.alias, leftValue.getIdentity());
+                  childContext.matched.put(alias, elem.getIdentity());
                   childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
                   childContext.matchedEdges.put(inEdge, true);
                   if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
@@ -748,6 +743,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
                 for (OIdentifiable id : prevMatchedRightValues) {
                   if (id.getIdentity().equals(leftValue.getIdentity())) {
                     MatchContext childContext = matchContext.copy(inEdge.out.alias, id);
+                    childContext.matched.put(alias, elem.getIdentity());
                     childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
                     childContext.matchedEdges.put(inEdge, true);
 
@@ -779,6 +775,29 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
     return true;
+  }
+
+  private Iterable<OIdentifiable> getPossibleIdentifiablesForAlias(MatchContext matchContext, Map<String, String> aliasClasses,
+      Map<String, OWhereClause> aliasFilters, Map<String, ORID> aliasRids, OCommandContext iCommandContext, CharSequence alias) {
+    Object starting = matchContext.matched.get(alias);
+    if (starting == null) {
+      starting = matchContext.candidates.get(alias);
+    }
+    if (starting == null) {
+      String clazz = aliasClasses.get(alias);
+      OWhereClause filter = aliasFilters.get(alias);
+      ORID rid = aliasRids.get(alias);
+      Iterator<OIdentifiable> candidates = query(clazz, filter, rid, iCommandContext);
+      if (candidates != null) {
+        Set<OIdentifiable> s = new HashSet<OIdentifiable>();
+        while (candidates.hasNext()) {
+          s.add(candidates.next());
+        }
+        starting = s;
+      }
+    }
+
+    return starting instanceof OIdentifiable ? Collections.singleton((OIdentifiable) starting) : (Iterable<OIdentifiable>) starting;
   }
 
   private boolean matchesClass(OIdentifiable identifiable, OClass oClass) {
