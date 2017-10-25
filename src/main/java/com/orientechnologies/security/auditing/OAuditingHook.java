@@ -216,7 +216,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     }
 
     auditingQueue = new LinkedBlockingQueue<ODocument>();
-    auditingThread = new OAuditingLoggingThread(ODatabaseRecordThreadLocal.INSTANCE.get().getName(), auditingQueue, server);
+    auditingThread = new OAuditingLoggingThread(ODatabaseRecordThreadLocal.instance().get().getName(), auditingQueue, server);
 
     auditingThread.start();
   }
@@ -340,7 +340,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
 
     for (OAuditingCommandConfig cfg : commands) {
       if (command.matches(cfg.regex)) {
-        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
         
         String username = null;
 
@@ -421,7 +421,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
 
     }
 
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
     String username = null;
 
@@ -558,7 +558,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   }
 
   protected void logClass(final OAuditingOperation operation, final String note) {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
     String username = null;
 

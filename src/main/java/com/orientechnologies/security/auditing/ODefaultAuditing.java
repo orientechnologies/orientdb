@@ -346,7 +346,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
   }
 
   private void createClassIfNotExists() {
-    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
 
     ODatabaseDocumentInternal sysdb = null;
 
@@ -373,9 +373,9 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
         sysdb.close();
 
       if (currentDB != null)
-        ODatabaseRecordThreadLocal.INSTANCE.set(currentDB);
+        ODatabaseRecordThreadLocal.instance().set(currentDB);
       else
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
     }
   }
 
