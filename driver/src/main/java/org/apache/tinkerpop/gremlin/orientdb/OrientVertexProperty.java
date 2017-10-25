@@ -76,7 +76,6 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
             OElement vertexDocument = element.getRawElement();
             vertexDocument.setProperty(metadataKey(), metadata, OType.EMBEDDED);
             vertexDocument.save();
-            metadata.save();
         }
         return metadata;
     }
