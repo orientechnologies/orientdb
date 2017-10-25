@@ -170,7 +170,7 @@ public final class OrientGraph implements Graph {
   }
 
   private void makeActiveDb() {
-    final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (database != null && tlDb != database) {
       database.activateOnCurrentThread();
     }
