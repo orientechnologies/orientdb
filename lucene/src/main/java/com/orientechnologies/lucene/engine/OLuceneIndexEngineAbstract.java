@@ -188,7 +188,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   private boolean shouldClose() {
-    return System.currentTimeMillis() - lastAccess.get() > closeAfterInterval;
+    return !(directory instanceof RAMDirectory) && System.currentTimeMillis() - lastAccess.get() > closeAfterInterval;
   }
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
