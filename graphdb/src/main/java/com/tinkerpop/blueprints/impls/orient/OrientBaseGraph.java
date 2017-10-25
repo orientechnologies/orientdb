@@ -1155,15 +1155,18 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     makeActive();
 
     try {
-      if (!isClosed() && commitTx) {
-        final OStorage storage = getDatabase().getStorage().getUnderlying();
-        if (storage instanceof OAbstractPaginatedStorage) {
-          if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
+      if (!isClosed()) {
+        if (commitTx) {
+          final OStorage storage = getDatabase().getStorage().getUnderlying();
+          if (storage instanceof OAbstractPaginatedStorage) {
+            if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
+              getDatabase().commit();
+          } else {
             getDatabase().commit();
-        } else {
-          getDatabase().commit();
+          }
+        } else if (closeDb) {
+          getDatabase().rollback();
         }
-
       }
 
     } catch (RuntimeException e) {
