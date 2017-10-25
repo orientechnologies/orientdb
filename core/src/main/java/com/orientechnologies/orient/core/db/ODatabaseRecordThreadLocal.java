@@ -22,22 +22,26 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInternal> {
+  /**
+   * @deprecated will be removed in 3.0 version, use {{@link #instance()}} instead.
+   */
+  @Deprecated
+  public static final InstanceHolder INSTANCE = new InstanceHolder();
 
-  private static final AtomicReference<ODatabaseRecordThreadLocal> INSTANCE = new AtomicReference<ODatabaseRecordThreadLocal>();
+  private static final AtomicReference<ODatabaseRecordThreadLocal> INST_HOLDER = new AtomicReference<ODatabaseRecordThreadLocal>();
 
   public static ODatabaseRecordThreadLocal instance() {
-    final ODatabaseRecordThreadLocal dbInst = INSTANCE.get();
+    final ODatabaseRecordThreadLocal dbInst = INST_HOLDER.get();
 
     if (dbInst != null)
       return dbInst;
 
     //we can do that to avoid thread local memory leaks in containers
-    if (INSTANCE.get() == null) {
+    if (INST_HOLDER.get() == null) {
       final Orient inst = Orient.instance();
       inst.registerListener(new OOrientListenerAbstract() {
         @Override
@@ -46,14 +50,14 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInt
 
         @Override
         public void onShutdown() {
-          INSTANCE.set(null);
+          INST_HOLDER.set(null);
         }
       });
 
-      INSTANCE.compareAndSet(null, new ODatabaseRecordThreadLocal());
+      INST_HOLDER.compareAndSet(null, new ODatabaseRecordThreadLocal());
 
     }
-    return INSTANCE.get();
+    return INST_HOLDER.get();
   }
 
   @Override
@@ -94,4 +98,9 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInt
     return super.get() != null;
   }
 
+  public static final class InstanceHolder {
+    public ODatabaseRecordThreadLocal get() {
+      return ODatabaseRecordThreadLocal.instance();
+    }
+  }
 }
