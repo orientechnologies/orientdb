@@ -338,9 +338,9 @@ public abstract class AbstractServerClusterTest {
       executeWhen(db, condition, action);
     } finally {
       if (!db.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+        ODatabaseRecordThreadLocal.instance().set(db);
         db.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
       }
     }
   }
@@ -424,9 +424,9 @@ public abstract class AbstractServerClusterTest {
 
       } finally {
         if (!db.isClosed()) {
-          ODatabaseRecordThreadLocal.INSTANCE.set(db);
+          ODatabaseRecordThreadLocal.instance().set(db);
           db.close();
-          ODatabaseRecordThreadLocal.INSTANCE.set(null);
+          ODatabaseRecordThreadLocal.instance().set(null);
         }
       }
     } catch (Exception e) {

@@ -126,7 +126,7 @@ public class S3UploaderTest extends AbstractUploaderTest {
 
     } finally {
       this.graph.shutdown();
-      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      ODatabaseRecordThreadLocal.instance().set(null);
       // cleaning all the directories
       this.cleanDirectories();
     }

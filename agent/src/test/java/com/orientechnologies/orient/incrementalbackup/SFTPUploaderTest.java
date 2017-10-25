@@ -23,7 +23,6 @@ import com.orientechnologies.backup.uploader.OLocalBackupUploader;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import org.junit.Test;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -125,7 +124,7 @@ public class SFTPUploaderTest extends AbstractUploaderTest {
 
     } finally {
       this.graph.shutdown();
-      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      ODatabaseRecordThreadLocal.instance().set(null);
       // cleaning all the directories
       this.cleanDirectories();
     }

@@ -45,7 +45,7 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
 
   protected ODatabaseDocumentInternal getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
-    ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.instance().getIfDefined();
 
     if (localDatabase == null) {
       final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');

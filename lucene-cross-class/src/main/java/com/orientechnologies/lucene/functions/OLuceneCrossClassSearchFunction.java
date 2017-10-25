@@ -92,7 +92,7 @@ public class OLuceneCrossClassSearchFunction extends OSQLFunctionAbstract implem
   }
 
   protected ODatabaseDocumentInternal getDb() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   private ODocument getMetadata(OExpression[] args) {

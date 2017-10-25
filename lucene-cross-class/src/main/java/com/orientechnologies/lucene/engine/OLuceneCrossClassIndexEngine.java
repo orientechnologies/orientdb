@@ -121,7 +121,7 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
     final List<String> includes = Optional.ofNullable(metadata.<List<String>>getProperty("includes"))
         .orElse(Collections.emptyList());
 
-    final Collection<? extends OIndex> indexes = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata()
+    final Collection<? extends OIndex> indexes = ODatabaseRecordThreadLocal.instance().get().getMetadata()
         .getIndexManager()
         .getIndexes()
         .stream()
