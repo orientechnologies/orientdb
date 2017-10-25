@@ -20,9 +20,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class OrientElement implements Element, OIdentifiable {
 
     protected OElement rawElement;
-    protected OrientGraph graph;
+    protected OGraph graph;
 
-    public OrientElement(final OrientGraph graph, final OElement rawElement) {
+    public OrientElement(final OGraph graph, final OElement rawElement) {
         if (rawElement == null)
             throw new IllegalArgumentException("rawElement must not be null!");
         this.graph = checkNotNull(graph);
@@ -112,7 +112,7 @@ public abstract class OrientElement implements Element, OIdentifiable {
         rawElement.save();
     }
 
-    public OrientGraph getGraph() {
+    public OGraph getGraph() {
         return graph;
     }
 

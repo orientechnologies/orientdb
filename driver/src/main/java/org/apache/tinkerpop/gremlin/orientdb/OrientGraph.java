@@ -28,6 +28,7 @@ import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.orientdb.executor.OGremlinResultSet;
+import org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphCountStrategy;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphMatchStepStrategy;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
@@ -35,7 +36,6 @@ import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.io.Io;
-import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
@@ -49,17 +49,10 @@ import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_INTEGRATE)
-@Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_PERFORMANCE)
 @Graph.OptIn(Graph.OptIn.SUITE_PROCESS_STANDARD)
 @Graph.OptIn(Graph.OptIn.SUITE_PROCESS_COMPUTER)
-@Graph.OptIn(Graph.OptIn.SUITE_PROCESS_PERFORMANCE)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_PROCESS_STANDARD)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_PROCESS_COMPUTER)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT_INTEGRATE)
-@Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT_PERFORMANCE)
 @Graph.OptIn("org.apache.tinkerpop.gremlin.orientdb.gremlintest.suite.OrientDBDebugSuite")
-public final class OrientGraph implements Graph {
+public final class OrientGraph implements OGraph {
   static {
     TraversalStrategies.GlobalCache.registerStrategies(OrientGraph.class,
         TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone()
@@ -77,6 +70,7 @@ public final class OrientGraph implements Graph {
 
   public static String CONFIG_URL                = "orient-url";
   public static String CONFIG_DB_NAME            = "orient-db-name";
+  public static String CONFIG_DB_TYPE            = "orient-db-type";
   public static String CONFIG_USER               = "orient-user";
   public static String CONFIG_PASS               = "orient-pass";
   public static String CONFIG_CREATE             = "orient-create";
@@ -92,8 +86,9 @@ public final class OrientGraph implements Graph {
   protected final Configuration      configuration;
   protected final String             user;
   protected final String             password;
-  protected       OrientGraphFactory factory;
+  protected       OrientGraphBaseFactory factory;
   protected boolean shouldCloseFactory = false;
+  protected OElementFactory   elementFactory;
   protected OrientTransaction tx;
 
   public static OrientGraph open() {
@@ -122,7 +117,7 @@ public final class OrientGraph implements Graph {
     return new OrientGraph(factory, config, true);
   }
 
-  public OrientGraph(OrientGraphFactory factory, final ODatabaseDocument database, final Configuration configuration,
+  public OrientGraph(OrientGraphBaseFactory factory, final ODatabaseDocument database, final Configuration configuration,
       final String user, final String password) {
     this.factory = factory;
     this.user = user;
@@ -137,13 +132,15 @@ public final class OrientGraph implements Graph {
       this.features = ODBFeatures.OrientFeatures.INSTANCE_NOTX;
       this.tx = new OrientNoTransaction(this);
     }
+
+    this.elementFactory = new OElementFactory(this);
   }
 
-  public OrientGraph(final OrientGraphFactory factory, final Configuration configuration) {
+  public OrientGraph(final OrientGraphBaseFactory factory, final Configuration configuration) {
     this(factory, configuration, false);
   }
 
-  public OrientGraph(final OrientGraphFactory factory, final Configuration configuration, boolean closeFactory) {
+  public OrientGraph(final OrientGraphBaseFactory factory, final Configuration configuration, boolean closeFactory) {
     this.factory = factory;
     this.database = factory.getDatabase(true, true);
     this.user = "";
@@ -159,6 +156,7 @@ public final class OrientGraph implements Graph {
       this.tx = new OrientNoTransaction(this);
     }
     this.shouldCloseFactory = closeFactory;
+    this.elementFactory = new OElementFactory(this);
   }
 
   public Features features() {
@@ -233,7 +231,7 @@ public final class OrientGraph implements Graph {
         throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
       String label = ElementHelper.getLabelValue(keyValues).orElse(OClass.VERTEX_CLASS_NAME);
-      OrientVertex vertex = new OrientVertex(this, label);
+      OrientVertex vertex = elementFactory().createVertex(label);
       vertex.property(keyValues);
 
       vertex.save();
@@ -258,6 +256,23 @@ public final class OrientGraph implements Graph {
     });
   }
 
+  public OGremlinResultSet querySql(String sql, Object... params) {
+    this.tx().readWrite();
+    return executeWithConnectionCheck(() -> {
+      makeActive();
+      OResultSet resultSet = database.query(sql, params);
+      return new OGremlinResultSet(this, resultSet);
+    });
+  }
+
+  public OGremlinResultSet querySql(String sql, Map params) {
+    return executeWithConnectionCheck(() -> {
+      makeActive();
+      OResultSet resultSet = database.command(sql, params);
+      return new OGremlinResultSet(this, resultSet);
+    });
+  }
+
   public OGremlinResultSet execute(String language, String script, Map params) {
 
     return executeWithConnectionCheck(() -> {
@@ -269,9 +284,7 @@ public final class OrientGraph implements Graph {
 
   @Deprecated
   public Object executeCommand(OCommandRequest command) {
-    return executeWithConnectionCheck(() -> {
-      return command.execute();
-    });
+    return executeWithConnectionCheck(() -> command.execute());
   }
 
   @Override
@@ -285,11 +298,16 @@ public final class OrientGraph implements Graph {
   }
 
   @Override
+  public OElementFactory elementFactory() {
+    return elementFactory;
+  }
+
+  @Override
   public Iterator<Vertex> vertices(Object... vertexIds) {
     this.tx().readWrite();
     return executeWithConnectionCheck(() -> {
       makeActive();
-      return elements(OClass.VERTEX_CLASS_NAME, r -> new OrientVertex(this, getRawDocument(r).asVertex()
+      return elements(OClass.VERTEX_CLASS_NAME, r -> elementFactory().wrapVertex(getRawDocument(r).asVertex()
           .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get a Vertex from document %s", r)))), vertexIds);
     });
   }
@@ -317,7 +335,6 @@ public final class OrientGraph implements Graph {
     return className.substring(2);
   }
 
-
   /**
    * Tries to execute a lambda in a transaction, retrying it if an ONeedRetryException is thrown.
    * <p>
@@ -327,17 +344,15 @@ public final class OrientGraph implements Graph {
    * @param nRetries the maximum number of retries (> 0)
    * @param function a lambda containing application code to execute in a commit/retry loop
    * @param <T>      the return type of the lambda
-   *
    * @return The result of the execution of the lambda
-   *
-   * @throws IllegalStateException    if there are operations in the current transaction
-   * @throws ONeedRetryException      if the maximum number of retries is executed and all failed with an ONeedRetryException
-   * @throws IllegalArgumentException if nRetries is <= 0
+   * @throws IllegalStateException         if there are operations in the current transaction
+   * @throws ONeedRetryException           if the maximum number of retries is executed and all failed with an ONeedRetryException
+   * @throws IllegalArgumentException      if nRetries is <= 0
    * @throws UnsupportedOperationException if this type of graph does not support automatic commit/retry or does not support transactions
    */
   public <T> T executeWithRetry(int nRetries, Function<OrientGraph, T> function) {
 
-    if(!this.features.graph().supportsTransactions()){
+    if (!this.features.graph().supportsTransactions()) {
       throw Graph.Exceptions.transactionsNotSupported();
     }
     ODatabaseDocument rawDatabase = this.getRawDatabase();
@@ -451,7 +466,7 @@ public final class OrientGraph implements Graph {
     this.tx().readWrite();
     return executeWithConnectionCheck(() -> {
       makeActive();
-      return elements(OClass.EDGE_CLASS_NAME, r -> new OrientEdge(this, getRawDocument(r).asEdge()
+      return elements(OClass.EDGE_CLASS_NAME, r -> elementFactory().wrapEdge(getRawDocument(r).asEdge()
           .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get an Edge from document %s", r)))), edgeIds);
     });
   }
@@ -568,9 +583,11 @@ public final class OrientGraph implements Graph {
       this.tx().close();
     } finally {
       try {
-        database.close();
-        if (shouldCloseFactory) {
-          factory.close();
+        if (!database.isClosed()) {
+          database.close();
+          if (shouldCloseFactory) {
+            factory.close();
+          }
         }
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during context close for db " + url, e);
@@ -719,10 +736,9 @@ public final class OrientGraph implements Graph {
     return iCallable.call(this);
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Override
-  public <I extends Io> I io(Builder<I> builder) {
-    return (I) Graph.super.io(builder.onMapper(mb -> mb.addRegistry(OrientIoRegistry.getInstance())));
+  public <I extends Io> I io(Io.Builder<I> builder) {
+    return (I) OGraph.super.io(builder.onMapper(mb -> mb.addRegistry(OrientIoRegistry.getInstance())));
   }
 
   @Override
@@ -733,5 +749,9 @@ public final class OrientGraph implements Graph {
   protected boolean isTransactionActive() {
 
     return getRawDatabase().getTransaction().isActive();
+  }
+
+  public void setElementFactory(OElementFactory elementFactory) {
+    this.elementFactory = elementFactory;
   }
 }

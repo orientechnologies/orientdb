@@ -18,7 +18,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <gremlin.version>3.2.5</gremlin.version>
+        <gremlin.version>3.3.0</gremlin.version>
     </properties>
 
     <developers>
@@ -93,12 +93,12 @@
             <version>${gremlin.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.tinkerpop</groupId>
-            <artifactId>gremlin-groovy-test</artifactId>
-            <version>${gremlin.version}</version>
-            <scope>test</scope>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.apache.tinkerpop</groupId>-->
+            <!--<artifactId>gremlin-groovy-test</artifactId>-->
+            <!--<version>${gremlin.version}</version>-->
+            <!--<scope>test</scope>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -197,37 +197,7 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.6</version>
             </plugin>
-            <plugin>
-                <groupId>com.marvinformatics.formatter</groupId>
-                <artifactId>formatter-maven-plugin</artifactId>
-                <version>1.8.0</version>
-                <configuration>
-                    <sourceDirectory>${project.basedir}</sourceDirectory>
-                    <excludes>
-                        <exclude>**/src/test/resources/**</exclude>
-                        <exclude>**/target/**</exclude>
-                    </excludes>
-                    <lineEnding>LF</lineEnding>
-                    <configFile>${project.basedir}/src/config/eclipse/formatter/java.xml</configFile>
-                    <configJsFile>${project.basedir}/src/config/eclipse/formatter/javascript.xml</configJsFile>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>format</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>format</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.codehaus.plexus</groupId>
-                        <artifactId>plexus-utils</artifactId>
-                        <version>3.0.22</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
+
         </plugins>
         <pluginManagement>
             <plugins>

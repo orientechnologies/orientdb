@@ -3,8 +3,10 @@ package org.apache.tinkerpop.gremlin.orientdb;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import org.apache.tinkerpop.gremlin.structure.util.AbstractThreadLocalTransaction;
+import org.apache.tinkerpop.gremlin.structure.util.TransactionException;
 
 public class OrientTransaction extends AbstractThreadLocalTransaction {
+
 
     protected OrientGraph graph;
 
@@ -26,6 +28,26 @@ public class OrientTransaction extends AbstractThreadLocalTransaction {
     @Override
     protected void doCommit() throws TransactionException {
         this.db().commit();
+    }
+
+    @Override
+    protected void doClose() {
+        super.doClose();
+    }
+
+    @Override
+    protected void doReadWrite() {
+        super.doReadWrite();
+    }
+
+    @Override
+    protected void fireOnCommit() {
+        super.fireOnCommit();
+    }
+
+    @Override
+    protected void fireOnRollback() {
+        super.fireOnRollback();
     }
 
     @Override

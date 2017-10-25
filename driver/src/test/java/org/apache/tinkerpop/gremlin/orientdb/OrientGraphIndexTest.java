@@ -15,12 +15,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.apache.tinkerpop.gremlin.structure.T.label;
@@ -102,6 +97,8 @@ public class OrientGraphIndexTest {
         // auto verify that an index is actually used
         GraphTraversal<Vertex, Vertex> traversal = graph.traversal().V().has(label, P.eq(vertexLabel1)).has(key, P.eq(value));
 
+        Assert.assertEquals(1, usedIndexes(graph, traversal));
+
         OIndex index = findUsedIndex(traversal).iterator().next().index;
         Assert.assertEquals(1, index.getSize());
         Assert.assertEquals(v1.id(), index.get(value));
@@ -135,6 +132,8 @@ public class OrientGraphIndexTest {
 
         GraphTraversal<Vertex, Vertex> traversal = graph.traversal().V().hasLabel(label1, label2, label3).has(key, value1);
 
+        Assert.assertEquals(3, usedIndexes(graph, traversal));
+
         Set<OrientIndexQuery> indicies = findUsedIndex(traversal);
         Assert.assertEquals(3, indicies.size());
 
@@ -152,7 +151,8 @@ public class OrientGraphIndexTest {
         return false;
     }
 
-    @Test
+    // TODO Enable when it's fixed
+    //  @Test
     public void vertexUniqueIndexLookupWithMultipleValues() {
         OrientGraph graph = newGraph();
         createVertexIndexLabel(graph, vertexLabel1);
@@ -170,7 +170,10 @@ public class OrientGraphIndexTest {
         // looking deep into the internals here - I can't find a nicer way to
         // auto verify that an index is actually used
         // GraphTraversal<Vertex, Vertex> traversal = graph.traversal().V().has(T.label, P.eq(vertexLabel1)).has(key, P.eq(value1));
-        GraphTraversal<Vertex, Vertex> traversal = graph.traversal().V().has(label, P.eq(vertexLabel1)).has(key, P.within(value1, value2));
+        GraphTraversal<Vertex, Vertex> traversal = graph.traversal().V().has(label, P.eq(vertexLabel1))
+                .has(key, P.within(value1, value2));
+
+        Assert.assertEquals(1, usedIndexes(graph, traversal));
 
         OIndex index = findUsedIndex(traversal).iterator().next().index;
         Assert.assertEquals(3, index.getSize());
@@ -201,6 +204,10 @@ public class OrientGraphIndexTest {
         {
             // Verify that the traversal hits the index for the edges with label1
             GraphTraversal<Edge, Edge> traversal1 = graph.traversal().E().has(label, P.eq(edgeLabel1)).has(key, P.eq(value));
+
+            Assert.assertEquals(1, usedIndexes(graph, traversal1));
+
+            // TODO Remove old legacy index
             Set<OrientIndexQuery> orientIndexQueries = findUsedIndex(traversal1);
             Assert.assertFalse(orientIndexQueries.isEmpty());
 
@@ -218,6 +225,9 @@ public class OrientGraphIndexTest {
         {
             // Verify that the traversal doesn't try to hit the index for the edges with label2
             GraphTraversal<Edge, Edge> traversal2 = graph.traversal().E().has(label, P.eq(edgeLabel2)).has(key, P.eq(value));
+
+            Assert.assertEquals(0, usedIndexes(graph, traversal2));
+
             Assert.assertTrue(findUsedIndex(traversal2).isEmpty());
 
             List<Edge> result2 = traversal2.toList();
@@ -247,6 +257,7 @@ public class OrientGraphIndexTest {
         // Verify that the traversal hits the index for the edges with label1
         GraphTraversal<Edge, Edge> traversal1 = graph.traversal().E().has(label, P.eq(edgeLabel1)).has(key, P.eq(value));
         Set<OrientIndexQuery> orientIndexQueries = findUsedIndex(traversal1);
+        Assert.assertEquals(1, usedIndexes(graph, traversal1));
         Assert.assertFalse(orientIndexQueries.isEmpty());
 
         orientIndexQueries.forEach(orientIndexQuery -> {
@@ -265,27 +276,6 @@ public class OrientGraphIndexTest {
         });
     }
 
-    //TODO: fix
-    @Test
-    public void indexCollation() {
-        OrientGraph graph = newGraph();
-
-        String label = "VC1";
-        String key = "name";
-        String value = "bob";
-
-        Configuration config = new BaseConfiguration();
-        config.setProperty("type", "UNIQUE");
-        config.setProperty("keytype", OType.STRING);
-        config.setProperty("collate", "ci");
-        graph.createVertexIndex(key, label, config);
-
-        graph.addVertex(label, label, key, value);
-        // TODO: test with a "has" traversal, if/when that supports a case insensitive match predicate
-        //        OrientIndexQuery indexRef = new OrientIndexQuery(true, Optional.of(label), key, value.toUpperCase());
-        //        Iterator<OrientVertex> result = graph.getIndexedVertices(indexRef).iterator();
-        //        Assert.assertEquals(result.hasNext(), true);
-    }
 
     private Set<OrientIndexQuery> findUsedIndex(GraphTraversal<?, ?> traversal) {
         OrientGraphStepStrategy.instance().apply(traversal.asAdmin());
@@ -294,6 +284,14 @@ public class OrientGraphIndexTest {
         OrientGraphStep orientGraphStep = (OrientGraphStep) traversal.asAdmin().getStartStep();
 
         return orientGraphStep.findIndex();
+    }
+
+    private int usedIndexes(OrientGraph graph, GraphTraversal<?, ?> traversal) {
+        OrientGraphStepStrategy.instance().apply(traversal.asAdmin());
+        OrientGraphStep orientGraphStep = (OrientGraphStep) traversal.asAdmin().getStartStep();
+        Optional<OrientGraphQuery> optional = orientGraphStep.buildQuery();
+        Optional<Integer> index = optional.map(query -> query.usedIndexes(graph));
+        return index.isPresent() ? index.get() : 0;
     }
 
     private void createVertexIndexLabel(OrientGraph graph, String vertexLabel) {

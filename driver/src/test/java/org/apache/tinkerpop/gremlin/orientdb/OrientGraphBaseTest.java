@@ -1,9 +1,14 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideEffect.OrientGraphStep;
+import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
+
+import java.util.Optional;
 
 /**
  * Created by Enrico Risa on 14/11/16.
@@ -34,6 +39,15 @@ public abstract class OrientGraphBaseTest {
     public void dropDB() {
 
         factory.drop();
+    }
+
+
+    protected int usedIndexes(OrientGraph graph, GraphTraversal<?, ?> traversal) {
+        OrientGraphStepStrategy.instance().apply(traversal.asAdmin());
+        OrientGraphStep orientGraphStep = (OrientGraphStep) traversal.asAdmin().getStartStep();
+        Optional<OrientGraphQuery> optional = orientGraphStep.buildQuery();
+        Optional<Integer> index = optional.map(query -> query.usedIndexes(graph));
+        return index.isPresent() ? index.get() : 0;
     }
 
 }

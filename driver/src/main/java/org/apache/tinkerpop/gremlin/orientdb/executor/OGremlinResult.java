@@ -12,43 +12,43 @@ import java.util.Optional;
  */
 public class OGremlinResult {
 
-    private OrientGraph graph;
-    OResult inner;
+  private OrientGraph graph;
+  OResult inner;
 
-    public OGremlinResult(OrientGraph graph, OResult inner) {
-        this.graph = graph;
-        this.inner = inner;
-    }
+  public OGremlinResult(OrientGraph graph, OResult inner) {
+    this.graph = graph;
+    this.inner = inner;
+  }
 
-    public <T> T getProperty(String name) {
-        return inner.getProperty(name);
-    }
+  public <T> T getProperty(String name) {
+    return inner.getProperty(name);
+  }
 
-    public Optional<OrientVertex> getVertex() {
-        return inner.getVertex().map((v) -> new OrientVertex(graph, v));
-    }
+  public Optional<OrientVertex> getVertex() {
+    return inner.getVertex().map((v) -> graph.elementFactory().wrapVertex(v));
+  }
 
-    public Optional<OrientEdge> getEdge() {
-        return inner.getEdge().map((v) -> new OrientEdge(graph, v));
-    }
+  public Optional<OrientEdge> getEdge() {
+    return inner.getEdge().map((v) -> graph.elementFactory().wrapEdge(v));
+  }
 
-    public boolean isElement() {
-        return inner.isElement();
-    }
+  public boolean isElement() {
+    return inner.isElement();
+  }
 
-    public boolean isVertex() {
-        return inner.isVertex();
-    }
+  public boolean isVertex() {
+    return inner.isVertex();
+  }
 
-    public boolean isEdge() {
-        return inner.isEdge();
-    }
+  public boolean isEdge() {
+    return inner.isEdge();
+  }
 
-    public boolean isBlob() {
-        return inner.isBlob();
-    }
+  public boolean isBlob() {
+    return inner.isBlob();
+  }
 
-    public OResult getRawResult() {
-        return inner;
-    }
+  public OResult getRawResult() {
+    return inner;
+  }
 }

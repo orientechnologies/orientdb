@@ -27,6 +27,8 @@
                 <parameter name="graph.pool.max" value="50"/>
             </parameters>
         </handler>
+        <handler class="com.orientechnologies.tinkerpop.server.OGremlinServerPlugin">
+        </handler>
         <!-- CLUSTER PLUGIN, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
         <handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
             <parameters>

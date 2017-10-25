@@ -12,5 +12,6 @@ import org.junit.runner.RunWith;
 
 @RunWith(OrientDBDebugSuite.class)
 @GraphProviderClass(provider = OrientGraphTxProvider.class, graph = OrientGraph.class)
+//@GraphProviderClass(provider = OrientStandardGraphProvider.class, graph = OrientStandardGraph.class)
 public class OrientDebugGraphStructure {
 }
