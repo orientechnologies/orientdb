@@ -99,8 +99,8 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInt
   }
 
   public static final class InstanceHolder {
-    public ODatabaseRecordThreadLocal get() {
-      return ODatabaseRecordThreadLocal.instance();
+    public ODatabaseDocumentInternal get() {
+      return ODatabaseRecordThreadLocal.instance().get();
     }
   }
 }
