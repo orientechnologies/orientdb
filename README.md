@@ -2,7 +2,6 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 **Develop branch:** [![Build Status](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/develop/badge/icon)](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/develop/)  **2.2.x branch:** [![Build Status](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/2.2.x/badge/icon)](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/2.2.x/) **Chat with the community:** [![Gitter chat](https://badges.gitter.im/orientechnologies/orientdb.png)](https://gitter.im/orientechnologies/orientdb)
-
 ------
 
 <img src="http://orientdb.com/orientdb-studio_800px.png">
@@ -53,3 +52,7 @@ OrientDB Community Edition is free for any use (Apache 2 license). If you are in
 --------
 
 [![](http://s1.softpedia-static.com/_img/sp100free.png?1)](http://www.softpedia.com/get/Internet/Servers/Database-Utils/OrientDB.shtml#status)
+
+--------
+
+[![security status](https://www.meterian.io/badge/gh/orientechnologies/orientdb/security)](https://www.meterian.io/report/gh/orientechnologies/orientdb) | [![stability status](https://www.meterian.io/badge/gh/orientechnologies/orientdb/stability)](https://www.meterian.io/report/gh/orientechnologies/orientdb)
