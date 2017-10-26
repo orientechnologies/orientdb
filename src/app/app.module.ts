@@ -10,8 +10,8 @@ import {APP_RESOLVER_PROVIDERS} from './app.resolver';
 import {APP_DECLARATIONS} from './app.declarations';
 import {APP_IMPORTS} from './app.imports';
 import {platformBrowserDynamic} from "@angular/platform-browser-dynamic";
-import {UpgradeModule} from "@angular/upgrade/src/aot/upgrade_module";
 import {BaseRequestOptions, RequestOptions} from "@angular/http";
+import {UpgradeModule} from "@angular/upgrade/static";
 
 
 declare var angular: angular.IAngularStatic;
