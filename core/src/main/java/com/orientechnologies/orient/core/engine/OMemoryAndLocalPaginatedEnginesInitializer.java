@@ -19,6 +19,7 @@
 
 package com.orientechnologies.orient.core.engine;
 
+import com.orientechnologies.common.collection.OLRUCache;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
@@ -56,11 +57,19 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
     OMemory.checkCacheMemoryConfiguration();
 
     OMemory.fixCommonConfigurationProblems();
+
+    OLogManager.instance().info(this, "Disk cache size is %d mb", OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong());
   }
 
   private void configureDefaults() {
+    OLogManager.instance().info(this, "Auto configuration of disk cache size.");
+
     if (!OGlobalConfiguration.DISK_CACHE_SIZE.isChanged())
       configureDefaultDiskCacheSize();
+    else {
+      OLogManager.instance()
+          .info(this, "Disk cache size is directly set by the user to the %d mb", OGlobalConfiguration.DISK_CACHE_SIZE.getValue());
+    }
 
     if (!OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.isChanged())
       configureDefaultWalRestoreBatchSize();
@@ -77,7 +86,7 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
   }
 
   private void configureDefaultDiskCacheSize() {
-    final long osMemory = ONative.instance().getMemoryLimit();
+    final long osMemory = ONative.instance().getMemoryLimit(true);
     final long jvmMaxMemory = OMemory.getCappedRuntimeMaxMemory(2L * 1024 * 1024 * 1024 /* 2GB */);
     final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
 
