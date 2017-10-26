@@ -102,5 +102,21 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInt
     public ODatabaseDocumentInternal get() {
       return ODatabaseRecordThreadLocal.instance().get();
     }
+
+    public void remove() {
+      ODatabaseRecordThreadLocal.instance().remove();
+    }
+
+    public void set(final ODatabaseDocumentInternal value) {
+      ODatabaseRecordThreadLocal.instance().set(value);
+    }
+
+    public ODatabaseDocumentInternal getIfDefined() {
+      return ODatabaseRecordThreadLocal.instance().getIfDefined();
+    }
+
+    public boolean isDefined() {
+      return ODatabaseRecordThreadLocal.instance().isDefined();
+    }
   }
 }
