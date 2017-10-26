@@ -49,14 +49,12 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -632,10 +630,10 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
     if (getTransaction().isActive())
       return this;
 
-    if (getTransaction().getAllRecordEntries() != null) {
+    if (getTransaction().getRecordOperations() != null) {
       // UPDATE ID & VERSION FOR ALL THE RECORDS
       Object pojo = null;
-      for (ORecordOperation entry : getTransaction().getAllRecordEntries()) {
+      for (ORecordOperation entry : getTransaction().getRecordOperations()) {
         switch (entry.type) {
         case ORecordOperation.CREATED:
         case ORecordOperation.UPDATED:
@@ -666,9 +664,9 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
     if (!underlying.getTransaction().isActive()) {
       // COPY ALL TX ENTRIES
       final List<ORecordOperation> newEntries;
-      if (getTransaction().getAllRecordEntries() != null) {
+      if (getTransaction().getRecordOperations() != null) {
         newEntries = new ArrayList<ORecordOperation>();
-        for (ORecordOperation entry : getTransaction().getAllRecordEntries())
+        for (ORecordOperation entry : getTransaction().getRecordOperations())
           if (entry.type == ORecordOperation.CREATED)
             newEntries.add(entry);
       } else

@@ -16,17 +16,17 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
-import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.06.13
  */
 public class OStorageTransaction {
-  private final OTransaction      clientTx;
-  private final OMicroTransaction microTransaction;
+  private final OTransactionInternal clientTx;
+  private final OMicroTransaction    microTransaction;
 
-  public OStorageTransaction(OTransaction clientTx) {
+  public OStorageTransaction(OTransactionInternal clientTx) {
     this.clientTx = clientTx;
     this.microTransaction = null;
   }
@@ -41,7 +41,7 @@ public class OStorageTransaction {
     this.clientTx = null;
   }
 
-  public OTransaction getClientTx() {
+  public OTransactionInternal getClientTx() {
     return clientTx;
   }
 

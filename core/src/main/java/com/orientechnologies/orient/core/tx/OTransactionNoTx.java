@@ -291,7 +291,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  public Collection<ORecordOperation> getAllRecordEntries() {
+  public Collection<ORecordOperation> getRecordOperations() {
     return null;
   }
 

@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -323,12 +323,12 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public List<ORecordOperation> commit(OTransaction iTx, Runnable callback) {
+        public List<ORecordOperation> commit(OTransactionInternal iTx, Runnable callback) {
           return null;
         }
 
         @Override
-        public void rollback(OTransaction iTx) {
+        public void rollback(OTransactionInternal iTx) {
 
         }
 

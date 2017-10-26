@@ -98,7 +98,7 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (this.txEntries == null) {
-        Iterable<? extends ORecordOperation> iterable = ctx.getDatabase().getTransaction().getAllRecordEntries();
+        Iterable<? extends ORecordOperation> iterable = ctx.getDatabase().getTransaction().getRecordOperations();
 
         List<ORecord> records = new ArrayList<>();
         if (iterable != null) {

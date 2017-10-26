@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.*;
@@ -43,9 +42,9 @@ import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
@@ -76,12 +75,12 @@ public class ODistributedTransactionManager {
     this.localDistributedDatabase = iDDatabase;
   }
 
-  public List<ORecordOperation> commit(final ODatabaseDocumentInternal database, final OTransaction iTx, final Runnable callback,
+  public List<ORecordOperation> commit(final ODatabaseDocumentInternal database, final OTransactionInternal iTx, final Runnable callback,
       final ODistributedStorageEventListener eventListener) {
     final String localNodeName = dManager.getLocalNodeName();
 
     try {
-      OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.BEGUN);
+      iTx.setStatus(OTransaction.TXSTATUS.BEGUN);
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(storage.getName());
 
@@ -136,7 +135,7 @@ public class ODistributedTransactionManager {
         database.setDefaultTransactionMode();
 
         // After commit force the clean of dirty managers due to possible copy and miss clean.
-        for (ORecordOperation ent : iTx.getAllRecordEntries())
+        for (ORecordOperation ent : iTx.getRecordOperations())
           ORecordInternal.getDirtyManager(ent.getRecord()).clear();
 
         if (nodes.isEmpty()) {
@@ -154,7 +153,7 @@ public class ODistributedTransactionManager {
         try {
           txTask.setLastLSN(((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN());
 
-          OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
+          iTx.setStatus(OTransaction.TXSTATUS.COMMITTING);
 
           if (executionModeSynch) {
             // SYNCHRONOUS CALL: REPLICATE IT
@@ -263,7 +262,7 @@ public class ODistributedTransactionManager {
 
     } catch (Exception e) {
 
-      for (ORecordOperation op : iTx.getAllRecordEntries()) {
+      for (ORecordOperation op : iTx.getRecordOperations()) {
         if (op.type == ORecordOperation.CREATED) {
           final ORecordId lockEntireCluster = (ORecordId) op.getRID().copy();
           localDistributedDatabase.getDatabaseRepairer().enqueueRepairCluster(lockEntireCluster.getClusterId());
@@ -277,8 +276,8 @@ public class ODistributedTransactionManager {
     return null;
   }
 
-  protected void checkForClusterIds(final OTransaction iTx, final String localNodeName, final ODistributedConfiguration dbCfg) {
-    for (ORecordOperation op : iTx.getAllRecordEntries()) {
+  protected void checkForClusterIds(final OTransactionInternal iTx, final String localNodeName, final ODistributedConfiguration dbCfg) {
+    for (ORecordOperation op : iTx.getRecordOperations()) {
       final ORecordId rid = (ORecordId) op.getRecord().getIdentity();
       switch (op.type) {
       case ORecordOperation.CREATED:
@@ -517,10 +516,10 @@ public class ODistributedTransactionManager {
    *
    * @throws InterruptedException
    */
-  protected void acquireMultipleRecordLocks(final OTransaction iTx, final ODistributedStorageEventListener eventListener,
+  protected void acquireMultipleRecordLocks(final OTransactionInternal iTx, final ODistributedStorageEventListener eventListener,
       final ODistributedTxContext reqContext) throws InterruptedException {
     final List<ORecordId> recordsToLock = new ArrayList<ORecordId>();
-    for (ORecordOperation op : iTx.getAllRecordEntries()) {
+    for (ORecordOperation op : iTx.getRecordOperations()) {
       recordsToLock.add((ORecordId) op.record.getIdentity());
     }
 
@@ -600,10 +599,10 @@ public class ODistributedTransactionManager {
    *
    * @return List of remote undo tasks
    */
-  protected List<OAbstractRemoteTask> createUndoTasksFromTx(final OTransaction iTx, final ODistributedDatabase database,
+  protected List<OAbstractRemoteTask> createUndoTasksFromTx(final OTransactionInternal iTx, final ODistributedDatabase database,
       final ODistributedRequestId requestId) {
     final List<OAbstractRemoteTask> undoTasks = new ArrayList<OAbstractRemoteTask>();
-    for (final ORecordOperation op : iTx.getAllRecordEntries()) {
+    for (final ORecordOperation op : iTx.getRecordOperations()) {
       OAbstractRemoteTask undoTask = null;
 
       final ORecord record = op.getRecord();
@@ -672,7 +671,7 @@ public class ODistributedTransactionManager {
 
   }
 
-  protected void processCommitResult(final String localNodeName, final OTransaction iTx, final OTxTask txTask,
+  protected void processCommitResult(final String localNodeName, final OTransactionInternal iTx, final OTxTask txTask,
       final Set<String> involvedClusters, final Iterable<ORecordOperation> tmpEntries, final Collection<String> nodes,
       final ODistributedRequestId reqId, final ODistributedResponse dResponse) throws InterruptedException {
     final Object result = dResponse.getPayload();
