@@ -34,7 +34,7 @@ public class ONative {
     long memoryLimit = getPhysicalMemorySize();
 
     if (memoryLimit > 0 && printSteps) {
-      OLogManager.instance().info(this, "%d bytes of physical memory were detected on machine");
+      OLogManager.instance().info(this, "%d bytes of physical memory were detected on machine", memoryLimit);
     }
 
     if (Platform.isLinux()) {
