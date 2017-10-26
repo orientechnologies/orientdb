@@ -148,7 +148,7 @@ public class ONative {
         if (!memoryCGroup.exists()) {
           if (printSteps)
             OLogManager.instance().info(this, "Can not find '%s' path for memory cgroup, it is supposed that "
-                + "process is running in container, will try to read root '%s' memory cgroup data", memoryCGroupRoot);
+                + "process is running in container, will try to read root '%s' memory cgroup data", memoryCGroup, memoryCGroupRoot);
 
           memoryCGroup = new File(memoryCGroupRoot);
         }
