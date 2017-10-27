@@ -16,7 +16,7 @@ ADD target/orientdb-community-${ORIENTDB_VERSION}.dir/orientdb-community-${ORIEN
 
 ENV PATH /orientdb/bin:$PATH
 
-VOLUME ["/orientdb/backup", "/orientdb/databases", "/orientdb/config"]
+VOLUME ["/orientdb/backup", "/orientdb/databases", "/orientdb/config", "orientdb/log"]
 
 WORKDIR /orientdb
 
