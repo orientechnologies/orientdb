@@ -104,7 +104,8 @@
     "wdio-spec-reporter": "^0.1.2",
     "webdriverio": "^4.8.0",
     "webpack": "2.2.1",
-    "webpack-dev-server": "2.3.0"
+    "webpack-dev-server": "2.3.0",
+    "selenium-standalone": "6.4.0"
   },
   "engines": {
     "node": ">=0.8.0"
