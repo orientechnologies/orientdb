@@ -51,7 +51,7 @@ public class OSQLScriptEngineFactory implements ScriptEngineFactory {
 
   @Override
   public String getEngineVersion() {
-    return OConstants.ORIENT_VERSION;
+    return OConstants.getVersion();
   }
 
   @Override
@@ -76,7 +76,7 @@ public class OSQLScriptEngineFactory implements ScriptEngineFactory {
 
   @Override
   public String getLanguageVersion() {
-    return OConstants.ORIENT_VERSION;
+    return OConstants.getVersion();
   }
 
   @Override

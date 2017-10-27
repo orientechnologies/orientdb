@@ -30,9 +30,6 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import static com.orientechnologies.orient.core.OConstants.ORIENT_VERSION_MAJOR;
-import static com.orientechnologies.orient.core.OConstants.ORIENT_VERSION_MINOR;
-
 public class OrientJdbcDriver implements java.sql.Driver {
 
 
@@ -75,12 +72,12 @@ public class OrientJdbcDriver implements java.sql.Driver {
 
   @Override
   public int getMajorVersion() {
-    return ORIENT_VERSION_MAJOR;
+    return OConstants.getVersionMajor();
   }
 
   @Override
   public int getMinorVersion() {
-    return ORIENT_VERSION_MINOR;
+    return OConstants.getVersionMinor();
   }
 
   @Override

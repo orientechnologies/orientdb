@@ -96,7 +96,12 @@ public class Orient extends OListenerManger<OOrientListener> {
   private final OLocalRecordCacheFactory localRecordCache = new OLocalRecordCacheFactoryImpl();
 
   static {
-    instance.startup();
+    try {
+      instance.startup();
+    } catch (Throwable t) {
+      OLogManager.instance().errorNoDb(Orient.class, "Error during initialization of OrientDB engine", t);
+    }
+
   }
 
   private final String os;
@@ -614,8 +619,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   /**
-   * Obtains a {@link OEngine#isRunning() running} {@link OEngine engine} instance with the given {@code engineName}.
-   * If engine is not running, starts it.
+   * Obtains a {@link OEngine#isRunning() running} {@link OEngine engine} instance with the given {@code engineName}. If engine is
+   * not running, starts it.
    *
    * @param engineName the name of the engine to obtain.
    *

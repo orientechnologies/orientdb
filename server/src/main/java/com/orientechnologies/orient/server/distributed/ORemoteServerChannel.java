@@ -118,7 +118,7 @@ public class ORemoteServerChannel {
     networkOperation(OChannelBinaryProtocol.DISTRIBUTED_CONNECT, new OStorageRemoteOperation<Void>() {
       @Override
       public Void execute() throws IOException {
-        channel.writeString(CLIENT_TYPE).writeString(OConstants.ORIENT_VERSION)
+        channel.writeString(CLIENT_TYPE).writeString(OConstants.getRawVersion())
             .writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION).writeString("0");
         channel.writeString(ODatabaseDocumentTx.getDefaultSerializer().toString());
         channel.writeBoolean(false);

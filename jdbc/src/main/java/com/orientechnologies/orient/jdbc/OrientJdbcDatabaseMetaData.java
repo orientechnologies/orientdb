@@ -33,9 +33,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.sql.*;
 import java.util.*;
 
-import static com.orientechnologies.orient.core.OConstants.ORIENT_VERSION_MAJOR;
-import static com.orientechnologies.orient.core.OConstants.ORIENT_VERSION_MINOR;
-
 /**
  * @author Roberto Franchini (CELI srl - franchini--at--celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
@@ -99,7 +96,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public String getDatabaseProductVersion() throws SQLException {
-    return OConstants.ORIENT_VERSION;
+    return OConstants.getVersion();
   }
 
   public String getDriverName() throws SQLException {
@@ -111,11 +108,11 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public int getDriverMajorVersion() {
-    return ORIENT_VERSION_MAJOR;
+    return OConstants.getVersionMajor();
   }
 
   public int getDriverMinorVersion() {
-    return ORIENT_VERSION_MINOR;
+    return OConstants.getVersionMinor();
   }
 
   public boolean usesLocalFiles() throws SQLException {
@@ -1175,11 +1172,11 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public int getDatabaseMajorVersion() throws SQLException {
-    return Integer.valueOf(OConstants.ORIENT_VERSION.split("\\.")[0]);
+    return OConstants.getVersionMajor();
   }
 
   public int getDatabaseMinorVersion() throws SQLException {
-    return Integer.valueOf(OConstants.ORIENT_VERSION.split("\\.")[1].substring(0, 1));
+    return OConstants.getVersionMinor();
   }
 
   public int getJDBCMajorVersion() throws SQLException {

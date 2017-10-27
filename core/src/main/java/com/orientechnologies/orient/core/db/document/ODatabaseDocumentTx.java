@@ -111,8 +111,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     defaultSerializer = ORecordSerializerFactory.instance()
         .getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
     if (defaultSerializer == null)
-      throw new ODatabaseException(
-          "Impossible to find serializer with name " + OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
+      OLogManager.instance().errorNoDb(ODatabaseDocumentTx.class, "Impossible to find serializer with name %s", null,
+          OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
   }
 
   private final Map<String, Object> properties = new HashMap<String, Object>();

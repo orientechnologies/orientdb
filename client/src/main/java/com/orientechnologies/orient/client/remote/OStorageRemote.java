@@ -2112,7 +2112,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       final boolean supportsPushMessages, final boolean collectStats) throws IOException {
     if (network.getSrvProtocolVersion() >= 7) {
       // @COMPATIBILITY 1.0rc8
-      network.writeString(driverName).writeString(OConstants.ORIENT_VERSION)
+      network.writeString(driverName).writeString(OConstants.getRawVersion())
           .writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION).writeString(clientId);
     }
     if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_21) {

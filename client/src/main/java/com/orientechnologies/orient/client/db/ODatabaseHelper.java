@@ -165,13 +165,13 @@ public class ODatabaseHelper {
       file = new File(sysProperty != null ? sysProperty : "");
     }
     if (!file.exists())
-      file = new File("../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+      file = new File("../releases/orientdb-" + OConstants.getRawVersion() + "/config/orientdb-server-config.xml");
     if (!file.exists())
-      file = new File("../releases/orientdb-community-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+      file = new File("../releases/orientdb-community-" + OConstants.getRawVersion() + "/config/orientdb-server-config.xml");
     if (!file.exists())
-      file = new File("../../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+      file = new File("../../releases/orientdb-" + OConstants.getRawVersion() + "/config/orientdb-server-config.xml");
     if (!file.exists())
-      file = new File("../../releases/orientdb-community-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+      file = new File("../../releases/orientdb-community-" + OConstants.getRawVersion() + "/config/orientdb-server-config.xml");
     if (!file.exists() && iDirectory != null) {
       file = new File(iDirectory + "/config/orientdb-server-config.xml");
       if (!file.exists())

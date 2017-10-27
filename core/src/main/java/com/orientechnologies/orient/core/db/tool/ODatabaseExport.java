@@ -333,7 +333,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     writer.writeAttribute(2, true, "name", database.getName().replace('\\', '/'));
     writer.writeAttribute(2, true, "default-cluster-id", database.getDefaultClusterId());
     writer.writeAttribute(2, true, "exporter-version", VERSION);
-    writer.writeAttribute(2, true, "engine-version", OConstants.ORIENT_VERSION);
+    writer.writeAttribute(2, true, "engine-version", OConstants.getVersion());
     final String engineBuild = OConstants.getBuildNumber();
     if (engineBuild != null)
       writer.writeAttribute(2, true, "engine-build", engineBuild);

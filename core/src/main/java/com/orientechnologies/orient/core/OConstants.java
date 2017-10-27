@@ -12,10 +12,10 @@ public class OConstants {
   public static final String COPYRIGHT  = "Copyrights (c) 2017 OrientDB LTD";
 
   /**
-   * @deprecated Use {@link #getVersion()} instead.
+   * @deprecated Use {@link #getRawVersion()} instead.
    */
   @Deprecated
-  public static final String ORIENT_VERSION = "2.2.30-SNAPSHOT";
+  public static String ORIENT_VERSION;
 
   @Deprecated
   public static final String GROUPID = "com.orientechnologies";
@@ -27,30 +27,122 @@ public class OConstants {
    * @deprecated Use {@link #getBuildNumber()} instead.
    */
   @Deprecated
-  public static final String REVISION             = "530f44fb671d22ef1e4e9debc381386fbcaa8bca";
-  //deprecated properties
-  public static final int    ORIENT_VERSION_MAJOR = 2;
-  public static final int    ORIENT_VERSION_MINOR = 2;
-  public static final int    ORIENT_VERSION_HOFIX = 18;
+  public static String REVISION;
+
+  /**
+   * @deprecated Use {@link #getVersionMajor()} instead.
+   */
+  @Deprecated
+  public static int ORIENT_VERSION_MAJOR;
+
+  /**
+   * @deprecated Use {@link #getVersionMinor()} instead.
+   */
+  @Deprecated
+  public static int ORIENT_VERSION_MINOR;
+
+  /**
+   * @deprecated Use {@link #getVersionHotfix()} instead.
+   */
+  @Deprecated
+  public static int ORIENT_VERSION_HOFIX;
 
   private static final Properties properties = new Properties();
 
   static {
-    final InputStream inputStream = OConstants.class.getResourceAsStream("/com/orientechnologies/orientdb.properties");
     try {
-      properties.load(inputStream);
-    } catch (IOException e) {
-      OLogManager.instance().error(OConstants.class, "Failed to load OrientDB properties", e);
-    } finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        } catch (IOException ignore) {
-          // Ignore
+      final InputStream inputStream = OConstants.class.getResourceAsStream("/com/orientechnologies/orientdb.properties");
+      try {
+        properties.load(inputStream);
+      } catch (IOException e) {
+        OLogManager.instance().error(OConstants.class, "Failed to load OrientDB properties", e);
+      } finally {
+        if (inputStream != null) {
+          try {
+            inputStream.close();
+          } catch (IOException ignore) {
+            // Ignore
+          }
         }
       }
+
+      ORIENT_VERSION = getRawVersion();
+
+      REVISION = getBuildNumber();
+
+      ORIENT_VERSION_MAJOR = getVersionMajor();
+      ORIENT_VERSION_MINOR = getVersionMinor();
+      ORIENT_VERSION_HOFIX = getVersionHotfix();
+    } catch (Throwable throwable) {
+      OLogManager.instance().errorNoDb(null, "Error during OrientDB constants initialization", throwable);
+    }
+  }
+
+  /**
+   * @return Major part of OrientDB version
+   */
+  public static int getVersionMajor() {
+    final String[] versions = properties.getProperty("version").split("\\.");
+    if (versions.length == 0) {
+      OLogManager.instance().errorNoDb(OConstants.class, "Can not retrieve version information for this build", null);
+      return -1;
     }
 
+    try {
+      return Integer.parseInt(versions[0]);
+    } catch (NumberFormatException nfe) {
+      OLogManager.instance().errorNoDb(OConstants.class, "Can not retrieve major version information for this build", nfe);
+      return -1;
+    }
+  }
+
+  /**
+   * @return Minor part of OrientDB version
+   */
+  public static int getVersionMinor() {
+    final String[] versions = properties.getProperty("version").split("\\.");
+    if (versions.length < 2) {
+      OLogManager.instance().errorNoDb(OConstants.class, "Can not retrieve minor version information for this build", null);
+      return -1;
+    }
+
+    try {
+      return Integer.parseInt(versions[1]);
+    } catch (NumberFormatException nfe) {
+      OLogManager.instance().errorNoDb(OConstants.class, "Can not retrieve minor version information for this build", nfe);
+      return -1;
+    }
+  }
+
+  /**
+   * @return Hotfix part of OrientDB version
+   */
+  public static int getVersionHotfix() {
+    final String[] versions = properties.getProperty("version").split("\\.");
+    if (versions.length < 3) {
+      return 0;
+    }
+
+    try {
+      String hotfix = versions[2];
+      int snapshotIndex = hotfix.indexOf("-SNAPSHOT");
+
+      if (snapshotIndex != -1) {
+        hotfix = hotfix.substring(0, snapshotIndex);
+      }
+
+      return Integer.parseInt(hotfix);
+    } catch (NumberFormatException nfe) {
+      OLogManager.instance().errorNoDb(OConstants.class, "Can not retrieve hotfix version information for this build", nfe);
+      return -1;
+    }
+  }
+
+  /**
+   * @return Returns only current version without build number and etc.
+   */
+  public static String getRawVersion() {
+    return properties.getProperty("version");
   }
 
   /**
