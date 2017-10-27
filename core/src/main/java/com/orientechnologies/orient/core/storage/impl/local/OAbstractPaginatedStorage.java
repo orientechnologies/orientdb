@@ -223,8 +223,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   /**
-   * This method is called by distributed storage during initialization to indicate that database is used in distributed
-   * cluster configuration
+   * This method is called by distributed storage during initialization to indicate that database is used in distributed cluster
+   * configuration
    */
   public void underDistributedStorage() {
     sbTreeCollectionManager.prohibitAccess();
@@ -320,6 +320,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
+
+    OLogManager.instance().info(this, "Storage '%s' is opened under OrientDB distribution : %s", getURL(), OConstants.getVersion());
   }
 
   protected void openIndexes() {
@@ -4959,15 +4961,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   /**
-   * Method which is called before any data modification operation to check alarm conditions such as:
-   * <ol>
-   * <li>Low disk space</li>
-   * <li>Exception during data flush in background threads</li>
-   * <li>Broken files</li>
-   * </ol>
+   * Method which is called before any data modification operation to check alarm conditions such as: <ol> <li>Low disk space</li>
+   * <li>Exception during data flush in background threads</li> <li>Broken files</li> </ol>
    * <p>
-   * If one of those conditions are satisfied data modification operation is aborted and
-   * storage is switched in "read only" mode.
+   * If one of those conditions are satisfied data modification operation is aborted and storage is switched in "read only" mode.
    * <p>
    * This method also performs "full checkpoint" if such one is requested by WAL.
    */
@@ -5186,20 +5183,24 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected RuntimeException logAndPrepareForRethrow(RuntimeException runtimeException) {
     if (!(runtimeException instanceof OHighLevelException || runtimeException instanceof ONeedRetryException))
       OLogManager.instance()
-          .error(this, "Exception `%08X` in storage `%s`", runtimeException, System.identityHashCode(runtimeException), getName());
+          .error(this, "Exception `%08X` in storage `%s`: %s", runtimeException, System.identityHashCode(runtimeException),
+              getURL(), OConstants.getVersion());
     return runtimeException;
   }
 
   protected Error logAndPrepareForRethrow(Error error) {
     if (!(error instanceof OHighLevelException))
-      OLogManager.instance().error(this, "Exception `%08X` in storage `%s`", error, System.identityHashCode(error), getName());
+      OLogManager.instance().error(this, "Exception `%08X` in storage `%s`: %s", error, System.identityHashCode(error), getURL(),
+          OConstants.getVersion());
     return error;
   }
 
   protected RuntimeException logAndPrepareForRethrow(Throwable throwable) {
     if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException))
       OLogManager.instance()
-          .error(this, "Exception `%08X` in storage `%s`", throwable, System.identityHashCode(throwable), getName());
+          .error(this, "Exception `%08X` in storage `%s`: %s", throwable, System.identityHashCode(throwable),
+              getURL(),
+              OConstants.getVersion());
     return new RuntimeException(throwable);
   }
 

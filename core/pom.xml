@@ -149,24 +149,24 @@
         </profile>
     </profiles>
 
-    <reporting>
-        <plugins>
-
-        </plugins>
-    </reporting>
-
     <build>
-        <plugins>
+        <resources>
+            <resource>
+                <directory>${basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
 
+        <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
-                <artifactId>templating-maven-plugin</artifactId>
-                <version>1.0.0</version>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.4</version>
                 <executions>
                     <execution>
-                        <id>generate-verion-class</id>
+                        <phase>validate</phase>
                         <goals>
-                            <goal>filter-sources</goal>
+                            <goal>create</goal>
                         </goals>
                     </execution>
                 </executions>
