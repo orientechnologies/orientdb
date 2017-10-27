@@ -15,10 +15,10 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput
 import java.io.IOException;
 
 public class OConnectRequest implements OBinaryRequest<OConnectResponse> {
-  private String  username;
-  private String  password;
+  private String username;
+  private String password;
   private String  driverName      = OStorageRemote.DRIVER_NAME;
-  private String  driverVersion   = OConstants.ORIENT_VERSION;
+  private String  driverVersion   = OConstants.getRawVersion();
   private short   protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
   private String  clientId        = null;
   private String  recordFormat    = ORecordSerializerNetworkV37.NAME;

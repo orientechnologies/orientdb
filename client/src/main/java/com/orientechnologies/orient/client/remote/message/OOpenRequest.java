@@ -17,7 +17,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput
 
 public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
   private String  driverName      = OStorageRemote.DRIVER_NAME;
-  private String  driverVersion   = OConstants.ORIENT_VERSION;
+  private String  driverVersion   = OConstants.getRawVersion();
   private short   protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
   private String  clientId        = null;
   private String  recordFormat    = ORecordSerializerNetwork.NAME;

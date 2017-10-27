@@ -171,7 +171,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.beginObject();
 
       json.beginObject("server");
-      json.writeAttribute("version", OConstants.ORIENT_VERSION);
+      json.writeAttribute("version", OConstants.getRawVersion());
       if (OConstants.getBuildNumber() != null)
         json.writeAttribute("build", OConstants.getBuildNumber());
       json.writeAttribute("osName", System.getProperty("os.name"));

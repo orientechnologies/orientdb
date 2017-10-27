@@ -49,7 +49,7 @@ public class OServerCommandGetServerVersion extends OServerCommandGetConnections
 
     iRequest.data.commandInfo = "Server status";
 
-    final String result = OConstants.ORIENT_VERSION;
+    final String result = OConstants.getRawVersion();
 
     iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, result, null);
 

@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.lock.*;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
@@ -330,6 +331,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
+
+    OLogManager.instance().info(this, "Storage '%s' is opened under OrientDB distribution : %s", getURL(), OConstants.getVersion());
   }
 
   /**
@@ -1590,8 +1593,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * <bold>other node commit</bold> is the commit that happen when a node execute a transaction of another node where all the rids
    * are already allocated in the other node.
    *
-   * @param transaction  the transaction to commit
-   * @param allocated true if the operation is pre-allocated commit
+   * @param transaction the transaction to commit
+   * @param allocated   true if the operation is pre-allocated commit
    *
    * @return The list of operations applied by the transaction
    */
@@ -5238,29 +5241,33 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected RuntimeException logAndPrepareForRethrow(RuntimeException runtimeException) {
-    if (!(runtimeException instanceof OHighLevelException))
+    if (!(runtimeException instanceof OHighLevelException || runtimeException instanceof ONeedRetryException))
       OLogManager.instance()
-          .error(this, "Exception `%08X` in storage `%s`", runtimeException, System.identityHashCode(runtimeException), getName());
+          .error(this, "Exception `%08X` in storage `%s`: %s", runtimeException, System.identityHashCode(runtimeException),
+              getURL(), OConstants.getVersion());
     return runtimeException;
-  }
-
-  private OInvalidIndexEngineIdException logAndPrepareForRethrow(OInvalidIndexEngineIdException exception) {
-    OLogManager.instance()
-        .error(this, "Exception `%08X` in storage `%s`", exception, System.identityHashCode(exception), getName());
-    return exception;
   }
 
   protected Error logAndPrepareForRethrow(Error error) {
     if (!(error instanceof OHighLevelException))
-      OLogManager.instance().error(this, "Exception `%08X` in storage `%s`", error, System.identityHashCode(error), getName());
+      OLogManager.instance().error(this, "Exception `%08X` in storage `%s`: %s", error, System.identityHashCode(error), getURL(),
+          OConstants.getVersion());
     return error;
   }
 
   protected RuntimeException logAndPrepareForRethrow(Throwable throwable) {
-    if (!(throwable instanceof OHighLevelException))
+    if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException))
       OLogManager.instance()
-          .error(this, "Exception `%08X` in storage `%s`", throwable, System.identityHashCode(throwable), getName());
+          .error(this, "Exception `%08X` in storage `%s`: %s", throwable, System.identityHashCode(throwable), getURL(),
+              OConstants.getVersion());
     return new RuntimeException(throwable);
+  }
+
+  private OInvalidIndexEngineIdException logAndPrepareForRethrow(OInvalidIndexEngineIdException exception) {
+    OLogManager.instance()
+        .error(this, "Exception `%08X` in storage `%s` : %s", exception, System.identityHashCode(exception), getURL(),
+            OConstants.getVersion());
+    return exception;
   }
 
   private static class FuzzyCheckpointThreadFactory implements ThreadFactory {
