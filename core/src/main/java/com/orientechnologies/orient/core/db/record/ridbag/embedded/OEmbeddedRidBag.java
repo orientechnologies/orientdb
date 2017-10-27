@@ -102,6 +102,11 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         nextValue = entries[currentIndex];
       }
 
+      if (!convertToRecord && nextValue != null) {
+        if (((OIdentifiable) nextValue).getIdentity().isPersistent())
+          entries[currentIndex] = ((OIdentifiable) nextValue).getIdentity();
+      }
+
       nextIndex = nextIndex();
 
       final OIdentifiable identifiable = (OIdentifiable) nextValue;
@@ -417,13 +422,13 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         if (db != null && !db.isClosed() && db.getTransaction().isActive()) {
           if (!link.getIdentity().isPersistent()) {
             link = db.getTransaction().getRecord(link.getIdentity());
-            entries[i] = link;
           }
         }
 
         if (link == null)
           throw new OSerializationException("Found null entry in ridbag with rid=" + rid);
 
+        entries[i] = link.getIdentity();
         OLinkSerializer.INSTANCE.serialize(link, stream, offset);
         offset += OLinkSerializer.RID_SIZE;
       }
