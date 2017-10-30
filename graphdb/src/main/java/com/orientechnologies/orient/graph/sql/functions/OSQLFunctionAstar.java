@@ -100,6 +100,9 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
               bindAdditionalParams(iParams[3], context);
             }
             iContext.setVariable("getNeighbors", 0);
+            if (paramSourceVertex == null || paramDestinationVertex == null) {
+              return new LinkedList<>();
+            }
             return internalExecute(iContext, graph);
           }
         });
