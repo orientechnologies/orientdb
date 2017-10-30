@@ -637,10 +637,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {
         if (logClientFullStackTrace)
           OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t,
-              channel.socket.getRemoteSocketAddress(), t.toString());
+              true, channel.socket.getRemoteSocketAddress(), t.toString());
         else
           OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null,
-              channel.socket.getRemoteSocketAddress(), t.toString());
+              true, channel.socket.getRemoteSocketAddress(), t.toString());
       }
     } catch (Exception e) {
       if (e instanceof SocketException)

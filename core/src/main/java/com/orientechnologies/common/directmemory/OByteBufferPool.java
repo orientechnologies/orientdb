@@ -667,8 +667,10 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
       }
 
       if (traceAggregation == TraceAggregation.None || !event.aggregate)
-        OLogManager.instance().log(this, event.level, "DIRECT-TRACE %s: %s, buffer = %X", null, event.tag(), event.describe(stats),
-            System.identityHashCode(buffer));
+        OLogManager.instance()
+            .log(this, event.level, "DIRECT-TRACE %s: %s, buffer = %X", null, false,
+                event.tag(), event.describe(stats),
+                System.identityHashCode(buffer));
       else {
         // select the event's aggregated stats
         final AtomicLongArray aggregatedStats = aggregatedTraceStats[event.ordinal()];
@@ -687,7 +689,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
         // log the stats if the threshold is reached
         if (inverseAggregatedStats == null) {
           if (eventsAggregated >= traceAggregation.threshold) {
-            OLogManager.instance().log(this, event.level, "DIRECT-TRACE %s x %d: %s", null, event.tag(), eventsAggregated,
+            OLogManager.instance().log(this, event.level, "DIRECT-TRACE %s x %d: %s", null, false, event.tag(), eventsAggregated,
                 event.describe(aggregatedStats, null, stats));
 
             // reset the aggregated stats
@@ -699,7 +701,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
           // log the stats if the threshold is reached
           if (eventsAggregated + inverseEventsAggregated >= traceAggregation.threshold) {
-            OLogManager.instance().log(this, event.level, "DIRECT-TRACE %s/%s: %s", null, event.tag(), event.inverse().tag(),
+            OLogManager.instance().log(this, event.level, "DIRECT-TRACE %s/%s: %s", null, false, event.tag(), event.inverse().tag(),
                 event.describe(aggregatedStats, inverseAggregatedStats, stats));
 
             // reset the aggregated stats

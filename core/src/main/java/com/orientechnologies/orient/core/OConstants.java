@@ -17,7 +17,7 @@ public class OConstants {
     try {
       properties.load(inputStream);
     } catch (IOException e) {
-      OLogManager.instance().error(OConstants.class, "Failed to load OrientDB properties", e);
+      OLogManager.instance().errorNoDb(OConstants.class, "Failed to load OrientDB properties", e);
     } finally {
       if (inputStream != null) {
         try {
@@ -36,14 +36,14 @@ public class OConstants {
   public static int getVersionMajor() {
     final String[] versions = properties.getProperty("version").split("\\.");
     if (versions.length == 0) {
-      OLogManager.instance().error(OConstants.class, "Can not retrieve version information for this build", null);
+      OLogManager.instance().errorNoDb(OConstants.class, "Can not retrieve version information for this build", null);
       return -1;
     }
 
     try {
       return Integer.parseInt(versions[0]);
     } catch (NumberFormatException nfe) {
-      OLogManager.instance().error(OConstants.class, "Can not retrieve major version information for this build", nfe);
+      OLogManager.instance().errorNoDb(OConstants.class, "Can not retrieve major version information for this build", nfe);
       return -1;
     }
   }
@@ -54,14 +54,14 @@ public class OConstants {
   public static int getVersionMinor() {
     final String[] versions = properties.getProperty("version").split("\\.");
     if (versions.length < 2) {
-      OLogManager.instance().error(OConstants.class, "Can not retrieve minor version information for this build", null);
+      OLogManager.instance().errorNoDb(OConstants.class, "Can not retrieve minor version information for this build", null);
       return -1;
     }
 
     try {
       return Integer.parseInt(versions[1]);
     } catch (NumberFormatException nfe) {
-      OLogManager.instance().error(OConstants.class, "Can not retrieve minor version information for this build", nfe);
+      OLogManager.instance().errorNoDb(OConstants.class, "Can not retrieve minor version information for this build", nfe);
       return -1;
     }
   }
@@ -77,9 +77,16 @@ public class OConstants {
     }
 
     try {
-      return Integer.parseInt(versions[2]);
+      String hotfix = versions[2];
+      int snapshotIndex = hotfix.indexOf("-SNAPSHOT");
+
+      if (snapshotIndex != -1) {
+        hotfix = hotfix.substring(0, snapshotIndex);
+      }
+
+      return Integer.parseInt(hotfix);
     } catch (NumberFormatException nfe) {
-      OLogManager.instance().error(OConstants.class, "Can not retrieve hotfix version information for this build", nfe);
+      OLogManager.instance().errorNoDb(OConstants.class, "Can not retrieve hotfix version information for this build", nfe);
       return -1;
     }
   }

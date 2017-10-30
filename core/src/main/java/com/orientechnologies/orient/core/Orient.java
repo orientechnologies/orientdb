@@ -100,7 +100,11 @@ public class Orient extends OListenerManger<OOrientListener> {
   private Set<OrientDBInternal> runningInstances = new HashSet<>();
 
   static {
-    instance.startup();
+    try {
+      instance.startup();
+    } catch (Exception e) {
+      OLogManager.instance().errorNoDb(Orient.class, "Error during OrientDB engine initialization", e);
+    }
   }
 
   private final String os;
@@ -222,18 +226,18 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       workers = new OThreadPoolExecutorWithLogging(cores, cores * 3, 10, TimeUnit.SECONDS,
           new LinkedBlockingQueue<Runnable>(cores * 500) {
-        @Override
-        public boolean offer(Runnable e) {
-          // turn offer() and add() into a blocking calls (unless interrupted)
-          try {
-            put(e);
-            return true;
-          } catch (InterruptedException ignore) {
-            Thread.currentThread().interrupt();
-          }
-          return false;
-        }
-      });
+            @Override
+            public boolean offer(Runnable e) {
+              // turn offer() and add() into a blocking calls (unless interrupted)
+              try {
+                put(e);
+                return true;
+              } catch (InterruptedException ignore) {
+                Thread.currentThread().interrupt();
+              }
+              return false;
+            }
+          });
 
       registerEngines();
 
