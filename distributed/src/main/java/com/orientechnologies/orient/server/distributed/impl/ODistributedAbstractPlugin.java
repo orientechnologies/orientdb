@@ -1290,11 +1290,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
         // CLOSE THE STORAGE FIRST
         final ODistributedStorage stg = storages.remove(databaseName);
-        if (stg != null)
-          stg.close(true, false);
 
         if (backupDatabase)
-          backupCurrentDatabase(databaseName);
+          backupCurrentDatabase(databaseName, stg);
+        else if (stg != null)
+          stg.close(true, false);
 
         installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value, false,
             uniqueClustersBackupDirectory, cfg);
@@ -1393,9 +1393,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return null;
   }
 
-  protected void backupCurrentDatabase(final String iDatabaseName) {
-    Orient.instance().unregisterStorageByName(iDatabaseName);
-
+  protected void backupCurrentDatabase(final String iDatabaseName, ODistributedStorage stg) {
     // move directory to ../backup/databases/<db-name>
     final String backupDirectory = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
     if (backupDirectory == null || OIOUtils.getStringContent(backupDirectory).trim().isEmpty())
@@ -1424,24 +1422,35 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     else
       backupfullpath.mkdirs();
 
-    final String dbpath = serverInstance.getDatabaseDirectory() + iDatabaseName;
-
-    // move the database on current node
-    ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
-        "Moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote node...", iDatabaseName, dbpath,
-        backupPath);
-
-    final File oldDirectory = new File(dbpath);
-    if (oldDirectory.exists() && oldDirectory.isDirectory()) {
-      try {
-        Files.move(oldDirectory.toPath(), backupfullpath.toPath(), StandardCopyOption.REPLACE_EXISTING);
-      } catch (IOException e) {
+    OCallable<Void, String> callable = new OCallable<Void, String>() {
+      @Override
+      public Void call(String dbpath) {
+        // move the database on current node
         ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
-            "Error on moving existent database '%s' located in '%s' to '%s' (error=%s). Deleting old database anyway",
-            iDatabaseName, dbpath, backupfullpath, e);
+            "Moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote node...", iDatabaseName, dbpath,
+            backupfullpath.getPath());
+        final File oldDirectory = new File(dbpath);
+        if (oldDirectory.exists() && oldDirectory.isDirectory()) {
 
-        OFileUtils.deleteRecursively(oldDirectory);
+          try {
+            Files.move(oldDirectory.toPath(), backupfullpath.toPath(), StandardCopyOption.REPLACE_EXISTING);
+          } catch (IOException e) {
+            ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
+                "Error on moving existent database '%s' located in '%s' to '%s' (error=%s). Deleting old database anyway",
+                iDatabaseName, dbpath, backupfullpath, e);
+
+            OFileUtils.deleteRecursively(oldDirectory);
+          }
+        }
+
+        return null;
       }
+    };
+    if (stg != null)
+      stg.closeAndMove(callable);
+    else {
+      final String dbpath = serverInstance.getDatabaseDirectory() + iDatabaseName;
+      callable.call(dbpath);
     }
   }
 

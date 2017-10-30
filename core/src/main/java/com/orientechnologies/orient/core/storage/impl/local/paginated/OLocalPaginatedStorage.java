@@ -27,6 +27,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
@@ -53,6 +54,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -607,6 +610,16 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   public static boolean exists(final String path) {
     return new File(path + "/" + OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION).exists();
+  }
+
+  public void closeAndMove(OCallable<Void, String> mover) {
+    stateLock.acquireWriteLock();
+    try {
+      this.close(true, false);
+      mover.call(this.storagePath);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
   }
 
   private static class FullCheckpointThreadFactory implements ThreadFactory {
