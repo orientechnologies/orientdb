@@ -30,7 +30,7 @@ import java.util.UUID;
  */
 public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
 
-  public static final int FACTORYID = 29;
+  public static final int FACTORYID = 40;
 
   private String              nodeName;
   private OExecutionPlan      plan;

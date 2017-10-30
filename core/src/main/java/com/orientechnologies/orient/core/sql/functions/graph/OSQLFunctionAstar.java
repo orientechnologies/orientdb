@@ -116,6 +116,9 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
       bindAdditionalParams(iParams[3], context);
     }
     iContext.setVariable("getNeighbors", 0);
+    if (paramSourceVertex == null || paramDestinationVertex == null) {
+      return new LinkedList<>();
+    }
     return internalExecute(iContext, iContext.getDatabase());
 
   }
@@ -243,8 +246,8 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
       ctx.paramDFactor = doubleOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_D_FACTOR), ctx.paramDFactor);
       if (mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA) != null) {
         if (mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA) instanceof String) {
-          ctx.paramHeuristicFormula = HeuristicFormula
-              .valueOf(stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA), "MANHATAN").toUpperCase(Locale.ENGLISH));
+          ctx.paramHeuristicFormula = HeuristicFormula.valueOf(
+              stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA), "MANHATAN").toUpperCase(Locale.ENGLISH));
         } else {
           ctx.paramHeuristicFormula = (HeuristicFormula) mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA);
         }

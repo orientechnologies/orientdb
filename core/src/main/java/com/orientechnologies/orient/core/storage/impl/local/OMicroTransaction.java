@@ -363,7 +363,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
   private void doCommit() {
     if (!recordOperations.isEmpty() || !indexOperations.isEmpty())
-      storage.commit(this);
+      getDatabase().internalCommit(this);
 
     invokeCallbacks();
 

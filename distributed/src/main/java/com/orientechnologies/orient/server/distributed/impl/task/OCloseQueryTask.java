@@ -20,7 +20,7 @@ import java.io.IOException;
  */
 public class OCloseQueryTask extends OAbstractRemoteTask {
 
-  public static final int FACTORYID = 31;
+  public static final int FACTORYID = 42;
 
   private String queryId;
 

@@ -27,7 +27,7 @@
         </handler>
         <handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
             <parameters>
-                <parameter value="false" name="enabled"/>
+                <parameter value="true" name="enabled"/>
                 <parameter value="src/test/resources/asynch-distributed-db-config.json" name="configuration.db.default"/>
                 <parameter value="src/test/resources/hazelcast-0.xml" name="configuration.hazelcast"/>
                 <parameter value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver" name="conflict.resolver.impl"/>
@@ -67,6 +67,7 @@
     <properties>
         <entry value="info" name="log.console.level"/>
         <entry value="fine" name="log.file.level"/>
+        <entry name="server.database.path" value="target/databases" />
     </properties>
     <isAfterFirstTime>true</isAfterFirstTime>
 </orient-server>

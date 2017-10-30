@@ -23,6 +23,9 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -94,6 +97,11 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
       acquiredLocks.add(rid);
   }
 
+  @Override
+  public void lockIndexKey(Object rid) {
+    throw new UnsupportedOperationException();
+  }
+
   public ODistributedRequestId getReqId() {
     return reqId;
   }
@@ -102,7 +110,7 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     undoTasks.add(undoTask);
   }
 
-  public synchronized void commit() {
+  public synchronized void commit(ODatabaseDocumentInternal database) {
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
         "Distributed transaction %s: committing transaction on database '%s' (locks=%s thread=%d)", reqId, db.getDatabaseName(),
         acquiredLocks, Thread.currentThread().getId());
@@ -200,5 +208,15 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
       for (ORID r : locked)
         ddb.unlockRecord(r, requestId);
     }
+  }
+
+  @Override
+  public OTransactionOptimistic getTransaction() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void begin(ODatabaseDocumentInternal distributed, boolean local) {
+    throw new UnsupportedOperationException();
   }
 }

@@ -130,6 +130,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
           }
         } finally {
           runningWriters.countDown();
+          database.activateOnCurrentThread();
           database.close();
         }
         j++;

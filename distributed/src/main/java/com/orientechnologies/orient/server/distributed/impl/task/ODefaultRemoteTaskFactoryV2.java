@@ -24,11 +24,11 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 /**
  * Factory of remote tasks.
  * <p>
- * <ul> <li>V1 (16/08/2017) - includes partitionKeys in OCompleted2pcTaskV1</li> </ul>
+ * <ul> <li>V2 (11/09/2017) </li> </ul>
  *
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Luigi Dell'Aquila (l.dellaquila--at--orientdb.com)
  */
-public class ODefaultRemoteTaskFactoryV1 extends ODefaultRemoteTaskFactoryV0 {
+public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
   @Override
   public ORemoteTask createTask(final int code) {
     switch (code) {
@@ -116,17 +116,30 @@ public class ODefaultRemoteTaskFactoryV1 extends ODefaultRemoteTaskFactoryV0 {
     case ORequestDatabaseConfigurationTask.FACTORYID: // 27
       return new ORequestDatabaseConfigurationTask();
 
-    case OTransactionPhase1Task.FACTORYID:
-      return  new OTransactionPhase1Task();
-
-    case OTransactionPhase2Task.FACTORYID:
-      return new OTransactionPhase2Task();
-
     case OUnreachableServerLocalTask.FACTORYID: // 28
       throw new IllegalArgumentException("Task with code " + code + " is not supported in remote configuration");
 
+
+    //--- here starts V2 ----
+
+    case ORunQueryExecutionPlanTask.FACTORYID: // 40
+      return new ORunQueryExecutionPlanTask();
+
+    case OFetchQueryPageTask.FACTORYID: // 41
+      return new OFetchQueryPageTask();
+
+    case OCloseQueryTask.FACTORYID: // 42
+      return new OCloseQueryTask();
+
+    case OTransactionPhase1Task.FACTORYID: // 43
+      return new OTransactionPhase1Task();
+
+    case OTransactionPhase2Task.FACTORYID: // 44
+      return new OTransactionPhase1Task();
+
     case OEnterpriseStatsTask.FACTORYID: // 29
       return new OEnterpriseStatsTask();
+      
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

@@ -1,17 +1,21 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.hazelcast.core.HazelcastException;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -21,10 +25,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
@@ -40,6 +48,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  * Created by tglman on 30/03/17.
@@ -461,7 +470,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         throw new ODatabaseException("Cannot save (5) document "+record+": no class or cluster defined");
       }
     } else if (record instanceof ODocument)
-      schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+      schemaClass = ((ODocument) record).getSchemaClass();
     // If the cluster id was set check is validity
     if (rid.getClusterId() > ORID.CLUSTER_ID_INVALID) {
       if (schemaClass != null) {
@@ -477,14 +486,172 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return rid.getClusterId();
   }
 
-  protected OMicroTransaction beginMicroTransaction() {
-    if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed())
-      return null;
-    return super.beginMicroTransaction();
+  @Override
+  public void internalCommit(OTransactionInternal iTx) {
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+      //Exclusive for handling schema manipulation, remove after refactor for distributed schema
+      super.internalCommit(iTx);
+    } else {
+      //This is future may handle a retry
+      try {
+        for (ORecordOperation txEntry : iTx.getRecordOperations()) {
+          if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+            final ORecord record = txEntry.getRecord();
+            if (record instanceof ODocument)
+              ((ODocument) record).validate();
+          }
+        }
+        final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
+        ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
+        final String localNodeName = dManager.getLocalNodeName();
+        getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
+        ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
+            getStorageDistributed().getLocalDistributedDatabase());
+        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(iTx);
+
+        txManager.commit(this, iTx, getStorageDistributed().getEventListener());
+        return;
+      } catch (OValidationException e) {
+        throw e;
+      } catch (HazelcastInstanceNotActiveException e) {
+        throw new OOfflineNodeException("Hazelcast instance is not available");
+
+      } catch (HazelcastException e) {
+        throw new OOfflineNodeException("Hazelcast instance is not available");
+      } catch (Exception e) {
+        getStorageDistributed().handleDistributedException("Cannot route TX operation against distributed node", e);
+      }
+    }
   }
 
-  @Override
-  protected boolean supportsMicroTransactions(ORecord record) {
-    return OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
+  public void acquireLocksForTx(OTransactionInternal tx, ODistributedTxContext txContext) {
+    //Sort and lock transaction entry in distributed environment
+    Set<ORID> rids = new TreeSet<>();
+    for (ORecordOperation entry : tx.getRecordOperations()) {
+      rids.add(entry.getRID());
+    }
+    for (ORID rid : rids) {
+      txContext.lock(rid);
+    }
+    Set<Object> keys = new TreeSet<>();
+    for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexOperations().entrySet()) {
+      OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
+      if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
+          .equals(index.getType()) || OClass.INDEX_TYPE.DICTIONARY.name().equals(index.getType())
+          || OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(index.getType())) {
+        for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
+          keys.add(changesPerKey.key);
+        }
+      }
+    }
+    for (Object key : keys) {
+      txContext.lockIndexKey(key);
+    }
+
+  }
+
+  public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local) {
+    ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
+    ODistributedTxContext txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
+        requestId, tx);
+    try {
+      txContext.begin(this, local);
+    } catch (OConcurrentCreateException ex) {
+      if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
+        return false;
+      }
+      throw ex;
+    } catch (OConcurrentModificationException ex) {
+      if (ex.getEnhancedRecordVersion() > ex.getEnhancedDatabaseVersion()) {
+        return false;
+
+      }
+      throw ex;
+    }
+    localDistributedDatabase.registerTxContext(requestId, txContext);
+    return true;
+  }
+
+  /**
+   * The Local commit is different from a remote commit due to local rid pre-allocation
+   *
+   * @param transactionId
+   */
+  public void commit2pcLocal(ODistributedRequestId transactionId) {
+    commit2pc(transactionId);
+  }
+
+  public boolean commit2pc(ODistributedRequestId transactionId) {
+    ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
+    ODistributedTxContext txContext = localDistributedDatabase.getTxContext(transactionId);
+    if (txContext != null) {
+      txContext.commit(this);
+      localDistributedDatabase.popTxContext(transactionId);
+      return true;
+    }
+    return false;
+  }
+
+  public void rollback2pc(ODistributedRequestId transactionId) {
+    ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
+    ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
+    if (txContext != null) {
+      synchronized (txContext) {
+        txContext.destroy();
+      }
+    }
+  }
+
+  public void internalCommit2pc(ONewDistributedTxContextImpl txContext) {
+    try {
+      OTransactionInternal tx = txContext.getTransaction();
+      ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
+    } finally {
+      txContext.destroy();
+    }
+
+  }
+
+  public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean local) {
+    acquireLocksForTx(txContext.getTransaction(), txContext);
+
+    for (Map.Entry<String, OTransactionIndexChanges> change : txContext.getTransaction().getIndexOperations().entrySet()) {
+      OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
+      if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
+          .equals(index.getType())) {
+        for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
+          OIdentifiable old = (OIdentifiable) index.get(changesPerKey.key);
+          Object newValue = changesPerKey.entries.get(changesPerKey.entries.size() - 1).value;
+          if (old != null && !old.equals(newValue)) {
+            throw new ORecordDuplicatedException(String
+                .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                    newValue, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity());
+          }
+        }
+      }
+    }
+
+    for (ORecordOperation entry : txContext.getTransaction().getRecordOperations()) {
+      if (entry.getType() != ORecordOperation.CREATED) {
+        int changeVersion = entry.getRecord().getVersion();
+        ORecordMetadata metadata = getStorage().getRecordMetadata(entry.getRID());
+        if (metadata == null) {
+          //don't exist i get -1, -1 rid that put the operation in queue for retry.
+          throw new OConcurrentCreateException(new ORecordId(-1, -1), entry.getRID());
+        }
+        int persistentVersion = metadata.getVersion();
+        if (changeVersion != persistentVersion) {
+          throw new OConcurrentModificationException(entry.getRID(), persistentVersion, changeVersion, entry.getType());
+        }
+      }
+    }
+
+    //This has to be the last one because does persistent opertations
+    if (!local) {
+      List<ORID> list = txContext.getTransaction().getRecordOperations().stream().map((x) -> x.getRID())
+          .collect(Collectors.toList());
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(txContext.getTransaction());
+    }
+
   }
 }

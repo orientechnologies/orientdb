@@ -1484,7 +1484,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    *
    * @param clientTx the transaction of witch allocate rids
    */
-  public void preallocateRids(final OTransaction clientTx) {
+  public void preallocateRids(final OTransactionInternal clientTx) {
     try {
       checkOpenness();
       checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
@@ -1740,7 +1740,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
 
             OTransactionAbstract.updateCacheFromEntries(transaction.getDatabase(), recordOperations, true);
-
             txCommit.incrementAndGet();
 
           } catch (IOException | RuntimeException e) {
@@ -1891,7 +1890,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             endStorageTx();
 
             OTransactionAbstract.updateCacheFromEntries(transaction.getDatabase(), recordOperations, true);
-
             txCommit.incrementAndGet();
 
           } catch (IOException | RuntimeException e) {

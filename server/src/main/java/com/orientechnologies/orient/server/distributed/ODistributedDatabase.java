@@ -26,6 +26,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -109,11 +113,17 @@ public interface ODistributedDatabase {
 
   void waitForOnline();
 
+  void reEnqueue(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload);
+
   void processRequest(ODistributedRequest request, boolean waitForAcceptingRequests);
 
   ODistributedTxContext registerTxContext(ODistributedRequestId reqId);
 
+  ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx);
+
   ODistributedTxContext popTxContext(ODistributedRequestId requestId);
+
+  ODistributedTxContext getTxContext(ODistributedRequestId requestId);
 
   ODistributedServerManager getManager();
 

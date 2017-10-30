@@ -44,7 +44,7 @@ public class TransactionRidAllocationTest {
     OVertex v = db.newVertex("V");
     db.save(v);
 
-    ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids(db.getTransaction());
+    ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids((OTransactionInternal) db.getTransaction());
     ORID generated = v.getIdentity();
     assertTrue(generated.isValid());
 
@@ -59,7 +59,7 @@ public class TransactionRidAllocationTest {
     OVertex v = db.newVertex("V");
     db.save(v);
 
-    ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids(db.getTransaction());
+    ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids((OTransactionInternal) db.getTransaction());
     ORID generated = v.getIdentity();
     ((OAbstractPaginatedStorage) db.getStorage()).commitPreAllocated((OTransactionInternal) db.getTransaction());
 
@@ -80,7 +80,7 @@ public class TransactionRidAllocationTest {
     OVertex v = db.newVertex("V");
     db.save(v);
 
-    ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids(db.getTransaction());
+    ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids((OTransactionInternal) db.getTransaction());
     ORID generated = v.getIdentity();
     OTransaction transaction = db.getTransaction();
     second.activateOnCurrentThread();
@@ -146,7 +146,7 @@ public class TransactionRidAllocationTest {
       orecords.add(db.save(v));
     }
 
-    ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids(db.getTransaction());
+    ((OAbstractPaginatedStorage) db.getStorage()).preallocateRids((OTransactionInternal) db.getTransaction());
     List<ORID> allocated = new ArrayList<>();
     for (ORecord rec : orecords) {
       allocated.add(rec.getIdentity());

@@ -79,7 +79,7 @@ public class ServerClusterRemoteDocumentTest extends AbstractServerClusterTest {
       if (matter == null) {
         throw new Exception("Matter not found with id" + id);
       }
-      matter.field("client", new ODocument());
+      matter.field("client", new ODocument().save(db2.getClusterNameById(db2.getDefaultClusterId())));
       matter.save();
       db2.commit();
     } finally {

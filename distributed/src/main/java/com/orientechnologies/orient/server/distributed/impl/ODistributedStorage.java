@@ -2224,4 +2224,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     return new File(serverInstance.getDatabaseDirectory() + getName() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
   }
 
+  public ODistributedTransactionManager getTxManager() {
+    return txManager;
+  }
+
+  public ODistributedDatabase getLocalDistributedDatabase() {
+    return localDistributedDatabase;
+  }
 }

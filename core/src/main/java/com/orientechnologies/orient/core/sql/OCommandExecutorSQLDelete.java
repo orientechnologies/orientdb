@@ -301,7 +301,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
           allDeletedRecords.add(record);
 
         // RESET VERSION TO DISABLE MVCC AVOIDING THE CONCURRENT EXCEPTION IF LOCAL CACHE IS NOT UPDATED
-        ORecordInternal.setVersion(record, -1);
+//        ORecordInternal.setVersion(record, -1);
 
         if (!unsafe && record instanceof ODocument) {
           // CHECK IF ARE VERTICES OR EDGES

@@ -59,6 +59,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
 
           int retry;
           for (retry = 0; retry < maxRetries; retry++) {
+            database.activateOnCurrentThread();
             if ((i + 1) % printBlocksOf == 0)
               System.out.println("\nWriter " + database.getURL() + "(thread=" + threadId + ") managed " + (i + 1) + "/" + count
                   + " records so far");
@@ -138,6 +139,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
           }
         } finally {
           runningWriters.countDown();
+          database.activateOnCurrentThread();
           database.close();
         }
       }

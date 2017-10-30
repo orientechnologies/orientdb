@@ -20,6 +20,10 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
+import com.orientechnologies.common.concur.lock.OSimpleLockManager;
+import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -31,12 +35,14 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -60,8 +66,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
+
 /**
- * Distributed database implementation. There is one instance per database. Each node creates own instance to talk with each others.
+ * Distributed database implementation. There is one instance per database. Each node creates own instance to talk with each
+ * others.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
@@ -89,7 +98,17 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private          AtomicBoolean                         parsing               = new AtomicBoolean(true);
   private final    AtomicReference<ODistributedMomentum> filterByMomentum      = new AtomicReference<ODistributedMomentum>();
 
-  private String localNodeName;
+  private String                     localNodeName;
+  private OSimpleLockManager<ORID>   recordLockManager;
+  private OSimpleLockManager<Object> indexKeyLockManager;
+
+  public OSimpleLockManager<ORID> getRecordLockManager() {
+    return recordLockManager;
+  }
+
+  public OSimpleLockManager<Object> getIndexKeyLockManager() {
+    return indexKeyLockManager;
+  }
 
   public class ODistributedLock {
     protected final    ODistributedRequestId reqId;
@@ -170,6 +189,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             return (long) lockManager.size();
           }
         }, "distributed.db.*.recordLocks");
+
+    long timeout = manager.getServerInstance().getContextConfiguration().getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
+    recordLockManager = new OSimpleLockManagerImpl<>(timeout);
+    indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
@@ -186,6 +209,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       Thread.currentThread().interrupt();
       // IGNORE IT
     }
+  }
+
+  public void reEnqueue(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload) {
+    new Thread(() -> {
+      processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false);
+    }).start();
   }
 
   /**
@@ -409,6 +438,19 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
       final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
       final OCallable<Void, ODistributedResponseManager> endCallback) {
+    return send2Nodes(iRequest, iClusterNames, iNodes, iExecutionMode, localResult, iAfterSentCallback, endCallback,
+        (iRequest1, iNodes1, endCallback1, task, nodesConcurToTheQuorum, availableNodes, expectedResponses, quorum, groupByResponse, waitLocalNode) -> {
+          return new ODistributedResponseManagerImpl(manager, iRequest, iNodes, nodesConcurToTheQuorum, expectedResponses, quorum,
+              waitLocalNode, adjustTimeoutWithLatency(iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
+              adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()), groupByResponse,
+              endCallback);
+        });
+  }
+
+  public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
+      Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
+      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
+      final OCallable<Void, ODistributedResponseManager> endCallback, ODistributedResponseManagerFactory responseManagerFactory) {
     boolean afterSendCallBackCalled = false;
     try {
       checkForServerOnline(iRequest);
@@ -447,10 +489,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final boolean waitLocalNode = waitForLocalNode(cfg, iClusterNames, iNodes);
 
       // CREATE THE RESPONSE MANAGER
-      final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, iNodes,
-          nodesConcurToTheQuorum, expectedResponses, quorum, waitLocalNode,
-          adjustTimeoutWithLatency(iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
-          adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()), groupByResponse, endCallback);
+      final ODistributedResponseManager currentResponseMgr = responseManagerFactory
+          .newResponseManager(iRequest, iNodes, endCallback, task, nodesConcurToTheQuorum, availableNodes, expectedResponses,
+              quorum, groupByResponse, waitLocalNode);
 
       if (localResult != null && currentResponseMgr.setLocalResult(localNodeName, localResult)) {
         // COLLECT LOCAL RESULT ONLY
@@ -541,6 +582,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (iAfterSentCallback != null && !afterSendCallBackCalled)
         iAfterSentCallback.call(iRequest.getId());
     }
+  }
+
+  public ODistributedResponseManager newResponseManager(ODistributedRequest iRequest, Collection<String> iNodes,
+      OCallable<Void, ODistributedResponseManager> endCallback, ORemoteTask task, Set<String> nodesConcurToTheQuorum,
+      int availableNodes, int expectedResponses, int quorum, boolean groupByResponse, boolean waitLocalNode) {
+    return new ODistributedResponseManagerImpl(manager, iRequest, iNodes, nodesConcurToTheQuorum, expectedResponses, quorum,
+        waitLocalNode, adjustTimeoutWithLatency(iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
+        adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()), groupByResponse, endCallback);
   }
 
   private long adjustTimeoutWithLatency(final Collection<String> iNodes, final long timeout,
@@ -801,8 +850,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId) {
-    ODistributedTxContext ctx = new ODistributedTxContextImpl(this, reqId);
+    return registerTxContext(reqId, new ODistributedTxContextImpl(this, reqId));
+  }
 
+  @Override
+  public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx) {
     final ODistributedTxContext prevCtx = activeTxContexts.putIfAbsent(reqId, ctx);
     if (prevCtx != null) {
       // ALREADY EXISTENT
@@ -822,6 +874,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public ODistributedTxContext popTxContext(final ODistributedRequestId requestId) {
     final ODistributedTxContext ctx = activeTxContexts.remove(requestId);
+    ODistributedServerLog
+        .debug(this, localNodeName, null, DIRECTION.NONE, "Distributed transaction: pop request %s for database %s -> %s",
+            requestId, databaseName, ctx);
+    return ctx;
+  }
+
+  @Override
+  public ODistributedTxContext getTxContext(final ODistributedRequestId requestId) {
+    final ODistributedTxContext ctx = activeTxContexts.get(requestId);
     ODistributedServerLog
         .debug(this, localNodeName, null, DIRECTION.NONE, "Distributed transaction: pop request %s for database %s -> %s",
             requestId, databaseName, ctx);
@@ -1235,8 +1296,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       }
     };
 
-    Orient.instance().scheduleTask(txTimeoutTask, OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong(),
-        OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong() / 2);
+//    Orient.instance().scheduleTask(txTimeoutTask, OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong(),
+//        OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong() / 2);
   }
 
   private boolean isRunning() {

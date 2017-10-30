@@ -74,6 +74,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCl
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -1340,6 +1341,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return componentsFactory.binarySerializerFactory;
   }
 
+  @Deprecated
   public ODatabaseDocument begin(final OTransaction iTx) {
     begin();
     return this;
@@ -3140,7 +3142,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public void internalCommit(OTransactionOptimistic transaction) {
+  public void internalCommit(OTransactionInternal transaction) {
     this.getStorage().commit(transaction, null);
   }
 }

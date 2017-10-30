@@ -20,7 +20,7 @@ import java.io.IOException;
  */
 public class OFetchQueryPageTask extends OAbstractRemoteTask {
 
-  public static final int FACTORYID = 30;
+  public static final int FACTORYID = 41;
 
   private String queryId;
 

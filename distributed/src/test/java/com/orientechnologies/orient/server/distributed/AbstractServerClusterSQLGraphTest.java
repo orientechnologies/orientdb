@@ -99,6 +99,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
             break;
           } finally {
             runningWriters.countDown();
+            graph.activateOnCurrentThread();
             graph.close();
           }
         }

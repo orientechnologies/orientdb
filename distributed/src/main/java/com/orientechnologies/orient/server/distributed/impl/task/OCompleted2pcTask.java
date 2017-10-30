@@ -94,7 +94,7 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
       if (success) {
         // COMMIT
         if (ctx != null)
-          ctx.commit();
+          ctx.commit(database);
         else {
           // UNABLE TO FIND TX CONTEXT
           ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
