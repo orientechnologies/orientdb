@@ -1335,6 +1335,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public void closeAndMove(OCallable<Void, String> mover) {
+    if (wrapped == null)
+      return;
     if (wrapped instanceof OLocalPaginatedStorage) {
       ((OLocalPaginatedStorage) wrapped).closeAndMove(mover);
     } else {
