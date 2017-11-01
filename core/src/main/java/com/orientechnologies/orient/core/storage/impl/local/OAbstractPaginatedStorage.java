@@ -511,6 +511,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
+
+    OLogManager.instance()
+        .info(this, "Storage '%s' is created under OrientDB distribution : %s", getURL(), OConstants.getVersion());
+
   }
 
   @Override
@@ -3829,7 +3833,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private void rollbackStorageTx() throws IOException {
-    if (writeAheadLog == null || transaction.get() == null)
+    if (transaction.get() == null)
       return;
 
     atomicOperationsManager.endAtomicOperation(true, null, (String) null);
@@ -5198,8 +5202,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected RuntimeException logAndPrepareForRethrow(Throwable throwable) {
     if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException))
       OLogManager.instance()
-          .error(this, "Exception `%08X` in storage `%s`: %s", throwable, System.identityHashCode(throwable),
-              getURL(),
+          .error(this, "Exception `%08X` in storage `%s`: %s", throwable, System.identityHashCode(throwable), getURL(),
               OConstants.getVersion());
     return new RuntimeException(throwable);
   }
