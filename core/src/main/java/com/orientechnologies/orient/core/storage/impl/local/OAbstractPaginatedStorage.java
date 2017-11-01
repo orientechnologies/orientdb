@@ -496,6 +496,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
+
+    OLogManager.instance()
+        .info(this, "Storage '%s' is created under OrientDB distribution : %s", getURL(), OConstants.getVersion());
+
   }
 
   @Override
