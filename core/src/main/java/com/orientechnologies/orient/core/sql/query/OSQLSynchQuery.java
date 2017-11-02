@@ -32,16 +32,16 @@ import java.util.Map;
 
 /**
  * SQL synchronous query. When executed the caller wait for the result.
- * 
- * @author Luca Garulli
- * 
+ *
  * @param <T>
+ *
+ * @author Luca Garulli
  * @see OSQLAsynchQuery
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> implements OCommandResultListener, Iterable<T> {
-  private final OResultSet<T> result              = new OConcurrentResultSet<T>();
-  private ORID                nextPageRID;
+  private final OResultSet<T> result = new OConcurrentResultSet<T>();
+  private ORID nextPageRID;
   private Map<Object, Object> previousQueryParams = new HashMap<Object, Object>();
 
   public OSQLSynchQuery() {
@@ -78,8 +78,13 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
   public List<T> run(final Object... iArgs) {
     String currentThreadName = Thread.currentThread().getName();
     try {
-      Thread.currentThread().setName(currentThreadName + " <query>" + this.getText() + "</query>");
-      
+      if (currentThreadName == null || !(currentThreadName.contains("<query>") || currentThreadName.contains("<command>"))) {
+        try {
+          Thread.currentThread().setName(currentThreadName + " <query>" + this.getText() + "</query>");
+        } catch (SecurityException x) {
+        }
+      }
+
       result.clear();
 
       final Map<Object, Object> queryParams;
@@ -105,8 +110,11 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
       }
 
       return result;
-    }finally{
-      Thread.currentThread().setName(String.valueOf(currentThreadName));
+    } finally {
+      try {
+        Thread.currentThread().setName(currentThreadName);
+      } catch (SecurityException x) {
+      }
     }
   }
 

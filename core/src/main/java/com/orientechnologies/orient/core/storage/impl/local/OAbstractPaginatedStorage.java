@@ -3293,10 +3293,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           String currentThreadName = Thread.currentThread().getName();
           try {
-            Thread.currentThread().setName(currentThreadName + " <command>" + iCommand + "</command>");
+            if (currentThreadName == null || !(currentThreadName.contains("<query>") || currentThreadName.contains("<command>"))) {
+              try {
+                Thread.currentThread().setName(currentThreadName + " <command>" + iCommand + "</command>");
+              } catch (SecurityException x) {
+              }
+            }
             return executeCommand(iCommand, executor);
           } finally {
-            Thread.currentThread().setName(String.valueOf(currentThreadName));
+            try {
+              Thread.currentThread().setName(currentThreadName);
+            } catch (SecurityException x) {
+            }
           }
 
         } catch (ORetryQueryException ignore) {
