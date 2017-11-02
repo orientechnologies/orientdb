@@ -1606,6 +1606,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       // TRY ALL THE SERVERS IN ORDER (ALL THE SERVERS HAVE THE SAME LIST)
       String lockManagerServer = getLockManagerRequester().getServer();
+
+      // PROTECT FROM DOUBLE LOCK MANAGER ELECTION IN CASE OF REMOVE OF LOCK MANAGER
+      if (lockManagerServer != null && getActiveServers().contains(lockManagerServer))
+        return lockManagerServer;
+
       final String originalLockManager = lockManagerServer;
 
       ODistributedServerLog.debug(this, nodeName, originalLockManager, DIRECTION.OUT,
