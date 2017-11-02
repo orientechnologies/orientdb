@@ -1440,7 +1440,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
             // SKIP RETRY IN CASE OF OConcurrentModificationException BECAUSE IT NEEDS A RETRY AT APPLICATION LEVEL
             if (!(e instanceof OConcurrentModificationException) && (e instanceof ONeedRetryException
-                || e instanceof ORecordNotFoundException)) {
+                || e instanceof ORecordNotFoundException) && !(e instanceof ODistributedRedirectException)) {
               // RETRY
               final long wait = autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay);
 
