@@ -3291,7 +3291,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           executor.setProgressListener(iCommand.getProgressListener());
           executor.parse(iCommand);
 
-          return executeCommand(iCommand, executor);
+          String currentThreadName = Thread.currentThread().getName();
+          try {
+            Thread.currentThread().setName(currentThreadName + " <command>" + iCommand + "</command>");
+            return executeCommand(iCommand, executor);
+          } finally {
+            Thread.currentThread().setName(String.valueOf(currentThreadName));
+          }
+
         } catch (ORetryQueryException ignore) {
 
           if (iCommand instanceof OQueryAbstract) {

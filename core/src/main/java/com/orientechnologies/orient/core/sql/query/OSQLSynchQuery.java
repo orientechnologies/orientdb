@@ -19,16 +19,16 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL synchronous query. When executed the caller wait for the result.
@@ -76,31 +76,38 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 
   @Override
   public List<T> run(final Object... iArgs) {
-    result.clear();
+    String currentThreadName = Thread.currentThread().getName();
+    try {
+      Thread.currentThread().setName(currentThreadName + " <query>" + this.getText() + "</query>");
+      
+      result.clear();
 
-    final Map<Object, Object> queryParams;
-    queryParams = fetchQueryParams(iArgs);
-    resetNextRIDIfParametersWereChanged(queryParams);
+      final Map<Object, Object> queryParams;
+      queryParams = fetchQueryParams(iArgs);
+      resetNextRIDIfParametersWereChanged(queryParams);
 
-    final List<Object> res = (List<Object>) super.run(iArgs);
+      final List<Object> res = (List<Object>) super.run(iArgs);
 
-    if (res != result && res != null && result.isEmptyNoWait()) {
-      Iterator<Object> iter = res.iterator();
-      while (iter.hasNext()) {
-        Object item = iter.next();
-        result.add((T) item);
+      if (res != result && res != null && result.isEmptyNoWait()) {
+        Iterator<Object> iter = res.iterator();
+        while (iter.hasNext()) {
+          Object item = iter.next();
+          result.add((T) item);
+        }
       }
+
+      ((OResultSet) result).setCompleted();
+
+      if (!result.isEmpty()) {
+        previousQueryParams = new HashMap<Object, Object>(queryParams);
+        final ORID lastRid = ((OIdentifiable) result.get(result.size() - 1)).getIdentity();
+        nextPageRID = new ORecordId(lastRid.next());
+      }
+
+      return result;
+    }finally{
+      Thread.currentThread().setName(String.valueOf(currentThreadName));
     }
-
-    ((OResultSet) result).setCompleted();
-
-    if (!result.isEmpty()) {
-      previousQueryParams = new HashMap<Object, Object>(queryParams);
-      final ORID lastRid = ((OIdentifiable) result.get(result.size() - 1)).getIdentity();
-      nextPageRID = new ORecordId(lastRid.next());
-    }
-
-    return result;
   }
 
   @Override
