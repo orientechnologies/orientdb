@@ -82,6 +82,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
         try {
           Thread.currentThread().setName(currentThreadName + " <query>" + this.getText() + "</query>");
         } catch (SecurityException x) {
+          // ignore, current thread for some reason cannot change its name
         }
       }
 
@@ -114,6 +115,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
       try {
         Thread.currentThread().setName(currentThreadName);
       } catch (SecurityException x) {
+        // ignore, current thread for some reason cannot change its name
       }
     }
   }

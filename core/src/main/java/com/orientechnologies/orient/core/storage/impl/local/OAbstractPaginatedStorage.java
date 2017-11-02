@@ -3297,6 +3297,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               try {
                 Thread.currentThread().setName(currentThreadName + " <command>" + iCommand + "</command>");
               } catch (SecurityException x) {
+                // ignore, current thread for some reason cannot change its name
               }
             }
             return executeCommand(iCommand, executor);
@@ -3304,6 +3305,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             try {
               Thread.currentThread().setName(currentThreadName);
             } catch (SecurityException x) {
+              // ignore, current thread for some reason cannot change its name
             }
           }
 
