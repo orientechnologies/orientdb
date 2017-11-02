@@ -1019,15 +1019,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         // container of rids of changed records
         final SortedSet<ORID> sortedRids = new TreeSet<ORID>();
 
-        final OLogSequenceNumber startLsn = writeAheadLog.next(lsn);
+        OLogSequenceNumber startLsn = writeAheadLog.next(lsn);
         if (startLsn == null) {
           OLogManager.instance()
               .info(this, "Cannot find requested LSN=%s for database sync operation (last available LSN is %s)", lsn, endLsn);
           return null;
         }
 
-        writeAheadLog.preventCutTill(startLsn);
+        final OLogSequenceNumber freezeLSN = startLsn;
+
+        writeAheadLog.addCutTillLimit(freezeLSN);
         try {
+          //reread because log may be already truncated
+          startLsn = writeAheadLog.next(lsn);
+          if (startLsn == null) {
+            OLogManager.instance()
+                .info(this, "Cannot find requested LSN=%s for database sync operation (last available LSN is %s)", lsn, endLsn);
+            return null;
+          }
+
           // start record is absent there is nothing that we can do
           OWALRecord walRecord = writeAheadLog.read(startLsn);
           if (walRecord == null) {
@@ -1074,7 +1084,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               outputListener.onMessage("read " + read + " records from WAL and collected " + sortedRids.size() + " records");
           }
         } finally {
-          writeAheadLog.preventCutTill(null);
+          writeAheadLog.removeCutTillLimit(freezeLSN);
         }
 
         final int totalRecords = sortedRids.size();
@@ -1192,14 +1202,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           return null;
         }
 
-        final OLogSequenceNumber startLsn = writeAheadLog.begin();
+        OLogSequenceNumber startLsn = writeAheadLog.begin();
         if (startLsn == null) {
           OLogManager.instance().warn(this, "The WAL is empty for database '%s'", name);
           return result;
         }
 
-        writeAheadLog.preventCutTill(startLsn);
+        final OLogSequenceNumber freezeLSN = startLsn;
+        writeAheadLog.addCutTillLimit(freezeLSN);
         try {
+          //reread because log may be already truncated
+          startLsn = writeAheadLog.begin();
+          if (startLsn == null) {
+            OLogManager.instance().warn(this, "The WAL is empty for database '%s'", name);
+            return result;
+          }
 
           final OLogSequenceNumber endLsn = writeAheadLog.end();
           if (endLsn == null) {
@@ -1251,7 +1268,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           return result;
         } finally {
-          writeAheadLog.preventCutTill(null);
+          writeAheadLog.removeCutTillLimit(freezeLSN);
         }
 
       } catch (IOException e) {

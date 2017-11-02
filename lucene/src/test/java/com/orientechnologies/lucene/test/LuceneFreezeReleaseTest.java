@@ -27,6 +27,8 @@ public class LuceneFreezeReleaseTest {
 
   @Test
   public void freezeReleaseTest() {
+    if (isWindows())
+      return;
 
     ODatabaseDocument db = new ODatabaseDocumentTx("plocal:target/freezeRelease");
 
@@ -57,7 +59,6 @@ public class LuceneFreezeReleaseTest {
       Assert.assertEquals(2, results.size());
 
     } finally {
-
       db.drop();
     }
 
@@ -66,6 +67,8 @@ public class LuceneFreezeReleaseTest {
   // With double calling freeze/release
   @Test
   public void freezeReleaseMisUsageTest() {
+    if (isWindows())
+      return;
 
     ODatabaseDocument db = new ODatabaseDocumentTx("plocal:target/freezeRelease");
 
@@ -100,9 +103,13 @@ public class LuceneFreezeReleaseTest {
       Assert.assertEquals(2, results.size());
 
     } finally {
-
       db.drop();
     }
 
+  }
+
+  private boolean isWindows() {
+    final String osName = System.getProperty("os.name").toLowerCase();
+    return osName.contains("win");
   }
 }

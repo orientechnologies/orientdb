@@ -117,7 +117,7 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
     actualStorage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
     actualAtomicOperationsManager = actualStorage.getAtomicOperationsManager();
     ODiskWriteAheadLog writeAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
-    writeAheadLog.preventCutTill(writeAheadLog.getFlushedLsn());
+    writeAheadLog.addCutTillLimit(writeAheadLog.getFlushedLsn());
 
     sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("actualSBTree", ".sbt", actualStorage);
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);

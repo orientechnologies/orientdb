@@ -75,7 +75,7 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber getFlushedLsn();
 
-  void cutTill(OLogSequenceNumber lsn) throws IOException;
+  boolean cutTill(OLogSequenceNumber lsn) throws IOException;
 
   void addFullCheckpointListener(OFullCheckpointRequestListener listener);
 
@@ -83,7 +83,9 @@ public interface OWriteAheadLog {
 
   void moveLsnAfter(OLogSequenceNumber lsn) throws IOException;
 
-  void preventCutTill(OLogSequenceNumber lsn) throws IOException;
+  void addCutTillLimit(OLogSequenceNumber lsn);
+
+  void removeCutTillLimit(OLogSequenceNumber lsn);
 
   File[] nonActiveSegments(long fromSegment);
 

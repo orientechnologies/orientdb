@@ -15,7 +15,7 @@ public class OConstants {
    * @deprecated Use {@link #getRawVersion()} instead.
    */
   @Deprecated
-  public static String ORIENT_VERSION;
+  public static volatile String ORIENT_VERSION;
 
   @Deprecated
   public static final String GROUPID = "com.orientechnologies";
@@ -27,25 +27,25 @@ public class OConstants {
    * @deprecated Use {@link #getBuildNumber()} instead.
    */
   @Deprecated
-  public static String REVISION;
+  public static final String REVISION;
 
   /**
    * @deprecated Use {@link #getVersionMajor()} instead.
    */
   @Deprecated
-  public static int ORIENT_VERSION_MAJOR;
+  public static final int ORIENT_VERSION_MAJOR;
 
   /**
    * @deprecated Use {@link #getVersionMinor()} instead.
    */
   @Deprecated
-  public static int ORIENT_VERSION_MINOR;
+  public static final int ORIENT_VERSION_MINOR;
 
   /**
    * @deprecated Use {@link #getVersionHotfix()} instead.
    */
   @Deprecated
-  public static int ORIENT_VERSION_HOFIX;
+  public static final int ORIENT_VERSION_HOFIX;
 
   private static final Properties properties = new Properties();
 
@@ -75,6 +75,7 @@ public class OConstants {
       ORIENT_VERSION_HOFIX = getVersionHotfix();
     } catch (Throwable throwable) {
       OLogManager.instance().errorNoDb(null, "Error during OrientDB constants initialization", throwable);
+      throw new RuntimeException(throwable);
     }
   }
 
