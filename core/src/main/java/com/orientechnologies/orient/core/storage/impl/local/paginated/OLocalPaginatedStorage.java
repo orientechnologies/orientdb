@@ -257,14 +257,16 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
       File dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
       final File[] storageFiles = dbDir.listFiles();
-      // TRY TO DELETE ALL THE FILES
-      for (File f : storageFiles) {
-        // DELETE ONLY THE SUPPORTED FILES
-        for (String ext : ALL_FILE_EXTENSIONS)
-          if (f.getPath().endsWith(ext)) {
-            f.delete();
-            break;
-          }
+      if(storageFiles != null) {
+        // TRY TO DELETE ALL THE FILES
+        for (File f : storageFiles) {
+          // DELETE ONLY THE SUPPORTED FILES
+          for (String ext : ALL_FILE_EXTENSIONS)
+            if (f.getPath().endsWith(ext)) {
+              f.delete();
+              break;
+            }
+        }
       }
 
       OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
