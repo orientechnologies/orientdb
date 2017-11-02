@@ -192,7 +192,9 @@ public class OLuceneIndexCrashRestoreIT {
         "Create index Person.name on Person(name) fulltext engine lucene metadata {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer', 'unknownKey':'unknownValue'}"))
         .execute();
 
-    //sometimes the metadata is null!!!!!
+    testDocumentTx.getMetadata().reload();
+    index = testDocumentTx.getMetadata().getIndexManager().getIndex("Person.name");
+
     assertThat((Iterable<? extends Map.Entry<String, Object>>) index.getMetadata()).isNotNull();
 
     assertThat(index.getMetadata().<String>field("default")).isNotNull();
