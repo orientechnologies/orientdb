@@ -2374,18 +2374,25 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           "Cannot recycle record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
 
     byte[] stream = record.toStream();
+    try {
 
-    final ORecordHook.RESULT hookResult = callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, record);
-    if (hookResult == ORecordHook.RESULT.RECORD_CHANGED) {
-      if (record instanceof ODocument)
-        ((ODocument) record).validate();
-      stream = updateStream(record);
+      final ORecordHook.RESULT hookResult = callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, record);
+      if (hookResult == ORecordHook.RESULT.RECORD_CHANGED) {
+        if (record instanceof ODocument)
+          ((ODocument) record).validate();
+        stream = updateStream(record);
+      }
+
+      storage.recyclePosition(rid, stream, record.getVersion(), ODocument.RECORD_TYPE);
+
+      final OStorageOperationResult<Integer> operationResult = new OStorageOperationResult<Integer>(record.getVersion(), false);
+      callbackHookSuccess(record, true, stream, operationResult);
+    } catch (RuntimeException e) {
+      callbackHookFailure(record, true, stream);
+      throw e;
+    } finally {
+      callbackHookFinalize(record, true, stream);
     }
-
-    storage.recyclePosition(rid, stream, record.getVersion(), ODocument.RECORD_TYPE);
-
-    final OStorageOperationResult<Integer> operationResult = new OStorageOperationResult<Integer>(record.getVersion(), false);
-    callbackHookSuccess(record, true, stream, operationResult);
   }
 
   /**
