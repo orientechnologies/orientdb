@@ -1187,8 +1187,6 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OResultSet query = db.getActiveQuery(queryId);
     if (query != null) {
       query.close();
-    } else {
-      throw new ODatabaseException("Cannot close query: " + oQueryRequest.getQueryId());
     }
     return new OCloseQueryResponse();
   }
@@ -1198,17 +1196,18 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     final long serverTimeout = connection.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
     //TODO set a timeout on the request?
 
-    OResultSet rs = connection.getDatabase().getActiveQuery(request.getQueryId());
+    OLocalResultSetLifecycleDecorator rs = (OLocalResultSetLifecycleDecorator) connection.getDatabase().getActiveQuery(request.getQueryId());
 
     //copy the result-set to make sure that the execution is successful
     List<OResultInternal> rsCopy = new ArrayList<>(request.getRecordsPerPage());
     int i = 0;
-    while (rs.hasNext() && i < request.getRecordsPerPage()) {
+    //if it's OInternalResultSet it means that it's a Command, not a Query, so the result has to be sent as it is, not streamed
+    while (rs.hasNext() && (rs.isDetached() || i < request.getRecordsPerPage())) {
       rsCopy.add((OResultInternal) rs.next());
       i++;
     }
     boolean hasNext = rs.hasNext();
-    return new OQueryResponse(((OLocalResultSetLifecycleDecorator) rs).getQueryId(), false, rsCopy, rs.getExecutionPlan(), hasNext,
+    return new OQueryResponse(rs.getQueryId(), false, rsCopy, rs.getExecutionPlan(), hasNext,
         rs.getQueryStats());
   }
 

@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -653,5 +652,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(txContext.getTransaction());
     }
 
+  }
+
+  @Override
+  public void queryStarted(String id, OResultSet rs) {
+    //do nothing
+  }
+
+  @Override
+  public void queryClosed(String id) {
+    //do nothing
   }
 }

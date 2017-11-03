@@ -73,11 +73,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTransactionNoTx;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -1535,7 +1531,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
             throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
           rid.setClusterId(schemaClass.getClusterForNewInstance((ODocument) record));
         } else
-          throw new ODatabaseException("Cannot save (1) document "+record+": no class or cluster defined");
+          throw new ODatabaseException("Cannot save (1) document " + record + ": no class or cluster defined");
       } else {
         if (record instanceof ORecordBytes) {
           Set<Integer> blobs = getBlobClusterIds();
@@ -1545,7 +1541,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
             rid.setClusterId(blobs.iterator().next());
           }
         } else {
-          throw new ODatabaseException("Cannot save (3) document "+record+": no class or cluster defined");
+          throw new ODatabaseException("Cannot save (3) document " + record + ": no class or cluster defined");
         }
       }
     } else if (record instanceof ODocument)
@@ -3124,6 +3120,17 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public void queryStarted(String id, OResultSet rs) {
+    if (this.activeQueries.size() > 1 && this.activeQueries.size() % 10 == 0) {
+      StringBuilder msg = new StringBuilder();
+      msg.append("This database instance has ");
+      msg.append(activeQueries.size());
+      msg.append(" open command/query result sets, please make sure you close them with OResultSet.close()");
+      OLogManager.instance().error(this, msg.toString(), null);
+      if (OLogManager.instance().isDebugEnabled()) {
+        activeQueries.values().stream().map(pendingQuery -> pendingQuery.getExecutionPlan()).filter(plan -> plan != null)
+            .forEach(plan -> OLogManager.instance().debug(this, plan.toString()));
+      }
+    }
     this.activeQueries.put(id, rs);
   }
 

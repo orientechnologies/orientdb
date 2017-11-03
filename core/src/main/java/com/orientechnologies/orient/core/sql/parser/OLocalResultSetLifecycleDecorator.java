@@ -77,4 +77,8 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
   public void setHasNextPage(boolean b) {
     this.hasNextPage = b;
   }
+
+  public boolean isDetached(){
+    return entity instanceof OInternalResultSet;
+  }
 }

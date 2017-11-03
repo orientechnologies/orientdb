@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -46,12 +45,8 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.executor.LiveQueryListenerImpl;
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -60,12 +55,10 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by tglman on 27/06/16.
@@ -380,9 +373,19 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public OResultSet command(String query, Object[] args) {
     OStatement statement = OSQLEngine.parse(query, this);
     OResultSet original = statement.execute(this, args);
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
+    OLocalResultSetLifecycleDecorator result;
+    if (!statement.isIdempotent()) {
+      //fetch all, close and detach
+      OInternalResultSet prefetched = new OInternalResultSet();
+      original.forEachRemaining(x -> prefetched.add(x));
+      original.close();
+      result = new OLocalResultSetLifecycleDecorator(prefetched);
+    } else {
+      //stream, keep open and attach to the current DB
+      result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+    }
     return result;
   }
 
@@ -390,9 +393,19 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public OResultSet command(String query, Map args) {
     OStatement statement = OSQLEngine.parse(query, this);
     OResultSet original = statement.execute(this, args);
-    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
-    this.queryStarted(result.getQueryId(), result);
-    result.addLifecycleListener(this);
+    OLocalResultSetLifecycleDecorator result;
+    if (!statement.isIdempotent()) {
+      //fetch all, close and detach
+      OInternalResultSet prefetched = new OInternalResultSet();
+      original.forEachRemaining(x -> prefetched.add(x));
+      original.close();
+      result = new OLocalResultSetLifecycleDecorator(prefetched);
+    } else {
+      //stream, keep open and attach to the current DB
+      result = new OLocalResultSetLifecycleDecorator(original);
+      this.queryStarted(result.getQueryId(), result);
+      result.addLifecycleListener(this);
+    }
     return result;
   }
 
