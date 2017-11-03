@@ -3125,7 +3125,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       msg.append("This database instance has ");
       msg.append(activeQueries.size());
       msg.append(" open command/query result sets, please make sure you close them with OResultSet.close()");
-      OLogManager.instance().error(this, msg.toString(), null);
+      OLogManager.instance().warn(this, msg.toString(), null);
       if (OLogManager.instance().isDebugEnabled()) {
         activeQueries.values().stream().map(pendingQuery -> pendingQuery.getExecutionPlan()).filter(plan -> plan != null)
             .forEach(plan -> OLogManager.instance().debug(this, plan.toString()));
