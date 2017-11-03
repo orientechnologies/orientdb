@@ -19,29 +19,29 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 /**
  * SQL synchronous query. When executed the caller wait for the result.
- * 
- * @author Luca Garulli
- * 
+ *
  * @param <T>
+ *
+ * @author Luca Garulli
  * @see OSQLAsynchQuery
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> implements OCommandResultListener, Iterable<T> {
-  private final OResultSet<T> result              = new OConcurrentResultSet<T>();
-  private ORID                nextPageRID;
+  private final OResultSet<T> result = new OConcurrentResultSet<T>();
+  private ORID nextPageRID;
   private Map<Object, Object> previousQueryParams = new HashMap<Object, Object>();
 
   public OSQLSynchQuery() {
@@ -76,31 +76,48 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 
   @Override
   public List<T> run(final Object... iArgs) {
-    result.clear();
+    String currentThreadName = Thread.currentThread().getName();
+    try {
+      if (currentThreadName == null || !(currentThreadName.contains("<query>") || currentThreadName.contains("<command>"))) {
+        try {
+          Thread.currentThread().setName(currentThreadName + " <query>" + this.getText() + "</query>");
+        } catch (SecurityException x) {
+          // ignore, current thread for some reason cannot change its name
+        }
+      }
 
-    final Map<Object, Object> queryParams;
-    queryParams = fetchQueryParams(iArgs);
-    resetNextRIDIfParametersWereChanged(queryParams);
+      result.clear();
 
-    final List<Object> res = (List<Object>) super.run(iArgs);
+      final Map<Object, Object> queryParams;
+      queryParams = fetchQueryParams(iArgs);
+      resetNextRIDIfParametersWereChanged(queryParams);
 
-    if (res != result && res != null && result.isEmptyNoWait()) {
-      Iterator<Object> iter = res.iterator();
-      while (iter.hasNext()) {
-        Object item = iter.next();
-        result.add((T) item);
+      final List<Object> res = (List<Object>) super.run(iArgs);
+
+      if (res != result && res != null && result.isEmptyNoWait()) {
+        Iterator<Object> iter = res.iterator();
+        while (iter.hasNext()) {
+          Object item = iter.next();
+          result.add((T) item);
+        }
+      }
+
+      ((OResultSet) result).setCompleted();
+
+      if (!result.isEmpty()) {
+        previousQueryParams = new HashMap<Object, Object>(queryParams);
+        final ORID lastRid = ((OIdentifiable) result.get(result.size() - 1)).getIdentity();
+        nextPageRID = new ORecordId(lastRid.next());
+      }
+
+      return result;
+    } finally {
+      try {
+        Thread.currentThread().setName(currentThreadName);
+      } catch (SecurityException x) {
+        // ignore, current thread for some reason cannot change its name
       }
     }
-
-    ((OResultSet) result).setCompleted();
-
-    if (!result.isEmpty()) {
-      previousQueryParams = new HashMap<Object, Object>(queryParams);
-      final ORID lastRid = ((OIdentifiable) result.get(result.size() - 1)).getIdentity();
-      nextPageRID = new ORecordId(lastRid.next());
-    }
-
-    return result;
   }
 
   @Override
