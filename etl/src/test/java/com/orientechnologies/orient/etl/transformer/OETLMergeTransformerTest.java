@@ -77,6 +77,7 @@ public class OETLMergeTransformerTest extends OETLBaseTest {
     assertThat(inserted.<Integer>getProperty("num")).isEqualTo(10000);
     assertThat(resultSet.hasNext()).isFalse();
 
+    resultSet.close();
     db.close();
     //run processor
     proc.execute();
@@ -95,6 +96,7 @@ public class OETLMergeTransformerTest extends OETLBaseTest {
     assertThat(updated.<Integer>getProperty("num")).isEqualTo(10000);
     assertThat(resultSet.hasNext()).isFalse();
 
+    resultSet.close();
   }
 
   @Test
@@ -130,6 +132,7 @@ public class OETLMergeTransformerTest extends OETLBaseTest {
 
     assertThat(updated.<String>getProperty("name")).isEqualTo("FirstNameUpdated");
     assertThat(resultSet.hasNext()).isFalse();
+    resultSet.close();
   }
 
 }

@@ -133,6 +133,7 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
     resultSet.vertexStream()
         .forEach(v -> assertThat((v.getIdentity()).getClusterId()).isEqualTo(idByName));
 
+    resultSet.close();
     db.close();
   }
 

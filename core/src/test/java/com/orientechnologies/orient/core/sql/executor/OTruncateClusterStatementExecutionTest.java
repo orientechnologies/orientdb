@@ -63,6 +63,7 @@ public class OTruncateClusterStatementExecutionTest {
     indexQuery = database.query("select from TruncateClusterClass where value='val'");
 
     Assert.assertEquals(toList(indexQuery).size(), 0);
+    indexQuery.close();
   }
 
   private List<OResult> toList(OResultSet input) {

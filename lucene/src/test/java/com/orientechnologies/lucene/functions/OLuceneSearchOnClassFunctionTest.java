@@ -7,8 +7,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,6 +76,7 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
     OResultSet resultSet = db
         .query(
             "SELECT from Author where SEARCH_CLASS('(description:happiness) (lyrics:sad)  ') = true ");
+    resultSet.close();
 
   }
 
@@ -89,6 +88,7 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
     OResultSet resultSet = db
         .query(
             "SELECT from Song where SEARCH_CLASS('not important, will fail') = true ");
+    resultSet.close();
 
   }
 
@@ -101,6 +101,7 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
 
     resultSet.stream()
         .forEach(r -> assertThat(r.<String>getProperty("$title_hl")).containsIgnoringCase("<span>believe</span>"));
+    resultSet.close();
 
   }
 

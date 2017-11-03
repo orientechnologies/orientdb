@@ -35,6 +35,7 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
     OResultSet docs = db.query("select * from Song where search_class(\"(title:*tain)\") = true");
 
     assertThat(docs).hasSize(4);
+    docs.close();
   }
 
   @Test
@@ -48,10 +49,12 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
     OResultSet docs = db.query("select * from Song where search_class('Hunter') =true");
 
     assertThat(docs).hasSize(97);
+    docs.close();
 
     docs = db.query("select * from Song where search_class('HUNTER')=true");
 
     assertThat(docs).hasSize(0);
+    docs.close();
   }
 
   @Test
@@ -64,6 +67,7 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
     OResultSet docs = db.query("select * from Song where search_class ('title:*tain')=true");
 
     assertThat(docs).hasSize(4);
+    docs.close();
   }
 
   @Test
@@ -72,13 +76,15 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
     db.command("create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE ");
 
     //querying with boost
-    List<String> boostedDocs = db.query("select * from Song where search_class ('(title:forever)^2 OR author:Boudleaux')=true")
+    OResultSet rs = db.query("select * from Song where search_class ('(title:forever)^2 OR author:Boudleaux')=true");
+    List<String> boostedDocs = rs
         .stream()
         .map(r -> r.<String>getProperty("title"))
         .collect(Collectors.toList());
 
     assertThat(boostedDocs).hasSize(5);
 
+    rs.close();
     //forever in title is boosted
     assertThat(boostedDocs).contains("THIS TIME FOREVER"
         , "FOREVER YOUNG"
@@ -86,13 +92,15 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
         , "STARS AND STRIPES FOREVER" //boosted
         , "ALL I HAVE TO DO IS DREAM");
 
-    List<String> docs = db.query("select * from Song where search_class ('(title:forever) OR author:Boudleaux')=true")
+
+    rs = db.query("select * from Song where search_class ('(title:forever) OR author:Boudleaux')=true");
+    List<String> docs = rs
         .stream()
         .map(r -> r.<String>getProperty("title"))
         .collect(Collectors.toList());
 
     assertThat(docs).hasSize(5);
-
+    rs.close();
     //no boost, order changed
     assertThat(docs).contains("THIS TIME FOREVER"
         , "FOREVER YOUNG"
@@ -108,14 +116,16 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
     db.command("create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE ");
 
     //querying with boost
-    List<String> boostedDocs = db
-        .query("select * from Song where search_class ('title:forever OR author:Boudleaux' , {'boost':{ 'title': 2  }  })=true")
+    OResultSet rs = db
+        .query("select * from Song where search_class ('title:forever OR author:Boudleaux' , {'boost':{ 'title': 2  }  })=true");
+    List<String> boostedDocs = rs
         .stream()
         .map(r -> r.<String>getProperty("title"))
         .collect(Collectors.toList());
 
     assertThat(boostedDocs).hasSize(5);
 
+    rs.close();
     //forever in title is boosted
     assertThat(boostedDocs).contains("THIS TIME FOREVER"
         , "FOREVER YOUNG"
@@ -123,12 +133,14 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
         , "STARS AND STRIPES FOREVER" //boosted
         , "ALL I HAVE TO DO IS DREAM");
 
-    List<String> docs = db.query("select * from Song where search_class ('(title:forever) OR author:Boudleaux')=true")
+    rs = db.query("select * from Song where search_class ('(title:forever) OR author:Boudleaux')=true");
+    List<String> docs = rs
         .stream()
         .map(r -> r.<String>getProperty("title"))
         .collect(Collectors.toList());
 
     assertThat(docs).hasSize(5);
+    rs.close();
 
     //no boost, order changed
     assertThat(docs).contains("THIS TIME FOREVER"
@@ -152,6 +164,7 @@ public class OLuceneQueryParserTest extends OLuceneBaseTest {
         + ")=true");
 
     assertThat(resultSet).hasSize(5);
+    resultSet.close();
 
   }
 }

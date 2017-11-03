@@ -75,7 +75,7 @@ public class IndexChangesQueryTest {
     OResultSet res = database
         .query("select from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1, 2);
     Assert.assertEquals(res.stream().count(), 2);
-
+    res.close();
     database.commit();
   }
 
@@ -103,6 +103,7 @@ public class IndexChangesQueryTest {
         .query("select count(*)  as count from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1,
             2);
     Assert.assertEquals((long) res.next().getProperty("count"), 3);
+    res.close();
 
     database.begin();
 
@@ -114,26 +115,31 @@ public class IndexChangesQueryTest {
 
     res = database.query("select from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1, 2);
     Assert.assertEquals(res.stream().count(), 2);
+    res.close();
     res = database.query("select expand(rid) from index:idxTxAwareMultiValueGetEntriesTest where key = ?", 2);
     Assert.assertEquals(res.stream().count(), 2);
+    res.close();
 
     res = database.query("select expand(rid) from index:idxTxAwareMultiValueGetEntriesTest where key = ?", 2);
     Assert.assertEquals(res.stream().map((aa) -> aa.getIdentity().orElse(null)).collect(Collectors.toSet()).size(), 2);
 
+    res.close();
     res = database
         .query("select count(*)  as count from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1,
             2);
     Assert.assertEquals((long) res.next().getProperty("count"), 2);
-
+    res.close();
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
 
     res = database.query("select from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1, 2);
     Assert.assertEquals(res.stream().count(), 3);
+    res.close();
     res = database
         .query("select count(*)  as count  from index:idxTxAwareMultiValueGetEntriesTest where key in [?, ?] order by key ASC ", 1,
             2);
     Assert.assertEquals((long) res.next().getProperty("count"), 3);
+    res.close();
   }
 }

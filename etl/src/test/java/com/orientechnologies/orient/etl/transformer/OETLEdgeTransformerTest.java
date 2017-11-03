@@ -178,6 +178,7 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     assertEquals(v0.getProperty("name"), "Jay");
     assertEquals(v0.getProperty("surname"), "Miner");
     assertEquals(v0.<Integer>getProperty("id"), Integer.valueOf(0));
+    v.close();
     db.close();
   }
 

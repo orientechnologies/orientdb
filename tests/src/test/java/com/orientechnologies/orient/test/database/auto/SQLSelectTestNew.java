@@ -1865,6 +1865,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     while (rs.hasNext()) {
       result.add((ODocument) rs.next().toElement());
     }
+    rs.close();
     return result;
   }
 }

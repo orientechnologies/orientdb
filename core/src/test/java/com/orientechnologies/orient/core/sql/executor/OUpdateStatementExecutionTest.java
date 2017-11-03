@@ -364,6 +364,7 @@ public class OUpdateStatementExecutionTest {
       Assert.assertNotNull(item.getProperty("surname"));
     }
 
+    result.close();
     result = db.command("update " + className + " remove surname");
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());

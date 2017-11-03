@@ -72,6 +72,7 @@ public class OLuceneBackupRestoreTest extends OLuceneBaseTest {
     OResultSet query = db.query("select from City where search_class('Rome') = true");
 
     assertThat(query).hasSize(1);
+    query.close();
 
     db.backup(new FileOutputStream(backupFile), null, null, null, 9, 1048576);
 
@@ -96,7 +97,9 @@ public class OLuceneBackupRestoreTest extends OLuceneBaseTest {
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
-    assertThat(db.query("select from City where search_class('Rome') = true")).hasSize(1);
+    query = db.query("select from City where search_class('Rome') = true");
+    assertThat(query).hasSize(1);
+    query.close();
   }
 
 }

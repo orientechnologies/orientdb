@@ -72,10 +72,11 @@ public class OLuceneGraphEmbeddedTest extends OLuceneBaseTest {
     OResultSet resultSet = db.query("SELECT from City where name = 'London / a' ");
 
     Assertions.assertThat(resultSet).hasSize(1);
-
+    resultSet.close();
     resultSet = db.query("SELECT from City where name = 'Rome' ");
 
     Assertions.assertThat(resultSet).hasSize(1);
+    resultSet.close();
   }
 
   @Test
@@ -103,6 +104,7 @@ public class OLuceneGraphEmbeddedTest extends OLuceneBaseTest {
 
     resultSet.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 2)));
     Assertions.assertThat(resultSet).hasSize(1);
+    resultSet.close();
 
   }
 

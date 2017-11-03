@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
@@ -42,7 +41,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.zip.GZIPInputStream;
 
@@ -133,6 +135,7 @@ public class OLuceneAutomaticBackupRestoreTest {
     OResultSet query = db.query("select from City where search_class('Rome') = true ");
 
     assertThat(query).hasSize(1);
+    query.close();
 
     String jsonConfig = OIOUtils.readStreamAsString(getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
 
@@ -204,6 +207,7 @@ public class OLuceneAutomaticBackupRestoreTest {
     OResultSet query = db.query("select from City where search_class('Rome') = true");
 
     assertThat(query).hasSize(1);
+    query.close();
 
     String jsonConfig = OIOUtils.readStreamAsString(getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
 
@@ -267,8 +271,9 @@ public class OLuceneAutomaticBackupRestoreTest {
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
-
-    assertThat(db.query("select from City where search_class('Rome') = true")).hasSize(1);
+    query = db.query("select from City where search_class('Rome') = true");
+    assertThat(query).hasSize(1);
+    query.close();
 
   }
 

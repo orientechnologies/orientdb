@@ -34,17 +34,18 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
     OResultSet res = db.query("select from cdr WHERE filename LUCENE ' RRC.20161229193002.PROD_R4.eno.data '");
 
     Assertions.assertThat(res).hasSize(2);
-
+    res.close();
     //exact match
     res = db.query(
         "select from cdr WHERE filename LUCENE ' \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" '");
 
     Assertions.assertThat(res).hasSize(1);
-
+    res.close();
     //wildcard
     res = db.query("select from cdr WHERE filename LUCENE ' MDCA* '");
 
     Assertions.assertThat(res).hasSize(2);
+    res.close();
   }
 
   @Test
@@ -58,22 +59,23 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
         "select from cdr WHERE SEARCH_CLASS( ' RRC.20161229193002.PROD_R4.eno.data ') = true");
 
     Assertions.assertThat(res).hasSize(2);
-
+    res.close();
     //exact match
     res = db.query(
         "select from cdr WHERE SEARCH_CLASS( ' \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" ') = true");
 
     Assertions.assertThat(res).hasSize(1);
-
+    res.close();
     //wildcard
     res = db.query(
         "select from cdr WHERE SEARCH_CLASS(' MDCA* ')= true");
-
+    res.close();
     //leadind wildcard
     res = db.query(
         "select from cdr WHERE SEARCH_CLASS(' *20MCR2016122* ') =true");
 
     Assertions.assertThat(res).hasSize(1);
+    res.close();
   }
 
   @Test

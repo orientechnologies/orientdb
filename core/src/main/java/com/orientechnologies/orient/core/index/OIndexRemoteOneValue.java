@@ -19,15 +19,15 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -44,19 +44,20 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
   }
 
   public OIdentifiable get(final Object iKey) {
-    final OResultSet result = getDatabase().command(String.format(QUERY_GET, name), iKey);
-    if (result != null && result.hasNext())
-      return ((OIdentifiable) result.next().getProperty("rid"));
-    return null;
+    try(final OResultSet result = getDatabase().command(String.format(QUERY_GET, name), iKey)) {
+      if (result != null && result.hasNext())
+        return ((OIdentifiable) result.next().getProperty("rid"));
+      return null;
+    }
   }
 
   public Iterator<Entry<Object, OIdentifiable>> iterator() {
-    final OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES, name));
+    try(final OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES, name))) {
 
-    final Map<Object, OIdentifiable> map = result.stream()
-        .collect(Collectors.toMap((res) -> res.getProperty("key"), (res) -> res.getProperty("rid")));
+      final Map<Object, OIdentifiable> map = result.stream().collect(Collectors.toMap((res) -> res.getProperty("key"), (res) -> res.getProperty("rid")));
 
-    return map.entrySet().iterator();
+      return map.entrySet().iterator();
+    }
   }
 
   @Override

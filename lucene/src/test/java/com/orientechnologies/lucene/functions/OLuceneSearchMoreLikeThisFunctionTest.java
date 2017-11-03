@@ -21,7 +21,7 @@ public class OLuceneSearchMoreLikeThisFunctionTest extends BaseLuceneTest {
     OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.setValue(8);
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    db.execute("sql", getScriptFromStream(stream));
+    db.execute("sql", getScriptFromStream(stream)).close();
 
   }
 

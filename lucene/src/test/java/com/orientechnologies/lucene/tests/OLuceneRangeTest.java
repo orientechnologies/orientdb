@@ -149,22 +149,25 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
 
     assertThat(results).hasSize(2);
 
+    results.close();
     //date range
     results = db.query("SELECT FROM index:Person.composite WHERE key = 'date:[" + fiveDaysAgo + " TO " + today + "]'");
 
     assertThat(results).hasSize(5);
 
+    results.close();
     //age and date range with MUST
     results = db
         .query("SELECT FROM index:Person.composite WHERE key = '+age:[4 TO 7]  +date:[" + fiveDaysAgo + " TO " + today + "]'");
 
     assertThat(results).hasSize(2);
 
+    results.close();
     results = db
         .query("SELECT FROM index:Person.composite where key = '*:*'");
 
     assertThat(results).hasSize(11);
-
+    results.close();
   }
 
 }

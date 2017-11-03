@@ -20,7 +20,6 @@ package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
@@ -56,6 +55,7 @@ public class OLuceneInheritanceQueryTest extends OLuceneBaseTest {
     OResultSet resultSet = db.query("select from C1 where search_class(\"abc\")=true ");
 
     assertThat(resultSet).hasSize(1);
+    resultSet.close();
 
   }
 

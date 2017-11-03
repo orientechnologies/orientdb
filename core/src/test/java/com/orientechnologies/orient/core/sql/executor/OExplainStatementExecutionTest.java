@@ -36,5 +36,7 @@ public class OExplainStatementExecutionTest {
     Assert.assertTrue(plan.isPresent());
     Assert.assertTrue(plan.get() instanceof OSelectExecutionPlan);
 
+    result.close();
+
   }
 }

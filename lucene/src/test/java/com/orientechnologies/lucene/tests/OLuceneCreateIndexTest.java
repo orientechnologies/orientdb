@@ -23,14 +23,12 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -76,19 +74,20 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
     OResultSet docs = db.query("select * from Song where search_fields(['title'],'mountain')=true");
 
     assertThat(docs).hasSize(4);
-
+    docs.close();
     docs = db.query("select * from Song where search_fields(['author'],'Fabbio')=true");
 
     assertThat(docs).hasSize(87);
-
+    docs.close();
     String query = "select * from Song where search_fields(['title'],'mountain')=true AND search_fields(['author'],'Fabbio')=true";
     docs = db.query(query);
     assertThat(docs).hasSize(1);
-
+    docs.close();
     query = "select * from Song where search_fields(['title'],'mountain')=true   and author = 'Fabbio'";
     docs = db.query(query);
 
     assertThat(docs).hasSize(1);
+    docs.close();
   }
 
   @Test
@@ -98,7 +97,7 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
     OResultSet docs = db.query(query);
 
     assertThat(docs).hasSize(1);
-
+    docs.close();
   }
 
 }

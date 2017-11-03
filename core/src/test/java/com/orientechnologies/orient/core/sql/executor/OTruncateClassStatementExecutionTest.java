@@ -204,10 +204,12 @@ public class OTruncateClassStatementExecutionTest {
     OResultSet result = database.query("select from test_class");
     Assert.assertEquals(toList(result).size(), 2);
 
+    result.close();
     database.command("truncate class test_class");
 
     result = database.query("select from test_class");
     Assert.assertEquals(toList(result).size(), 0);
+    result.close();
 
     schema.dropClass("test_class");
     if (!ccWasEnabled) {

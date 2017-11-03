@@ -119,7 +119,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
     }
     Assert.assertEquals(i, 0);
     assertThat(index.getSize()).isEqualTo(1);
-
+    vertices.close();
     db.rollback();
 
     query = "select from C1 where search_fields(['p1'], 'abc' )=true ";
@@ -128,6 +128,7 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
 
     assertThat(vertices).hasSize(1);
     assertThat(index.getSize()).isEqualTo(2);
+    vertices.close();
 
   }
 

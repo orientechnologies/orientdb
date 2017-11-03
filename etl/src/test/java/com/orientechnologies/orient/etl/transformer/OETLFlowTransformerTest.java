@@ -48,6 +48,7 @@ public class OETLFlowTransformerTest extends OETLBaseTest {
     OResult v1 = resultSet.next();
     Object value1 = v1.getProperty("name");
     assertEquals("3", value1);
+    resultSet.close();
 
   }
 
@@ -70,6 +71,7 @@ public class OETLFlowTransformerTest extends OETLBaseTest {
     assertEquals("3", value1);
     Object value2 = v1.getProperty("surname");
     assertEquals("Test", value2);
+    resultSet.close();
 
   }
 }

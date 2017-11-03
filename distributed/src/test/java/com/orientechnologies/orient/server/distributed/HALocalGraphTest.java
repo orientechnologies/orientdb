@@ -325,6 +325,7 @@ System.out.println("\n\n ----------- startThread()");
                     }
                   }
                 }
+                vtxs.close();
               }
 
             } finally {

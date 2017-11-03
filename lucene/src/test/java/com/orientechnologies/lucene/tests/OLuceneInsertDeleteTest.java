@@ -92,11 +92,13 @@ public class OLuceneInsertDeleteTest extends OLuceneBaseTest {
 
     assertThat(docs).hasSize(4);
     TimeUnit.SECONDS.sleep(5);
+    docs.close();
 
     db.command("delete vertex from Song where title lucene 'mountain'");
 
     docs = db.query("select from Song where  title lucene 'mountain'");
     assertThat(docs).hasSize(0);
+    docs.close();
   }
 
 }

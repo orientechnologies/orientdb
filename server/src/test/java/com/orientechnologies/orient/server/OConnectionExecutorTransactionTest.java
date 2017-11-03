@@ -470,6 +470,7 @@ public class OConnectionExecutorTransactionTest {
     assertEquals(1, results.size());
 
     assertEquals("update", results.get(0).getProperty("name"));
+    query.close();
   }
 
   @Test
@@ -512,6 +513,7 @@ public class OConnectionExecutorTransactionTest {
 
     assertEquals("update", results.get(0).getProperty("name"));
 
+    query.close();
   }
 
   @Test
@@ -559,6 +561,7 @@ public class OConnectionExecutorTransactionTest {
 
     assertEquals(2, database.countClass("test"));
 
+    query.close();
   }
 
 }

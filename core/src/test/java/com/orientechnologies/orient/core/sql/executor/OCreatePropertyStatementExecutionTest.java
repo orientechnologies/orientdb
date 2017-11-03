@@ -39,8 +39,8 @@ public class OCreatePropertyStatementExecutionTest {
 
 
   @Test public void testBasicCreateProperty() throws Exception {
-    db.command("CREATE class testBasicCreateProperty");
-    db.command("CREATE property testBasicCreateProperty.name STRING");
+    db.command("CREATE class testBasicCreateProperty").close();
+    db.command("CREATE property testBasicCreateProperty.name STRING").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testBasicCreateProperty");
     OProperty nameProperty = companyClass.getProperty(PROP_NAME);
@@ -54,8 +54,8 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testBasicUnsafeCreateProperty() throws Exception {
-    db.command("CREATE class testBasicUnsafeCreateProperty");
-    db.command("CREATE property testBasicUnsafeCreateProperty.name STRING UNSAFE");
+    db.command("CREATE class testBasicUnsafeCreateProperty").close();
+    db.command("CREATE property testBasicUnsafeCreateProperty.name STRING UNSAFE").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testBasicUnsafeCreateProperty");
     OProperty nameProperty = companyClass.getProperty(PROP_NAME);
@@ -69,9 +69,9 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testCreatePropertyWithLinkedClass() throws Exception {
-    db.command("CREATE class testCreatePropertyWithLinkedClass_1");
-    db.command("CREATE class testCreatePropertyWithLinkedClass_2");
-    db.command("CREATE property testCreatePropertyWithLinkedClass_2.division LINK testCreatePropertyWithLinkedClass_1");
+    db.command("CREATE class testCreatePropertyWithLinkedClass_1").close();
+    db.command("CREATE class testCreatePropertyWithLinkedClass_2").close();
+    db.command("CREATE property testCreatePropertyWithLinkedClass_2.division LINK testCreatePropertyWithLinkedClass_1").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testCreatePropertyWithLinkedClass_2");
     OProperty nameProperty = companyClass.getProperty(PROP_DIVISION);
@@ -86,8 +86,8 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testCreatePropertyWithEmbeddedType() throws Exception {
-    db.command("CREATE Class testCreatePropertyWithEmbeddedType");
-    db.command("CREATE Property testCreatePropertyWithEmbeddedType.officers EMBEDDEDLIST STRING");
+    db.command("CREATE Class testCreatePropertyWithEmbeddedType").close();
+    db.command("CREATE Property testCreatePropertyWithEmbeddedType.officers EMBEDDEDLIST STRING").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testCreatePropertyWithEmbeddedType");
     OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
@@ -102,8 +102,8 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testCreateMandatoryProperty() throws Exception {
-    db.command("CREATE class testCreateMandatoryProperty");
-    db.command("CREATE property testCreateMandatoryProperty.name STRING (MANDATORY)");
+    db.command("CREATE class testCreateMandatoryProperty").close();
+    db.command("CREATE property testCreateMandatoryProperty.name STRING (MANDATORY)").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testCreateMandatoryProperty");
     OProperty nameProperty = companyClass.getProperty(PROP_NAME);
@@ -116,8 +116,8 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testCreateNotNullProperty() throws Exception {
-    db.command("CREATE class testCreateNotNullProperty");
-    db.command("CREATE property testCreateNotNullProperty.name STRING (NOTNULL)");
+    db.command("CREATE class testCreateNotNullProperty").close();
+    db.command("CREATE property testCreateNotNullProperty.name STRING (NOTNULL)").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testCreateNotNullProperty");
     OProperty nameProperty = companyClass.getProperty(PROP_NAME);
@@ -130,8 +130,8 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testCreateReadOnlyProperty() throws Exception {
-    db.command("CREATE class testCreateReadOnlyProperty");
-    db.command("CREATE property testCreateReadOnlyProperty.name STRING (READONLY)");
+    db.command("CREATE class testCreateReadOnlyProperty").close();
+    db.command("CREATE property testCreateReadOnlyProperty.name STRING (READONLY)").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testCreateReadOnlyProperty");
     OProperty nameProperty = companyClass.getProperty(PROP_NAME);
@@ -144,8 +144,8 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testCreateReadOnlyFalseProperty() throws Exception {
-    db.command("CREATE class testCreateReadOnlyFalseProperty");
-    db.command("CREATE property testCreateReadOnlyFalseProperty.name STRING (READONLY false)");
+    db.command("CREATE class testCreateReadOnlyFalseProperty").close();
+    db.command("CREATE property testCreateReadOnlyFalseProperty.name STRING (READONLY false)").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testCreateReadOnlyFalseProperty");
     OProperty nameProperty = companyClass.getProperty(PROP_NAME);
@@ -156,9 +156,9 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testCreateMandatoryPropertyWithEmbeddedType() throws Exception {
-    db.command("CREATE Class testCreateMandatoryPropertyWithEmbeddedType");
+    db.command("CREATE Class testCreateMandatoryPropertyWithEmbeddedType").close();
     db.command(
-        "CREATE Property testCreateMandatoryPropertyWithEmbeddedType.officers EMBEDDEDLIST STRING (MANDATORY)");
+        "CREATE Property testCreateMandatoryPropertyWithEmbeddedType.officers EMBEDDEDLIST STRING (MANDATORY)").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testCreateMandatoryPropertyWithEmbeddedType");
     OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
@@ -173,8 +173,8 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testCreateUnsafePropertyWithEmbeddedType() throws Exception {
-    db.command("CREATE Class testCreateUnsafePropertyWithEmbeddedType");
-    db.command("CREATE Property testCreateUnsafePropertyWithEmbeddedType.officers EMBEDDEDLIST STRING UNSAFE");
+    db.command("CREATE Class testCreateUnsafePropertyWithEmbeddedType").close();
+    db.command("CREATE Property testCreateUnsafePropertyWithEmbeddedType.officers EMBEDDEDLIST STRING UNSAFE").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testCreateUnsafePropertyWithEmbeddedType");
     OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
@@ -186,9 +186,9 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testComplexCreateProperty() throws Exception {
-    db.command("CREATE Class testComplexCreateProperty");
+    db.command("CREATE Class testComplexCreateProperty").close();
     db.command(
-        "CREATE Property testComplexCreateProperty.officers EMBEDDEDLIST STRING (MANDATORY, READONLY, NOTNULL) UNSAFE");
+        "CREATE Property testComplexCreateProperty.officers EMBEDDEDLIST STRING (MANDATORY, READONLY, NOTNULL) UNSAFE").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testComplexCreateProperty");
     OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
@@ -203,9 +203,9 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testLinkedTypeDefaultAndMinMaxUnsafeProperty() throws Exception {
-    db.command("CREATE CLASS testLinkedTypeDefaultAndMinMaxUnsafeProperty");
+    db.command("CREATE CLASS testLinkedTypeDefaultAndMinMaxUnsafeProperty").close();
     db.command(
-        "CREATE PROPERTY testLinkedTypeDefaultAndMinMaxUnsafeProperty.id EMBEDDEDLIST Integer (DEFAULT 5, MIN 1, MAX 10) UNSAFE");
+        "CREATE PROPERTY testLinkedTypeDefaultAndMinMaxUnsafeProperty.id EMBEDDEDLIST Integer (DEFAULT 5, MIN 1, MAX 10) UNSAFE").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testLinkedTypeDefaultAndMinMaxUnsafeProperty");
     OProperty idProperty = companyClass.getProperty(PROP_ID);
@@ -223,8 +223,8 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testDefaultAndMinMaxUnsafeProperty() throws Exception {
-    db.command("CREATE CLASS testDefaultAndMinMaxUnsafeProperty");
-    db.command("CREATE PROPERTY testDefaultAndMinMaxUnsafeProperty.id INTEGER (DEFAULT 5, MIN 1, MAX 10) UNSAFE");
+    db.command("CREATE CLASS testDefaultAndMinMaxUnsafeProperty").close();
+    db.command("CREATE PROPERTY testDefaultAndMinMaxUnsafeProperty.id INTEGER (DEFAULT 5, MIN 1, MAX 10) UNSAFE").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testDefaultAndMinMaxUnsafeProperty");
     OProperty idProperty = companyClass.getProperty(PROP_ID);
@@ -242,8 +242,8 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testExtraSpaces() throws Exception {
-    db.command("CREATE CLASS testExtraSpaces");
-    db.command("CREATE PROPERTY testExtraSpaces.id INTEGER  ( DEFAULT  5 ,  MANDATORY  )  UNSAFE ");
+    db.command("CREATE CLASS testExtraSpaces").close();
+    db.command("CREATE PROPERTY testExtraSpaces.id INTEGER  ( DEFAULT  5 ,  MANDATORY  )  UNSAFE ").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testExtraSpaces");
     OProperty idProperty = companyClass.getProperty(PROP_ID);
@@ -257,19 +257,19 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test(expected = OCommandExecutionException.class) public void testInvalidAttributeName() throws Exception {
-    db.command("CREATE CLASS OCommandExecutionException");
-    db.command("CREATE PROPERTY OCommandExecutionException.id INTEGER (MANDATORY, INVALID, NOTNULL)  UNSAFE");
+    db.command("CREATE CLASS OCommandExecutionException").close();
+    db.command("CREATE PROPERTY OCommandExecutionException.id INTEGER (MANDATORY, INVALID, NOTNULL)  UNSAFE").close();
   }
 
   @Test(expected = OCommandExecutionException.class) public void testMissingAttributeValue() throws Exception {
-    db.command("CREATE CLASS testMissingAttributeValue");
-    db.command("CREATE PROPERTY testMissingAttributeValue.id INTEGER (DEFAULT)  UNSAFE");
+    db.command("CREATE CLASS testMissingAttributeValue").close();
+    db.command("CREATE PROPERTY testMissingAttributeValue.id INTEGER (DEFAULT)  UNSAFE").close();
   }
 
   @Test public void testMandatoryAsLinkedName() throws Exception {
-    db.command("CREATE CLASS testMandatoryAsLinkedName");
-    db.command("CREATE CLASS testMandatoryAsLinkedName_2");
-    db.command("CREATE PROPERTY testMandatoryAsLinkedName.id EMBEDDEDLIST testMandatoryAsLinkedName_2 UNSAFE");
+    db.command("CREATE CLASS testMandatoryAsLinkedName").close();
+    db.command("CREATE CLASS testMandatoryAsLinkedName_2").close();
+    db.command("CREATE PROPERTY testMandatoryAsLinkedName.id EMBEDDEDLIST testMandatoryAsLinkedName_2 UNSAFE").close();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testMandatoryAsLinkedName");
     OClass mandatoryClass = db.getMetadata().getSchema().getClass("testMandatoryAsLinkedName_2");
@@ -283,8 +283,8 @@ public class OCreatePropertyStatementExecutionTest {
   }
 
   @Test public void testIfNotExists() throws Exception {
-    db.command("CREATE class testIfNotExists");
-    db.command("CREATE property testIfNotExists.name if not exists STRING");
+    db.command("CREATE class testIfNotExists").close();
+    db.command("CREATE property testIfNotExists.name if not exists STRING").close();
 
     OClass clazz = db.getMetadata().getSchema().getClass("testIfNotExists");
     OProperty nameProperty = clazz.getProperty(PROP_NAME);
@@ -293,7 +293,7 @@ public class OCreatePropertyStatementExecutionTest {
     assertEquals(nameProperty.getFullName(), "testIfNotExists.name");
     assertEquals(nameProperty.getType(), OType.STRING);
 
-    db.command("CREATE property testIfNotExists.name if not exists STRING");
+    db.command("CREATE property testIfNotExists.name if not exists STRING").close();
 
     clazz = db.getMetadata().getSchema().getClass("testIfNotExists");
     nameProperty = clazz.getProperty(PROP_NAME);

@@ -64,16 +64,16 @@ public class OLuceneManualIndexTest extends OLuceneBaseTest {
 
     OResultSet docs = db.query("select from  index:apiManual  where  key = 'k0:Enrico'");
     assertThat(docs).hasSize(1);
-
+    docs.close();
     docs = db.command("select from index:apiManual where key = '(k0:Luca)'");
     assertThat(docs).hasSize(1);
-
+    docs.close();
     docs = db.command("select from index:apiManual where key ='(k1:Rome)'");
     assertThat(docs).hasSize(2);
-
+    docs.close();
     docs = db.command("select from index:apiManual where key ='(k1:London)'");
     assertThat(docs).hasSize(1);
-
+    docs.close();
   }
 
   @Test
@@ -86,7 +86,7 @@ public class OLuceneManualIndexTest extends OLuceneBaseTest {
     OResultSet docs = db.query("select from index:manual where key = 'Enrico'");
 
     assertThat(docs).hasSize(1);
-
+    docs.close();
   }
 
   @Test
@@ -98,16 +98,16 @@ public class OLuceneManualIndexTest extends OLuceneBaseTest {
 
     OResultSet docs = db.query("select from index:manual where key = '(k0:Enrico)'");
     assertThat(docs).hasSize(1);
-
+    docs.close();
     docs = db.query("select from index:manual where key = '(k0:Luca)'");
     assertThat(docs).hasSize(1);
-
+    docs.close();
     docs = db.query("select from index:manual where key = '(k1:Rome)'");
     assertThat(docs).hasSize(2);
-
+    docs.close();
     docs = db.query("select from index:manual where key = '(k1:London)'");
     assertThat(docs).hasSize(1);
-
+    docs.close();
   }
 
   @Test
@@ -132,6 +132,7 @@ public class OLuceneManualIndexTest extends OLuceneBaseTest {
     OResultSet docs = db.query("select from index:manualInTransaction where key = 'k0:rob'");
 
     assertThat(docs).hasSize(1);
+    docs.close();
     db.commit();
   }
 

@@ -63,7 +63,7 @@ public class OLuceneContextTest extends OLuceneBaseTest {
           .isLessThanOrEqualTo(latestScore);
       latestScore = score;
     }
-
+    docs.close();
   }
 
   @Test
@@ -79,6 +79,6 @@ public class OLuceneContextTest extends OLuceneBaseTest {
 
     assertThat(doc.<Integer>getProperty("$totalHits")).isEqualTo(14);
     assertThat(doc.<Integer>getProperty("$Song_title_totalHits")).isEqualTo(14);
-
+    docs.close();
   }
 }

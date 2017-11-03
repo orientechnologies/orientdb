@@ -93,6 +93,7 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
     query = "select  from (select name from Person where age = 18) where search_index('Person.name','Enrico') = true";
     results = db.query(query);
     assertThat(results).hasSize(1);
+    results.close();
 
   }
 
@@ -149,9 +150,11 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
 
     assertThat(results).hasSize(1);
 
+    results.close();
     results = db.query("select from AuthorOf where in.title lucene 'hurricane'");
 
     assertThat(results).hasSize(1);
+    results.close();
   }
 
 }

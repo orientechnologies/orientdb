@@ -47,16 +47,17 @@ public class OLuceneSkipLimitTest extends OLuceneBaseTest {
     OResultSet docs = db.query("select * from Song where search_fields(['title'],\"(title:man)\")=true");
 
     Assertions.assertThat(docs).hasSize(14);
-
+    docs.close();
     docs = db.query("select * from Song where search_fields(['title'],\"(title:man)\")=true skip 10 limit 10");
 
     Assertions.assertThat(docs).hasSize(4);
 
 //    Assert.assertEquals(docs.contains(doc), false);
-
+    docs.close();
     docs = db.query("select * from Song where search_fields(['title'],\"(title:man)\")=true skip 14 limit 10");
 
     Assertions.assertThat(docs).hasSize(0);
+    docs.close();
   }
 
 }

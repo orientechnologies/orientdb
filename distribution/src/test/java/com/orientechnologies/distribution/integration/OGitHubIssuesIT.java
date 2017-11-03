@@ -185,22 +185,28 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
     db.command(
         "CREATE EDGE t7249HasFriend FROM (SELECT FROM t7249Profiles WHERE Name='Enrico') TO (SELECT FROM t7249Profiles WHERE Name='Santo');");
 
-    List<OResult> results = db.query("SELECT in('t7249HasFriend').size() as InFriendsNumber FROM t7249Profiles WHERE Name='Santo'")
+    OResultSet rs = db.query("SELECT in('t7249HasFriend').size() as InFriendsNumber FROM t7249Profiles WHERE Name='Santo'");
+    List<OResult> results =rs
         .stream()
         .collect(Collectors.toList());
+    rs.close();
     assertThat(results).hasSize(1);
     assertThat(results.get(0).<Integer>getProperty("InFriendsNumber")).isEqualTo(1);
 
-    results = db.query("SELECT out('t7249HasFriend').size() as OutFriendsNumber FROM t7249Profiles WHERE Name='Santo'")
+    rs = db.query("SELECT out('t7249HasFriend').size() as OutFriendsNumber FROM t7249Profiles WHERE Name='Santo'");
+    results =rs
         .stream()
         .collect(Collectors.toList());
+    rs.close();
 
     assertThat(results).hasSize(1);
     assertThat(results.get(0).<Integer>getProperty("OutFriendsNumber")).isEqualTo(3);
 
-    results = db.query("SELECT both('t7249HasFriend').size() as TotalFriendsNumber FROM t7249Profiles WHERE Name='Santo'")
+    rs = db.query("SELECT both('t7249HasFriend').size() as TotalFriendsNumber FROM t7249Profiles WHERE Name='Santo'");
+    results =rs
         .stream()
         .collect(Collectors.toList());
+    rs.close();
 
     assertThat(results).hasSize(1);
     assertThat(results.get(0).<Integer>getProperty("TotalFriendsNumber")).isEqualTo(4);
@@ -237,6 +243,7 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
         "MATCH {class: t7265Customers, as: customer, where: (OrderedId=1)}--{Class: t7265Services, as: service} RETURN service.Name");
 
     assertThat(results).hasSize(2);
+    results.close();
   }
 
 }

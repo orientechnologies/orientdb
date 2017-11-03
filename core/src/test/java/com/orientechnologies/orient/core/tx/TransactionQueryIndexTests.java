@@ -43,11 +43,12 @@ public class TransactionQueryIndexTests {
     OResultSet res = database.query("select from Test where test='abcdefg' ");
 
     assertEquals(1L, res.stream().count());
-
+    res.close();
     res = database.query("select from Test where test='aaaaa' ");
 
     System.out.println(res.getExecutionPlan().get().prettyPrint(0, 0));
     assertEquals(0L, res.stream().count());
+    res.close();
   }
 
   @Test
@@ -65,11 +66,12 @@ public class TransactionQueryIndexTests {
     OResultSet res = database.query("select from Test2 where foo='abcdefg' and bar = 'abcdefg' ");
 
     assertEquals(1L, res.stream().count());
-
+    res.close();
     res = database.query("select from Test2 where foo='aaaaa' and bar = 'aaa'");
 
     System.out.println(res.getExecutionPlan().get().prettyPrint(0, 0));
     assertEquals(0L, res.stream().count());
+    res.close();
   }
 
   @After

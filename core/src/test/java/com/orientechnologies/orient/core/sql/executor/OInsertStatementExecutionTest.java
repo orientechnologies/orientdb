@@ -259,6 +259,7 @@ public class OInsertStatementExecutionTest {
       Assert.assertNotNull(val);
       Assert.assertTrue(val instanceof OIdentifiable);
     }
+    result.close();
   }
 
 }

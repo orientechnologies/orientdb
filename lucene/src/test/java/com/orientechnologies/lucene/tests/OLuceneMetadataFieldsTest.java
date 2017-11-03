@@ -36,7 +36,7 @@ public class OLuceneMetadataFieldsTest extends OLuceneBaseTest {
     OResultSet results = db.query("SELECT FROM Song WHERE search_class('+_CLUSTER:" + cluster + "')=true ");
 
     assertThat(results).hasSize(73);
-
+    results.close();
   }
 
   @Test
@@ -46,7 +46,7 @@ public class OLuceneMetadataFieldsTest extends OLuceneBaseTest {
     OResultSet results = db.query("SELECT FROM Song WHERE search_class('RID:("+ridQuery+") ')=true ");
 
     assertThat(results).hasSize(2);
-
+    results.close();
   }
 
 

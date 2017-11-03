@@ -4,7 +4,6 @@ import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -121,7 +120,7 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
   @Test(expected = OCommandExecutionException.class)
   public void shouldFailWithWrongIndexName() throws Exception {
 
-    db.query("SELECT from Song where SEARCH_INDEX('Song.wrongName', 'tambourine') = true ");
+    db.query("SELECT from Song where SEARCH_INDEX('Song.wrongName', 'tambourine') = true ").close();
 
   }
 

@@ -95,5 +95,6 @@ public class OConnetionExecutorTest {
     assertEquals(1, results.size());
 
     assertEquals("update", results.get(0).getProperty("name"));
+    query.close();
   }
 }

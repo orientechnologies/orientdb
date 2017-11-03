@@ -26,16 +26,16 @@ public class OCreateLinkStatementExecutionTest {
 
   @Test
   public void testBasic() throws Exception {
-    db.command("create class Basic1");
-    db.command("create class Basic2");
+    db.command("create class Basic1").close();
+    db.command("create class Basic2").close();
 
-    db.command("insert into Basic1 set pk = 'pkb1_1', fk = 'pkb2_1'");
-    db.command("insert into Basic1 set pk = 'pkb1_2', fk = 'pkb2_2'");
+    db.command("insert into Basic1 set pk = 'pkb1_1', fk = 'pkb2_1'").close();
+    db.command("insert into Basic1 set pk = 'pkb1_2', fk = 'pkb2_2'").close();
 
-    db.command("insert into Basic2 set pk = 'pkb2_1'");
-    db.command("insert into Basic2 set pk = 'pkb2_2'");
+    db.command("insert into Basic2 set pk = 'pkb2_1'").close();
+    db.command("insert into Basic2 set pk = 'pkb2_2'").close();
 
-    db.command("CREATE LINK theLink type link FROM Basic1.fk TO Basic2.pk ");
+    db.command("CREATE LINK theLink type link FROM Basic1.fk TO Basic2.pk ").close();
 
     OResultSet result = db.query("select pk, theLink.pk as other from Basic1 order by pk");
     Assert.assertTrue(result.hasNext());
@@ -55,17 +55,17 @@ public class OCreateLinkStatementExecutionTest {
 
   @Test
   public void testInverse() throws Exception {
-    db.command("create class Inverse1");
-    db.command("create class Inverse2");
+    db.command("create class Inverse1").close();
+    db.command("create class Inverse2").close();
 
-    db.command("insert into Inverse1 set pk = 'pkb1_1', fk = 'pkb2_1'");
-    db.command("insert into Inverse1 set pk = 'pkb1_2', fk = 'pkb2_2'");
-    db.command("insert into Inverse1 set pk = 'pkb1_3', fk = 'pkb2_2'");
+    db.command("insert into Inverse1 set pk = 'pkb1_1', fk = 'pkb2_1'").close();
+    db.command("insert into Inverse1 set pk = 'pkb1_2', fk = 'pkb2_2'").close();
+    db.command("insert into Inverse1 set pk = 'pkb1_3', fk = 'pkb2_2'").close();
 
-    db.command("insert into Inverse2 set pk = 'pkb2_1'");
-    db.command("insert into Inverse2 set pk = 'pkb2_2'");
+    db.command("insert into Inverse2 set pk = 'pkb2_1'").close();
+    db.command("insert into Inverse2 set pk = 'pkb2_2'").close();
 
-    db.command("CREATE LINK theLink TYPE LINKSET FROM Inverse1.fk TO Inverse2.pk INVERSE");
+    db.command("CREATE LINK theLink TYPE LINKSET FROM Inverse1.fk TO Inverse2.pk INVERSE").close();
 
     OResultSet result = db.query("select pk, theLink.pk as other from Inverse2 order by pk");
     Assert.assertTrue(result.hasNext());

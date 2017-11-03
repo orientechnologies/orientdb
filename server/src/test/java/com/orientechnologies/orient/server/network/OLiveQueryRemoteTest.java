@@ -190,6 +190,7 @@ public class OLiveQueryRemoteTest {
 
     latch.await();
 
+    query.close();
     database.command("insert into test set name = 'foo', surname = 'bar'");
 
     database.command("insert into test set name = 'foo', surname = 'bar', _allow=?", new ArrayList<OIdentifiable>() {{

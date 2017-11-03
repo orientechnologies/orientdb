@@ -48,5 +48,6 @@ public class OLuceneQueryErrorTest extends OLuceneBaseTest {
     OResultSet result = db.query(query);
 
     Assertions.assertThat(result).isEmpty();
+    result.close();
   }
 }

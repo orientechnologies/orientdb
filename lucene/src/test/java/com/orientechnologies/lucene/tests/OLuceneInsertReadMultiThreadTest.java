@@ -144,6 +144,7 @@ public class OLuceneInsertReadMultiThreadTest extends OLuceneBaseTest {
         if (resultSet.hasNext()) {
           assertThat(resultSet.next().toElement().<String>getProperty("name")).isEqualToIgnoringCase("rome");
         }
+        resultSet.close();
       }
       db.close();
 

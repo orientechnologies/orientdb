@@ -19,19 +19,13 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -52,16 +46,17 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
   }
 
   public Collection<OIdentifiable> get(final Object iKey) {
-    return getDatabase().command(String.format(QUERY_GET, name), iKey).stream().map((res) -> res.getIdentity().orElse(null))
-        .collect(Collectors.toSet());
+    try(final OResultSet result = getDatabase().command(String.format(QUERY_GET, name), iKey)) {
+      return result.stream().map((res) -> res.getIdentity().orElse(null)).collect(Collectors.toSet());
+    }
   }
 
   public Iterator<Entry<Object, Collection<OIdentifiable>>> iterator() {
-    final OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES, name));
+    try(final OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES, name))) {
 
-    final Map<Object, Collection<OIdentifiable>> map = result.stream()
-        .collect(Collectors.toMap((r) -> r.getProperty("key"), (r) -> r.getProperty("rid")));
-    return map.entrySet().iterator();
+      final Map<Object, Collection<OIdentifiable>> map = result.stream().collect(Collectors.toMap((r) -> r.getProperty("key"), (r) -> r.getProperty("rid")));
+      return map.entrySet().iterator();
+    }
   }
 
   public Iterator<OIdentifiable> valuesIterator() {

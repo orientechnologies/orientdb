@@ -76,7 +76,7 @@ public class OStorageTestIT {
     file.close();
 
     session = orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin");
-    session.query("select from PageBreak");
+    session.query("select from PageBreak").close();
 
     Thread.sleep(100);//lets wait till event will be propagated
 
@@ -133,7 +133,7 @@ public class OStorageTestIT {
     file.close();
 
     session = orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin");
-    session.query("select from PageBreak");
+    session.query("select from PageBreak").close();
 
     Thread.sleep(100);//lets wait till event will be propagated
 
@@ -190,7 +190,7 @@ public class OStorageTestIT {
     file.close();
 
     session = orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin");
-    session.query("select from PageBreak");
+    session.query("select from PageBreak").close();
 
     Thread.sleep(100);//lets wait till event will be propagated
 
@@ -245,7 +245,7 @@ public class OStorageTestIT {
     file.close();
 
     session = orientDB.open(OStorageTestIT.class.getSimpleName(), "admin", "admin");
-    session.query("select from PageBreak");
+    session.query("select from PageBreak").close();
 
     Thread.sleep(100);//lets wait till event will be propagated
 

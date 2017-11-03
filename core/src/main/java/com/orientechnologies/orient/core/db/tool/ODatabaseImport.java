@@ -242,7 +242,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
 
       listener.onMessage("\nStart rebuild index " + indexName);
-      database.command("rebuild index " + indexName);
+      database.command("rebuild index " + indexName).close();
       listener.onMessage("\nRebuild  of index " + indexName + " is completed.");
     }
     listener.onMessage("\nStale indexes were rebuilt...");
@@ -251,7 +251,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   public ODatabaseImport removeExportImportRIDsMap() {
     listener.onMessage("\nDeleting RID Mapping table...");
     if (exportImportHashTable != null) {
-      database.command("drop index " + EXPORT_IMPORT_MAP_NAME);
+      database.command("drop index " + EXPORT_IMPORT_MAP_NAME).close();
       exportImportHashTable = null;
     }
 
@@ -941,7 +941,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           .equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
           .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
         if (!merge)
-          database.command("truncate cluster `" + name + "`");
+          database.command("truncate cluster `" + name + "`").close();
 
         for (OIndex existingIndex : database.getMetadata().getIndexManager().getIndexes()) {
           if (existingIndex.getClusters().contains(name)) {

@@ -102,6 +102,7 @@ public class OSelectStatementExecutionTest {
   public void testSelectNoTargetLimitx() {
     OResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 0 limit 0");
     printExecutionPlan(result);
+    result.close();
   }
 
   @Test
@@ -467,6 +468,7 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(next);
       Assert.assertEquals(7L, (Object) next.getProperty("count(*)"));
       Assert.assertFalse(result.hasNext());
+      result.close();
     } catch (Exception e) {
       e.printStackTrace();
       Assert.fail();
@@ -494,6 +496,7 @@ public class OSelectStatementExecutionTest {
         Assert.assertEquals(2L, (Object) next.getProperty("count(*)"));
       }
       Assert.assertFalse(result.hasNext());
+      result.close();
     } catch (Exception e) {
       e.printStackTrace();
       Assert.fail();
@@ -506,7 +509,7 @@ public class OSelectStatementExecutionTest {
     db.getMetadata().getSchema().createClass(className);
 
     try {
-      db.query("select max(a) + max(b) + pippo + pluto as foo, max(d) + max(e), f from " + className);
+      db.query("select max(a) + max(b) + pippo + pluto as foo, max(d) + max(e), f from " + className).close();
       Assert.fail();
     } catch (OCommandExecutionException x) {
 
@@ -521,7 +524,7 @@ public class OSelectStatementExecutionTest {
     db.getMetadata().getSchema().createClass(className);
 
     try {
-      db.query("select [max(a), max(b), foo] from " + className);
+      db.query("select [max(a), max(b), foo] from " + className).close();
       Assert.fail();
     } catch (OCommandExecutionException x) {
 
@@ -539,6 +542,7 @@ public class OSelectStatementExecutionTest {
       String query = "select [max(a), max(b)] from " + className;
       OResultSet result = db.query(query);
       printExecutionPlan(query, result);
+      result.close();
     } catch (Exception x) {
       Assert.fail();
     }
@@ -552,6 +556,7 @@ public class OSelectStatementExecutionTest {
     try {
       OResultSet result = db.query("select max(a + b) + (max(b + c * 2) + 1 + 2) * 3 as foo, max(d) + max(e), f from " + className);
       printExecutionPlan(result);
+      result.close();
     } catch (Exception e) {
       e.printStackTrace();
       Assert.fail();
@@ -1114,7 +1119,7 @@ public class OSelectStatementExecutionTest {
     doc.save();
 
     try {
-      db.query("select from index:" + className + ".name");
+      db.query("select from index:" + className + ".name").close();
       Assert.fail();
     } catch (OCommandExecutionException ex) {
 

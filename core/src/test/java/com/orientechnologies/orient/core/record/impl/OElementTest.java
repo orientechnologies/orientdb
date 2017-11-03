@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.record.impl;
 
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.OElement;
@@ -54,5 +53,6 @@ public class OElementTest {
     OResultSet result = db.query("select from TestLoadAndSave where name = 'foo'");
     Assert.assertTrue(result.hasNext());
     Assert.assertEquals("foo", result.next().getProperty("name"));
+    result.close();
   }
 }

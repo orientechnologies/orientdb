@@ -137,7 +137,7 @@ public class OLuceneIndexVsLuceneTest extends OLuceneBaseTest {
 //      i++;
 //    }
 //    reader.close();
-//    resultSet.close();
+    resultSet.close();
 
   }
 

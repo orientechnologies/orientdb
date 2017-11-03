@@ -107,7 +107,7 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
     OResultSet query = db.query("select from City where search_class('Beautiful') =true ");
 
     assertThat(query).hasSize(2);
-
+    query.close();
   }
 
   @Test
@@ -153,25 +153,28 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
 
     assertThat(query).hasSize(1);
 
+    query.close();
+
     query = db.query("select from (select from Person search_class('name:Enrico')=true)");
 
     assertThat(query).hasSize(1);
-
+    query.close();
     query = db.query("select from Person where search_class('Jared')=true");
 
     assertThat(query).hasSize(1);
-
+    query.close();
     query = db.query("select from Person where search_class('Funny') =true");
 
     assertThat(query).hasSize(1);
-
+    query.close();
     query = db.query("select from Person where search_class('Geek')=true");
 
     assertThat(query).hasSize(2);
-
+    query.close();
     query = db.query("select from Person where search_class('(name:Enrico AND tags:Geek) ')=true");
 
     assertThat(query).hasSize(1);
+    query.close();
   }
 
 }

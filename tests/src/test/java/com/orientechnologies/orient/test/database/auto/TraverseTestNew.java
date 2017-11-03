@@ -88,6 +88,7 @@ import java.util.Map;
       Assert.assertTrue(result1.hasNext());
       result1.next();
     }
+    result1.close();
   }
 
   public void traverseSQLAllFromActorNoWhereDepthFrirst() {
@@ -97,12 +98,14 @@ import java.util.Map;
       Assert.assertTrue(result1.hasNext());
       result1.next();
     }
+    result1.close();
   }
 
   @Test public void traverseSQLOutFromActor1Depth() {
     OResultSet result1 = database.query("traverse out_ from " + tomCruise.getIdentity() + " while $depth <= 1");
 
     Assert.assertTrue(result1.hasNext());
+    result1.close();
   }
 
   @Test public void traverseSQLMoviesOnly() {
@@ -113,6 +116,7 @@ import java.util.Map;
 
       Assert.assertEquals(d.getElement().get().getSchemaType().get().getName(), "Movie");
     }
+    result1.close();
   }
 
   @Test public void traverseSQLPerClassFields() {
@@ -123,13 +127,14 @@ import java.util.Map;
       OResult d = result1.next();
       Assert.assertEquals(d.getElement().get().getSchemaType().get().getName(), "Movie");
     }
+    result1.close();
   }
 
   @Test public void traverseSQLMoviesOnlyDepth() {
     OResultSet result1 = database
         .query("select from ( traverse * from " + tomCruise.getIdentity() + " while $depth <= 1 ) where @class = 'Movie'");
     Assert.assertFalse(result1.hasNext());
-
+    result1.close();
     OResultSet result2 = database
         .query("select from ( traverse * from " + tomCruise.getIdentity() + " while $depth <= 2 ) where @class = 'Movie'");
     Assert.assertTrue(result2.hasNext());
@@ -139,7 +144,7 @@ import java.util.Map;
       Assert.assertEquals(d.getClassName(), "Movie");
       size2++;
     }
-
+    result2.close();
     OResultSet result3 = database
         .query("select from ( traverse * from " + tomCruise.getIdentity() + " ) where @class = 'Movie'");
     Assert.assertTrue(result3.hasNext());
@@ -150,6 +155,7 @@ import java.util.Map;
       size3++;
     }
     Assert.assertTrue(size3 > size2);
+    result3.close();
   }
 
   @Test public void traverseSelect() {
@@ -161,6 +167,7 @@ import java.util.Map;
     }
 
     Assert.assertEquals(tot, totalElements);
+    result1.close();
   }
 
   @Test public void traverseSQLSelectAndTraverseNested() {
@@ -174,6 +181,7 @@ import java.util.Map;
     }
 
     Assert.assertEquals(tot, totalElements);
+    result1.close();
   }
 
   @Test public void traverseAPISelectAndTraverseNested() {
@@ -196,6 +204,7 @@ import java.util.Map;
       tot++;
     }
     Assert.assertEquals(tot, totalElements);
+    result1.close();
   }
 
   @Test public void traverseAPISelectAndTraverseNestedBreadthFirst() {
@@ -215,16 +224,19 @@ import java.util.Map;
     while (result1.hasNext()) {
       list1.add(result1.next());
     }
+    result1.close();
     OResultSet result2 = database.query("select from ( traverse * from Movie while $depth < 2 )");
     List<OResult> list2 = new ArrayList<>();
     while (result2.hasNext()) {
       list2.add(result2.next());
     }
+    result2.close();
     OResultSet result3 = database.query("select from ( traverse * from Movie while $depth < 2 ) where true");
     List<OResult> list3 = new ArrayList<>();
     while (result3.hasNext()) {
       list3.add(result3.next());
     }
+    result3.close();
     OResultSet result4 = database
         .query("select from ( traverse * from Movie while $depth < 2 and ( true = true ) ) where true");
 
@@ -236,6 +248,7 @@ import java.util.Map;
     Assert.assertEquals(list1, list2);
     Assert.assertEquals(list1, list3);
     Assert.assertEquals(list1, list4);
+    result4.close();
   }
 
   @Test public void traverseNoConditionLimit1() {
@@ -260,6 +273,7 @@ import java.util.Map;
       }
     }
     Assert.assertTrue(found);
+    result1.close();
   }
 
   @Test public void traverseAndFilterWithNamedParam() {
@@ -293,6 +307,7 @@ import java.util.Map;
       Assert.assertEquals(depth, i++);
     }
     Assert.assertEquals(i.intValue(), 2);
+    result1.close();
   }
 
   @Test public void traverseAndCheckReturn() {
@@ -312,6 +327,7 @@ import java.util.Map;
         i++;
       }
       Assert.assertEquals(i.intValue(), 2);
+      result1.close();
     } finally {
       ODatabaseRecordThreadLocal.instance().set(database);
     }

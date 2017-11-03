@@ -61,13 +61,14 @@ public class OLuceneBooleanIndexTest extends OLuceneBaseTest {
     assertThat(results).hasSize(500);
 
     assertThat(results.get(0).<Boolean>getProperty("isDeleted")).isFalse();
+    docs.close();
 
     docs = db.query("select from Person where search_class('true') = true");
 
     results = docs.stream().collect(Collectors.toList());
     assertThat(results).hasSize(500);
     assertThat(results.get(0).<Boolean>getProperty("isDeleted")).isTrue();
-
+    docs.close();
   }
 
 }

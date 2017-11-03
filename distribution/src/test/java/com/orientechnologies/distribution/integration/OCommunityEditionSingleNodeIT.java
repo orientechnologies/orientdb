@@ -16,6 +16,7 @@ public class OCommunityEditionSingleNodeIT extends OIntegrationTestTemplate {
     OResultSet result = db.query("SELECT from ArchaeologicalSites where search_fields(['Name'],'foro') = true");
 
     assertThat(result).hasSize(2);
+    result.close();
   }
 
   @Test
@@ -24,6 +25,7 @@ public class OCommunityEditionSingleNodeIT extends OIntegrationTestTemplate {
     OResultSet result = db.query("select * from `Hotels` where search_class('western')=true");
 
     assertThat(result).hasSize(6);
+    result.close();
   }
 
 }
