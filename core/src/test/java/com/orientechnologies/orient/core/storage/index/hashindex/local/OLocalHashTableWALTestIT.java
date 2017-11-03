@@ -84,7 +84,7 @@ public class OLocalHashTableWALTestIT extends OLocalHashTableBase {
     ODiskWriteAheadLog diskWriteAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
 
     actualStorage.synch();
-    diskWriteAheadLog.preventCutTill(diskWriteAheadLog.getFlushedLsn());
+    diskWriteAheadLog.addCutTillLimit(diskWriteAheadLog.getFlushedLsn());
 
     createActualHashTable();
   }
