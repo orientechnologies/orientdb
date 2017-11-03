@@ -3624,7 +3624,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void registerRecoverListener(final OStorageRecoverListener recoverListener) {
     try {
-      if (recoverListener == null)
+      if (recoverListener != null)
         this.recoverListener = recoverListener;
     } catch (RuntimeException e) {
       throw logAndPrepareForRethrow(e);

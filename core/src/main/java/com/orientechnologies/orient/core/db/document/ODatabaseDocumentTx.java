@@ -386,8 +386,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     for (ODatabaseListener listener : getListenersCopy())
       try {
         listener.onOpen(getDatabaseOwner());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error during call of database listener", t);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during call of database listener", e);
       }
   }
 
@@ -480,7 +480,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onCreate(this);
-        } catch (Throwable ignore) {
+        } catch (Exception ignore) {
         }
     } catch (OStorageExistsException e) {
       status = STATUS.CLOSED;
@@ -611,8 +611,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     for (ODatabaseListener listener : getListenersCopy())
       try {
         listener.onClose(getDatabaseOwner());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error during call of database listener", t);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during call of database listener", e);
       }
   }
 
@@ -628,8 +628,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       try {
         activateOnCurrentThread();
         listener.onDelete(getDatabaseOwner());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error during call of database listener", t);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during call of database listener", e);
       }
   }
 
@@ -2052,7 +2052,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw t;
     } catch (ORecordNotFoundException t) {
       throw t;
-    } catch (Throwable t) {
+    } catch (Exception t) {
       if (rid.isTemporary())
         throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
       else
@@ -2460,8 +2460,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     for (ODatabaseListener listener : browseListeners())
       try {
         listener.onBeforeTxBegin(this);
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error before tx begin", t);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error before tx begin", e);
       }
 
     switch (iType) {
@@ -2931,8 +2931,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onBeforeTxRollback(this);
-        } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error before transaction rollback `%08X`", t, System.identityHashCode(t));
+        } catch (Exception e1) {
+          OLogManager.instance().error(this, "Error before transaction rollback `%08X`", e1, System.identityHashCode(e1));
         }
 
       try {
@@ -2950,8 +2950,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onAfterTxRollback(this);
-        } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error after transaction rollback `%08X`", t, System.identityHashCode(t));
+        } catch (Exception e1) {
+          OLogManager.instance().error(this, "Error after transaction rollback `%08X`", e1, System.identityHashCode(e1));
         }
 
       throw e;
@@ -2997,8 +2997,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onBeforeTxRollback(this);
-        } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error before transactional rollback", t);
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error before transactional rollback", e);
         }
 
       currentTx.rollback(force, -1);
@@ -3007,8 +3007,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onAfterTxRollback(this);
-        } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error after transaction rollback", t);
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error after transaction rollback", e);
         }
     }
 

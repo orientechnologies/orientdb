@@ -73,9 +73,9 @@ public class OConstants {
       ORIENT_VERSION_MAJOR = getVersionMajor();
       ORIENT_VERSION_MINOR = getVersionMinor();
       ORIENT_VERSION_HOFIX = getVersionHotfix();
-    } catch (Throwable throwable) {
-      OLogManager.instance().errorNoDb(null, "Error during OrientDB constants initialization", throwable);
-      throw new RuntimeException(throwable);
+    } catch (Exception e) {
+      OLogManager.instance().errorNoDb(null, "Error during OrientDB constants initialization", e);
+      throw new RuntimeException(e);
     }
   }
 

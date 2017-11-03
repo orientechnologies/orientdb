@@ -165,7 +165,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
             Thread.currentThread().interrupt();
 
-          } catch (Throwable e) {
+          } catch (Exception e) {
             if (running)
               // ASYNC: IGNORE IT
               if (e instanceof ONeedRetryException)
@@ -1411,7 +1411,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         if (autoRetryDelay <= 0)
           autoRetryDelay = 1;
 
-        Throwable lastException = null;
+        Exception lastException = null;
         for (int retry = 1; retry <= maxAutoRetry; ++retry) {
 
           try {
@@ -1428,7 +1428,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
             return result;
 
-          } catch (Throwable e) {
+          } catch (Exception e) {
             lastException = e;
 
             if (retry >= maxAutoRetry) {
@@ -1491,10 +1491,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     if (eventListener != null) {
       try {
         eventListener.onAfterRecordLock(rid);
-      } catch (Throwable t) {
+      } catch (Exception e) {
         // IGNORE IT
         ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Caught exception during ODistributedStorageEventListener.onAfterRecordLock", t);
+            "Caught exception during ODistributedStorageEventListener.onAfterRecordLock", e);
       }
     }
 
@@ -1506,10 +1506,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     if (eventListener != null) {
       try {
         eventListener.onAfterRecordUnlock(rid);
-      } catch (Throwable t) {
+      } catch (Exception e) {
         // IGNORE IT
         ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Caught exception during ODistributedStorageEventListener.onAfterRecordUnlock", t);
+            "Caught exception during ODistributedStorageEventListener.onAfterRecordUnlock", e);
       }
     }
   }

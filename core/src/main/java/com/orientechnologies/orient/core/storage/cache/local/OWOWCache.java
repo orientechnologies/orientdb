@@ -1862,7 +1862,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             }
           }
         }
-      } catch (Throwable e) {
+      } catch (Exception e) {
         OLogManager.instance().error(this, "Exception during data flush", e);
         OWOWCache.this.fireBackgroundDataProcessingExceptionEvent(e);
       } finally {
@@ -2151,7 +2151,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           writeAheadLog.cutTill(minLsn);
 
         OLogManager.instance().debug(this, "End fuzzy checkpoint");
-      } catch (Throwable e) {
+      } catch (Exception e) {
         OLogManager.instance().error(this, "Error during fuzzy checkpoint", e);
         fireBackgroundDataProcessingExceptionEvent(e);
       } finally {

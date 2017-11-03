@@ -178,7 +178,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 T inRes = read.execute(network, session);
                 callback.call(recordId, inRes);
                 connectionManager.release(network);
-              } catch (Throwable e) {
+              } catch (Exception e) {
                 connectionManager.remove(network);
                 OLogManager.instance().error(this, "Exception on async query", e);
               }

@@ -92,7 +92,7 @@ public class ORepairClusterTask extends OTxTask {
       }
       return null;
 
-    } catch (Throwable e) {
+    } catch (Exception e) {
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
           "Repair cluster: rolling back transaction db=%s (reqId=%s error=%s)...", database.getName(), requestId, e);
 

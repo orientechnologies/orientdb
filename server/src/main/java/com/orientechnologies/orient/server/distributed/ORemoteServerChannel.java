@@ -241,7 +241,7 @@ public class ORemoteServerChannel {
             public void run() {
               try {
                 manager.removeServer(server, true);
-              } catch (Throwable e) {
+              } catch (Exception e) {
                 ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
                     "Error on removing server '%s' from the cluster", server);
               }

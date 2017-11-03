@@ -352,7 +352,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (msgService != null) {
       try {
         setDatabaseStatus(getLocalNodeName(), iDatabase.getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
-      } catch (Throwable t) {
+      } catch (Exception e) {
         // IGNORE IT
       }
 
@@ -635,7 +635,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               "Interrupted execution on executing distributed request %s on local node: %s", e, reqId, task);
           return e;
 
-        } catch (Throwable e) {
+        } catch (Exception e) {
           if (!(e instanceof OException))
             ODistributedServerLog.error(this, nodeName, getNodeNameById(reqId.getNodeId()), DIRECTION.IN,
                 "Error on executing distributed request %s on local node: %s", e, reqId, task);
@@ -1692,7 +1692,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               public Object call() throws Exception {
                 try {
                   clazz.addCluster(newClusterName);
-                } catch (Throwable e) {
+                } catch (Exception e) {
                   if (!iDatabase.getClusterNames().contains(newClusterName)) {
                     // NOT CREATED
                     ODistributedServerLog.error(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,

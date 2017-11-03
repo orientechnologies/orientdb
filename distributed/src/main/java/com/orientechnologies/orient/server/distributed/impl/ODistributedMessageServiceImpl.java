@@ -92,7 +92,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
       try {
         manager.setDatabaseStatus(manager.getLocalNodeName(), m.getKey(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-      } catch (Throwable t) {
+      } catch (Exception e) {
         // IGNORE IT
       }
       m.getValue().shutdown();

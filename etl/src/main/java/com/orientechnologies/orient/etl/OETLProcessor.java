@@ -676,8 +676,8 @@ public class OETLProcessor {
 
         queue.put(new OExtractedItem(true));
         return Boolean.TRUE;
-      } catch (Throwable t) {
-        OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error during extraction: " + t);
+      } catch (Exception e) {
+        OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error during extraction: " + e);
         return Boolean.FALSE;
       }
     }

@@ -213,13 +213,13 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
               .error(this, "\nError on exporting record %s because of I/O problems", e, rec == null ? null : rec.getIdentity());
           // RE-THROW THE EXCEPTION UP
           throw e;
-        } catch (Throwable t) {
+        } catch (Exception e) {
           if (rec != null) {
             final byte[] buffer = rec.toStream();
 
             OLogManager.instance().error(this,
                 "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
-                t, rec.getIdentity(), buffer.length, new String(buffer));
+                e, rec.getIdentity(), buffer.length, new String(buffer));
           }
         }
       }
@@ -599,7 +599,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           listener.onMessage(".");
 
         return true;
-      } catch (Throwable t) {
+      } catch (Exception e) {
         if (rec != null) {
           final ORID rid = rec.getIdentity().copy();
 
@@ -611,7 +611,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
           OLogManager.instance().error(this,
               "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
-              t, rec.getIdentity(), buffer.length, new String(buffer));
+              e, rec.getIdentity(), buffer.length, new String(buffer));
         }
       }
 

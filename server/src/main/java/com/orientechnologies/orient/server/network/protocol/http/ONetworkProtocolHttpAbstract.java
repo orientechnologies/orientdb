@@ -642,7 +642,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     } catch (SocketTimeoutException e) {
       timeout();
 
-    } catch (Throwable t) {
+    } catch (Exception t) {
       if (request.httpMethod != null && request.url != null) {
         try {
           sendError(505, "Error on executing of " + request.httpMethod + " for the resource: " + request.url, null, "text/plain",

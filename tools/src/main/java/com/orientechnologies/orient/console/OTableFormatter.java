@@ -207,8 +207,8 @@ public class OTableFormatter {
 
       out.onMessage("\n" + format.toString(), vargs.toArray());
 
-    } catch (Throwable t) {
-      out.onMessage("%3d|%9s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record due to: " + t);
+    } catch (Exception e) {
+      out.onMessage("%3d|%9s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record due to: " + e);
     }
   }
 

@@ -343,9 +343,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
           OLogManager.instance().warn(this, "Cannot load index '%s' rebuilt it from scratch", getName());
           try {
             rebuild();
-          } catch (Throwable t) {
+          } catch (Exception e1) {
             OLogManager.instance()
-                .error(this, "Cannot rebuild index '%s' because '" + t + "'. The index will be removed in configuration", e,
+                .error(this, "Cannot rebuild index '%s' because '" + e1 + "'. The index will be removed in configuration", e1,
                     getName());
             // REMOVE IT
             return false;

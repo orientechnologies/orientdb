@@ -273,8 +273,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       sendErrorOrDropConnection(connection, clientTxId, e);
     } catch (RuntimeException e) {
       sendErrorOrDropConnection(connection, clientTxId, e);
-    } catch (Throwable t) {
-      sendErrorOrDropConnection(connection, clientTxId, t);
+    } catch (Exception e) {
+      sendErrorOrDropConnection(connection, clientTxId, e);
     } finally {
       Orient.instance().getProfiler()
           .stopChrono("server.network.requests", "Total received requests", timer, "server.network.requests");
@@ -343,10 +343,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         afterOperationRequest(connection);
       }
 
-    } catch (Throwable t) {
+    } catch (Exception e) {
       // IN CASE OF DISTRIBUTED ANY EXCEPTION AT THIS POINT CAUSE THIS CONNECTION TO CLOSE
       OLogManager.instance()
-          .warn(this, "I/O Error on distributed channel (clientId=%d reqType=%d error=%s)", clientTxId, requestType, t);
+          .warn(this, "I/O Error on distributed channel (clientId=%d reqType=%d error=%s)", clientTxId, requestType, e);
       sendShutdown();
     } finally {
       Orient.instance().getProfiler()
@@ -413,8 +413,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       sendErrorOrDropConnection(connection, clientTxId, e);
     } catch (RuntimeException e) {
       sendErrorOrDropConnection(connection, clientTxId, e);
-    } catch (Throwable t) {
-      sendErrorOrDropConnection(connection, clientTxId, t);
+    } catch (Exception e) {
+      sendErrorOrDropConnection(connection, clientTxId, e);
     } finally {
       Orient.instance().getProfiler()
           .stopChrono("server.network.requests", "Total received requests", timer, "server.network.requests");

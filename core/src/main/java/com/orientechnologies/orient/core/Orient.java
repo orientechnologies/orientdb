@@ -98,8 +98,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   static {
     try {
       instance.startup();
-    } catch (Throwable t) {
-      OLogManager.instance().errorNoDb(Orient.class, "Error during initialization of OrientDB engine", t);
+    } catch (Exception e) {
+      OLogManager.instance().errorNoDb(Orient.class, "Error during initialization of OrientDB engine", e);
     }
 
   }
@@ -405,7 +405,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         try {
           OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
           stg.shutdown();
-        } catch (Throwable e) {
+        } catch (Exception e) {
           OLogManager.instance().warn(this, "-- error on shutdown storage", e);
         }
       }

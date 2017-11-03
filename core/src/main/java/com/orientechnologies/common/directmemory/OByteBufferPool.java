@@ -591,7 +591,7 @@ public class OByteBufferPool implements OOrientShutdownListener, OByteBufferPool
     try {
       for (ByteBuffer byteBuffer : pool)
         clean(byteBuffer, cleaned);
-    } catch (Throwable ignore) {
+    } catch (Exception ignore) {
       return;
     }
 

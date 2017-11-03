@@ -140,7 +140,7 @@ public class OTxTask extends OAbstract2pcTask {
           reqContext.lock(((OPlaceholder) result.results.get(i)).getIdentity(), getRecordLock());
       }
 
-    } catch (Throwable e) {
+    } catch (Exception e) {
       // if (e instanceof ODistributedRecordLockedException)
       // ddb.dumpLocks();
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
