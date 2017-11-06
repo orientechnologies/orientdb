@@ -142,6 +142,9 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
       for (OrientEdge neighborEdge : getNeighborEdges(current)) {
 
         OrientVertex neighbor = getNeighbor(current, neighborEdge, graph);
+        if(neighbor==null){
+          continue;
+        }
         // Ignore the neighbor which is already evaluated.
         if (closedSet.contains(neighbor)) {
           continue;
