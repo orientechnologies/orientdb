@@ -104,6 +104,10 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
         }
         ctx.destinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
 
+        if(ctx.sourceVertex==null || ctx.destinationVertex==null){
+          return new ArrayList<ORID>();
+        }
+
         if (ctx.sourceVertex.equals(ctx.destinationVertex)) {
           final List<ORID> result = new ArrayList<ORID>(1);
           result.add(ctx.destinationVertex.getIdentity());
