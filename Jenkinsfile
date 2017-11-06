@@ -2,6 +2,9 @@
 node("master") {
     ansiColor('xterm') {
 
+	properties([[$class: 'BuildDiscarderProperty',
+                 strategy: [$class: 'LogRotator', artifactDaysToKeepStr: '',
+                            artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10']]])
         def mvnHome = tool 'mvn'
         def mvnJdk8Image = "orientdb/mvn-gradle-node-zulu-jdk8"
 
