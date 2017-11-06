@@ -1501,6 +1501,23 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         .debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Distributed server '%s' is unreachable", nodeLeftName);
 
     try {
+      if (nodeLeftName.equals(getLockManagerRequester().getServer()))
+        electNewLockManager();
+
+      getLockManagerExecutor().handleUnreachableServer(nodeLeftName);
+      getLockManagerRequester().handleUnreachableServer(nodeLeftName);
+
+    } catch (Exception e) {
+      // IGNORE IT
+      ODistributedServerLog.debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on electing new lockManager", e);
+    }
+
+    if (nodeLeftName.equals(getLockManagerRequester().getServer())) {
+      // IF AFTER RE-ELECTION THE DISTRIBUTED LOCK MANAGER IS STILL THE REMOVED SERVER ABORT REMOVE.
+      return;
+    }
+
+    try {
       // REMOVE INTRA SERVER CONNECTION
       closeRemoteServer(nodeLeftName);
 
@@ -1510,13 +1527,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           l.onNodeLeft(nodeLeftName);
         } catch (Exception e) {
           // IGNORE IT
+          ODistributedServerLog
+              .debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on calling onNodeLeft event on '%s'", e, l);
         }
-
-      if (nodeLeftName.equals(getLockManagerRequester().getServer()))
-        electNewLockManager();
-
-      getLockManagerExecutor().handleUnreachableServer(nodeLeftName);
-      getLockManagerRequester().handleUnreachableServer(nodeLeftName);
 
       // UNLOCK ANY PENDING LOCKS
       if (messageService != null) {
