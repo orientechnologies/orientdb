@@ -2,12 +2,22 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import org.apache.tinkerpop.gremlin.structure.util.AbstractThreadLocalTransaction;
+import org.apache.tinkerpop.gremlin.structure.Transaction;
+import org.apache.tinkerpop.gremlin.structure.util.AbstractTransaction;
 import org.apache.tinkerpop.gremlin.structure.util.TransactionException;
 
-public class OrientTransaction extends AbstractThreadLocalTransaction {
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
+
+public class OrientTransaction extends AbstractTransaction {
 
   protected OrientGraph graph;
+
+  protected       Consumer<Transaction>  readWriteConsumerInternal = READ_WRITE_BEHAVIOR.AUTO;
+  protected       Consumer<Transaction>  closeConsumerInternal     = CLOSE_BEHAVIOR.ROLLBACK;
+  protected final List<Consumer<Status>> transactionListeners      = new CopyOnWriteArrayList<>();
 
   public OrientTransaction(OrientGraph graph) {
     super(graph);
@@ -17,6 +27,35 @@ public class OrientTransaction extends AbstractThreadLocalTransaction {
   @Override
   public boolean isOpen() {
     return this.tx().isActive();
+  }
+
+  @Override
+  public Transaction onReadWrite(Consumer<Transaction> consumer) {
+    this.readWriteConsumerInternal = Optional.ofNullable(consumer)
+        .orElseThrow(Transaction.Exceptions::onReadWriteBehaviorCannotBeNull);
+    return this;
+  }
+
+  @Override
+  public Transaction onClose(Consumer<Transaction> consumer) {
+    this.closeConsumerInternal = Optional.ofNullable(consumer).orElseThrow(Transaction.Exceptions::onReadWriteBehaviorCannotBeNull);
+    return this;
+  }
+
+  @Override
+  public void addTransactionListener(Consumer<Status> listener) {
+    transactionListeners.add(listener);
+  }
+
+  @Override
+  public void removeTransactionListener(Consumer<Status> listener) {
+    transactionListeners.remove(listener);
+  }
+
+  @Override
+  public void clearTransactionListeners() {
+
+    transactionListeners.clear();
   }
 
   @Override
@@ -31,22 +70,22 @@ public class OrientTransaction extends AbstractThreadLocalTransaction {
 
   @Override
   protected void doClose() {
-    super.doClose();
+    closeConsumerInternal.accept(this);
   }
 
   @Override
   protected void doReadWrite() {
-    super.doReadWrite();
+    readWriteConsumerInternal.accept(this);
   }
 
   @Override
   protected void fireOnCommit() {
-    super.fireOnCommit();
+    this.transactionListeners.forEach(c -> c.accept(Status.COMMIT));
   }
 
   @Override
   protected void fireOnRollback() {
-    super.fireOnRollback();
+    this.transactionListeners.forEach(c -> c.accept(Status.ROLLBACK));
   }
 
   @Override
