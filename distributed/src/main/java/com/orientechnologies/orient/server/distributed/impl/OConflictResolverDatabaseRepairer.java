@@ -115,7 +115,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
           check();
 
-        } catch (Throwable t) {
+        } catch (Exception t) {
           OLogManager.instance().error(this, "Error on repairing distributed database", t);
           // IGNORE THE EXCEPTION
         } finally {
@@ -314,7 +314,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
                   "Auto repairing of cluster '%s' completed. Repaired %d records (reqId=%s)", clusterName, repaired, requestId);
       }
 
-    } catch (Throwable e) {
+    } catch (Exception e) {
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Error executing auto repairing on cluster '%s' (error=%s, reqId=%s)", clusterName, e.toString(), requestId);
       return;
@@ -681,7 +681,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
       if (skipTheRest)
         return false;
-    } catch (Throwable e) {
+    } catch (Exception e) {
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Error executing auto repairing (error=%s, reqId=%s)", e.toString(), requestId);
       return false;

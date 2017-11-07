@@ -362,8 +362,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
         OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
         ODatabaseDocumentEmbedded.deInit(stg);
         stg.shutdown();
-      } catch (Throwable e) {
+      } catch (Exception e) {
         OLogManager.instance().warn(this, "-- error on shutdown storage", e);
+      } catch (Error e) {
+        OLogManager.instance().warn(this, "-- error on shutdown storage", e);
+        throw e;
       }
     }
     storages.clear();
@@ -458,5 +461,17 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public boolean isEmbedded() {
     return true;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  @Override
+  public void handleJVMError(Error e) {
+    synchronized (this) {
+      for (OAbstractPaginatedStorage storage : storages.values()) {
+        storage.handleJVMError(e);
+      }
+    }
   }
 }

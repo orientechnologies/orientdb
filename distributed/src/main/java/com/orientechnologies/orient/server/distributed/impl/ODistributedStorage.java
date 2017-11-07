@@ -180,7 +180,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
             Thread.interrupted();
 
-          } catch (Throwable e) {
+          } catch (Exception e) {
             if (running)
               // ASYNC: IGNORE IT
               if (e instanceof ONeedRetryException)
@@ -1452,7 +1452,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
             return result;
 
-          } catch (Throwable e) {
+          } catch (Exception e) {
             lastException = e;
 
             if (retry >= maxAutoRetry) {
@@ -1514,7 +1514,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     if (eventListener != null) {
       try {
         eventListener.onAfterRecordLock(rid);
-      } catch (Throwable t) {
+      } catch (Exception t) {
         // IGNORE IT
         ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
             "Caught exception during ODistributedStorageEventListener.onAfterRecordLock", t);
@@ -1529,7 +1529,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     if (eventListener != null) {
       try {
         eventListener.onAfterRecordUnlock(rid);
-      } catch (Throwable t) {
+      } catch (Exception t) {
         // IGNORE IT
         ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
             "Caught exception during ODistributedStorageEventListener.onAfterRecordUnlock", t);

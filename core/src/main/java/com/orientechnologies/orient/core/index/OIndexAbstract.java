@@ -316,7 +316,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
           OLogManager.instance().warn(this, "Cannot load index '%s' rebuilt it from scratch", getName());
           try {
             rebuild();
-          } catch (Throwable t) {
+          } catch (Exception t) {
             OLogManager.instance()
                 .error(this, "Cannot rebuild index '%s' because '" + t + "'. The index will be removed in configuration", e,
                     getName());

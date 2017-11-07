@@ -104,7 +104,7 @@ public class OLogManager {
             if (dbName != null)
               iMessage = "$ANSI{green {db=" + dbName + "}} " + iMessage;
           }
-        } catch (Throwable ignore) {
+        } catch (Exception ignore) {
         }
 
       final String requesterName;

@@ -134,7 +134,7 @@ public class ODistributedWorker extends Thread {
       } catch (HazelcastInstanceNotActiveException e) {
         Thread.currentThread().interrupt();
         break;
-      } catch (Throwable e) {
+      } catch (Exception e) {
         try {
           if (e.getCause() instanceof InterruptedException)
             Thread.currentThread().interrupt();
@@ -142,7 +142,7 @@ public class ODistributedWorker extends Thread {
             ODistributedServerLog.error(this, localNodeName, reqId != null ? manager.getNodeNameById(reqId.getNodeId()) : "?",
                 ODistributedServerLog.DIRECTION.IN, "Error on executing distributed request %s: (%s) worker=%d", e,
                 message != null ? message.getId() : -1, message != null ? message.getTask() : "-", id);
-        } catch (Throwable t) {
+        } catch (Exception t) {
           ODistributedServerLog.error(this, localNodeName, "?", ODistributedServerLog.DIRECTION.IN,
               "Error on executing distributed request %s: (%s) worker=%d", e, message != null ? message.getId() : -1,
               message != null ? message.getTask() : "-", id);
@@ -338,7 +338,7 @@ public class ODistributedWorker extends Thread {
           } else
             origin = null;
 
-        } catch (Throwable ex) {
+        } catch (Exception ex) {
           OLogManager.instance().error(this, "Failed on user switching database. ", ex);
         }
       }

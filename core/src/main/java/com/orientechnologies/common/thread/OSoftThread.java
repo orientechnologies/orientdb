@@ -81,9 +81,13 @@ public abstract class OSoftThread extends Thread implements OService {
         beforeExecution();
         execute();
         afterExecution();
-      } catch (Throwable t) {
+      } catch (Exception e) {
         if (dumpExceptions)
-          OLogManager.instance().error(this, "Error during thread execution", t);
+          OLogManager.instance().error(this, "Error during thread execution", e);
+      } catch (Error e) {
+        if (dumpExceptions)
+          OLogManager.instance().error(this, "Error during thread execution", e);
+        throw e;
       }
     }
 

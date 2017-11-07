@@ -629,7 +629,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               "Interrupted execution on executing distributed request %s on local node: %s", e, reqId, task);
           return e;
 
-        } catch (Throwable e) {
+        } catch (Exception e) {
           if (!(e instanceof OException))
             ODistributedServerLog.error(this, nodeName, getNodeNameById(reqId.getNodeId()), DIRECTION.IN,
                 "Error on executing distributed request %s on local node: %s", e, reqId, task);

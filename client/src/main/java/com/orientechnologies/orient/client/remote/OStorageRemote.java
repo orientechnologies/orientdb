@@ -195,9 +195,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
             }
             callback.call(recordId, response);
             connectionManager.release(network);
-          } catch (Throwable e) {
+          } catch (Exception e) {
             connectionManager.remove(network);
             OLogManager.instance().error(this, "Exception on async query", e);
+          } catch (Error e) {
+            connectionManager.remove(network);
+            OLogManager.instance().error(this, "Exception on async query", e);
+            throw e;
           }
         });
       } else {

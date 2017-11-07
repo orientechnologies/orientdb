@@ -495,7 +495,7 @@ public class OServer {
             OLogManager.instance().info(this, "- %s", l);
             try {
               l.shutdown();
-            } catch (Throwable e) {
+            } catch (Exception e) {
               OLogManager.instance().error(this, "Error during shutdown of listener %s.", e, l);
             }
           }
@@ -533,7 +533,7 @@ public class OServer {
         try {
           OLogManager.instance().info(this, "Shutting down databases:");
           Orient.instance().shutdown();
-        } catch (Throwable e) {
+        } catch (Exception e) {
           OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
         }
     } finally {

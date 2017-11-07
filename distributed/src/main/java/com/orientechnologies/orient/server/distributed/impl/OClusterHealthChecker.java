@@ -62,7 +62,7 @@ public class OClusterHealthChecker extends TimerTask {
 
       } catch (HazelcastInstanceNotActiveException e) {
         // IGNORE IT
-      } catch (Throwable t) {
+      } catch (Exception t) {
         if (manager.getServerInstance().isActive())
           OLogManager.instance().error(this, "Error on checking cluster health", t);
         else

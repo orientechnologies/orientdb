@@ -516,7 +516,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
           remoteServer.sendRequest(iRequest);
 
-        } catch (Throwable e) {
+        } catch (Exception e) {
           currentResponseMgr.removeServerBecauseUnreachable(node);
 
           String reason = e.getMessage();
@@ -533,7 +533,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
               remoteServer.sendRequest(iRequest);
               continue;
 
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
               // IGNORE IT BECAUSE MANAGED BELOW
             }
           }
@@ -821,7 +821,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         try {
           rids2Repair.addAll(pReq.rollback(database));
           rollbacks++;
-        } catch (Throwable t) {
+        } catch (Exception t) {
           // IGNORE IT
           ODistributedServerLog.error(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
               "Distributed transaction: error on rolling back transaction (req=%s)", pReq.getReqId());
@@ -1036,7 +1036,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           || serverStatus == ODistributedServerManager.DB_STATUS.SYNCHRONIZING) {
         try {
           manager.setDatabaseStatus(manager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-        } catch (Throwable e) {
+        } catch (Exception e) {
           // IGNORE IT
         }
       }
@@ -1253,7 +1253,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                     // REQUEST WAS ORIGINATED FROM CURRENT SERVER
                     msgService.timeoutRequest(ctx.getReqId().getMessageId());
 
-                } catch (Throwable t) {
+                } catch (Exception t) {
                   ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
                       "Error on rolling back distributed transaction %s on database '%s' (err=%s)", ctx.getReqId(), databaseName,
                       t);
@@ -1283,7 +1283,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
           getDatabaseRepairer().enqueueRepairRecords(rids2Repair);
 
-        } catch (Throwable t) {
+        } catch (Exception t) {
           // CATCH EVERYTHING TO AVOID THE TIMER IS CANCELED
           ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
               "Error on checking for expired distributed transaction on database '%s'", databaseName);

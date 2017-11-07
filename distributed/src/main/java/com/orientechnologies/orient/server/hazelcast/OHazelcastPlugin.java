@@ -478,7 +478,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final ODocument cfg = getLocalNodeConfiguration();
       ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentTx.getDefaultSerializer());
       configurationMap.put(CONFIG_NODE_PREFIX + nodeUuid, cfg);
-    } catch (Throwable t) {
+    } catch (Exception t) {
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on publishing local server configuration");
     }
   }
@@ -503,7 +503,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // DUMP HA STATS
       System.out.println(buffer);
 
-    } catch (Throwable t) {
+    } catch (Exception t) {
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on printing HA stats");
     }
   }
@@ -1067,7 +1067,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
       OLogManager.instance().error(this, "Hazelcast is not running", e);
-    } catch (Throwable e) {
+    } catch (Exception e) {
       OLogManager.instance().error(this, "Error on removing the server '%s'", e, getNodeName(iEvent.getMember()));
     }
   }

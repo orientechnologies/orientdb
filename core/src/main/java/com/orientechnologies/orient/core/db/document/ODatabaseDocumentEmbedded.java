@@ -225,7 +225,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     for (ODatabaseListener listener : browseListeners())
       try {
         listener.onCreate(this);
-      } catch (Throwable ignore) {
+      } catch (Exception ignore) {
       }
   }
 

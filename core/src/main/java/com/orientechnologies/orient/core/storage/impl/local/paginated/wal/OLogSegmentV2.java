@@ -162,7 +162,7 @@ final class OLogSegmentV2 implements OLogSegment {
         }
 
         writeAheadLog.checkFreeSpace();
-      } catch (Throwable e) {
+      } catch (Exception e) {
         OLogManager.instance().error(this, "Error during WAL background flush", e);
       }
     }

@@ -242,7 +242,7 @@ public class OScheduledEvent extends ODocumentWrapper {
           timer = null;
           break;
 
-        } catch (Throwable e) {
+        } catch (Exception e) {
           // SUSPEND EXECUTION
           OLogManager.instance()
               .error(this, "Error during starting of scheduled event '%s' executionId=%d", e, getName(), nextExecutionId);

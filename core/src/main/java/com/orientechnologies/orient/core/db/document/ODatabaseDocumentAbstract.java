@@ -147,8 +147,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     for (ODatabaseListener listener : getListenersCopy())
       try {
         listener.onOpen(getDatabaseOwner());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error during call of database listener", t);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during call of database listener", e);
       }
   }
 
@@ -163,8 +163,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     for (ODatabaseListener listener : getListenersCopy())
       try {
         listener.onClose(getDatabaseOwner());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error during call of database listener", t);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during call of database listener", e);
       }
   }
 
@@ -175,8 +175,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       try {
         activateOnCurrentThread();
         listener.onDelete(getDatabaseOwner());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error during call of database listener", t);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during call of database listener", e);
       }
   }
 
@@ -1499,7 +1499,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       throw t;
     } catch (ORecordNotFoundException t) {
       throw t;
-    } catch (Throwable t) {
+    } catch (Exception t) {
       if (rid.isTemporary())
         throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
       else
@@ -1893,8 +1893,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     for (ODatabaseListener listener : browseListeners())
       try {
         listener.onBeforeTxBegin(this);
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error before tx begin", t);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error before tx begin", e);
       }
 
     switch (iType) {
@@ -2186,7 +2186,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           OLogManager.instance().error(this, "Error during edge deletion", ex);
         }
         throw e;
-      } catch (Throwable e) {
+      } catch (Exception e) {
         // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
         try {
           edge.delete();
@@ -2578,7 +2578,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onBeforeTxRollback(this);
-        } catch (Throwable t) {
+        } catch (Exception t) {
           OLogManager.instance().error(this, "Error before transaction rollback `%08X`", t, System.identityHashCode(t));
         }
 
@@ -2595,7 +2595,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onAfterTxRollback(this);
-        } catch (Throwable t) {
+        } catch (Exception t) {
           OLogManager.instance().error(this, "Error after transaction rollback `%08X`", t, System.identityHashCode(t));
         }
       throw e;
@@ -2641,7 +2641,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onBeforeTxRollback(this);
-        } catch (Throwable t) {
+        } catch (Exception t) {
           OLogManager.instance().error(this, "Error before transactional rollback", t);
         }
 
@@ -2651,7 +2651,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       for (ODatabaseListener listener : browseListeners())
         try {
           listener.onAfterTxRollback(this);
-        } catch (Throwable t) {
+        } catch (Exception t) {
           OLogManager.instance().error(this, "Error after transaction rollback", t);
         }
     }

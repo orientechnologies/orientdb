@@ -86,7 +86,6 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContaine
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerAbstract;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -102,6 +101,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -170,6 +170,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private volatile ThreadLocal<OStorageTransaction> transaction;
   private final AtomicBoolean checkpointInProgress = new AtomicBoolean();
   private final AtomicBoolean walVacuumInProgress  = new AtomicBoolean();
+
+  /**
+   * Error which happened inside of storage or during data processing related to this storage.
+   */
+  private final AtomicReference<Error> storageError = new AtomicReference<>();
 
   @SuppressWarnings("WeakerAccess")
   protected final OSBTreeCollectionManagerShared sbTreeCollectionManager;
@@ -333,6 +338,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     OLogManager.instance().info(this, "Storage '%s' is opened under OrientDB distribution : %s", getURL(), OConstants.getVersion());
+  }
+
+  /**
+   * That is internal method which is called once we encounter any error inside of JVM. In such case we need to restart JVM to avoid
+   * any data corruption. Till JVM is not restarted storage will be put in read-only state.
+   */
+  public void handleJVMError(Error e) {
+    storageError.compareAndSet(null, e);
   }
 
   /**
@@ -612,7 +625,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public int addCluster(String clusterName, final Object... parameters) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       stateLock.acquireWriteLock();
       try {
@@ -639,7 +652,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public int addCluster(String clusterName, int requestedId, Object... parameters) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
@@ -674,7 +687,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public boolean dropCluster(final int clusterId, final boolean iTruncate) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       stateLock.acquireWriteLock();
       try {
@@ -1116,7 +1129,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final byte recordType, final int mode, final ORecordCallback<Long> callback) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       final OPhysicalPosition ppos = new OPhysicalPosition(recordType);
       final OCluster cluster = getClusterById(rid.getClusterId());
@@ -1217,7 +1230,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int version, final byte recordType, final int mode, final ORecordCallback<Integer> callback) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       final OCluster cluster = getClusterById(rid.getClusterId());
 
@@ -1254,7 +1267,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final byte recordType) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       final OCluster cluster = getClusterById(rid.getClusterId());
       if (transaction.get() != null) {
@@ -1303,7 +1316,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       ORecordCallback<Boolean> callback) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       final OCluster cluster = getClusterById(rid.getClusterId());
 
@@ -1331,7 +1344,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public OStorageOperationResult<Boolean> hideRecord(final ORecordId rid, final int mode, ORecordCallback<Boolean> callback) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       final OCluster cluster = getClusterById(rid.getClusterId());
 
@@ -1491,7 +1504,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public void preallocateRids(final OTransactionInternal clientTx) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       @SuppressWarnings("unchecked")
       final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getRecordOperations();
@@ -1611,7 +1624,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       txBegun.incrementAndGet();
 
@@ -1787,7 +1800,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       txBegun.incrementAndGet();
 
@@ -1993,7 +2006,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         // this method introduced for binary compatibility only
         if (configuration.binaryFormatVersion > 15)
@@ -2041,14 +2054,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OIndexDefinition indexDefinition, final OBinarySerializer valueSerializer, final boolean isAutomatic,
       final Boolean durableInNonTxMode, final int version, final Map<String, String> engineProperties,
       final Set<String> clustersToIndex, final ODocument metadata) {
-    try {
+      try {
       checkOpenness();
 
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         if (indexEngineNameMap.containsKey(engineName)) {
           // OLD INDEX FILE ARE PRESENT: THIS IS THE CASE OF PARTIAL/BROKEN INDEX
@@ -2143,7 +2156,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         checkIndexId(indexId);
 
@@ -2224,7 +2237,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         return doRemoveKeyFromIndex(indexId, key);
       } finally {
@@ -2267,7 +2280,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         doClearIndex(indexId);
       } finally {
@@ -2358,7 +2371,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         doUpdateIndexEntry(indexId, key, valueCreator);
       } finally {
@@ -2487,7 +2500,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         doPutIndexValue(indexId, key, value);
       } finally {
@@ -2543,7 +2556,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         return doValidatedPutIndexValue(indexId, key, value, validator);
       } finally {
@@ -5053,7 +5066,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * <p>
    * If one of those conditions are satisfied data modification operation is aborted and storage is switched in "read only" mode.
    */
-  private void checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptionsAndBrokenPages() {
+  private void checkLowDiskSpaceRequestsAndReadOnlyConditions() {
     if (transaction.get() != null)
       return;
 
@@ -5128,6 +5141,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           + "filling a bug please check your hardware. To restore database and make it fully operational you may export and import database "
           + "to and from JSON.");
 
+    }
+
+    if (storageError.get() != null) {
+      throw new OJVMErrorException(
+          "JVM error '" + storageError.get().getClass().getSimpleName() + " : " + storageError.get().getMessage()
+              + "' occurred during data processing, storage is switched to 'read-only' mode. "
+              + "To prevent this exception please restart the JVM and check data consistency by calling of 'check database' "
+              + "command from database console.");
     }
   }
 
@@ -5254,6 +5275,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (!(error instanceof OHighLevelException))
       OLogManager.instance().error(this, "Exception `%08X` in storage `%s`: %s", error, System.identityHashCode(error), getURL(),
           OConstants.getVersion());
+
+    handleJVMError(error);
+
     return error;
   }
 

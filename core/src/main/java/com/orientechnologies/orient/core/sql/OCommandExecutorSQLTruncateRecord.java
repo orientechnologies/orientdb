@@ -109,7 +109,7 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
         if (result.getResult())
           deleted++;
 
-      } catch (Throwable e) {
+      } catch (Exception e) {
         throw OException.wrapException(new OCommandExecutionException("Error on executing command"), e);
       }
     }

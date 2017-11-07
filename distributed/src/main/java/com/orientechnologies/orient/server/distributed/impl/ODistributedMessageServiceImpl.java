@@ -92,7 +92,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
       try {
         manager.setDatabaseStatus(manager.getLocalNodeName(), m.getKey(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-      } catch (Throwable t) {
+      } catch (Exception t) {
         // IGNORE IT
       }
       m.getValue().shutdown();
@@ -152,7 +152,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
     try {
       manager.setDatabaseStatus(manager.getLocalNodeName(), iDatabaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
-    } catch (Throwable t) {
+    } catch (Exception t) {
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, null, "error un-registering database", t);
       // IGNORE IT
     }

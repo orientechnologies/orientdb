@@ -659,7 +659,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
           OLogManager.instance().error(this, "Error during edge deletion", ex);
         }
         throw e;
-      } catch (Throwable e) {
+      } catch (Exception e) {
         // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
         try {
           edge.delete();

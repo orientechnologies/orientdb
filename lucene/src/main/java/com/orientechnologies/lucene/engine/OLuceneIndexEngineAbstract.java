@@ -328,7 +328,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     try {
       if (!closed.get() && indexWriter != null && indexWriter.isOpen())
         indexWriter.commit();
-    } catch (Throwable e) {
+    } catch (Exception e) {
       OLogManager.instance().error(this, "Error on flushing Lucene index", e);
     }
 
@@ -542,7 +542,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
 //      OLogManager.instance().info(this, "Closed Lucene index '" + this.name);
 
-    } catch (Throwable e) {
+    } catch (Exception e) {
       OLogManager.instance().error(this, "Error on closing Lucene index", e);
     }
   }
