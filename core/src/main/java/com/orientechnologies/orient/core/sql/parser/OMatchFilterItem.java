@@ -13,6 +13,7 @@ public class OMatchFilterItem extends SimpleNode {
   protected OArrayRangeSelector depth;
   protected OInteger            maxDepth;
   protected Boolean             optional;
+  protected OIdentifier         depthAlias;
 
   public OMatchFilterItem(int id) {
     super(id);
@@ -72,9 +73,17 @@ public class OMatchFilterItem extends SimpleNode {
       builder.append(optional);
       return;
     }
+
+    if (depthAlias != null) {
+      builder.append("depthAlias: ");
+      depthAlias.toString(params, builder);
+      return;
+    }
+
   }
 
-  @Override public OMatchFilterItem copy() {
+  @Override
+  public OMatchFilterItem copy() {
     OMatchFilterItem result = new OMatchFilterItem(-1);
     result.className = className == null ? null : className.copy();
     result.classNames = classNames == null ? null : classNames.copy();
@@ -84,10 +93,12 @@ public class OMatchFilterItem extends SimpleNode {
     result.depth = depth == null ? null : depth.copy();
     result.maxDepth = maxDepth == null ? null : maxDepth.copy();
     result.optional = optional;
+    result.depthAlias = depthAlias == null ? null : depthAlias.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -111,11 +122,11 @@ public class OMatchFilterItem extends SimpleNode {
       return false;
     if (optional != null ? !optional.equals(that.optional) : that.optional != null)
       return false;
-
-    return true;
+    return depthAlias != null ? depthAlias.equals(that.depthAlias) : that.depthAlias == null;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = className != null ? className.hashCode() : 0;
     result = 31 * result + (classNames != null ? classNames.hashCode() : 0);
     result = 31 * result + (alias != null ? alias.hashCode() : 0);
@@ -124,6 +135,7 @@ public class OMatchFilterItem extends SimpleNode {
     result = 31 * result + (depth != null ? depth.hashCode() : 0);
     result = 31 * result + (maxDepth != null ? maxDepth.hashCode() : 0);
     result = 31 * result + (optional != null ? optional.hashCode() : 0);
+    result = 31 * result + (depthAlias != null ? depthAlias.hashCode() : 0);
     return result;
   }
 }

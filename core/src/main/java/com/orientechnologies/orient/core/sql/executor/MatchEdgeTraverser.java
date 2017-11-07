@@ -17,7 +17,7 @@ public class MatchEdgeTraverser {
   protected EdgeTraversal  edge;
   protected OMatchPathItem item;
 
-  Iterator<OIdentifiable> downstream;
+  Iterator<OResultInternal> downstream;
 
   public MatchEdgeTraverser(OResult lastUpstreamRecord, EdgeTraversal edge) {
     this.sourceRecord = lastUpstreamRecord;
@@ -41,7 +41,8 @@ public class MatchEdgeTraverser {
       throw new IllegalStateException();
     }
     String endPointAlias = getEndpointAlias();
-    OIdentifiable nextElement = downstream.next();
+    OResultInternal nextR = downstream.next();
+    OIdentifiable nextElement = nextR.getElement().get();
     Object prevValue = sourceRecord.getProperty(endPointAlias);
     if (prevValue != null && !equals(prevValue, nextElement)) {
       return null;
@@ -51,6 +52,9 @@ public class MatchEdgeTraverser {
       result.setProperty(prop, sourceRecord.getProperty(prop));
     }
     result.setProperty(endPointAlias, toResult(nextElement));
+    if (edge.edge.item.getFilter().getDepthAlias() != null) {
+      result.setProperty(edge.edge.item.getFilter().getDepthAlias(), nextR.getMetadata("$depth"));
+    }
     return result;
   }
 
@@ -91,7 +95,7 @@ public class MatchEdgeTraverser {
     }
   }
 
-  protected Iterable<OIdentifiable> executeTraversal(OCommandContext iCommandContext, OMatchPathItem item,
+  protected Iterable<OResultInternal> executeTraversal(OCommandContext iCommandContext, OMatchPathItem item,
       OIdentifiable startingPoint, int depth) {
 
     OWhereClause filter = null;
@@ -105,7 +109,7 @@ public class MatchEdgeTraverser {
       className = targetClassName(item, iCommandContext);
     }
 
-    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    Set<OResultInternal> result = new HashSet<>();
 
     if (whileCondition == null && maxDepth == null) {// in this case starting point is not returned and only one level depth is
       // evaluated
@@ -115,7 +119,7 @@ public class MatchEdgeTraverser {
         Object previousMatch = iCommandContext.getVariable("$currentMatch");
         iCommandContext.setVariable("$currentMatch", origin);
         if (matchesFilters(iCommandContext, filter, origin) && matchesClass(iCommandContext, className, origin)) {
-          result.add(origin);
+          result.add(new OResultInternal(origin));
         }
         iCommandContext.setVariable("$currentMatch", previousMatch);
       }
@@ -124,7 +128,9 @@ public class MatchEdgeTraverser {
       Object previousMatch = iCommandContext.getVariable("$currentMatch");
       iCommandContext.setVariable("$currentMatch", startingPoint);
       if (matchesFilters(iCommandContext, filter, startingPoint) && matchesClass(iCommandContext, className, startingPoint)) {
-        result.add(startingPoint);
+        OResultInternal rs = new OResultInternal(startingPoint);
+        rs.setMetadata("$depth", depth);
+        result.add(rs);
       }
 
       if ((maxDepth == null || depth < maxDepth) && (whileCondition == null || whileCondition
@@ -137,11 +143,11 @@ public class MatchEdgeTraverser {
           //            continue;
           //          }
           // TODO consider break strategies (eg. re-traverse nodes)
-          Iterable<OIdentifiable> subResult = executeTraversal(iCommandContext, item, origin, depth + 1);
+          Iterable<OResultInternal> subResult = executeTraversal(iCommandContext, item, origin, depth + 1);
           if (subResult instanceof Collection) {
-            result.addAll((Collection<? extends OIdentifiable>) subResult);
+            result.addAll((Collection<? extends OResultInternal>) subResult);
           } else {
-            for (OIdentifiable i : subResult) {
+            for (OResultInternal i : subResult) {
               result.add(i);
             }
           }

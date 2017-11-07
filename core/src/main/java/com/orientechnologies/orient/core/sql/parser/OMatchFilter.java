@@ -123,6 +123,15 @@ public class OMatchFilter extends SimpleNode {
     return false;
   }
 
+  public String getDepthAlias() {
+    for (OMatchFilterItem item : items) {
+      if (item.depthAlias != null) {
+        return item.depthAlias.getStringValue();
+      }
+    }
+    return null;
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("{");
     boolean first = true;
@@ -136,13 +145,15 @@ public class OMatchFilter extends SimpleNode {
     builder.append("}");
   }
 
-  @Override public OMatchFilter copy() {
+  @Override
+  public OMatchFilter copy() {
     OMatchFilter result = new OMatchFilter(-1);
     result.items = items == null ? null : items.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -156,7 +167,8 @@ public class OMatchFilter extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return items != null ? items.hashCode() : 0;
   }
 }

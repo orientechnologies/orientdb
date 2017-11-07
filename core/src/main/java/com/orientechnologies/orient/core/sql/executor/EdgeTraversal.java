@@ -31,4 +31,9 @@ public class EdgeTraversal {
   public OWhereClause getLeftFilter() {
     return leftFilter;
   }
+
+  @Override
+  public String toString() {
+    return edge.toString();
+  }
 }

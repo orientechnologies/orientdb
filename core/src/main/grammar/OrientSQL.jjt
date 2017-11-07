@@ -367,6 +367,8 @@ TOKEN:
 	|
 	< MOVE: ( "m" | "M" ) ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) >
 	|
+	< DEPTH_ALIAS: ( "d" | "D" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) ( "a" | "A" ) ( "l" | "L" ) ( "i" | "I" ) ( "a" | "A" ) ( "s" | "S" )>
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -871,6 +873,8 @@ OIdentifier Identifier():
     token = <EXISTS>
     |
     token = <MOVE>
+    |
+    token = <DEPTH_ALIAS>
     |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -3645,6 +3649,10 @@ OMatchFilterItem MatchFilterItem():
                 |
                 <FALSE> { jjtThis.optional = false; }
             )
+        )
+        |
+        (
+              <DEPTH_ALIAS> <COLON> jjtThis.depthAlias = Identifier()
         )
     )
     { return jjtThis; }
