@@ -3,6 +3,7 @@ package com.orientechnologies.orient.graph.sql;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -1817,15 +1818,22 @@ public class OMatchStatementExecutionNewTest {
     db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ccc'")).execute();
     db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ddd'")).execute();
 
-    db.command(new OCommandSQL("CREATE EDGE E FROM (SELECT FROM "+clazz+" WHERE name = 'aaa') TO (SELECT FROM "+clazz+" WHERE name = 'bbb')")).execute();
-    db.command(new OCommandSQL("CREATE EDGE E FROM (SELECT FROM "+clazz+" WHERE name = 'bbb') TO (SELECT FROM "+clazz+" WHERE name = 'ccc')")).execute();
-    db.command(new OCommandSQL("CREATE EDGE E FROM (SELECT FROM "+clazz+" WHERE name = 'ccc') TO (SELECT FROM "+clazz+" WHERE name = 'ddd')")).execute();
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM " + clazz + " WHERE name = 'aaa') TO (SELECT FROM " + clazz + " WHERE name = 'bbb')"))
+        .execute();
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM " + clazz + " WHERE name = 'bbb') TO (SELECT FROM " + clazz + " WHERE name = 'ccc')"))
+        .execute();
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM " + clazz + " WHERE name = 'ccc') TO (SELECT FROM " + clazz + " WHERE name = 'ddd')"))
+        .execute();
 
     String query = "MATCH { class: " + clazz
         + ", as:a, where:(name = 'aaa')} --> {as:b, while:($depth<10), depthAlias: xy} RETURN a.name as name, b.name as bname, xy";
 
     OResultSet result = db.query(query);
 
+    int sum = 0;
     for (int i = 0; i < 4; i++) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
@@ -1848,6 +1856,63 @@ public class OMatchStatementExecutionNewTest {
       default:
         Assert.fail();
       }
+      sum += (int) depth;
+    }
+    Assert.assertEquals(sum, 6);
+    Assert.assertFalse(result.hasNext());
+
+    result.close();
+  }
+
+  @Test
+  public void testPathAlias() {
+    String clazz = "testPathAlias";
+    db.command(new OCommandSQL("CREATE CLASS " + clazz + " EXTENDS V")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'aaa'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'bbb'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ccc'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ddd'")).execute();
+
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM " + clazz + " WHERE name = 'aaa') TO (SELECT FROM " + clazz + " WHERE name = 'bbb')"))
+        .execute();
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM " + clazz + " WHERE name = 'bbb') TO (SELECT FROM " + clazz + " WHERE name = 'ccc')"))
+        .execute();
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM " + clazz + " WHERE name = 'ccc') TO (SELECT FROM " + clazz + " WHERE name = 'ddd')"))
+        .execute();
+
+    String query = "MATCH { class: " + clazz
+        + ", as:a, where:(name = 'aaa')} --> {as:b, while:($depth<10), pathAlias: xy} RETURN a.name as name, b.name as bname, xy";
+
+    OResultSet result = db.query(query);
+
+    for (int i = 0; i < 4; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Object path = item.getProperty("xy");
+      Assert.assertTrue(path instanceof List);
+      List<OIdentifiable> thePath = (List<OIdentifiable>) path;
+
+      String bname = item.getProperty("bname");
+      if (bname.equals("aaa")) {
+        Assert.assertEquals(0, thePath.size());
+      } else if (bname.equals("aaa")) {
+        Assert.assertEquals(1, thePath.size());
+        Assert.assertEquals("bbb", ((OElement) thePath.get(0).getRecord()).getProperty("name"));
+      } else if (bname.equals("ccc")) {
+        Assert.assertEquals(2, thePath.size());
+        Assert.assertEquals("bbb", ((OElement) thePath.get(0).getRecord()).getProperty("name"));
+        Assert.assertEquals("ccc", ((OElement) thePath.get(1).getRecord()).getProperty("name"));
+      } else if (bname.equals("ddd")) {
+        Assert.assertEquals(3, thePath.size());
+        Assert.assertEquals("bbb", ((OElement) thePath.get(0).getRecord()).getProperty("name"));
+        Assert.assertEquals("ccc", ((OElement) thePath.get(1).getRecord()).getProperty("name"));
+        Assert.assertEquals("ddd", ((OElement) thePath.get(2).getRecord()).getProperty("name"));
+      }
+
     }
     Assert.assertFalse(result.hasNext());
 

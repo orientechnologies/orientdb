@@ -132,6 +132,15 @@ public class OMatchFilter extends SimpleNode {
     return null;
   }
 
+  public String getPathAlias() {
+    for (OMatchFilterItem item : items) {
+      if (item.pathAlias != null) {
+        return item.pathAlias.getStringValue();
+      }
+    }
+    return null;
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("{");
     boolean first = true;

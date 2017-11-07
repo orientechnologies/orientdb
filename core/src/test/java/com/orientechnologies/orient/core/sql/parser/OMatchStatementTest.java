@@ -189,6 +189,12 @@ public class OMatchStatementTest {
   }
 
   @Test
+  public void testPathAlias() {
+    checkRightSyntax("MATCH {class: 'V', as: foo}-->{as:bar, while:($depth < 2), pathAlias: barPath} RETURN barPath");
+
+  }
+
+  @Test
   public void testSkip() {
     checkRightSyntax("MATCH {class: 'V', as: foo}-->{as:bar} RETURN foo.name, bar.name skip 10 limit 10");
   }

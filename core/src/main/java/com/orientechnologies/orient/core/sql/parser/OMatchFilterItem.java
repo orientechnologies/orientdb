@@ -14,6 +14,7 @@ public class OMatchFilterItem extends SimpleNode {
   protected OInteger            maxDepth;
   protected Boolean             optional;
   protected OIdentifier         depthAlias;
+  protected OIdentifier         pathAlias;
 
   public OMatchFilterItem(int id) {
     super(id);
@@ -80,6 +81,12 @@ public class OMatchFilterItem extends SimpleNode {
       return;
     }
 
+    if (pathAlias != null) {
+      builder.append("pathAlias: ");
+      pathAlias.toString(params, builder);
+      return;
+    }
+
   }
 
   @Override
@@ -94,6 +101,7 @@ public class OMatchFilterItem extends SimpleNode {
     result.maxDepth = maxDepth == null ? null : maxDepth.copy();
     result.optional = optional;
     result.depthAlias = depthAlias == null ? null : depthAlias.copy();
+    result.pathAlias = pathAlias == null ? null : pathAlias.copy();
     return result;
   }
 
@@ -122,7 +130,9 @@ public class OMatchFilterItem extends SimpleNode {
       return false;
     if (optional != null ? !optional.equals(that.optional) : that.optional != null)
       return false;
-    return depthAlias != null ? depthAlias.equals(that.depthAlias) : that.depthAlias == null;
+    if (depthAlias != null ? !depthAlias.equals(that.depthAlias) : that.depthAlias != null)
+      return false;
+    return pathAlias != null ? pathAlias.equals(that.pathAlias) : that.pathAlias == null;
   }
 
   @Override
@@ -136,6 +146,7 @@ public class OMatchFilterItem extends SimpleNode {
     result = 31 * result + (maxDepth != null ? maxDepth.hashCode() : 0);
     result = 31 * result + (optional != null ? optional.hashCode() : 0);
     result = 31 * result + (depthAlias != null ? depthAlias.hashCode() : 0);
+    result = 31 * result + (pathAlias != null ? pathAlias.hashCode() : 0);
     return result;
   }
 }

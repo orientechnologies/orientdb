@@ -55,6 +55,9 @@ public class MatchEdgeTraverser {
     if (edge.edge.item.getFilter().getDepthAlias() != null) {
       result.setProperty(edge.edge.item.getFilter().getDepthAlias(), nextR.getMetadata("$depth"));
     }
+    if (edge.edge.item.getFilter().getPathAlias() != null) {
+      result.setProperty(edge.edge.item.getFilter().getPathAlias(), nextR.getMetadata("$matchPath"));
+    }
     return result;
   }
 
@@ -91,12 +94,12 @@ public class MatchEdgeTraverser {
       if (startingElem instanceof OResult) {
         startingElem = ((OResult) startingElem).getElement().orElse(null);
       }
-      downstream = executeTraversal(ctx, this.item, (OIdentifiable) startingElem, 0).iterator();
+      downstream = executeTraversal(ctx, this.item, (OIdentifiable) startingElem, 0, null).iterator();
     }
   }
 
   protected Iterable<OResultInternal> executeTraversal(OCommandContext iCommandContext, OMatchPathItem item,
-      OIdentifiable startingPoint, int depth) {
+      OIdentifiable startingPoint, int depth, List<OIdentifiable> pathToHere) {
 
     OWhereClause filter = null;
     OWhereClause whileCondition = null;
@@ -127,9 +130,14 @@ public class MatchEdgeTraverser {
       iCommandContext.setVariable("$depth", depth);
       Object previousMatch = iCommandContext.getVariable("$currentMatch");
       iCommandContext.setVariable("$currentMatch", startingPoint);
+
       if (matchesFilters(iCommandContext, filter, startingPoint) && matchesClass(iCommandContext, className, startingPoint)) {
         OResultInternal rs = new OResultInternal(startingPoint);
+        // set traversal depth in the metadata
         rs.setMetadata("$depth", depth);
+        // set traversal path in the metadata
+        rs.setMetadata("$matchPath", pathToHere == null ? Collections.EMPTY_LIST : pathToHere);
+        // add the result to the list
         result.add(rs);
       }
 
@@ -143,7 +151,14 @@ public class MatchEdgeTraverser {
           //            continue;
           //          }
           // TODO consider break strategies (eg. re-traverse nodes)
-          Iterable<OResultInternal> subResult = executeTraversal(iCommandContext, item, origin, depth + 1);
+
+          List<OIdentifiable> newPath = new ArrayList<>();
+          if (pathToHere != null) {
+            newPath.addAll(pathToHere);
+          }
+          newPath.add(origin.getIdentity());
+
+          Iterable<OResultInternal> subResult = executeTraversal(iCommandContext, item, origin, depth + 1, newPath);
           if (subResult instanceof Collection) {
             result.addAll((Collection<? extends OResultInternal>) subResult);
           } else {
