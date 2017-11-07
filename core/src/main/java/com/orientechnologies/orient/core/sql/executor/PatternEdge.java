@@ -18,4 +18,8 @@ public class PatternEdge {
     return item.executeTraversal(matchContext, iCommandContext, startingPoint, depth);
   }
 
+  @Override
+  public String toString() {
+    return "{as: "+in.alias+"}"+item.toString();
+  }
 }

@@ -67,10 +67,6 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    final String os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
-
-    Assume.assumeFalse(os.contains("win"));
-
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();

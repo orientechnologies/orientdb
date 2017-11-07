@@ -183,6 +183,12 @@ public class OMatchStatementTest {
   }
 
   @Test
+  public void testDepthAlias() {
+    checkRightSyntax("MATCH {class: 'V', as: foo}-->{as:bar, while:($depth < 2), depthAlias: depth} RETURN depth");
+
+  }
+
+  @Test
   public void testSkip() {
     checkRightSyntax("MATCH {class: 'V', as: foo}-->{as:bar} RETURN foo.name, bar.name skip 10 limit 10");
   }

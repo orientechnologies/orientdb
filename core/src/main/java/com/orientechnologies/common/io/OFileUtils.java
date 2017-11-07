@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Locale;
 
 public class OFileUtils {
@@ -147,17 +148,27 @@ public class OFileUtils {
       throw new IOException("Invalid file name '" + iFileName + "'");
   }
 
-  public static void deleteRecursively(final File iRootFile) {
-    if (iRootFile.exists()) {
-      if (iRootFile.isDirectory()) {
-        for (File f : iRootFile.listFiles()) {
-          if (f.isFile())
-            f.delete();
-          else
-            deleteRecursively(f);
+  public static void deleteRecursively(final File rootFile) {
+    if (!rootFile.exists())
+      return;
+
+    try {
+      Path rootPath = Paths.get(rootFile.getCanonicalPath());
+      Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          Files.deleteIfExists(file);
+          return FileVisitResult.CONTINUE;
         }
-      }
-      iRootFile.delete();
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+          Files.deleteIfExists(dir);
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
     }
   }
 
@@ -213,8 +224,8 @@ public class OFileUtils {
   }
 
   /**
-   * Prepares the path for a file creation or replacement. If the file pointed by the path already exists, it will be deleted,
-   * a warning will be emitted to the log in this case. All absent directories along the path will be created.
+   * Prepares the path for a file creation or replacement. If the file pointed by the path already exists, it will be deleted, a
+   * warning will be emitted to the log in this case. All absent directories along the path will be created.
    *
    * @param path      the file path.
    * @param requester the requester of an operation being performed to produce user-friendly log messages.

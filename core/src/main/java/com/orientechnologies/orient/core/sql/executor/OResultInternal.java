@@ -22,6 +22,13 @@ public class OResultInternal implements OResult {
   protected Map<String, Object> metadata;
   protected OIdentifiable       element;
 
+  public OResultInternal(){
+  }
+
+  public OResultInternal(OIdentifiable ident){
+    this.element = ident;
+  }
+
   public void setProperty(String name, Object value) {
     if (value instanceof Optional) {
       value = ((Optional) value).orElse(null);

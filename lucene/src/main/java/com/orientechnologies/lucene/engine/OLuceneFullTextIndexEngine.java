@@ -68,11 +68,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public IndexWriter openIndexWriter(Directory directory) throws IOException {
-    return createIndexWriter(directory);
-  }
-
-  @Override
   public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
     super.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
     queryBuilder = new OLuceneQueryBuilder(metadata);

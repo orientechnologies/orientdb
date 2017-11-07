@@ -947,15 +947,24 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         // container of rids of changed records
         final SortedSet<ORID> sortedRids = new TreeSet<>();
 
-        final OLogSequenceNumber startLsn = writeAheadLog.next(lsn);
+        OLogSequenceNumber startLsn = writeAheadLog.next(lsn);
         if (startLsn == null) {
           OLogManager.instance()
               .info(this, "Cannot find requested LSN=%s for database sync operation (last available LSN is %s)", lsn, endLsn);
           return null;
         }
 
-        writeAheadLog.preventCutTill(startLsn);
+        final OLogSequenceNumber freezeLsn = startLsn;
+
+        writeAheadLog.addCutTillLimit(freezeLsn);
         try {
+          startLsn = writeAheadLog.next(lsn);
+          if (startLsn == null) {
+            OLogManager.instance()
+                .info(this, "Cannot find requested LSN=%s for database sync operation (last available LSN is %s)", lsn, endLsn);
+            return null;
+          }
+
           // start record is absent there is nothing that we can do
           OWALRecord walRecord = writeAheadLog.read(startLsn);
           if (walRecord == null) {
@@ -1002,7 +1011,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               outputListener.onMessage("read " + read + " records from WAL and collected " + sortedRids.size() + " records");
           }
         } finally {
-          writeAheadLog.preventCutTill(null);
+          writeAheadLog.removeCutTillLimit(freezeLsn);
         }
 
         final int totalRecords = sortedRids.size();

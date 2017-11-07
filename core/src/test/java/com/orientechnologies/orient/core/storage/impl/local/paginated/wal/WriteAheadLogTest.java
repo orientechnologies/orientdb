@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -33,9 +34,8 @@ public class WriteAheadLogTest {
       buildDirectory = ".";
 
     testDir = new File(buildDirectory, "writeAheadLogTest");
-    if (!testDir.exists())
-      Assert.assertTrue(testDir.mkdir());
-
+    OFileUtils.deleteRecursively(testDir);
+    Assert.assertTrue(testDir.mkdir());
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, TestRecord.class);
   }
 
@@ -65,12 +65,18 @@ public class WriteAheadLogTest {
   public void afterMethod() throws Exception {
     if (writeAheadLog != null)
       writeAheadLog.delete();
+
+    final File[] files = testDir.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        OFileUtils.deleteRecursively(file);
+      }
+    }
   }
 
   @AfterClass
   public static void afterClass() {
-    if (testDir.exists())
-      Assert.assertTrue(testDir.delete());
+    OFileUtils.deleteRecursively(testDir);
   }
 
   @Test
@@ -699,6 +705,105 @@ public class WriteAheadLogTest {
     Assert.assertEquals(writeAheadLog.size(), duration);
 
     assertLogContent(writeAheadLog, writtenRecords);
+  }
+
+  @Test
+  public void testCutTillLimits() throws IOException {
+    long nextStart = 0;
+
+    for (int n = 0; n < 3; n++) {
+      for (int i = 0; i < SEGMENT_SIZE / OWALPage.PAGE_SIZE; i++) {
+        TestRecord walRecord = new TestRecord(nextStart, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
+        writeAheadLog.log(walRecord);
+        nextStart = walRecord.nextStart;
+      }
+
+      TestRecord walRecord = new TestRecord(nextStart, SEGMENT_SIZE, OWALPage.PAGE_SIZE, false, false);
+      writeAheadLog.log(walRecord);
+    }
+
+    try {
+      writeAheadLog.addCutTillLimit(null);
+      Assert.fail();
+    } catch (NullPointerException npe) {
+      Assert.assertTrue(true);
+    }
+
+    try {
+      writeAheadLog.removeCutTillLimit(null);
+      Assert.fail();
+    } catch (NullPointerException npe) {
+      Assert.assertTrue(true);
+    }
+
+    final OLogSequenceNumber end = writeAheadLog.end();
+    final OLogSequenceNumber begin = writeAheadLog.begin();
+
+    writeAheadLog.addCutTillLimit(new OLogSequenceNumber(25, 25));
+    writeAheadLog.addCutTillLimit(new OLogSequenceNumber(25, 25));
+
+    writeAheadLog.addCutTillLimit(new OLogSequenceNumber(0, 0));
+    writeAheadLog.addCutTillLimit(new OLogSequenceNumber(0, 0));
+    writeAheadLog.addCutTillLimit(new OLogSequenceNumber(0, 0));
+
+    writeAheadLog.addCutTillLimit(new OLogSequenceNumber(1, 10));
+
+    writeAheadLog.addCutTillLimit(new OLogSequenceNumber(2, 10));
+    writeAheadLog.addCutTillLimit(new OLogSequenceNumber(2, 10));
+
+    writeAheadLog.cutTill(new OLogSequenceNumber(3, 0));
+
+    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertEquals(writeAheadLog.begin(), begin);
+
+    writeAheadLog.removeCutTillLimit(new OLogSequenceNumber(0, 0));
+    writeAheadLog.cutTill(new OLogSequenceNumber(3, 0));
+
+    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertEquals(writeAheadLog.begin(), begin);
+
+    writeAheadLog.removeCutTillLimit(new OLogSequenceNumber(0, 0));
+    writeAheadLog.cutTill(new OLogSequenceNumber(3, 0));
+    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertEquals(writeAheadLog.begin(), begin);
+
+    writeAheadLog.removeCutTillLimit(new OLogSequenceNumber(1, 10));
+    writeAheadLog.cutTill(new OLogSequenceNumber(3, 0));
+    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertEquals(writeAheadLog.begin(), begin);
+
+    writeAheadLog.removeCutTillLimit(new OLogSequenceNumber(0, 0));
+    writeAheadLog.cutTill(new OLogSequenceNumber(3, 0));
+    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertEquals(writeAheadLog.begin().getSegment(), 2);
+
+    writeAheadLog.removeCutTillLimit(new OLogSequenceNumber(2, 10));
+    writeAheadLog.cutTill(new OLogSequenceNumber(3, 0));
+    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertEquals(writeAheadLog.begin().getSegment(), 2);
+
+    try {
+      writeAheadLog.removeCutTillLimit(new OLogSequenceNumber(2, 1));
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(true);
+    }
+
+    writeAheadLog.removeCutTillLimit(new OLogSequenceNumber(2, 10));
+    writeAheadLog.cutTill(new OLogSequenceNumber(3, 0));
+    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertEquals(writeAheadLog.begin().getSegment(), 3);
+
+    writeAheadLog.removeCutTillLimit(new OLogSequenceNumber(25, 25));
+    writeAheadLog.removeCutTillLimit(new OLogSequenceNumber(25, 25));
+
+    try {
+      writeAheadLog.removeCutTillLimit(new OLogSequenceNumber(25, 25));
+      Assert.fail();
+    } catch (IllegalArgumentException iae) {
+      Assert.assertTrue(true);
+    }
+
   }
 
   @Test

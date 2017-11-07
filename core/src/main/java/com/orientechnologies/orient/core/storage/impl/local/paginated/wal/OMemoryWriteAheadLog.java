@@ -100,7 +100,8 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void cutTill(OLogSequenceNumber lsn) throws IOException {
+  public boolean cutTill(OLogSequenceNumber lsn) throws IOException {
+    return false;
   }
 
   @Override
@@ -116,7 +117,13 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void preventCutTill(OLogSequenceNumber lsn) {
+  public void addCutTillLimit(OLogSequenceNumber lsn) {
+
+  }
+
+  @Override
+  public void removeCutTillLimit(OLogSequenceNumber lsn) {
+
   }
 
   @Override

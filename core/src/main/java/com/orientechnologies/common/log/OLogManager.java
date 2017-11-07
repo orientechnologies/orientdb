@@ -133,7 +133,7 @@ public class OLogManager {
         try {
           System.err.println(String.format(iMessage, iAdditionalArgs));
         } catch (Exception e) {
-          OLogManager.instance().warn(this, "Error on formatting message", e);
+          System.err.print(String.format("Error on formatting message '%s'. Exception: %s", iMessage, e.toString()));
         }
       } else if (log.isLoggable(iLevel)) {
         // USE THE LOG
