@@ -1,12 +1,13 @@
 package com.orientechnologies.common.thread;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 
 import java.util.concurrent.*;
 
 /**
- * The same as thread {@link ThreadPoolExecutor} but also logs all exceptions happened inside of the tasks which caused
- * tasks to stop.
+ * The same as thread {@link ThreadPoolExecutor} but also logs all exceptions happened inside of the tasks which caused tasks to
+ * stop.
  */
 public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
   public OThreadPoolExecutorWithLogging(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
@@ -49,6 +50,12 @@ public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
     if (t != null) {
       final Thread thread = Thread.currentThread();
       OLogManager.instance().error(this, "Exception in thread '%s'", t, thread.getName());
+
+      if (t instanceof Error) {
+        final Orient orient = Orient.instance();
+        if (orient != null)
+          orient.handleJVMError((Error) t);
+      }
     }
   }
 }

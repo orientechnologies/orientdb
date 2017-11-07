@@ -123,8 +123,11 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
             }
           }
         }
-      } catch (Throwable e) {
+      } catch (Exception e) {
         OLogManager.instance().debug(this, "Error on memory checker task", e);
+      } catch (Error e) {
+        OLogManager.instance().debug(this, "Error on memory checker task", e);
+        throw e;
       }
     }
   }
@@ -261,7 +264,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
         statsTxCommit = lastTxCommit;
         statsTxRollback = lastTxRollback;
 
-      } catch (Throwable t) {
+      } catch (Exception e) {
         // IGNORE IT
       }
     }

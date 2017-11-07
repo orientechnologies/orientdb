@@ -207,7 +207,7 @@ public class ODistributedTransactionManager {
 
             executeAsyncTx(nodes, localResult, involvedClusters, txTask, requestId.getMessageId(), localNodeName, unlockCallback);
           }
-        } catch (Throwable e) {
+        } catch (Exception e) {
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
               "Error on executing transaction on database '%s', rollback... (reqId=%s err='%s')", storage.getName(), requestId, e);
 
@@ -571,7 +571,7 @@ public class ODistributedTransactionManager {
           for (ORecordId rid : recordsToLock)
             try {
               eventListener.onAfterRecordLock(rid);
-            } catch (Throwable t) {
+            } catch (Exception t) {
               // IGNORE IT
               ODistributedServerLog.error(iThis, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
                   "Caught exception during ODistributedStorageEventListener.onAfterRecordLock", t);
@@ -865,7 +865,7 @@ public class ODistributedTransactionManager {
                 try {
                   sendTxCompleted(localNodeName, involvedClusters, OMultiValue.getSingletonList(s), (OCompleted2pcTask) fixTask);
                   return true;
-                } catch (Throwable t) {
+                } catch (Exception t) {
                   // GO FOR ROLLBACK + REPAIR
                 }
               }

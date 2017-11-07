@@ -306,7 +306,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     try {
       if (!closed.get() && indexWriter != null && indexWriter.isOpen())
         indexWriter.commit();
-    } catch (Throwable e) {
+    } catch (Exception e) {
       OLogManager.instance().error(this, "Error on flushing Lucene index", e);
     }
 

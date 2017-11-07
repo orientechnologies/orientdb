@@ -1,6 +1,7 @@
 package com.orientechnologies.common.thread;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 
 import java.util.concurrent.*;
 
@@ -48,6 +49,12 @@ public class OScheduledThreadPoolExecutorWithLogging extends ScheduledThreadPool
     if (t != null) {
       final Thread thread = Thread.currentThread();
       OLogManager.instance().error(this, "Exception in thread '%s'", t, thread.getName());
+
+      if (t instanceof Error) {
+        final Orient orient = Orient.instance();
+        if (orient != null)
+          orient.handleJVMError((Error) t);
+      }
     }
   }
 }

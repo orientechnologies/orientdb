@@ -53,7 +53,7 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
           recordRes.setProperty("record", rec.toString());
           rs.add(recordRes);
         }
-      } catch (Throwable e) {
+      } catch (Exception e) {
         throw OException.wrapException(new OCommandExecutionException("Error on executing command"), e);
       }
     }

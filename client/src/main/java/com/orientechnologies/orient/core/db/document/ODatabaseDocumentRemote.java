@@ -220,8 +220,11 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     for (ODatabaseListener listener : browseListeners())
       try {
         listener.onBeforeTxBegin(this);
-      } catch (Throwable t) {
+      } catch (Exception t) {
         OLogManager.instance().error(this, "Error before tx begin", t);
+      } catch (Error e) {
+        OLogManager.instance().error(this, "Error before tx begin", e);
+        throw e;
       }
 
     switch (iType) {

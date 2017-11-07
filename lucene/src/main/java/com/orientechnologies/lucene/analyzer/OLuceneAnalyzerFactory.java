@@ -78,7 +78,7 @@ public class OLuceneAnalyzerFactory {
         classAnalyzer = Class.forName(analyzerFQN);
         return (Analyzer) classAnalyzer.newInstance();
 
-      } catch (Throwable e1) {
+      } catch (Exception e1) {
         OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
 
         //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException

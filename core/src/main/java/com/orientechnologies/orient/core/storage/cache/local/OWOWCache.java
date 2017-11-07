@@ -2495,7 +2495,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           }
         }
 
-      } catch (Throwable t) {
+      } catch (Exception t) {
         OLogManager.instance().error(this, "Exception during data flush", t);
         OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
       } finally {

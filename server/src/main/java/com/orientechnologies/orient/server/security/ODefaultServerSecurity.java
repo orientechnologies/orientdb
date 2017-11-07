@@ -124,7 +124,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
           cls = Class.forName(clsName);
         }
       }
-    } catch (Throwable th) {
+    } catch (Exception th) {
       OLogManager.instance().error(this, "ODefaultServerSecurity.getClass() Throwable: ", th);
     }
 
@@ -642,7 +642,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
               OLogManager.instance()
                   .error(this, "ODefaultServerSecurity.loadAuthenticators() authentication object is missing name", null);
             }
-          } catch (Throwable ex) {
+          } catch (Exception ex) {
             OLogManager.instance().error(this, "ODefaultServerSecurity.loadAuthenticators() Exception: ", ex);
           }
         }
@@ -1038,7 +1038,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         OLogManager.instance()
             .error(this, "ODefaultServerSecurity.registerRESTCommands() unable to retrieve Network Protocol listener.", null);
       }
-    } catch (Throwable th) {
+    } catch (Exception th) {
       OLogManager.instance().error(this, "ODefaultServerSecurity.registerRESTCommands()", th);
     }
   }
@@ -1053,7 +1053,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         OLogManager.instance()
             .error(this, "ODefaultServerSecurity.unregisterRESTCommands() unable to retrieve Network Protocol listener.", null);
       }
-    } catch (Throwable th) {
+    } catch (Exception th) {
       OLogManager.instance().error(this, "ODefaultServerSecurity.unregisterRESTCommands()", th);
     }
   }

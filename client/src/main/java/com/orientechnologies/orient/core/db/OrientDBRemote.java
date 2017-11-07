@@ -242,8 +242,11 @@ public class OrientDBRemote implements OrientDBInternal {
         ODatabaseDocumentRemote.deInit(stg);
         OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
         stg.shutdown();
-      } catch (Throwable e) {
+      } catch (Exception e) {
         OLogManager.instance().warn(this, "-- error on shutdown storage", e);
+      } catch (Error e) {
+        OLogManager.instance().warn(this, "-- error on shutdown storage", e);
+        throw e;
       }
     }
     storages.clear();
@@ -327,5 +330,12 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public ODatabaseDocumentInternal openNoAuthorization(String name) {
     throw new UnsupportedOperationException("impossible skip authentication and authorization in remote");
+  }
+
+  /**
+   * @inheritDoc
+   */
+  @Override
+  public void handleJVMError(Error e) {
   }
 }

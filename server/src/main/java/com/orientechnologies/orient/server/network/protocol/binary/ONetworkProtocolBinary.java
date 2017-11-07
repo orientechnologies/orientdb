@@ -395,7 +395,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         afterOperationRequest(connection);
       }
 
-    } catch (Throwable t) {
+    } catch (Exception t) {
       // IN CASE OF DISTRIBUTED ANY EXCEPTION AT THIS POINT CAUSE THIS CONNECTION TO CLOSE
       OLogManager.instance().warn(this, "I/O Error on distributed channel  clientId=%d reqType=%d", clientTxId, requestType, t);
       sendShutdown();
