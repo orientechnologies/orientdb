@@ -104,7 +104,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   private volatile OLogSequenceNumber flushedLsn;
 
-  private volatile OLogSequenceNumber preventCutTill;
+  private final ConcurrentSkipListMap<OLogSequenceNumber, Integer> cutTillLimits = new ConcurrentSkipListMap<OLogSequenceNumber, Integer>();
 
   private volatile long cacheOverflowCount = 0;
 
@@ -782,6 +782,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       closed = true;
 
+      cutTillLimits.clear();
+
       for (OLogSegment logSegment : logSegments)
         logSegment.close(flush);
 
@@ -907,17 +909,17 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void cutTill(OLogSequenceNumber lsn) throws IOException {
+  public boolean cutTill(OLogSequenceNumber lsn) throws IOException {
     syncObject.lock();
     try {
       checkForClose();
 
       flush();
 
-      final OLogSequenceNumber maxLsn = preventCutTill;
+      final Map.Entry<OLogSequenceNumber, Integer> firsEntry = cutTillLimits.firstEntry();
 
-      if (maxLsn != null && lsn.compareTo(maxLsn) > 0)
-        lsn = maxLsn;
+      if (firsEntry != null && lsn.compareTo(firsEntry.getKey()) > 0)
+        lsn = firsEntry.getKey();
 
       int lastTruncateIndex = -1;
 
@@ -938,6 +940,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       recalculateLogSize();
       fixMasterRecords();
+
+      return lastTruncateIndex != -1;
     } finally {
       syncObject.unlock();
     }
@@ -950,11 +954,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       checkForClose();
       flush();
 
-      final OLogSequenceNumber maxSegmentLSN = preventCutTill;
+      final Map.Entry<OLogSequenceNumber, Integer> firsEntry = cutTillLimits.firstEntry();
 
-      if (maxSegmentLSN != null) {
-        if (segmentId > maxSegmentLSN.getSegment()) {
-          segmentId = maxSegmentLSN.getSegment();
+      if (firsEntry != null) {
+        if (segmentId > firsEntry.getKey().getSegment()) {
+          segmentId = firsEntry.getKey().getSegment();
         }
       }
 
@@ -984,8 +988,48 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void preventCutTill(OLogSequenceNumber lsn) {
-    preventCutTill = lsn;
+  public void addCutTillLimit(OLogSequenceNumber lsn) {
+    if (lsn == null)
+      throw new NullPointerException();
+
+    while (true) {
+      final Integer oldCounter = cutTillLimits.get(lsn);
+
+      final Integer newCounter;
+
+      if (oldCounter == null) {
+        if (cutTillLimits.putIfAbsent(lsn, 1) == null)
+          break;
+      } else {
+        newCounter = oldCounter + 1;
+
+        if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
+          break;
+        }
+      }
+    }
+  }
+
+  @Override
+  public void removeCutTillLimit(OLogSequenceNumber lsn) {
+    if (lsn == null)
+      throw new NullPointerException();
+
+    while (true) {
+      final Integer oldCounter = cutTillLimits.get(lsn);
+
+      if (oldCounter == null)
+        throw new IllegalArgumentException(String.format("Limit %s is going to be removed but it was not added", lsn));
+
+      final Integer newCounter = oldCounter - 1;
+      if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
+        if (newCounter == 0) {
+          cutTillLimits.remove(lsn, newCounter);
+        }
+
+        break;
+      }
+    }
   }
 
   private OLogSegment removeHeadSegmentFromList() {

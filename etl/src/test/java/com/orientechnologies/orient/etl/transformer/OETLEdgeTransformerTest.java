@@ -54,8 +54,9 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
 
   @After
   public void tearDown() throws Exception {
-    OFileUtils.deleteRecursively(new File("./target/databases/"));
+    closeResources();
 
+    OFileUtils.deleteRecursively(new File("./target/databases/"));
   }
 
   public void createClasses(ODatabaseDocument db) {
@@ -266,5 +267,4 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     assertEquals(7, db.countClass("FriendMF"));
     db.close();
   }
-
 }

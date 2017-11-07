@@ -94,7 +94,7 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
 
     storage.synch();
     ODiskWriteAheadLog writeAheadLog = (ODiskWriteAheadLog) storage.getWALInstance();
-    writeAheadLog.preventCutTill(writeAheadLog.getFlushedLsn());
+    writeAheadLog.addCutTillLimit(writeAheadLog.getFlushedLsn());
     writeCache = storage.getWriteCache();
     readCache = storage.getReadCache();
 

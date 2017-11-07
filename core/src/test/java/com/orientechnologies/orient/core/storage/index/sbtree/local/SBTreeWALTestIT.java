@@ -100,7 +100,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     ODiskWriteAheadLog writeAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
 
     actualStorage.synch();
-    writeAheadLog.preventCutTill(writeAheadLog.getFlushedLsn());
+    writeAheadLog.addCutTillLimit(writeAheadLog.getFlushedLsn());
 
     OReadCache actualReadCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getReadCache();
     actualWriteCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getWriteCache();
