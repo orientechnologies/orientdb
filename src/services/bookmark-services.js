@@ -123,7 +123,7 @@ bookmark.factory('GraphConfig', ["$resource", "localStorageService", "DocumentAp
     query = S(query).template({clazz: CLAZZ, username: username, type: TYPE}).s;
     $http.post(text, query).success(function (data) {
       deferred.resolve(data.result[0]);
-    });
+    }).error((err)=> deferred.reject(err));
     return deferred.promise;
   }
   resource.set = function (config) {

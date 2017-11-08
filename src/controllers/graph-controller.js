@@ -1,4 +1,4 @@
-import Icons from  '../services/icon-services';
+import Icons from '../services/icon-services';
 import BrowseConfig from '../services/browse-services';
 
 
@@ -487,6 +487,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
   var data = [];
   $scope.currentIndex = -1;
 
+  $scope.canSaveConfig = true;
   $scope.history = History.histories();
 
 
@@ -670,6 +671,11 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
 
       }
 
+    }).catch(() => {
+      $scope.canSaveConfig = false;
+      $scope.gConfig = {
+        config: config
+      };
     });
   } else {
 
@@ -679,6 +685,11 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
       GraphConfig.set(newCfg).then(function (data) {
         $scope.gConfig = data;
       })
+    }).catch(() => {
+      $scope.canSaveConfig = false;
+      $scope.gConfig = {
+        config: config
+      };
     });
   }
 
@@ -726,6 +737,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
   $scope.tmpGraphOptions = {
     data: GraphService.data($scope.database, $scope.currentUser),
     onLoad: function (graph) {
+
       $scope.graph = graph;
 
       $scope.graph.on('data/changed', function (graph) {
@@ -1319,6 +1331,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
       limit: $scope.config.limit
     }).then(function (data) {
 
+      console.log($scope.graph);
       $scope.graph.data(data.graph).redraw();
       $scope.history = History.push(queryBuffer);
       $scope.currentIndex = -1;
