@@ -375,7 +375,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           } finally {
             // IF IT IS THE CASE OF A DOS, FORCE A LITTLE WAIT
             Thread.sleep(100);
-
+            try {
+              channel.drain();
+            } catch (IOException e1) {
+              // IGNORE IT
+            }
             try {
               channel.close();
             } catch (Exception exx) {

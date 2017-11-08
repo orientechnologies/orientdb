@@ -361,4 +361,13 @@ public abstract class OChannelBinary extends OChannel {
   public DataInputStream getDataInput() {
     return in;
   }
+
+  public void drain() throws IOException {
+    if (socket != null && in != null) {
+      socket.setSoTimeout(1);
+      while (socket.getInputStream().read() != -1) {
+      }
+    }
+  }
+
 }
