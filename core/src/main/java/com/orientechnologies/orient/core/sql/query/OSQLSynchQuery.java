@@ -79,6 +79,10 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
     String currentThreadName = Thread.currentThread().getName();
     try {
       if (currentThreadName == null || !(currentThreadName.contains("<query>") || currentThreadName.contains("<command>"))) {
+        if (currentThreadName == null) {
+          currentThreadName = "";
+        }
+
         try {
           Thread.currentThread().setName(currentThreadName + " <query>" + this.getText() + "</query>");
         } catch (SecurityException x) {
@@ -110,13 +114,23 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
         nextPageRID = new ORecordId(lastRid.next());
       }
 
-      return result;
-    } finally {
+      //hack to prevent of removal of SQL text if Error is thrown
       try {
         Thread.currentThread().setName(currentThreadName);
       } catch (SecurityException x) {
         // ignore, current thread for some reason cannot change its name
       }
+
+      return result;
+    } catch (RuntimeException e) {
+      //hack to prevent of removal of SQL text if Error is thrown
+      try {
+        Thread.currentThread().setName(currentThreadName);
+      } catch (SecurityException x) {
+        // ignore, current thread for some reason cannot change its name
+      }
+
+      throw e;
     }
   }
 

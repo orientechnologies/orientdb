@@ -94,6 +94,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -164,6 +165,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final AtomicLong txRollback     = new AtomicLong(0);
 
   /**
+   * Error which happened inside of storage or during data processing related to this storage.
+   */
+  private final AtomicReference<Error> storageError = new AtomicReference<Error>();
+
+  /**
    * Set of pages which were detected as broken and need to be repaired.
    */
   private final Set<OPair<String, Long>> brokenPages = Collections
@@ -228,6 +234,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    */
   public void underDistributedStorage() {
     sbTreeCollectionManager.prohibitAccess();
+  }
+
+  /**
+   * That is internal method which is called once we encounter any error inside of JVM. In such case we need to restart JVM to avoid
+   * any data corruption. Till JVM is not restarted storage will be put in read-only state.
+   */
+  public void handleJVMError(Error e) {
+    storageError.compareAndSet(null, e);
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -658,7 +672,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public int addCluster(String clusterName, boolean forceListBased, final Object... parameters) {
     try {
       checkOpeness();
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       stateLock.acquireWriteLock();
       try {
@@ -690,7 +704,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         throw new OStorageException("Cluster with name `" + clusterName + "` does not exist");
 
       checkOpeness();
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       stateLock.acquireWriteLock();
       try {
@@ -717,7 +731,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public int addCluster(String clusterName, int requestedId, boolean forceListBased, Object... parameters) {
     try {
       checkOpeness();
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
       stateLock.acquireWriteLock();
       try {
         checkOpeness();
@@ -752,7 +766,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public boolean dropCluster(final int clusterId, final boolean iTruncate) {
     try {
       checkOpeness();
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       stateLock.acquireWriteLock();
       try {
@@ -1325,7 +1339,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final byte recordType, final int mode, final ORecordCallback<Long> callback) {
     try {
       checkOpeness();
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       final OPhysicalPosition ppos = new OPhysicalPosition(recordType);
       final OCluster cluster = getClusterById(rid.getClusterId());
@@ -1426,7 +1440,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int version, final byte recordType, final int mode, final ORecordCallback<Integer> callback) {
     try {
       checkOpeness();
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       final OCluster cluster = getClusterById(rid.getClusterId());
 
@@ -1467,7 +1481,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public void recyclePosition(final ORecordId record, final byte[] content, final int recordVersion, final byte recordType) {
     try {
       checkOpeness();
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       final ORecordId rid = (ORecordId) record.getIdentity();
 
@@ -1534,7 +1548,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       ORecordCallback<Boolean> callback) {
     try {
       checkOpeness();
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       final OCluster cluster = getClusterById(rid.getClusterId());
 
@@ -1562,7 +1576,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public OStorageOperationResult<Boolean> hideRecord(final ORecordId rid, final int mode, ORecordCallback<Boolean> callback) {
     try {
       checkOpeness();
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       final OCluster cluster = getClusterById(rid.getClusterId());
 
@@ -1715,7 +1729,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public List<ORecordOperation> commit(final OTransaction clientTx, Runnable callback) {
     try {
       checkOpeness();
-      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       txBegun.incrementAndGet();
 
@@ -1943,7 +1957,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpeness();
 
-        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         // this method introduced for binary compatibility only
         if (configuration.binaryFormatVersion > 15)
@@ -2001,7 +2015,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpeness();
 
-        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         final String originalName = engineName;
         engineName = engineName.toLowerCase(configuration.getLocaleInstance());
@@ -2099,7 +2113,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpeness();
 
-        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         checkIndexId(indexId);
 
@@ -2176,7 +2190,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpeness();
 
-        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         return doRemoveKeyFromIndex(indexId, key);
       } finally {
@@ -2217,7 +2231,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpeness();
 
-        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         doClearIndex(indexId);
       } finally {
@@ -2302,7 +2316,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpeness();
-        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         doUpdateIndexEntry(indexId, key, valueCreator);
       } finally {
@@ -2427,7 +2441,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpeness();
 
-        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         doPutIndexValue(indexId, key, value);
       } finally {
@@ -2481,7 +2495,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpeness();
 
-        checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         return doValidatedPutIndexValue(indexId, key, value, validator);
       } finally {
@@ -3311,19 +3325,36 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           String currentThreadName = Thread.currentThread().getName();
           try {
             if (currentThreadName == null || !(currentThreadName.contains("<query>") || currentThreadName.contains("<command>"))) {
+              if (currentThreadName == null) {
+                currentThreadName = "";
+              }
+
               try {
                 Thread.currentThread().setName(currentThreadName + " <command>" + iCommand + "</command>");
               } catch (SecurityException x) {
                 // ignore, current thread for some reason cannot change its name
               }
             }
-            return executeCommand(iCommand, executor);
-          } finally {
+
+            final Object result = executeCommand(iCommand, executor);
+
+            //hack to prevent of removal of SQL text if Error is thrown
             try {
               Thread.currentThread().setName(currentThreadName);
             } catch (SecurityException x) {
               // ignore, current thread for some reason cannot change its name
             }
+
+            return result;
+          } catch (RuntimeException e) {
+
+            //hack to prevent of removal of SQL text if Error is thrown
+            try {
+              Thread.currentThread().setName(currentThreadName);
+            } catch (SecurityException x) {
+              // ignore, current thread for some reason cannot change its name
+            }
+            throw e;
           }
 
         } catch (ORetryQueryException ignore) {
@@ -5006,7 +5037,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * <p>
    * This method also performs "full checkpoint" if such one is requested by WAL.
    */
-  private void checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptionsAndBrokenPages() {
+  private void checkLowDiskSpaceRequestsAndReadOnlyConditions() {
     if (transaction.get() != null)
       return;
 
@@ -5101,6 +5132,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           + "filling a bug please check your hardware. To restore database and make it fully operational you may export and import database "
           + "to and from JSON.");
 
+    }
+
+    if (storageError.get() != null) {
+      throw new OJVMErrorException(
+          "JVM error '" + storageError.get().getClass().getSimpleName() + " : " + storageError.get().getMessage()
+              + "' occurred during data processing, storage is switched to 'read-only' mode. "
+              + "To prevent this exception please restart the JVM and check data consistency by calling of 'check database' "
+              + "command from database console.");
     }
   }
 
@@ -5230,6 +5269,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (!(error instanceof OHighLevelException))
       OLogManager.instance().error(this, "Exception `%08X` in storage `%s`: %s", error, System.identityHashCode(error), getURL(),
           OConstants.getVersion());
+
+    handleJVMError(error);
+
     return error;
   }
 

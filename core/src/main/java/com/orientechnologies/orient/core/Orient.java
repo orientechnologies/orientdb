@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.io.File;
 import java.io.IOException;
@@ -284,6 +285,25 @@ public class Orient extends OListenerManger<OOrientListener> {
       shutdownHandlers.add(shutdownHandler);
     } finally {
       engineLock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * This method is called once JVM Error is observed by OrientDB to be thrown. Typically it means that all storages will be put in
+   * read-only mode and user will be asked to restart JVM.
+   *
+   * @param e Error happened during JVM execution
+   */
+  public void handleJVMError(Error e) {
+    engineLock.readLock().lock();
+    try {
+      for (OStorage storage : storages.values()) {
+        if (storage instanceof OAbstractPaginatedStorage) {
+          ((OAbstractPaginatedStorage) storage).handleJVMError(e);
+        }
+      }
+    } finally {
+      engineLock.readLock().unlock();
     }
   }
 
