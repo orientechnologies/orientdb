@@ -1319,6 +1319,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         conn.acquire();
         try {
           conn.getDatabase().replaceStorage(storage);
+          conn.getDatabase().getMetadata().reload();
         } finally {
           conn.release();
         }
