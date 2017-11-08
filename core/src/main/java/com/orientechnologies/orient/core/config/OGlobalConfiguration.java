@@ -380,7 +380,7 @@ public enum OGlobalConfiguration {
       "Indicates the index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
       "FULL"),
 
-  INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
+  INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 10000),
 
   // SBTREE
   SBTREE_MAX_DEPTH("sbtree.maxDepth",
