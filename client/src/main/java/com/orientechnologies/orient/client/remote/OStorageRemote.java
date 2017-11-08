@@ -249,7 +249,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         return operation.execute(network, session);
       } catch (ODistributedRedirectException e) {
-        connectionManager.release(network);
+        connectionManager.remove(network);
         OLogManager.instance()
             .debug(this, "Redirecting the request from server '%s' to the server '%s' because %s", e.getFromServer(), e.toString(),
                 e.getMessage());
@@ -304,6 +304,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   }
 
+  @Override
+  public boolean isAssigningClusterIds() {
+    return false;
+  }
+
   private int handleIOException(int retry, final OChannelBinaryAsynchClient network, final Exception e) {
     OLogManager.instance()
         .info(this, "Caught Network I/O errors on %s, trying an automatic reconnection... (error: %s)", network.getServerURL(),
@@ -321,11 +326,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     }
     return retry;
-  }
-
-  @Override
-  public boolean isAssigningClusterIds() {
-    return false;
   }
 
   public int getSessionId() {
@@ -2046,6 +2046,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
           connectionManager.release(network);
           return;
+        } catch (ODistributedRedirectException e) {
+          connectionManager.remove(network);
+          // RECONNECT TO THE SERVER SUGGESTED IN THE EXCEPTION
+          currentURL = e.getToServerAddress();
+        } catch (OModificationOperationProhibitedException mope) {
+          connectionManager.release(network);
+          handleDBFreeze();
+          currentURL = useNewServerURL(currentURL);
+        } catch (OOfflineNodeException e) {
+          connectionManager.release(network);
+          currentURL = useNewServerURL(currentURL);
         } catch (OIOException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
@@ -2059,18 +2070,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // PROPAGATE ANY OTHER ORIENTDB EXCEPTION
           throw e;
 
+        } catch (IOException e) {
+          if (network != null) {
+            connectionManager.release(network);
+          }
         } catch (Exception e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
-            try {
-              connectionManager.remove(network);
-            } catch (Exception ex) {
-              // IGNORE ANY EXCEPTION
-              OLogManager.instance().debug(this, "Cannot remove connection or database url=" + currentURL, e);
-            }
+            connectionManager.remove(network);
           }
-
-          OLogManager.instance().error(this, "Cannot open database url=" + currentURL, e);
+          throw OException.wrapException(new OStorageException(e.getMessage()), e);
         }
       } while (connectionManager.getReusableConnections(currentURL) > 0);
 
