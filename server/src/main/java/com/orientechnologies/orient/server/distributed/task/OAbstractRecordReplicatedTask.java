@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -29,6 +30,8 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSaveThreadLocal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -54,27 +57,47 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   protected transient ORecord previousRecord;
 
   public OAbstractRecordReplicatedTask init(final ORecord record) {
-    init((ORecordId) record.getIdentity(), record.getVersion());
+    this.rid = (ORecordId) record.getIdentity();
+    this.version = record.getVersion();
+    definePartitionKey(record);
     return this;
   }
 
-  public OAbstractRecordReplicatedTask init(final ORecordId iRid, final int iVersion) {
-    this.rid = iRid;
-    this.version = iVersion;
-
+  private void definePartitionKey(ORecord record) {
+    if (!(record instanceof ODocument) || record == null)
+      return;
+    ODocument doc = (ODocument) record;
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null) {
       final OClass clazz = db.getMetadata().getSchema().getClassByClusterId(rid.getClusterId());
       if (clazz != null) {
         final Set<OIndex<?>> indexes = clazz.getIndexes();
         if (indexes != null && !indexes.isEmpty()) {
-          for (OIndex idx : indexes)
-            if (idx.isUnique())
+          for (OIndex idx : indexes) {
+            boolean changed = false;
+            if (doc != null) {
+              for (String changeFiled : doc.getDirtyFields()) {
+                if (idx.getDefinition().getFields().contains(changeFiled)) {
+                  changed = true;
+                  break;
+                }
+              }
+            } else
+              changed = true; 
+            if (changed && idx.isUnique())
               // UNIQUE INDEX: RETURN THE HASH OF THE NAME TO USE THE SAME PARTITION ID AVOIDING CONCURRENCY ON INDEX UPDATES
               partitionKey = idx.getName().hashCode();
+          }
         }
       }
     }
+
+  }
+
+  public OAbstractRecordReplicatedTask init(final ORecordId iRid, final int iVersion) {
+    this.rid = iRid;
+    this.version = iVersion;
+    definePartitionKey(ORecordSaveThreadLocal.getLast());
     return this;
   }
 
