@@ -7,7 +7,7 @@ import com.orientechnologies.common.exception.OHighLevelException;
  * {@link Error} during data processing.
  */
 public class OJVMErrorException extends OStorageException implements OHighLevelException {
-  public OJVMErrorException(OStorageException exception) {
+  public OJVMErrorException(OJVMErrorException exception) {
     super(exception);
   }
 
