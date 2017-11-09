@@ -34,8 +34,8 @@ public class OError37Response implements OBinaryResponse {
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     int code = network.readInt();
-    this.code = OErrorCode.getErrorCode(code);
     this.errorIdentifier = network.readInt();
+    this.code = OErrorCode.getErrorCode(code);
     messages = new HashMap<>();
     while (network.readByte() == 1) {
       String key = network.readString();
