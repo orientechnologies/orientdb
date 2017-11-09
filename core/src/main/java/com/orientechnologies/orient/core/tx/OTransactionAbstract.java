@@ -225,7 +225,7 @@ public abstract class OTransactionAbstract implements OTransaction {
   }
 
   public String getClusterName(final ORecord record) {
-    if (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().isRemote())
+    if (ODatabaseRecordThreadLocal.instance().get().getStorage().isRemote())
       // DON'T ASSIGN CLUSTER WITH REMOTE: SERVER KNOWS THE RIGHT CLUSTER BASED ON LOCALITY
       return null;
 

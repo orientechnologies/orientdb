@@ -55,15 +55,19 @@ public class TTYConsoleReader implements OConsoleReader {
   private static       int    cachedConsoleWidth = -1; // -1 for no cached value, -2 to indicate the error
 
   static {
-    final Signal signal = new Signal("WINCH");
-    Signal.handle(signal, new SignalHandler() {
-      @Override
-      public void handle(Signal signal) {
-        synchronized (signalLock) {
-          cachedConsoleWidth = -1;
+    try {
+      final Signal signal = new Signal("WINCH");
+      Signal.handle(signal, new SignalHandler() {
+        @Override
+        public void handle(Signal signal) {
+          synchronized (signalLock) {
+            cachedConsoleWidth = -1;
+          }
         }
-      }
-    });
+      });
+    }catch (Exception e){
+      OLogManager.instance().warn(null, "Cannot manage SIGWINCH on this system");
+    }
   }
 
   protected int cursorPosition    = 0;

@@ -273,8 +273,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       sendErrorOrDropConnection(connection, clientTxId, e);
     } catch (RuntimeException e) {
       sendErrorOrDropConnection(connection, clientTxId, e);
-    } catch (Throwable t) {
-      sendErrorOrDropConnection(connection, clientTxId, t);
+    } catch (Exception e) {
+      sendErrorOrDropConnection(connection, clientTxId, e);
     } finally {
       Orient.instance().getProfiler()
           .stopChrono("server.network.requests", "Total received requests", timer, "server.network.requests");
@@ -343,10 +343,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         afterOperationRequest(connection);
       }
 
-    } catch (Throwable t) {
+    } catch (Exception e) {
       // IN CASE OF DISTRIBUTED ANY EXCEPTION AT THIS POINT CAUSE THIS CONNECTION TO CLOSE
       OLogManager.instance()
-          .warn(this, "I/O Error on distributed channel (clientId=%d reqType=%d error=%s)", clientTxId, requestType, t);
+          .warn(this, "I/O Error on distributed channel (clientId=%d reqType=%d error=%s)", clientTxId, requestType, e);
       sendShutdown();
     } finally {
       Orient.instance().getProfiler()
@@ -375,7 +375,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           } finally {
             // IF IT IS THE CASE OF A DOS, FORCE A LITTLE WAIT
             Thread.sleep(100);
-
+            try {
+              channel.drain();
+            } catch (IOException e1) {
+              // IGNORE IT
+            }
             try {
               channel.close();
             } catch (Exception exx) {
@@ -413,8 +417,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       sendErrorOrDropConnection(connection, clientTxId, e);
     } catch (RuntimeException e) {
       sendErrorOrDropConnection(connection, clientTxId, e);
-    } catch (Throwable t) {
-      sendErrorOrDropConnection(connection, clientTxId, t);
+    } catch (Exception e) {
+      sendErrorOrDropConnection(connection, clientTxId, e);
     } finally {
       Orient.instance().getProfiler()
           .stopChrono("server.network.requests", "Total received requests", timer, "server.network.requests");
@@ -454,12 +458,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     } catch (RuntimeException e) {
       if (connection != null)
         server.getClientConnectionManager().disconnect(connection);
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       throw e;
     } catch (IOException e) {
       if (connection != null)
         server.getClientConnectionManager().disconnect(connection);
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       throw e;
     }
 
@@ -508,12 +512,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     } catch (RuntimeException e) {
       if (connection != null)
         server.getClientConnectionManager().disconnect(connection);
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       throw e;
     } catch (IOException e) {
       if (connection != null)
         server.getClientConnectionManager().disconnect(connection);
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      ODatabaseRecordThreadLocal.instance().remove();
       throw e;
     }
     return connection;
@@ -1129,10 +1133,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {
         if (logClientFullStackTrace)
-          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t,
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t, true,
               channel.socket.getRemoteSocketAddress(), t.toString());
         else
-          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null,
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null, true,
               channel.socket.getRemoteSocketAddress(), t.toString());
       }
     } catch (Exception e) {
@@ -2884,7 +2888,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     final byte[] stream;
     String dbSerializerName = null;
-    if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
+    if (ODatabaseRecordThreadLocal.instance().getIfDefined() != null)
       dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
     String name = getRecordSerializerName(connection);
     if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
@@ -2921,7 +2925,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   protected int trimCsvSerializedContent(OClientConnection connection, final byte[] stream) {
     int realLength = stream.length;
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null && db instanceof ODatabaseDocument) {
       if (ORecordSerializerSchemaAware2CSV.NAME.equals(getRecordSerializerName(connection))) {
         // TRIM TAILING SPACES (DUE TO OVERSIZE)

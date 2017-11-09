@@ -113,7 +113,7 @@ public class SBTreeWALTest extends SBTreeTest {
 
     actualStorage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
     writeAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
-    writeAheadLog.preventCutTill(writeAheadLog.getFlushedLsn());
+    writeAheadLog.addCutTillLimit(writeAheadLog.getFlushedLsn());
 
     actualReadCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getReadCache();
 

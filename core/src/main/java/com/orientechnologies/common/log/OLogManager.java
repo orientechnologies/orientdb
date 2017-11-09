@@ -92,19 +92,20 @@ public class OLogManager {
     setLevel(iLevel, FileHandler.class);
   }
 
-  public void log(final Object iRequester, final Level iLevel, String iMessage, final Throwable iException,
+  public void log(final Object iRequester, final Level iLevel, String iMessage, final Throwable iException, boolean extractDBData,
       final Object... iAdditionalArgs) {
     if (iMessage != null) {
-      try {
-        final ODatabaseDocumentInternal db =
-            ODatabaseRecordThreadLocal.INSTANCE != null ? ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() : null;
-        if (db != null && db.getStorage() != null && db.getStorage() instanceof OAbstractPaginatedStorage) {
-          final String dbName = db.getStorage().getName();
-          if (dbName != null)
-            iMessage = "$ANSI{green {db=" + dbName + "}} " + iMessage;
+      if (extractDBData)
+        try {
+          final ODatabaseDocumentInternal db =
+              ODatabaseRecordThreadLocal.instance() != null ? ODatabaseRecordThreadLocal.instance().getIfDefined() : null;
+          if (db != null && db.getStorage() != null && db.getStorage() instanceof OAbstractPaginatedStorage) {
+            final String dbName = db.getStorage().getName();
+            if (dbName != null)
+              iMessage = "$ANSI{green {db=" + dbName + "}} " + iMessage;
+          }
+        } catch (Exception ignore) {
         }
-      } catch (Throwable ignore) {
-      }
 
       final String requesterName;
       if (iRequester instanceof Class<?>) {
@@ -132,7 +133,7 @@ public class OLogManager {
         try {
           System.err.println(String.format(iMessage, iAdditionalArgs));
         } catch (Exception e) {
-          OLogManager.instance().warn(this, "Error on formatting message", e);
+          System.err.print(String.format("Error on formatting message '%s'. Exception: %s", iMessage, e.toString()));
         }
       } else if (log.isLoggable(iLevel)) {
         // USE THE LOG
@@ -151,41 +152,47 @@ public class OLogManager {
 
   public void debug(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
     if (isDebugEnabled())
-      log(iRequester, Level.FINE, iMessage, null, iAdditionalArgs);
+      log(iRequester, Level.FINE, iMessage, null, true, iAdditionalArgs);
   }
 
   public void debug(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
     if (isDebugEnabled())
-      log(iRequester, Level.FINE, iMessage, iException, iAdditionalArgs);
+      log(iRequester, Level.FINE, iMessage, iException, true, iAdditionalArgs);
   }
 
   public void info(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
     if (isInfoEnabled())
-      log(iRequester, Level.INFO, iMessage, null, iAdditionalArgs);
+      log(iRequester, Level.INFO, iMessage, null, true, iAdditionalArgs);
   }
 
   public void info(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
     if (isInfoEnabled())
-      log(iRequester, Level.INFO, iMessage, iException, iAdditionalArgs);
+      log(iRequester, Level.INFO, iMessage, iException, true, iAdditionalArgs);
   }
 
   public void warn(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
     if (isWarnEnabled())
-      log(iRequester, Level.WARNING, iMessage, null, iAdditionalArgs);
+      log(iRequester, Level.WARNING, iMessage, null, true, iAdditionalArgs);
   }
 
   public void warn(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
     if (isWarnEnabled())
-      log(iRequester, Level.WARNING, iMessage, iException, iAdditionalArgs);
+      log(iRequester, Level.WARNING, iMessage, iException, true, iAdditionalArgs);
   }
 
   public void config(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    log(iRequester, Level.CONFIG, iMessage, null, iAdditionalArgs);
+    log(iRequester, Level.CONFIG, iMessage, null, true, iAdditionalArgs);
   }
 
   public void error(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
     if (isErrorEnabled())
-      log(iRequester, Level.SEVERE, iMessage, iException, iAdditionalArgs);
+      log(iRequester, Level.SEVERE, iMessage, iException, true, iAdditionalArgs);
+  }
+
+  public void errorNoDb(final Object iRequester, final String iMessage, final Throwable iException,
+      final Object... iAdditionalArgs) {
+    if (isErrorEnabled())
+      log(iRequester, Level.SEVERE, iMessage, iException, false, iAdditionalArgs);
   }
 
   public boolean isWarn() {
@@ -289,7 +296,7 @@ public class OLogManager {
     return new OCommandOutputListener() {
       @Override
       public void onMessage(String iText) {
-        log(iThis, iLevel, iText, null);
+        log(iThis, iLevel, iText, null, true);
       }
     };
   }
@@ -310,8 +317,8 @@ public class OLogManager {
 
   /**
    * Inhibits the logs reset request which is typically done on shutdown. This allows to use JDK logging from shutdown hooks.
-   * -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager must be passed to the JVM,
-   * to activate this log manager.
+   * -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager must be passed to the JVM, to
+   * activate this log manager.
    */
   public static class ShutdownLogManager extends LogManager {
 

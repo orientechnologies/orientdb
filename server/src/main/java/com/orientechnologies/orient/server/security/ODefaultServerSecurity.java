@@ -127,8 +127,8 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
           cls = Class.forName(clsName);
         }
       }
-    } catch (Throwable th) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.getClass() Throwable: ", th);
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "ODefaultServerSecurity.getClass() Throwable: ", e);
     }
 
     return cls;
@@ -569,7 +569,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         } catch (Exception ex) {
           OLogManager.instance().error(this, "securityRecordChange() Exception: ", ex);
         }
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
       }
     });
 
@@ -638,7 +638,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
               OLogManager.instance()
                   .error(this, "ODefaultServerSecurity.loadAuthenticators() authentication object is missing name", null);
             }
-          } catch (Throwable ex) {
+          } catch (Exception ex) {
             OLogManager.instance().error(this, "ODefaultServerSecurity.loadAuthenticators() Exception: ", ex);
           }
         }
@@ -1034,8 +1034,8 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         OLogManager.instance()
             .error(this, "ODefaultServerSecurity.registerRESTCommands() unable to retrieve Network Protocol listener.", null);
       }
-    } catch (Throwable th) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.registerRESTCommands()", th);
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "ODefaultServerSecurity.registerRESTCommands()", e);
     }
   }
 
@@ -1049,8 +1049,8 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         OLogManager.instance()
             .error(this, "ODefaultServerSecurity.unregisterRESTCommands() unable to retrieve Network Protocol listener.", null);
       }
-    } catch (Throwable th) {
-      OLogManager.instance().error(this, "ODefaultServerSecurity.unregisterRESTCommands()", th);
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "ODefaultServerSecurity.unregisterRESTCommands()", e);
     }
   }
 }

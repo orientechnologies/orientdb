@@ -53,7 +53,7 @@ public class OSQLMethodAsDateTime extends OAbstractSQLMethod {
         return new Date(((Number) iThis).longValue());
       } else {
         try {
-          return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
+          return ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getDateTimeFormatInstance()
               .parse(iThis.toString());
         } catch (ParseException e) {
           OLogManager.instance().error(this, "Error during execution a method '%s'", e, NAME);

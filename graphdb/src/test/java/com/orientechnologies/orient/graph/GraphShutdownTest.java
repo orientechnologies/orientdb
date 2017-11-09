@@ -5,6 +5,11 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+
 public class GraphShutdownTest {
 
   @Test(expected = ODatabaseException.class)
@@ -16,4 +21,17 @@ public class GraphShutdownTest {
     graph2.commit(); // this should fail
     factory.drop();
   }
+
+  @Test
+  public void rollbackOnShutdownNotCommit() {
+    OrientGraph orientGraph = new OrientGraph("memory:test");
+    Map userData = new HashMap();
+
+    orientGraph.addVertex("User", userData);
+
+    orientGraph.shutdown(true, false);
+    orientGraph = new OrientGraph("memory:test");
+    assertEquals(orientGraph.countVertices(), 0);
+  }
+
 }

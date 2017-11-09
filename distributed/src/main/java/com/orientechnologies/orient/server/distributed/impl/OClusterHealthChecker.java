@@ -62,12 +62,12 @@ public class OClusterHealthChecker extends TimerTask {
 
       } catch (HazelcastInstanceNotActiveException e) {
         // IGNORE IT
-      } catch (Throwable t) {
+      } catch (Exception e) {
         if (manager.getServerInstance().isActive())
-          OLogManager.instance().error(this, "Error on checking cluster health", t);
+          OLogManager.instance().error(this, "Error on checking cluster health", e);
         else
           // SHUTDOWN IN PROGRESS
-          OLogManager.instance().debug(this, "Error on checking cluster health", t);
+          OLogManager.instance().debug(this, "Error on checking cluster health", e);
       } finally {
         OLogManager.instance().debug(this, "Cluster health checking completed");
       }
@@ -169,6 +169,9 @@ public class OClusterHealthChecker extends TimerTask {
   private void checkServerStatus() {
     if (manager.getNodeStatus() != ODistributedServerManager.NODE_STATUS.ONLINE)
       // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
+      return;
+
+    if (!manager.getServerInstance().isActive())
       return;
 
     for (String dbName : manager.getMessageService().getDatabases()) {

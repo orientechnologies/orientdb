@@ -208,7 +208,7 @@ public class OFunction extends ODocumentWrapper {
     }
 
     if (Orient.instance().getProfiler().isRecording())
-      Orient.instance().getProfiler().stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".function.execute",
+      Orient.instance().getProfiler().stopChrono("db." + ODatabaseRecordThreadLocal.instance().get().getName() + ".function.execute",
           "Time to execute a function", start, "db.*.function.execute");
 
     return result;

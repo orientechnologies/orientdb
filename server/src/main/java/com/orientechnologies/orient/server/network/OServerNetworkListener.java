@@ -218,7 +218,7 @@ public class OServerNetworkListener extends Thread {
           // CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
           protocol.config(this, server, socket, configuration);
 
-        } catch (Throwable e) {
+        } catch (Exception e) {
           if (active)
             OLogManager.instance().error(this, "Error on client connection", e);
         } finally {

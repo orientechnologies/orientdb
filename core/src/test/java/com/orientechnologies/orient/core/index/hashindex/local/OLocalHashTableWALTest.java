@@ -89,7 +89,7 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
     OLocalPaginatedStorage actualStorage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
     ODiskWriteAheadLog diskWriteAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
 
-    diskWriteAheadLog.preventCutTill(diskWriteAheadLog.getFlushedLsn());
+    diskWriteAheadLog.addCutTillLimit(diskWriteAheadLog.getFlushedLsn());
   }
 
   @AfterMethod

@@ -112,7 +112,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
       boolean newGraph = false;
       if (graph == null) {
         newGraph = true;
-        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
         if (db != null) {
           graph = new OrientGraphNoTx((ODatabaseDocumentTx) db);
         }

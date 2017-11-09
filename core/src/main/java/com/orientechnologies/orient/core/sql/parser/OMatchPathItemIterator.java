@@ -81,7 +81,7 @@ public class OMatchPathItemIterator implements Iterator<OIdentifiable> {
     final OWhereClause filter = this.item.filter == null ? null : this.item.filter.getFilter();
     final String className = this.item.filter == null ? null : this.item.filter.getClassName(ctx);
     final OClass clazz =
-        className == null ? null : ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(className);
+        className == null ? null : ODatabaseRecordThreadLocal.instance().get().getMetadata().getSchema().getClass(className);
     final OWhereClause whileCondition = this.item.filter == null ? null : this.item.filter.getWhileCondition();
     final Integer maxDepth = maxDepth(this.item.filter);
     final OClass oClass =

@@ -69,7 +69,7 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
         format = new SimpleDateFormat((String) iParams[1]);
         format.setTimeZone(ODateHelper.getDatabaseTimeZone());
       } else
-        format = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance();
+        format = ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getDateTimeFormatInstance();
 
       if (iParams.length == 3)
         format.setTimeZone(TimeZone.getTimeZone(iParams[2].toString()));

@@ -56,7 +56,7 @@ import java.util.Set;
 public class OFindReferenceHelper {
 
   public static List<ODocument> findReferences(final Set<ORID> iRecordIds, final String classList) {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
 
     final Map<ORID, Set<ORID>> map = new HashMap<ORID, Set<ORID>>();
     for (ORID rid : iRecordIds) {

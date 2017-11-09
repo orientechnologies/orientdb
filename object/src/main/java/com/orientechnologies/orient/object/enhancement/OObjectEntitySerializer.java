@@ -111,7 +111,7 @@ public class OObjectEntitySerializer {
   }
 
   protected static OObjectEntitySerializedSchema getCurrentSerializedSchema() {
-    OStorage storage = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage();
+    OStorage storage = ODatabaseRecordThreadLocal.instance().get().getStorage();
     OObjectEntitySerializedSchema serializedShchema = storage
         .getResource(SIMPLE_NAME, new Callable<OObjectEntitySerializedSchema>() {
           @Override
@@ -405,7 +405,7 @@ public class OObjectEntitySerializer {
    */
   @SuppressWarnings("unchecked")
   public static synchronized void registerClass(final Class<?> iClass, boolean forceReload) {
-    if (!ODatabaseRecordThreadLocal.INSTANCE.isDefined() || ODatabaseRecordThreadLocal.INSTANCE.get().isClosed())
+    if (!ODatabaseRecordThreadLocal.instance().isDefined() || ODatabaseRecordThreadLocal.instance().get().isClosed())
       return;
     final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (serializedSchema == null)
@@ -419,7 +419,7 @@ public class OObjectEntitySerializer {
     boolean reloadSchema = false;
     boolean automaticSchemaGeneration = false;
 
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     final OSchema oSchema = db.getMetadata().getSchema();
     if (forceReload) {
       oSchema.reload();

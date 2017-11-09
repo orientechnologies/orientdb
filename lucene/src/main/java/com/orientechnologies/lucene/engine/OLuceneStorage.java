@@ -122,7 +122,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
       return;
     }
-    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
 
     final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
     Directory dir = null;
@@ -284,7 +284,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     OLogManager.instance().info(this, "CLOSING  engine");
     try {
       closeIndex();
-    } catch (Throwable e) {
+    } catch (Exception e) {
       OLogManager.instance().error(this, "Error on closing Lucene index", e);
     }
 

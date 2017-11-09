@@ -114,7 +114,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       try {
         System.out.print("Checking that records on server3 are not available in the cluster...");
         graphNoTx = localFactory.getNoTx();
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx.getRawGraph());
+        ODatabaseRecordThreadLocal.instance().set(graphNoTx.getRawGraph());
         final String uniqueId = "client_asia-s2-t10-v0";
         Iterable<Vertex> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
         List<OrientVertex> result = new LinkedList<OrientVertex>();
@@ -124,7 +124,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
         assertEquals(0, result.size());
         System.out.println("Done");
         graphNoTx.getRawGraph().close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
       } catch (Exception e) {
         e.printStackTrace();
         fail();
@@ -143,7 +143,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
         System.out.print("Checking server3 status by querying a record inserted on it...");
         localFactory = new OrientGraphFactory("plocal:target/server2/databases/" + getDatabaseName());
         graphNoTx = localFactory.getNoTx();
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx.getRawGraph());
+        ODatabaseRecordThreadLocal.instance().set(graphNoTx.getRawGraph());
         final String uniqueId = "client_asia-s2-t10-v0";
         Iterable<Vertex> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
         List<OrientVertex> result = new LinkedList<OrientVertex>();
@@ -152,7 +152,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
         }
         assertEquals(1, result.size());
         graphNoTx.getRawGraph().close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
       } catch (Exception e) {
         e.printStackTrace();
         fail(e.toString());
@@ -167,9 +167,9 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       fail(e.toString());
     } finally {
       if (!graphNoTx.getRawGraph().isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx.getRawGraph());
+        ODatabaseRecordThreadLocal.instance().set(graphNoTx.getRawGraph());
         graphNoTx.getRawGraph().close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
       }
 
     }

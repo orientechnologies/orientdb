@@ -104,7 +104,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       nextIndex = nextIndex();
 
       final OIdentifiable identifiable = (OIdentifiable) nextValue;
-      if (convertToRecord && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
+      if (convertToRecord && ODatabaseRecordThreadLocal.instance().isDefined())
         return identifiable.getRecord();
 
       return identifiable;
@@ -405,7 +405,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   public int serialize(byte[] stream, int offset, UUID ownerUuid) {
     OIntegerSerializer.INSTANCE.serializeLiteral(size, stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     final int totEntries = entries.length;
     for (int i = 0; i < totEntries; ++i) {
       final Object entry = entries[i];

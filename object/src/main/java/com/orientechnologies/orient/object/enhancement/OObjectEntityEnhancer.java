@@ -138,7 +138,7 @@ public class OObjectEntityEnhancer {
         }
         if (constructor != null) {
           newEntity = (T) constructor.newInstance(iArgs);
-          initDocument(iClass, newEntity, doc, (ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
+          initDocument(iClass, newEntity, doc, (ODatabaseObject) ODatabaseRecordThreadLocal.instance().get().getDatabaseOwner());
         } else {
           if (iEnclosingInstance != null)
             newEntity = createInstanceNoParameters(c, iEnclosingInstance);

@@ -21,9 +21,11 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -64,16 +66,24 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
 
     final ODocument value = (ODocument) rec;
 
-    final OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(value);
+    final OClass klass;
+    if (ODocumentInternal.getImmutableSchemaClass(value) != null) {
+      klass = ODocumentInternal.getImmutableSchemaClass(value);
+    } else if (ODatabaseRecordThreadLocal.instance().getIfDefined() != null) {
+      ODatabaseRecordThreadLocal.instance().getIfDefined().getMetadata().reload();
+      klass = value.getSchemaClass();
+    } else {
+      throw new IllegalStateException("Invalid content found between connections: " + value);
+    }
 
     return OGraphCommandExecutorSQLFactory.runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<Vertex>() {
       @Override
       public Vertex call(OrientBaseGraph graph) {
         final OrientVertex v;
-        if (immutableClass.isVertexType()) {
+        if (klass.isVertexType()) {
           // DIRECT VERTEX
           v = graph.getVertex(value);
-        } else if (immutableClass.isEdgeType()) {
+        } else if (klass.isEdgeType()) {
           // EDGE
           if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
             v = graph.getVertex(OrientEdge.getConnection(value, connection.getKey().opposite()));
@@ -139,11 +149,15 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
     final ODocument value = (ODocument) rec;
 
     final OIdentifiable v;
-    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(value);
-    if (immutableClass.isVertexType()) {
+    OClass klass = ODocumentInternal.getImmutableSchemaClass(value);
+    if (klass == null && ODatabaseRecordThreadLocal.instance().getIfDefined() != null) {
+      ODatabaseRecordThreadLocal.instance().getIfDefined().getMetadata().reload();
+      klass = value.getSchemaClass();
+    }
+    if (klass.isVertexType()) {
       // DIRECT VERTEX
       return true;
-    } else if (immutableClass.isEdgeType()) {
+    } else if (klass.isEdgeType()) {
       return false;
     }
 

@@ -199,7 +199,7 @@ public class OIndexDefinitionFactory {
   }
 
   private static Locale getServerLocale() {
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     OStorage storage = db.getStorage();
     OStorageConfiguration configuration = storage.getConfiguration();
     return configuration.getLocaleInstance();

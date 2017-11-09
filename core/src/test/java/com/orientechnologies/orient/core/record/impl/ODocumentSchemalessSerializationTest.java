@@ -41,7 +41,7 @@ public class ODocumentSchemalessSerializationTest {
   public void before() {
     defaultSerializer = ODatabaseDocumentTx.getDefaultSerializer();
     ODatabaseDocumentTx.setDefaultSerializer(serializer);
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   @AfterMethod

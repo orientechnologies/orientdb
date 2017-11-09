@@ -157,7 +157,7 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     String databaseName = db.getRawGraph().getName();
     System.out.println("Creating database schema for " + databaseName + "...");
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(db.getRawGraph());
+    ODatabaseRecordThreadLocal.instance().set(db.getRawGraph());
 
     // building basic schema
     OClass personClass = db.getRawGraph().getMetadata().getSchema().createClass("Person");
@@ -170,7 +170,7 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     OClass person = schema.getClass("Person");
     idx = person.createIndex("Person.name", OClass.INDEX_TYPE.UNIQUE, "name");
 
-    //    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    //    ODatabaseRecordThreadLocal.instance().set(null);
 
     // populating db
     try {
@@ -275,9 +275,9 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     } finally {
 
       for (ODatabaseDocumentTx db : dbs) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+        ODatabaseRecordThreadLocal.instance().set(db);
         db.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
       }
     }
 
@@ -285,14 +285,14 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
 
   protected ODocument loadRecord(ODatabaseDocumentTx database, int i) {
     final String uniqueId = database.getName() + "-" + i;
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    ODatabaseRecordThreadLocal.instance().set(database);
     List<ODocument> result = database
         .query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId + "'"));
     if (result.size() == 0)
       assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
     else if (result.size() > 1)
       assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    ODatabaseRecordThreadLocal.instance().set(null);
     return result.get(0);
   }
 

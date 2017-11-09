@@ -35,12 +35,10 @@ final class OLogSegmentV1 implements OLogSegment {
   private final ODiskWriteAheadLog writeAheadLog;
 
   /**
-   * File which contains WAL segment data.
-   * It is <code>null</code> by default and initialized on request.
+   * File which contains WAL segment data. It is <code>null</code> by default and initialized on request.
    * <p>
-   * When file is requested and if this file is not file of active WAL segment
-   * then timer which will close file if it is not accessed any more in {@link #fileTTL} seconds will
-   * be started.
+   * When file is requested and if this file is not file of active WAL segment then timer which will close file if it is not
+   * accessed any more in {@link #fileTTL} seconds will be started.
    * <p>
    * This field is not supposed to be accessed directly please use {@link #getRndFile()} instead.
    *
@@ -50,22 +48,20 @@ final class OLogSegmentV1 implements OLogSegment {
   private RandomAccessFile rndFile;
 
   /**
-   * Lock which protects {@link #rndFile} access. Any time you call {@link #getRndFile()} you should also
-   * acquire this lock.
+   * Lock which protects {@link #rndFile} access. Any time you call {@link #getRndFile()} you should also acquire this lock.
    */
   private final Lock fileLock = new ReentrantLock();
 
   /**
-   * Flag which indicates if auto close timer is started.
-   * This flag is used to guarantee that one and only one instance of auto close timer is active at any moment.
+   * Flag which indicates if auto close timer is started. This flag is used to guarantee that one and only one instance of auto
+   * close timer is active at any moment.
    *
    * @see #rndFile
    */
   private final AtomicBoolean autoCloseInProgress = new AtomicBoolean();
 
   /**
-   * Flag which when is set will prevent auto close timer to close of file. But timer itself
-   * will not be stopped.
+   * Flag which when is set will prevent auto close timer to close of file. But timer itself will not be stopped.
    *
    * @see #rndFile
    */
@@ -74,8 +70,8 @@ final class OLogSegmentV1 implements OLogSegment {
   private final File file;
 
   /**
-   * Flag which indicates that file was accessed inside of {@link #fileTTL} which means that file will not be accessed
-   * at least inside of next {@link #fileTTL} interval.
+   * Flag which indicates that file was accessed inside of {@link #fileTTL} which means that file will not be accessed at least
+   * inside of next {@link #fileTTL} interval.
    */
   private volatile boolean closeNextTime;
 
@@ -87,8 +83,8 @@ final class OLogSegmentV1 implements OLogSegment {
   private final int fileTTL;
 
   /**
-   * Scheduler which will be used to start timer which will close file if last one will not be accessed inside of
-   * {@link #fileTTL} in seconds.
+   * Scheduler which will be used to start timer which will close file if last one will not be accessed inside of {@link #fileTTL}
+   * in seconds.
    *
    * @see #rndFile
    */
@@ -122,7 +118,7 @@ final class OLogSegmentV1 implements OLogSegment {
       try {
         try {
           commitLog();
-        } catch (Throwable e) {
+        } catch (Exception e) {
           OLogManager.instance().error(this, "Error during WAL background flush", e);
         }
       } finally {
@@ -341,8 +337,8 @@ final class OLogSegmentV1 implements OLogSegment {
   }
 
   /**
-   * Returns active instance of file which is associated with given WAL segment
-   * Call of this method should always be protected by {@link #fileLock}.
+   * Returns active instance of file which is associated with given WAL segment Call of this method should always be protected by
+   * {@link #fileLock}.
    *
    * @return Active instance of file which is associated with given WAL segment
    */
@@ -358,9 +354,8 @@ final class OLogSegmentV1 implements OLogSegment {
   }
 
   /**
-   * Start timer thread which will auto close file if it is not accesses during {@link #fileTTL} seconds.
-   * If file is already closed timer thread will be terminate itself till it will not be started again by
-   * {@link #getRndFile()} call.
+   * Start timer thread which will auto close file if it is not accesses during {@link #fileTTL} seconds. If file is already closed
+   * timer thread will be terminate itself till it will not be started again by {@link #getRndFile()} call.
    */
   private void scheduleFileAutoClose() {
     if (!autoCloseInProgress.get() && autoCloseInProgress.compareAndSet(false, true)) {

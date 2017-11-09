@@ -53,7 +53,7 @@ public class OContentRecordConflictStrategy extends OVersionRecordConflictStrate
       final ODocument storedRecord = new ODocument(rid).fromStream(res.getResult().getBuffer());
       final ODocument newRecord = new ODocument().fromStream(iRecordContent);
 
-      final ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.instance().get();
       hasSameContent = ODocumentHelper.hasSameContentOf(storedRecord, currentDb, newRecord, currentDb, null, false);
     } else {
       // CHECK BYTE PER BYTE

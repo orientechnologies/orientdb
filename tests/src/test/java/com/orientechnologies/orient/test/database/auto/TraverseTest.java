@@ -313,7 +313,7 @@ public class TraverseTest extends DocumentDBBaseTest {
 
       String q = "traverse in('married')  from " + nicoleKidman.getIdentity() + "";
       ODatabaseDocumentTx db = database.copy();
-      ODatabaseRecordThreadLocal.INSTANCE.set(db);
+      ODatabaseRecordThreadLocal.instance().set(db);
       List<Object> result1 = db.command(new OSQLSynchQuery<ODocument>(q)).execute();
       Assert.assertEquals(result1.size(), 2);
       boolean found = false;
@@ -322,7 +322,7 @@ public class TraverseTest extends DocumentDBBaseTest {
         Assert.assertTrue(doc instanceof ODocument);
       }
     } finally {
-      ODatabaseRecordThreadLocal.INSTANCE.set(database);
+      ODatabaseRecordThreadLocal.instance().set(database);
     }
 
   }

@@ -50,7 +50,7 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
   public ODocumentComparator(final List<OPair<String, String>> iOrderCriteria, OCommandContext iContext) {
     this.orderCriteria = iOrderCriteria;
     this.context = iContext;
-    ODatabaseDocumentInternal internal = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocumentInternal internal = ODatabaseRecordThreadLocal.instance().get();
     collator = Collator.getInstance(new Locale(internal.get(ATTRIBUTES.LOCALECOUNTRY) + "_"
         + internal.get(ATTRIBUTES.LOCALELANGUAGE)));
   }

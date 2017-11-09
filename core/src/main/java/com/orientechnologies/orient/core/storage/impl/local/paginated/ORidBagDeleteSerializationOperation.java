@@ -37,7 +37,7 @@ public class ORidBagDeleteSerializationOperation implements ORecordSerialization
   public ORidBagDeleteSerializationOperation(OBonsaiCollectionPointer collectionPointer, OSBTreeRidBag ridBag) {
     this.collectionPointer = collectionPointer;
     this.ridBag = ridBag;
-    collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+    collectionManager = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
   }
 
   @Override

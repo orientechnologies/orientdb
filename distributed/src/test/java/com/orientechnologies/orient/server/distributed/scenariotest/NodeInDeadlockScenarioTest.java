@@ -82,7 +82,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
       banner("Test with quorum = 2");
 
       // writes on server1 and server2
-      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      ODatabaseRecordThreadLocal.instance().set(null);
       executeMultipleWrites(this.executeTestsOnServers, "remote", this.executeTestsOnServers);
 
       // check consistency on server1 and server2
@@ -102,9 +102,9 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
     } finally {
 
       if (!dbServer3.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
+        ODatabaseRecordThreadLocal.instance().set(dbServer3);
         dbServer3.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+        ODatabaseRecordThreadLocal.instance().set(null);
       }
     }
   }

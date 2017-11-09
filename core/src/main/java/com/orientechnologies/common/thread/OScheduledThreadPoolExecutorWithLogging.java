@@ -1,7 +1,10 @@
 package com.orientechnologies.common.thread;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OSQLDumper;
+import com.orientechnologies.orient.core.Orient;
 
+import java.util.Collection;
 import java.util.concurrent.*;
 
 /**
@@ -47,7 +50,34 @@ public class OScheduledThreadPoolExecutorWithLogging extends ScheduledThreadPool
 
     if (t != null) {
       final Thread thread = Thread.currentThread();
-      OLogManager.instance().error(this, "Exception in thread '%s'", t, thread.getName());
+      final OLogManager logManager = OLogManager.instance();
+
+      if (logManager != null) {
+        if (t instanceof OutOfMemoryError) {
+          final Collection<String> queries = OSQLDumper.dumpAllSQLQueries();
+          if (queries.isEmpty())
+            logManager.errorNoDb(this, "Uncaught exception in thread '%s'", t, thread.getName());
+          else {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("OOM Error was thrown by JVM. OOM can be caused by one of the following queries: \n");
+            sb.append("-----------------------------------------------------------------------------------\n");
+            for (String query : queries) {
+              sb.append("- '").append(query).append("'\n");
+            }
+            sb.append("-----------------------------------------------------------------------------------\n");
+
+            logManager.errorNoDb(this, sb.toString(), t);
+          }
+        } else {
+          logManager.errorNoDb(this, "Uncaught exception in thread '%s'", t, thread.getName());
+        }
+      }
+
+      if (t instanceof Error) {
+        final Orient orient = Orient.instance();
+        if (orient != null)
+          orient.handleJVMError((Error) t);
+      }
     }
   }
 }

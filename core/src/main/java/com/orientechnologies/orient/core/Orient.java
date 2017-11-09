@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.io.File;
 import java.io.IOException;
@@ -96,7 +97,12 @@ public class Orient extends OListenerManger<OOrientListener> {
   private final OLocalRecordCacheFactory localRecordCache = new OLocalRecordCacheFactoryImpl();
 
   static {
-    instance.startup();
+    try {
+      instance.startup();
+    } catch (Exception e) {
+      OLogManager.instance().errorNoDb(Orient.class, "Error during initialization of OrientDB engine", e);
+    }
+
   }
 
   private final String os;
@@ -283,6 +289,25 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   /**
+   * This method is called once JVM Error is observed by OrientDB to be thrown. Typically it means that all storages will be put in
+   * read-only mode and user will be asked to restart JVM.
+   *
+   * @param e Error happened during JVM execution
+   */
+  public void handleJVMError(Error e) {
+    engineLock.readLock().lock();
+    try {
+      for (OStorage storage : storages.values()) {
+        if (storage instanceof OAbstractPaginatedStorage) {
+          ((OAbstractPaginatedStorage) storage).handleJVMError(e);
+        }
+      }
+    } finally {
+      engineLock.readLock().unlock();
+    }
+  }
+
+  /**
    * Adds shutdown handlers in order which will be used during execution of shutdown.
    */
   private void initShutdownQueue() {
@@ -400,7 +425,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         try {
           OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
           stg.shutdown();
-        } catch (Throwable e) {
+        } catch (Exception e) {
           OLogManager.instance().warn(this, "-- error on shutdown storage", e);
         }
       }
@@ -614,8 +639,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   /**
-   * Obtains a {@link OEngine#isRunning() running} {@link OEngine engine} instance with the given {@code engineName}.
-   * If engine is not running, starts it.
+   * Obtains a {@link OEngine#isRunning() running} {@link OEngine engine} instance with the given {@code engineName}. If engine is
+   * not running, starts it.
    *
    * @param engineName the name of the engine to obtain.
    *

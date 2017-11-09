@@ -165,7 +165,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
             Thread.currentThread().interrupt();
 
-          } catch (Throwable e) {
+          } catch (Exception e) {
             if (running)
               // ASYNC: IGNORE IT
               if (e instanceof ONeedRetryException)
@@ -336,7 +336,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
         if (exec.involveSchema())
           // UPDATE THE SCHEMA
-          dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
+          dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.instance().get());
 
         break;
       }
@@ -1334,6 +1334,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     close(false, false);
   }
 
+  public void closeAndMove(OCallable<Void, String> mover) {
+    if (wrapped == null)
+      return;
+    if (wrapped instanceof OLocalPaginatedStorage) {
+      ((OLocalPaginatedStorage) wrapped).closeAndMove(mover);
+    } else {
+      wrapped.close(true, false);
+    }
+  }
+
   @Override
   public void close(final boolean iForce, final boolean onDelete) {
     if (wrapped == null)
@@ -1401,13 +1411,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         if (autoRetryDelay <= 0)
           autoRetryDelay = 1;
 
-        Throwable lastException = null;
+        Exception lastException = null;
         for (int retry = 1; retry <= maxAutoRetry; ++retry) {
 
           try {
 
             final List<ORecordOperation> result = txManager
-                .commit((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get(), iTx, callback, eventListener);
+                .commit((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.instance().get(), iTx, callback, eventListener);
 
             if (result != null) {
               for (ORecordOperation r : result) {
@@ -1418,7 +1428,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
             return result;
 
-          } catch (Throwable e) {
+          } catch (Exception e) {
             lastException = e;
 
             if (retry >= maxAutoRetry) {
@@ -1430,7 +1440,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
             // SKIP RETRY IN CASE OF OConcurrentModificationException BECAUSE IT NEEDS A RETRY AT APPLICATION LEVEL
             if (!(e instanceof OConcurrentModificationException) && (e instanceof ONeedRetryException
-                || e instanceof ORecordNotFoundException)) {
+                || e instanceof ORecordNotFoundException) && !(e instanceof ODistributedRedirectException)) {
               // RETRY
               final long wait = autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay);
 
@@ -1481,10 +1491,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     if (eventListener != null) {
       try {
         eventListener.onAfterRecordLock(rid);
-      } catch (Throwable t) {
+      } catch (Exception e) {
         // IGNORE IT
         ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Caught exception during ODistributedStorageEventListener.onAfterRecordLock", t);
+            "Caught exception during ODistributedStorageEventListener.onAfterRecordLock", e);
       }
     }
 
@@ -1496,10 +1506,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     if (eventListener != null) {
       try {
         eventListener.onAfterRecordUnlock(rid);
-      } catch (Throwable t) {
+      } catch (Exception e) {
         // IGNORE IT
         ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Caught exception during ODistributedStorageEventListener.onAfterRecordUnlock", t);
+            "Caught exception during ODistributedStorageEventListener.onAfterRecordUnlock", e);
       }
     }
   }
@@ -1946,7 +1956,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     if (OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError != null) {
 
       final OAsyncReplicationError subCallback = OExecutionThreadLocal.INSTANCE.get().onAsyncReplicationError;
-      final ODatabaseDocumentTx currentDatabase = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocumentTx currentDatabase = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.instance().get();
       final ODatabaseDocumentTx copyDatabase = currentDatabase.copy();
       currentDatabase.activateOnCurrentThread();
 
@@ -2004,7 +2014,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
         @Override
         public Object call() throws Exception {
-          ODatabaseDocumentTx database = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          ODatabaseDocumentTx database = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.instance().getIfDefined();
           final boolean databaseAlreadyDefined;
 
           if (database == null) {
@@ -2078,7 +2088,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       return null;
 
     final OCluster cl = getClusterByName(clusterName);
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     final OClass cls = db.getMetadata().getSchema().getClassByClusterId(cl.getId());
     String newClusterName = null;
     if (cls != null) {

@@ -82,7 +82,7 @@ public class TwoClientsRecordUpdateDuringRetryWithTransactionsOnMultipleServersS
     ODatabaseDocumentTx dbServer2 = poolFactory.get(getDatabaseURL(serverInstance.get(1)), "admin", "admin").acquire();
 
     // inserts record1
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer2);
+    ODatabaseRecordThreadLocal.instance().set(dbServer2);
     ODocument record1Server1 = new ODocument("Person").fields("id", RECORD_ID, "firstName", "Han", "lastName", "Solo");
     record1Server1.save();
 

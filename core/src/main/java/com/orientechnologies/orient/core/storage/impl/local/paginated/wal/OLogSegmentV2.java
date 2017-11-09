@@ -121,7 +121,7 @@ final class OLogSegmentV2 implements OLogSegment {
       try {
         try {
           commitLog();
-        } catch (Throwable e) {
+        } catch (Exception e) {
           OLogManager.instance().error(this, "Error during WAL background flush", e);
         }
       } finally {

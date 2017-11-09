@@ -341,7 +341,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   private ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   private OHashTable<Object, Object> getPartition(final Object iKey) {

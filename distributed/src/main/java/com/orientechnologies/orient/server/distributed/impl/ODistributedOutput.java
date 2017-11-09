@@ -523,7 +523,7 @@ public class ODistributedOutput {
       }
     });
 
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null && db.isClosed())
       db = null;
 

@@ -83,10 +83,13 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     if (timeout < 0)
       timeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger();
 
-    if (!rid.isPersistent())
+    if (!rid.isPersistent()) {
       // CREATE A COPY TO MAINTAIN THE LOCK ON THE CLUSTER AVOIDING THE RID IS TRANSFORMED IN PERSISTENT. THIS ALLOWS TO HAVE
       // PARALLEL TX BECAUSE NEW RID LOCKS THE ENTIRE CLUSTER.
       rid = new ORecordId(rid.getClusterId(), -1l);
+      if (timeout > 0)
+        timeout *= 10;
+    }
 
     if (db.lockRecord(rid, reqId, timeout))
       // NEW LOCK (FALSE=LOCK WAS ALREADY TAKEN. THIS CAN HAPPEN WITH CREATE, BECAUSE THE RID IS ON CLUSTER ID ONLY (LIKE #25:-1),

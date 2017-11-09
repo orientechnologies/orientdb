@@ -1,12 +1,16 @@
 package com.orientechnologies.common.thread;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OSQLDumper;
+import com.orientechnologies.orient.core.Orient;
 
+import java.io.StringWriter;
+import java.util.Collection;
 import java.util.concurrent.*;
 
 /**
- * The same as thread {@link ThreadPoolExecutor} but also logs all exceptions happened inside of the tasks which caused
- * tasks to stop.
+ * The same as thread {@link ThreadPoolExecutor} but also logs all exceptions happened inside of the tasks which caused tasks to
+ * stop.
  */
 public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
   public OThreadPoolExecutorWithLogging(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
@@ -48,7 +52,34 @@ public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
 
     if (t != null) {
       final Thread thread = Thread.currentThread();
-      OLogManager.instance().error(this, "Exception in thread '%s'", t, thread.getName());
+      final OLogManager logManager = OLogManager.instance();
+
+      if (logManager != null) {
+        if (t instanceof OutOfMemoryError) {
+          final Collection<String> queries = OSQLDumper.dumpAllSQLQueries();
+          if (queries.isEmpty())
+            logManager.errorNoDb(this, "Uncaught exception in thread '%s'", t, thread.getName());
+          else {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("OOM Error was thrown by JVM. OOM can be caused by one of the following queries: \n");
+            sb.append("-----------------------------------------------------------------------------------\n");
+            for (String query : queries) {
+              sb.append("- '").append(query).append("'\n");
+            }
+            sb.append("-----------------------------------------------------------------------------------\n");
+
+            logManager.errorNoDb(this, sb.toString(), t);
+          }
+        } else {
+          logManager.errorNoDb(this, "Uncaught exception in thread '%s'", t, thread.getName());
+        }
+      }
+
+      if (t instanceof Error) {
+        final Orient orient = Orient.instance();
+        if (orient != null)
+          orient.handleJVMError((Error) t);
+      }
     }
   }
 }

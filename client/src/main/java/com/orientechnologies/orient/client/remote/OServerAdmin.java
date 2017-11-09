@@ -378,7 +378,7 @@ public class OServerAdmin {
       s.close(true, true);
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    ODatabaseRecordThreadLocal.instance().remove();
 
     return this;
   }

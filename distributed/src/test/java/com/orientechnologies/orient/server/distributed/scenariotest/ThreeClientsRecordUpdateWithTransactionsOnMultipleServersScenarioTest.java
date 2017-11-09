@@ -92,7 +92,7 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioTe
     ODatabaseDocumentTx dbServer3 = poolFactory.get(getDatabaseURL(serverInstance.get(2)), "admin", "admin").acquire();
 
     // inserts record1
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+    ODatabaseRecordThreadLocal.instance().set(dbServer1);
     ODocument record1Server1 = new ODocument("Person").fromMap(hanFields);
     record1Server1.save();
 

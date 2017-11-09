@@ -207,8 +207,8 @@ public class OTableFormatter {
 
       out.onMessage("\n" + format.toString(), vargs.toArray());
 
-    } catch (Throwable t) {
-      out.onMessage("%3d|%9s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record due to: " + t);
+    } catch (Exception e) {
+      out.onMessage("%3d|%9s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record due to: " + e);
     }
   }
 
@@ -323,7 +323,7 @@ public class OTableFormatter {
         value = ((ORecord) value).getIdentity().toString();
       }
     } else if (value instanceof Date) {
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
       if (db != null)
         value = db.getStorage().getConfiguration().getDateTimeFormatInstance().format((Date) value);
       else {

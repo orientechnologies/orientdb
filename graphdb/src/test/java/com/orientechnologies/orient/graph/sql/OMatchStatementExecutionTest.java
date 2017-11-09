@@ -1798,6 +1798,41 @@ public class OMatchStatementExecutionTest {
 
   }
 
+
+  @Test
+  public void testWhileAndNotReverse() {
+
+    db.command(new OCommandSQL("CREATE CLASS testWhileAndNotReverseFoo EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testWhileAndNotReverseBar EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testWhileAndNotReverseBaz EXTENDS V")).execute();
+
+    db.command(new OCommandSQL("CREATE CLASS testWhileAndNotReverseE EXTENDS E")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testWhileAndNotReverseFoo SET name = 'a'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testWhileAndNotReverseFoo SET name = 'b'")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testWhileAndNotReverseBar SET name = 'x'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testWhileAndNotReverseBar SET name = 'y'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testWhileAndNotReverseBar SET name = 'z'")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testWhileAndNotReverseBaz SET name = 'k'")).execute();
+
+
+    db.command(new OCommandSQL("CREATE EDGE testWhileAndNotReverseE FROM (SELECT * FROM testWhileAndNotReverseFoo) TO (SELECT * FROM testWhileAndNotReverseBar WHERE name = 'x')")).execute();
+    db.command(new OCommandSQL("CREATE EDGE testWhileAndNotReverseE FROM (SELECT * FROM testWhileAndNotReverseBar WHERE name = 'x') TO (SELECT * FROM testWhileAndNotReverseBar WHERE name = 'y')")).execute();
+    db.command(new OCommandSQL("CREATE EDGE testWhileAndNotReverseE FROM (SELECT * FROM testWhileAndNotReverseBar WHERE name = 'y') TO (SELECT * FROM testWhileAndNotReverseBar WHERE name = 'z')")).execute();
+    db.command(new OCommandSQL("CREATE EDGE testWhileAndNotReverseE FROM (SELECT * FROM testWhileAndNotReverseBar WHERE name = 'z') TO (SELECT * FROM testWhileAndNotReverseBaz)")).execute();
+
+
+    OSQLSynchQuery query = new OSQLSynchQuery(
+        "MATCH {class:testWhileAndNotReverseFoo, as: foo} --> {class: testWhileAndNotReverseBaz, as:bar, while: ($depth < 10)}\n" + "RETURN foo, bar");
+
+    List<ODocument> result = db.query(query);
+
+    assertEquals(2, result.size());
+
+  }
+
   private List<OIdentifiable> getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");

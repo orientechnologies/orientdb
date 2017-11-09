@@ -234,7 +234,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   private boolean shouldClose() {
-    return System.currentTimeMillis() - lastAccess.get() > closeAfterInterval;
+    return !(directory instanceof RAMDirectory) && System.currentTimeMillis() - lastAccess.get() > closeAfterInterval;
   }
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
@@ -263,7 +263,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.instance().get();
   }
 
   private synchronized void open() throws IOException {
@@ -342,7 +342,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on flushing Lucene index", e);
-    } catch (Throwable e) {
+    } catch (Exception e) {
       OLogManager.instance().error(this, "Error on flushing Lucene index", e);
     }
 
@@ -561,7 +561,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 //      OLogManager.instance().info(this, "Closed Lucene index '" + this.name);
       cancelCommitTask();
 
-    } catch (Throwable e) {
+    } catch (Exception e) {
       OLogManager.instance().error(this, "Error on closing Lucene index", e);
     }
   }

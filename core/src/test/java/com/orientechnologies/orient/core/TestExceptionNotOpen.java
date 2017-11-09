@@ -65,7 +65,7 @@ public class TestExceptionNotOpen {
       ODatabaseDocument db = new ODatabaseDocumentTx("remote:127.0.0.1:00");
       Assert.fail();
     } catch (ODatabaseException e) {
-      Assert.assertNull(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined());
+      Assert.assertNull(ODatabaseRecordThreadLocal.instance().getIfDefined());
     }
   }
 

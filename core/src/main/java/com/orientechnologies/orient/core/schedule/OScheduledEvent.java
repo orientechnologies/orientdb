@@ -241,7 +241,7 @@ public class OScheduledEvent extends ODocumentWrapper {
           timer = null;
           break;
 
-        } catch (Throwable e) {
+        } catch (Exception e) {
           // SUSPEND EXECUTION
           OLogManager.instance()
               .error(this, "Error during starting of scheduled event '%s' executionId=%d", e, getName(), nextExecutionId);
@@ -299,7 +299,7 @@ public class OScheduledEvent extends ODocumentWrapper {
   }
 
   private void bindDb() {
-    final ODatabaseDocumentInternal tlDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal tlDb = ODatabaseRecordThreadLocal.instance().get();
     if (tlDb != null && !tlDb.isClosed())
       this.db = ((ODatabaseDocumentTx) tlDb).copy();
   }

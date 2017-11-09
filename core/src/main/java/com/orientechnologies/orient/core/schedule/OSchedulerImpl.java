@@ -107,7 +107,7 @@ public class OSchedulerImpl implements OScheduler {
 
   @Override
   public void load() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
 
     if (db.getMetadata().getSchema().existsClass(OScheduledEvent.CLASS_NAME)) {
       final Iterable<ODocument> result = db.browseClass(OScheduledEvent.CLASS_NAME);
@@ -130,7 +130,7 @@ public class OSchedulerImpl implements OScheduler {
 
   @Override
   public void create() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (db.getMetadata().getSchema().existsClass(OScheduledEvent.CLASS_NAME))
       return;
     final OClass f = db.getMetadata().getSchema().createClass(OScheduledEvent.CLASS_NAME);

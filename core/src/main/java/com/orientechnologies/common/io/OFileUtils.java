@@ -148,17 +148,25 @@ public class OFileUtils {
       throw new IOException("Invalid file name '" + iFileName + "'");
   }
 
-  public static void deleteRecursively(final File iRootFile) {
-    if (iRootFile.exists()) {
-      if (iRootFile.isDirectory()) {
-        for (File f : iRootFile.listFiles()) {
-          if (f.isFile())
-            f.delete();
-          else
-            deleteRecursively(f);
+  public static void deleteRecursively(final File rootFile) {
+    if (rootFile.exists()) {
+      if (rootFile.isDirectory()) {
+        final File[] files = rootFile.listFiles();
+        if (files != null) {
+          for (File f : files) {
+            if (f.isFile()) {
+              if (!f.delete()) {
+                throw new IllegalStateException(String.format("Can not delete file %s", f));
+              }
+            } else
+              deleteRecursively(f);
+          }
         }
       }
-      iRootFile.delete();
+
+      if (!rootFile.delete()) {
+        throw new IllegalStateException(String.format("Can not delete file %s", rootFile));
+      }
     }
   }
 

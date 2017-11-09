@@ -317,7 +317,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
           OLogManager.instance().error(OrientGraphNoTx.class, "Error during edge removal", ex);
         }
         throw e;
-      } catch (Throwable e) {
+      } catch (Exception e) {
         // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
         try {
           edge.remove();
@@ -419,7 +419,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
         // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
         // TODO
         throw e;
-      } catch (Throwable e) {
+      } catch (Exception e) {
         // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
         // TODO
         throw OException.wrapException(new OrientGraphModificationException("Error on addEdge in non tx environment"), e);

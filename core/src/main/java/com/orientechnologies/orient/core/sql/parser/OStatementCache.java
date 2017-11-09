@@ -104,7 +104,7 @@ public class OStatementCache {
    */
   protected static OStatement parse(String statement) throws OCommandSQLParsingException {
     try {
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
       InputStream is;
 
       if (db == null) {

@@ -68,7 +68,7 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
     functions.clear();
 
     // LOAD ALL THE FUNCTIONS IN MEMORY
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().existsClass("OFunction")) {
       List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction order by name"));
       for (ODocument d : result) {
@@ -117,7 +117,7 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
   }
 
   protected void init() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (db.getMetadata().getSchema().existsClass("OFunction")) {
       final OClass f = db.getMetadata().getSchema().getClass("OFunction");
       OProperty prop = f.getProperty("name");

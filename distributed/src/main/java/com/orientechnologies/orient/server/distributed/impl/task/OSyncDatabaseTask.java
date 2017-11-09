@@ -139,7 +139,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
                 ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                     "Backup of database '%s' completed. lastOperationId=%s...", databaseName, requestId);
 
-              } catch (Throwable e) {
+              } catch (Exception e) {
                 OLogManager.instance().error(this, "Cannot execute backup of database '%s' for deploy database", e, databaseName);
               } finally {
                 try {

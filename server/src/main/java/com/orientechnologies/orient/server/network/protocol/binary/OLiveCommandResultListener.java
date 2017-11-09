@@ -113,7 +113,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
       List<OClientConnection> connections = session.getConnections();
       if (connections.size() == 0) {
         try {
-          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
           OLogManager.instance().warn(this, "Unsubscribing live query for connection " + connection);
           OLiveQueryHook.unsubscribe(iToken, db);
         } catch (Exception e) {
@@ -153,7 +153,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
         session.removeConnection(curConnection);
         connections = session.getConnections();
         if (connections.isEmpty()) {
-          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
           OLiveQueryHook.unsubscribe(iToken, db);
           break;
         }

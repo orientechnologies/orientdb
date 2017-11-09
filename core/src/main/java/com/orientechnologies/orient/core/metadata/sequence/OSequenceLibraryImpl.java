@@ -51,7 +51,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   public void load() {
     sequences.clear();
 
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().existsClass(OSequence.CLASS_NAME)) {
       final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + OSequence.CLASS_NAME));
       for (ODocument document : result) {
@@ -116,7 +116,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     final OSequence seq = getSequence(iName);
 
     if (seq != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.get().delete(seq.getDocument().getIdentity());
+      ODatabaseRecordThreadLocal.instance().get().delete(seq.getDocument().getIdentity());
       sequences.remove(iName.toUpperCase(Locale.ENGLISH));
     }
   }
@@ -171,7 +171,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   }
 
   private void init() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (db.getMetadata().getSchema().existsClass(OSequence.CLASS_NAME)) {
       return;
     }

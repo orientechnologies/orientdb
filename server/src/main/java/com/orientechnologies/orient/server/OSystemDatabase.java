@@ -56,7 +56,7 @@ public class OSystemDatabase {
    * Adds the specified cluster to the class, if it doesn't already exist.
    */
   public void createCluster(final String className, final String clusterName) {
-    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       final ODatabaseDocumentInternal sysdb = openSystemDatabase();
       try {
@@ -78,9 +78,9 @@ public class OSystemDatabase {
 
     } finally {
       if (currentDB != null)
-        ODatabaseRecordThreadLocal.INSTANCE.set(currentDB);
+        ODatabaseRecordThreadLocal.instance().set(currentDB);
       else
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
     }
   }
 
@@ -93,7 +93,7 @@ public class OSystemDatabase {
   }
 
   public Object execute(final OCallable<Object, Object> callback, final String sql, final Object... args) {
-    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       // BYPASS SECURITY
       final ODatabase<?> db = openSystemDatabase();
@@ -111,9 +111,9 @@ public class OSystemDatabase {
 
     } finally {
       if (currentDB != null)
-        ODatabaseRecordThreadLocal.INSTANCE.set(currentDB);
+        ODatabaseRecordThreadLocal.instance().set(currentDB);
       else
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
     }
   }
 
@@ -122,7 +122,7 @@ public class OSystemDatabase {
   }
 
   public ODocument save(final ODocument document, final String clusterName) {
-    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       // BYPASS SECURITY
       final ODatabaseDocumentInternal db = openSystemDatabase();
@@ -137,14 +137,14 @@ public class OSystemDatabase {
 
     } finally {
       if (currentDB != null)
-        ODatabaseRecordThreadLocal.INSTANCE.set(currentDB);
+        ODatabaseRecordThreadLocal.instance().set(currentDB);
       else
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
     }
   }
 
   private void init() {
-    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
+    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.instance();
     final ODatabaseDocumentInternal oldDbInThread = tl != null ? tl.getIfDefined() : null;
     try {
 
@@ -163,16 +163,16 @@ public class OSystemDatabase {
 
     } finally {
       if (oldDbInThread != null) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(oldDbInThread);
+        ODatabaseRecordThreadLocal.instance().set(oldDbInThread);
       } else {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
       }
     }
   }
 
   public void executeInDBScope(OCallable<Void, ODatabase> callback) {
 
-    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
 
     try {
       final ODatabase<?> db = openSystemDatabase();
@@ -183,15 +183,15 @@ public class OSystemDatabase {
       }
     } finally {
       if (currentDB != null)
-        ODatabaseRecordThreadLocal.INSTANCE.set(currentDB);
+        ODatabaseRecordThreadLocal.instance().set(currentDB);
       else
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
     }
 
   }
 
   public boolean exists() {
-    final ODatabaseDocumentInternal oldDbInThread = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal oldDbInThread = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
 
       ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDatabasePath());
@@ -200,9 +200,9 @@ public class OSystemDatabase {
 
     } finally {
       if (oldDbInThread != null) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(oldDbInThread);
+        ODatabaseRecordThreadLocal.instance().set(oldDbInThread);
       } else {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
       }
     }
   }

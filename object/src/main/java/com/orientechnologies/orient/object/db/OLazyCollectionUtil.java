@@ -13,7 +13,7 @@ public class OLazyCollectionUtil {
      * Gets the current thread database as a ODatabasePojoAbstract, wrapping it where necessary.
      */
   protected static <TYPE> ODatabasePojoAbstract<TYPE> getDatabase() {
-    ODatabaseInternal<?> databaseOwner = ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
+    ODatabaseInternal<?> databaseOwner = ODatabaseRecordThreadLocal.instance().get().getDatabaseOwner();
     if (databaseOwner instanceof ODatabasePojoAbstract) {
       return (ODatabasePojoAbstract<TYPE>) databaseOwner;
     } else if (databaseOwner instanceof ODatabaseDocumentTx) {

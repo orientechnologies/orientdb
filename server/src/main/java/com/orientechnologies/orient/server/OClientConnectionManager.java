@@ -64,7 +64,7 @@ public class OClientConnectionManager {
       public void run() {
         try {
           cleanExpiredConnections();
-        } catch (Throwable e) {
+        } catch (Exception e) {
           OLogManager.instance().debug(this, "Error on client connection purge task", e);
         }
       }
