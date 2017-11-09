@@ -262,13 +262,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         handleDBFreeze();
         serverUrl = null;
       } catch (OTokenException e) {
-        connectionManager.release(network);
+        connectionManager.remove(network);
         session.removeServerSession(network.getServerURL());
         if (--retry <= 0)
           throw OException.wrapException(new OStorageException(errorMessage), e);
         serverUrl = null;
       } catch (OTokenSecurityException e) {
-        connectionManager.release(network);
+        connectionManager.remove(network);
         session.removeServerSession(network.getServerURL());
         if (--retry <= 0)
           throw OException.wrapException(new OStorageException(errorMessage), e);
