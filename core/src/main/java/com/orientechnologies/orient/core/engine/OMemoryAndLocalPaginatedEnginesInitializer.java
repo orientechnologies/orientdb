@@ -57,8 +57,6 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
     OMemory.checkCacheMemoryConfiguration();
 
     OMemory.fixCommonConfigurationProblems();
-
-    OLogManager.instance().info(this, "Disk cache size is %d mb", OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong());
   }
 
   private void configureDefaults() {
@@ -67,8 +65,8 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
     if (!OGlobalConfiguration.DISK_CACHE_SIZE.isChanged())
       configureDefaultDiskCacheSize();
     else {
-      OLogManager.instance()
-          .infoNoDb(this, "Disk cache size is directly set by the user to the %d mb", OGlobalConfiguration.DISK_CACHE_SIZE.getValue());
+      OLogManager.instance().infoNoDb(this, "Disk cache size is directly set by the user to the %d mb",
+          OGlobalConfiguration.DISK_CACHE_SIZE.getValue());
     }
 
     if (!OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.isChanged())
@@ -109,8 +107,9 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
     long diskCacheInMB = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
     if (diskCacheInMB > 0) {
       diskCacheInMB = Math.min(diskCacheInMB, maxDirectMemoryInMB);
-      OLogManager.instance().infoNoDb(this, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB direct=%,dMB os=%,dMB)", diskCacheInMB,
-          jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB, osMemory / 1024 / 1024);
+      OLogManager.instance()
+          .infoNoDb(this, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB direct=%,dMB os=%,dMB)", diskCacheInMB,
+              jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB, osMemory / 1024 / 1024);
 
       OGlobalConfiguration.DISK_CACHE_SIZE.setValue(diskCacheInMB);
       OGlobalConfiguration.MEMORY_CHUNK_SIZE
