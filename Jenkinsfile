@@ -1,5 +1,14 @@
 #!groovy
 node("master") {
+    
+    properties([
+            pipelineTriggers([cron('H H * * H(6-7)')]),
+            [$class: 'BuildDiscarderProperty', 
+                 strategy: [$class: 'LogRotator', artifactDaysToKeepStr: '', 
+                            artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10']]
+    ])
+
+    
     ansiColor('xterm') {
 
         def mvnHome = tool 'mvn'
