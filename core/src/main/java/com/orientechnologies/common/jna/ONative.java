@@ -8,21 +8,43 @@ import com.sun.jna.Platform;
 import javax.management.*;
 import java.io.*;
 import java.lang.management.ManagementFactory;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ONative {
-  private static final OCLibrary C_LIBRARY;
+  private static volatile OCLibrary C_LIBRARY;
   private static final String DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/memory";
 
-  static {
-    if (Platform.isLinux()) {
-      C_LIBRARY = Native.loadLibrary("c", OCLibrary.class);
-    } else {
-      C_LIBRARY = null;
-    }
-  }
+  private static volatile ONative instance = null;
+  private static final    Lock    initLock = new ReentrantLock();
 
   public static ONative instance() {
-    return InstanceHolder.INSTANCE;
+    if (instance != null)
+      return instance;
+
+    initLock.lock();
+    try {
+      if (instance != null)
+        return instance;
+
+      if (Platform.isLinux()) {
+        C_LIBRARY = Native.loadLibrary("c", OCLibrary.class);
+      } else {
+        C_LIBRARY = null;
+      }
+
+      instance = new ONative();
+    } finally {
+      initLock.unlock();
+    }
+
+    return instance;
+  }
+
+  /**
+   * Prevent initialization outside singleton
+   */
+  private ONative() {
   }
 
   /**
@@ -31,246 +53,283 @@ public class ONative {
    * @return Amount of memory which are allowed to be consumed by application, if value <= 0 then limit is not set.
    */
   public long getMemoryLimit(boolean printSteps) {
+    //Perform several steps here:
+    //1. Fetch physical size available on machine
+    //2. Fetch soft limit
+    //3. Fetch cgroup soft limit
+    //4. Fetch cgroup hard limit
+    //5. Return the minimal value from the list of results
+
     long memoryLimit = getPhysicalMemorySize();
 
-    if (memoryLimit > 0 && printSteps) {
-      OLogManager.instance().info(this, "%d bytes of physical memory were detected on machine", memoryLimit);
+    if (printSteps) {
+      OLogManager.instance()
+          .infoNoDb(this, "%d B/%d MB/%d GB of physical memory were detected on machine", memoryLimit, convertToMB(memoryLimit),
+              convertToGB(memoryLimit));
     }
 
     if (Platform.isLinux()) {
       final OCLibrary.Rlimit rlimit = new OCLibrary.Rlimit();
-      int result = C_LIBRARY.getrlimit(OCLibrary.RLIMIT_AS, rlimit);
+      final int result = C_LIBRARY.getrlimit(OCLibrary.RLIMIT_AS, rlimit);
 
-      if (result == 0 && rlimit.rlim_cur > 0) {
+      //no errors during the call
+      if (result == 0) {
         if (printSteps)
-          OLogManager.instance().info(this, "Soft memory limit for this process is set to %d bytes", rlimit.rlim_cur);
+          OLogManager.instance().infoNoDb(this, "Soft memory limit for this process is set to %d B/%d MB/%d GB", rlimit.rlim_cur,
+              convertToMB(rlimit.rlim_cur), convertToGB(rlimit.rlim_cur));
 
-        if (rlimit.rlim_cur < memoryLimit || memoryLimit <= 0) {
-          memoryLimit = rlimit.rlim_cur;
-        }
+        memoryLimit = updateMemoryLimit(memoryLimit, rlimit.rlim_cur);
 
+        if (printSteps)
+          OLogManager.instance().infoNoDb(this, "Hard memory limit for this process is set to %d B/%d MB/%d GB", rlimit.rlim_max,
+              convertToMB(rlimit.rlim_max), convertToGB(rlimit.rlim_max));
+
+        memoryLimit = updateMemoryLimit(memoryLimit, rlimit.rlim_max);
       }
 
-      String memoryCGroupPath = null;
-
-      final File cgroupList = new File("/proc/self/cgroup");
-      if (cgroupList.exists()) {
-        try {
-          final FileReader cgroupListReader = new FileReader(cgroupList);
-          final BufferedReader bufferedCGroupReader = new BufferedReader(cgroupListReader);
-          try {
-            String cgroupData;
-            try {
-              while ((cgroupData = bufferedCGroupReader.readLine()) != null) {
-                final String[] cgroupParts = cgroupData.split(":");
-                if (cgroupParts[1].equals("memory")) {
-                  memoryCGroupPath = cgroupParts[2];
-                }
-              }
-            } catch (IOException ioe) {
-              OLogManager.instance().error(this, "Error during reading of details of list of cgroups for the current process, "
-                  + "no restrictions applied by cgroups will be taken into account", ioe);
-              memoryCGroupPath = null;
-            }
-
-          } finally {
-            try {
-              bufferedCGroupReader.close();
-            } catch (IOException ioe) {
-              OLogManager.instance()
-                  .error(this, "Error during closing of reader which reads details of list of cgroups for the current process",
-                      ioe);
-            }
-          }
-        } catch (FileNotFoundException fnfe) {
-          OLogManager.instance().warn(this, "Can not retrieve list of cgroups to which process belongs, "
-              + "no restrictions applied by cgroups will be taken into account");
-        }
-      }
+      final String memoryCGroupPath = findMemoryGCGroupPath();
 
       if (memoryCGroupPath != null) {
         if (printSteps)
-          OLogManager.instance().info(this, "Path to 'memory' cgroup is %s, reading memory limits", memoryCGroupPath);
+          OLogManager.instance().infoNoDb(this, "Path to 'memory' cgroup is '%s'", memoryCGroupPath);
 
-        String memoryCGroupRoot = null;
-
-        //find all mounting points
-        final File procMounts = new File("/proc/mounts");
-        if (procMounts.exists()) {
-          FileReader mountsReader;
-          try {
-            mountsReader = new FileReader(procMounts);
-            BufferedReader bufferedMountsReader = new BufferedReader(mountsReader);
-
-            try {
-              String fileSystem;
-              while ((fileSystem = bufferedMountsReader.readLine()) != null) {
-                final String[] fsParts = fileSystem.split("\\s+");
-                if (fsParts.length == 0) {
-                  continue;
-                }
-
-                final String fsType = fsParts[0];
-                //all cgroup controllers have "cgroup" as file system type
-                if (fsType.equals("cgroup")) {
-                  //get mounting path of cgroup
-                  final String fsMountingPath = fsParts[1];
-                  final String[] fsPathParts = fsMountingPath.split("/");
-                  if (fsPathParts[fsPathParts.length - 1].equals("memory")) {
-                    memoryCGroupRoot = fsMountingPath;
-                  }
-                }
-              }
-            } catch (IOException e) {
-              OLogManager.instance().error(this, "Error during reading a list of mounted file systems", e);
-              memoryCGroupRoot = DEFAULT_MEMORY_CGROUP_PATH;
-            } finally {
-              try {
-                bufferedMountsReader.close();
-              } catch (IOException e) {
-                OLogManager.instance().error(this, "Error during closing of reader of list of mounted file systems", e);
-              }
-            }
-
-          } catch (FileNotFoundException fnfe) {
-            memoryCGroupRoot = DEFAULT_MEMORY_CGROUP_PATH;
-          }
-        }
-
-        if (memoryCGroupRoot == null) {
-          memoryCGroupRoot = DEFAULT_MEMORY_CGROUP_PATH;
-        }
+        final String memoryCGroupRoot = findMemoryGCRoot();
 
         if (printSteps)
-          OLogManager.instance().info(this, "Mounting path for memory cgroup controller is %s", memoryCGroupRoot);
+          OLogManager.instance().infoNoDb(this, "Mounting path for memory cgroup controller is '%s'", memoryCGroupRoot);
 
         File memoryCGroup = new File(memoryCGroupRoot, memoryCGroupPath);
         if (!memoryCGroup.exists()) {
           if (printSteps)
-            OLogManager.instance().info(this, "Can not find '%s' path for memory cgroup, it is supposed that "
+            OLogManager.instance().infoNoDb(this, "Can not find '%s' path for memory cgroup, it is supposed that "
                 + "process is running in container, will try to read root '%s' memory cgroup data", memoryCGroup, memoryCGroupRoot);
 
           memoryCGroup = new File(memoryCGroupRoot);
         }
 
-        boolean readHardLimit = false;
-        File softMemoryCGroupLimit = new File(memoryCGroup, "memory.soft_limit_in_bytes");
-        if (softMemoryCGroupLimit.exists()) {
-          try {
-            final FileReader memoryLimitReader = new FileReader(softMemoryCGroupLimit);
-            final BufferedReader bufferedMemoryLimitReader = new BufferedReader(memoryLimitReader);
-            try {
-              try {
-                final String cgroupMemoryLimitValueStr = bufferedMemoryLimitReader.readLine();
-                try {
-                  final long cgroupMemoryLimitValue = Long.parseLong(cgroupMemoryLimitValueStr);
+        final long softMemoryLimit = fetchCGroupSoftMemoryLimit(memoryCGroup, printSteps);
+        memoryLimit = updateMemoryLimit(memoryLimit, softMemoryLimit);
 
-                  if (printSteps)
-                    OLogManager.instance().info(this, "cgroup soft memory limit is %d", cgroupMemoryLimitValue);
-
-                  if (cgroupMemoryLimitValue < memoryLimit) {
-                    memoryLimit = cgroupMemoryLimitValue;
-                  }
-                } catch (NumberFormatException nfe) {
-                  OLogManager.instance()
-                      .error(this, "Can not read memory soft limit for cgroup %s, will try to read memory hard limit", nfe,
-                          memoryCGroup);
-                  readHardLimit = true;
-                }
-              } catch (IOException ioe) {
-                OLogManager.instance()
-                    .error(this, "Can not read memory soft limit for cgroup %s, will try to read memory hard limit", ioe,
-                        memoryCGroup);
-                readHardLimit = true;
-              }
-            } finally {
-              try {
-                bufferedMemoryLimitReader.close();
-              } catch (IOException ioe) {
-                OLogManager.instance().error(this, "Error on closing the reader of soft memory limit", ioe);
-              }
-            }
-          } catch (FileNotFoundException fnfe) {
-            OLogManager.instance()
-                .error(this, "Can not read memory soft limit for cgroup %s, will try to read memory hard limit", fnfe,
-                    memoryCGroup);
-            readHardLimit = true;
-          }
-        } else {
-          if (printSteps)
-            OLogManager.instance()
-                .info(this, "Can not read memory soft limit for cgroup %s, will try to read memory hard limit", memoryCGroup);
-
-          readHardLimit = true;
-        }
-
-        if (readHardLimit) {
-          final File hardMemoryCGroupLimit = new File(memoryCGroup, "memory.limit_in_bytes");
-          if (hardMemoryCGroupLimit.exists()) {
-            try {
-              final FileReader memoryLimitReader = new FileReader(softMemoryCGroupLimit);
-              final BufferedReader bufferedMemoryLimitReader = new BufferedReader(memoryLimitReader);
-              try {
-                try {
-                  final String cgroupMemoryLimitValueStr = bufferedMemoryLimitReader.readLine();
-                  try {
-                    final long cgroupMemoryLimitValue = Long.parseLong(cgroupMemoryLimitValueStr);
-
-                    if (printSteps)
-                      OLogManager.instance().info(this, "cgroup hard memory limit is %d", cgroupMemoryLimitValue);
-
-                    if (cgroupMemoryLimitValue < memoryLimit) {
-                      memoryLimit = cgroupMemoryLimitValue;
-                    }
-                  } catch (NumberFormatException nfe) {
-                    OLogManager.instance().error(this,
-                        "Can not read memory hard limit for cgroup %s, cgroup memory limits for current "
-                            + "process will not be applied", nfe, memoryCGroup);
-                  }
-                } catch (IOException ioe) {
-                  OLogManager.instance().error(this,
-                      "Can not read memory hard limit for cgroup %s, cgroup memory limits for current process"
-                          + " will not be applied", ioe, memoryCGroup);
-                }
-              } finally {
-                try {
-                  bufferedMemoryLimitReader.close();
-                } catch (IOException ioe) {
-                  OLogManager.instance().error(this, "Error on closing the reader of hard memory limit", ioe);
-                }
-              }
-            } catch (FileNotFoundException fnfe) {
-              OLogManager.instance().error(this,
-                  "Can not read memory hard limit for cgroup %s, cgroup memory limits for current process will not be applied",
-                  fnfe, memoryCGroup);
-            }
-          } else {
-            if (printSteps) {
-              OLogManager.instance().info(this,
-                  "Can not read memory hard limit for cgroup %s, cgroup memory limits for current process will not be applied",
-                  memoryCGroup);
-            }
-          }
-        }
+        final long hardMemoryLimit = fetchCGroupHardMemoryLimit(memoryCGroup, printSteps);
+        memoryLimit = updateMemoryLimit(memoryLimit, hardMemoryLimit);
       }
     }
 
     if (printSteps) {
       if (memoryLimit > 0)
-        OLogManager.instance().info(this, "Detected memory limit for current process is %d", memoryLimit);
+        OLogManager.instance()
+            .infoNoDb(this, "Detected memory limit for current process is %d B/%d MB/%d GB", memoryLimit, convertToMB(memoryLimit),
+                convertToGB(memoryLimit));
       else
-        OLogManager.instance().info(this, "Memory limit for current process is not set");
+        OLogManager.instance().infoNoDb(this, "Memory limit for current process is not set");
     }
 
     return memoryLimit;
+  }
+
+  private long updateMemoryLimit(long memoryLimit, long newMemoryLimit) {
+    if (newMemoryLimit <= 0) {
+      return memoryLimit;
+    }
+
+    if (memoryLimit <= 0) {
+      memoryLimit = newMemoryLimit;
+    }
+
+    if (memoryLimit > newMemoryLimit) {
+      memoryLimit = newMemoryLimit;
+    }
+
+    return memoryLimit;
+  }
+
+  private long fetchCGroupSoftMemoryLimit(File memoryCGroup, boolean printSteps) {
+    File softMemoryCGroupLimit = new File(memoryCGroup, "memory.soft_limit_in_bytes");
+    if (softMemoryCGroupLimit.exists()) {
+      try {
+        final FileReader memoryLimitReader = new FileReader(softMemoryCGroupLimit);
+        final BufferedReader bufferedMemoryLimitReader = new BufferedReader(memoryLimitReader);
+        try {
+          try {
+            final String cgroupMemoryLimitValueStr = bufferedMemoryLimitReader.readLine();
+            try {
+              final long cgroupMemoryLimitValue = Long.parseLong(cgroupMemoryLimitValueStr);
+
+              if (printSteps)
+                OLogManager.instance().infoNoDb(this, "cgroup soft memory limit is %d B/%d MB/%d GB", cgroupMemoryLimitValue,
+                    convertToMB(cgroupMemoryLimitValue), convertToGB(cgroupMemoryLimitValue));
+
+              return cgroupMemoryLimitValue;
+            } catch (NumberFormatException nfe) {
+              OLogManager.instance().errorNoDb(this, "Can not read memory soft limit for cgroup '%s'", nfe, memoryCGroup);
+            }
+          } catch (IOException ioe) {
+            OLogManager.instance().errorNoDb(this, "Can not read memory soft limit for cgroup '%s'", ioe, memoryCGroup);
+          }
+        } finally {
+          try {
+            bufferedMemoryLimitReader.close();
+          } catch (IOException ioe) {
+            OLogManager.instance().errorNoDb(this, "Error on closing the reader of soft memory limit", ioe);
+          }
+        }
+      } catch (FileNotFoundException fnfe) {
+        OLogManager.instance().errorNoDb(this, "Can not read memory soft limit for cgroup '%s'", fnfe, memoryCGroup);
+      }
+    } else {
+      if (printSteps)
+        OLogManager.instance().infoNoDb(this, "Can not read memory soft limit for cgroup '%s'", memoryCGroup);
+    }
+
+    return -1;
+  }
+
+  private long fetchCGroupHardMemoryLimit(File memoryCGroup, boolean printSteps) {
+    final File hardMemoryCGroupLimit = new File(memoryCGroup, "memory.limit_in_bytes");
+    if (hardMemoryCGroupLimit.exists()) {
+      try {
+        final FileReader memoryLimitReader = new FileReader(hardMemoryCGroupLimit);
+        final BufferedReader bufferedMemoryLimitReader = new BufferedReader(memoryLimitReader);
+        try {
+          try {
+            final String cgroupMemoryLimitValueStr = bufferedMemoryLimitReader.readLine();
+            try {
+              final long cgroupMemoryLimitValue = Long.parseLong(cgroupMemoryLimitValueStr);
+
+              if (printSteps)
+                OLogManager.instance().infoNoDb(this, "cgroup hard memory limit is %d B/%d MB/%d GB", cgroupMemoryLimitValue,
+                    convertToMB(cgroupMemoryLimitValue), convertToGB(cgroupMemoryLimitValue));
+
+              return cgroupMemoryLimitValue;
+            } catch (NumberFormatException nfe) {
+              OLogManager.instance().errorNoDb(this, "Can not read memory hard limit for cgroup '%s'", nfe, memoryCGroup);
+            }
+          } catch (IOException ioe) {
+            OLogManager.instance().errorNoDb(this, "Can not read memory hard limit for cgroup '%s'", ioe, memoryCGroup);
+          }
+        } finally {
+          try {
+            bufferedMemoryLimitReader.close();
+          } catch (IOException ioe) {
+            OLogManager.instance().errorNoDb(this, "Error on closing the reader of hard memory limit", ioe);
+          }
+        }
+      } catch (FileNotFoundException fnfe) {
+        OLogManager.instance().errorNoDb(this, "Can not read memory hard limit for cgroup '%s'", fnfe, memoryCGroup);
+      }
+    } else {
+      if (printSteps) {
+        OLogManager.instance().infoNoDb(this, "Can not read memory hard limit for cgroup '%s'", memoryCGroup);
+      }
+    }
+
+    return -1;
+  }
+
+  private String findMemoryGCGroupPath() {
+    String memoryCGroupPath = null;
+
+    //fetch list of cgroups to which given process belongs to
+    final File cgroupList = new File("/proc/self/cgroup");
+    if (cgroupList.exists()) {
+      try {
+        final FileReader cgroupListReader = new FileReader(cgroupList);
+        final BufferedReader bufferedCGroupReader = new BufferedReader(cgroupListReader);
+        try {
+          String cgroupData;
+          try {
+            while ((cgroupData = bufferedCGroupReader.readLine()) != null) {
+              final String[] cgroupParts = cgroupData.split(":");
+              //we need only memory controller
+              if (cgroupParts[1].equals("memory")) {
+                memoryCGroupPath = cgroupParts[2];
+              }
+            }
+          } catch (IOException ioe) {
+            OLogManager.instance().errorNoDb(this, "Error during reading of details of list of cgroups for the current process, "
+                + "no restrictions applied by cgroups will be taken into account", ioe);
+            memoryCGroupPath = null;
+          }
+
+        } finally {
+          try {
+            bufferedCGroupReader.close();
+          } catch (IOException ioe) {
+            OLogManager.instance()
+                .errorNoDb(this, "Error during closing of reader which reads details of list of cgroups for the current process",
+                    ioe);
+          }
+        }
+      } catch (FileNotFoundException fnfe) {
+        OLogManager.instance().warnNoDb(this, "Can not retrieve list of cgroups to which process belongs, "
+            + "no restrictions applied by cgroups will be taken into account");
+      }
+    }
+
+    return memoryCGroupPath;
+  }
+
+  private String findMemoryGCRoot() {
+    String memoryCGroupRoot = null;
+
+    //fetch all mount points and find one to which cgroup memory controller is mounted
+    final File procMounts = new File("/proc/mounts");
+    if (procMounts.exists()) {
+      FileReader mountsReader;
+      try {
+        mountsReader = new FileReader(procMounts);
+        BufferedReader bufferedMountsReader = new BufferedReader(mountsReader);
+
+        try {
+          String fileSystem;
+          while ((fileSystem = bufferedMountsReader.readLine()) != null) {
+            //file system type \s+ mount point \s+ etc.
+            final String[] fsParts = fileSystem.split("\\s+");
+            if (fsParts.length == 0) {
+              continue;
+            }
+
+            final String fsType = fsParts[0];
+            //all cgroup controllers have "cgroup" as file system type
+            if (fsType.equals("cgroup")) {
+              //get mounting path of cgroup
+              final String fsMountingPath = fsParts[1];
+              final String[] fsPathParts = fsMountingPath.split(File.separator);
+              if (fsPathParts[fsPathParts.length - 1].equals("memory")) {
+                memoryCGroupRoot = fsMountingPath;
+              }
+            }
+          }
+        } catch (IOException e) {
+          OLogManager.instance().errorNoDb(this, "Error during reading a list of mounted file systems", e);
+          memoryCGroupRoot = DEFAULT_MEMORY_CGROUP_PATH;
+        } finally {
+          try {
+            bufferedMountsReader.close();
+          } catch (IOException e) {
+            OLogManager.instance().errorNoDb(this, "Error during closing of reader of list of mounted file systems", e);
+          }
+        }
+
+      } catch (FileNotFoundException fnfe) {
+        memoryCGroupRoot = DEFAULT_MEMORY_CGROUP_PATH;
+      }
+    }
+
+    if (memoryCGroupRoot == null) {
+      memoryCGroupRoot = DEFAULT_MEMORY_CGROUP_PATH;
+    }
+
+    return memoryCGroupRoot;
   }
 
   /**
    * Obtains the total size in bytes of the installed physical memory on this machine. Note that on some VMs it's impossible to
    * obtain the physical memory size, in this case the return value will {@code -1}.
    *
-   * @return the total physical memory size in bytes or {@code -1} if the size can't be obtained.
+   * @return the total physical memory size in bytes or {@code <= 0} if the size can't be obtained.
    */
+
   private long getPhysicalMemorySize() {
     long osMemory = -1;
 
@@ -287,52 +346,58 @@ public class ONative {
             osMemory = Long.parseLong(attribute.toString());
           } catch (NumberFormatException e) {
             if (!OLogManager.instance().isDebugEnabled())
-              OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+              OLogManager.instance().warnNoDb(OMemory.class, "Unable to determine the amount of installed RAM.");
             else
-              OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+              OLogManager.instance().debugNoDb(OMemory.class, "Unable to determine the amount of installed RAM.", e);
           }
         }
       } else {
         if (!OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+          OLogManager.instance().warnNoDb(OMemory.class, "Unable to determine the amount of installed RAM.");
       }
     } catch (MalformedObjectNameException e) {
       if (!OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+        OLogManager.instance().warnNoDb(OMemory.class, "Unable to determine the amount of installed RAM.");
       else
-        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+        OLogManager.instance().debugNoDb(OMemory.class, "Unable to determine the amount of installed RAM.", e);
     } catch (AttributeNotFoundException e) {
       if (!OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+        OLogManager.instance().warnNoDb(OMemory.class, "Unable to determine the amount of installed RAM.");
       else
-        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+        OLogManager.instance().debugNoDb(OMemory.class, "Unable to determine the amount of installed RAM.", e);
     } catch (InstanceNotFoundException e) {
       if (!OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+        OLogManager.instance().warnNoDb(OMemory.class, "Unable to determine the amount of installed RAM.");
       else
-        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+        OLogManager.instance().debugNoDb(OMemory.class, "Unable to determine the amount of installed RAM.", e);
     } catch (MBeanException e) {
       if (!OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+        OLogManager.instance().warnNoDb(OMemory.class, "Unable to determine the amount of installed RAM.");
       else
-        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+        OLogManager.instance().debugNoDb(OMemory.class, "Unable to determine the amount of installed RAM.", e);
     } catch (ReflectionException e) {
       if (!OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+        OLogManager.instance().warnNoDb(OMemory.class, "Unable to determine the amount of installed RAM.");
       else
-        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+        OLogManager.instance().debugNoDb(OMemory.class, "Unable to determine the amount of installed RAM.", e);
     } catch (RuntimeException e) {
-      OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+      OLogManager.instance().warnNoDb(OMemory.class, "Unable to determine the amount of installed RAM.", e);
     }
 
     return osMemory;
   }
 
-  private static class InstanceHolder {
-    private static final ONative INSTANCE;
+  private static long convertToMB(long bytes) {
+    if (bytes < 0)
+      return bytes;
 
-    static {
-      INSTANCE = new ONative();
-    }
+    return bytes / (1024 * 1024);
+  }
+
+  private static long convertToGB(long bytes) {
+    if (bytes < 0)
+      return bytes;
+
+    return bytes / (1024 * 1024 * 1024);
   }
 }

@@ -160,9 +160,20 @@ public class OLogManager {
       log(iRequester, Level.FINE, iMessage, iException, true, iAdditionalArgs);
   }
 
+  public void debugNoDb(final Object iRequester, final String iMessage, final Throwable iException,
+      final Object... iAdditionalArgs) {
+    if (isDebugEnabled())
+      log(iRequester, Level.FINE, iMessage, iException, false, iAdditionalArgs);
+  }
+
   public void info(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
     if (isInfoEnabled())
       log(iRequester, Level.INFO, iMessage, null, true, iAdditionalArgs);
+  }
+
+  public void infoNoDb(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
+    if (isInfoEnabled())
+      log(iRequester, Level.INFO, iMessage, null, false, iAdditionalArgs);
   }
 
   public void info(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
@@ -173,6 +184,11 @@ public class OLogManager {
   public void warn(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
     if (isWarnEnabled())
       log(iRequester, Level.WARNING, iMessage, null, true, iAdditionalArgs);
+  }
+
+  public void warnNoDb(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
+    if (isWarnEnabled())
+      log(iRequester, Level.WARNING, iMessage, null, false, iAdditionalArgs);
   }
 
   public void warn(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {

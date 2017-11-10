@@ -130,7 +130,13 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
   }
 
   public OAbstractProfiler() {
-    Orient.instance().registerWeakOrientStartupListener(this);
+    this(true);
+  }
+
+  public OAbstractProfiler(boolean registerListener) {
+    if (registerListener) {
+      Orient.instance().registerWeakOrientStartupListener(this);
+    }
   }
 
   public OAbstractProfiler(final OAbstractProfiler profiler) {
