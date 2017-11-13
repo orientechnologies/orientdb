@@ -21,11 +21,12 @@ node("master") {
                     docker.image("${mvnJdk7Image}")
                             .inside("--memory=4g ${env.VOLUMES}") {
                         try {
-                            export MAVEN_OPTS=-Xmx128m
+                            sh "export MAVEN_OPTS=-Xmx128m"
                             //skip integration test for now
                             sh "${mvnHome}/bin/mvn -V  -fae clean   install   -Dsurefire.useFile=false -DskipITs"
                             sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
                             sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests -DskipITs"
+                            sh "echo ${MAVEN_OPTS}"
                         } finally {
                             junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
 
@@ -36,7 +37,7 @@ node("master") {
                 stage('Publish Javadoc') {
                     docker.image("${mvnJdk8Image}")
                             .inside("--memory=4g ${env.VOLUMES}") {
-                        export MAVEN_OPTS=-Xmx128m
+                        sh export MAVEN_OPTS=-Xmx128m
                         sh "${mvnHome}/bin/mvn  javadoc:aggregate"
                         sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
                     }
