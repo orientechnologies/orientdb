@@ -21,7 +21,7 @@ node("master") {
                     docker.image("${mvnJdk7Image}")
                             .inside("--memory=4g ${env.VOLUMES}") {
                         try {
-                            export MAVEN_OPTS = "-Xmx256m"
+                            export MAVEN_OPTS = "-Xmx2048m"
                             //skip integration test for now
                             sh "${mvnHome}/bin/mvn -V  -fae clean   install   -Dsurefire.useFile=false -DskipITs"
                             sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
