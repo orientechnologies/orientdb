@@ -111,7 +111,7 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
     long diskCacheInMB;
     if (osMemory.insideContainer) {
       //DISK-CACHE IN MB = OS MEMORY - MAX HEAP JVM MEMORY - 256 MB
-      diskCacheInMB = (osMemory.memoryLimit - jvmMaxMemory) / (1024 * 1024) - 256;
+      diskCacheInMB = (osMemory.memoryLimit - jvmMaxMemory) / (1024 * 1024) - 512;
     } else {
       // DISK-CACHE IN MB = OS MEMORY - MAX HEAP JVM MEMORY - 2 GB
       diskCacheInMB = (osMemory.memoryLimit - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
