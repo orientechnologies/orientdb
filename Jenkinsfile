@@ -1,5 +1,9 @@
 #!groovy
 node("master") {
+    properties([[$class  : 'BuildDiscarderProperty',
+                 strategy: [$class              : 'LogRotator', artifactDaysToKeepStr: '',
+                            artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10']]])
+
     milestone()
     lock(resource: "${env.BRANCH_NAME}", inversePrecedence: true) {
         ansiColor('xterm') {
