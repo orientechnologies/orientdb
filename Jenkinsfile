@@ -1,5 +1,9 @@
 #!groovy
 node("master") {
+    properties([[$class  : 'BuildDiscarderProperty',
+                 strategy: [$class              : 'LogRotator', artifactDaysToKeepStr: '',
+                            artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10']]])
+
     milestone()
     lock(resource: "${env.BRANCH_NAME}", inversePrecedence: true) {
         ansiColor('xterm') {
@@ -16,6 +20,7 @@ node("master") {
                 stage('Run tests on Java8') {
                     docker.image("${mvnJdk8Image}").inside("${env.VOLUMES}") {
                         try {
+                            export MAVEN_OPTS = "-Xmx:128m"
                             //skip integration test for now
                             sh "${mvnHome}/bin/mvn -V  -fae clean install   -Dsurefire.useFile=false -DskipITs"
                             //clean distribution to enable recreation of databases
@@ -32,6 +37,7 @@ node("master") {
                 stage('Run QA/Integration tests on Java8') {
                     docker.image("${mvnJdk8Image}").inside("${env.VOLUMES}") {
                         try {
+                            export MAVEN_OPTS = "-Xmx:128m"
                             sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
                         } finally {
                             junit allowEmptyResults: true, testResults: '**/target/failsafe-reports/TEST-*.xml'
@@ -42,6 +48,7 @@ node("master") {
 
                 stage('Publish Javadoc') {
                     docker.image("${mvnJdk8Image}").inside("${env.VOLUMES}") {
+                        export MAVEN_OPTS = "-Xmx:128m"
                         sh "${mvnHome}/bin/mvn  javadoc:aggregate"
                         sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
                     }
