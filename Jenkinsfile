@@ -14,23 +14,25 @@ node("master") {
 
             try {
                 stage('Run tests on Java7') {
-                    docker.image("${mvnJdk7Image}")
+                    docker.image("${mvnJdk7Image}", "--memory=4g")
                             .inside("${env.VOLUMES}") {
                         try {
+                            export MAVEN_OPTS = "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
                             //skip integration test for now
                             sh "${mvnHome}/bin/mvn -V  -fae clean   install   -Dsurefire.useFile=false -DskipITs"
                             sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
                             sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests -DskipITs"
                         } finally {
                             junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
-                            
+
                         }
                     }
                 }
 
                 stage('Publish Javadoc') {
-                    docker.image("${mvnJdk8Image}")
+                    docker.image("${mvnJdk8Image}", "--memory=4g")
                             .inside("${env.VOLUMES}") {
+                        export MAVEN_OPTS = "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
                         sh "${mvnHome}/bin/mvn  javadoc:aggregate"
                         sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
                     }
