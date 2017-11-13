@@ -18,8 +18,8 @@ node("master") {
 
             try {
                 stage('Run tests on Java7') {
-                    docker.image("${mvnJdk7Image}", "--memory=4g")
-                            .inside("${env.VOLUMES}") {
+                    docker.image("${mvnJdk7Image}")
+                            .inside("--memory=4g ${env.VOLUMES}") {
                         try {
                             export MAVEN_OPTS = "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
                             //skip integration test for now
@@ -34,8 +34,8 @@ node("master") {
                 }
 
                 stage('Publish Javadoc') {
-                    docker.image("${mvnJdk8Image}", "--memory=4g")
-                            .inside("${env.VOLUMES}") {
+                    docker.image("${mvnJdk8Image}")
+                            .inside("--memory=4g ${env.VOLUMES}") {
                         export MAVEN_OPTS = "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
                         sh "${mvnHome}/bin/mvn  javadoc:aggregate"
                         sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
