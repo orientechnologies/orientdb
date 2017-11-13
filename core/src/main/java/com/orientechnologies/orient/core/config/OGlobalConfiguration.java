@@ -818,13 +818,13 @@ public enum OGlobalConfiguration {
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY("distributed.concurrentTxMaxAutoRetry",
       "Maximum attempts the transaction coordinator should execute a transaction automatically, if records are locked. (Minimum is 1 = no attempts)",
-      Integer.class, 10, true),
+      Integer.class, 15, true),
 
   /**
    * @Since 2.2.7
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_ATOMIC_LOCK_TIMEOUT("distributed.atomicLockTimeout",
-      "Timeout (in ms) to acquire a distributed lock on a record. (0=infinite)", Integer.class, 50, true),
+      "Timeout (in ms) to acquire a distributed lock on a record. (0=infinite)", Integer.class, 1000, true),
 
   /**
    * @Since 2.1
