@@ -50,9 +50,10 @@ public class ONative {
   /**
    * @param printSteps Print all steps of discovering of memory limit in the log with {@code INFO} level.
    *
-   * @return Amount of memory which are allowed to be consumed by application, if value <= 0 then limit is not set.
+   * @return Amount of memory which are allowed to be consumed by application, and detects whether OrientDB instance is running
+   * inside container. If <code>null</code> is returned then it was impossible to detect amount of memory on machine.
    */
-  public long getMemoryLimit(boolean printSteps) {
+  public MemoryLimitResult getMemoryLimit(boolean printSteps) {
     //Perform several steps here:
     //1. Fetch physical size available on machine
     //2. Fetch soft limit
@@ -61,6 +62,7 @@ public class ONative {
     //5. Return the minimal value from the list of results
 
     long memoryLimit = getPhysicalMemorySize();
+    boolean insideContainer = false;
 
     if (printSteps) {
       OLogManager.instance()
@@ -105,6 +107,7 @@ public class ONative {
                 + "process is running in container, will try to read root '%s' memory cgroup data", memoryCGroup, memoryCGroupRoot);
 
           memoryCGroup = new File(memoryCGroupRoot);
+          insideContainer = true;
         }
 
         final long softMemoryLimit = fetchCGroupSoftMemoryLimit(memoryCGroup, printSteps);
@@ -124,7 +127,10 @@ public class ONative {
         OLogManager.instance().infoNoDb(this, "Memory limit for current process is not set");
     }
 
-    return memoryLimit;
+    if (memoryLimit <= 0)
+      return null;
+
+    return new MemoryLimitResult(memoryLimit, insideContainer);
   }
 
   private long updateMemoryLimit(long memoryLimit, long newMemoryLimit) {
@@ -399,5 +405,15 @@ public class ONative {
       return bytes;
 
     return bytes / (1024 * 1024 * 1024);
+  }
+
+  public final class MemoryLimitResult {
+    public final long    memoryLimit;
+    public final boolean insideContainer;
+
+    public MemoryLimitResult(long memoryLimit, boolean insideContainer) {
+      this.memoryLimit = memoryLimit;
+      this.insideContainer = insideContainer;
+    }
   }
 }

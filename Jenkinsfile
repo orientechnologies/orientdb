@@ -13,13 +13,6 @@ node("master") {
             }
 
             try {
-//                stage('Compile on Java7') {
-//                    docker.image("${mvnJdk7Image}")
-//                            .inside("${env.VOLUMES}") {
-//                        sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean compile -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
-//                    }
-//                }
-
                 stage('Run tests on Java7') {
                     docker.image("${mvnJdk7Image}")
                             .inside("${env.VOLUMES}") {
@@ -35,18 +28,6 @@ node("master") {
                     }
                 }
 
-//            stage('Run QA/Integration tests on Java8') {
-//                docker.image("${mvnJdk8Image}")
-//                        .inside("${env.VOLUMES}") {
-//                    try {
-//                        sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
-//                    } finally {
-//                        junit allowEmptyResults: true, testResults: '**/target/failsafe-reports/TEST-*.xml'
-//
-//                    }
-//                }
-//            }
-
                 stage('Publish Javadoc') {
                     docker.image("${mvnJdk8Image}")
                             .inside("${env.VOLUMES}") {
@@ -57,8 +38,6 @@ node("master") {
 
                 stage("Downstream projects") {
                     build job: "orientdb-spatial-multibranch/${env.BRANCH_NAME}", wait: false
-                    //excluded: too long
-                    //build job: "orientdb-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "orientdb-neo4j-importer-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "orientdb-teleporter-multibranch/${env.BRANCH_NAME}", wait: false

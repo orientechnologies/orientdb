@@ -99,14 +99,14 @@ public class OMemory {
    * Checks the direct memory configuration and emits a warning if configuration is invalid.
    */
   public static void checkDirectMemoryConfiguration() {
-    final long physicalMemory = ONative.instance().getMemoryLimit(false);
+    final ONative.MemoryLimitResult physicalMemory = ONative.instance().getMemoryLimit(false);
     final long maxDirectMemory = getConfiguredMaxDirectMemory();
 
     if (maxDirectMemory == -1) {
-      if (physicalMemory > 0)
+      if (physicalMemory != null)
         OLogManager.instance().warnNoDb(OMemory.class, "MaxDirectMemorySize JVM option is not set or has invalid value, "
-            + "that may cause out of memory errors. Please set the -XX:MaxDirectMemorySize=" + physicalMemory / (1024 * 1024)
-            + "m option when you start the JVM.");
+            + "that may cause out of memory errors. Please set the -XX:MaxDirectMemorySize=" + physicalMemory.memoryLimit / (1024
+            * 1024) + "m option when you start the JVM.");
       else
         OLogManager.instance().warnNoDb(OMemory.class, "MaxDirectMemorySize JVM option is not set or has invalid value, "
             + "that may cause out of memory errors. Please set the -XX:MaxDirectMemorySize=<SIZE>m JVM option "
@@ -123,7 +123,7 @@ public class OMemory {
   public static void checkCacheMemoryConfiguration() {
     final long maxHeapSize = Runtime.getRuntime().maxMemory();
     final long maxCacheSize = getMaxCacheMemorySize();
-    final long physicalMemory = ONative.instance().getMemoryLimit(false);
+    final ONative.MemoryLimitResult physicalMemory = ONative.instance().getMemoryLimit(false);
     final long maxDirectMemory = getConfiguredMaxDirectMemory();
 
     if (maxDirectMemory != -1 && maxCacheSize > maxDirectMemory)
@@ -133,7 +133,7 @@ public class OMemory {
           + "maximum direct memory size or storage.diskCache.bufferSize OrientDB option to lower memory requirements of the "
           + "cache.");
 
-    if (maxHeapSize != Long.MAX_VALUE && physicalMemory > 0 && maxHeapSize + maxCacheSize > physicalMemory)
+    if (maxHeapSize != Long.MAX_VALUE && physicalMemory != null && maxHeapSize + maxCacheSize > physicalMemory.memoryLimit)
       OLogManager.instance().warnNoDb(OMemory.class,
           "The sum of the configured JVM maximum heap size (" + maxHeapSize + " bytes) " + "and the OrientDB maximum cache size ("
               + maxCacheSize + " bytes) is larger than the available physical memory size " + "(" + physicalMemory

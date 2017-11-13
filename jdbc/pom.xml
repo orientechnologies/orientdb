@@ -36,6 +36,7 @@
 
     <properties>
         <argLine>
+            -Xmx1024m
             -XX:MaxDirectMemorySize=512g
             -Dmemory.directMemory.trackMode=true
             -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager
