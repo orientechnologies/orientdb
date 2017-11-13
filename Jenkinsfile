@@ -21,7 +21,7 @@ node("master") {
                     docker.image("${mvnJdk7Image}")
                             .inside("--memory=4g ${env.VOLUMES}") {
                         try {
-                            export MAVEN_OPTS = "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+                            //export MAVEN_OPTS = "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
                             //skip integration test for now
                             sh "${mvnHome}/bin/mvn -V  -fae clean   install   -Dsurefire.useFile=false -DskipITs"
                             sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
@@ -36,7 +36,7 @@ node("master") {
                 stage('Publish Javadoc') {
                     docker.image("${mvnJdk8Image}")
                             .inside("--memory=4g ${env.VOLUMES}") {
-                        export MAVEN_OPTS = "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+                        //export MAVEN_OPTS = "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
                         sh "${mvnHome}/bin/mvn  javadoc:aggregate"
                         sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
                     }
