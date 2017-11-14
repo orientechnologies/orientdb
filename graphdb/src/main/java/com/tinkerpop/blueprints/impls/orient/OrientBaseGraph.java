@@ -2194,12 +2194,21 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     final String inverseFieldName = OrientVertex.getInverseConnectionFieldName(iFieldName, useVertexFieldsForEdgeLabels);
     OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(r);
-    if (immutableClass.isVertexType()) {
+    OClass klass = ODocumentInternal.getImmutableSchemaClass(r);
+    if (klass == null) {
+      graph.getDatabase().getMetadata().reload();
+      klass = graph.getDatabase().getMetadata().getSchema().getClass(inverseFieldName);
+      if (klass == null) {
+        OLogManager.instance().warn(null, "Removing edge, schema class not found for " + r);
+        return;
+      }
+    }
+    if (klass.isVertexType()) {
       // DIRECT VERTEX
       removeEdges(graph, r, inverseFieldName, iVertex, false, useVertexFieldsForEdgeLabels, autoScaleEdgeType, forceReload);
       r.save();
 
-    } else if (immutableClass.isEdgeType()) {
+    } else if (klass.isEdgeType()) {
       // EDGE, REMOVE THE EDGE
       final OIdentifiable otherVertex = OrientEdge
           .getConnection(r, OrientVertex.getConnectionDirection(inverseFieldName, useVertexFieldsForEdgeLabels));
