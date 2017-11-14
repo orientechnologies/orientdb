@@ -130,6 +130,7 @@
                             <executable>${java.home}/bin/java</executable>
                             <workingDirectory>${project.basedir}</workingDirectory>
                             <arguments>
+                                <argument>-Xmx${heapSize}</argument>
                                 <argument>-XX:MaxDirectMemorySize=512g</argument>
                                 <argument>-classpath</argument>
                                 <classpath/>

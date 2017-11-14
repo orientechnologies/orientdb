@@ -192,6 +192,7 @@
         <license.location>ODB-ASL-LICENSE.txt</license.location>
         <!--Override with the given url on external modules-->
         <!--<license.location>https://github.com/orientechnologies/orientdb/raw/develop/ODB-ASL-LICENSE.txt</license.location>-->
+        <heapSize>2048m</heapSize>
     </properties>
 
     <build>

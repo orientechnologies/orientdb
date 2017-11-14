@@ -18,7 +18,7 @@ node("master") {
             try {
 
                 stage('Run tests on Java8') {
-                    docker.image("${mvnJdk8Image}").inside("${env.VOLUMES}") {
+                    docker.image("${mvnJdk8Image}").inside("--memory=5g ${env.VOLUMES}") {
                         try {
                             //skip integration test for now
                             sh "${mvnHome}/bin/mvn -V  -fae clean install   -Dsurefire.useFile=false -DskipITs"
@@ -34,7 +34,7 @@ node("master") {
                 }
 
                 stage('Run QA/Integration tests on Java8') {
-                    docker.image("${mvnJdk8Image}").inside("${env.VOLUMES}") {
+                    docker.image("${mvnJdk8Image}").inside("--memory=5g ${env.VOLUMES}") {
                         try {
                             sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
                         } finally {
@@ -45,7 +45,7 @@ node("master") {
                 }
 
                 stage('Publish Javadoc') {
-                    docker.image("${mvnJdk8Image}").inside("${env.VOLUMES}") {
+                    docker.image("${mvnJdk8Image}").inside("--memory=5g ${env.VOLUMES}") {
                         sh "${mvnHome}/bin/mvn  javadoc:aggregate"
                         sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
                     }

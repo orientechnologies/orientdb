@@ -29,7 +29,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
@@ -37,6 +39,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
@@ -60,7 +63,9 @@ public class Orient extends OListenerManger<OOrientListener> {
   public static final String ORIENTDB_HOME = "ORIENTDB_HOME";
   public static final String URL_SYNTAX    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  private static final    Orient  instance               = new Orient();
+  private static volatile Orient instance;
+  private static final Lock initLock = new ReentrantLock();
+
   private static volatile boolean registerDatabaseByPath = false;
 
   private final ConcurrentMap<String, OEngine> engines = new ConcurrentHashMap<String, OEngine>();
@@ -99,20 +104,12 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   private Set<OrientDBInternal> runningInstances = new HashSet<>();
 
-  static {
-    try {
-      instance.startup();
-    } catch (Exception e) {
-      OLogManager.instance().errorNoDb(Orient.class, "Error during OrientDB engine initialization", e);
-    }
-  }
-
   private final String os;
 
   private volatile Timer timer;
   private volatile ORecordFactoryManager recordFactoryManager = new ORecordFactoryManager();
   private          OrientShutdownHook          shutdownHook;
-  private volatile OProfiler                   profiler;
+  private volatile OAbstractProfiler           profiler;
   private          ODatabaseThreadLocalFactory databaseThreadFactory;
   private volatile boolean active = false;
   private          ThreadPoolExecutor workers;
@@ -158,7 +155,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  protected Orient() {
+  Orient() {
     super(true);
     this.os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
     threadGroup = new ThreadGroup("OrientDB");
@@ -166,6 +163,22 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public static Orient instance() {
+    if (instance != null)
+      return instance;
+
+    initLock.lock();
+    try {
+      if (instance != null)
+        return instance;
+
+      final Orient orient = new Orient();
+      orient.startup();
+
+      instance = orient;
+    } finally {
+      initLock.unlock();
+    }
+
     return instance;
   }
 
@@ -214,7 +227,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (timer == null)
         timer = new Timer(true);
 
-      profiler = new OProfilerStub();
+      profiler = new OProfilerStub(false);
 
       shutdownHook = new OrientShutdownHook();
       if (signalHandler == null) {
@@ -268,6 +281,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         }
 
       initShutdownQueue();
+      registerWeakOrientStartupListener(profiler);
     } finally {
       engineLock.writeLock().unlock();
     }
@@ -614,7 +628,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     return profiler;
   }
 
-  public void setProfiler(final OProfiler iProfiler) {
+  public void setProfiler(final OAbstractProfiler iProfiler) {
     profiler = iProfiler;
   }
 

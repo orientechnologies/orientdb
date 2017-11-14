@@ -13,7 +13,7 @@
     <artifactId>orientdb-crashtests</artifactId>
 
     <properties>
-        <argLine>-ea -Xmx3072m -XX:MaxDirectMemorySize=512g
+        <argLine>-ea -Xmx${heapSize} -XX:MaxDirectMemorySize=512g
             -Dmemory.directMemory.trackMode=true
             -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager
             -Dstorage.diskCache.checksumMode=storeAndThrow

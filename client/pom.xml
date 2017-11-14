@@ -41,6 +41,8 @@
         <osgi.export>com.orientechnologies.orient.client.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>
+            -ea
+            -Xmx${heapSize}
             -XX:MaxDirectMemorySize=512g
             -Dmemory.directMemory.trackMode=true
             -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager
