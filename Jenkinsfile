@@ -19,7 +19,7 @@ node("master") {
             try {
                 stage('Run tests on Java7') {
                     docker.image("${mvnJdk7Image}")
-                            .inside("--memory=4g ${env.VOLUMES}") {
+                            .inside("--memory=5g ${env.VOLUMES}") {
                         try {
                             //skip integration test for now
                             sh "${mvnHome}/bin/mvn -V  -fae clean   install   -Dsurefire.useFile=false -DskipITs"
@@ -34,7 +34,7 @@ node("master") {
 
                 stage('Publish Javadoc') {
                     docker.image("${mvnJdk8Image}")
-                            .inside("--memory=4g ${env.VOLUMES}") {
+                            .inside("--memory=5g ${env.VOLUMES}") {
                         sh "${mvnHome}/bin/mvn  javadoc:aggregate"
                         sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
                     }

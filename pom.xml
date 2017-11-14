@@ -186,6 +186,7 @@
         <surefire.version>2.19.1</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
+        <heapSize>2048mb</heapSize>
     </properties>
 
     <build>

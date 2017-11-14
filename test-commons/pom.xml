@@ -16,7 +16,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>
             -ea
-            -Xmx1024m
+            -Xmx${heapSize}
             -XX:MaxDirectMemorySize=512g
             -Dmemory.directMemory.trackMode=true
             -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager
