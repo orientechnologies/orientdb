@@ -93,7 +93,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
   private Lock openCloseLock;
 
-  OLuceneIndexEngineAbstract(OStorage storage, String name) {
+  public OLuceneIndexEngineAbstract(OStorage storage, String name) {
     super(true, 0, true);
 
     this.storage = storage;
@@ -106,11 +106,11 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     openCloseLock = new ReentrantLock();
   }
 
-  void updateLastAccess() {
+  protected void updateLastAccess() {
     lastAccess.set(System.currentTimeMillis());
   }
 
-  void addDocument(Document doc) {
+  protected void addDocument(Document doc) {
     try {
 
       reopenToken = indexWriter.addDocument(doc);
@@ -396,7 +396,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     return collectionDelete;
   }
 
-  void openIfClosed() {
+  protected void openIfClosed() {
     if (closed.get()) {
       try {
         reOpen();
