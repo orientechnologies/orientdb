@@ -258,11 +258,18 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               Charset.forName(configuration.getCharset()));
           try {
             final long startSegment;
+            final OLogSequenceNumber freezeLsn;
 
             final long newSegmentFreezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
             try {
               final OLogSequenceNumber startLsn = writeAheadLog.end();
-              writeAheadLog.preventCutTill(startLsn);
+
+              if (startLsn != null)
+                freezeLsn = startLsn;
+              else
+                freezeLsn = new OLogSequenceNumber(0, 0);
+
+              writeAheadLog.addCutTillLimit(freezeLsn);
 
               writeAheadLog.newSegment();
               startSegment = writeAheadLog.activeSegment();
@@ -286,7 +293,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                 lastLsn = lastWALLsn;
               }
             } finally {
-              writeAheadLog.preventCutTill(null);
+              writeAheadLog.removeCutTillLimit(freezeLsn);
             }
           } finally {
             zipOutputStream.flush();
