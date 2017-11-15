@@ -70,6 +70,19 @@ public enum OGlobalConfiguration {
   MEMORY_CHUNK_SIZE("memory.chunk.size", "Size of single memory chunk (in bytes) which will be preallocated by OrientDB",
       Integer.class, Integer.MAX_VALUE),
 
+  MEMORY_LEFT_TO_OS("memory.leftToOS", "Amount of free memory which should be left unallocated in case of OrientDB is started outside of container. "
+      + "Value can be set as % of total memory provided to OrientDB or as absolute value in bytes, kilobytes, megabytes or gigabytes. "
+      + "If you set value as 10% it means that 10% of memory will not be allocated by OrientDB and will be left to use by the rest of "
+      + "applications, if 2g value is provided it means that 2 gigabytes of memory will be left to use by the rest of applications. "
+      + "Default value is 2g", String.class, "2g"),
+
+  MEMORY_LEFT_TO_CONTAINER("memory.leftToContainer", "Amount of free memory which should be left unallocated in case of OrientDB is started inside of container. "
+      + "Value can be set as % of total memory provided to OrientDB or as absolute value in bytes, kilobytes, megabytes or gigabytes. "
+      + "If you set value as 10% it means that 10% of memory will not be allocated by OrientDB and will be left to use by the rest of "
+      + "applications, if 2g value is provided it means that 2 gigabytes of memory will be left to use by the rest of applications. "
+      + "Default value is 256m", String.class, "256m"),
+
+
   DIRECT_MEMORY_SAFE_MODE("memory.directMemory.safeMode",
       "Indicates whether to perform a range check before each direct memory update. It is true by default, "
           + "but usually it can be safely set to false. It should only be to true after dramatic changes have been made in the storage structures",
