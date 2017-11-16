@@ -29,9 +29,9 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   }
 
   @Override
-  public void releaseSchemaWriteLock(ODatabaseDocumentInternal database) {
+  public void releaseSchemaWriteLock(ODatabaseDocumentInternal database, final boolean iSave) {
     try {
-      super.releaseSchemaWriteLock(database);
+      super.releaseSchemaWriteLock(database, iSave);
     } finally {
       if (executeThroughDistributedStorage(database)) {
         ((OAutoshardedStorage) database.getStorage()).releaseDistributedExclusiveLock();
