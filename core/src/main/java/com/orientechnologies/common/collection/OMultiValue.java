@@ -478,8 +478,7 @@ public class OMultiValue {
 
         } else if (iToAdd instanceof Map<?, ?>) {
           // MAP
-          for (Entry<Object, Object> entry : ((Map<Object, Object>) iToAdd).entrySet())
-            coll.add(entry.getValue());
+          coll.add(iToAdd);
         } else if (iToAdd instanceof Iterator<?>) {
           // ITERATOR
           for (Iterator<?> it = (Iterator<?>) iToAdd; it.hasNext(); )
