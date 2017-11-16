@@ -125,6 +125,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected final        List<String>                   registeredNodeById     = new CopyOnWriteArrayList<String>();
   protected final        ConcurrentMap<String, Integer> registeredNodeByName   = new ConcurrentHashMap<String, Integer>();
   protected              ConcurrentMap<String, Long>    autoRemovalOfServers   = new ConcurrentHashMap<String, Long>();
+  protected              Set<String>                    installingDatabases    = Collections
+      .newSetFromMap(new ConcurrentHashMap<String, Boolean>());
   protected volatile ODistributedMessageServiceImpl messageService;
   protected Date                      startedOn              = new Date();
   protected ODistributedStrategy      responseManagerFactory = new ODefaultDistributedStrategy();
@@ -875,12 +877,18 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       // DON'T REPLICATE SYSTEM BECAUSE IS DIFFERENT AND PER SERVER
       return false;
 
+    if (installingDatabases.contains(databaseName)) {
+      return false;
+    }
+
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName, null);
 
-    return executeInDistributedDatabaseLock(databaseName, 20000, null,
-        new OCallable<Boolean, OModifiableDistributedConfiguration>() {
-          @Override
-          public Boolean call(OModifiableDistributedConfiguration cfg) {
+    try {
+      installingDatabases.add(databaseName);
+      return executeInDistributedDatabaseLock(databaseName, 20000, null,
+          new OCallable<Boolean, OModifiableDistributedConfiguration>() {
+            @Override
+            public Boolean call(OModifiableDistributedConfiguration cfg) {
 
             distrDatabase.checkNodeInConfiguration(cfg, nodeName);
 
@@ -993,6 +1001,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             return databaseInstalled;
           }
         });
+    } finally {
+      installingDatabases.remove(databaseName);
+    }
   }
 
   protected boolean requestFullDatabase(final ODistributedDatabaseImpl distrDatabase, final String databaseName,
