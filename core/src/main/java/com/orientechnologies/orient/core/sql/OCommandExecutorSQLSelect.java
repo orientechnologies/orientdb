@@ -1084,6 +1084,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           // EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
           projection = words.get(0);
           fieldName = projection;
+          if (fieldName.startsWith("`") && fieldName.endsWith("`")) {
+            fieldName = fieldName.substring(1, fieldName.length() - 1);
+          }
 
           lastRealPositionProjection = projectionString.indexOf(fieldName) + fieldName.length() + 1;
 
