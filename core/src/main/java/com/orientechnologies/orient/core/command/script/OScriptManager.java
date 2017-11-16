@@ -69,7 +69,7 @@ public class OScriptManager {
     if (!existsEngine(DEF_LANGUAGE)) {
       final ScriptEngine defEngine = scriptEngineManager.getEngineByName(DEF_LANGUAGE);
       if (defEngine == null) {
-        OLogManager.instance().warn(this, "Cannot find default script language for %s", DEF_LANGUAGE);
+        OLogManager.instance().warnNoDb(this, "Cannot find default script language for %s", DEF_LANGUAGE);
       } else {
         // GET DIRECTLY THE LANGUAGE BY NAME (DON'T KNOW WHY SOMETIMES DOESN'T RETURN IT WITH getEngineFactories() ABOVE!
         registerEngine(DEF_LANGUAGE, defEngine.getFactory());

@@ -40,6 +40,10 @@ public class OProfilerStub extends OAbstractProfiler {
   public OProfilerStub() {
   }
 
+  public OProfilerStub(boolean registerListener) {
+    super(registerListener);
+  }
+
   public OProfilerStub(final OAbstractProfiler profiler) {
     super(profiler);
   }

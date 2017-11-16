@@ -14,6 +14,14 @@
     <name>OrientDB Test Commons</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>
+            -ea
+            -Xmx${heapSize}
+            -XX:MaxDirectMemorySize=512g
+            -Dmemory.directMemory.trackMode=true
+            -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager
+            -Dstorage.diskCache.checksumMode=storeAndThrow
+        </argLine>
     </properties>
 
     <dependencies>

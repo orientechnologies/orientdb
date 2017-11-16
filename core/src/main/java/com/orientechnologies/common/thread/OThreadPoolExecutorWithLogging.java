@@ -62,6 +62,7 @@ public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
           else {
             final StringBuilder sb = new StringBuilder();
             sb.append("OOM Error was thrown by JVM. OOM can be caused by one of the following queries: \n");
+            sb.append("-----------------------------------------------------------------------------------\n");
             for (String query : queries) {
               sb.append("- '").append(query).append("'\n");
             }

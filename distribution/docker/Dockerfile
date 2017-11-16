@@ -19,7 +19,7 @@ RUN rm -rf /orientdb/databases/*
 
 ENV PATH /orientdb/bin:$PATH
 
-VOLUME ["/orientdb/backup", "/orientdb/databases", "/orientdb/config"]
+VOLUME ["/orientdb/backup", "/orientdb/databases", "/orientdb/config", "orientdb/log"]
 
 WORKDIR /orientdb
 
