@@ -12,7 +12,7 @@ ENV ORIENTDB_VERSION 3.0.0-SNAPSHOT
 #download distribution tar, untar and delete databases
 RUN mkdir /orientdb
 
-ADD target/orientdb-community-${ORIENTDB_VERSION}-distribution.dir/orientdb-community-${ORIENTDB_VERSION} /orientdb/
+ADD target/orientdb-community-${ORIENTDB_VERSION}.dir/orientdb-community-${ORIENTDB_VERSION} /orientdb/
 
 ENV PATH /orientdb/bin:$PATH
 
