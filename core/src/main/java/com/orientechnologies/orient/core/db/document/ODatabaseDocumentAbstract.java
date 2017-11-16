@@ -241,6 +241,19 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   public ODatabaseDocument delete(final ORecord iRecord, final OPERATION_MODE iMode) {
     checkIfActive();
+    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
+    if (iRecord instanceof OElement && dirtyManager != null && dirtyManager.getReferences() != null && !dirtyManager.getReferences()
+        .isEmpty()) {
+      if (((OElement) iRecord).isEdge() || ((OElement) iRecord).isVertex() && !getTransaction().isActive()) {
+        begin();
+        try {
+          currentTx.deleteRecord(iRecord, iMode);
+          return this;
+        } finally {
+          commit();
+        }
+      }
+    }
     currentTx.deleteRecord(iRecord, iMode);
     return this;
   }
@@ -2385,6 +2398,19 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public <RET extends ORecord> RET save(ORecord iRecord, String iClusterName, final OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
     checkOpenness();
+
+    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
+    if (iRecord instanceof OElement && dirtyManager != null && dirtyManager.getReferences() != null && !dirtyManager.getReferences()
+        .isEmpty()) {
+      if (((OElement) iRecord).isVertex() || ((OElement) iRecord).isEdge() && !getTransaction().isActive()) {
+        return saveGraph(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+      }
+    }
+    return saveInternal(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+  }
+
+  private <RET extends ORecord> RET saveInternal(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
     if (iRecord instanceof OVertexDelegate) {
       iRecord = iRecord.getRecord();
     }
@@ -2423,6 +2449,17 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         .saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
     return (RET) doc;
+  }
+
+  private <RET extends ORecord> RET saveGraph(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
+    begin();
+    try {
+      return saveInternal(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+    } finally {
+      commit();
+    }
+
   }
 
   /**
