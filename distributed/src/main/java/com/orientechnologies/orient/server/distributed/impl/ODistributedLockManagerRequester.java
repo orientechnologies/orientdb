@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.types.OModifiableInteger;
-import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
@@ -75,7 +74,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
         Object result;
         try {
           final ODistributedResponse dResponse = manager
-              .sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers, new ODistributedLockTask(server, resource, timeout, true),
+              .sendRequest(resource, null, servers, new ODistributedLockTask(server, resource, timeout, true),
                   manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
           if (dResponse == null) {
@@ -164,7 +163,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
         Object result;
         try {
           final ODistributedResponse dResponse = manager
-              .sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers, new ODistributedLockTask(server, resource, 20000, false),
+              .sendRequest(resource, null, servers, new ODistributedLockTask(server, resource, 20000, false),
                   manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
           if (dResponse == null)

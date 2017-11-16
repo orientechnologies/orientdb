@@ -234,8 +234,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       messageService = new ODistributedMessageServiceImpl(this);
 
-      initSystemDatabase();
-
       ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Servers in cluster: %s", activeNodes.keySet());
 
       publishLocalNodeConfiguration();
@@ -315,21 +313,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     dumpServersStatus();
   }
-
-  /**
-   * Protecte system database from being replicated
-   */
-  protected void initSystemDatabase() {
-    final ODocument defaultCfg = getStorage(OSystemDatabase.SYSTEM_DB_NAME)
-        .loadDatabaseConfiguration(getDefaultDatabaseConfigFile());
-    defaultCfg.field("autoDeploy", false);
-    final OModifiableDistributedConfiguration sysCfg = new OModifiableDistributedConfiguration(defaultCfg);
-    sysCfg.removeServer("<NEW_NODE>");
-
-    messageService.registerDatabase(OSystemDatabase.SYSTEM_DB_NAME, sysCfg);
-    sysCfg.addNewNodeInServerList(getLocalNodeName());
-  }
-
+  
   private void initRegisteredNodeIds() {
     final ILock lock = hazelcastInstance.getLock("orientdb." + CONFIG_REGISTEREDNODES);
     lock.lock();
