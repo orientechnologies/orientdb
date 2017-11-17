@@ -1425,62 +1425,60 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       try {
         connection.getDatabase().begin(tx);
       } catch (final ORecordNotFoundException e) {
+        if (connection.getDatabase().getTransaction().isActive())
+          connection.getDatabase().rollback(true);
         sendShutdown();
         throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
       }
+      try {
+        connection.getDatabase().commit();
+      } catch (final ORecordNotFoundException e) {
+        throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
+      } catch (RuntimeException e) {
+        if (connection.getDatabase().getTransaction().isActive())
+          connection.getDatabase().rollback(true);
+        
+        final OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
+        if (collectionManager != null)
+          collectionManager.clearChangedIds();
+        throw e;
+      }
 
       try {
-        try {
-          connection.getDatabase().commit();
-        } catch (final ORecordNotFoundException e) {
-          throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
-        }
+
         beginResponse();
-        try {
-          sendOk(connection, clientTxId);
+        sendOk(connection, clientTxId);
 
-          // SEND BACK ALL THE RECORD IDS FOR THE CREATED RECORDS
-          channel.writeInt(tx.getCreatedRecords().size());
-          for (Entry<ORecordId, ORecord> entry : tx.getCreatedRecords().entrySet()) {
-            channel.writeRID(entry.getKey());
-            channel.writeRID(entry.getValue().getIdentity());
+        // SEND BACK ALL THE RECORD IDS FOR THE CREATED RECORDS
+        channel.writeInt(tx.getCreatedRecords().size());
+        for (Entry<ORecordId, ORecord> entry : tx.getCreatedRecords().entrySet()) {
+          channel.writeRID(entry.getKey());
+          channel.writeRID(entry.getValue().getIdentity());
 
-            // IF THE NEW OBJECT HAS VERSION > 0 MEANS THAT HAS BEEN UPDATED IN THE SAME TX. THIS HAPPENS FOR GRAPHS
-            if (entry.getValue().getVersion() > 0)
-              tx.getUpdatedRecords().put((ORecordId) entry.getValue().getIdentity(), entry.getValue());
-          }
-
-          // SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
-          channel.writeInt(tx.getUpdatedRecords().size());
-          for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
-            channel.writeRID(entry.getKey());
-            channel.writeVersion(entry.getValue().getVersion());
-          }
-
-          if (connection.getData().protocolVersion >= 20)
-            sendCollectionChanges(connection);
-        } finally {
-          endResponse(connection);
-        }
-      } catch (Exception e) {
-        if (connection != null && connection.getDatabase() != null) {
-          if (connection.getDatabase().getTransaction().isActive())
-            connection.getDatabase().rollback(true);
-
-          final OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
-          if (collectionManager != null)
-            collectionManager.clearChangedIds();
+          // IF THE NEW OBJECT HAS VERSION > 0 MEANS THAT HAS BEEN UPDATED IN THE SAME TX. THIS HAPPENS FOR GRAPHS
+          if (entry.getValue().getVersion() > 0)
+            tx.getUpdatedRecords().put((ORecordId) entry.getValue().getIdentity(), entry.getValue());
         }
 
-        sendErrorOrDropConnection(connection, clientTxId, e);
+        // SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
+        channel.writeInt(tx.getUpdatedRecords().size());
+        for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
+          channel.writeRID(entry.getKey());
+          channel.writeVersion(entry.getValue().getVersion());
+        }
+
+        if (connection.getData().protocolVersion >= 20)
+          sendCollectionChanges(connection);
+      } finally {
+        final OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
+        if (collectionManager != null)
+          collectionManager.clearChangedIds();
+
+        endResponse(connection);
       }
     } catch (OTransactionAbortedException e) {
       // TX ABORTED BY THE CLIENT
     } catch (Exception e) {
-      // Error during TX initialization, possibly index constraints violation.
-      if (tx.isActive())
-        tx.rollback(true, -1);
-
       sendErrorOrDropConnection(connection, clientTxId, e);
     }
   }
