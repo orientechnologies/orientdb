@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -20,6 +21,7 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
   }
 
   @Test
+  @Ignore
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
