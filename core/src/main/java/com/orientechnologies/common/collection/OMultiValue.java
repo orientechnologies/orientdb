@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.common.collection;
 
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OResettable;
@@ -30,6 +26,10 @@ import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Handles Multi-value types such as Arrays, Collections and Maps. It recognizes special Orient collections.
@@ -465,8 +465,7 @@ public class OMultiValue {
 
         } else if (iToAdd instanceof Map<?, ?>) {
           // MAP
-          for (Entry<Object, Object> entry : ((Map<Object, Object>) iToAdd).entrySet())
-            coll.add(entry.getValue());
+          coll.add(iToAdd);
         } else if (iToAdd instanceof Iterator<?>) {
           // ITERATOR
           for (Iterator<?> it = (Iterator<?>) iToAdd; it.hasNext(); )
