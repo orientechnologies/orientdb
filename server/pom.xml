@@ -38,6 +38,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-ea
             -Xmx${heapSize}
+            -Xms${heapSize}
             -XX:MaxDirectMemorySize=512g
             -Dsecurity.userPasswordSaltIterations=10
             -Dmemory.directMemory.trackMode=true

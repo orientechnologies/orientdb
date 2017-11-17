@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
@@ -33,28 +34,35 @@ import java.util.*;
  * OCommandExecutionException} will be thrown.
  */
 public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
+
+  public static <T extends OIdentifiable> List<T> createResultList(String query) {
+    if (OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.getValueAsBoolean()) {
+      return new OSoftQueryResultList<T>(query);
+    } else {
+      return new ArrayList<T>();
+    }
+  }
+
+  public static <T extends OIdentifiable> List<T> createResultList(String query, List<T> other) {
+    if (OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.getValueAsBoolean()) {
+      return new OSoftQueryResultList<T>(other, query);
+    } else {
+      return new ArrayList<T>(other);
+    }
+  }
+
   private final List<SoftReference<E>> buffer;
   private final ReferenceQueue<E> queue = new ReferenceQueue<E>();
   private final String query;
 
-  @SuppressWarnings({ "WeakerAccess", "unused" })
-  public OSoftQueryResultList() {
-    this((String) null);
-  }
-
   @SuppressWarnings("WeakerAccess")
-  public OSoftQueryResultList(String query) {
+  OSoftQueryResultList(String query) {
     this.query = query;
     this.buffer = new ArrayList<SoftReference<E>>();
   }
 
-  @SuppressWarnings({ "unused", "WeakerAccess" })
-  public OSoftQueryResultList(List<? extends E> other) {
-    this(other, null);
-  }
-
   @SuppressWarnings("WeakerAccess")
-  public OSoftQueryResultList(List<? extends E> other, String query) {
+  OSoftQueryResultList(List<? extends E> other, String query) {
     this(query);
     for (E x : other) {
       buffer.add(new SoftReference<E>(x, queue));
@@ -72,11 +80,20 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     }
   }
 
+  /**
+   * The same as {@link List#size()} but throws {@link OCommandExecutionException} if some of items inside the list are collected by
+   * GC.
+   */
   @Override
   public int size() {
     checkQueue();
     return buffer.size();
   }
+
+  /**
+   * The same as {@link List#isEmpty()} but throws {@link OCommandExecutionException} if some of items inside the list are collected
+   * by GC.
+   */
 
   @Override
   public boolean isEmpty() {
@@ -84,9 +101,14 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return buffer.isEmpty();
   }
 
+  /**
+   * The same as {@link List#contains(Object)} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC.
+   */
   @Override
   public boolean contains(Object o) {
     checkQueue();
+
     for (SoftReference<E> ref : buffer) {
       final E item = getItem(ref);
       if (item.equals(o)) {
@@ -106,6 +128,11 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return result;
   }
 
+  /**
+   * The same as {@link List#iterator()} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC. All methods of iterator also check presence of collected items inside of the list and throw {@link
+   * OCommandExecutionException} if such items are detected.
+   */
   @Override
   public Iterator<E> iterator() {
     checkQueue();
@@ -140,17 +167,27 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     };
   }
 
+  /**
+   * Not supported because may lead to generation of OOM.
+   */
   @Override
   public Object[] toArray() {
     throw new UnsupportedOperationException("Operation is not supported because may cause OOM exception");
   }
 
+  /**
+   * Not supported because may lead to generation of OOM.
+   */
   @SuppressWarnings("unchecked")
   @Override
   public <T> T[] toArray(T[] a) {
     throw new UnsupportedOperationException("Operation is not supported because may cause OOM exception");
   }
 
+  /**
+   * The same as {@link List#add(Object)} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC.
+   */
   @Override
   public boolean add(E e) {
     checkQueue();
@@ -161,6 +198,10 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return buffer.add(new SoftReference<E>(e, queue));
   }
 
+  /**
+   * The same as {@link List#remove(Object)} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC.
+   */
   @Override
   public boolean remove(Object o) {
     checkQueue();
@@ -177,6 +218,10 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return false;
   }
 
+  /**
+   * The same as {@link List#containsAll(Collection)} (Object)} but throws {@link OCommandExecutionException} if some of items
+   * inside the list are collected by GC.
+   */
   @Override
   public boolean containsAll(Collection<?> c) {
     checkQueue();
@@ -190,6 +235,10 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return true;
   }
 
+  /**
+   * The same as {@link List#addAll(Collection)} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC.
+   */
   @Override
   public boolean addAll(Collection<? extends E> c) {
     checkQueue();
@@ -203,6 +252,10 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return added;
   }
 
+  /**
+   * The same as {@link List#addAll(int, Collection)} but throws {@link OCommandExecutionException} if some of items inside the list
+   * are collected by GC.
+   */
   @Override
   public boolean addAll(int index, Collection<? extends E> c) {
     checkQueue();
@@ -217,6 +270,10 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return added;
   }
 
+  /**
+   * The same as {@link List#removeAll(Collection)} but throws {@link OCommandExecutionException} if some of items inside the list
+   * are collected by GC.
+   */
   @Override
   public boolean removeAll(Collection<?> c) {
     checkQueue();
@@ -241,6 +298,10 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return updated;
   }
 
+  /**
+   * The same as {@link List#retainAll(Collection)} but throws {@link OCommandExecutionException} if some of items inside the list
+   * are collected by GC.
+   */
   @Override
   public boolean retainAll(Collection<?> c) {
     checkQueue();
@@ -271,6 +332,10 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return updated;
   }
 
+  /**
+   * The same as {@link List#clear()} but throws {@link OCommandExecutionException} if some of items inside the list are collected
+   * by GC.
+   */
   @Override
   public void clear() {
     checkQueue();
@@ -282,6 +347,10 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     buffer.clear();
   }
 
+  /**
+   * The same as {@link List#get(int)} but throws {@link OCommandExecutionException} if some of items inside the list are collected
+   * by GC.
+   */
   @Override
   public E get(int index) {
     checkQueue();
@@ -294,6 +363,10 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return getItem(res);
   }
 
+  /**
+   * The same as {@link List#set(int, Object)} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC.
+   */
   @Override
   public E set(int index, E element) {
     checkQueue();
@@ -312,17 +385,25 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return item;
   }
 
+  /**
+   * The same as {@link List#add(int, Object)} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC.
+   */
   @Override
   public void add(int index, E element) {
     checkQueue();
 
     if (element == null) {
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException("Null value passed");
     }
 
     buffer.add(index, new SoftReference<E>(element, queue));
   }
 
+  /**
+   * The same as {@link List#remove(int)} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC.
+   */
   @Override
   public E remove(int index) {
     checkQueue();
@@ -338,6 +419,10 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return item;
   }
 
+  /**
+   * The same as {@link List#indexOf(Object)} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC.
+   */
   @Override
   public int indexOf(Object o) {
     checkQueue();
@@ -351,6 +436,10 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return -1;
   }
 
+  /**
+   * The same as {@link List#lastIndexOf(Object)} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC.
+   */
   @Override
   public int lastIndexOf(Object o) {
     checkQueue();
@@ -364,6 +453,11 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     return -1;
   }
 
+  /**
+   * The same as {@link List#listIterator()} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC. All methods of iterator also check presence of collected items inside of the list and throw {@link
+   * OCommandExecutionException} if such items are detected.
+   */
   @Override
   public ListIterator<E> listIterator() {
     checkQueue();
@@ -435,6 +529,11 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     };
   }
 
+  /**
+   * The same as {@link List#listIterator(int)} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC. All methods of iterator also check presence of collected items inside of the list and throw {@link
+   * OCommandExecutionException} if such items are detected.
+   */
   @Override
   public ListIterator<E> listIterator(final int index) {
     checkQueue();
@@ -505,13 +604,22 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     };
   }
 
+  /**
+   * The same as {@link List#subList(int, int)} but throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC.
+   */
   @Override
-  public List<E> subList(int fromIndex, int toIndex) {
+  public OSoftQueryResultList<E> subList(int fromIndex, int toIndex) {
     checkQueue();
 
     return new OSoftQueryResultList<E>(query, buffer.subList(fromIndex, toIndex));
   }
 
+  /**
+   * Sort elements according to passed in comparator, throws {@link OCommandExecutionException} if some of items inside the list are
+   * collected by GC. This method is implemented because default method of sorting collections in Java converts {@link List} to
+   * array which is not supported by current implementation.
+   */
   public void sort(Comparator<? super E> comparator) {
     checkQueue();
 

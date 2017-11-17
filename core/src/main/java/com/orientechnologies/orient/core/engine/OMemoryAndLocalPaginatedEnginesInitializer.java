@@ -27,6 +27,10 @@ import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
+
 /**
  * Manages common initialization logic for memory and plocal engines. These engines are tight together through dependency to {@link
  * com.orientechnologies.common.directmemory.OByteBufferPool}, which is hard to reconfigure if initialization logic is separate.
@@ -60,7 +64,9 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
   }
 
   private void configureDefaults() {
-    OLogManager.instance().info(this, "Auto configuration of disk cache size.");
+    configureDefaultSoftRefsInSQL();
+
+    OLogManager.instance().infoNoDb(this, "Auto configuration of disk cache size.");
 
     if (!OGlobalConfiguration.DISK_CACHE_SIZE.isChanged())
       configureDefaultDiskCacheSize();
@@ -71,6 +77,25 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
 
     if (!OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.isChanged())
       configureDefaultWalRestoreBatchSize();
+  }
+
+  private void configureDefaultSoftRefsInSQL() {
+    if (OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.getValue() == null) {
+      OLogManager.instance()
+          .infoNoDb(this, "Configuration of usage of soft references inside of containers of results of SQL execution");
+
+      final MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+      final MemoryUsage heapMemoryUsage = memoryBean.getHeapMemoryUsage();
+      if (heapMemoryUsage.getInit() == heapMemoryUsage.getMax()) {
+        OLogManager.instance().infoNoDb(this, "Initial and maximum values of heap memory usage are equal, containers of "
+            + "results of SQL executors will use soft references by default");
+        OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.setValue(true);
+      } else {
+        OLogManager.instance().infoNoDb(this, "Initial and maximum values of heap memory usage are NOT equal, containers of "
+            + "results of SQL executors will NOT use soft references by default");
+        OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.setValue(false);
+      }
+    }
   }
 
   private void configureDefaultWalRestoreBatchSize() {
