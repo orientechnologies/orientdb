@@ -9,6 +9,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Set;
@@ -114,6 +115,7 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
   }
 
   @Test
+  @Ignore
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
