@@ -160,6 +160,8 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
 
         if (current != null) {
           current.clear();
+        } else {
+          throw new IllegalStateException("Can not clear currently processed soft reference");
         }
 
         innerIterator.remove();
@@ -191,6 +193,7 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
   @Override
   public boolean add(E e) {
     checkQueue();
+
     if (e == null) {
       throw new IllegalArgumentException("Null value is passed");
     }
@@ -506,24 +509,41 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
       @Override
       public void remove() {
         checkQueue();
+
         if (current != null) {
           current.clear();
+        } else {
+          throw new IllegalStateException("Can not clear currently processed soft reference");
         }
+
         innerIterator.remove();
       }
 
       @Override
       public void set(E e) {
         checkQueue();
+
+        if (e == null) {
+          throw new IllegalArgumentException("Null value is passed as argument");
+        }
+
         if (current != null) {
           current.clear();
+        } else {
+          throw new IllegalStateException("Can not clear currently processed soft reference");
         }
+
         innerIterator.set(new SoftReference<E>(e, queue));
       }
 
       @Override
       public void add(E e) {
         checkQueue();
+
+        if (e == null) {
+          throw new IllegalArgumentException("Null value is passed as argument");
+        }
+
         innerIterator.add(new SoftReference<E>(e, queue));
       }
     };
@@ -583,15 +603,25 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
         checkQueue();
         if (current != null) {
           current.clear();
+        } else {
+          throw new IllegalStateException("Can not clear currently processed soft reference");
         }
+
         innerIterator.remove();
       }
 
       @Override
       public void set(E e) {
         checkQueue();
+
+        if (e == null) {
+          throw new IllegalArgumentException("Null value is passed as argument");
+        }
+
         if (current != null) {
           current.clear();
+        } else {
+          throw new IllegalStateException("Can not clear currently processed soft reference");
         }
         innerIterator.set(new SoftReference<E>(e, queue));
       }
@@ -599,6 +629,11 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
       @Override
       public void add(E e) {
         checkQueue();
+
+        if (e == null) {
+          throw new IllegalArgumentException("Null value is passed as argument");
+        }
+
         innerIterator.add(new SoftReference<E>(e, queue));
       }
     };
