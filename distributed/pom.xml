@@ -38,6 +38,7 @@
 
     <properties>
         <hz.version>3.8.4</hz.version>
+        <hz.aws.version>2.1.0</hz.aws.version>
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
@@ -134,6 +135,11 @@
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast</artifactId>
             <version>${hz.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast-aws</artifactId>
+            <version>${hz.aws.version}</version>
         </dependency>
     </dependencies>
 
