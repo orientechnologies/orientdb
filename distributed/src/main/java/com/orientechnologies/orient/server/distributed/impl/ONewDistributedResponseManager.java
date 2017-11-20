@@ -55,7 +55,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   @Override
   public synchronized void removeServerBecauseUnreachable(String node) {
     responseCount += 1;
-    // ?? probably is more correct handle this case in collect response, to double check
+    checkFinished(new ArrayList<>());
   }
 
   @Override
@@ -150,6 +150,11 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
       results.add(result);
     }
     responseCount += 1;
+    checkFinished(results);
+    return this.finished;
+  }
+
+  private void checkFinished(List<OTransactionResultPayload> results) {
     if (results.size() >= quorum) {
       this.finished = true;
       this.quorumReached = true;
@@ -161,7 +166,6 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
       this.finalResult = null;
       this.notifyAll();
     }
-    return this.finished;
   }
 
   public synchronized List<OTransactionResultPayload> getAllResponses() {
