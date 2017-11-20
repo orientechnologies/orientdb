@@ -45,7 +45,7 @@ public class OSequenceLibraryImpl {
     init(database);
   }
 
-  public void load(final ODatabaseDocumentInternal db) {
+  public synchronized void load(final ODatabaseDocumentInternal db) {
     sequences.clear();
 
     if (db.getMetadata().getImmutableSchemaSnapshot().existsClass(OSequence.CLASS_NAME)) {
@@ -63,21 +63,24 @@ public class OSequenceLibraryImpl {
     sequences.clear();
   }
 
-  public Set<String> getSequenceNames() {
+  public synchronized Set<String> getSequenceNames() {
     return sequences.keySet();
   }
 
-  public int getSequenceCount() {
+  public synchronized int getSequenceCount() {
     return sequences.size();
   }
 
   public OSequence getSequence(final ODatabaseDocumentInternal database, final String iName) {
     final String name = iName.toUpperCase(Locale.ENGLISH);
 
-    OSequence seq = sequences.get(name);
-    if (seq == null) {
-      load(database);
+    OSequence seq;
+    synchronized (this) {
       seq = sequences.get(name);
+      if (seq == null) {
+        load(database);
+        seq = sequences.get(name);
+      }
     }
 
     if (seq != null) {
@@ -87,7 +90,7 @@ public class OSequenceLibraryImpl {
     return seq;
   }
 
-  public OSequence createSequence(final ODatabaseDocumentInternal database, final String iName, final SEQUENCE_TYPE sequenceType,
+  public synchronized OSequence createSequence(final ODatabaseDocumentInternal database, final String iName, final SEQUENCE_TYPE sequenceType,
       final OSequence.CreateParams params) {
     init(database);
 
@@ -101,7 +104,7 @@ public class OSequenceLibraryImpl {
     return sequence;
   }
 
-  public void dropSequence(final ODatabaseDocumentInternal database, final String iName) {
+  public synchronized void dropSequence(final ODatabaseDocumentInternal database, final String iName) {
     final OSequence seq = getSequence(database, iName);
 
     if (seq != null) {
