@@ -105,6 +105,7 @@ public class OTransactionPhase1TaskResult implements OStreamable {
     case OTxException.ID:
       RuntimeException exception = (RuntimeException) OStreamableHelper.fromStream(in);
       this.resultPayload = new OTxException(exception);
+      break;
     case OTxUniqueIndex.ID:
       //RID
       ORecordId rid2 = new ORecordId(in.readInt(), in.readLong());
