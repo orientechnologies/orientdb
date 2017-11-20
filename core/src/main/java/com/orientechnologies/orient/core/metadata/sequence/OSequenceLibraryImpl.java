@@ -48,7 +48,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   }
 
   @Override
-  public void load() {
+  public synchronized void load() {
     sequences.clear();
 
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
@@ -66,17 +66,17 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   }
 
   @Override
-  public void close() {
+  public synchronized void close() {
     sequences.clear();
   }
 
   @Override
-  public Set<String> getSequenceNames() {
+  public synchronized Set<String> getSequenceNames() {
     return sequences.keySet();
   }
 
   @Override
-  public int getSequenceCount() {
+  public synchronized int getSequenceCount() {
     return sequences.size();
   }
 
@@ -84,10 +84,13 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   public OSequence getSequence(String iName) {
     final String name = iName.toUpperCase(Locale.ENGLISH);
 
-    OSequence seq = sequences.get(name);
-    if (seq == null) {
-      load();
+    OSequence seq;
+    synchronized (this) {
       seq = sequences.get(name);
+      if (seq == null) {
+        load();
+        seq = sequences.get(name);
+      }
     }
 
     if (seq != null) {
@@ -98,7 +101,8 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   }
 
   @Override
-  public OSequence createSequence(final String iName, final SEQUENCE_TYPE sequenceType, final OSequence.CreateParams params) {
+  public synchronized OSequence createSequence(final String iName, final SEQUENCE_TYPE sequenceType,
+      final OSequence.CreateParams params) {
     init();
 
     final String key = iName.toUpperCase(Locale.ENGLISH);
@@ -112,7 +116,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   }
 
   @Override
-  public void dropSequence(final String iName) {
+  public synchronized void dropSequence(final String iName) {
     final OSequence seq = getSequence(iName);
 
     if (seq != null) {
