@@ -6,13 +6,11 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -45,7 +43,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   private          OLogSequenceNumber            lastLSN;
   private          List<ORecordOperation>        ops;
   private          List<ORecordOperationRequest> operations;
-  private OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
+  private           OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
+  private transient int                                             retryCount = 0;
 
   public OTransactionPhase1Task() {
     ops = new ArrayList<>();
@@ -95,8 +94,9 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       ODatabaseDocumentInternal database) throws Exception {
     convert(database);
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
-    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false);
+    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
     if (res1 == null) {
+      retryCount++;
       ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
           .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this);
       hasResponse = false;
@@ -112,10 +112,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   }
 
   public static OTransactionResultPayload executeTransaction(ODistributedRequestId requestId, ODatabaseDocumentDistributed database,
-      OTransactionInternal tx, boolean local) {
+      OTransactionInternal tx, boolean local, int retryCount) {
     OTransactionResultPayload payload;
     try {
-      if (database.beginDistributedTx(requestId, tx, local)) {
+      if (database.beginDistributedTx(requestId, tx, local, retryCount)) {
         payload = new OTxSuccess();
       } else {
         return null;

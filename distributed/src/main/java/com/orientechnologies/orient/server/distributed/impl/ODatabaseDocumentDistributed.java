@@ -49,6 +49,8 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
+
 /**
  * Created by tglman on 30/03/17.
  */
@@ -549,21 +551,24 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
-  public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local) {
+  public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local, int retryCount) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
         requestId, tx);
     try {
       txContext.begin(this, local);
     } catch (OConcurrentCreateException ex) {
-      if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
-        return false;
+      if (retryCount >= 0 || retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+        if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
+          return false;
+        }
       }
       throw ex;
     } catch (OConcurrentModificationException ex) {
-      if (ex.getEnhancedRecordVersion() > ex.getEnhancedDatabaseVersion()) {
-        return false;
-
+      if (retryCount >= 0 || retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+        if (ex.getEnhancedRecordVersion() > ex.getEnhancedDatabaseVersion()) {
+          return false;
+        }
       }
       throw ex;
     }

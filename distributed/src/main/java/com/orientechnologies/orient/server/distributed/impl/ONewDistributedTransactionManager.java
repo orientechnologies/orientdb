@@ -80,7 +80,7 @@ public class ONewDistributedTransactionManager {
     Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
     final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(iTx, nodes) : null;
 
-    OTransactionResultPayload localResult = OTransactionPhase1Task.executeTransaction(requestId, database, iTx, true);
+    OTransactionResultPayload localResult = OTransactionPhase1Task.executeTransaction(requestId, database, iTx, true, -1);
 
     try {
       localDistributedDatabase.getSyncConfiguration()

@@ -27,7 +27,8 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   private ODistributedRequestId transactionId;
   private boolean               success;
   private int[]                 involvedClusters;
-  private boolean hasResponse = false;
+  private          boolean hasResponse    = false;
+  private volatile int     reEnqueueLimit = 0;
 
   public OTransactionPhase2Task(ODistributedRequestId transactionId, boolean success, int[] involvedClusters,
       OLogSequenceNumber lsn) {
@@ -82,9 +83,16 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
       ODatabaseDocumentInternal database) throws Exception {
     if (success) {
       if (!((ODatabaseDocumentDistributed) database).commit2pc(transactionId)) {
-        ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
-            .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this);
-        hasResponse = false;
+        reEnqueueLimit++;
+        if (reEnqueueLimit < 10) {
+          ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
+              .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this);
+          hasResponse = false;
+        } else {
+          ((ODatabaseDocumentDistributed) database).rollback2pc(transactionId);
+          hasResponse = true;
+          return "KO";
+        }
       } else
         hasResponse = true;
     } else {
