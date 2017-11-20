@@ -35,7 +35,7 @@ import java.util.*;
  */
 public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
 
-  public static <T extends OIdentifiable> List<T> createResultList(String query) {
+  static <T extends OIdentifiable> List<T> createResultList(String query) {
     if (OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.getValueAsBoolean()) {
       return new OSoftQueryResultList<T>(query);
     } else {
@@ -43,7 +43,7 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     }
   }
 
-  public static <T extends OIdentifiable> List<T> createResultList(String query, List<T> other) {
+  static <T extends OIdentifiable> List<T> createResultList(String query, List<T> other) {
     if (OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.getValueAsBoolean()) {
       return new OSoftQueryResultList<T>(other, query);
     } else {
@@ -189,13 +189,15 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
   /**
    * The same as {@link List#add(Object)} but throws {@link OCommandExecutionException} if some of items inside the list are
    * collected by GC.
+   *
+   * @throws NullPointerException if passed in value is <code>null</code>
    */
   @Override
   public boolean add(E e) {
     checkQueue();
 
     if (e == null) {
-      throw new IllegalArgumentException("Null value is passed");
+      throw new NullPointerException("Null value is passed");
     }
 
     return buffer.add(new SoftReference<E>(e, queue));
@@ -218,6 +220,7 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
         return true;
       }
     }
+
     return false;
   }
 
@@ -292,8 +295,8 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
         if (val.equals(o)) {
           updated = true;
           item.clear();
-
           iter.remove();
+          break;
         }
       }
     }
@@ -359,29 +362,27 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     checkQueue();
 
     final SoftReference<E> res = buffer.get(index);
+    assert res != null;
 
-    if (res == null) {
-      return null;
-    }
     return getItem(res);
   }
 
   /**
    * The same as {@link List#set(int, Object)} but throws {@link OCommandExecutionException} if some of items inside the list are
    * collected by GC.
+   *
+   * @throws NullPointerException if passed in value is <code>null</code>
    */
   @Override
   public E set(int index, E element) {
     checkQueue();
 
     if (element == null) {
-      throw new IllegalArgumentException("Null value passed");
+      throw new NullPointerException("Null value passed");
     }
 
     final SoftReference<E> res = buffer.set(index, new SoftReference<E>(element, queue));
-    if (res == null) {
-      return null;
-    }
+    assert res != null;
 
     final E item = getItem(res);
     res.clear();
@@ -391,13 +392,15 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
   /**
    * The same as {@link List#add(int, Object)} but throws {@link OCommandExecutionException} if some of items inside the list are
    * collected by GC.
+   *
+   * @throws NullPointerException if passed in value equals to <code>null</code>
    */
   @Override
   public void add(int index, E element) {
     checkQueue();
 
     if (element == null) {
-      throw new IllegalArgumentException("Null value passed");
+      throw new NullPointerException("Null value passed");
     }
 
     buffer.add(index, new SoftReference<E>(element, queue));
@@ -412,9 +415,7 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     checkQueue();
 
     final SoftReference<E> res = buffer.remove(index);
-    if (res == null) {
-      return null;
-    }
+    assert res != null;
 
     final E item = getItem(res);
     res.clear();
@@ -425,10 +426,16 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
   /**
    * The same as {@link List#indexOf(Object)} but throws {@link OCommandExecutionException} if some of items inside the list are
    * collected by GC.
+   *
+   * @throws NullPointerException if passed in value equals to <code>null</code>
    */
   @Override
   public int indexOf(Object o) {
     checkQueue();
+
+    if (o == null) {
+      throw new NullPointerException("Null value passed");
+    }
 
     for (int i = 0; i < buffer.size(); i++) {
       E item = getItem(buffer.get(i));
@@ -442,10 +449,15 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
   /**
    * The same as {@link List#lastIndexOf(Object)} but throws {@link OCommandExecutionException} if some of items inside the list are
    * collected by GC.
+   *
+   * @throws NullPointerException if argument value is <code>null</code>
    */
   @Override
   public int lastIndexOf(Object o) {
     checkQueue();
+
+    if (o == null)
+      throw new NullPointerException("Null value passed");
 
     for (int i = buffer.size() - 1; i >= 0; i--) {
       E item = getItem(buffer.get(i));
@@ -524,7 +536,7 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
         checkQueue();
 
         if (e == null) {
-          throw new IllegalArgumentException("Null value is passed as argument");
+          throw new NullPointerException("Null value is passed as argument");
         }
 
         if (current != null) {
@@ -541,7 +553,7 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
         checkQueue();
 
         if (e == null) {
-          throw new IllegalArgumentException("Null value is passed as argument");
+          throw new NullPointerException("Null value is passed as argument");
         }
 
         innerIterator.add(new SoftReference<E>(e, queue));
@@ -615,7 +627,7 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
         checkQueue();
 
         if (e == null) {
-          throw new IllegalArgumentException("Null value is passed as argument");
+          throw new NullPointerException("Null value is passed as argument");
         }
 
         if (current != null) {
@@ -631,7 +643,7 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
         checkQueue();
 
         if (e == null) {
-          throw new IllegalArgumentException("Null value is passed as argument");
+          throw new NullPointerException("Null value is passed as argument");
         }
 
         innerIterator.add(new SoftReference<E>(e, queue));
