@@ -70,7 +70,7 @@ public final class ODefaultSQLFunctionFactory extends OSQLFunctionFactoryTemplat
     register(OSQLFunctionUUID.NAME, OSQLFunctionUUID.class);
     register(OSQLFunctionConcat.NAME, OSQLFunctionConcat.class);
     register(OSQLFunctionDecimal.NAME, OSQLFunctionDecimal.class);
-    register(OSQLFunctionSequence.NAME, new OSQLFunctionSequence());
+    register(OSQLFunctionSequence.NAME, OSQLFunctionSequence.class);
     register(OSQLFunctionAbsoluteValue.NAME, OSQLFunctionAbsoluteValue.class);
     register(OSQLFunctionIndexKeySize.NAME, OSQLFunctionIndexKeySize.class);
     //graph
