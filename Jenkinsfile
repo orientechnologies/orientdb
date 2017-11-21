@@ -43,7 +43,7 @@ node("master") {
 
                 stage('Run QA/Integration tests on Java8') {
                     docker.image("${mvnJdk8Image}").inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
-                            "--name= ${containerName} --memory=4g ${env.VOLUMES}") {
+                            "--name ${containerName} --memory=4g ${env.VOLUMES}") {
                         try {
                             sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
                         } finally {
@@ -55,7 +55,7 @@ node("master") {
 
                 stage('Publish Javadoc') {
                     docker.image("${mvnJdk8Image}").inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} "  +
-                            "--name= ${containerName} --memory=2g ${env.VOLUMES}") {
+                            "--name ${containerName} --memory=2g ${env.VOLUMES}") {
                         sh "${mvnHome}/bin/mvn  javadoc:aggregate"
                         sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
                     }
