@@ -466,9 +466,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
           rid.setClusterId(schemaClass.getClusterForNewInstance((ODocument) record));
         } else
-          throw new ODatabaseException("Cannot save (4) document "+record+": no class or cluster defined");
+          throw new ODatabaseException("Cannot save (4) document " + record + ": no class or cluster defined");
       } else {
-        throw new ODatabaseException("Cannot save (5) document "+record+": no class or cluster defined");
+        throw new ODatabaseException("Cannot save (5) document " + record + ": no class or cluster defined");
       }
     } else if (record instanceof ODocument)
       schemaClass = ((ODocument) record).getSchemaClass();
@@ -640,8 +640,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         int changeVersion = entry.getRecord().getVersion();
         ORecordMetadata metadata = getStorage().getRecordMetadata(entry.getRID());
         if (metadata == null) {
-          //don't exist i get -1, -1 rid that put the operation in queue for retry.
-          throw new OConcurrentCreateException(new ORecordId(-1, -1), entry.getRID());
+          if (((OAbstractPaginatedStorage) getStorage().getUnderlying()).isDeleted(entry.getRID())) {
+            throw new OConcurrentModificationException(entry.getRID(), changeVersion, changeVersion, entry.getType());
+          } else {
+            //don't exist i get -1, -1 rid that put the operation in queue for retry.
+            throw new OConcurrentCreateException(new ORecordId(-1, -1), entry.getRID());
+          }
         }
         int persistentVersion = metadata.getVersion();
         if (changeVersion != persistentVersion) {
@@ -652,8 +656,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     //This has to be the last one because does persistent opertations
     if (!local) {
-      List<ORID> list = txContext.getTransaction().getRecordOperations().stream().map((x) -> x.getRID())
-          .collect(Collectors.toList());
       ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(txContext.getTransaction());
     }
 

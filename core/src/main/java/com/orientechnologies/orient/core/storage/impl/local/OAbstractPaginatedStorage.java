@@ -1198,6 +1198,36 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  public boolean isDeleted(ORID rid) {
+    try {
+      if (rid.isNew())
+        throw new OStorageException("Passed record with id " + rid + " is new and cannot be stored.");
+
+      checkOpenness();
+
+      stateLock.acquireReadLock();
+      try {
+        final OCluster cluster = getClusterById(rid.getClusterId());
+        checkOpenness();
+
+        return cluster.isDeleted(new OPhysicalPosition(rid.getClusterPosition()));
+
+      } catch (IOException ioe) {
+        OLogManager.instance().error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+
+      return false;
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
   @Override
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
       boolean prefetchRecords, ORecordCallback<ORawBuffer> iCallback) {

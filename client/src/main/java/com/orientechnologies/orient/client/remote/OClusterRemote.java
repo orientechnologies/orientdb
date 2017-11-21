@@ -220,6 +220,11 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
+  public boolean isDeleted(OPhysicalPosition iPPosition) throws IOException {
+    throw new UnsupportedOperationException("isDeleted()");
+  }
+
+  @Override
   public float recordGrowFactor() {
     throw new UnsupportedOperationException("recordGrowFactor()");
   }

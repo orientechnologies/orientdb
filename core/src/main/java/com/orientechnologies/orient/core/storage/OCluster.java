@@ -99,6 +99,12 @@ public interface OCluster {
    */
   OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
 
+  /** Check if a rid is existent and deleted or not existent
+   *
+   *  return true only if delete flag is set.
+   */
+  boolean isDeleted(OPhysicalPosition iPPosition) throws IOException;
+
   long getEntries();
 
   long getFirstPosition() throws IOException;

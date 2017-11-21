@@ -233,6 +233,11 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
+  public boolean isDeleted(OPhysicalPosition iPPosition) throws IOException {
+    return false;
+  }
+
+  @Override
   public OClusterEntryIterator absoluteIterator() {
     return null;
   }
