@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.Comparator;
 
-class OSoftQueryResultTimSort<T extends OIdentifiable> {
+class OSoftQueryResultTimSort<T> {
   /**
    * This is the minimum sized sequence that will be merged.  Shorter sequences will be lengthened by calling binarySort.  If the
    * entire array is less than this length, no merges will be performed.
@@ -141,7 +140,7 @@ class OSoftQueryResultTimSort<T extends OIdentifiable> {
    *
    * @since 1.8
    */
-  static <T extends OIdentifiable> void sort(SoftReference<T>[] a, int hi, Comparator<? super T> c, ReferenceQueue<T> queue,
+  static <T> void sort(SoftReference<T>[] a, int hi, Comparator<? super T> c, ReferenceQueue<T> queue,
       String query) {
     assert c != null && a != null && 0 <= hi && hi <= a.length;
 
@@ -190,7 +189,7 @@ class OSoftQueryResultTimSort<T extends OIdentifiable> {
     assert ts.stackSize == 1;
   }
 
-  private static <T extends OIdentifiable> T getItem(SoftReference<T> ref, ReferenceQueue<T> queue, String query) {
+  private static <T> T getItem(SoftReference<T> ref, ReferenceQueue<T> queue, String query) {
     checkQueue(queue, query);
 
     final T result = ref.get();
@@ -202,7 +201,7 @@ class OSoftQueryResultTimSort<T extends OIdentifiable> {
     return result;
   }
 
-  private static <T extends OIdentifiable> void checkQueue(ReferenceQueue<T> queue, String query) {
+  private static <T> void checkQueue(ReferenceQueue<T> queue, String query) {
     if (queue.poll() != null) {
       //noinspection ConstantConditions
       throwCanExecuteException(query);
@@ -231,7 +230,7 @@ class OSoftQueryResultTimSort<T extends OIdentifiable> {
    * @param c     comparator to used for the sort
    */
   @SuppressWarnings("fallthrough")
-  private static <T extends OIdentifiable> void binarySort(SoftReference<T>[] a, int lo, int hi, int start, Comparator<? super T> c,
+  private static <T> void binarySort(SoftReference<T>[] a, int lo, int hi, int start, Comparator<? super T> c,
       ReferenceQueue<T> queue, String query) {
     assert lo <= start && start <= hi;
     if (start == lo)
@@ -303,7 +302,7 @@ class OSoftQueryResultTimSort<T extends OIdentifiable> {
    *
    * @return the length of the run beginning at the specified position in the specified array
    */
-  private static <T extends OIdentifiable> int countRunAndMakeAscending(SoftReference<T>[] a, int lo, int hi,
+  private static <T> int countRunAndMakeAscending(SoftReference<T>[] a, int lo, int hi,
       Comparator<? super T> c, ReferenceQueue<T> queue, String query) {
     checkQueue(queue, query);
 
@@ -486,7 +485,7 @@ class OSoftQueryResultTimSort<T extends OIdentifiable> {
    * n] is infinity. In other words, key belongs at index b + k; or in other words, the first k elements of a should precede key,
    * and the last n - k should follow it.
    */
-  private static <T extends OIdentifiable> int gallopLeft(SoftReference<T> key, SoftReference<T>[] a, int base, int len, int hint,
+  private static <T> int gallopLeft(SoftReference<T> key, SoftReference<T>[] a, int base, int len, int hint,
       Comparator<? super T> c, ReferenceQueue<T> queue, String query) {
     assert len > 0 && hint >= 0 && hint < len;
     int lastOfs = 0;
@@ -557,7 +556,7 @@ class OSoftQueryResultTimSort<T extends OIdentifiable> {
    *
    * @return the int k,  0 <= k <= n such that a[b + k - 1] <= key < a[b + k]
    */
-  private static <T extends OIdentifiable> int gallopRight(SoftReference<T> key, SoftReference<T>[] a, int base, int len, int hint,
+  private static <T> int gallopRight(SoftReference<T> key, SoftReference<T>[] a, int base, int len, int hint,
       Comparator<? super T> c, ReferenceQueue<T> queue, String query) {
     assert len > 0 && hint >= 0 && hint < len;
 

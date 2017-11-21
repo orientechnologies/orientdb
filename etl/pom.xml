@@ -34,7 +34,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -Xmx${heapSize} -XX:MaxDirectMemorySize=512g
+        <argLine>-ea -Xmx${heapSize} -Xms${heapSize} -XX:MaxDirectMemorySize=512g
             -Dindex.flushAfterCreate=false
             -Dstorage.makeFullCheckpointAfterCreate=false
             -Dstorage.makeFullCheckpointAfterOpen=false

@@ -1176,6 +1176,10 @@ public enum OGlobalConfiguration {
 
   public boolean getValueAsBoolean() {
     final Object v = value != nullValue && value != null ? value : defValue;
+
+    if (v == null)
+      return false;
+
     return v instanceof Boolean ? (Boolean) v : Boolean.parseBoolean(v.toString());
   }
 

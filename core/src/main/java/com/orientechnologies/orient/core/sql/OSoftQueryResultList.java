@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 import java.lang.ref.ReferenceQueue;
@@ -33,9 +32,9 @@ import java.util.*;
  * java.lang.ref.WeakReference}s. Once it is detected that some of the records inside list are processed by GC {@link
  * OCommandExecutionException} will be thrown.
  */
-public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
+public class OSoftQueryResultList<E> implements List<E> {
 
-  static <T extends OIdentifiable> List<T> createResultList(String query) {
+  public static <T> List<T> createResultList(String query) {
     if (OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.getValueAsBoolean()) {
       return new OSoftQueryResultList<T>(query);
     } else {
@@ -43,7 +42,7 @@ public class OSoftQueryResultList<E extends OIdentifiable> implements List<E> {
     }
   }
 
-  static <T extends OIdentifiable> List<T> createResultList(String query, List<T> other) {
+  static <T> List<T> createResultList(String query, List<T> other) {
     if (OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.getValueAsBoolean()) {
       return new OSoftQueryResultList<T>(other, query);
     } else {

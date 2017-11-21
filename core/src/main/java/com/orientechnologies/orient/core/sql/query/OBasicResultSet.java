@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.query;
 
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.sql.OSoftQueryResultList;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -35,17 +36,16 @@ import java.util.*;
  * @see OSQLAsynchQuery
  */
 public class OBasicResultSet<T> implements OResultSet<T> {
+  final     String  query;
   protected List<T> underlying;
   protected transient int limit = -1;
   // Reference to temporary record for avoid garbace collection
+  @SuppressWarnings({ "FieldCanBeLocal", "unused" })
   private List<ORecord> temporaryRecordCache;
 
-  public OBasicResultSet() {
-    underlying = Collections.synchronizedList(new ArrayList<T>());
-  }
-
-  public OBasicResultSet(final int iCapacity) {
-    underlying = Collections.synchronizedList(new ArrayList<T>(iCapacity));
+  public OBasicResultSet(String query) {
+    this.query = query;
+    underlying = Collections.synchronizedList(OSoftQueryResultList.<T>createResultList(query));
   }
 
   public OBasicResultSet<T> setCompleted() {
@@ -68,11 +68,7 @@ public class OBasicResultSet<T> implements OResultSet<T> {
 
   @Override
   public boolean isEmpty() {
-    boolean empty = underlying.isEmpty();
-    if (empty) {
-      empty = underlying.isEmpty();
-    }
-    return empty;
+    return underlying.isEmpty();
   }
 
   @Override
@@ -114,6 +110,7 @@ public class OBasicResultSet<T> implements OResultSet<T> {
 
   @Override
   public <T1> T1[] toArray(final T1[] a) {
+    //noinspection SuspiciousToArrayCall
     return underlying.toArray(a);
   }
 
@@ -121,8 +118,7 @@ public class OBasicResultSet<T> implements OResultSet<T> {
     if (limit > -1 && underlying.size() >= limit)
       return false;
 
-    final boolean result = underlying.add(t);
-    return result;
+    return underlying.add(t);
   }
 
   @Override
@@ -226,11 +222,12 @@ public class OBasicResultSet<T> implements OResultSet<T> {
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    //noinspection unchecked
     underlying = (List<T>) in.readObject();
   }
 
   public OBasicResultSet<T> copy() {
-    final OBasicResultSet<T> newValue = new OBasicResultSet<T>();
+    final OBasicResultSet<T> newValue = new OBasicResultSet<T>(query);
     newValue.underlying.addAll(underlying);
     return newValue;
   }
