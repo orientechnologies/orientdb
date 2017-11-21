@@ -1754,6 +1754,25 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
+  @Test
+  public void testIsDefinedOnNull() {
+    //issue #7879
+    String className = "testIsDefinedOnNull";
+
+    db.command(new OCommandSQL("create class " + className)).execute();
+    db.command(new OCommandSQL("create property " + className + ".name STRING")).execute();
+    db.command(new OCommandSQL("insert into " + className + " SET name = null, x = 1")).execute();
+    db.command(new OCommandSQL("insert into " + className + " SET x = 2")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT * FROM " + className + " WHERE name is defined"));
+    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.get(0).field("x"), 1);
+
+    results = db.query(new OSQLSynchQuery<ODocument>("SELECT * FROM " + className + " WHERE name is not defined"));
+    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.get(0).field("x"), 2);
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

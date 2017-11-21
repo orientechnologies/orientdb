@@ -40,11 +40,11 @@ import java.util.*;
 
 /**
  * SQL CREATE EDGE command.
- * 
+ *
  * @author Luca Garulli
  */
 public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
-  public static final String  NAME          = "CREATE EDGE";
+  public static final  String NAME          = "CREATE EDGE";
   private static final String KEYWORD_BATCH = "BATCH";
 
   private String                      from;
@@ -53,7 +53,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
   private String                      edgeLabel;
   private String                      clusterName;
   private List<OPair<String, Object>> fields;
-  private int                         batch = 100;
+  private int batch = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateEdge parse(final OCommandRequest iRequest) {
@@ -167,7 +167,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
               for (final OPair<String, Object> f : fields) {
                 if (f.getValue() instanceof OSQLFunctionRuntime) {
                   f.setValue(((OSQLFunctionRuntime) f.getValue()).getValue(to, null, context));
-                }else if(f.getValue() instanceof OSQLFilterItem){
+                } else if (f.getValue() instanceof OSQLFilterItem) {
                   f.setValue(((OSQLFilterItem) f.getValue()).getValue(to, null, context));
                 }
               }
@@ -204,10 +204,11 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
 
         if (edges.isEmpty()) {
           if (fromIds.isEmpty())
-            throw new OCommandExecutionException("No edge has been created because no source vertices");
+            throw new OCommandExecutionException("No edge has been created because no source vertices: " + this.toString());
           else if (toIds.isEmpty())
-            throw new OCommandExecutionException("No edge has been created because no target vertices");
-          throw new OCommandExecutionException("No edge has been created between " + fromIds + " and " + toIds);
+            throw new OCommandExecutionException("No edge has been created because no target vertices: " + this.toString());
+          throw new OCommandExecutionException(
+              "No edge has been created between " + fromIds + " and " + toIds + ": " + this.toString());
         }
 
         return edges;
