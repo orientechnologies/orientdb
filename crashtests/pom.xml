@@ -12,6 +12,7 @@
 
     <artifactId>orientdb-crashtests</artifactId>
 
+    <name>OrientDB Crash Tests</name>
     <properties>
         <argLine>-ea -Xmx${heapSize} -XX:MaxDirectMemorySize=512g
             -Dmemory.directMemory.trackMode=true
