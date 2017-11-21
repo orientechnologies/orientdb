@@ -116,13 +116,14 @@ public class MatchEdgeTraverser {
 
     if (whileCondition == null && maxDepth == null) {// in this case starting point is not returned and only one level depth is
       // evaluated
-      Iterable<OIdentifiable> queryResult = traversePatternEdge(startingPoint, iCommandContext);
+      Iterable<OResultInternal> queryResult = traversePatternEdge(startingPoint, iCommandContext);
 
-      for (OIdentifiable origin : queryResult) {
+      for (OResultInternal origin : queryResult) {
         Object previousMatch = iCommandContext.getVariable("$currentMatch");
-        iCommandContext.setVariable("$currentMatch", origin);
-        if (matchesFilters(iCommandContext, filter, origin) && matchesClass(iCommandContext, className, origin)) {
-          result.add(new OResultInternal(origin));
+        OElement elem = origin.toElement();
+        iCommandContext.setVariable("$currentMatch", elem);
+        if (matchesFilters(iCommandContext, filter, elem) && matchesClass(iCommandContext, className, elem)) {
+          result.add(origin);
         }
         iCommandContext.setVariable("$currentMatch", previousMatch);
       }
@@ -144,9 +145,9 @@ public class MatchEdgeTraverser {
       if ((maxDepth == null || depth < maxDepth) && (whileCondition == null || whileCondition
           .matchesFilters(startingPoint, iCommandContext))) {
 
-        Iterable<OIdentifiable> queryResult = traversePatternEdge(startingPoint, iCommandContext);
+        Iterable<OResultInternal> queryResult = traversePatternEdge(startingPoint, iCommandContext);
 
-        for (OIdentifiable origin : queryResult) {
+        for (OResultInternal origin : queryResult) {
           //          if(origin.equals(startingPoint)){
           //            continue;
           //          }
@@ -156,9 +157,11 @@ public class MatchEdgeTraverser {
           if (pathToHere != null) {
             newPath.addAll(pathToHere);
           }
-          newPath.add(origin.getIdentity());
 
-          Iterable<OResultInternal> subResult = executeTraversal(iCommandContext, item, origin, depth + 1, newPath);
+          OElement elem = origin.toElement();
+          newPath.add(elem.getIdentity());
+
+          Iterable<OResultInternal> subResult = executeTraversal(iCommandContext, item, elem, depth + 1, newPath);
           if (subResult instanceof Collection) {
             result.addAll((Collection<? extends OResultInternal>) subResult);
           } else {
@@ -210,7 +213,7 @@ public class MatchEdgeTraverser {
 
   //TODO refactor this method to receive the item.
 
-  protected Iterable<OIdentifiable> traversePatternEdge(OIdentifiable startingPoint, OCommandContext iCommandContext) {
+  protected Iterable<OResultInternal> traversePatternEdge(OIdentifiable startingPoint, OCommandContext iCommandContext) {
 
     Iterable possibleResults = null;
     if (this.item.getFilter() != null) {
@@ -226,7 +229,28 @@ public class MatchEdgeTraverser {
     }
 
     Object qR = this.item.getMethod().execute(startingPoint, possibleResults, iCommandContext);
-    return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
+    if (qR == null) {
+      return Collections.EMPTY_LIST;
+    }
+    if (qR instanceof OIdentifiable) {
+      return Collections.singleton(new OResultInternal((OIdentifiable) qR));
+    }
+    if (qR instanceof Iterable) {
+      Iterable iterable = (Iterable) qR;
+      List<OResultInternal> result = new ArrayList<>();
+      for (Object o : iterable) {
+        if (o instanceof OIdentifiable) {
+          result.add(new OResultInternal((OIdentifiable) o));
+        } else if (o instanceof OResultInternal) {
+          result.add((OResultInternal) o);
+        }
+        else{
+          throw new UnsupportedOperationException();
+        }
+      }
+      return result;
+    }
+    return Collections.EMPTY_LIST;
   }
 
 }

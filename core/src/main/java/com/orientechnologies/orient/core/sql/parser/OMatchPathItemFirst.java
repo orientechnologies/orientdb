@@ -12,6 +12,8 @@ import java.util.Map;
 public class OMatchPathItemFirst extends OMatchPathItem {
   protected OFunctionCall function;
 
+  protected OMethodCall methodWrapper;
+
   public OMatchPathItemFirst(int id) {
     super(id);
   }
@@ -38,13 +40,15 @@ public class OMatchPathItemFirst extends OMatchPathItem {
     return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
   }
 
-  @Override public OMatchPathItem copy() {
+  @Override
+  public OMatchPathItem copy() {
     OMatchPathItemFirst result = (OMatchPathItemFirst) super.copy();
     result.function = function == null ? null : function.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (!super.equals(o)) {
       return false;
     }
@@ -56,7 +60,8 @@ public class OMatchPathItemFirst extends OMatchPathItem {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (function != null ? function.hashCode() : 0);
     return result;
@@ -68,5 +73,19 @@ public class OMatchPathItemFirst extends OMatchPathItem {
 
   public void setFunction(OFunctionCall function) {
     this.function = function;
+  }
+
+  @Override
+  public OMethodCall getMethod() {
+    if (methodWrapper == null) {
+      synchronized (this) {
+        if (methodWrapper == null) {
+          methodWrapper = new OMethodCall(-1);
+          methodWrapper.params = function.params;
+          methodWrapper.methodName = function.name;
+        }
+      }
+    }
+    return methodWrapper;
   }
 }

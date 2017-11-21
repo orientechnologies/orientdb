@@ -5,7 +5,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.parser.OMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by luigidellaquila on 15/10/16.
@@ -30,10 +32,34 @@ public class MatchReverseEdgeTraverser extends MatchEdgeTraverser {
   }
 
   @Override
-  protected Iterable<OIdentifiable> traversePatternEdge(OIdentifiable startingPoint, OCommandContext iCommandContext) {
+  protected Iterable<OResultInternal> traversePatternEdge(OIdentifiable startingPoint, OCommandContext iCommandContext) {
 
     Object qR = this.item.getMethod().executeReverse(startingPoint, iCommandContext);
-    return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
+    if(qR==null){
+      return Collections.emptyList();
+    }
+    if(qR instanceof OResultInternal){
+      return Collections.singleton((OResultInternal) qR);
+    }
+    if(qR instanceof OIdentifiable){
+      return Collections.singleton(new OResultInternal((OIdentifiable) qR));
+    }
+    if (qR instanceof Iterable) {
+      Iterable iterable = (Iterable) qR;
+      List<OResultInternal> result = new ArrayList<>();
+      for (Object o : iterable) {
+        if (o instanceof OIdentifiable) {
+          result.add(new OResultInternal((OIdentifiable) o));
+        } else if (o instanceof OResultInternal) {
+          result.add((OResultInternal) o);
+        }
+        else{
+          throw new UnsupportedOperationException();
+        }
+      }
+      return result;
+    }
+    return Collections.EMPTY_LIST;
   }
 
   @Override
