@@ -538,7 +538,9 @@ public class OFetchHelper {
           fetchCollection(iRootRecord, iUserObject, iFetchPlan, o, null, iCurrentLevel + 1, iLevelFromRoot, iFieldDepthLevel,
               parsedRecords, iFieldPathFromRoot, iListener, iContext);
         } else if (o instanceof String || o instanceof Number || o instanceof Boolean) {
-          ((OJSONFetchContext) iContext).getJsonWriter().writeValue(0, false, o);
+          if (iContext instanceof OJSONFetchContext) {
+            ((OJSONFetchContext) iContext).getJsonWriter().writeValue(0, false, o);
+          }
         }
       }
     } finally {
