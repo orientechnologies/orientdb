@@ -32,17 +32,17 @@ import java.util.concurrent.Callable;
 
 /**
  * Interface to claim the resource can be backed up ad restored.
- * 
+ *
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public interface OBackupable {
   /**
    * Executes a backup of the database. During the backup the database will be frozen in read-only mode.
-   * 
+   *
    * @param out
    *          OutputStream used to write the backup content. Use a FileOutputStream to make the backup persistent on disk
    * @param options
-   *          Backup options as Map<String, Object> object
+   *          Backup options as Map<String, Object> object. Currently no options are supported, this is just ignored (null is accepted)
    * @param callable
    *          Callback to execute when the database is locked
    * @param iListener
@@ -59,7 +59,7 @@ public interface OBackupable {
 
   /**
    * Executes a restore of a database backup. During the restore the database will be frozen in read-only mode.
-   * 
+   *
    * @param in
    *          InputStream used to read the backup content. Use a FileInputStream to read a backup on a disk
    * @param options
