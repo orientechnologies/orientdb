@@ -26,7 +26,7 @@ node("master") {
 
                 stage('Run tests on Java8') {
                     docker.image("${mvnJdk8Image}").inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} "
-                            + "--name ${containerName} --memory=4g ${env.VOLUMES}") {
+                            + "--name ${containerName} --memory=5g ${env.VOLUMES}") {
                         try {
                             //skip integration test for now
                             sh "${mvnHome}/bin/mvn -V  -fae clean install   -Dsurefire.useFile=false -DskipITs"
