@@ -324,7 +324,7 @@ public class ODistributedWorker extends Thread {
         distributed.waitIsReady(new OCallable<Boolean, Void>() {
           @Override
           public Boolean call(Void iArgument) {
-            return null;
+            return true;
           }
         });
 
