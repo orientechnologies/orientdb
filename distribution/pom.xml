@@ -29,13 +29,14 @@
         <VERSION>${project.version}</VERSION>
         <BUILD>${implementation.build}; ${maven.build.timestamp}</BUILD>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>-Xmx${heapSize} -Xms${heapSize} -XX:MaxDirectMemorySize=512g</argLine>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-test-commons</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>6.9.8</version>
             <scope>test</scope>
         </dependency>
 
@@ -136,7 +137,7 @@
                                 <classpath/>
                                 <argument>com.orientechnologies.orient.console.OConsoleDatabaseApp</argument>
                                 <argument>CREATE DATABASE plocal:./target/databases/demodb;</argument>
-                                <argument>LOAD SCRIPT ./src/test/resources/demoDB.osql;</argument>
+                                <argument>LOAD SCRIPT ./src/main/resources/demoDB.osql;</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -188,6 +189,25 @@
                     </resources>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                        <buildName>${project.build.finalName}</buildName>
+                        <loadScriptPath>${basedir}/src/main/resources/demoDB.osql</loadScriptPath>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -199,6 +219,13 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <buildDirectory>${project.build.directory}</buildDirectory>
+                                <buildName>${project.build.finalName}</buildName>
+                                <loadScriptPath>${basedir}/src/main/resources/demoDB.osql</loadScriptPath>
+                            </systemPropertyVariables>
+                        </configuration>
                         <executions>
                             <execution>
                                 <goals>
@@ -208,45 +235,6 @@
                             </execution>
                         </executions>
                     </plugin>
-
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.8</version>
-                        <executions>
-                            <execution>
-                                <id>start-orient</id>
-                                <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target name="start OrientDB server on localhost">
-                                        <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/server.sh"
-                                              spawn="true">
-                                            <env key="ORIENTDB_ROOT_PASSWORD" value="root"/>
-                                        </exec>
-                                    </target>
-                                </configuration>
-                            </execution>
-
-                            <execution>
-                                <id>stop-orient</id>
-                                <phase>post-integration-test</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target name="stop the running OrientDB server on localhost">
-                                        <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/shutdown.sh"
-                                              spawn="false">
-                                        </exec>
-                                    </target>
-                                </configuration>
-
-                            </execution>
-                        </executions>
-                    </plugin>
-
                 </plugins>
             </build>
 

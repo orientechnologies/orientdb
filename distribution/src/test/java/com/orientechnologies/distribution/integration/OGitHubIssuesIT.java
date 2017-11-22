@@ -8,27 +8,23 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * This integration test keeps track of issues to avoid regressions. It creates a database called as the class name, which is
- * dropped at the end of the work.
- * Created by santo-it on 2017-03-22.
+ * dropped at the end of the work. Created by santo-it on 2017-03-22.
  */
+@Test
 public class OGitHubIssuesIT extends OIntegrationTestTemplate {
 
-  @Override
-  @Before
-  public void setUp() throws Exception {
-    super.setUp();
-
+  @BeforeMethod
+  public void before() {
     dropTestDatabase();
 
     String database = this.getClass().getName();
@@ -47,10 +43,9 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
   }
 
   @Override
-  @After
-  public void tearDown() {
+  @AfterMethod
+  public void after() {
     dropTestDatabase();
-    super.tearDown();
   }
 
   @Test
@@ -77,10 +72,10 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
     db.command("INSERT INTO OtherClass SET OtherCS='AbC', OtherCI='AbC';");
 
     OResultSet results = db.query("SELECT FROM OtherClass WHERE OtherCS='abc'");
-    assertThat(results).hasSize(1);
+    Assert.assertEquals(results.stream().count(), 1);
 
     results = db.query("SELECT FROM OtherClass WHERE OtherCI='abc'");
-    assertThat(results).hasSize(8);
+    Assert.assertEquals(results.stream().count(), 8);
 
     OClass oClassCS = db.createVertexClass("CaseSensitiveCollationIndex");
 
@@ -103,22 +98,28 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
     db.command("INSERT INTO CaseSensitiveCollationIndex SET `Group`='1', Name='AbC', Version='1';");
 
     results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND `Group` = '1' AND Name='abc'");
-    assertThat(results).hasSize(1);
+    Assert.assertEquals(results.stream().count(), 1);
+    results.close();
 
     results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` = '1'");
-    assertThat(results).hasSize(1);
+    Assert.assertEquals(results.stream().count(), 1);
+    results.close();
 
     results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = '1' AND Name='abc' AND Version='1'");
-    assertThat(results).hasSize(1);
+    Assert.assertEquals(results.stream().count(), 1);
+    results.close();
 
     results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = '1' AND Version='1' AND Name='abc'");
-    assertThat(results).hasSize(1);
+    Assert.assertEquals(results.stream().count(), 1);
+    results.close();
 
     results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` = '1'");
-    assertThat(results).hasSize(1);
+    Assert.assertEquals(results.stream().count(), 1);
+    results.close();
 
     results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND `Group` = '1' AND Version='1'");
-    assertThat(results).hasSize(1);
+    Assert.assertEquals(results.stream().count(), 1);
+    results.close();
 
     OClass oClassCI = db.createVertexClass("CaseInsensitiveCollationIndex");
 
@@ -141,27 +142,33 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
     db.command("INSERT INTO CaseInsensitiveCollationIndex SET `Group`='1', Name='AbC', Version='1';");
 
     results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND `Group` = '1' AND Name='abc'");
-    assertThat(results).hasSize(8);
+    Assert.assertEquals(results.stream().count(), 8);
+    results.close();
 
     results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` = '1'");
-    assertThat(results).hasSize(8);
+    Assert.assertEquals(results.stream().count(), 8);
+    results.close();
 
     results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = '1' AND Name='abc' AND Version='1'");
-    assertThat(results).hasSize(8);
+    Assert.assertEquals(results.stream().count(), 8);
+    results.close();
 
     results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = '1' AND Version='1' AND Name='abc'");
-    assertThat(results).hasSize(8);
+    Assert.assertEquals(results.stream().count(), 8);
+    results.close();
 
     results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` = '1'");
-    assertThat(results).hasSize(8);
+    Assert.assertEquals(results.stream().count(), 8);
+    results.close();
 
     results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND `Group` = '1' AND Version='1'");
-    assertThat(results).hasSize(8);
+    Assert.assertEquals(results.stream().count(), 8);
+    results.close();
 
     //test that Group = 1 (integer) is correctly converted to String
     results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND `Group` = 1 AND Version='1'");
-    assertThat(results).hasSize(8);
-
+    Assert.assertEquals(results.stream().count(), 8);
+    results.close();
   }
 
   @Test
@@ -186,31 +193,24 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
         "CREATE EDGE t7249HasFriend FROM (SELECT FROM t7249Profiles WHERE Name='Enrico') TO (SELECT FROM t7249Profiles WHERE Name='Santo');");
 
     OResultSet rs = db.query("SELECT in('t7249HasFriend').size() as InFriendsNumber FROM t7249Profiles WHERE Name='Santo'");
-    List<OResult> results =rs
-        .stream()
-        .collect(Collectors.toList());
+    List<OResult> results = rs.stream().collect(Collectors.toList());
     rs.close();
-    assertThat(results).hasSize(1);
-    assertThat(results.get(0).<Integer>getProperty("InFriendsNumber")).isEqualTo(1);
+    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.get(0).<Integer>getProperty("InFriendsNumber"), Integer.valueOf(1));
 
     rs = db.query("SELECT out('t7249HasFriend').size() as OutFriendsNumber FROM t7249Profiles WHERE Name='Santo'");
-    results =rs
-        .stream()
-        .collect(Collectors.toList());
+    results = rs.stream().collect(Collectors.toList());
     rs.close();
 
-    assertThat(results).hasSize(1);
-    assertThat(results.get(0).<Integer>getProperty("OutFriendsNumber")).isEqualTo(3);
+    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.get(0).<Integer>getProperty("OutFriendsNumber"), Integer.valueOf(3));
 
     rs = db.query("SELECT both('t7249HasFriend').size() as TotalFriendsNumber FROM t7249Profiles WHERE Name='Santo'");
-    results =rs
-        .stream()
-        .collect(Collectors.toList());
+    results = rs.stream().collect(Collectors.toList());
     rs.close();
 
-    assertThat(results).hasSize(1);
-    assertThat(results.get(0).<Integer>getProperty("TotalFriendsNumber")).isEqualTo(4);
-
+    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.get(0).<Integer>getProperty("TotalFriendsNumber"), Integer.valueOf(4));
   }
 
   @Test
@@ -242,7 +242,7 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
     OResultSet results = db.query(
         "MATCH {class: t7265Customers, as: customer, where: (OrderedId=1)}--{Class: t7265Services, as: service} RETURN service.Name");
 
-    assertThat(results).hasSize(2);
+    Assert.assertEquals(results.stream().count(), 2);
     results.close();
   }
 

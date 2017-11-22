@@ -3,157 +3,133 @@ package com.orientechnologies.distribution.integration.demodb;
 import com.orientechnologies.distribution.integration.OIntegrationTestTemplate;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * Created by frank on 24/05/2017.
  */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@Test
 public class ODemoDbFromDocumentationFriendshipIT extends OIntegrationTestTemplate {
-
-  @Test
+  @Test(priority = 1)
   public void test_Friendship_Example_1() throws Exception {
 
-    OResultSet resultSet = db.query("MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend} \n"
-        + "RETURN $pathelements");
+    OResultSet resultSet = db.query(
+        "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend} \n"
+            + "RETURN $pathelements");
 
-    assertThat(resultSet)
-        .hasSize(20);
-
+    Assert.assertEquals(resultSet.stream().count(), 20);
     resultSet.close();
 
     resultSet = db.query("SELECT \n" + "  both('HasFriend').size() AS FriendsNumber \n" + "FROM `Profiles` \n"
         + "WHERE Name='Santo' AND Surname='OrientDB'");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
-    assertThat(results)
-        .hasSize(1);
+    Assert.assertEquals(results.size(), 1);
 
     final OResult result = results.iterator().next();
-
-    assertThat(result.<Integer>getProperty("FriendsNumber")).isEqualTo(10);
+    Assert.assertEquals(result.<Integer>getProperty("FriendsNumber"), Integer.valueOf(10));
 
     resultSet.close();
-    db.close();
-
   }
 
-  @Test
+  @Test(priority = 2)
   public void test_Friendship_Example_2() throws Exception {
 
-    OResultSet resultSet = db.query("MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer}\n"
-        + "RETURN $pathelements");
+    OResultSet resultSet = db.query(
+        "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer}\n"
+            + "RETURN $pathelements");
 
-    assertThat(resultSet)
-        .hasSize(15);
+    Assert.assertEquals(resultSet.stream().count(), 15);
 
     resultSet.close();
-    db.close();
-
   }
 
-  @Test
+  @Test(priority = 3)
   public void test_Friendship_Example_3() throws Exception {
 
-    OResultSet resultSet = db.query("MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer}-IsFromCountry->{Class: Countries, as: country}\n"
-        + "RETURN $pathelements");
+    OResultSet resultSet = db.query(
+        "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer}-IsFromCountry->{Class: Countries, as: country}\n"
+            + "RETURN $pathelements");
 
-    assertThat(resultSet)
-        .hasSize(20);
+    Assert.assertEquals(resultSet.stream().count(), 20);
 
     resultSet.close();
-    db.close();
-
   }
 
-  @Test
+  @Test(priority = 4)
   public void test_Friendship_Example_4() throws Exception {
 
-    OResultSet resultSet = db.query("MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer}<-HasCustomer-{Class: Orders, as: order} \n"
-        + "RETURN $pathelements");
+    OResultSet resultSet = db.query(
+        "MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer}<-HasCustomer-{Class: Orders, as: order} \n"
+            + "RETURN $pathelements");
 
-    assertThat(resultSet)
-        .hasSize(40);
+    Assert.assertEquals(resultSet.stream().count(), 40);
 
     resultSet.close();
-    db.close();
-
   }
 
-  @Test
+  @Test(priority = 5)
   public void test_Friendship_Example_5() throws Exception {
 
-    OResultSet resultSet = db.query("SELECT \n" + "  OrderedId as Customer_OrderedId, \n"
-        + "  in('HasCustomer').size() as NumberOfOrders, \n" + "  out('HasProfile').Name as Friend_Name, \n"
-        + "  out('HasProfile').Surname as Friend_Surname \n" + "FROM (\n" + "  SELECT expand(customer) \n" + "  FROM (\n"
-        + "    MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer} \n"
-        + "    RETURN customer\n" + "  )\n" + ") \n" + "ORDER BY NumberOfOrders DESC \n" + "LIMIT 3");
+    OResultSet resultSet = db.query(
+        "SELECT \n" + "  OrderedId as Customer_OrderedId, \n" + "  in('HasCustomer').size() as NumberOfOrders, \n"
+            + "  out('HasProfile').Name as Friend_Name, \n" + "  out('HasProfile').Surname as Friend_Surname \n" + "FROM (\n"
+            + "  SELECT expand(customer) \n" + "  FROM (\n"
+            + "    MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer} \n"
+            + "    RETURN customer\n" + "  )\n" + ") \n" + "ORDER BY NumberOfOrders DESC \n" + "LIMIT 3");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
-    assertThat(results)
-        .hasSize(3);
+    Assert.assertEquals(results.size(), 3);
 
     final OResult result = results.iterator().next();
 
-    assertThat(result.<Long>getProperty("Customer_OrderedId")).isEqualTo(4);
-    assertThat(result.<Integer>getProperty("NumberOfOrders")).isEqualTo(4);
+    Assert.assertEquals(result.<Long>getProperty("Customer_OrderedId"), Long.valueOf(4));
+    Assert.assertEquals(result.<Integer>getProperty("NumberOfOrders"), Integer.valueOf(4));
 
     resultSet.close();
-    db.close();
-
   }
 
-  @Test
+  @Test(priority = 6)
   public void test_Friendship_Example_6() throws Exception {
 
-    OResultSet resultSet = db.query("SELECT \n" + "  OrderedId as Customer_OrderedId, \n"
-        + "  out('HasVisited').size() as NumberOfVisits, \n" + "  out('HasProfile').Name as Friend_Name, \n"
-        + "  out('HasProfile').Surname as Friend_Surname \n" + "FROM (\n" + "  SELECT expand(customer) \n" + "  FROM (\n"
-        + "    MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer} \n"
-        + "    RETURN customer\n" + "  )\n" + ") \n" + "ORDER BY NumberOfVisits DESC \n" + "LIMIT 3");
+    OResultSet resultSet = db.query(
+        "SELECT \n" + "  OrderedId as Customer_OrderedId, \n" + "  out('HasVisited').size() as NumberOfVisits, \n"
+            + "  out('HasProfile').Name as Friend_Name, \n" + "  out('HasProfile').Surname as Friend_Surname \n" + "FROM (\n"
+            + "  SELECT expand(customer) \n" + "  FROM (\n"
+            + "    MATCH {Class: Profiles, as: profile, where: (Name='Santo' AND Surname='OrientDB')}-HasFriend-{Class: Profiles, as: friend}<-HasProfile-{class: Customers, as: customer} \n"
+            + "    RETURN customer\n" + "  )\n" + ") \n" + "ORDER BY NumberOfVisits DESC \n" + "LIMIT 3");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
-    assertThat(results)
-        .hasSize(3);
+    Assert.assertEquals(results.size(), 3);
 
     final OResult result = results.iterator().next();
 
-    assertThat(result.<Long>getProperty("Customer_OrderedId")).isEqualTo(2);
-    assertThat(result.<Integer>getProperty("NumberOfVisits")).isEqualTo(23);
+    Assert.assertEquals(result.<Long>getProperty("Customer_OrderedId"), Long.valueOf(2));
+    Assert.assertEquals(result.<Integer>getProperty("NumberOfVisits"), Integer.valueOf(23));
 
     resultSet.close();
-    db.close();
-
   }
 
-  @Test
+  @Test(priority = 7)
   public void test_Friendship_Example_7() throws Exception {
 
-    OResultSet resultSet = db.query("SELECT \n" + "  @Rid as Friend_RID, \n" + "  Name as Friend_Name, \n"
-        + "  Surname as Friend_Surname \n" + "FROM (\n" + "  SELECT expand(customerFriend) \n" + "  FROM (\n"
-        + "    MATCH {Class:Customers, as: customer, where:(OrderedId=1)}-HasProfile-{Class:Profiles, as: profile}-HasFriend-{Class:Profiles, as: customerFriend} RETURN customerFriend\n"
-        + "  )\n" + ") \n" + "WHERE in('HasProfile').size()=0\n" + "ORDER BY Friend_Name ASC");
+    OResultSet resultSet = db.query(
+        "SELECT \n" + "  @Rid as Friend_RID, \n" + "  Name as Friend_Name, \n" + "  Surname as Friend_Surname \n" + "FROM (\n"
+            + "  SELECT expand(customerFriend) \n" + "  FROM (\n"
+            + "    MATCH {Class:Customers, as: customer, where:(OrderedId=1)}-HasProfile-{Class:Profiles, as: profile}-HasFriend-{Class:Profiles, as: customerFriend} RETURN customerFriend\n"
+            + "  )\n" + ") \n" + "WHERE in('HasProfile').size()=0\n" + "ORDER BY Friend_Name ASC");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
-    assertThat(results)
-        .hasSize(5);
+    Assert.assertEquals(results.size(), 5);
 
     final OResult result = results.iterator().next();
 
-    assertThat(result.<String>getProperty("Friend_Name")).isEqualTo("Emanuele");
-    assertThat(result.<String>getProperty("Friend_Surname")).isEqualTo("OrientDB");
+    Assert.assertEquals(result.getProperty("Friend_Name"), "Emanuele");
+    Assert.assertEquals(result.getProperty("Friend_Surname"), "OrientDB");
 
     resultSet.close();
-    db.close();
-
   }
-
 }

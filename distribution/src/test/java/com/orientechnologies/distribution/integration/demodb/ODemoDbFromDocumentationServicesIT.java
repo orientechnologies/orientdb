@@ -3,77 +3,67 @@ package com.orientechnologies.distribution.integration.demodb;
 import com.orientechnologies.distribution.integration.OIntegrationTestTemplate;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by santo-it on 2017-08-28.
  */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@Test
 public class ODemoDbFromDocumentationServicesIT extends OIntegrationTestTemplate {
 
-  @Test
+  @Test(priority = 1)
   public void test_Services_Example_1() throws Exception {
 
-    OResultSet resultSet = db.query("MATCH {class: Customers, as: customer, where: (OrderedId=1)}--{Class: Services, as: service}\n"
-        + "RETURN $pathelements");
+    OResultSet resultSet = db.query(
+        "MATCH {class: Customers, as: customer, where: (OrderedId=1)}--{Class: Services, as: service}\n" + "RETURN $pathelements");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
-    assertThat(results)
-        .hasSize(8);
+    Assert.assertEquals(results.size(), 8);
 
     resultSet.close();
-    db.close();
   }
 
-  @Test
+  @Test(priority = 2)
   public void test_Services_Example_2() throws Exception {
 
     OResultSet resultSet = db.query("SELECT \n" + "  Name, Type, in(\"HasStayed\").size() AS NumberOfBookings \n" + "FROM Hotels \n"
         + "ORDER BY NumberOfBookings DESC \n" + "LIMIT 3");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
-    assertThat(results)
-        .hasSize(3);
+    Assert.assertEquals(results.size(), 3);
 
     final OResult result = results.iterator().next();
 
-    assertThat(result.<String>getProperty("Name")).isEqualTo("Hotel Cavallino d'Oro");
-    assertThat(result.<String>getProperty("Type")).isEqualTo("hotel");
-    assertThat(result.<Integer>getProperty("NumberOfBookings")).isEqualTo(7);
+    Assert.assertEquals(result.getProperty("Name"), "Hotel Cavallino d'Oro");
+    Assert.assertEquals(result.getProperty("Type"), "hotel");
+    Assert.assertEquals(result.<Integer>getProperty("NumberOfBookings"), Integer.valueOf(7));
 
     resultSet.close();
-    db.close();
   }
 
-  @Test
+  @Test(priority = 3)
   public void test_Services_Example_3() throws Exception {
 
     OResultSet resultSet = db.query("SELECT \n" + "  Name, Type, out(\"HasReview\").size() AS ReviewNumbers \n" + "FROM `Hotels` \n"
         + "ORDER BY ReviewNumbers DESC \n" + "LIMIT 3");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
-    assertThat(results)
-        .hasSize(3);
+    Assert.assertEquals(results.size(), 3);
 
     final OResult result = results.iterator().next();
 
-    assertThat(result.<String>getProperty("Name")).isEqualTo("Hotel Felicyta");
-    assertThat(result.<String>getProperty("Type")).isEqualTo("hotel");
-    assertThat(result.<Integer>getProperty("ReviewNumbers")).isEqualTo(5);
+    Assert.assertEquals(result.getProperty("Name"), "Hotel Felicyta");
+    Assert.assertEquals(result.getProperty("Type"), "hotel");
+    Assert.assertEquals(result.<Integer>getProperty("ReviewNumbers"), Integer.valueOf(5));
 
     resultSet.close();
-    db.close();
   }
 
-  @Test
+  @Test(priority = 4)
   public void test_Services_Example_4() throws Exception {
 
     OResultSet resultSet = db.query("SELECT \n" + "  Name, \n" + "  count(*) as CountryCount \n" + "FROM (\n" + "  SELECT \n"
@@ -82,16 +72,13 @@ public class ODemoDbFromDocumentationServicesIT extends OIntegrationTestTemplate
         + "    UNWIND customers) \n" + "  UNWIND countries) \n" + "GROUP BY Name \n" + "ORDER BY CountryCount DESC \n" + "LIMIT 3");
 
     final List<OResult> results = resultSet.stream().collect(Collectors.toList());
-    assertThat(results)
-        .hasSize(3);
+    Assert.assertEquals(results.size(), 3);
 
     final OResult result = results.iterator().next();
 
-    assertThat(result.<String>getProperty("Name")).isEqualTo("Croatia");
-    assertThat(result.<Long>getProperty("CountryCount")).isEqualTo(1);
+    Assert.assertEquals(result.getProperty("Name"), "Croatia");
+    Assert.assertEquals(result.<Long>getProperty("CountryCount"), Long.valueOf(1));
 
     resultSet.close();
-    db.close();
   }
-
 }

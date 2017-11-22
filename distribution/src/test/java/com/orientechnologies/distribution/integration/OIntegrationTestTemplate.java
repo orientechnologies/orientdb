@@ -1,13 +1,20 @@
 package com.orientechnologies.distribution.integration;
 
+import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import org.junit.After;
-import org.junit.Before;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerMain;
+import org.testng.annotations.*;
 
-import java.util.concurrent.TimeUnit;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * This abstract class is a template to be extended to implements integration tests.
@@ -16,36 +23,89 @@ import java.util.concurrent.TimeUnit;
  * Created by frank on 15/03/2017.
  */
 public abstract class OIntegrationTestTemplate {
+  private static final String ORIENTDB_HOME          = "ORIENTDB_HOME";
+  private static final String ORIENTDB_ROOT_PASSWORD = "ORIENTDB_ROOT_PASSWORD";
 
-  public static boolean firstTime = true;
+  private static volatile OServer server;
+  private static volatile String  beforeOrientDBHome;
+  private static volatile String  beforeRootPassword;
 
-  protected ODatabaseDocument db;
-  protected OrientDB          orientDB;
-  private   ODatabasePool     pool;
+  protected               ODatabaseDocument db;
+  static volatile         OrientDB          orientDB;
+  private static volatile ODatabasePool     pool;
 
-  @Before
-  public void setUp() throws Exception {
+  @BeforeSuite
+  public static void beforeSuite() throws Exception {
+    final String buildDirectory = System.getProperty("buildDirectory", "target");
+    final Path buildPath = Paths.get(buildDirectory);
 
-    if (firstTime) {
-      System.out.println("Waiting for OrientDB to startup");
-      TimeUnit.SECONDS.sleep(5);
-      firstTime = false;
+    final String buildName = System.getProperty("buildName", "unknownBuild");
+
+    final Path orientdbHomePath = buildPath.resolve(buildName + ".dir").resolve(buildName);
+    Files.createDirectories(orientdbHomePath.resolve("databases"));
+
+    beforeOrientDBHome = System.getProperty(ORIENTDB_HOME);
+    beforeRootPassword = System.getProperty(ORIENTDB_ROOT_PASSWORD);
+
+    System.setProperty(ORIENTDB_ROOT_PASSWORD, "root");
+    System.setProperty(ORIENTDB_HOME, orientdbHomePath.toRealPath().toString());
+
+    server = OServerMain.create();
+    try (InputStream configuration = OIntegrationTestTemplate.class.getResourceAsStream("/orientdb-server-config.xml")) {
+      server.startup(configuration);
+    }
+    server.activate();
+
+    createDemoDB();
+  }
+
+  private static void createDemoDB() throws IOException {
+    orientDB = new OrientDB("remote:localhost:9595", "root", "root", OrientDBConfig.defaultConfig());
+    if (!orientDB.exists("demodb")) {
+      orientDB.create("demodb", ODatabaseType.PLOCAL);
+
+      final String loadScript = System.getProperty("loadScriptPath");
+      if (loadScript != null) {
+        final Path loadScriptPath = Paths.get(loadScript);
+        final OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { loadScriptPath.toRealPath().toString() });
+        console.connect("remote:localhost:9595/demodb", "admin", "admin");
+        console.run();
+        console.close();
+      }
+
     }
 
-    //root's user password is defined inside the pom
-    orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-
     pool = new ODatabasePool(orientDB, "demodb", "admin", "admin");
+  }
 
+  @AfterSuite
+  public static void afterSuite() {
+    orientDB.close();
+    pool.close();
+
+    server.shutdown();
+
+    if (beforeRootPassword == null) {
+      System.clearProperty(ORIENTDB_ROOT_PASSWORD);
+    } else {
+      System.setProperty(ORIENTDB_ROOT_PASSWORD, beforeRootPassword);
+    }
+
+    if (beforeOrientDBHome == null) {
+      System.clearProperty(ORIENTDB_HOME);
+    } else {
+      System.setProperty(ORIENTDB_HOME, beforeOrientDBHome);
+    }
+  }
+
+  @BeforeMethod
+  public void before() {
     db = pool.acquire();
   }
 
-  @After
-  public void tearDown() {
-      db.activateOnCurrentThread();
-      db.close();
-      pool.close();
-      orientDB.close();
+  @AfterMethod
+  public void after() {
+    db.activateOnCurrentThread();
+    db.close();
   }
-
 }

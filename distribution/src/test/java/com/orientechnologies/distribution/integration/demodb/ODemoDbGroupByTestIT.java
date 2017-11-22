@@ -2,57 +2,48 @@ package com.orientechnologies.distribution.integration.demodb;
 
 import com.orientechnologies.distribution.integration.OIntegrationTestTemplate;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
  * Tests for issue #7661
  */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@Test
 public class ODemoDbGroupByTestIT extends OIntegrationTestTemplate {
 
-  @Test
+  @Test(priority = 1)
   public void testGroupBy1() throws Exception {
     OResultSet resultSet = db.query("SELECT count(*) FROM Orders GROUP BY OrderDate.format('yyyy')");
 
-    assertThat(resultSet)
-        .hasSize(7);
+    Assert.assertEquals(resultSet.stream().count(), 7);
     resultSet.close();
-    db.close();
   }
 
-  @Test
+  @Test(priority = 2)
   public void testGroupBy2() throws Exception {
 
     OResultSet resultSet = db.query("SELECT count(*), OrderDate.format('yyyy') as year FROM Orders GROUP BY year");
 
-    assertThat(resultSet)
-        .hasSize(7);
+    Assert.assertEquals(resultSet.stream().count(), 7);
     resultSet.close();
-    db.close();
   }
-  @Test
+
+  @Test(priority = 3)
   public void testGroupBy3() throws Exception {
 
     OResultSet resultSet = db.query("SELECT count(*), OrderDate.format('yyyy') FROM Orders GROUP BY OrderDate.format('yyyy')");
 
-    assertThat(resultSet)
-        .hasSize(7);
+    Assert.assertEquals(resultSet.stream().count(), 7);
     resultSet.close();
-    db.close();
   }
-  @Test
+
+  @Test(priority = 4)
   public void testGroupBy4() throws Exception {
 
-    OResultSet resultSet = db.query("SELECT count(*), OrderDate.format('yyyy') as year FROM Orders GROUP BY OrderDate.format('yyyy')");
+    OResultSet resultSet = db
+        .query("SELECT count(*), OrderDate.format('yyyy') as year FROM Orders GROUP BY OrderDate.format('yyyy')");
 
-    assertThat(resultSet)
-        .hasSize(7);
+    Assert.assertEquals(resultSet.stream().count(), 7);
     resultSet.close();
-    db.close();
   }
-
 }
