@@ -129,11 +129,17 @@ public class OStatementCache {
       return result;
     } catch (ParseException e) {
       throwParsingException(e, statement);
+    }catch (TokenMgrError e2){
+      throwParsingException(e2, statement);
     }
     return null;
   }
 
   protected static void throwParsingException(ParseException e, String statement) {
+    throw new OCommandSQLParsingException(e, statement);
+  }
+
+  protected static void throwParsingException(TokenMgrError e, String statement) {
     throw new OCommandSQLParsingException(e, statement);
   }
 
