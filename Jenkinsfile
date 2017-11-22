@@ -4,6 +4,8 @@ node("master") {
                  strategy: [$class              : 'LogRotator', artifactDaysToKeepStr: '',
                             artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10']]])
 
+    //we use 24 gb of 32 of server memory
+    lock(resource: "memory", "quantity":48){}
     milestone()
     lock(resource: "${env.BRANCH_NAME}", inversePrecedence: true) {
         ansiColor('xterm') {
