@@ -69,7 +69,8 @@ public class ODropClusterStatement extends ODDLStatement {
     OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "drop cluster");
-    result.setProperty("clusterName", name.getStringValue());
+    result.setProperty("clusterName", name == null ? null : name.getStringValue());
+    result.setProperty("clusterId", id == null ? null : id.getValue());
     rs.add(result);
     return rs;
   }
