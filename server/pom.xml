@@ -185,6 +185,16 @@
                         <version>${surefire.version}</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <systemPropertyVariables>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                        <orient.server.testMode>${orient.server.testMode}</orient.server.testMode>
+                        <orient.server.port>${orient.server.port}</orient.server.port>
+                    </systemPropertyVariables>
+                    <excludes>
+                        <exclude>**/*CrashRestoreIT.java</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
