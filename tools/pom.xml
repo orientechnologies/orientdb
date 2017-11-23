@@ -46,6 +46,7 @@
         <argLine>
             -Xmx${heapSize}
             -XX:MaxDirectMemorySize=512g
+            -Dstorage.diskCache.bufferSize=4096
             -Dmemory.directMemory.trackMode=true
             -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager
             -Dstorage.diskCache.checksumMode=storeAndThrow
