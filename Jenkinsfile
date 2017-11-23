@@ -25,27 +25,31 @@ node("master") {
 
             try {
                 stage('Run tests on Java7') {
-                    docker.image("${mvnJdk7Image}")
-                            .inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
-                            "--name ${containerName} --memory=5g ${env.VOLUMES}") {
-                        try {
-                            //skip integration test for now
-                            sh "${mvnHome}/bin/mvn -V  -fae clean   install   -Dsurefire.useFile=false -DskipITs"
-                            sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
-                            sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests -DskipITs"
-                        } finally {
-                            junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
+                    lock("label": "memory", "quantity":5) {
+                        docker.image("${mvnJdk7Image}")
+                                .inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
+                                "--name ${containerName} --memory=5g ${env.VOLUMES}") {
+                            try {
+                                //skip integration test for now
+                                sh "${mvnHome}/bin/mvn -V  -fae clean   install   -Dsurefire.useFile=false -DskipITs"
+                                sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
+                                sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests -DskipITs"
+                            } finally {
+                                junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
 
+                            }
                         }
                     }
                 }
 
                 stage('Publish Javadoc') {
-                    docker.image("${mvnJdk8Image}")
-                            .inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
-                            "--name ${containerName} --memory=1g ${env.VOLUMES}") {
-                        sh "${mvnHome}/bin/mvn  javadoc:aggregate"
-                        sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
+                    lock("label": "memory", "quantity":1) {
+                        docker.image("${mvnJdk8Image}")
+                                .inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
+                                "--name ${containerName} --memory=1g ${env.VOLUMES}") {
+                            sh "${mvnHome}/bin/mvn  javadoc:aggregate"
+                            sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
+                        }
                     }
                 }
 
