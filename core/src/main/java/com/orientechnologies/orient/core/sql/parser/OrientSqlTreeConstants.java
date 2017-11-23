@@ -173,22 +173,23 @@ public interface OrientSqlTreeConstants
   public int JJTGRANTSTATEMENT = 167;
   public int JJTREVOKESTATEMENT = 168;
   public int JJTCREATEFUNCTIONSTATEMENT = 169;
-  public int JJTLETSTATEMENT = 170;
-  public int JJTBEGINSTATEMENT = 171;
-  public int JJTCOMMITSTATEMENT = 172;
-  public int JJTROLLBACKSTATEMENT = 173;
-  public int JJTRETURNSTATEMENT = 174;
-  public int JJTIFSTATEMENT = 175;
-  public int JJTSLEEPSTATEMENT = 176;
-  public int JJTCONSOLESTATEMENT = 177;
-  public int JJTCREATESEQUENCESTATEMENT = 178;
-  public int JJTALTERSEQUENCESTATEMENT = 179;
-  public int JJTDROPSEQUENCESTATEMENT = 180;
-  public int JJTHASTATUSSTATEMENT = 181;
-  public int JJTHAREMOVESERVERSTATEMENT = 182;
-  public int JJTHASYNCDATABASESTATEMENT = 183;
-  public int JJTHASYNCCLUSTERSTATEMENT = 184;
-  public int JJTFOREACHBLOCK = 185;
+  public int JJTCREATEUSERSTATEMENT = 170;
+  public int JJTLETSTATEMENT = 171;
+  public int JJTBEGINSTATEMENT = 172;
+  public int JJTCOMMITSTATEMENT = 173;
+  public int JJTROLLBACKSTATEMENT = 174;
+  public int JJTRETURNSTATEMENT = 175;
+  public int JJTIFSTATEMENT = 176;
+  public int JJTSLEEPSTATEMENT = 177;
+  public int JJTCONSOLESTATEMENT = 178;
+  public int JJTCREATESEQUENCESTATEMENT = 179;
+  public int JJTALTERSEQUENCESTATEMENT = 180;
+  public int JJTDROPSEQUENCESTATEMENT = 181;
+  public int JJTHASTATUSSTATEMENT = 182;
+  public int JJTHAREMOVESERVERSTATEMENT = 183;
+  public int JJTHASYNCDATABASESTATEMENT = 184;
+  public int JJTHASYNCCLUSTERSTATEMENT = 185;
+  public int JJTFOREACHBLOCK = 186;
 
 
   public String[] jjtNodeName = {
@@ -362,6 +363,7 @@ public interface OrientSqlTreeConstants
     "GrantStatement",
     "RevokeStatement",
     "CreateFunctionStatement",
+    "CreateUserStatement",
     "LetStatement",
     "BeginStatement",
     "CommitStatement",
@@ -380,4 +382,4 @@ public interface OrientSqlTreeConstants
     "ForEachBlock",
   };
 }
-/* JavaCC - OriginalChecksum=d53b78aced9d53565d34969c6ed15302 (do not edit this line) */
+/* JavaCC - OriginalChecksum=87b4d37856fcbb04243509da07ace54b (do not edit this line) */
