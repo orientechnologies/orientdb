@@ -675,7 +675,8 @@ public class OSoftQueryResultList<E> implements List<E> {
       softRefs[i] = buffer.get(i);
     }
 
-    OSoftQueryResultTimSort.sort(softRefs, size(), comparator, queue, query);
+    final OSoftQueryResultTimSort<E> sort = new OSoftQueryResultTimSort<E>(query, queue);
+    sort.sort(softRefs, 0, buffer.size(), comparator);
 
     for (int i = 0; i < buffer.size(); i++) {
       buffer.set(i, softRefs[i]);

@@ -575,7 +575,7 @@ public enum OGlobalConfiguration {
       Integer.class, 500),
 
   // QUERY
-  QUERY_USE_SOFT_REFENCES_IN_RESULT_SET("query.useSofReferencesInResultSet",
+  QUERY_USE_SOFT_REFENCES_IN_RESULT_SET("query.useSoftReferencesInResultSet",
       "If this flag is set all query results will be wrapped "
           + "in soft references, which prevents generation of OOM in case of query returns big amount of data. "
           + "It is mandatory that both -Xms and -Xmx properties of JVM will be equal, otherwise queries will be aborted even if JVM has "
