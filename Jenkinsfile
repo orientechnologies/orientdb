@@ -25,10 +25,10 @@ node("master") {
 
             try {
                 stage('Run tests on Java7') {
-                    lock("label": "memory", "quantity":5) {
+                    lock("label": "memory", "quantity":6) {
                         docker.image("${mvnJdk7Image}")
                                 .inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
-                                "--name ${containerName} --memory=5g ${env.VOLUMES}") {
+                                "--name ${containerName} --memory=6g ${env.VOLUMES}") {
                             try {
                                 //skip integration test for now
                                 sh "${mvnHome}/bin/mvn -V  -fae clean   install   -Dsurefire.useFile=false -DskipITs"
