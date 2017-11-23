@@ -47,6 +47,7 @@
             -Dmemory.directMemory.trackMode=true
             -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager
             -Dstorage.diskCache.checksumMode=storeAndThrow
+            -Dstorage.diskCache.bufferSize=4096
         </argLine>
     </properties>
 
