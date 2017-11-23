@@ -46,6 +46,7 @@
         <osgi.export>com.orientechnologies.orient.server.hazelcast.*,com.orientechnologies.orient.server.distributed.impl.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-ea -Xmx${heapSize} -XX:MaxDirectMemorySize=512g -Dindex.flushAfterCreate=false
+            -Dstorage.diskCache.bufferSize=4096
             -Dstorage.makeFullCheckpointAfterCreate=false
             -Dmemory.directMemory.trackMode=true
             -Dstorage.makeFullCheckpointAfterOpen=false

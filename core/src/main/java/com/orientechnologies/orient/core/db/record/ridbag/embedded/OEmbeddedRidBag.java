@@ -418,6 +418,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
             entries[i] = link;
           }
         }
+        if (link != null && !link.getIdentity().isPersistent() && db != null && !db.getStorage().isRemote()) {
+          throw new OSerializationException("Impossible to serialize invalid link :" + link.getIdentity() + " in embedded session");
+        }
 
         if (link == null)
           throw new OSerializationException("Found null entry in ridbag with rid=" + rid);
