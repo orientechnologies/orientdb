@@ -39,6 +39,7 @@
         <argLine>-ea
             -XX:MaxDirectMemorySize=512g
             -Xmx${heapSize}
+            -Dstorage.diskCache.bufferSize=4096
             -Dindex.flushAfterCreate=false
             -Dstorage.makeFullCheckpointAfterCreate=false
             -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false

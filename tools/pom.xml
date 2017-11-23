@@ -45,6 +45,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>
             -Xmx${heapSize}
+            -Dstorage.diskCache.bufferSize=4096
             -XX:MaxDirectMemorySize=512g
             -Dmemory.directMemory.trackMode=true
             -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager
