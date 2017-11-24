@@ -712,6 +712,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     hazelcastConfig.getMapConfig(CONFIG_REGISTEREDNODES).setBackupCount(6);
     hazelcastConfig.getMapConfig(OHazelcastDistributedMap.ORIENTDB_MAP).setMergePolicy(OHazelcastMergeStrategy.class.getName());
+    //Disabled the shudown hook of hazelcast, shutdown is managed by orient hook
+    hazelcastConfig.setProperty("hazelcast.shutdownhook.enabled", "false");
 
     return Hazelcast.newHazelcastInstance(hazelcastConfig);
   }
