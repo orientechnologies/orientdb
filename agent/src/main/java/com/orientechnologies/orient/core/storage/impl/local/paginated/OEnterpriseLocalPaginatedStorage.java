@@ -271,7 +271,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
               writeAheadLog.addCutTillLimit(freezeLsn);
 
-              writeAheadLog.newSegment();
+              writeAheadLog.appendNewSegment();
               startSegment = writeAheadLog.activeSegment();
             } finally {
               atomicOperationsManager.releaseAtomicOperations(newSegmentFreezeId);
