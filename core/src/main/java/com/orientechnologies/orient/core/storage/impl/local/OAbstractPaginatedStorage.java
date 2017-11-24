@@ -3707,11 +3707,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (configuration != null)
           configuration.synch();
 
+        //so we will be able to cut almost all the log
+        writeAheadLog.appendNewSegment();
+
         writeAheadLog.logFullCheckpointStart();
         writeCache.flush();
         writeAheadLog.logFullCheckpointEnd();
         writeAheadLog.flush();
 
+        //this prevents us to cut WAL till the minimum. Mixing of low level changes and high level operations
+        // is not good thing, it should be removed in future.
         final OLogSequenceNumber lastLSN = writeAheadLog.getOldestTxLsn();
 
         writeAheadLog.cutTill(lastLSN);

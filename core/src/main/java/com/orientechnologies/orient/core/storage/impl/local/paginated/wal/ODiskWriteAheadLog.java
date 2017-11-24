@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.executors.SubScheduledExecutorService
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -589,15 +590,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
         if (record instanceof OAtomicUnitEndRecord && activeOperations.size() == 1 || (!(record instanceof OOperationUnitRecord)
             && activeOperations.isEmpty())) {
-          last.stopBackgroundWrite(true);
-
-          last = new OLogSegmentV2(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
-              performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
-              new SubScheduledExecutorService(commitExecutor));
-          last.init();
-          last.startBackgroundWrite();
-
-          logSegments.add(last);
+          appendNewSegment(last);
 
           segmentCreationFlag = false;
           segmentCreationComplete.signalAll();
@@ -623,6 +616,18 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     } finally {
       syncObject.unlock();
     }
+  }
+
+  private void appendNewSegment(OLogSegment last) throws IOException {
+    last.stopBackgroundWrite(true);
+
+    last = new OLogSegmentV2(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
+        performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
+        new SubScheduledExecutorService(commitExecutor));
+    last.init();
+    last.startBackgroundWrite();
+
+    logSegments.add(last);
   }
 
   @Override
@@ -662,32 +667,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       logSegments.add(last);
 
-    } finally {
-      syncObject.unlock();
-    }
-  }
-
-  @Override
-  public void newSegment() throws IOException {
-    syncObject.lock();
-    try {
-      if (!activeOperations.isEmpty())
-        throw new OStorageException("Can not change end of WAL because there are active atomic operations in the log.");
-
-      OLogSegment last = logSegments.get(logSegments.size() - 1);
-      if (last.filledUpTo() == 0) {
-        return;
-      }
-
-      last.stopBackgroundWrite(true);
-
-      last = new OLogSegmentV2(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
-          performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
-          new SubScheduledExecutorService(commitExecutor));
-      last.init();
-      last.startBackgroundWrite();
-
-      logSegments.add(last);
     } finally {
       syncObject.unlock();
     }
@@ -1153,4 +1132,29 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return commitDelay;
   }
 
+  /**
+   * @inheritDoc
+   */
+  @Override
+  public void appendNewSegment() {
+    syncObject.lock();
+    try {
+      if (!activeOperations.isEmpty())
+        throw new OStorageException("Can not change end of WAL because there are active atomic operations in the log.");
+
+      if (end() == null)
+        throw new OStorageException("Can not change end of WAL because WAL is empty");
+
+      OLogSegment last = logSegments.get(logSegments.size() - 1);
+      if (last.filledUpTo() == 0) {
+        return; //nothing to do next records will be in new segment
+      }
+
+      appendNewSegment(last);
+    } catch (IOException ioe) {
+      throw OException.wrapException(new OIOException("Error during appending of new segment to the WAL"), ioe);
+    } finally {
+      syncObject.unlock();
+    }
+  }
 }

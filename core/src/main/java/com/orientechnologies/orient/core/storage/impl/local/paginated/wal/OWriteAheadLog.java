@@ -122,8 +122,6 @@ public interface OWriteAheadLog {
 
   long activeSegment();
 
-  void newSegment() throws IOException;
-
   /**
    * @return preferred segment count this WAL instance tries to keep under. In fact, there may be less segments or more segments in
    * this WAL instance than the returned count, but the returned count is preferred by this WAL instance.
@@ -133,4 +131,9 @@ public interface OWriteAheadLog {
   void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
   void removeLowDiskSpaceListener(OLowDiskSpaceListener listener);
+
+  /**
+   * Adds new segment so all sequential log entries will be added to this new segment.
+   */
+  void appendNewSegment();
 }

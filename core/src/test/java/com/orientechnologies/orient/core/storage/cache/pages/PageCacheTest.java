@@ -718,11 +718,6 @@ public class PageCacheTest {
     }
 
     @Override
-    public void newSegment() throws IOException {
-
-    }
-
-    @Override
     public long getPreferredSegmentCount() {
       return 0;
     }
@@ -735,6 +730,10 @@ public class PageCacheTest {
     @Override
     public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
 
+    }
+
+    @Override
+    public void appendNewSegment() {
     }
   }
 

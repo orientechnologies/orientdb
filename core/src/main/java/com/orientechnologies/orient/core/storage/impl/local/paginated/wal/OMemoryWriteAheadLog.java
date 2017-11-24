@@ -122,7 +122,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void addCutTillLimit(OLogSequenceNumber lsn)  {
+  public void addCutTillLimit(OLogSequenceNumber lsn) {
   }
 
   @Override
@@ -140,10 +140,6 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void newSegment() throws IOException {
-  }
-
-  @Override
   public long getPreferredSegmentCount() {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
@@ -154,5 +150,9 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
+  }
+
+  @Override
+  public void appendNewSegment() {
   }
 }

@@ -54,8 +54,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -229,7 +227,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
         try {
           return OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo,
-              new String[] { ".wal", ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION }, iOutput, compressionLevel);
+              new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION }, iOutput, compressionLevel);
         } finally {
           if (bufferSize > 0) {
             bo.flush();
@@ -257,7 +255,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
       File dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
       final File[] storageFiles = dbDir.listFiles();
-      if(storageFiles != null) {
+      if (storageFiles != null) {
         // TRY TO DELETE ALL THE FILES
         for (File f : storageFiles) {
           // DELETE ONLY THE SUPPORTED FILES
@@ -331,7 +329,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     long freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
     try {
       lastLSN = writeAheadLog.end();
-      writeAheadLog.newSegment();
+      writeAheadLog.appendNewSegment();
       nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
     } finally {
       getAtomicOperationsManager().releaseAtomicOperations(freezeId);
