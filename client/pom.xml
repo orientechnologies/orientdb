@@ -80,7 +80,7 @@
                     <properties>
                         <property>
                             <name>listener</name>
-                            <value>com.orientechnologies.OTestNGTestLeaksListener</value>
+                            <value>com.orientechnologies.OTestNGTestListener</value>
                         </property>
                     </properties>
                 </configuration>

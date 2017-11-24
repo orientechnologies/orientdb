@@ -20,29 +20,49 @@
 package com.orientechnologies;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import org.junit.runner.Result;
-import org.junit.runner.notification.RunListener;
+import org.testng.ISuite;
+import org.testng.ISuiteListener;
+import org.testng.ISuiteResult;
 
 /**
- * Listens for the JUnit test run finishing and runs the direct memory leaks detector, if no tests failed. If leak detector finds
- * some leaks, it triggers {@link AssertionError} and the build is marked as failed. Java assertions (-ea) must be active for this
- * to work.
+ * <ol>
+ *   <li>Listens for TestNG test run started and prohibits logging of exceptions on storage level.</li>
+ *   <li>Listens for the
+ *    TestNG test run finishing and runs the direct memory leaks detector, if no tests failed. If leak detector finds some leaks, it
+ *    triggers {@link AssertionError} and the build is marked as failed. Java assertions (-ea) must be active for this to work.
+ *    </li>
+ * </ol>
  *
  * @author Sergey Sitnikov
  */
-public class OJUnitTestLeaksListener extends RunListener {
+public class OTestNGTestListener implements ISuiteListener {
 
   @Override
-  public void testRunFinished(Result result) throws Exception {
-    super.testRunFinished(result);
+  public void onStart(ISuite suite) {
+    OLogManager.instance().applyStorageFilter();
+  }
 
+  @Override
+  public void onFinish(ISuite suite) {
     Orient.instance().closeAllStorages();
 
-    if (result.wasSuccessful()) {
+    if (!isFailed(suite)) {
       System.out.println("Checking for direct memory leaks...");
       OByteBufferPool.instance().verifyState();
     }
+  }
+
+  private static boolean isFailed(ISuite suite) {
+    if (suite.getSuiteState().isFailed())
+      return true;
+
+    for (ISuiteResult result : suite.getResults().values())
+      if (result.getTestContext().getFailedTests().size() != 0)
+        return true;
+
+    return false;
   }
 
 }
