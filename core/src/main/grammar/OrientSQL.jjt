@@ -371,6 +371,12 @@ TOKEN:
 	|
 	< PATH_ALIAS: ( "p" | "P" ) ( "a" | "A" ) ( "t" | "T" ) ( "h" | "H" ) ( "a" | "A" ) ( "l" | "L" ) ( "i" | "I" ) ( "a" | "A" ) ( "s" | "S" )>
 	|
+	< IDENTIFIED: ( "i" | "I" ) ( "d" | "D" ) ( "e" | "E" ) ( "n" | "N" ) ( "t" | "T" ) ( "i" | "I" ) ( "f" | "F" ) ( "i" | "I" ) ( "e" | "E" ) ( "d" | "D" )>
+	|
+	< ROLE: ( "r" | "R" ) ( "o" | "O" ) ( "l" | "L" ) ( "e" | "E" ) >
+	|
+	< USER: ( "u" | "U" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -880,6 +886,12 @@ OIdentifier Identifier():
     |
     token = <PATH_ALIAS>
     |
+    token = <IDENTIFIED>
+    |
+    token = <ROLE>
+    |
+    token = <USER>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -998,6 +1010,9 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(2)
                 result = CreateFunctionStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateUserStatement()
                 |
                 LOOKAHEAD(2)
                 result = CreateSequenceStatement()
@@ -4619,6 +4634,48 @@ OCreateFunctionStatement CreateFunctionStatement():
         [
             <LANGUAGE>
             jjtThis.language = Identifier()
+        ]
+    )
+    { return jjtThis; }
+}
+
+
+OCreateUserStatement CreateUserStatement():
+{
+    Token token;
+    OIdentifier lastIdentifier;
+}
+{
+    (
+        <CREATE> <USER>
+        jjtThis.name = Identifier()
+        <IDENTIFIED> <BY>
+        (
+            jjtThis.passwordIdentifier = Identifier()
+            |
+            jjtThis.passwordString = String()
+        )
+        [
+          <ROLE>
+          (
+            (
+              lastIdentifier = Identifier()
+              {
+                 jjtThis.roles.add(lastIdentifier);
+              }
+            )
+            |
+            (
+               <LBRACKET>
+               [
+                 lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+                 (
+                    <COMMA> lastIdentifier = Identifier() { jjtThis.roles.add(lastIdentifier);}
+                 )*
+               ]
+               <RBRACKET>
+            )
+          )
         ]
     )
     { return jjtThis; }
