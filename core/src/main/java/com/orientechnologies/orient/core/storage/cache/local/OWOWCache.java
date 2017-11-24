@@ -1582,7 +1582,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private PageGroup doPutInCache(OCachePointer dataPointer, PageKey pageKey) {
     final PageGroup pageGroup = new PageGroup(System.currentTimeMillis(), dataPointer);
-    writeCachePages.put(pageKey, pageGroup);
+
+    PageGroup oldPageGroup = writeCachePages.putIfAbsent(pageKey, pageGroup);
+    if (oldPageGroup != null) {
+      throw new IllegalStateException();
+    }
 
     writeCacheSize.increment();
 
