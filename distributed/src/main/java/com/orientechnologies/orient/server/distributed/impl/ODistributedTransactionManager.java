@@ -828,7 +828,13 @@ public class ODistributedTransactionManager {
                   "Distributed transaction found servers %s not in quorum, schedule a repair records for %s (reqId=%s)",
                   serversToFollowup, involvedRecords, resp.getMessageId());
 
-              localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecords(involvedRecords);
+              Orient.instance().submit(new Runnable() {
+                @Override
+                public void run() {
+                  localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecords(involvedRecords);
+                }
+              });
+
             }
           }
 
@@ -888,7 +894,13 @@ public class ODistributedTransactionManager {
                   "Distributed transaction found servers %s not in quorum, schedule a repair records for %s (reqId=%s)",
                   serversToFollowup, involvedRecords, resp.getMessageId());
 
-              localDistributedDatabase.getDatabaseRepairer().repairRecords(involvedRecords);
+              Orient.instance().submit(new Runnable() {
+                @Override
+                public void run() {
+                  localDistributedDatabase.getDatabaseRepairer().repairRecords(involvedRecords);
+                }
+              });
+
             }
           }
         }
