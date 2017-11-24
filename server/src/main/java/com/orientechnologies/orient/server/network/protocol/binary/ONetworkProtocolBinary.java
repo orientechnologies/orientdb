@@ -1437,7 +1437,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       } catch (RuntimeException e) {
         if (connection.getDatabase().getTransaction().isActive())
           connection.getDatabase().rollback(true);
-        
+
         final OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
         if (collectionManager != null)
           collectionManager.clearChangedIds();
@@ -1470,9 +1470,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         if (connection.getData().protocolVersion >= 20)
           sendCollectionChanges(connection);
       } finally {
-        final OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
-        if (collectionManager != null)
-          collectionManager.clearChangedIds();
+        if (connection.getDatabase() != null) {
+          final OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
+          if (collectionManager != null)
+            collectionManager.clearChangedIds();
+        }
 
         endResponse(connection);
       }
