@@ -3826,6 +3826,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (configuration != null)
           configuration.synch();
 
+        //so we will be able to cut almost all the log
+        writeAheadLog.appendNewSegment();
+
         final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
         writeCache.flush();
         writeAheadLog.logFullCheckpointEnd();

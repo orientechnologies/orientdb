@@ -4,7 +4,9 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import org.junit.*;
 
@@ -2331,6 +2333,69 @@ public class WriteAheadLogTest {
     Assert.assertEquals(startLSN, lsn);
     Assert.assertEquals(writeAheadLog.end(), lsn);
     Assert.assertEquals(writeAheadLog.size(), OWALPage.PAGE_SIZE / 2);
+  }
+
+  @Test(expected = OStorageException.class)
+  public void testEmptyWalCannotBeAppended() {
+    writeAheadLog.appendNewSegment();
+  }
+
+  @Test
+  public void appendIsNotAllowedWithOnGoingOperations() throws Exception {
+    final OOperationUnitId operationUnitId = OOperationUnitId.generateId();
+
+    writeAheadLog.logAtomicOperationStartRecord(false, operationUnitId);
+    try {
+      writeAheadLog.appendNewSegment();
+      Assert.fail();
+    } catch (OStorageException ose) {
+      Assert.assertTrue(true);
+    }
+
+    OLogSequenceNumber endLsn = writeAheadLog.logAtomicOperationEndRecord(operationUnitId, false, new OLogSequenceNumber(0, 0),
+        Collections.<String, OAtomicOperationMetadata<?>>emptyMap());
+
+    writeAheadLog.appendNewSegment();
+
+    OLogSequenceNumber lsn = writeAheadLog.log(new TestRecord(0, SEGMENT_SIZE, 100, false, true));
+
+    Assert.assertEquals(writeAheadLog.end(), lsn);
+    Assert.assertEquals(endLsn.getSegment() + 1, lsn.getSegment());
+  }
+
+  @Test
+  public void emptySegmentNoOpOnAppend() throws Exception {
+    OLogSequenceNumber lsn = writeAheadLog.log(new TestRecord(0, SEGMENT_SIZE, SEGMENT_SIZE, false, false));
+
+    final List<String> walFiles = writeAheadLog.getWalFiles();
+    Assert.assertEquals(2, walFiles.size());
+
+    writeAheadLog.appendNewSegment();
+
+    Assert.assertEquals(walFiles, writeAheadLog.getWalFiles());
+    OLogSequenceNumber appLsn = writeAheadLog.log(new TestRecord(0, 100, SEGMENT_SIZE, true, false));
+
+    Assert.assertEquals(lsn.getSegment() + 1, appLsn.getSegment());
+
+  }
+
+  @Test
+  public void testAppendSegment() throws Exception {
+    long nextStart = 0;
+
+    for (int i = 0; i < 10; i++) {
+      TestRecord walRecord = new TestRecord(nextStart, SEGMENT_SIZE, 512, false, true);
+      writeAheadLog.log(walRecord);
+    }
+
+    OLogSequenceNumber end = writeAheadLog.end();
+    writeAheadLog.appendNewSegment();
+
+    TestRecord walRecord = new TestRecord(0, SEGMENT_SIZE, 512, false, true);
+    writeAheadLog.log(walRecord);
+
+    Assert.assertEquals(writeAheadLog.end(), walRecord.getLsn());
+    Assert.assertEquals(end.getSegment() + 1, walRecord.lsn.getSegment());
   }
 
   private void assertLogContent(ODiskWriteAheadLog writeAheadLog, List<? extends OWALRecord> writtenRecords) throws Exception {

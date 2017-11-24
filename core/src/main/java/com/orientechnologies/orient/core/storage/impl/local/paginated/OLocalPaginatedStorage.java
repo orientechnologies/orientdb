@@ -201,7 +201,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
         try {
           return OZIPCompressionUtil.compressDirectory(getStoragePath().toString(), bo,
-              new String[] { ".wal", ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION }, iOutput, compressionLevel);
+              new String[] {".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION }, iOutput, compressionLevel);
         } finally {
           if (bufferSize > 0) {
             bo.flush();
@@ -291,7 +291,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     long freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
     try {
       lastLSN = writeAheadLog.end();
-      writeAheadLog.newSegment();
+      writeAheadLog.appendNewSegment();
       nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
     } finally {
       getAtomicOperationsManager().releaseAtomicOperations(freezeId);

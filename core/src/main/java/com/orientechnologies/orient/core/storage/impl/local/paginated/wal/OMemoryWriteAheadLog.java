@@ -142,10 +142,6 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void newSegment() throws IOException {
-  }
-
-  @Override
   public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
   }
 
@@ -167,4 +163,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
     event.run();
   }
 
+  @Override
+  public void appendNewSegment() {
+  }
 }

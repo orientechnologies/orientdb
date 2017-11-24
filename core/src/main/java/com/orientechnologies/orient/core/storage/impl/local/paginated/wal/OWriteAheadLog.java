@@ -132,8 +132,6 @@ public interface OWriteAheadLog {
 
   long activeSegment();
 
-  void newSegment() throws IOException;
-
   /**
    * Adds the event to fire when this write ahead log instances reaches the given LSN.
    * <p>
@@ -150,4 +148,8 @@ public interface OWriteAheadLog {
    */
   void addEventAt(OLogSequenceNumber lsn, Runnable event);
 
+  /**
+   * Adds new segment so all subsequent log entries will be added to this new segment.
+   */
+  void appendNewSegment();
 }
