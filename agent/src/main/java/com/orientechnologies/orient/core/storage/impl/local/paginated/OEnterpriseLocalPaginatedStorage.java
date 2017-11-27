@@ -18,7 +18,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.agent.OL;
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OErrorCode;
@@ -271,7 +270,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
               writeAheadLog.addCutTillLimit(freezeLsn);
 
-              writeAheadLog.newSegment();
+              writeAheadLog.appendNewSegment();
               startSegment = writeAheadLog.activeSegment();
             } finally {
               atomicOperationsManager.releaseAtomicOperations(newSegmentFreezeId);
