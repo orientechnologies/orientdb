@@ -37,6 +37,7 @@
     <properties>
         <argLine>
             -Xmx${heapSize}
+            -Xms${heapSize}
             -XX:MaxDirectMemorySize=512g
             -Dstorage.diskCache.bufferSize=4096
             -Dmemory.directMemory.trackMode=true

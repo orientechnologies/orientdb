@@ -27,6 +27,15 @@ import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
+import java.lang.management.RuntimeMXBean;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Manages common initialization logic for memory and plocal engines. These engines are tight together through dependency to {@link
  * com.orientechnologies.common.directmemory.OByteBufferPool}, which is hard to reconfigure if initialization logic is separate.
@@ -60,7 +69,9 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
   }
 
   private void configureDefaults() {
-    OLogManager.instance().info(this, "Auto configuration of disk cache size.");
+    configureDefaultSoftRefsInSQL();
+
+    OLogManager.instance().infoNoDb(this, "Auto configuration of disk cache size.");
 
     if (!OGlobalConfiguration.DISK_CACHE_SIZE.isChanged())
       configureDefaultDiskCacheSize();
@@ -71,6 +82,75 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
 
     if (!OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.isChanged())
       configureDefaultWalRestoreBatchSize();
+  }
+
+  private void configureDefaultSoftRefsInSQL() {
+    if (OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.getValue() == null) {
+      OLogManager.instance()
+          .infoNoDb(this, "Configuration of usage of soft references inside of containers of results of SQL execution");
+
+      RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+      final List<String> inputArgs = runtimeMXBean.getInputArguments();
+      String xms = null;
+      String xmx = null;
+
+      for (String inputArg : inputArgs) {
+        if (inputArg.matches("-Xms\\d+[gGmMkK]?")) {
+          xms = inputArg;
+        } else if (inputArg.matches("-Xmx\\d+[gGmMkK]?")) {
+          xmx = inputArg;
+        }
+      }
+
+      if (xmx == null || xms == null) {
+        OLogManager.instance().infoNoDb(this, "Initial or maximum values of heap memory usage are NOT set, containers of "
+            + "results of SQL executors will NOT use soft references by default");
+        OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.setValue(false);
+        return;
+      }
+
+      final long xmsBytes = extractMemoryLimitInBytes(xms);
+      final long xmxBytes = extractMemoryLimitInBytes(xmx);
+
+      if (xmsBytes == xmxBytes) {
+        OLogManager.instance().infoNoDb(this, "Initial and maximum values of heap memory usage are equal, containers of "
+            + "results of SQL executors will use soft references by default");
+        OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.setValue(true);
+      } else {
+        OLogManager.instance().infoNoDb(this, "Initial and maximum values of heap memory usage are NOT equal, containers of "
+            + "results of SQL executors will NOT use soft references by default");
+        OGlobalConfiguration.QUERY_USE_SOFT_REFENCES_IN_RESULT_SET.setValue(false);
+      }
+    }
+  }
+
+  private long extractMemoryLimitInBytes(String limit) {
+    final Pattern pattern = Pattern.compile("((-Xms)|(-Xmx))(\\d+)([gGmMkK]?)");
+    final Matcher matcher = pattern.matcher(limit);
+    if (!matcher.find()) {
+      throw new IllegalArgumentException("Invalid value of memory limit was provided '" + limit + "'");
+    }
+    final String value = matcher.group(4);
+    String dimension = matcher.group(5);
+
+    long bytes = Long.parseLong(value);
+    if (dimension == null || dimension.isEmpty()) {
+      return bytes;
+    }
+
+    dimension = dimension.toLowerCase(Locale.ENGLISH);
+
+    if (dimension.equals("g")) {
+      bytes = bytes * 1024 * 1024 * 1024;
+    } else if (dimension.equals("m")) {
+      bytes = bytes * 1024 * 1024;
+    } else if (dimension.equals("k")) {
+      bytes = bytes * 1024;
+    } else {
+      throw new IllegalArgumentException("Invalid dimension of memory limit + '" + dimension + "'");
+    }
+
+    return bytes;
   }
 
   private void configureDefaultWalRestoreBatchSize() {

@@ -39,22 +39,25 @@ import java.util.Map;
  * @see OSQLAsynchQuery
  */
 @SuppressWarnings({ "unchecked", "serial" })
-public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> implements OCommandResultListener, Iterable<T> {
-  private final OResultSet<T> result = new OConcurrentResultSet<T>();
-  private ORID nextPageRID;
+public class OSQLSynchQuery<T> extends OSQLAsynchQuery<T> implements OCommandResultListener, Iterable<T> {
+  private final OResultSet<T> result;
+  private       ORID          nextPageRID;
   private Map<Object, Object> previousQueryParams = new HashMap<Object, Object>();
 
   public OSQLSynchQuery() {
+    result = new OBasicResultSet<T>(null);
     resultListener = this;
   }
 
   public OSQLSynchQuery(final String iText) {
     super(iText);
+    result = new OBasicResultSet<T>(iText);
     resultListener = this;
   }
 
   public OSQLSynchQuery(final String iText, final int iLimit) {
     super(iText, iLimit, null);
+    result = new OBasicResultSet<T>(iText);
     resultListener = this;
   }
 
@@ -99,9 +102,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
       final List<Object> res = (List<Object>) super.run(iArgs);
 
       if (res != result && res != null && result.isEmptyNoWait()) {
-        Iterator<Object> iter = res.iterator();
-        while (iter.hasNext()) {
-          Object item = iter.next();
+        for (Object item : res) {
           result.add((T) item);
         }
       }
@@ -164,6 +165,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
     return false;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   protected OMemoryStream queryToStream() {
     final OMemoryStream buffer = super.queryToStream();
@@ -177,7 +179,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
   }
 
   @Override
-  protected void queryFromStream(final OMemoryStream buffer) {
+  protected void queryFromStream(@SuppressWarnings("deprecation") final OMemoryStream buffer) {
     super.queryFromStream(buffer);
 
     final String rid = buffer.getAsString();

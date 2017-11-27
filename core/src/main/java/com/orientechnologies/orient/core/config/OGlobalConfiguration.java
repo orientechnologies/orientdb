@@ -575,6 +575,13 @@ public enum OGlobalConfiguration {
       Integer.class, 500),
 
   // QUERY
+  QUERY_USE_SOFT_REFENCES_IN_RESULT_SET("query.useSoftReferencesInResultSet",
+      "If this flag is set all query results will be wrapped "
+          + "in soft references, which prevents generation of OOM in case of query returns big amount of data. "
+          + "It is mandatory that both -Xms and -Xmx properties of JVM will be equal, otherwise queries will be aborted even if JVM has "
+          + "enough memory to process the query. This property is set automatically by OrientDB unless it is directly set by the user.",
+      Boolean.class, null),
+
   QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query, if requirements are met", Boolean.class, false),
 
   QUERY_PARALLEL_MINIMUM_RECORDS("query.parallelMinimumRecords",
@@ -1169,6 +1176,10 @@ public enum OGlobalConfiguration {
 
   public boolean getValueAsBoolean() {
     final Object v = value != nullValue && value != null ? value : defValue;
+
+    if (v == null)
+      return false;
+
     return v instanceof Boolean ? (Boolean) v : Boolean.parseBoolean(v.toString());
   }
 

@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.sql.query.OResultSet;
 
 final class OCommandCacheRemoteResultListener extends OAbstractCommandResultListener {
   private final OCommandCache cmdCache;
-  private OResultSet          collector = new OConcurrentResultSet<ORecord>();
+  private OResultSet          collector = new OConcurrentResultSet<ORecord>(null);
 
   OCommandCacheRemoteResultListener(OCommandResultListener wrappedResultListener, OCommandCache cmdCache) {
     super(wrappedResultListener);
