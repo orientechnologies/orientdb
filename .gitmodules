@@ -1,0 +1,3 @@
+[submodule "orientdb-cloud-protocol"]
+	path = orientdb-cloud-protocol
+	url = https://github.com/orientechnologies/orientdb-cloud-protocol
