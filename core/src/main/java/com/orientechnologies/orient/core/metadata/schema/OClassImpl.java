@@ -986,7 +986,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       final Set<ODocument> props = new LinkedHashSet<ODocument>();
       for (final OProperty p : properties.values()) {
-        props.add(((OPropertyImpl) p).toStream());
+        ODocument propDoc = ((OPropertyImpl) p).toStream();
+        if (propDoc.getIdentity().isValid()) {
+          ORecordInternal.setIdentity(propDoc, ORecordId.EMPTY_RECORD_ID);
+        }
+        props.add(propDoc);
       }
       document.field("properties", props, OType.EMBEDDEDSET);
 
