@@ -96,9 +96,7 @@ public class LuceneBackupRestoreTest {
 
   @Test
   public void shouldBackupAndRestore() throws IOException {
-
     File backupFile = new File(tempFolder, "backupRestore.gz");
-    Assert.assertTrue(backupFile.mkdirs());
 
     List<?> query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
 
