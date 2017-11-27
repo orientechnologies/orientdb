@@ -926,6 +926,16 @@ public enum OGlobalConfiguration {
   @OApi(maturity = OApi.MATURITY.NEW) SERVER_SECURITY_FILE("server.security.file",
       "Location of the OrientDB security.json configuration file", String.class, null),
 
+
+  // CLOUD
+  CLOUD_PROJECT_TOKEN("cloud.project.token", "The token used to authenticate this project on the cloud platform", String.class,
+      null),
+
+  CLOUD_PROJECT_ID("cloud.project.id", "The ID used to identify this project on the cloud platform", String.class, null),
+
+  CLOUD_BASE_URL("cloud.base.url", "The base URL of the cloud endpoint for requests", String.class, null),
+
+
   /**
    * Deprecated in v2.2.0
    */
