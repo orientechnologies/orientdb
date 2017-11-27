@@ -1201,21 +1201,22 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
    * @inheritDoc
    */
   @Override
-  public void appendNewSegment() {
+  public boolean appendNewSegment() {
     syncObject.lock();
     try {
       if (!activeOperations.isEmpty())
         throw new OStorageException("Can not change end of WAL because there are active atomic operations in the log.");
 
       if (end() == null)
-        throw new OStorageException("Can not change end of WAL because WAL is empty");
+        return false; //nothing to do next records will be in new segment
 
       OLogSegment last = logSegments.get(logSegments.size() - 1);
       if (last.filledUpTo() == 0) {
-        return; //nothing to do next records will be in new segment
+        return false; //nothing to do next records will be in new segment
       }
 
       appendNewSegment(last);
+      return true;
     } catch (IOException ioe) {
       throw OException.wrapException(new OIOException("Error during appending of new segment to the WAL"), ioe);
     } finally {

@@ -164,6 +164,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void appendNewSegment() {
+  public boolean appendNewSegment() {
+    return false;
   }
 }
