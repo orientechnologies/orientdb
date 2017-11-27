@@ -126,10 +126,7 @@ public class LuceneAutomaticBackupRestoreTest {
 
     if (!os.contains("win")) {
       dropIfExists();
-
-      OFileUtils.deleteRecursively(tempFolder);
     }
-
   }
 
   @Test
