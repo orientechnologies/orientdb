@@ -12,9 +12,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestName;
 
+import java.io.File;
 import java.util.List;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
@@ -28,15 +28,14 @@ public class OrientGraphFactoryEncryptionTest {
   @Rule
   public TestName name = new TestName();
 
-  @Rule
-  public TemporaryFolder folder = new TemporaryFolder();
-
   private String dbPath;
 
   @Before
   public void setUp() throws Exception {
-    dbPath = folder.newFolder(name.getMethodName()).getAbsolutePath();
+    final String buildDirectory = System.getProperty("buildDirectory", "target");
+    final File buildDirectoryFile = new File(buildDirectory);
 
+    dbPath = new File(buildDirectoryFile, name.getMethodName()).getCanonicalPath();
   }
 
   @Test

@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.*;
-import org.junit.rules.TemporaryFolder;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -45,16 +45,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LuceneBackupRestoreTest {
 
   @Rule
-  public TemporaryFolder tempFolder = new TemporaryFolder();
+  public TestName name = new TestName();
+
+  private File tempFolder;
 
   private ODatabaseDocumentTx databaseDocumentTx;
 
   @Before
   public void setUp() throws Exception {
+    final String buildDirectory = System.getProperty("buildDirectory", "target");
+    final File buildDirectoryFile = new File(buildDirectory);
+
+    tempFolder = new File(buildDirectoryFile, name.getMethodName());
+
     final String os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
     Assume.assumeFalse(os.contains("win"));
 
-    String url = "plocal:./target/" + getClass().getName();
+    String url = "plocal:" + new File(tempFolder, getClass().getName()).getCanonicalPath();
 
     databaseDocumentTx = new ODatabaseDocumentTx(url);
 
@@ -90,7 +97,8 @@ public class LuceneBackupRestoreTest {
   @Test
   public void shouldBackupAndRestore() throws IOException {
 
-    File backupFile = tempFolder.newFile("backupRestore.gz");
+    File backupFile = new File(tempFolder, "backupRestore.gz");
+    Assert.assertTrue(backupFile.mkdirs());
 
     List<?> query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
 
