@@ -176,6 +176,8 @@ public class OLogManager {
           if (label != null) {
             record.setParameters(new Object[] { label });
           }
+
+          log.log(record);
         } catch (Exception e) {
           System.err.print(String.format("Error on formatting message '%s'. Exception: %s", iMessage, e.toString()));
         }
