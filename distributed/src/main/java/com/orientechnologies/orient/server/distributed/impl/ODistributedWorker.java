@@ -38,6 +38,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -437,9 +438,13 @@ public class ODistributedWorker extends Thread {
 
       remoteSenderServer.sendResponse(response);
 
-    } catch (Exception e) {
+    } catch (IOException e) {
       ODistributedServerLog.debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Error on sending response '%s' back (reqId=%s err=%s)", response, iRequest.getId(), e.toString());
+      return false;
+    } catch (RuntimeException e) {
+      ODistributedServerLog.error(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+          "Error on sending response '%s' back (reqId=%s err=%s)", e, response, iRequest.getId(), e.toString());
       return false;
     }
 

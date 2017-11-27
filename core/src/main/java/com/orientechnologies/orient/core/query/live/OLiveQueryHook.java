@@ -171,7 +171,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ORecordHook
 
   @Override
   public void onAfterTxCommit(ODatabase iDatabase) {
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+    if (Boolean.FALSE.equals(iDatabase.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
       return;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
     List<ORecordOperation> list;
