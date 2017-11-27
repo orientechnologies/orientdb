@@ -55,13 +55,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <!--<dependencies>-->
-                <!--<dependency>-->
-                <!--<groupId>org.apache.maven.surefire</groupId>-->
-                <!--<artifactId>surefire-junit47</artifactId>-->
-                <!--<version>${surefire.version}</version>-->
-                <!--</dependency>-->
-                <!--</dependencies>-->
+                <configuration>
+                    <properties>
+                        <property>
+                            <name>listener</name>
+                            <value>com.orientechnologies.OJUnitTestListener</value>
+                        </property>
+                    </properties>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

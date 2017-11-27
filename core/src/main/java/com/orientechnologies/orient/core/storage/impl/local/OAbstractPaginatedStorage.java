@@ -337,7 +337,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     }
 
-    OLogManager.instance().info(this, "Storage '%s' is opened under OrientDB distribution : %s", getURL(), OConstants.getVersion());
+    OLogManager.instance()
+        .infoNoDb(this, "Storage '%s' is opened under OrientDB distribution : %s", getURL(), OConstants.getVersion());
   }
 
   /**
@@ -2063,7 +2064,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OIndexDefinition indexDefinition, final OBinarySerializer valueSerializer, final boolean isAutomatic,
       final Boolean durableInNonTxMode, final int version, final Map<String, String> engineProperties,
       final Set<String> clustersToIndex, final ODocument metadata) {
-      try {
+    try {
       checkOpenness();
 
       stateLock.acquireWriteLock();
@@ -5278,15 +5279,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected RuntimeException logAndPrepareForRethrow(RuntimeException runtimeException) {
     if (!(runtimeException instanceof OHighLevelException || runtimeException instanceof ONeedRetryException))
       OLogManager.instance()
-          .error(this, "Exception `%08X` in storage `%s`: %s", runtimeException, System.identityHashCode(runtimeException),
+          .errorStorage(this, "Exception `%08X` in storage `%s`: %s", runtimeException, System.identityHashCode(runtimeException),
               getURL(), OConstants.getVersion());
     return runtimeException;
   }
 
   protected Error logAndPrepareForRethrow(Error error) {
     if (!(error instanceof OHighLevelException))
-      OLogManager.instance().error(this, "Exception `%08X` in storage `%s`: %s", error, System.identityHashCode(error), getURL(),
-          OConstants.getVersion());
+      OLogManager.instance()
+          .errorStorage(this, "Exception `%08X` in storage `%s`: %s", error, System.identityHashCode(error), getURL(),
+              OConstants.getVersion());
 
     handleJVMError(error);
 
@@ -5296,14 +5298,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected RuntimeException logAndPrepareForRethrow(Throwable throwable) {
     if (!(throwable instanceof OHighLevelException || throwable instanceof ONeedRetryException))
       OLogManager.instance()
-          .error(this, "Exception `%08X` in storage `%s`: %s", throwable, System.identityHashCode(throwable), getURL(),
+          .errorStorage(this, "Exception `%08X` in storage `%s`: %s", throwable, System.identityHashCode(throwable), getURL(),
               OConstants.getVersion());
     return new RuntimeException(throwable);
   }
 
   private OInvalidIndexEngineIdException logAndPrepareForRethrow(OInvalidIndexEngineIdException exception) {
     OLogManager.instance()
-        .error(this, "Exception `%08X` in storage `%s` : %s", exception, System.identityHashCode(exception), getURL(),
+        .errorStorage(this, "Exception `%08X` in storage `%s` : %s", exception, System.identityHashCode(exception), getURL(),
             OConstants.getVersion());
     return exception;
   }

@@ -117,7 +117,7 @@
                     <properties>
                         <property>
                             <name>listener</name>
-                            <value>com.orientechnologies.OJUnitTestLeaksListener</value>
+                            <value>com.orientechnologies.OJUnitTestListener</value>
                         </property>
                     </properties>
                 </configuration>
@@ -133,7 +133,7 @@
                     <properties>
                         <property>
                             <name>listener</name>
-                            <value>com.orientechnologies.OJUnitTestLeaksListener</value>
+                            <value>com.orientechnologies.OJUnitTestListener</value>
                         </property>
                     </properties>
                 </configuration>

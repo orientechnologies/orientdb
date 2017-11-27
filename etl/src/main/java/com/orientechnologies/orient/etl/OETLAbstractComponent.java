@@ -114,9 +114,9 @@ public abstract class OETLAbstractComponent implements OETLComponent {
     final Long extractedNum = context != null ? (Long) context.getVariable("extractedNum") : null;
 
     if (extractedNum != null) {
-      OLogManager.instance().log(this, iLevel, "[" + extractedNum + ":" + getName() + "]  " + iText, exception, true, iArgs);
+      OLogManager.instance().log(this, iLevel, "[" + extractedNum + ":" + getName() + "]  " + iText, exception, true, null, iArgs);
     } else {
-      OLogManager.instance().log(this, iLevel, "[" + getName() + "] " + iText, exception, true, iArgs);
+      OLogManager.instance().log(this, iLevel, "[" + getName() + "] " + iText, exception, true, null, iArgs);
     }
   }
 
