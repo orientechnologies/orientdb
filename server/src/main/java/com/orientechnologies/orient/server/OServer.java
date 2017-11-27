@@ -464,7 +464,9 @@ public class OServer {
         shutdownLatch = null;
       }
 
-      OLogManager.instance().shutdown();
+      if (shutdownEngineOnExit) {
+        OLogManager.instance().shutdown();
+      }
     }
   }
 
