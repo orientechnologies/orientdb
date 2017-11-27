@@ -452,7 +452,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       applyOrderBy(true);
       applyLimitAndSkip();
 
-      subIterator = new ArrayList<OIdentifiable>((List<OIdentifiable>) getResult()).iterator();
+      subIterator = OSoftQueryResultList.createResultList(parserText, (List<OIdentifiable>) getResult()).iterator();
       lastRecord = null;
       tempResult = null;
       groupedResult.clear();
@@ -743,16 +743,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       tipLimitThreshold = 0;
     }
 
-    List<OIdentifiable> allResults = new ArrayList<OIdentifiable>();
+    List<OIdentifiable> allResults = OSoftQueryResultList.createResultList(parserText);
     if (unwindFields != null) {
       Collection<OIdentifiable> partial = unwind(iRecord, this.unwindFields, iContext);
-
-      for (OIdentifiable item : partial) {
-        allResults.add(item);
-      }
+      allResults.addAll(partial);
     } else {
       allResults.add(iRecord);
     }
+
     boolean result = true;
     if (allowsStreamedResult()) {
       // SEND THE RESULT INLINE
@@ -764,7 +762,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       // COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
       if (tempResult == null)
-        tempResult = new ArrayList<OIdentifiable>();
+        tempResult = OSoftQueryResultList.createResultList(parserText);
 
       applyPartialOrderBy();
 
@@ -831,14 +829,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
       if (tempResult instanceof List && ((List) tempResult).size() >= sortBufferSize + PARTIAL_SORT_BUFFER_THRESHOLD) {
         applyOrderBy(false);
-        tempResult = new ArrayList(((List) tempResult).subList(0, sortBufferSize));
+        tempResult = OSoftQueryResultList.createResultList(parserText, ((List) tempResult).subList(0, sortBufferSize));
       }
     }
   }
 
   private Collection<OIdentifiable> unwind(final OIdentifiable iRecord, final List<String> unwindFields,
       final OCommandContext iContext) {
-    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+    final List<OIdentifiable> result = OSoftQueryResultList.createResultList(parserText);
     ODocument doc;
     if (iRecord instanceof ODocument) {
       doc = (ODocument) iRecord;
@@ -1286,7 +1284,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               }
 
               if (tempResult == null)
-                tempResult = new ArrayList<OIdentifiable>();
+                tempResult = OSoftQueryResultList.createResultList(parserText);
               ((Collection<OIdentifiable>) tempResult).add(new ODocument().field(entry.getKey(), count));
               return true;
             }
@@ -2270,7 +2268,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                     .updateCounter(profiler.getDatabaseMetric(database.getName(), "query.indexUsed"), "Used index in query", +1);
               }
               if (tempResult == null)
-                tempResult = new ArrayList<OIdentifiable>();
+                tempResult = OSoftQueryResultList.createResultList(parserText);
               ((Collection<OIdentifiable>) tempResult).add(new ODocument().field(entry.getKey(), count));
               return true;
             }
@@ -2523,7 +2521,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final long startOrderBy = System.currentTimeMillis();
     try {
       if (tempResult instanceof OMultiCollectionIterator) {
-        final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
+        final List<OIdentifiable> list = OSoftQueryResultList.createResultList(parserText);
         for (OIdentifiable o : tempResult) {
           list.add(o);
         }
@@ -2557,7 +2555,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     try {
 
       if (tempResult == null) {
-        tempResult = new ArrayList<OIdentifiable>();
+        tempResult = OSoftQueryResultList.createResultList(parserText);
         if (expandTarget instanceof OSQLFilterItemVariable) {
           Object r = ((OSQLFilterItemVariable) expandTarget).getValue(null, null, context);
           if (r != null) {
@@ -2589,7 +2587,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       } else {
         if (tempResult == null) {
-          tempResult = new ArrayList<OIdentifiable>();
+          tempResult = OSoftQueryResultList.createResultList(parserText);
         }
         final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
 
@@ -2872,7 +2870,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final long startGroupBy = System.currentTimeMillis();
       try {
 
-        tempResult = new ArrayList<OIdentifiable>();
+        tempResult = OSoftQueryResultList.createResultList(parserText);
 
         for (Entry<Object, ORuntimeResult> g : groupedResult.entrySet()) {
           if (g.getKey() != null || (groupedResult.size() == 1 && groupByFields == null)) {

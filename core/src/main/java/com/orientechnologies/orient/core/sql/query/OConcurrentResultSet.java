@@ -27,22 +27,22 @@ import java.util.*;
 /**
  * ResultSet implementation that allows concurrent population.
  *
- * @author Luca Garulli
- *
  * @param <T>
+ *
+ * @author Luca Garulli
  * @see OSQLAsynchQuery
  */
 public class OConcurrentResultSet<T> implements OResultSet<T> {
-  protected final transient Object             waitForNextItem   = new Object();
-  protected final transient Object             waitForCompletion = new Object();
+  private final transient Object waitForNextItem   = new Object();
+  private final transient Object waitForCompletion = new Object();
   protected final transient OBasicResultSet<T> wrapped;
-  protected transient volatile boolean         completed         = false;
+  protected transient volatile boolean completed = false;
 
-  public OConcurrentResultSet() {
-    this.wrapped = new OBasicResultSet<T>();
+  public OConcurrentResultSet(String query) {
+    this.wrapped = new OBasicResultSet<T>(query);
   }
 
-  public OConcurrentResultSet(final OBasicResultSet<T> wrapped) {
+  private OConcurrentResultSet(final OBasicResultSet<T> wrapped) {
     this.wrapped = wrapped;
   }
 
@@ -244,6 +244,7 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
   public <T1> T1[] toArray(T1[] a) {
     waitForCompletion();
     synchronized (wrapped) {
+      //noinspection SuspiciousToArrayCall
       return wrapped.toArray(a);
     }
   }
@@ -347,7 +348,7 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
     return "size=" + wrapped.size();
   }
 
-  protected void waitForCompletion() {
+  private void waitForCompletion() {
     synchronized (waitForCompletion) {
       if (!completed)
         try {
@@ -358,7 +359,7 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
     }
   }
 
-  protected void waitForNewItemOrCompleted() {
+  private void waitForNewItemOrCompleted() {
     synchronized (waitForNextItem) {
       if (!completed)
         try {
@@ -369,7 +370,7 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
     }
   }
 
-  protected void notifyNewItem() {
+  private void notifyNewItem() {
     synchronized (waitForNextItem) {
       waitForNextItem.notifyAll();
     }

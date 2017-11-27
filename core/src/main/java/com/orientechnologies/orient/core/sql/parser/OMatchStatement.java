@@ -278,8 +278,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     try {
 
       Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasFilters, aliasRids, context);
-      if (estimatedRootEntries.values().contains(0l)) {
-        return new OBasicResultSet();// some aliases do not match on any classes
+      if (estimatedRootEntries.values().contains(0L)) {
+        return new OBasicResultSet(request.getText());// some aliases do not match on any classes
       }
 
       List<EdgeTraversal> sortedEdges = getTopologicalSortedSchedule(estimatedRootEntries, pattern);

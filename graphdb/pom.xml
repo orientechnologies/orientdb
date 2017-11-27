@@ -44,7 +44,7 @@
         </osgi.export>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -Xmx${heapSize} -XX:MaxDirectMemorySize=512g
+        <argLine>-ea -Xmx${heapSize}  -Xms${heapSize} -XX:MaxDirectMemorySize=512g
             -Dindex.flushAfterCreate=false
             -Dstorage.diskCache.bufferSize=4096
             -Dmemory.directMemory.trackMode=false

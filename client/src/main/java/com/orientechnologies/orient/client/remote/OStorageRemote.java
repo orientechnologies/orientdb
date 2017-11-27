@@ -1319,7 +1319,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       final int tot = network.readInt();
       final Collection<OIdentifiable> coll;
 
-      coll = type == 's' ? new HashSet<OIdentifiable>(tot) : new OBasicResultSet<OIdentifiable>(tot);
+      coll = type == 's' ? new HashSet<OIdentifiable>(tot) : new OBasicResultSet<OIdentifiable>(null);
       for (int i = 0; i < tot; ++i) {
         final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
         if (resultItem instanceof ORecord)
@@ -1330,7 +1330,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       result = coll;
       break;
     case 'i':
-      coll = new OBasicResultSet<OIdentifiable>();
+      coll = new OBasicResultSet<OIdentifiable>(null);
       byte status;
       while ((status = network.readByte()) > 0) {
         final OIdentifiable record = OChannelBinaryProtocol.readIdentifiable(network);

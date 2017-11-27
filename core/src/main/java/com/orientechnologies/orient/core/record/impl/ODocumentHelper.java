@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.OSoftQueryResultList;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
@@ -81,8 +82,13 @@ public class ODocumentHelper {
 
   public static void sort(List<? extends OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria,
       OCommandContext context) {
-    if (ioResultSet != null)
-      Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria, context));
+    if (ioResultSet != null) {
+      if (ioResultSet instanceof OSoftQueryResultList) {
+        ((OSoftQueryResultList<? extends OIdentifiable>) ioResultSet).sort(new ODocumentComparator(iOrderCriteria, context));
+      } else {
+        Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria, context));
+      }
+    }
   }
 
   @SuppressWarnings("unchecked")
