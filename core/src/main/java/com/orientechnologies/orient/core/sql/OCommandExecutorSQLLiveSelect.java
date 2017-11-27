@@ -105,9 +105,9 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
   public void onLiveResult(final ORecordOperation iOp) {
 
     ODatabaseDocumentInternal oldThreadLocal = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    execDb.activateOnCurrentThread();
 
     try {
+      execDb.activateOnCurrentThread();
       final OIdentifiable value = iOp.getRecord();
 
       if (!matchesTarget(value)) {
