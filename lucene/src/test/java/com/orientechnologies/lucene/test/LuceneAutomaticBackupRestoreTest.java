@@ -88,7 +88,7 @@ public class LuceneAutomaticBackupRestoreTest {
     File config = new File(tempFolder, "config");
     Assert.assertTrue(config.mkdirs());
 
-    server = new OServer() {
+    server = new OServer(false) {
       @Override
       public Map<String, String> getAvailableStorageNames() {
         HashMap<String, String> result = new HashMap<String, String>();
@@ -111,6 +111,8 @@ public class LuceneAutomaticBackupRestoreTest {
   }
 
   private void dropIfExists() {
+    server.shutdown();
+
     if (databaseDocumentTx.exists()) {
       if (databaseDocumentTx.isClosed())
         databaseDocumentTx.open("admin", "admin");
