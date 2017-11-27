@@ -133,7 +133,19 @@ public interface OWriteAheadLog {
   void removeLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
   /**
-   * Adds new segment so all sequential log entries will be added to this new segment.
+   * Adds new segment so all sequent log entries will be added to this new segment.
+   *
+   * New segment can not be appended if:
+   * <ol>
+   *   <li>WAL is empty</li>
+   *   <li>There last segment in WAL is empty.</li>
+   * </ol>
+   *
+   * Despite of the fact that WAL segment will not be appended, method call still will reach its main target, all subsequent log
+   * records will have segment number higher than previously logged records. But to inform user that segment is not added result of
+   * success of failure of this method will be returned.
+   *
+   * @return <code>true</code> if new segment is added, and <code>false</code> otherwise.
    */
-  void appendNewSegment();
+  boolean appendNewSegment();
 }

@@ -377,7 +377,6 @@ public class OLogManager {
    * activate this log manager.
    */
   public static class ShutdownLogManager extends LogManager {
-
     @Override
     public void reset() {
       // do nothing

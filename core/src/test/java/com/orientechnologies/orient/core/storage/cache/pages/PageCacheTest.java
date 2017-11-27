@@ -733,7 +733,8 @@ public class PageCacheTest {
     }
 
     @Override
-    public void appendNewSegment() {
+    public boolean appendNewSegment() {
+      return false;
     }
   }
 

@@ -2283,9 +2283,8 @@ public class WriteAheadLogTest {
     Assert.assertEquals(writeAheadLog.size(), OWALPage.PAGE_SIZE / 2);
   }
 
-  @Test(expectedExceptions = OStorageException.class)
   public void testEmptyWalCannotBeAppended() {
-    writeAheadLog.appendNewSegment();
+    Assert.assertFalse(writeAheadLog.appendNewSegment());
   }
 
   public void appendIsNotAllowedWithOnGoingOperations() throws Exception {
@@ -2302,7 +2301,7 @@ public class WriteAheadLogTest {
     OLogSequenceNumber endLsn = writeAheadLog.logAtomicOperationEndRecord(operationUnitId, false, new OLogSequenceNumber(0, 0),
         Collections.<String, OAtomicOperationMetadata<?>>emptyMap());
 
-    writeAheadLog.appendNewSegment();
+    Assert.assertTrue(writeAheadLog.appendNewSegment());
 
     OLogSequenceNumber lsn = writeAheadLog.log(new TestRecord(0, SEGMENT_SIZE, 100, false, true));
 
@@ -2316,7 +2315,7 @@ public class WriteAheadLogTest {
     final List<String> walFiles = writeAheadLog.getWalFiles();
     Assert.assertEquals(walFiles.size(), 2);
 
-    writeAheadLog.appendNewSegment();
+    Assert.assertFalse(writeAheadLog.appendNewSegment());
 
     Assert.assertEquals(writeAheadLog.getWalFiles(), walFiles);
     OLogSequenceNumber appLsn = writeAheadLog.log(new TestRecord(0, 100, SEGMENT_SIZE, true, false));
@@ -2334,7 +2333,7 @@ public class WriteAheadLogTest {
     }
 
     OLogSequenceNumber end = writeAheadLog.end();
-    writeAheadLog.appendNewSegment();
+    Assert.assertTrue(writeAheadLog.appendNewSegment());
 
     TestRecord walRecord = new TestRecord(0, SEGMENT_SIZE, 512, false, true);
     writeAheadLog.log(walRecord);
