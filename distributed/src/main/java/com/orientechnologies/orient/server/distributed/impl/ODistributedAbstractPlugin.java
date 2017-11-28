@@ -1203,15 +1203,18 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final OAbstractPaginatedStorage stg = ((OAbstractPaginatedStorage) db.getStorage().getUnderlying());
 
     final Set<ORecordId> changedRecords = stg.recordsChangedRecently(checkIntegrityLastTxs, clusters2Include);
-
+    int av = getAvailableNodes(distrDatabase.getDatabaseName());
     if (!changedRecords.isEmpty()) {
       ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
           "Executing the realignment of the last records modified before last close %s...", changedRecords);
+      ODistributedConfiguration config = getDatabaseConfiguration(distrDatabase.getDatabaseName());
+      config.forceWriteQuorum(av + 1);
 
       distrDatabase.getDatabaseRepairer().repairRecords(changedRecords);
-
+      config.clearForceWriteQuorum();
       ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Realignment completed.");
     }
+
   }
 
   protected boolean requestDatabaseFullSync(final ODistributedDatabaseImpl distrDatabase, final boolean backupDatabase,

@@ -56,7 +56,8 @@ public class ODistributedConfiguration {
   protected static final String EXECUTION_MODE_SYNCHRONOUS = "synchronous";
 
   protected final ODocument configuration;
-  protected static final List<String> DEFAULT_CLUSTER_NAME = Collections.singletonList(ALL_WILDCARD);
+  protected static final List<String>         DEFAULT_CLUSTER_NAME = Collections.singletonList(ALL_WILDCARD);
+  private static         ThreadLocal<Integer> overwriteWriteQuorum = new ThreadLocal<Integer>();
 
   public enum ROLES {
     MASTER, REPLICA
@@ -714,7 +715,11 @@ public class ODistributedConfiguration {
    * @param totalConfiguredMasterServers Total node available
    */
   public int getWriteQuorum(final String clusterName, final int totalConfiguredMasterServers, final String server) {
-    return getQuorum("writeQuorum", clusterName, totalConfiguredMasterServers, DEFAULT_WRITE_QUORUM, server);
+    Integer overWrite = overwriteWriteQuorum.get();
+    if (overWrite != null)
+      return overWrite.intValue();
+    else
+      return getQuorum("writeQuorum", clusterName, totalConfiguredMasterServers, DEFAULT_WRITE_QUORUM, server);
   }
 
   private ODocument getConfiguredClusters() {
@@ -773,6 +778,14 @@ public class ODistributedConfiguration {
       return dcs.field(dataCenter);
     throw new OConfigurationException("Cannot find the data center '" + dataCenter + "' in distributed database configuration");
 
+  }
+
+  public void forceWriteQuorum(int quorum) {
+    overwriteWriteQuorum.set(quorum);
+  }
+
+  public void clearForceWriteQuorum() {
+    overwriteWriteQuorum.remove();
   }
 
   /**
