@@ -1,7 +1,11 @@
 package com.orientechnologies.agent.cloud;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orientdb.cloud.protocol.Command;
+import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -12,12 +16,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.List;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
  */
 public class CloudEndpoint extends Thread {
+
+  ObjectMapper objectMapper = new ObjectMapper();
+
   private final OEnterpriseAgent agent;
   private       boolean          terminate;
   private       long             requestInterval;
@@ -60,7 +66,7 @@ public class CloudEndpoint extends Thread {
   }
 
   private void handleRequest() throws IOException {
-    List<?> request = fetchRequest();
+    Command request = fetchRequest();
     if (request == null) {
       if (requestInterval < 50) {
         requestInterval = 50;
@@ -72,14 +78,14 @@ public class CloudEndpoint extends Thread {
       requestInterval = 0;
     }
     try {
-      Object response = processRequest(request);
+      CommandResponse response = processRequest(request);
       sendResponse(response);
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  private void sendResponse(Object response) throws IOException {
+  private void sendResponse(CommandResponse response) throws IOException {
     CloseableHttpClient client = HttpClients.createDefault();
     String fetchRequestsUrl = cloudBaseUrl + responsePath.replaceAll("\\{projectId\\}", projectId);
     HttpPost httpPost = new HttpPost(fetchRequestsUrl);
@@ -94,20 +100,21 @@ public class CloudEndpoint extends Thread {
     client.close();
   }
 
-  private <T> T deserialize(InputStream content) {
-    return null; //TODO
+  private Command deserializeRequest(InputStream content) throws IOException {
+    return objectMapper.readValue(content, Command.class);
   }
 
-  private String serialize(Object response) {
-    return null;//TODO
+  private String serialize(CommandResponse response) throws JsonProcessingException {
+    return objectMapper.writeValueAsString(response);
   }
 
-  private Object processRequest(Object request) {
-    // TODO
+  private CommandResponse processRequest(Command request) {
+    // TODO 
+
     return null;
   }
 
-  private <T> T fetchRequest() throws IOException {
+  private Command fetchRequest() throws IOException {
     if (cloudBaseUrl == null || projectId == null || token == null) {
       init();
       return null;
@@ -133,7 +140,7 @@ public class CloudEndpoint extends Thread {
     content.close();
     client.close();
 
-    return deserialize(content);
+    return deserializeRequest(content);
   }
 
   public void shutdown() {
