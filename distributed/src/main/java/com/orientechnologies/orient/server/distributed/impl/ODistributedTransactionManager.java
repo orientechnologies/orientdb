@@ -164,15 +164,20 @@ public class ODistributedTransactionManager {
                       @Override
                       public Void call(final ODistributedResponseManager resp) {
                         // FINALIZE ONLY IF IT IS IN ASYNCH MODE
-                        if (finalizeRequest(resp, localNodeName, involvedClusters, txTask)) {
-                          if (lockReleased.compareAndSet(false, true)) {
-                            localDistributedDatabase.popTxContext(requestId);
-                            ctx.destroy();
-                          }
-                        }
+                        Orient.instance().submit(new Runnable() {
+                          @Override
+                          public void run() {
+                            if (finalizeRequest(resp, localNodeName, involvedClusters, txTask)) {
+                              if (lockReleased.compareAndSet(false, true)) {
+                                localDistributedDatabase.popTxContext(requestId);
+                                ctx.destroy();
+                              }
+                            }
 
-                        // CONTEXT WILL BE RELEASED
-                        releaseContext.set(true);
+                            // CONTEXT WILL BE RELEASED
+                            releaseContext.set(true);
+                          }
+                        });
                         return null;
                       }
                     });
@@ -828,12 +833,7 @@ public class ODistributedTransactionManager {
                   "Distributed transaction found servers %s not in quorum, schedule a repair records for %s (reqId=%s)",
                   serversToFollowup, involvedRecords, resp.getMessageId());
 
-              Orient.instance().submit(new Runnable() {
-                @Override
-                public void run() {
-                  localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecords(involvedRecords);
-                }
-              });
+              localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecords(involvedRecords);
 
             }
           }
@@ -894,12 +894,7 @@ public class ODistributedTransactionManager {
                   "Distributed transaction found servers %s not in quorum, schedule a repair records for %s (reqId=%s)",
                   serversToFollowup, involvedRecords, resp.getMessageId());
 
-              Orient.instance().submit(new Runnable() {
-                @Override
-                public void run() {
-                  localDistributedDatabase.getDatabaseRepairer().repairRecords(involvedRecords);
-                }
-              });
+              localDistributedDatabase.getDatabaseRepairer().repairRecords(involvedRecords);
 
             }
           }
