@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 
+import org.testng.Assert;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 import org.testng.ISuiteResult;
@@ -36,6 +37,8 @@ import org.testng.ISuiteResult;
  * TestNG test run finishing and runs the direct memory leaks detector, if no tests failed. If leak detector finds some leaks, it
  * triggers {@link AssertionError} and the build is marked as failed. Java assertions (-ea) must be active for this to work.
  * </li>
+ * <li>Triggers {@link AssertionError} if {@link OLogManager} is shutdown before test is finished.
+ * We may miss some errors because {@link OLogManager} is shutdown</li>
  * </ol>
  *
  * @author Sergey Sitnikov
@@ -50,6 +53,12 @@ public class OTestNGTestListener implements ISuiteListener {
   @Override
   public void onFinish(ISuite suite) {
 
+    if (OLogManager.instance().isShutdown()) {
+      final String msg = "LogManager was switched off before shutdown";
+
+      System.err.println(msg);
+      Assert.fail(msg);
+    }
     if (!isFailed(suite)) {
       ODatabaseDocumentTx.closeAll();
       System.out.println("Checking for direct memory leaks...");

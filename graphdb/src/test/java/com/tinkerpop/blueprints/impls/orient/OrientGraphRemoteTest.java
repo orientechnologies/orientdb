@@ -51,6 +51,9 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     Thread.sleep(1000);
     ODatabaseDocumentTx.closeAll();
 
+    Orient.instance().shutdown();
+    Orient.instance().startup();
+
     if (oldOrientDBHome != null)
       System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
     else
@@ -58,8 +61,6 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
 
     final File file = new File(serverHome);
     deleteDirectory(file);
-
-    Orient.instance().startup();
   }
 
   public Graph generateGraph(final String graphDirectoryName) {

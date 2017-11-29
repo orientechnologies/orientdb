@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
@@ -49,6 +50,12 @@ public abstract class BaseLuceneTest {
     } else {
       db = new ODatabaseDocumentTx("memory:" + name.getMethodName());
     }
+
+    if (db.exists()) {
+      db.drop();
+    }
+
+    db.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8);
 
     db.create();
   }

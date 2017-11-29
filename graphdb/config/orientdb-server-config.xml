@@ -21,12 +21,13 @@
 
 <orient-server>
     <handlers>
-        <handler class="com.orientechnologies.orient.graph.handler.OGraphServerHandler">
-            <parameters>
-                <parameter name="enabled" value="true"/>
-                <parameter name="graph.pool.max" value="50"/>
-            </parameters>
-        </handler>
+        <!-- DISABLED-->
+        <!--<handler class="com.orientechnologies.orient.graph.handler.OGraphServerHandler">-->
+        <!--<parameters>-->
+        <!--<parameter name="enabled" value="true"/>-->
+        <!--<parameter name="graph.pool.max" value="50"/>-->
+        <!--</parameters>-->
+        <!--</handler>-->
         <!-- CLUSTER PLUGIN, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
         <handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
             <parameters>
@@ -59,6 +60,13 @@
             <parameters>
                 <parameter name="enabled" value="true"/>
                 <parameter name="allowedLanguages" value="SQL"/>
+            </parameters>
+        </handler>
+        <!-- CUSTOM SQL FUNCTIONS -->
+        <handler class="com.orientechnologies.orient.server.handler.OCustomSQLFunctionPlugin">
+            <parameters>
+                <!-- LOCATION OF JSON CONFIGURATION FILE -->
+                <parameter name="config" value="${ORIENTDB_HOME}/config/custom-sql-functions.json"/>
             </parameters>
         </handler>
 
@@ -117,7 +125,8 @@
                             <entry name="http.cache:default" value="Cache-Control: max-age=120"/>
                         </parameters>
                     </command>
-                    <command pattern="GET|gephi/*" implementation="com.orientechnologies.orient.graph.server.command.OServerCommandGetGephi"/>
+                    <command pattern="GET|gephi/*" implementation="com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetGephi"/>
+
                 </commands>
             </listener>
         </listeners>

@@ -3,11 +3,17 @@ package com.orientechnologies.orient.server.network;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -27,33 +33,43 @@ public class BinaryProtocolAnyResultTest {
 
   @Before
   public void before() throws Exception {
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
   }
 
   @Test
+  @Ignore
   public void scriptReturnValueTest() throws IOException {
-    OServerAdmin server = new OServerAdmin("remote:localhost");
-    server.connect("root","root");
-    server.createDatabase("test","graph","memory");
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:localhost/test");
-    db.open("admin","admin");
+    OrientDB orient = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
 
-    Object res = db.command(new OCommandScript("SQL", " let $one = select from OUser limit 1; return [$one,1]")).execute();
+    if (orient.exists("test")) {
+      orient.drop("test");
+    }
+
+    orient.create("test", ODatabaseType.MEMORY);
+    ODatabaseSession db = orient.open("test", "admin", "admin");
+
+    Object res = db.execute("SQL", " let $one = select from OUser limit 1; return [$one,1]");
 
     assertTrue(res instanceof List);
-    assertTrue(((List)res).get(0) instanceof Collection);
-    assertTrue(((List)res).get(1) instanceof Integer);
+    assertTrue(((List) res).get(0) instanceof Collection);
+    assertTrue(((List) res).get(1) instanceof Integer);
     db.close();
 
+    orient.drop("test");
+    orient.close();
   }
-
 
   @After
   public void after() {
     server.shutdown();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    Orient.instance().shutdown();
     Orient.instance().startup();
   }
 

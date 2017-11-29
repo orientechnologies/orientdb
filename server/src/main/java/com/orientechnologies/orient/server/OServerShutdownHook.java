@@ -37,16 +37,12 @@ public class OServerShutdownHook extends Thread {
   @Override
   public void run() {
     if (server != null)
-      try {
-        if (!server.shutdown()) {
-          // ALREADY IN SHUTDOWN, WAIT FOR 5 SEC MORE
-          try {
-            Thread.sleep(5000);
-          } catch (InterruptedException e) {
-          }
+      if (!server.shutdown()) {
+        // ALREADY IN SHUTDOWN, WAIT FOR 5 SEC MORE
+        try {
+          Thread.sleep(5000);
+        } catch (InterruptedException e) {
         }
-      } finally {
-        OLogManager.instance().shutdown();
       }
   }
 

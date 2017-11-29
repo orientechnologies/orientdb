@@ -70,18 +70,19 @@ public enum OGlobalConfiguration {
   MEMORY_CHUNK_SIZE("memory.chunk.size", "Size of single memory chunk (in bytes) which will be preallocated by OrientDB",
       Integer.class, Integer.MAX_VALUE),
 
-  MEMORY_LEFT_TO_OS("memory.leftToOS", "Amount of free memory which should be left unallocated in case of OrientDB is started outside of container. "
-      + "Value can be set as % of total memory provided to OrientDB or as absolute value in bytes, kilobytes, megabytes or gigabytes. "
-      + "If you set value as 10% it means that 10% of memory will not be allocated by OrientDB and will be left to use by the rest of "
-      + "applications, if 2g value is provided it means that 2 gigabytes of memory will be left to use by the rest of applications. "
-      + "Default value is 2g", String.class, "2g"),
+  MEMORY_LEFT_TO_OS("memory.leftToOS",
+      "Amount of free memory which should be left unallocated in case of OrientDB is started outside of container. "
+          + "Value can be set as % of total memory provided to OrientDB or as absolute value in bytes, kilobytes, megabytes or gigabytes. "
+          + "If you set value as 10% it means that 10% of memory will not be allocated by OrientDB and will be left to use by the rest of "
+          + "applications, if 2g value is provided it means that 2 gigabytes of memory will be left to use by the rest of applications. "
+          + "Default value is 2g", String.class, "2g"),
 
-  MEMORY_LEFT_TO_CONTAINER("memory.leftToContainer", "Amount of free memory which should be left unallocated in case of OrientDB is started inside of container. "
-      + "Value can be set as % of total memory provided to OrientDB or as absolute value in bytes, kilobytes, megabytes or gigabytes. "
-      + "If you set value as 10% it means that 10% of memory will not be allocated by OrientDB and will be left to use by the rest of "
-      + "applications, if 2g value is provided it means that 2 gigabytes of memory will be left to use by the rest of applications. "
-      + "Default value is 256m", String.class, "256m"),
-
+  MEMORY_LEFT_TO_CONTAINER("memory.leftToContainer",
+      "Amount of free memory which should be left unallocated in case of OrientDB is started inside of container. "
+          + "Value can be set as % of total memory provided to OrientDB or as absolute value in bytes, kilobytes, megabytes or gigabytes. "
+          + "If you set value as 10% it means that 10% of memory will not be allocated by OrientDB and will be left to use by the rest of "
+          + "applications, if 2g value is provided it means that 2 gigabytes of memory will be left to use by the rest of applications. "
+          + "Default value is 256m", String.class, "256m"),
 
   DIRECT_MEMORY_SAFE_MODE("memory.directMemory.safeMode",
       "Indicates whether to perform a range check before each direct memory update. It is true by default, "
@@ -138,10 +139,13 @@ public enum OGlobalConfiguration {
 
         @Override
         public void change(Object currentValue, Object newValue) {
-          final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) Orient.instance()
-              .getEngineIfRunning(OEngineLocalPaginated.NAME);
-          if (engineLocalPaginated != null)
-            engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
+          final Orient orient = Orient.instance();
+          if (orient != null) {
+            final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) orient
+                .getEngineIfRunning(OEngineLocalPaginated.NAME);
+            if (engineLocalPaginated != null)
+              engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
+          }
         }
       }),
 
@@ -469,7 +473,6 @@ public enum OGlobalConfiguration {
   NETWORK_REQUEST_TIMEOUT("network.requestTimeout", "Request completion timeout (in ms)", Integer.class, 3600000 /* one hour */,
       true),
 
-
   NETWORK_SOCKET_RETRY_STRATEGY("network.retry.strategy",
       "Select the retry server selection strategy, possible values are auto,same-dc ", String.class, "auto", true),
 
@@ -535,12 +538,15 @@ public enum OGlobalConfiguration {
   PROFILER_ENABLED("profiler.enabled", "Enables the recording of statistics and counters", Boolean.class, false,
       new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
-          final OProfiler prof = Orient.instance().getProfiler();
-          if (prof != null)
-            if ((Boolean) iNewValue)
-              prof.startRecording();
-            else
-              prof.stopRecording();
+          Orient instance = Orient.instance();
+          if (instance != null) {
+            final OProfiler prof = instance.getProfiler();
+            if (prof != null)
+              if ((Boolean) iNewValue)
+                prof.startRecording();
+              else
+                prof.stopRecording();
+          }
         }
       }),
 
@@ -926,7 +932,6 @@ public enum OGlobalConfiguration {
   @OApi(maturity = OApi.MATURITY.NEW) SERVER_SECURITY_FILE("server.security.file",
       "Location of the OrientDB security.json configuration file", String.class, null),
 
-
   // CLOUD
   CLOUD_PROJECT_TOKEN("cloud.project.token", "The token used to authenticate this project on the cloud platform", String.class,
       null),
@@ -934,7 +939,6 @@ public enum OGlobalConfiguration {
   CLOUD_PROJECT_ID("cloud.project.id", "The ID used to identify this project on the cloud platform", String.class, null),
 
   CLOUD_BASE_URL("cloud.base.url", "The base URL of the cloud endpoint for requests", String.class, null),
-
 
   /**
    * Deprecated in v2.2.0

@@ -52,6 +52,9 @@ public class OrientGraphMultithreadRemoteTest {
     Thread.sleep(1000);
     ODatabaseDocumentTx.closeAll();
 
+    Orient.instance().shutdown();
+    Orient.instance().startup();
+
     if (oldOrientDBHome != null)
       System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
     else

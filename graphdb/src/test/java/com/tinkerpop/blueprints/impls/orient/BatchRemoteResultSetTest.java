@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.test.server.network.http.BaseHttpTest;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -94,6 +95,12 @@ public class BatchRemoteResultSetTest {
     File file = new File(serverHome);
     deleteDirectory(file);
 
+    Orient.instance().startup();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    Orient.instance().shutdown();
     Orient.instance().startup();
   }
 

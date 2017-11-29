@@ -11,7 +11,7 @@ public class RunServerTest {
 
   @BeforeSuite
   public void before() throws Exception {
-    server = new OServer();
+    server = new OServer(false);
     server.startup(RunServerTest.class.getClassLoader().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
   }

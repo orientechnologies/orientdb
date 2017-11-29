@@ -15,6 +15,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerHookConfiguration;
 import com.orientechnologies.orient.server.network.ORemoteImportTest;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -35,7 +36,7 @@ public class RemoteTransactionHookTest {
 
   @Before
   public void before() throws Exception {
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     OServerHookConfiguration hookConfig = new OServerHookConfiguration();
@@ -55,6 +56,11 @@ public class RemoteTransactionHookTest {
     database.close();
     orientDB.close();
     server.shutdown();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    Orient.instance().shutdown();
     Orient.instance().startup();
   }
 

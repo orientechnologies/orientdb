@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,7 +30,7 @@ public class ORemoteImportTest {
 
   @Before
   public void before() throws Exception {
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
@@ -37,7 +38,7 @@ public class ORemoteImportTest {
     OServerAdmin server = new OServerAdmin("remote:localhost");
     server.connect("root", "root");
     server.createDatabase(ORemoteImportTest.class.getSimpleName(), "graph", "memory");
-
+    server.close();
   }
 
   @Test
@@ -66,6 +67,11 @@ public class ORemoteImportTest {
   @After
   public void after() {
     server.shutdown();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    Orient.instance().shutdown();
     Orient.instance().startup();
   }
 }

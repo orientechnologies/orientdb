@@ -384,6 +384,13 @@ public class OLogManager {
   }
 
   /**
+   * @return <code>true</code> if log manager is shutdown by {@link #shutdown()} method and no logging is possible.
+   */
+  public boolean isShutdown() {
+    return shutdownFlag.get();
+  }
+
+  /**
    * Inhibits the logs reset request which is typically done on shutdown. This allows to use JDK logging from shutdown hooks.
    * -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager must be passed to the JVM, to
    * activate this log manager.

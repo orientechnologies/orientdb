@@ -18,14 +18,21 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.*;
-import org.junit.rules.TemporaryFolder;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -33,7 +40,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,9 +51,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LuceneBackupRestoreTest {
 
   @Rule
-  public TemporaryFolder tempFolder = new TemporaryFolder();
+  public TestName name = new TestName();
 
-  private ODatabaseDocumentTx databaseDocumentTx;
+  private File tempFolder;
+
+  private OrientDB orientDB;
+
+  private ODatabaseSession databaseDocumentTx;
 
   @Before
   public void setUp() throws Exception {
@@ -55,17 +65,23 @@ public class LuceneBackupRestoreTest {
 
     Assume.assumeFalse(os.contains("win"));
 
-    String url = "plocal:./target/" + getClass().getName();
+    final String buildDirectory = System.getProperty("buildDirectory", "target");
+    final File buildDirectoryFile = new File(buildDirectory);
 
-    databaseDocumentTx = new ODatabaseDocumentTx(url);
+    tempFolder = new File(buildDirectoryFile, name.getMethodName());
+
+    orientDB = new OrientDB("plocal:" + tempFolder.getCanonicalPath(), OrientDBConfig.defaultConfig());
 
     dropIfExists();
 
-    databaseDocumentTx.create();
+    final String dbName = getClass().getSimpleName();
 
-    databaseDocumentTx.command(new OCommandSQL("create class City ")).execute();
-    databaseDocumentTx.command(new OCommandSQL("create property City.name string")).execute();
-    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    orientDB.create(dbName, ODatabaseType.PLOCAL);
+    databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
+
+    databaseDocumentTx.command("create class City ");
+    databaseDocumentTx.command("create property City.name string");
+    databaseDocumentTx.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE");
 
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
@@ -73,10 +89,10 @@ public class LuceneBackupRestoreTest {
   }
 
   private void dropIfExists() {
-    if (databaseDocumentTx.exists()) {
-      if (databaseDocumentTx.isClosed())
-        databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
+    final String dbName = getClass().getSimpleName();
+
+    if (orientDB.exists(dbName)) {
+      orientDB.drop(dbName);
     }
   }
 
@@ -90,28 +106,21 @@ public class LuceneBackupRestoreTest {
 
   @Test
   public void shouldBackupAndRestore() throws IOException {
+    File backupFile = new File(tempFolder, "backupRestore.gz");
 
-    File backupFile = tempFolder.newFile("backupRestore.gz");
-
-    List<?> query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
-
-    Assert.assertEquals(query.size(), 1);
+    try (OResultSet query = databaseDocumentTx.query("select from City where name lucene 'Rome'")) {
+      assertThat(query).hasSize(1);
+    }
 
     databaseDocumentTx.backup(new FileOutputStream(backupFile), null, null, null, 9, 1048576);
 
-    //RESTORE
-    databaseDocumentTx.drop();
-
-    databaseDocumentTx.create();
+    orientDB.drop(getClass().getSimpleName());
+    orientDB.create(getClass().getSimpleName(), ODatabaseType.PLOCAL);
+    databaseDocumentTx = orientDB.open(getClass().getSimpleName(), "admin", "admin");
 
     FileInputStream stream = new FileInputStream(backupFile);
 
     databaseDocumentTx.restore(stream, null, null, null);
-
-    databaseDocumentTx.close();
-
-    //VERIFY
-    databaseDocumentTx.open("admin", "admin");
 
     assertThat(databaseDocumentTx.countClass("City")).isEqualTo(1);
 
@@ -120,7 +129,8 @@ public class LuceneBackupRestoreTest {
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
-    assertThat((List) databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"))).hasSize(1);
+    try (OResultSet query = databaseDocumentTx.query("select from City where name lucene 'Rome'")) {
+      assertThat(query).hasSize(1);
+    }
   }
-
 }

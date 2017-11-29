@@ -79,5 +79,6 @@
 		<entry value="true" name="profiler.enabled" />
 		<entry value="info" name="log.console.level" />
 		<entry value="fine" name="log.file.level" />
+		<entry value="8" name="class.minimumClusters"/>
 	</properties>
 </orient-server>

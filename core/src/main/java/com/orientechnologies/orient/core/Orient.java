@@ -117,6 +117,11 @@ public class Orient extends OListenerManger<OOrientListener> {
   private volatile OSecuritySystem    security;
   private boolean runningDistributed = false;
 
+  /**
+   * Prevents duplications because of recursive initialization.
+   */
+  private static boolean initInProgress = false;
+
   private static class WeakHashSetValueHolder<T> extends WeakReference<T> {
     private final int hashCode;
 
@@ -168,6 +173,11 @@ public class Orient extends OListenerManger<OOrientListener> {
 
     initLock.lock();
     try {
+      if (initInProgress) {
+        return null;
+      }
+
+      initInProgress = true;
       if (instance != null)
         return instance;
 
@@ -176,6 +186,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       instance = orient;
     } finally {
+      initInProgress = false;
       initLock.unlock();
     }
 

@@ -12,6 +12,7 @@ import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,7 +47,7 @@ public class OServerDatabaseOperationsTest {
     rootUser.resources = "list";
     conf.users = new OServerUserConfiguration[] { rootUser };
     conf.properties = new OServerEntryConfiguration[] { new OServerEntryConfiguration("server.database.path", "target/databases") };
-    server = new OServer();
+    server = new OServer(false);
     server.startup(conf);
     server.activate();
     ODocument securityConfig = new ODocument();
@@ -57,6 +58,12 @@ public class OServerDatabaseOperationsTest {
   @After
   public void after() {
     server.shutdown();
+    Orient.instance().startup();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    Orient.instance().shutdown();
     Orient.instance().startup();
   }
 
