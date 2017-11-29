@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.cloud.processor.CloudCommandProcessor;
+import com.orientechnologies.agent.cloud.processor.CloudCommandProcessorFactory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
@@ -123,10 +125,38 @@ public class CloudEndpoint extends Thread {
   }
 
   private CommandResponse processRequest(Command request) {
-    // TODO
+    CloudCommandProcessor processor = CloudCommandProcessorFactory.INSTANCE.getProcessorFor(request.getCmd());
+    if (processor == null) {
+      return commandNotSupported(request);
+    }
+    try {
+      return processor.execute(request, this.agent);
+    } catch (Exception e) {
+      return exceptionDuringExecution(request, e);
+    }
+  }
 
+  private CommandResponse exceptionDuringExecution(Command cmd, Exception e) {
+    CommandResponse result = new CommandResponse();
+    result.setSuccess(false);
+    result.setErrorCode(CommandResponse.ErrorCode.EXCEPTION_DURING_EXECUTION);
+    result.setErrorMessage(
+        "Exception during execution of command " + cmd.getCmd() + ": " + e.getClass().getSimpleName() + " - " + e.getMessage());
+    result.setResponseChannel(cmd.getResponseChannel());
+    result.setProjectId(OGlobalConfiguration.CLOUD_PROJECT_ID.getValueAsString());
+    result.setId(cmd.getId());
+    return result;
+  }
 
-    return null;
+  private CommandResponse commandNotSupported(Command cmd) {
+    CommandResponse result = new CommandResponse();
+    result.setSuccess(false);
+    result.setErrorCode(CommandResponse.ErrorCode.COMMAND_NOT_SUPPORTED);
+    result.setErrorMessage("Command not supported: " + cmd.getCmd());
+    result.setResponseChannel(cmd.getResponseChannel());
+    result.setProjectId(OGlobalConfiguration.CLOUD_PROJECT_ID.getValueAsString());
+    result.setId(cmd.getId());
+    return result;
   }
 
   private Command fetchRequest() throws IOException, ClassNotFoundException {
