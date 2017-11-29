@@ -1,6 +1,7 @@
 package com.orientechnologies.agent.cloud;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -65,7 +66,7 @@ public class CloudEndpoint extends Thread {
     }
   }
 
-  private void handleRequest() throws IOException {
+  private void handleRequest() throws IOException, ClassNotFoundException {
     Command request = fetchRequest();
     if (request == null) {
       if (requestInterval < 50) {
@@ -100,8 +101,21 @@ public class CloudEndpoint extends Thread {
     client.close();
   }
 
-  private Command deserializeRequest(InputStream content) throws IOException {
-    return objectMapper.readValue(content, Command.class);
+  private Command deserializeRequest(InputStream content) throws IOException, ClassNotFoundException {
+    JsonNode tree = objectMapper.readTree(content);
+
+    Command cmd = new Command();
+    cmd.setId(tree.get("id").asText());
+    cmd.setCmd(tree.get("cmd").asText());
+    cmd.setPayloadClass(tree.get("payloadClass").asText());
+
+    JsonNode payloadTree = tree.get("payload");
+    Object payload = objectMapper.readValue(payloadTree.toString(), Class.forName(cmd.getPayloadClass()));
+    cmd.setPayload(payload);
+
+    cmd.setResponseChannel(tree.get("responseChannel").asText());
+
+    return cmd;
   }
 
   private String serialize(CommandResponse response) throws JsonProcessingException {
@@ -109,12 +123,13 @@ public class CloudEndpoint extends Thread {
   }
 
   private CommandResponse processRequest(Command request) {
-    // TODO 
+    // TODO
+
 
     return null;
   }
 
-  private Command fetchRequest() throws IOException {
+  private Command fetchRequest() throws IOException, ClassNotFoundException {
     if (cloudBaseUrl == null || projectId == null || token == null) {
       init();
       return null;
