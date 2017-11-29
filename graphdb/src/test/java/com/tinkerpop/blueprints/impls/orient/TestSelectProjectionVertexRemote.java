@@ -13,6 +13,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,7 +43,15 @@ public class TestSelectProjectionVertexRemote {
   @After
   public void after() {
     server.shutdown();
-    Orient.instance().startup();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    final Orient orient = Orient.instance();
+    if (orient != null) {
+      orient.shutdown();
+      orient.startup();
+    }
   }
 
   @Test

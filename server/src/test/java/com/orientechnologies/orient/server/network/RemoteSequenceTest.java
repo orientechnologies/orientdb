@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,7 +25,7 @@ public class RemoteSequenceTest {
 
   @Before
   public void before() throws Exception {
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
@@ -73,7 +74,15 @@ public class RemoteSequenceTest {
   @After
   public void after() {
     server.shutdown();
-    Orient.instance().startup();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    final Orient orient = Orient.instance();
+    if (orient != null) {
+      orient.shutdown();
+      orient.startup();
+    }
   }
 
 }

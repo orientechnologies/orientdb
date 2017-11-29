@@ -22,7 +22,7 @@ public class OLiveQueryShutdownTest {
   private OServer             server;
 
   public void bootServer() throws Exception {
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
@@ -35,7 +35,12 @@ public class OLiveQueryShutdownTest {
 
   public void shutdownServer() {
     server.shutdown();
-    Orient.instance().startup();
+
+    final Orient orient = Orient.instance();
+    if (orient != null) {
+      orient.shutdown();
+      orient.startup();
+    }
   }
 
   @Test

@@ -10,6 +10,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +49,7 @@ public class HookInstallServerTest {
   public void before() throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException,
       NotCompliantMBeanException, ClassNotFoundException, NullPointerException, IOException, IllegalArgumentException,
       SecurityException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-    server = new OServer();
+    server = new OServer(false);
     OServerConfigurationManager ret = new OServerConfigurationManager(
         this.getClass().getClassLoader().getResourceAsStream("com/orientechnologies/orient/server/network/orientdb-server-config.xml"));
     OServerHookConfiguration hc = new OServerHookConfiguration();
@@ -72,7 +73,15 @@ public class HookInstallServerTest {
     admin.dropDatabase("test", "memory");
     admin.close();
     server.shutdown();
-    Orient.instance().startup();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    final Orient orient = Orient.instance();
+    if (orient != null) {
+      orient.shutdown();
+      orient.startup();
+    }
   }
 
   @Test

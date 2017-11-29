@@ -10,6 +10,7 @@ import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfigur
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -68,8 +69,15 @@ public class OServerShutdownMainTest {
       System.setProperty("ORIENTDB_HOME", prevOrientHome);
     if (prevPassword != null)
       System.setProperty("ORIENTDB_ROOT_PASSWORD", prevPassword);
+  }
 
-    Orient.instance().startup();
+  @AfterClass
+  public static void afterClass() {
+    final Orient orient = Orient.instance();
+    if (orient != null) {
+      orient.shutdown();
+      orient.startup();
+    }
   }
 
   @Test

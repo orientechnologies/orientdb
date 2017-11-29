@@ -67,7 +67,7 @@ public class OServerTest {
   public void shouldShutdownOnPluginStartupException() {
 
     try {
-      server = new OServer(true);
+      server = new OServer(false);
       server.startup(conf);
       server.activate();
     } catch (Exception e) {

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.handler;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -36,18 +37,19 @@ public class AutomaticBackupTest {
   private final static String BACKUPDIR = "target/backup";
   private static final String URL       = "plocal:target/" + DBNAME;
   private static final String URL2      = "plocal:target/" + DBNAME + "2";
-  private final String        tempDirectory;
-  private ODatabaseDocumentTx database;
-  private final OServer       server;
+  private final String              tempDirectory;
+  private       ODatabaseDocumentTx database;
+  private final OServer             server;
 
-  public AutomaticBackupTest() throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-      NotCompliantMBeanException, MBeanRegistrationException, IOException {
+  public AutomaticBackupTest()
+      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
+      MBeanRegistrationException, IOException {
 
     // SET THE ORIENTDB_HOME DIRECTORY TO CHECK JSON FILE CREATION
     tempDirectory = new File("target/testhome").getAbsolutePath();
     System.setProperty("ORIENTDB_HOME", tempDirectory);
 
-    server = new OServer() {
+    server = new OServer(false) {
       @Override
       public Map<String, String> getAvailableStorageNames() {
         HashMap<String, String> result = new HashMap<String, String>();
@@ -59,8 +61,17 @@ public class AutomaticBackupTest {
 
   @BeforeClass
   @AfterClass
-  public static final void clean() {
+  public static void clean() {
     OFileUtils.deleteRecursively(new File(BACKUPDIR));
+  }
+
+  @AfterClass
+  public static void restartEngine() {
+    final Orient orient = Orient.instance();
+    if (orient != null) {
+      orient.shutdown();
+      orient.startup();
+    }
   }
 
   @Before
@@ -89,8 +100,9 @@ public class AutomaticBackupTest {
   }
 
   @Test
-  public void testFullBackupWithJsonConfigInclude() throws IOException, ClassNotFoundException, MalformedObjectNameException,
-      InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
+  public void testFullBackupWithJsonConfigInclude()
+      throws IOException, ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
+      NotCompliantMBeanException, MBeanRegistrationException {
     if (new File(BACKUPDIR + "/testautobackup.zip").exists())
       new File(BACKUPDIR + "/testautobackup.zip").delete();
 
@@ -134,8 +146,9 @@ public class AutomaticBackupTest {
   }
 
   @Test
-  public void testFullBackupWithJsonConfigExclude() throws IOException, ClassNotFoundException, MalformedObjectNameException,
-      InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
+  public void testFullBackupWithJsonConfigExclude()
+      throws IOException, ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
+      NotCompliantMBeanException, MBeanRegistrationException {
     if (new File(BACKUPDIR + "/testautobackup.zip").exists())
       new File(BACKUPDIR + "/testautobackup.zip").delete();
 
@@ -172,8 +185,9 @@ public class AutomaticBackupTest {
   }
 
   @Test
-  public void testFullBackup() throws IOException, ClassNotFoundException, MalformedObjectNameException,
-      InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
+  public void testFullBackup()
+      throws IOException, ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
+      NotCompliantMBeanException, MBeanRegistrationException {
     if (new File(BACKUPDIR + "/fullBackup.zip").exists())
       new File(BACKUPDIR + "/fullBackup.zip").delete();
 
@@ -206,12 +220,10 @@ public class AutomaticBackupTest {
     Assert.assertEquals(database2.countClass("TestBackup"), 1);
   }
 
-
   @Test
-  public void testAutomaticBackupDisable() throws IOException, ClassNotFoundException, MalformedObjectNameException,
-      InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
-
-
+  public void testAutomaticBackupDisable()
+      throws IOException, ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
+      NotCompliantMBeanException, MBeanRegistrationException {
 
     String jsonConfig = OIOUtils.readStreamAsString(getClass().getResourceAsStream("automatic-backup.json"));
 
@@ -230,11 +242,10 @@ public class AutomaticBackupTest {
 
     final OServerParameterConfiguration[] config = new OServerParameterConfiguration[] {};
 
-
     try {
       aBackup.config(server, config);
 
-    } catch (OConfigurationException e){
+    } catch (OConfigurationException e) {
       Assert.fail("It should not get an configuration exception when disabled");
     }
 

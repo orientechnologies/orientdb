@@ -22,17 +22,20 @@ package com.orientechnologies;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import org.junit.Assert;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 import org.testng.ISuiteResult;
 
 /**
  * <ol>
- *   <li>Listens for TestNG test run started and prohibits logging of exceptions on storage level.</li>
- *   <li>Listens for the
- *    TestNG test run finishing and runs the direct memory leaks detector, if no tests failed. If leak detector finds some leaks, it
- *    triggers {@link AssertionError} and the build is marked as failed. Java assertions (-ea) must be active for this to work.
- *    </li>
+ * <li>Listens for TestNG test run started and prohibits logging of exceptions on storage level.</li>
+ * <li>Listens for the
+ * TestNG test run finishing and runs the direct memory leaks detector, if no tests failed. If leak detector finds some leaks, it
+ * triggers {@link AssertionError} and the build is marked as failed. Java assertions (-ea) must be active for this to work.
+ * </li>
+ * <li>Triggers {@link AssertionError} if {@link OLogManager} is shutdown before test is finished.
+ * We may miss some errors because {@link OLogManager} is shutdown</li>
  * </ol>
  *
  * @author Sergey Sitnikov
@@ -51,6 +54,13 @@ public class OTestNGTestListener implements ISuiteListener {
     if (!isFailed(suite)) {
       System.out.println("Checking for direct memory leaks...");
       OByteBufferPool.instance().verifyState();
+    }
+
+    if (OLogManager.instance().isShutdown()) {
+      final String msg = "LogManager was switched off before shutdown";
+
+      System.err.println(msg);
+      Assert.fail(msg);
     }
   }
 

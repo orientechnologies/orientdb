@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.test.server.network.http;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -32,6 +34,15 @@ public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
     super.stopServer();
 
     onAfterDatabaseDropped();
+  }
+
+  @AfterClass
+  public static void reinitEngine() {
+    final Orient orient = Orient.instance();
+    if (orient != null) {
+      orient.shutdown();
+      orient.startup();
+    }
   }
 
   protected void onAfterDatabaseCreated() throws Exception {

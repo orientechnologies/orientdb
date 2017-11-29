@@ -63,7 +63,11 @@ public class Orient extends OListenerManger<OOrientListener> {
   public static final String URL_SYNTAX    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
   private static volatile Orient instance;
-  private static final Lock initLock = new ReentrantLock();
+  private static final Lock    initLock       = new ReentrantLock();
+  /**
+   * Prevents duplications because of recursive initialization.
+   */
+  private static       boolean initInProgress = false;
 
   private static volatile boolean registerDatabaseByPath = false;
 
@@ -165,6 +169,10 @@ public class Orient extends OListenerManger<OOrientListener> {
 
     initLock.lock();
     try {
+      if (initInProgress)
+        return null;
+
+      initInProgress = true;
       if (instance != null)
         return instance;
 
@@ -173,6 +181,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       instance = orient;
     } finally {
+      initInProgress = false;
       initLock.unlock();
     }
 

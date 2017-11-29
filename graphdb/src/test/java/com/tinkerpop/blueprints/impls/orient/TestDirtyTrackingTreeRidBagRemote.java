@@ -9,6 +9,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,7 +48,15 @@ public class TestDirtyTrackingTreeRidBagRemote {
   @After
   public void after() {
     server.shutdown();
-    Orient.instance().startup();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    final Orient orient = Orient.instance();
+    if (orient != null) {
+      orient.shutdown();
+      orient.startup();
+    }
   }
 
   @Test

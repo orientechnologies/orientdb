@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -57,6 +58,12 @@ public class OrientdbEdgeTest {
   public static void tearDownClass() {
     if (server != null)
       server.shutdown();
+
+    final Orient orient = Orient.instance();
+    if (orient != null) {
+      orient.shutdown();
+      orient.startup();
+    }
 
     File file = new File("./target/databases/");
     if (file.exists())

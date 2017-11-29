@@ -22,7 +22,7 @@ public class RemoteMultipleUrlTest {
 
   @Before
   public void before() throws Exception {
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getClassLoader().getResourceAsStream("orientdb-dserver-config-0.xml"));
     server.activate();
@@ -44,7 +44,13 @@ public class RemoteMultipleUrlTest {
   @After
   public void after() {
     server.shutdown();
-    Orient.instance().startup();
+
+    final Orient orient = Orient.instance();
+    if (orient != null) {
+     orient.shutdown();
+     orient.startup();
+    }
+
     OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
   }
 

@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.*;
 
@@ -57,6 +58,7 @@ public class OLogManager {
     STORAGE_LOGGING
   }
 
+  private final AtomicBoolean                 shutdownFlag = new AtomicBoolean();
   private final ConcurrentMap<String, Logger> loggersCache = new ConcurrentHashMap<String, Logger>();
 
   protected OLogManager() {
@@ -118,6 +120,12 @@ public class OLogManager {
 
   public void log(final Object iRequester, final Level iLevel, String iMessage, final Throwable iException, boolean extractDBData,
       final LogLabel label, final Object... iAdditionalArgs) {
+
+    if (shutdownFlag.get()) {
+      System.err.println("ERROR: LogManager is shutdown, no logging is possible !!!");
+      return;
+    }
+
     if (iMessage != null) {
       if (extractDBData)
         try {
@@ -155,7 +163,6 @@ public class OLogManager {
           }
         }
       }
-
 
       if (log == null) {
         // USE SYSERR
@@ -363,14 +370,23 @@ public class OLogManager {
    * Shutdowns this log manager.
    */
   public void shutdown() {
-    try {
-      if (LogManager.getLogManager() instanceof ShutdownLogManager)
-        ((ShutdownLogManager) LogManager.getLogManager()).shutdown();
-    } catch (NoClassDefFoundError ignore) {
-      // Om nom nom. Some custom class loaders, like Tomcat's one, cannot load classes while in shutdown hooks, since their
-      // runtime is already shutdown. Ignoring the exception, if ShutdownLogManager is not loaded at this point there are no instances
-      // of it anyway and we have nothing to shutdown.
+    if (shutdownFlag.compareAndSet(false, true)) {
+      try {
+        if (LogManager.getLogManager() instanceof ShutdownLogManager)
+          ((ShutdownLogManager) LogManager.getLogManager()).shutdown();
+      } catch (NoClassDefFoundError ignore) {
+        // Om nom nom. Some custom class loaders, like Tomcat's one, cannot load classes while in shutdown hooks, since their
+        // runtime is already shutdown. Ignoring the exception, if ShutdownLogManager is not loaded at this point there are no instances
+        // of it anyway and we have nothing to shutdown.
+      }
     }
+  }
+
+  /**
+   * @return <code>true</code> if log manager is shutdown by {@link #shutdown()} method and no logging is possible.
+   */
+  public boolean isShutdown() {
+    return shutdownFlag.get();
   }
 
   /**

@@ -110,10 +110,13 @@ public enum OGlobalConfiguration {
 
         @Override
         public void change(Object currentValue, Object newValue) {
-          final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) Orient.instance()
-              .getEngineIfRunning(OEngineLocalPaginated.NAME);
-          if (engineLocalPaginated != null)
-            engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
+          final Orient orient = Orient.instance();
+          if (orient != null) {
+            final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) orient
+                .getEngineIfRunning(OEngineLocalPaginated.NAME);
+            if (engineLocalPaginated != null)
+              engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
+          }
         }
       }),
 
@@ -484,12 +487,16 @@ public enum OGlobalConfiguration {
   PROFILER_ENABLED("profiler.enabled", "Enables the recording of statistics and counters", Boolean.class, false,
       new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
-          final OProfiler prof = Orient.instance().getProfiler();
-          if (prof != null)
-            if ((Boolean) iNewValue)
-              prof.startRecording();
-            else
-              prof.stopRecording();
+          final Orient orient = Orient.instance();
+
+          if (orient != null) {
+            final OProfiler prof = orient.getProfiler();
+            if (prof != null)
+              if ((Boolean) iNewValue)
+                prof.startRecording();
+              else
+                prof.stopRecording();
+          }
         }
       }),
 

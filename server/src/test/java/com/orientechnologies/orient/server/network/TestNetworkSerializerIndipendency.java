@@ -10,8 +10,10 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.internal.matchers.Or;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,7 +26,7 @@ public class TestNetworkSerializerIndipendency {
 
   @Before
   public void before() throws Exception {
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
@@ -107,9 +109,23 @@ public class TestNetworkSerializerIndipendency {
   @After
   public void after() {
     server.shutdown();
+
+    Orient orient = Orient.instance();
+    if (orient != null) {
+      orient.closeAllStorages();
+    }
+
     File iDirectory = new File(SERVER_DIRECTORY);
     deleteDirectory(iDirectory);
-    Orient.instance().startup();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    final Orient orient = Orient.instance();
+    if (orient != null) {
+      orient.shutdown();
+      orient.startup();
+    }
   }
 
   private void deleteDirectory(File iDirectory) {
