@@ -113,7 +113,7 @@ public class JournaledTxStreamingTest {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-      OServer server = OServerMain.create();
+      OServer server = OServerMain.create(false);
       server.startup(RemoteDBRunner.class
           .getResourceAsStream("/com/orientechnologies/orient/core/db/journaled-tx-streaming-test-server-config.xml"));
       server.activate();

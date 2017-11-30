@@ -59,7 +59,7 @@ public class AutomaticBackupTest {
     tempDirectory = new File("target/testhome").getAbsolutePath();
     System.setProperty("ORIENTDB_HOME", tempDirectory);
 
-    server = new OServer() {
+    server = new OServer(false) {
       @Override
       public Map<String, String> getAvailableStorageNames() {
         HashMap<String, String> result = new HashMap<String, String>();

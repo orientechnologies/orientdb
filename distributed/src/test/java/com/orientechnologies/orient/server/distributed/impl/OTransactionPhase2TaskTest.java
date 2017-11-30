@@ -41,7 +41,7 @@ public class OTransactionPhase2TaskTest {
       throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
       MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
       IllegalAccessException {
-    server = new OServer();
+    server = new OServer(false);
     server.startup(getClass().getClassLoader().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
     OrientDB orientDB = server.getContext();
