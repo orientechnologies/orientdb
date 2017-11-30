@@ -1,14 +1,14 @@
 package com.orientechnologies.agent.cloud.processor;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orientdb.cloud.protocol.Command;
-import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
-import com.orientechnologies.orientdb.cloud.protocol.ServerBasicInfo;
-import com.orientechnologies.orientdb.cloud.protocol.ServerList;
+import com.orientechnologies.orientdb.cloud.protocol.*;
 
 import java.util.Collection;
+import java.util.Map;
 
 public class ListServersCommandProcessor implements CloudCommandProcessor {
   @Override
@@ -28,6 +28,26 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
       ServerBasicInfo server = new ServerBasicInfo();
       server.setName("orientdb");
       server.setId("orientdb");
+      OProfiler profiler = Orient.instance().getProfiler();
+      ODocument statsDoc = new ODocument().fromJSON(profiler.getStatsAsJson());//change this!!!
+
+      ServerStats stats = new ServerStats();
+      stats.setCpuUsage(getDouble(statsDoc, ""));
+      stats.setActiveConnections(getLong(statsDoc, ""));
+      stats.setCreateOps(getLong(statsDoc, ""));
+      stats.setUpdateOps(getLong(statsDoc, ""));
+      stats.setScanOps(getLong(statsDoc, ""));
+      stats.setDeleteOps(getLong(statsDoc, ""));
+
+      Map statsMap = ((Map) ((Map) statsDoc.getProperty("reatime")).get("statistics"));
+      statsMap.get("process.runtime.availableMemory");
+
+      stats.setTotalHeapMemory(getLong(statsDoc.getProperty("reatime"), "statistics", "process.runtime.availableMemory", "total"));
+      stats.setUsedHeapMemory(getLong(statsDoc.getProperty("reatime"), "statistics", "process.runtime.availableMemory", "last"));
+      stats.setDeleteOps(getLong(statsDoc.getProperty("reatime"), "counters", "process.runtime.availableMemory", "last"));
+
+      //TODO
+
       result.addInfo(server);
     } else { //distributed
       final ODocument doc = manager.getClusterConfiguration();
@@ -42,6 +62,38 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
       }
     }
     return result;
+  }
+
+  private Double getDouble(Object statsDoc, String... path) {
+    Object value = statsDoc;
+    for (String s : path) {
+      if (value instanceof Map) {
+        value = ((Map) value).get(s);
+      }
+    }
+    if (value instanceof String) {
+      value = Double.parseDouble((String) value);
+    }
+    if (value instanceof Number) {
+      return ((Number) value).doubleValue();
+    }
+    return null;
+  }
+
+  private Long getLong(Object statsDoc, String... path) {
+    Object value = statsDoc;
+    for (String s : path) {
+      if (value instanceof Map) {
+        value = ((Map) value).get(s);
+      }
+    }
+    if (value instanceof String) {
+      value = Long.parseLong((String) value);
+    }
+    if (value instanceof Number) {
+      return ((Number) value).longValue();
+    }
+    return null;
   }
 
 }
