@@ -1,6 +1,7 @@
 package com.orientechnologies.security.symmetrickey;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -45,7 +46,7 @@ public class OSymmetricKeyCITest extends AbstractSecurityTest {
   	 sk.saveToKeystore(new FileOutputStream(SERVER_DIRECTORY + "/config/test.jks"), "password", "keyAlias", "password");
   	 sk.saveToStream(new FileOutputStream(SERVER_DIRECTORY + "/config/AES.key"));
   	   	 
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(new File(SERVER_DIRECTORY + "/config/orientdb-server-config.xml"));
     server.activate();    
@@ -54,6 +55,9 @@ public class OSymmetricKeyCITest extends AbstractSecurityTest {
   @AfterClass
   public static void afterClass() {
     server.shutdown();
+
+    Orient.instance().shutdown();
+    Orient.instance().startup();
 
     // Just in case...
     OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue("com.orientechnologies.orient.core.security.ODefaultCI");

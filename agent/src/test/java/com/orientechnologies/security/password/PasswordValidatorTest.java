@@ -57,7 +57,7 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
   	 createFile(SERVER_DIRECTORY + "/config/orientdb-server-config.xml", PasswordValidatorTest.class.getResourceAsStream("/com/orientechnologies/security/password/orientdb-server-config.xml"));
   	 createFile(SERVER_DIRECTORY + "/config/security.json", PasswordValidatorTest.class.getResourceAsStream("/com/orientechnologies/security/password/security.json"));
   	
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(new File(SERVER_DIRECTORY + "/config/orientdb-server-config.xml"));
     server.activate();
@@ -73,6 +73,9 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
     server.shutdown();
 
     cleanup(TESTDB);
+
+    Orient.instance().shutdown();
+    Orient.instance().startup();
   }
 
   @Test

@@ -56,7 +56,7 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
         SystemDbAuditingTest.class.getResourceAsStream("/com/orientechnologies/security/auditing/security.json"));
 
 
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
 
     server.startup(new File(SERVER_DIRECTORY + "/config/orientdb-server-config.xml"));
@@ -79,6 +79,8 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
     server.shutdown();
 
     cleanup(TESTDB);
+
+    Orient.instance().shutdown();
     Orient.instance().startup();
   }
 
