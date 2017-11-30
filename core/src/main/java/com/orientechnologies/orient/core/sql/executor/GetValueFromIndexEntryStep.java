@@ -11,6 +11,9 @@ import java.util.Optional;
  * Created by luigidellaquila on 16/03/17.
  */
 public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
+
+  private long cost = 0;
+
   public GetValueFromIndexEntryStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
@@ -21,21 +24,35 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
     return new OResultSet() {
       @Override
       public boolean hasNext() {
-        return upstream.hasNext();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
+        try {
+          return upstream.hasNext();
+        } finally {
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
+        }
       }
 
       @Override
       public OResult next() {
-        OResult val = upstream.next();
-        Object finalVal = val.getProperty("rid");
-        if (finalVal instanceof OIdentifiable) {
-          OResultInternal res = new OResultInternal();
-          res.setElement((OIdentifiable) finalVal);
-          return res;
-        } else if (finalVal instanceof OResult) {
-          return (OResult) finalVal;
+        long begin = profilingEnabled ? System.nanoTime() : 0;
+        try {
+          OResult val = upstream.next();
+          Object finalVal = val.getProperty("rid");
+          if (finalVal instanceof OIdentifiable) {
+            OResultInternal res = new OResultInternal();
+            res.setElement((OIdentifiable) finalVal);
+            return res;
+          } else if (finalVal instanceof OResult) {
+            return (OResult) finalVal;
+          }
+          throw new IllegalStateException();
+        } finally {
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
-        throw new IllegalStateException();
       }
 
       @Override
@@ -58,6 +75,15 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
   @Override
   public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ EXTRACT VALUE FROM INDEX ENTRY";
+    String result = spaces + "+ EXTRACT VALUE FROM INDEX ENTRY";
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    return result;
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

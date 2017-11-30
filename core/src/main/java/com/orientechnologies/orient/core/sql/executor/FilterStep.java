@@ -17,6 +17,8 @@ public class FilterStep extends AbstractExecutionStep {
 
   OResultSet prevResult = null;
 
+  private long cost;
+
   public FilterStep(OWhereClause whereClause, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.whereClause = whereClause;
@@ -56,10 +58,18 @@ public class FilterStep extends AbstractExecutionStep {
             }
           }
           nextItem = prevResult.next();
-          if (whereClause.matchesFilters(nextItem, ctx)) {
-            break;
+          long begin = profilingEnabled ? System.nanoTime() : 0;
+          try {
+            if (whereClause.matchesFilters(nextItem, ctx)) {
+              break;
+            }
+
+            nextItem = null;
+          } finally {
+            if (profilingEnabled) {
+              cost += (System.nanoTime() - begin);
+            }
           }
-          nextItem = null;
         }
       }
 
@@ -117,8 +127,16 @@ public class FilterStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ FILTER ITEMS WHERE \n" + OExecutionStepInternal
-        .getIndent(depth, indent) + "  " + whereClause.toString();
+    StringBuilder result = new StringBuilder();
+    result.append(OExecutionStepInternal.getIndent(depth, indent) + "+ FILTER ITEMS WHERE ");
+    if (profilingEnabled) {
+      result.append(" (" + getCostFormatted() + ")");
+    }
+    result.append("\n");
+    result.append(OExecutionStepInternal.getIndent(depth, indent));
+    result.append("  ");
+    result.append(whereClause.toString());
+    return result.toString();
   }
 
   @Override
@@ -142,4 +160,8 @@ public class FilterStep extends AbstractExecutionStep {
     }
   }
 
+  @Override
+  public long getCost() {
+    return cost;
+  }
 }

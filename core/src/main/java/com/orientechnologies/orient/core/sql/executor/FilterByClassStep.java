@@ -18,6 +18,8 @@ public class FilterByClassStep extends AbstractExecutionStep {
 
   OResultSet prevResult = null;
 
+  private long cost;
+
   public FilterByClassStep(OIdentifier identifier, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.identifier = identifier;
@@ -57,13 +59,20 @@ public class FilterByClassStep extends AbstractExecutionStep {
             }
           }
           nextItem = prevResult.next();
-          if (nextItem.isElement()) {
-            Optional<OClass> clazz = nextItem.getElement().get().getSchemaType();
-            if (clazz.isPresent() && clazz.get().isSubClassOf(identifier.getStringValue())) {
-              break;
+          long begin = profilingEnabled ? System.nanoTime() : 0;
+          try {
+            if (nextItem.isElement()) {
+              Optional<OClass> clazz = nextItem.getElement().get().getSchemaType();
+              if (clazz.isPresent() && clazz.get().isSubClassOf(identifier.getStringValue())) {
+                break;
+              }
+            }
+            nextItem = null;
+          } finally {
+            if (profilingEnabled) {
+              cost += (System.nanoTime() - begin);
             }
           }
-          nextItem = null;
         }
       }
 
@@ -121,8 +130,17 @@ public class FilterByClassStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ FILTER ITEMS BY CLASS \n" + OExecutionStepInternal
-        .getIndent(depth, indent) + "  " + identifier.getStringValue();
+    StringBuilder result = new StringBuilder();
+    result.append(OExecutionStepInternal.getIndent(depth, indent));
+    result.append("+ FILTER ITEMS BY CLASS");
+    if (profilingEnabled) {
+      result.append(" (" + getCostFormatted() + ")");
+    }
+    result.append(" \n");
+    result.append(OExecutionStepInternal.getIndent(depth, indent));
+    result.append("  ");
+    result.append(identifier.getStringValue());
+    return result.toString();
   }
 
   @Override
@@ -141,5 +159,10 @@ public class FilterByClassStep extends AbstractExecutionStep {
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }
