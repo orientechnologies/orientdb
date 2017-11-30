@@ -533,6 +533,10 @@ public enum OGlobalConfiguration {
   NETWORK_TOKEN_EXPIRE_TIMEOUT("network.token.expireTimeout",
       "Timeout, after which a binary session is considered to have expired (in minutes)", Integer.class, 60),
 
+  INIT_IN_SERVLET_CONTEXT_LISTENER("orient.initInServletContextListener",
+      "If this value set to ture (default) OrientDB engine " + "will be initialzed using embedded ServletContextListener",
+      Boolean.class, true),
+
   // PROFILER
 
   PROFILER_ENABLED("profiler.enabled", "Enables the recording of statistics and counters", Boolean.class, false,

@@ -118,6 +118,11 @@ public class Orient extends OListenerManger<OOrientListener> {
   private boolean runningDistributed = false;
 
   /**
+   * Indicates that engine is initialized inside of web application container.
+   */
+  private volatile boolean insideWebContainer;
+
+  /**
    * Prevents duplications because of recursive initialization.
    */
   private static boolean initInProgress = false;
@@ -160,17 +165,26 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  Orient() {
+  Orient(boolean insideWebContainer) {
     super(true);
+    this.insideWebContainer = insideWebContainer;
     this.os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
     threadGroup = new ThreadGroup("OrientDB");
     threadGroup.setDaemon(false);
+  }
+
+  public boolean isInsideWebContainer() {
+    return insideWebContainer;
   }
 
   public static Orient instance() {
     if (instance != null)
       return instance;
 
+    return startUp(false);
+  }
+
+  public static Orient startUp(boolean insideWebContainer) {
     initLock.lock();
     try {
       if (initInProgress) {
@@ -181,7 +195,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (instance != null)
         return instance;
 
-      final Orient orient = new Orient();
+      final Orient orient = new Orient(false);
       orient.startup();
 
       instance = orient;
