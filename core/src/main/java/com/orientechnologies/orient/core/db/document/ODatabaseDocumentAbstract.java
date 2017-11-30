@@ -2606,7 +2606,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       currentTx.commit(force);
     } catch (RuntimeException e) {
 
-      if (e instanceof OHighLevelException)
+      if ((e instanceof OHighLevelException) || (e instanceof ONeedRetryException))
         OLogManager.instance().debug(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));
       else
         OLogManager.instance().error(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));

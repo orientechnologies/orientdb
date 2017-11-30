@@ -13,6 +13,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,9 +28,10 @@ public class SelectProjectionVertexRemoteTest {
   private OServer server;
 
   @Before
-  public void before() throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-      NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException, NoSuchMethodException,
-      InstantiationException, IOException, IllegalAccessException {
+  public void before()
+      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
+      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
+      IllegalAccessException {
     server = new OServer(false);
     server.startup(OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));
     server.activate();
@@ -42,6 +44,11 @@ public class SelectProjectionVertexRemoteTest {
   @After
   public void after() {
     server.shutdown();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    Orient.instance().shutdown();
     Orient.instance().startup();
   }
 

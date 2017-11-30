@@ -104,12 +104,19 @@ public class OServer {
   public OServer()
       throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
       MBeanRegistrationException, NotCompliantMBeanException {
-    this(true);
+    this(!Orient.instance().isInsideWebContainer());
   }
 
   public OServer(boolean shutdownEngineOnExit)
       throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
       MBeanRegistrationException, NotCompliantMBeanException {
+    final boolean insideWebContainer = Orient.instance().isInsideWebContainer();
+
+    if (insideWebContainer && shutdownEngineOnExit) {
+      OLogManager.instance().warnNoDb(this, "OrientDB instance is running inside of web application, "
+          + "it is highly unrecommended to force to shutdown OrientDB engine on server shutdown");
+    }
+
     this.shutdownEngineOnExit = shutdownEngineOnExit;
 
     serverRootDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}", ".");
@@ -127,7 +134,9 @@ public class OServer {
     if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean() && !Orient.instance().getProfiler().isRecording())
       Orient.instance().getProfiler().startRecording();
 
-    shutdownHook = new OServerShutdownHook(this);
+    if (shutdownEngineOnExit) {
+      shutdownHook = new OServerShutdownHook(this);
+    }
   }
 
   public static OServer getInstance(final String iServerId) {
@@ -464,7 +473,9 @@ public class OServer {
         shutdownLatch = null;
       }
 
-      OLogManager.instance().shutdown();
+      if (shutdownEngineOnExit) {
+        OLogManager.instance().shutdown();
+      }
     }
   }
 

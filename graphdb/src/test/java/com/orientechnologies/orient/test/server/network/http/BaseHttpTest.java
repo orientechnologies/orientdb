@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.server.network.http;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.server.OServer;
 import org.apache.http.Consts;
 import org.apache.http.HttpHost;

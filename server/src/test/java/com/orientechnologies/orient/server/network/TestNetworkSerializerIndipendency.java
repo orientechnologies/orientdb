@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,7 +27,7 @@ public class TestNetworkSerializerIndipendency {
 
   @Before
   public void before() throws Exception {
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
@@ -112,6 +113,11 @@ public class TestNetworkSerializerIndipendency {
     File iDirectory = new File(SERVER_DIRECTORY);
     deleteDirectory(iDirectory);
     ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerFactory.instance().getFormat(ORecordSerializerBinary.NAME));
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    Orient.instance().shutdown();
     Orient.instance().startup();
   }
 

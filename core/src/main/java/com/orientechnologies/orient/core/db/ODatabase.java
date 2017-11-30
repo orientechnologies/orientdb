@@ -389,6 +389,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param iValue new value to set
    *
    * @return The previous value if any, otherwise null
+   * @deprecated use <code>OrientDBConfig.builder().setConfig(propertyName, propertyValue).build();</code> instead if you use >=3.0 API.
    */
   @Deprecated
   Object setProperty(String iName, Object iValue);
@@ -399,12 +400,14 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param iName Property name
    *
    * @return The previous value if any, otherwise null
+   * @deprecated use {@link ODatabase#getConfiguration()} instead if you use >=3.0 API.
    */
   @Deprecated
   Object getProperty(String iName);
 
   /**
    * Returns an iterator of the property entries
+   * @deprecated use {@link ODatabase#getConfiguration()} instead if you use >=3.0 API.
    */
   @Deprecated
   Iterator<Map.Entry<String, Object>> getProperties();

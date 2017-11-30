@@ -20,6 +20,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,12 +75,17 @@ public class GraphNonBlockingQueryRemoteTest {
   @After
   public void after() {
     server.shutdown();
-    Orient.instance().startup();
 
     if (oldOrientDBHome != null)
       System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
     else
       System.clearProperty("ORIENTDB_HOME");
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    Orient.instance().shutdown();
+    Orient.instance().startup();
   }
 
   @Test

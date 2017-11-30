@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -55,15 +56,17 @@ public abstract class OLuceneBaseTest {
   }
 
   protected void setupDatabase(String config) {
+    OrientDBConfig cfg = OrientDBConfig.builder().addAttribute(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8).build();
+
     if ("ci".equals(config) || "release".equals(config)) {
-      orient = new OrientDB("embedded:./target/databases/", OrientDBConfig.defaultConfig());
+      orient = new OrientDB("embedded:./target/databases/", cfg);
       if (orient.exists(name.getMethodName()))
         orient.drop(name.getMethodName());
 
       orient.create(name.getMethodName(), ODatabaseType.PLOCAL);
 
     } else {
-      orient = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+      orient = new OrientDB("embedded:", cfg);
       if (orient.exists(name.getMethodName()))
         orient.drop(name.getMethodName());
 

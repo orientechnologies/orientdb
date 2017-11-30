@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.ORemoteImportTest;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,7 +43,7 @@ public class RemoteTransactionSupportTest {
   @Before
   public void before() throws Exception {
     OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.setValue(1);
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
@@ -411,7 +412,11 @@ public class RemoteTransactionSupportTest {
     database.close();
     orientDB.close();
     server.shutdown();
-    Orient.instance().startup();
   }
 
+  @AfterClass
+  public static void afterClass() {
+    Orient.instance().shutdown();
+    Orient.instance().startup();
+  }
 }

@@ -1,25 +1,31 @@
 package com.orientechnologies.orient.server.network;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+
 import static org.junit.Assert.assertNotNull;
+
 public class TestConcurrentSequenceGenerationIT {
-  static final int THREADS = 20;
-  static final int RECORDS = 100;
+  static final         int    THREADS          = 20;
+  static final         int    RECORDS          = 100;
   private static final String SERVER_DIRECTORY = "./target/db";
   private OServer  server;
   private OrientDB orientDB;
+
   @Before
   public void before() throws Exception {
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
@@ -32,6 +38,7 @@ public class TestConcurrentSequenceGenerationIT {
             + "CREATE INDEX TestSequence_id_index ON TestSequence (id BY VALUE) UNIQUE;");
     databaseSession.close();
   }
+
   @Test
   public void test() throws InterruptedException {
     AtomicLong failures = new AtomicLong(0);
@@ -64,11 +71,17 @@ public class TestConcurrentSequenceGenerationIT {
     }
     Assert.assertEquals(0, failures.get());
   }
+
   @After
   public void after() {
     orientDB.drop(TestConcurrentSequenceGenerationIT.class.getSimpleName());
     orientDB.close();
     server.shutdown();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    Orient.instance().shutdown();
     Orient.instance().startup();
   }
 }

@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -134,7 +135,7 @@ public class ODemoDbFromDocumentationCustomersIT extends OIntegrationTestTemplat
     resultSet.close();
   }
 
-  @Test(priority = 10)
+  @Test(priority = 10, enabled = false)
   public void test_Customers_Example_10() throws Exception {
 
     OResultSet resultSet = db.query(

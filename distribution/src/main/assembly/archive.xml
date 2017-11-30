@@ -14,7 +14,7 @@
          | copy server scripts
         -->
         <fileSet>
-            <directory>${basedir}/script</directory>
+            <directory>${basedir}/../server/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -23,7 +23,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/script</directory>
+            <directory>${basedir}/../server/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
@@ -35,7 +35,7 @@
          | copy service scripts
         -->
         <fileSet>
-            <directory>${basedir}/script</directory>
+            <directory>${basedir}/../server/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>orientdb.service</include>
@@ -69,32 +69,10 @@
         </fileSet>
 
         <!--
-         | copy tools scripts
-        -->
-        <fileSet>
-            <directory>${basedir}/script</directory>
-            <outputDirectory>bin</outputDirectory>
-            <includes>
-                <include>*.bat</include>
-            </includes>
-            <fileMode>644</fileMode>
-            <filtered>true</filtered>
-        </fileSet>
-        <fileSet>
-            <directory>${basedir}/script</directory>
-            <outputDirectory>bin</outputDirectory>
-            <includes>
-                <include>*.sh</include>
-            </includes>
-            <fileMode>755</fileMode>
-            <filtered>true</filtered>
-        </fileSet>
-
-        <!--
          | copy distributed scripts
         -->
         <fileSet>
-            <directory>${basedir}/script</directory>
+            <directory>${basedir}/../distributed/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -103,7 +81,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/script</directory>
+            <directory>${basedir}/../distributed/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
@@ -117,7 +95,22 @@
          | configurations
         -->
         <fileSet>
-            <directory>${basedir}/config</directory>
+            <directory>${basedir}/../server/config</directory>
+            <outputDirectory>config</outputDirectory>
+            <fileMode>600</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../distributed/config</directory>
+            <outputDirectory>config</outputDirectory>
+            <fileMode>600</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../graphdb/config</directory>
+            <outputDirectory>config</outputDirectory>
+            <fileMode>600</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../tools/config</directory>
             <outputDirectory>config</outputDirectory>
             <fileMode>600</fileMode>
         </fileSet>
@@ -127,7 +120,7 @@
             <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/config/cert</directory>
+            <directory>${basedir}/../server/config/cert</directory>
             <outputDirectory>config/cert</outputDirectory>
             <fileMode>600</fileMode>
         </fileSet>

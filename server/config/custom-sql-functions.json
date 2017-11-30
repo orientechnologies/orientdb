@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "functions": [
+    //    {
+    //      "prefix": "the_function_prefix here",
+    //      "class": "your.class.with.static.methods.Here"
+    //    }
+  ]
+}

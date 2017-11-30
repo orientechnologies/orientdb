@@ -50,7 +50,7 @@ public abstract class OIntegrationTestTemplate {
     System.setProperty(ORIENTDB_ROOT_PASSWORD, "root");
     System.setProperty(ORIENTDB_HOME, orientdbHomePath.toRealPath().toString());
 
-    server = OServerMain.create();
+    server = OServerMain.create(false);
     try (InputStream configuration = OIntegrationTestTemplate.class.getResourceAsStream("/orientdb-server-config.xml")) {
       server.startup(configuration);
     }

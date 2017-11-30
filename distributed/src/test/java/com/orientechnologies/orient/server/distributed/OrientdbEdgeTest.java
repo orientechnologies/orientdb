@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -64,6 +65,9 @@ public class OrientdbEdgeTest {
       server.shutdown();
 
     ODatabaseDocumentTx.closeAll();
+
+    Orient.instance().shutdown();
+    Orient.instance().startup();
 
     File file = new File("./target/databases/");
     if (file.exists())
