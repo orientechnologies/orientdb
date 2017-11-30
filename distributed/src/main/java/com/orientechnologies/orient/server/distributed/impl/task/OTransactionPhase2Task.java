@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -28,10 +29,12 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   private int[]                 involvedClusters;
   private boolean hasResponse = false;
 
-  public OTransactionPhase2Task(ODistributedRequestId transactionId, boolean success, int[] involvedClusters) {
+  public OTransactionPhase2Task(ODistributedRequestId transactionId, boolean success, int[] involvedClusters,
+      OLogSequenceNumber lsn) {
     this.transactionId = transactionId;
     this.success = success;
     this.involvedClusters = involvedClusters;
+    this.lastLSN = lsn;
   }
 
   public OTransactionPhase2Task() {
@@ -59,6 +62,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
       this.involvedClusters[i] = in.readInt();
     }
     this.success = in.readBoolean();
+    this.lastLSN = new OLogSequenceNumber(in);
   }
 
   @Override
@@ -70,6 +74,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
       out.writeInt(involvedCluster);
     }
     out.writeBoolean(success);
+    lastLSN.toStream(out);
   }
 
   @Override
@@ -87,6 +92,16 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
       hasResponse = true;
     }
     return "OK"; //TODO
+  }
+
+  @Override
+  public OLogSequenceNumber getLastLSN() {
+    return super.getLastLSN();
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    return false;
   }
 
   @Override
