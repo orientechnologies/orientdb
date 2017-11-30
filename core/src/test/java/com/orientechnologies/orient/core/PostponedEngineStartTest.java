@@ -59,7 +59,7 @@ public class PostponedEngineStartTest {
 
   @BeforeClass
   public void before() {
-    ORIENT = new Orient() {
+    ORIENT = new Orient(false) {
       @Override
       public Orient startup() {
         ORIENT.registerEngine(ENGINE1 = new NamedEngine("engine1"));

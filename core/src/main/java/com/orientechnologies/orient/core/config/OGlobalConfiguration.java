@@ -898,6 +898,11 @@ public enum OGlobalConfiguration {
   @OApi(maturity = OApi.MATURITY.NEW) SERVER_SECURITY_FILE("server.security.file",
       "Location of the OrientDB security.json configuration file", String.class, null),
 
+  INIT_IN_SERVLET_CONTEXT_LISTENER("orient.initInServletContextListener",
+      "If this value set to ture (default) OrientDB engine " + "will be initialzed using embedded ServletContextListener",
+      Boolean.class, true),
+
+
   /**
    * Deprecated in v2.2.0
    */
