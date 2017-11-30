@@ -17,6 +17,8 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
@@ -121,7 +123,7 @@ public class ServerRun {
     System.setProperty("ORIENTDB_HOME", getServerHome());
 
     if (server == null)
-      server = OServerMain.create();
+      server = OServerMain.create(false);
 
     server.setServerRootDirectory(getServerHome());
     server.startup(getClass().getClassLoader().getResourceAsStream(iServerConfigFile));
@@ -140,6 +142,9 @@ public class ServerRun {
     }
 
     closeStorages();
+
+    Orient.instance().shutdown();
+    Orient.instance().startup();
   }
 
   public void terminateServer() {

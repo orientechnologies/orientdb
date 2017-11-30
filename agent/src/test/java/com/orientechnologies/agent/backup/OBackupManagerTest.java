@@ -19,17 +19,14 @@
 package com.orientechnologies.agent.backup;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
-import com.orientechnologies.agent.backup.log.OBackupLog;
 import com.orientechnologies.agent.backup.log.OBackupLogType;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,56 +49,49 @@ import static org.junit.Assert.*;
 
 public class OBackupManagerTest {
 
-  private OServer             server;
+  private OServer server;
 
-  private final String        DB_NAME     = "backupDB";
-  private final String        BACKUP_PATH = System.getProperty("java.io.tmpdir") + File.separator + DB_NAME;
-  private ODatabaseDocumentTx db;
-
-  private OBackupManager      manager;
+  private final String DB_NAME     = "backupDB";
+  private final String BACKUP_PATH =
+      System.getProperty("buildDirectory", "target") + File.separator + "databases" + File.separator + DB_NAME;
+  private OBackupManager manager;
 
   @Before
-  public void bootOrientDB() {
+  public void bootOrientDB() throws Exception {
+    OFileUtils.deleteRecursively(new File(BACKUP_PATH));
 
-    try {
-      InputStream stream = ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml");
-      server = OServerMain.create(false);
-      server.startup(stream);
-      server.activate();
+    InputStream stream = ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml");
+    server = OServerMain.create(false);
+    server.startup(stream);
 
-      server.getSystemDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
-        @Override
-        public Void call(ODatabase iArgument) {
+    OrientDB orientDB = server.getContext();
+    orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
 
-          iArgument.command(new OCommandSQL("delete from OBackupLog")).execute();
-          return null;
-        }
-      });
+    server.activate();
 
-      db = new ODatabaseDocumentTx("plocal:" + server.getDatabaseDirectory() + DB_NAME);
+    server.getSystemDatabase().executeInDBScope(iArgument -> {
 
-      if (db.exists()) {
+      iArgument.command("delete from OBackupLog");
+      return null;
+    });
 
-        db.drop();
-      } else {
-        db.create();
-      }
+    OEnterpriseAgent agent = server.getPluginByClass(OEnterpriseAgent.class);
 
-      OEnterpriseAgent agent = server.getPluginByClass(OEnterpriseAgent.class);
-
-      manager = agent.getBackupManager();
-
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    manager = agent.getBackupManager();
   }
 
   @After
   public void tearDownOrientDB() {
-    if (db != null)
-      db.drop();
+    OrientDB orientDB = server.getContext();
+    if (orientDB.exists(DB_NAME))
+      orientDB.drop(DB_NAME);
+
     if (server != null)
       server.shutdown();
+
+    Orient.instance().shutdown();
+    Orient.instance().startup();
+
     OFileUtils.deleteRecursively(new File(BACKUP_PATH));
   }
 
@@ -133,16 +123,13 @@ public class OBackupManagerTest {
       final OBackupTask task = manager.getTask(uuid);
 
       final CountDownLatch latch = new CountDownLatch(17);
-      task.registerListener(new OBackupListener() {
-        @Override
-        public Boolean onEvent(ODocument cfg, OBackupLog log) {
-          latch.countDown();
-          return latch.getCount() > 0;
+      task.registerListener((cfg1, log) -> {
+        latch.countDown();
+        return latch.getCount() > 0;
 
-        }
       });
       latch.await();
-      ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
+      ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
       assertNotNull(logs);
       assertNotNull(logs.field("logs"));
 
@@ -158,7 +145,7 @@ public class OBackupManagerTest {
 
   }
 
-  private int calculateToDelete(List<ODocument> list, int start) {
+  private int calculateToDelete(List<ODocument> list, @SuppressWarnings("SameParameterValue") int start) {
 
     int counter = 0;
     Long last = null;
@@ -201,16 +188,13 @@ public class OBackupManagerTest {
       final OBackupTask task = manager.getTask(uuid);
 
       final CountDownLatch latch = new CountDownLatch(5);
-      task.registerListener(new OBackupListener() {
-        @Override
-        public Boolean onEvent(ODocument cfg, OBackupLog log) {
-          latch.countDown();
-          return latch.getCount() > 0;
+      task.registerListener((cfg1, log) -> {
+        latch.countDown();
+        return latch.getCount() > 0;
 
-        }
       });
       latch.await();
-      ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
+      ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
       assertNotNull(logs);
       assertNotNull(logs.field("logs"));
 
@@ -251,19 +235,18 @@ public class OBackupManagerTest {
     }
   }
 
-  protected List<ODocument> getLogs(String uuid) {
-    ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
+  private List<ODocument> getLogs(String uuid) {
+    ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
     assertNotNull(logs);
     assertNotNull(logs.field("logs"));
 
-    List<ODocument> list = logs.field("logs");
-    return list;
+    return logs.field("logs");
   }
 
   @Test
   public void backupIncrementalTest() throws InterruptedException {
 
-    checkExpected(0,null);
+    checkExpected(0, null);
     ODocument modes = new ODocument();
 
     ODocument mode = new ODocument();
@@ -285,17 +268,14 @@ public class OBackupManagerTest {
       OBackupTask task = manager.getTask(uuid);
 
       final CountDownLatch latch = new CountDownLatch(5);
-      task.registerListener(new OBackupListener() {
-        @Override
-        public Boolean onEvent(ODocument cfg, OBackupLog log) {
-          latch.countDown();
-          return latch.getCount() > 0;
+      task.registerListener((cfg1, log) -> {
+        latch.countDown();
+        return latch.getCount() > 0;
 
-        }
       });
       latch.await();
 
-      ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
+      ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
       assertNotNull(logs);
       assertNotNull(logs.field("logs"));
 
@@ -329,12 +309,8 @@ public class OBackupManagerTest {
     } else {
       query = "select count(*) from OBackupLog";
     }
-    List<ODocument> execute = (List<ODocument>) server.getSystemDatabase().execute(new OCallable<Object, Object>() {
-      @Override
-      public Object call(Object iArgument) {
-        return iArgument;
-      }
-    }, query, uuid);
+    @SuppressWarnings("unchecked")
+    List<ODocument> execute = (List<ODocument>) server.getSystemDatabase().execute(iArgument -> iArgument, query, uuid);
     assertThat(execute.get(0).<Long>field("count")).isEqualTo(expected);
   }
 

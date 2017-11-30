@@ -110,15 +110,19 @@ public class OBackupDBLogger implements OBackupLogger {
       }
     };
 
-    List<ODocument> results = (List<ODocument>) getDatabase().execute(new OCallable<Object, Object>() {
-      @Override
-      public Object call(Object iArgument) {
-        return iArgument;
-      }
-    }, query, params);
+    final OSystemDatabase database = getDatabase();
 
-    if (results.size() > 0) {
-      return factory.fromDoc(results.get(0));
+    if (database != null) {
+      List<ODocument> results = (List<ODocument>) database.execute(new OCallable<Object, Object>() {
+        @Override
+        public Object call(Object iArgument) {
+          return iArgument;
+        }
+      }, query, params);
+
+      if (results.size() > 0) {
+        return factory.fromDoc(results.get(0));
+      }
     }
 
     return null;
