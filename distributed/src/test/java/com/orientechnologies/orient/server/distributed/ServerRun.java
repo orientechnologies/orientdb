@@ -162,7 +162,7 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
     System.setProperty("ORIENTDB_HOME", getServerHome());
 
     if (server == null)
-      server = OServerMain.create();
+      server = OServerMain.create(false);
 
     server.setServerRootDirectory(getServerHome());
     server.startup(getClass().getClassLoader().getResourceAsStream(iServerConfigFile));    

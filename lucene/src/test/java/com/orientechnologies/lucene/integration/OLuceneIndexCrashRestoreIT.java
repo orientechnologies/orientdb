@@ -168,7 +168,7 @@ public class OLuceneIndexCrashRestoreIT {
     System.out.println("START AGAIN");
 
     //start embedded
-    OServer server = OServerMain.create();
+    OServer server = OServerMain.create(false);
     InputStream conf = RemoteDBRunner.class.getResourceAsStream("index-crash-config.xml");
 
     server.startup(conf);

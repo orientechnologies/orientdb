@@ -25,7 +25,7 @@ public class OLiveQueryShotdownTest {
   private OServer             server;
 
   public void bootServer() throws Exception {
-    server = new OServer();
+    server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
