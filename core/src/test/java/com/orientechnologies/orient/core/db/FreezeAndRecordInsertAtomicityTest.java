@@ -94,40 +94,40 @@ public class FreezeAndRecordInsertAtomicityTest {
     for (int i = 0; i < THREADS; ++i) {
       final int thread = i;
 
-      futures.add(executorService.submit(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            final ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
-            db.open("admin", "admin");
-            final OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Person.name");
+      futures.add(executorService.submit(() -> {
+        try {
+          final ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
+          db.open("admin", "admin");
+          final OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Person.name");
 
-            for (int i = 0; i < ITERATIONS; ++i)
-              switch (random.nextInt(3)) {
-              case 0:
-                db.newInstance("Person").field("name", "name-" + thread + "-" + i).save();
-                break;
+          for (int i1 = 0; i1 < ITERATIONS; ++i1)
+            switch (random.nextInt(3)) {
+            case 0:
+              db.newInstance("Person").field("name", "name-" + thread + "-" + i1).save();
+              break;
 
-              case 1:
-                db.begin();
-                db.newInstance("Person").field("name", "name-" + thread + "-" + i).save();
-                db.commit();
-                break;
+            case 1:
+              db.begin();
+              db.newInstance("Person").field("name", "name-" + thread + "-" + i1).save();
+              db.commit();
+              break;
 
-              case 2:
-                db.freeze();
-                try {
-                  for (ODocument document : db.browseClass("Person"))
-                    assertEquals(document.getIdentity(), index.get(document.field("name")));
-                } finally {
-                  db.release();
-                }
-
-                break;
+            case 2:
+              db.freeze();
+              try {
+                for (ODocument document : db.browseClass("Person"))
+                  assertEquals(document.getIdentity(), index.get(document.field("name")));
+              } finally {
+                db.release();
               }
-          } finally {
-            countDownLatch.countDown();
-          }
+
+              break;
+            }
+        } catch (RuntimeException | Error e) {
+          e.printStackTrace();
+          throw e;
+        } finally {
+          countDownLatch.countDown();
         }
       }));
     }
