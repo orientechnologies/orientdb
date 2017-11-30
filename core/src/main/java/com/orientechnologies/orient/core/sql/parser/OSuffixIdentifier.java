@@ -104,9 +104,7 @@ public class OSuffixIdentifier extends SimpleNode {
       return null;
     }
 
-    if (recordAttribute != null)
-
-    {
+    if (iCurrentRecord != null && recordAttribute != null) {
       return iCurrentRecord.getProperty(recordAttribute.name);
     }
 
