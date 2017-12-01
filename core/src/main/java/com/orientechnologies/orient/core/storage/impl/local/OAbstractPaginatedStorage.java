@@ -129,6 +129,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (journaledPort != null) {
       ServerSocket serverSocket;
       try {
+        //noinspection resource,IOResourceOpenedButNotSafelyClosed
         serverSocket = new ServerSocket(journaledPort, 0, InetAddress.getLocalHost());
         serverSocket.setReuseAddress(true);
       } catch (IOException e) {
@@ -142,6 +143,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           OLogManager.instance()
               .info(OAbstractPaginatedStorage.class, "journaled tx streaming server is listening on localhost:" + journaledPort);
           try {
+            @SuppressWarnings("resource")
             final Socket clientSocket = finalServerSocket.accept(); // accept single connection only and only once
             clientSocket.setSendBufferSize(4 * 1024 * 1024 /* 4MB */);
             journaledStream = new DataOutputStream(clientSocket.getOutputStream());
@@ -174,7 +176,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * Error which happened inside of storage or during data processing related to this storage.
    */
-  private final AtomicReference<Error> storageError = new AtomicReference<>();
+  private final AtomicReference<Error> jvmError = new AtomicReference<>();
 
   @SuppressWarnings("WeakerAccess")
   protected final OSBTreeCollectionManagerShared sbTreeCollectionManager;
@@ -346,7 +348,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * any data corruption. Till JVM is not restarted storage will be put in read-only state.
    */
   public void handleJVMError(Error e) {
-    storageError.compareAndSet(null, e);
+    jvmError.compareAndSet(null, e);
   }
 
   /**
@@ -896,9 +898,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * This method finds all the records which were updated starting from (but not including) current LSN and write result in provided
    * output stream. In output stream will be included all thw records which were updated/deleted/created since passed in LSN till
    * the current moment.
-   * <p>
    * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
-   * <p>
    * Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li> <li>Record's
    * cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only if record is
    * not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary presentation of
@@ -1517,7 +1517,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       @SuppressWarnings("unchecked")
-      final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getRecordOperations();
+      final Iterable<ORecordOperation> entries = clientTx.getRecordOperations();
       final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<>();
 
       final Set<ORecordOperation> newRecords = new TreeSet<>(COMMIT_RECORD_OPERATION_COMPARATOR);
@@ -1610,13 +1610,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   /**
    * The commit operation can be run in 3 different conditions, embedded commit, pre-allocated commit, other node commit.
-   * <p>
    * <bold>Embedded commit</bold> is the basic commit where the operation is run in embedded or server side, the transaction arrive
    * with invalid rids that get allocated and committed.
-   * <p>
    * <bold>pre-allocated commit</bold> is the commit that happen after an preAllocateRids call is done, this is usually run by the
    * coordinator of a tx in distributed.
-   * <p>
    * <bold>other node commit</bold> is the commit that happen when a node execute a transaction of another node where all the rids
    * are already allocated in the other node.
    *
@@ -3865,8 +3862,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected abstract void initWalAndDiskCache(OContextConfiguration contextConfiguration) throws IOException, InterruptedException;
 
-  protected void postCloseSteps(@SuppressWarnings("unused") boolean onDelete) throws IOException {
-  }
+  protected abstract void postCloseSteps(@SuppressWarnings("unused") boolean onDelete, boolean jvmError) throws IOException;
 
   @SuppressWarnings({ "EmptyMethod", "WeakerAccess" })
   protected void preCloseSteps() {
@@ -4497,7 +4493,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         OLogManager.instance().error(this, "MBean for write cache cannot be unregistered", e);
       }
 
-      postCloseSteps(onDelete);
+      postCloseSteps(onDelete, jvmError.get() != null);
 
       if (atomicOperationsManager != null)
         try {
@@ -4956,33 +4952,32 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return;
       }
 
-      final FileOutputStream archiveOutputStream = new FileOutputStream(archiveFile);
-      final ZipOutputStream archiveZipOutputStream = new ZipOutputStream(new BufferedOutputStream(archiveOutputStream));
+      try (final FileOutputStream archiveOutputStream = new FileOutputStream(archiveFile)) {
+        try (final ZipOutputStream archiveZipOutputStream = new ZipOutputStream(new BufferedOutputStream(archiveOutputStream))) {
 
-      final ZipEntry metadataEntry = new ZipEntry(metadataName);
+          final ZipEntry metadataEntry = new ZipEntry(metadataName);
 
-      archiveZipOutputStream.putNextEntry(metadataEntry);
+          archiveZipOutputStream.putNextEntry(metadataEntry);
 
-      final PrintWriter metadataFileWriter = new PrintWriter(new OutputStreamWriter(archiveZipOutputStream, "UTF-8"));
-      metadataFileWriter.append("Storage name : ").append(getName()).append("\r\n");
-      metadataFileWriter.append("Date : ").append(strDate).append("\r\n");
-      metadataFileWriter.append("Stacktrace : \r\n");
-      e.printStackTrace(metadataFileWriter);
-      metadataFileWriter.flush();
-      archiveZipOutputStream.closeEntry();
+          final PrintWriter metadataFileWriter = new PrintWriter(new OutputStreamWriter(archiveZipOutputStream, "UTF-8"));
+          metadataFileWriter.append("Storage name : ").append(getName()).append("\r\n");
+          metadataFileWriter.append("Date : ").append(strDate).append("\r\n");
+          metadataFileWriter.append("Stacktrace : \r\n");
+          e.printStackTrace(metadataFileWriter);
+          metadataFileWriter.flush();
+          archiveZipOutputStream.closeEntry();
 
-      final List<String> walPaths = ((ODiskWriteAheadLog) writeAheadLog).getWalFiles();
-      for (String walSegment : walPaths) {
-        archiveEntry(archiveZipOutputStream, walSegment);
+          final List<String> walPaths = ((ODiskWriteAheadLog) writeAheadLog).getWalFiles();
+          for (String walSegment : walPaths) {
+            archiveEntry(archiveZipOutputStream, walSegment);
+          }
+
+          archiveEntry(archiveZipOutputStream, ((ODiskWriteAheadLog) writeAheadLog).getWMRFile().toString());
+        }
       }
-
-      archiveEntry(archiveZipOutputStream, ((ODiskWriteAheadLog) writeAheadLog).getWMRFile().toString());
-
-      archiveZipOutputStream.close();
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error during WAL backup", ioe);
     }
-
   }
 
   private void archiveEntry(ZipOutputStream archiveZipOutputStream, String walSegment) throws IOException {
@@ -5076,7 +5071,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * Method which is called before any data modification operation to check alarm conditions such as: <ol> <li>Low disk space</li>
    * <li>Exception during data flush in background threads</li> <li>Broken files</li> </ol>
-   * <p>
    * If one of those conditions are satisfied data modification operation is aborted and storage is switched in "read only" mode.
    */
   private void checkLowDiskSpaceRequestsAndReadOnlyConditions() {
@@ -5150,18 +5144,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       brokenPagesList.append("]");
 
       throw new OPageIsBrokenException("Following files and pages are detected to be broken " + brokenPagesList + ", storage is "
-          + "switched to 'read only' mode. Any modification operations are prohibited. Typically it means hardware error, before "
-          + "filling a bug please check your hardware. To restore database and make it fully operational you may export and import database "
-          + "to and from JSON.");
+          + "switched to 'read only' mode. Any modification operations are prohibited. "
+          + "To restore database and make it fully operational you may export and import database " + "to and from JSON.");
 
     }
 
-    if (storageError.get() != null) {
-      throw new OJVMErrorException(
-          "JVM error '" + storageError.get().getClass().getSimpleName() + " : " + storageError.get().getMessage()
-              + "' occurred during data processing, storage is switched to 'read-only' mode. "
-              + "To prevent this exception please restart the JVM and check data consistency by calling of 'check database' "
-              + "command from database console.");
+    if (jvmError.get() != null) {
+      throw new OJVMErrorException("JVM error '" + jvmError.get().getClass().getSimpleName() + " : " + jvmError.get().getMessage()
+          + "' occurred during data processing, storage is switched to 'read-only' mode. "
+          + "To prevent this exception please restart the JVM and check data consistency by calling of 'check database' "
+          + "command from database console.");
     }
   }
 

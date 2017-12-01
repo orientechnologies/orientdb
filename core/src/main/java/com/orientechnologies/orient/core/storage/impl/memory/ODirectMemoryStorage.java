@@ -73,6 +73,10 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
+  protected void postCloseSteps(boolean onDelete, boolean jvmError) throws IOException {
+  }
+
+  @Override
   public boolean exists() {
     try {
       return readCache != null && writeCache.exists("default" + OPaginatedCluster.DEF_EXTENSION);

@@ -200,8 +200,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
         final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
         try {
-          return OZIPCompressionUtil.compressDirectory(getStoragePath().toString(), bo,
-              new String[] {".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION }, iOutput, compressionLevel);
+          return OZIPCompressionUtil
+              .compressDirectory(getStoragePath().toString(), bo, new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION },
+                  iOutput, compressionLevel);
         } finally {
           if (bufferSize > 0) {
             bo.flush();
@@ -396,11 +397,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void postCloseSteps(boolean onDelete) throws IOException {
-    if (onDelete)
+  protected void postCloseSteps(boolean onDelete, boolean jvmError) throws IOException {
+    if (onDelete) {
       dirtyFlag.delete();
-    else {
-      dirtyFlag.clearDirty();
+    } else {
+      if (!jvmError) {
+        dirtyFlag.clearDirty();
+      }
       dirtyFlag.close();
     }
   }
