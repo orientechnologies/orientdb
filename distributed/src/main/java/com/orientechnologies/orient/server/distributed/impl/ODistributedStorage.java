@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OSoftQueryResultList;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -520,7 +521,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       }
     }
 
-    final List<Object> toMerge = new ArrayList<Object>();
+    final List<Object> toMerge = OSoftQueryResultList.createResultList(null);
 
     // MERGE AGGREGATED FIELDS
     for (Map.Entry<String, Object> p : proj.entrySet()) {

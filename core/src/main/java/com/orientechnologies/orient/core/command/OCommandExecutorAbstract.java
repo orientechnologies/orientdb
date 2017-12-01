@@ -30,19 +30,19 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.sql.OSoftQueryResultList;
 
 import java.util.*;
 
 /**
  * Abstract implementation of Executor Command interface.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public abstract class OCommandExecutorAbstract extends OBaseParser implements OCommandExecutor {
-  protected OProgressListener   progressListener;
-  protected int                 limit = -1;
+  protected OProgressListener progressListener;
+  protected int limit = -1;
   protected Map<Object, Object> parameters;
   protected OCommandContext     context;
 
@@ -170,12 +170,11 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     Object aggregatedResult = null;
 
     for (Map.Entry<String, Object> entry : results.entrySet()) {
-      final String nodeName = entry.getKey();
       final Object nodeResult = entry.getValue();
 
       if (nodeResult instanceof Collection) {
         if (aggregatedResult == null)
-          aggregatedResult = new ArrayList();
+          aggregatedResult = OSoftQueryResultList.createResultList(parserText);
 
         ((List) aggregatedResult).addAll((Collection<?>) nodeResult);
 
@@ -186,7 +185,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
 
       else if (nodeResult instanceof OIdentifiable) {
         if (aggregatedResult == null)
-          aggregatedResult = new ArrayList();
+          aggregatedResult = OSoftQueryResultList.createResultList(parserText);
 
         ((List) aggregatedResult).add(nodeResult);
 
@@ -201,7 +200,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     return aggregatedResult;
   }
 
-  public boolean isDistributedExecutingOnLocalNodeFirst(){
+  public boolean isDistributedExecutingOnLocalNodeFirst() {
     return true;
   }
 }

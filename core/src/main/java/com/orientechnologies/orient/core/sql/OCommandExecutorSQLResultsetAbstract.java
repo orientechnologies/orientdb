@@ -707,12 +707,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       return null;
 
     // TODO: DELEGATE MERGE AT EVERY COMMAND
-    final ArrayList<Object> mergedResult = new ArrayList<Object>();
+    final List<Object> mergedResult = OSoftQueryResultList.createResultList(request.getText());
 
     final Object firstResult = results.values().iterator().next();
 
     for (Map.Entry<String, Object> entry : results.entrySet()) {
-      final String nodeName = entry.getKey();
       final Object nodeResult = entry.getValue();
 
       if (nodeResult instanceof Collection)
@@ -732,7 +731,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       ((OResultSet) firstResult).addAll(mergedResult);
       result = firstResult;
     } else
-      result = new ArrayList<Object>(mergedResult);
+      result = mergedResult;
 
     return result;
   }
