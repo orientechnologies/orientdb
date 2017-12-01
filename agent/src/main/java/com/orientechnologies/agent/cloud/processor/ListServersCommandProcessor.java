@@ -32,21 +32,27 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
       ODocument statsDoc = new ODocument().fromJSON(profiler.getStatsAsJson());//change this!!!
 
       ServerStats stats = new ServerStats();
-      stats.setCpuUsage(getDouble(statsDoc, ""));
-      stats.setActiveConnections(getLong(statsDoc, ""));
-      stats.setCreateOps(getLong(statsDoc, ""));
-      stats.setUpdateOps(getLong(statsDoc, ""));
-      stats.setScanOps(getLong(statsDoc, ""));
-      stats.setDeleteOps(getLong(statsDoc, ""));
 
-      Map statsMap = ((Map) ((Map) statsDoc.getProperty("reatime")).get("statistics"));
-      statsMap.get("process.runtime.availableMemory");
+      Map realtime = statsDoc.getProperty("realtime");
 
-      stats.setTotalHeapMemory(getLong(statsDoc.getProperty("reatime"), "statistics", "process.runtime.availableMemory", "total"));
-      stats.setUsedHeapMemory(getLong(statsDoc.getProperty("reatime"), "statistics", "process.runtime.availableMemory", "last"));
-      stats.setDeleteOps(getLong(statsDoc.getProperty("reatime"), "counters", "process.runtime.availableMemory", "last"));
+      stats.setTotalHeapMemory(getLong(realtime, "statistics", "process.runtime.availableMemory", "total"));
+      stats.setUsedHeapMemory(getLong(realtime, "statistics", "process.runtime.availableMemory", "last"));
+      stats.setDeleteOps(aggregate((Map) realtime.get("counters"), "db", "deleteRecord"));
+      stats.setUpdateOps(aggregate((Map) realtime.get("counters"), "db", "updateRecord"));
+      stats.setCreateOps(aggregate((Map) realtime.get("counters"), "db", "createRecord"));
+      stats.setScanOps(aggregate((Map) realtime.get("counters"), "db", "readRecord"));
 
-      //TODO
+      stats.setCpuUsage(getDouble(statsDoc, "statistics", "process.runtime.cpu", "last"));
+      stats.setNumberOfCPUs(getLong(statsDoc, "sizes", "system.config.cpus"));
+      stats.setActiveConnections(getLong(statsDoc, "counters", "server.connections.actives"));
+      stats.setNetworkRequets(getLong(statsDoc, "chronos", "server.network.requests", "last"));
+      stats.setTotalDiskCache(getLong(statsDoc, "statistics", "process.runtime.diskCacheTotal", "last"));
+      stats.setTotalDiskCache(getLong(statsDoc, "statistics", "process.runtime.diskCacheUsed", "last"));
+      stats.setDiskSize(getLong(statsDoc, "sizes", "system.disk./.totalSpace"));
+      stats.setDiskUsed(
+          getLong(statsDoc, "sizes", "system.disk./.totalSpace") - getLong(statsDoc, "sizes", "system.disk./.freeSpace"));
+
+      server.setStats(stats);
 
       result.addInfo(server);
     } else { //distributed
@@ -58,8 +64,25 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
         ServerBasicInfo server = new ServerBasicInfo();
         server.setName((String) document.field("name"));
         server.setId((String) document.field("name"));
+        //TODO server stats
+
         result.addInfo(server);
       }
+    }
+    return result;
+  }
+
+  private Long aggregate(Map<String, Number> counters, String prefix, String suffix) {
+    Long result = 0L;
+    for (Map.Entry<String, Number> entry : counters.entrySet()) {
+
+      if (prefix != null && !entry.getKey().startsWith(prefix)) {
+        continue;
+      }
+      if (suffix != null && !entry.getKey().endsWith(suffix)) {
+        continue;
+      }
+      result += entry.getValue().longValue();
     }
     return result;
   }

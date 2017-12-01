@@ -19,6 +19,7 @@ package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.backup.OBackupManager;
 import com.orientechnologies.agent.cloud.CloudEndpoint;
+import com.orientechnologies.agent.cloud.CloudPushEndpoint;
 import com.orientechnologies.agent.ha.OEnterpriseDistributedStrategy;
 import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.plugins.OEventPlugin;
@@ -81,7 +82,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   private   OBackupManager      backupManager;
   protected OEnterpriseProfiler profiler;
 
-  protected CloudEndpoint cloudEndpoint;
+  protected CloudEndpoint     cloudEndpoint;
+  private   CloudPushEndpoint cloudPushEndpoint;
 
   public OEnterpriseAgent() {
   }
@@ -157,6 +159,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       Orient.instance().addDbLifecycleListener(this);
       cloudEndpoint = new CloudEndpoint(this);
       cloudEndpoint.start();
+      cloudPushEndpoint = new CloudPushEndpoint(this);
+      cloudPushEndpoint.start();
     }
   }
 
@@ -164,6 +168,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   public void shutdown() {
     if (enabled) {
       cloudEndpoint.shutdown();
+      cloudPushEndpoint.shutdown();
       unregisterSecurityComponents();
       uninstallBackupManager();
       uninstallCommands();
