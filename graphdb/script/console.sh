@@ -36,7 +36,7 @@ if [ -z "$ORIENTDB_OPTS_MEMORY" ] ; then
     ORIENTDB_OPTS_MEMORY="-Xmx1024m "
 fi
 
-ORIENTDB_SETTINGS="-XX:MaxDirectMemorySize=512g -Djava.util.logging.config.file=\"$ORIENTDB_HOME/config/orientdb-client-log.properties\" -Djava.awt.headless=true"
+ORIENTDB_SETTINGS="-XX:MaxDirectMemorySize=512g -Djna.nosys=true -Djava.util.logging.config.file=\"$ORIENTDB_HOME/config/orientdb-client-log.properties\" -Djava.awt.headless=true"
 #JAVA_OPTS=-Xmx1024m
 KEYSTORE="$ORIENTDB_HOME/config/cert/orientdb-console.ks"
 KEYSTORE_PASS=password
