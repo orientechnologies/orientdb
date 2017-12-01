@@ -439,10 +439,11 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
     startOperation();
     try {
-      startAtomicOperation(true);
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
         final OPhysicalPosition pos = createPhysicalPosition(recordType, clusterPositionMap.allocate(), -1);
+        addAtomicOperationMetadata(new ORecordId(id, pos.clusterPosition), atomicOperation);
         endAtomicOperation(false, null);
         return pos;
       } catch (IOException | RuntimeException e) {
