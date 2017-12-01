@@ -160,6 +160,8 @@ public class ODeleteEdgeExecutionPlanner {
 
   private void handleGlobalLet(ODeleteExecutionPlan result, OIdentifier name, OExpression expression, OCommandContext ctx,
       boolean profilingEnabled) {
-    result.chain(new GlobalLetExpressionStep(name, expression, ctx, profilingEnabled));
+    if (expression != null) {
+      result.chain(new GlobalLetExpressionStep(name, expression, ctx, profilingEnabled));
+    }
   }
 }
