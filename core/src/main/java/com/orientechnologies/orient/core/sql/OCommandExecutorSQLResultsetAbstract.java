@@ -714,8 +714,12 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     for (Map.Entry<String, Object> entry : results.entrySet()) {
       final Object nodeResult = entry.getValue();
 
-      if (nodeResult instanceof Collection)
-        mergedResult.addAll((Collection<?>) nodeResult);
+      if (nodeResult instanceof Collection) {
+        // OSoftQueryResultList does not allow .toArray
+        for (Object o : (Collection<?>) nodeResult) {
+          mergedResult.add(o);
+        }
+      }
       else if (nodeResult instanceof Exception)
         // RECEIVED EXCEPTION
         throw (Exception) nodeResult;
