@@ -42,15 +42,15 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
       stats.setCreateOps(aggregate((Map) realtime.get("counters"), "db", "createRecord"));
       stats.setScanOps(aggregate((Map) realtime.get("counters"), "db", "readRecord"));
 
-      stats.setCpuUsage(getDouble(statsDoc, "statistics", "process.runtime.cpu", "last"));
-      stats.setNumberOfCPUs(getLong(statsDoc, "sizes", "system.config.cpus"));
-      stats.setActiveConnections(getLong(statsDoc, "counters", "server.connections.actives"));
-      stats.setNetworkRequets(getLong(statsDoc, "chronos", "server.network.requests", "last"));
-      stats.setTotalDiskCache(getLong(statsDoc, "statistics", "process.runtime.diskCacheTotal", "last"));
-      stats.setTotalDiskCache(getLong(statsDoc, "statistics", "process.runtime.diskCacheUsed", "last"));
-      stats.setDiskSize(getLong(statsDoc, "sizes", "system.disk./.totalSpace"));
+      stats.setCpuUsage(getDouble(realtime, "statistics", "process.runtime.cpu", "last"));
+      stats.setNumberOfCPUs(getLong(realtime, "sizes", "system.config.cpus"));
+      stats.setActiveConnections(getLong(realtime, "counters", "server.connections.actives"));
+      stats.setNetworkRequets(getLong(realtime, "chronos", "server.network.requests", "last"));
+      stats.setTotalDiskCache(getLong(realtime, "statistics", "process.runtime.diskCacheTotal", "last"));
+      stats.setTotalDiskCache(getLong(realtime, "statistics", "process.runtime.diskCacheUsed", "last"));
+      stats.setDiskSize(getLong(realtime, "sizes", "system.disk./.totalSpace"));
       stats.setDiskUsed(
-          getLong(realtime,  "sizes", "system.disk./.totalSpace") - getLong(realtime,  "sizes", "system.disk./.freeSpace"));
+          getLong(realtime, "sizes", "system.disk./.totalSpace") - getLong(realtime, "sizes", "system.disk./.freeSpace"));
 
       server.setStats(stats);
 
