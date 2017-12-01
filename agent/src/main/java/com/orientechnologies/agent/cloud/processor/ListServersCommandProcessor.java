@@ -50,7 +50,7 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
       stats.setTotalDiskCache(getLong(statsDoc, "statistics", "process.runtime.diskCacheUsed", "last"));
       stats.setDiskSize(getLong(statsDoc, "sizes", "system.disk./.totalSpace"));
       stats.setDiskUsed(
-          getLong(statsDoc, "sizes", "system.disk./.totalSpace") - getLong(statsDoc, "sizes", "system.disk./.freeSpace"));
+          getLong(realtime,  "sizes", "system.disk./.totalSpace") - getLong(realtime,  "sizes", "system.disk./.freeSpace"));
 
       server.setStats(stats);
 

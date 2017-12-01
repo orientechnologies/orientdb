@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import com.orientechnologies.orientdb.cloud.protocol.CommandType;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -32,7 +33,7 @@ public class CloudPushEndpoint extends Thread {
   private String projectId;
   private String cloudBaseUrl;
 
-  private static String monitoringPath = "/statistics/{projectId}";
+  private static String monitoringPath = "/monitoring/collectStats/{projectId}";
 
   public CloudPushEndpoint(OEnterpriseAgent oEnterpriseAgent) {
     agent = oEnterpriseAgent;
@@ -81,18 +82,20 @@ public class CloudPushEndpoint extends Thread {
     HttpPost httpPost = new HttpPost(fetchRequestsUrl);
     httpPost.addHeader("Authorization", "Bearer " + token);
 
-    String json = serialize(response);
+    String json = serialize(response.getPayload());
     StringEntity entity = new StringEntity(json);
     httpPost.setEntity(entity);
     httpPost.setHeader("Accept", "application/json");
     httpPost.setHeader("Content-type", "application/json");
-    client.execute(httpPost);
+    CloseableHttpResponse r = client.execute(httpPost);
+
+
     client.close();
   }
 
 
 
-  private String serialize(CommandResponse response) throws JsonProcessingException {
+  private String serialize(Object response) throws JsonProcessingException {
     return objectMapper.writeValueAsString(response);
   }
 
