@@ -166,6 +166,10 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
+  protected void postCloseSteps(boolean onDelete, boolean jvmError) throws IOException {
+  }
+
+  @Override
   protected OWriteAheadLog createWalFromIBUFiles(File directory) throws IOException {
     return null;
   }

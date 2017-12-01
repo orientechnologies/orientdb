@@ -167,7 +167,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * Error which happened inside of storage or during data processing related to this storage.
    */
-  private final AtomicReference<Error> storageError = new AtomicReference<Error>();
+  private final AtomicReference<Error> jvmError = new AtomicReference<Error>();
 
   /**
    * Set of pages which were detected as broken and need to be repaired.
@@ -241,7 +241,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * any data corruption. Till JVM is not restarted storage will be put in read-only state.
    */
   public void handleJVMError(Error e) {
-    storageError.compareAndSet(null, e);
+    jvmError.compareAndSet(null, e);
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -3748,8 +3748,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected abstract void initWalAndDiskCache() throws IOException;
 
-  protected void postCloseSteps(boolean onDelete) throws IOException {
-  }
+  protected abstract void postCloseSteps(boolean onDelete, boolean jvmError) throws IOException;
 
   protected void preCloseSteps() throws IOException {
   }
@@ -4459,7 +4458,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         OLogManager.instance().error(this, "MBean for write cache cannot be unregistered", e);
       }
 
-      postCloseSteps(onDelete);
+      postCloseSteps(onDelete, jvmError.get() != null);
 
       if (atomicOperationsManager != null)
         try {
@@ -5133,15 +5132,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       brokenPagesList.append("]");
 
       throw new OPageIsBrokenException("Following files and pages are detected to be broken " + brokenPagesList + ", storage is "
-          + "switched to 'read only' mode. Any modification operations are prohibited. Typically it means hardware error, before "
-          + "filling a bug please check your hardware. To restore database and make it fully operational you may export and import database "
+          + "switched to 'read only' mode. Any modification operations are prohibited. To restore database and make it "
+          + "fully operational you may export and import database "
           + "to and from JSON.");
 
     }
 
-    if (storageError.get() != null) {
+    if (jvmError.get() != null) {
       throw new OJVMErrorException(
-          "JVM error '" + storageError.get().getClass().getSimpleName() + " : " + storageError.get().getMessage()
+          "JVM error '" + jvmError.get().getClass().getSimpleName() + " : " + jvmError.get().getMessage()
               + "' occurred during data processing, storage is switched to 'read-only' mode. "
               + "To prevent this exception please restart the JVM and check data consistency by calling of 'check database' "
               + "command from database console.");
