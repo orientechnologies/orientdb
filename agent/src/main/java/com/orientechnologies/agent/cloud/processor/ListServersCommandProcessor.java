@@ -1,13 +1,15 @@
 package com.orientechnologies.agent.cloud.processor;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.http.command.OServerCommandDistributedManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orientdb.cloud.protocol.*;
 
-import java.util.Collection;
 import java.util.Map;
 
 public class ListServersCommandProcessor implements CloudCommandProcessor {
@@ -31,45 +33,57 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
       OProfiler profiler = Orient.instance().getProfiler();
       ODocument statsDoc = new ODocument().fromJSON(profiler.getStatsAsJson());//change this!!!
 
-      ServerStats stats = new ServerStats();
-
       Map realtime = statsDoc.getProperty("realtime");
 
-      stats.setTotalHeapMemory(getLong(realtime, "statistics", "process.runtime.availableMemory", "total"));
-      stats.setUsedHeapMemory(getLong(realtime, "statistics", "process.runtime.availableMemory", "last"));
-      stats.setDeleteOps(aggregate((Map) realtime.get("counters"), "db", "deleteRecord"));
-      stats.setUpdateOps(aggregate((Map) realtime.get("counters"), "db", "updateRecord"));
-      stats.setCreateOps(aggregate((Map) realtime.get("counters"), "db", "createRecord"));
-      stats.setScanOps(aggregate((Map) realtime.get("counters"), "db", "readRecord"));
-
-      stats.setCpuUsage(getDouble(realtime, "statistics", "process.runtime.cpu", "last"));
-      stats.setNumberOfCPUs(getLong(realtime, "sizes", "system.config.cpus"));
-      stats.setActiveConnections(getLong(realtime, "counters", "server.connections.actives"));
-      stats.setNetworkRequets(getLong(realtime, "chronos", "server.network.requests", "last"));
-      stats.setTotalDiskCache(getLong(realtime, "statistics", "process.runtime.diskCacheTotal", "last"));
-      stats.setTotalDiskCache(getLong(realtime, "statistics", "process.runtime.diskCacheUsed", "last"));
-      stats.setDiskSize(getLong(realtime, "sizes", "system.disk./.totalSpace"));
-      stats.setDiskUsed(
-          getLong(realtime, "sizes", "system.disk./.totalSpace") - getLong(realtime, "sizes", "system.disk./.freeSpace"));
+      ServerStats stats = populateStats(realtime);
 
       server.setStats(stats);
 
       result.addInfo(server);
     } else { //distributed
-      final ODocument doc = manager.getClusterConfiguration();
+      final OServerNetworkListener listener = manager.getServerInstance().getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
 
-      final Collection<ODocument> documents = doc.field("members");
+      OServerCommandDistributedManager command = (OServerCommandDistributedManager) listener
+          .getCommand(OServerCommandDistributedManager.class);
 
-      for (ODocument document : documents) {
+      ODocument clusterStats = command.getClusterConfig(manager);
+      Map statsDoc = clusterStats.getProperty("clusterStats");
+      Map realtime = (Map) statsDoc.get("realtime");
+
+      Iterable<Map.Entry<String, Map>> nodesStats = statsDoc.entrySet();
+
+      for (Map.Entry<String, Map> nodesStat : nodesStats) {
         ServerBasicInfo server = new ServerBasicInfo();
-        server.setName((String) document.field("name"));
-        server.setId((String) document.field("name"));
-        //TODO server stats
-
+        server.setName(nodesStat.getKey());
+        server.setId(nodesStat.getKey());
+        ServerStats stats = populateStats(((ODocument)nodesStat.getValue()).getProperty("realtime"));
+        server.setStats(stats);
         result.addInfo(server);
       }
     }
+
     return result;
+  }
+
+  private ServerStats populateStats(Map realtime) {
+    ServerStats stats = new ServerStats();
+    stats.setTotalHeapMemory(getLong(realtime, "statistics", "process.runtime.availableMemory", "total"));
+    stats.setUsedHeapMemory(getLong(realtime, "statistics", "process.runtime.availableMemory", "last"));
+    stats.setDeleteOps(aggregate((Map) realtime.get("counters"), "db", "deleteRecord"));
+    stats.setUpdateOps(aggregate((Map) realtime.get("counters"), "db", "updateRecord"));
+    stats.setCreateOps(aggregate((Map) realtime.get("counters"), "db", "createRecord"));
+    stats.setScanOps(aggregate((Map) realtime.get("counters"), "db", "readRecord"));
+
+    stats.setCpuUsage(getDouble(realtime, "statistics", "process.runtime.cpu", "last"));
+    stats.setNumberOfCPUs(getLong(realtime, "sizes", "system.config.cpus"));
+    stats.setActiveConnections(getLong(realtime, "counters", "server.connections.actives"));
+    stats.setNetworkRequets(getLong(realtime, "chronos", "server.network.requests", "last"));
+    stats.setTotalDiskCache(getLong(realtime, "statistics", "process.runtime.diskCacheTotal", "last"));
+    stats.setTotalDiskCache(getLong(realtime, "statistics", "process.runtime.diskCacheUsed", "last"));
+    stats.setDiskSize(getLong(realtime, "sizes", "system.disk./.totalSpace"));
+    stats.setDiskUsed(
+        getLong(realtime, "sizes", "system.disk./.totalSpace") - getLong(realtime, "sizes", "system.disk./.freeSpace"));
+    return stats;
   }
 
   private Long aggregate(Map<String, Number> counters, String prefix, String suffix) {

@@ -19,6 +19,7 @@ package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.ha.sql.OCommandExecutorSQLHAStartReplication;
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -306,8 +307,14 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     for (ODocument document : documents)
       servers.add((String) document.field("name"));
 
+    Set<String> databases = manager.getServerInstance().listDatabases();
+    if(databases.isEmpty()){
+      OLogManager.instance().warn(this, "Cannot load stats, no databases on this server");
+      return doc;
+    }
+
     final ODistributedResponse dResponse = manager
-        .sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers, new OEnterpriseStatsTask(), manager.getNextMessageIdCounter(),
+        .sendRequest(databases.iterator().next(), null, servers, new OEnterpriseStatsTask(), manager.getNextMessageIdCounter(),
             ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
     final Object payload = dResponse.getPayload();
 
