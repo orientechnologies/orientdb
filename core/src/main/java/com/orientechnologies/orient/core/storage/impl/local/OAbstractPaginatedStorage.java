@@ -3782,7 +3782,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected void makeFuzzyCheckpoint() {
-    stateLock.acquireReadLock();
+    if (writeAheadLog == null)
+      return;
+
+    //check every 1 ms.
+    while (!stateLock.tryAcquireReadLock(1_000_000)) {
+      if (status != STATUS.OPEN)
+        return;
+    }
+
     try {
       if (status != STATUS.OPEN || writeAheadLog == null)
         return;

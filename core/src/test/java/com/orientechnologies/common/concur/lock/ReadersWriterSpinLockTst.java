@@ -1,11 +1,14 @@
 package com.orientechnologies.common.concur.lock;
 
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -17,8 +20,9 @@ public class ReadersWriterSpinLockTst {
   private final AtomicLong readers = new AtomicLong();
   private final AtomicLong writers = new AtomicLong();
 
-  private final AtomicLong readersCounter = new AtomicLong();
-  private final AtomicLong writersCounter = new AtomicLong();
+  private final AtomicLong readersCounter   = new AtomicLong();
+  private final AtomicLong writersCounter   = new AtomicLong();
+  private final AtomicLong readRetryCounter = new AtomicLong();
 
   private final    OReadersWriterSpinLock spinLock        = new OReadersWriterSpinLock();
   private final    ExecutorService        executorService = Executors.newCachedThreadPool();
@@ -47,6 +51,33 @@ public class ReadersWriterSpinLockTst {
     System.out.println("Reads : " + readers.get());
   }
 
+
+  public void testCompetingAccessWithTry() throws Exception {
+    List<Future> futures = new ArrayList<Future>();
+    int threads = 8;
+
+    for (int i = 0; i < threads; i++)
+      futures.add(executorService.submit(new Writer()));
+
+    for (int i = 0; i < threads; i++)
+      futures.add(executorService.submit(new TryReader()));
+
+    latch.countDown();
+    Thread.sleep(3 * 60 * 60 * 1000);
+
+    stop = true;
+
+    for (Future future : futures)
+      future.get();
+
+    System.out.println("Writes : " + writers.get());
+    System.out.println("Reads : " + readers.get());
+    System.out.println("Reads retry : " + readRetryCounter.get());
+
+    assertThat(writersCounter.get()).isEqualTo(0);
+    assertThat(readersCounter.get()).isEqualTo(0);
+  }
+
   private void consumeCPU(int cycles) {
     long c1 = c;
     for (int i = 0; i < cycles; i++) {
@@ -66,6 +97,47 @@ public class ReadersWriterSpinLockTst {
           try {
             spinLock.acquireReadLock();
             try {
+              readersCounter.incrementAndGet();
+              readers.incrementAndGet();
+              consumeCPU(100);
+              readersCounter.decrementAndGet();
+            } finally {
+              spinLock.releaseReadLock();
+            }
+          } finally {
+            spinLock.releaseReadLock();
+          }
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      }
+
+      return null;
+    }
+  }
+
+  private final class TryReader implements Callable<Void> {
+    @Override
+    public Void call() throws Exception {
+      latch.await();
+
+      try {
+        while (!stop) {
+          long start = System.nanoTime();
+          while (!spinLock.tryAcquireReadLock(500)) {
+            assertThat(System.nanoTime() - start).isGreaterThan(500);
+            readRetryCounter.incrementAndGet();
+
+            if (stop)
+              return null;
+            start = System.nanoTime();
+          }
+          try {
+            spinLock.acquireReadLock();
+            try {
+              Assert.assertEquals(0, writersCounter.get());
+
               readersCounter.incrementAndGet();
               readers.incrementAndGet();
               consumeCPU(100);

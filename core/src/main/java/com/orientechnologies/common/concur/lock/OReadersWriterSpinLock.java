@@ -56,6 +56,68 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
     distributedCounter = new LongAdder();
   }
 
+  /**
+   * Tries to acquire lock during provided interval of time and returns either if provided time interval was passed or
+   * if lock was acquired.
+   * @param timeout Timeout during of which we should wait for read lock.
+   * @return <code>true</code> if read lock was acquired.
+   */
+  public boolean tryAcquireReadLock(long timeout) {
+    final OModifiableInteger lHolds = lockHolds.get();
+
+    final int holds = lHolds.intValue();
+    if (holds > 0) {
+      // we have already acquire read lock
+      lHolds.increment();
+      return true;
+    } else if (holds < 0) {
+      // write lock is acquired before, do nothing
+      return true;
+    }
+
+    distributedCounter.increment();
+
+    WNode wNode = tail.get();
+
+    final long start = System.nanoTime();
+    while (wNode.locked) {
+      distributedCounter.decrement();
+
+      while (wNode.locked && wNode == tail.get()) {
+        wNode.waitingReaders.add(Thread.currentThread());
+
+        if (wNode.locked && wNode == tail.get()) {
+          final long parkTimeout = timeout - (System.nanoTime() - start);
+          if (parkTimeout > 0) {
+            LockSupport.parkNanos(this, parkTimeout);
+          } else {
+            return false;
+          }
+        }
+
+        wNode = tail.get();
+
+        if (System.nanoTime() - start > timeout) {
+          return false;
+        }
+      }
+
+      distributedCounter.increment();
+
+      wNode = tail.get();
+      if (System.nanoTime() - start > timeout) {
+        distributedCounter.decrement();
+
+        return false;
+      }
+    }
+
+    lHolds.increment();
+    assert lHolds.intValue() == 1;
+
+    return true;
+  }
+
   public void acquireReadLock() {
     final OModifiableInteger lHolds = lockHolds.get();
 
@@ -133,15 +195,8 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
 
     pNode.waitingWriter = null;
 
-    final long beginTime = System.currentTimeMillis();
     while (distributedCounter.sum() != 0) {
-      // IN THE WORST CASE CPU CAN BE 100% FOR MAXIMUM 1 SECOND
-      if (System.currentTimeMillis() - beginTime > 1000)
-        try {
-          Thread.sleep(1);
-        } catch (InterruptedException ignore) {
-          break;
-        }
+      Thread.yield();
     }
 
     setExclusiveOwnerThread(Thread.currentThread());
