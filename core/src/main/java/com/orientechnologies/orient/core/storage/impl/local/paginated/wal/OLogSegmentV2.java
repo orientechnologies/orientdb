@@ -21,6 +21,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -855,6 +856,12 @@ final class OLogSegmentV2 implements OLogSegment {
     if (!commitExecutor.isShutdown()) {
       try {
         commitExecutor.submit(new FlushTask()).get();
+      } catch (RejectedExecutionException e) {
+        if (!commitExecutor.isShutdown()) {
+          throw OException.wrapException(new OStorageException("Unable to flush data"), e);
+        } else {
+          new FlushTask().run();
+        }
       } catch (InterruptedException e) {
         throw OException.wrapException(new OStorageException("Thread was interrupted during flush"), e);
       } catch (ExecutionException e) {
