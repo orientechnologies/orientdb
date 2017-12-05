@@ -205,6 +205,16 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   }
 
   @Override
+  public OLogSequenceNumber getLastLSN() {
+    return lastLSN;
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    return false;
+  }
+
+  @Override
   public int[] getPartitionKey() {
     if (operations.size() > 0)
       return operations.stream().mapToInt((x) -> x.getId().getClusterId()).toArray();

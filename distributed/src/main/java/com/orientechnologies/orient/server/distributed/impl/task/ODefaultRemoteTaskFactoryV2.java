@@ -135,7 +135,7 @@ public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
       return new OTransactionPhase1Task();
 
     case OTransactionPhase2Task.FACTORYID: // 44
-      return new OTransactionPhase1Task();
+      return new OTransactionPhase2Task();
 
     case OEnterpriseStatsTask.FACTORYID: // 29
       return new OEnterpriseStatsTask();

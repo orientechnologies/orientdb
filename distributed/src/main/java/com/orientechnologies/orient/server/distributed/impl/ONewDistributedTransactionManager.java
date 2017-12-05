@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -96,7 +97,7 @@ public class ONewDistributedTransactionManager {
       return null;
     }
     //TODO:check the lsn
-    txTask.setLastLSN(((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN());
+    txTask.setLastLSN(getLsn());
 
     iTx.setStatus(OTransaction.TXSTATUS.COMMITTING);
 
@@ -118,6 +119,10 @@ public class ONewDistributedTransactionManager {
 
   }
 
+  public OLogSequenceNumber getLsn() {
+    return ((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN();
+  }
+
   private void handleResponse(ODistributedRequestId requestId, ONewDistributedResponseManager responseManager,
       Set<String> involvedClusters, Set<String> nodes, ODatabaseDocumentDistributed database) {
 
@@ -135,17 +140,17 @@ public class ONewDistributedTransactionManager {
       case OTxSuccess.ID:
         //Success send ok
         localOk(requestId, database);
-        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, true, involvedClustersIds));
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, true, involvedClustersIds, getLsn()));
         break;
       case OTxException.ID:
         //Exception send ko and throws the exception
         localKo(requestId, database);
-        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
         throw ((OTxException) resultPayload).getException();
       case OTxUniqueIndex.ID: {
         //Unique index quorum error send ko and throw unique index exception
         localKo(requestId, database);
-        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
         ORID id = ((OTxUniqueIndex) resultPayload).getRecordId();
         String index = ((OTxUniqueIndex) resultPayload).getIndex();
         Object key = ((OTxUniqueIndex) resultPayload).getKey();
@@ -156,14 +161,14 @@ public class ONewDistributedTransactionManager {
       case OTxConcurrentModification.ID: {
         //Concurrent modification exception quorum send ko and throw cuncurrent modification exception
         localKo(requestId, database);
-        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
         ORID id = ((OTxConcurrentModification) resultPayload).getRecordId();
         int version = ((OTxConcurrentModification) resultPayload).getVersion();
         //TODO include all paramenter in response
         throw new OConcurrentModificationException(id, version, 0, 0);
       }
       case OTxLockTimeout.ID:
-        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
         throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, 0);
       }
     } else {
@@ -172,12 +177,12 @@ public class ONewDistributedTransactionManager {
       for (OTransactionResultPayload result : results) {
         switch (result.getResponseType()) {
         case OTxLockTimeout.ID:
-          sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
+          sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
           throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, 0);
         }
       }
       localKo(requestId, database);
-      sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds));
+      sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
       throw new ODistributedOperationException("quorum not reached");
     }
 
