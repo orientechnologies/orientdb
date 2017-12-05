@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -681,6 +682,10 @@ final class OLogSegmentV2 implements OLogSegment {
 
     try {
       commitExecutor.submit(new WriteTask()).get();
+    } catch (RejectedExecutionException e) {
+      if (flushNewData || !commitExecutor.isShutdown()) {
+        throw OException.wrapException(new OStorageException("Unable to write data"), e);
+      }
     } catch (InterruptedException e) {
       Thread.interrupted();
       throw OException.wrapException(new OStorageException("Thread was interrupted during data write"), e);
@@ -699,6 +704,10 @@ final class OLogSegmentV2 implements OLogSegment {
 
     try {
       commitExecutor.submit(new SyncTask()).get();
+    } catch (RejectedExecutionException e) {
+      if (flushNewData || !Objects.equals(storedUpTo, syncedUpTo) || !commitExecutor.isShutdown()) {
+        throw OException.wrapException(new OStorageException("Unable to sync data"), e);
+      }
     } catch (InterruptedException e) {
       Thread.interrupted();
       throw OException.wrapException(new OStorageException("Thread was interrupted during data sync"), e);
