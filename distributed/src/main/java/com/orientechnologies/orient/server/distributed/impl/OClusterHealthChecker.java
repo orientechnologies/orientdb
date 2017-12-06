@@ -23,6 +23,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OGossipTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORequestDatabaseConfigurationTask;
@@ -178,6 +179,9 @@ public class OClusterHealthChecker extends TimerTask {
       final ODistributedServerManager.DB_STATUS localNodeStatus = manager.getDatabaseStatus(manager.getLocalNodeName(), dbName);
       if (localNodeStatus != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE)
         // ONLY NOT_AVAILABLE NODE/DB CAN BE RECOVERED
+        continue;
+      if (OSystemDatabase.SYSTEM_DB_NAME.equalsIgnoreCase(dbName))
+        // SKIP SYSTEM DATABASE FROM HEALTH CHECK
         continue;
 
       final Set<String> servers = manager.getAvailableNodeNames(dbName);
