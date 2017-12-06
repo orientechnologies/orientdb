@@ -21,11 +21,13 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   private final    int                    availableNodes;
   private final    int                    expectedResponses;
   private final    int                    quorum;
+  private final    long                   timeout;
   private volatile int                    responseCount;
-  private volatile Map<Integer, List<OTransactionResultPayload>> resultsByType = new HashMap<>();
-  private volatile boolean finished;
-  private volatile boolean quorumReached;
-  private volatile Object  finalResult;
+  private final    List<String>                                  debugNodeReplied = new ArrayList<>();
+  private volatile Map<Integer, List<OTransactionResultPayload>> resultsByType    = new HashMap<>();
+  private volatile boolean                                       finished         = false;
+  private volatile boolean                                       quorumReached    = false;
+  private volatile Object finalResult;
 
   public ONewDistributedResponseManager(OTransactionPhase1Task iRequest, Collection<String> iNodes,
       Set<String> nodesConcurToTheQuorum, int availableNodes, int expectedResponses, int quorum) {
@@ -35,6 +37,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     this.availableNodes = availableNodes;
     this.expectedResponses = expectedResponses;
     this.quorum = quorum;
+    timeout = iRequest.getSynchronousTimeout(expectedResponses);
   }
 
   @Override
@@ -60,10 +63,10 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public synchronized boolean waitForSynchronousResponses() throws InterruptedException {
-    if (!finished) {
-      wait();
+    if (!quorumReached) {
+      wait(timeout);
     }
-    return finished;
+    return quorumReached;
   }
 
   @Override
@@ -83,7 +86,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public List<String> getRespondingNodes() {
-    return null;
+    return debugNodeReplied;
   }
 
   @Override
@@ -136,7 +139,8 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     return false;
   }
 
-  public synchronized boolean collectResponse(OTransactionPhase1TaskResult response) {
+  public synchronized boolean collectResponse(OTransactionPhase1TaskResult response, String senderNodeName) {
+    debugNodeReplied.add(senderNodeName);
     return addResult(response.getResultPayload());
   }
 
@@ -156,15 +160,18 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   private void checkFinished(List<OTransactionResultPayload> results) {
     if (results.size() >= quorum) {
-      this.finished = true;
       this.quorumReached = true;
       this.finalResult = results;
       this.notifyAll();
     } else if (responseCount == expectedResponses) {
-      this.quorumReached = false;
-      this.finished = true;
-      this.finalResult = null;
-      this.notifyAll();
+      if (quorumReached) {
+        this.finished = true;
+      } else {
+        this.finished = true;
+        finalResult = null;
+        this.finalResult = null;
+        this.notifyAll();
+      }
     }
   }
 
@@ -179,12 +186,14 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   @Override
   public boolean collectResponse(ODistributedResponse response) {
     if (response.getPayload() instanceof OTransactionPhase1TaskResult) {
-      return collectResponse((OTransactionPhase1TaskResult) response.getPayload());
+      return collectResponse((OTransactionPhase1TaskResult) response.getPayload(), response.getSenderNodeName());
     } else if (response.getPayload() instanceof RuntimeException) {
-      return collectResponse(new OTransactionPhase1TaskResult(new OTxException((RuntimeException) response.getPayload())));
+      return collectResponse(new OTransactionPhase1TaskResult(new OTxException((RuntimeException) response.getPayload())),
+          response.getSenderNodeName());
     } else {
-      return collectResponse(new OTransactionPhase1TaskResult(
-          new OTxException(new ODistributedException("unknown payload:" + response.getPayload()))));
+      return collectResponse(
+          new OTransactionPhase1TaskResult(new OTxException(new ODistributedException("unknown payload:" + response.getPayload()))),
+          response.getSenderNodeName());
     }
   }
 
