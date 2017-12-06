@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,6 +33,7 @@ public class HARemoveNodeFromCfgTest extends AbstractServerClusterTxTest {
   private AtomicBoolean lastNodeIsUp = new AtomicBoolean(true);
 
   @Test
+  @Ignore
   public void test() throws Exception {
     OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(100);
     try {

@@ -19,6 +19,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.Callable;
@@ -34,6 +35,7 @@ public class HATxCrashTest extends AbstractHARemoveNode {
   private volatile boolean lastServerOn  = false;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     startupNodesInSequence = true;
     count = 500;

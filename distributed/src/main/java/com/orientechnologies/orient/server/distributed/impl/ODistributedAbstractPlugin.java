@@ -1185,7 +1185,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   protected void checkIntegrityOfLastTransactions(final ODistributedDatabaseImpl distrDatabase) {
     final ODatabaseDocumentInternal db = distrDatabase.getDatabaseInstance();
-    if (db == null || !db.exists())
+    if (db == null)
       return;
 
     final int checkIntegrityLastTxs = DISTRIBUTED_CHECKINTEGRITY_LAST_TX.getValueAsInteger();

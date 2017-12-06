@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.orientechnologies.common.util.OCallable;
@@ -32,6 +33,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   private volatile     boolean serverRestarted = false;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     startupNodesInSequence = true;
     count = 500;
