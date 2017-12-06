@@ -212,9 +212,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void reEnqueue(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload) {
-    new Thread(() -> {
+    Orient.instance().submit(() -> {
       processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false);
-    }).start();
+    });
   }
 
   /**
@@ -222,18 +222,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
    * against the same record cluster.
    */
   public void processRequest(final ODistributedRequest request, final boolean waitForAcceptingRequests) {
-    if (!running)
-      // DISCARD IT
-      return;
+    if (!running) {
+      throw new ODistributedException("Server is going down or is removing the database:'" + getDatabaseName() + "' discarding");
+    }
 
     final ORemoteTask task = request.getTask();
 
     if (waitForAcceptingRequests) {
       waitIsReady(task);
 
-      if (!running)
-        // DISCARD IT
-        return;
+      if (!running) {
+        throw new ODistributedException("Server is going down or is removing the database:'" + getDatabaseName() + "' discarding");
+      }
     }
 
     totalReceivedRequests.incrementAndGet();

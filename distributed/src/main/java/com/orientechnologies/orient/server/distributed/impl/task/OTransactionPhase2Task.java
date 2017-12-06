@@ -1,13 +1,11 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
@@ -18,6 +16,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
+
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
  */
@@ -27,8 +27,8 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   private ODistributedRequestId transactionId;
   private boolean               success;
   private int[]                 involvedClusters;
-  private          boolean hasResponse    = false;
-  private volatile int     reEnqueueLimit = 0;
+  private          boolean hasResponse = false;
+  private volatile int     retryCount  = 0;
 
   public OTransactionPhase2Task(ODistributedRequestId transactionId, boolean success, int[] involvedClusters,
       OLogSequenceNumber lsn) {
@@ -83,13 +83,16 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
       ODatabaseDocumentInternal database) throws Exception {
     if (success) {
       if (!((ODatabaseDocumentDistributed) database).commit2pc(transactionId)) {
-        reEnqueueLimit++;
-        if (reEnqueueLimit < 10) {
+        retryCount++;
+        if (retryCount < database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
           ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
               .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this);
           hasResponse = false;
         } else {
           ((ODatabaseDocumentDistributed) database).rollback2pc(transactionId);
+          Orient.instance().submit(() -> {
+            iManager.installDatabase(false, database.getName(), true, true);
+          });
           hasResponse = true;
           return "KO";
         }
