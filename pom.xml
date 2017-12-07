@@ -115,6 +115,7 @@
         <module>jdbc</module>
         <module>etl</module>
         <module>distribution</module>
+        <module>javassist</module>
     </modules>
 
     <scm>
