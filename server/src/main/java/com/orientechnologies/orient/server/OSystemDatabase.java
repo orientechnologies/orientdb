@@ -22,20 +22,23 @@ package com.orientechnologies.orient.server;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+
+import java.util.UUID;
 
 public class OSystemDatabase {
   public static final String SYSTEM_DB_NAME = "OSystem";
 
+  public static final String SERVER_INFO_CLASS  = "ServerInfo";
+  public static final String SERVER_ID_PROPERTY = "serverId";
+
   private final OServer server;
+  private       String  serverId;
 
   public OSystemDatabase(final OServer server) {
     this.server = server;
@@ -152,6 +155,7 @@ public class OSystemDatabase {
             .addConfig(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1).build();
         server.createDatabase(SYSTEM_DB_NAME, ODatabaseType.PLOCAL, config);
       }
+      checkServerId();
 
     } finally {
       if (oldDbInThread != null) {
@@ -159,6 +163,30 @@ public class OSystemDatabase {
       } else {
         ODatabaseRecordThreadLocal.instance().remove();
       }
+    }
+  }
+
+  private synchronized void checkServerId() {
+    ODatabaseDocumentInternal db = openSystemDatabase();
+    try {
+      OClass clazz = db.getClass(SERVER_INFO_CLASS);
+      if (clazz == null) {
+        clazz = db.createClass(SERVER_INFO_CLASS);
+      }
+      OElement info;
+      if (clazz.count() == 0) {
+        info = db.newElement(SERVER_INFO_CLASS);
+      } else {
+        info = db.browseClass(clazz.getName()).next();
+      }
+      this.serverId = info.getProperty(SERVER_ID_PROPERTY);
+      if (this.serverId == null) {
+        this.serverId = UUID.randomUUID().toString();
+        info.setProperty(SERVER_ID_PROPERTY, serverId);
+        info.save();
+      }
+    } finally {
+      db.close();
     }
   }
 
@@ -184,5 +212,9 @@ public class OSystemDatabase {
 
   public boolean exists() {
     return server.existsDatabase(getSystemDatabaseName());
+  }
+
+  public String getServerId() {
+    return serverId;
   }
 }

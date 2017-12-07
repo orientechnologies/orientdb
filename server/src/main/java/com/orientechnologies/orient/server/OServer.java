@@ -205,6 +205,10 @@ public class OServer {
     return systemDatabase;
   }
 
+  public String getServerId() {
+    return getSystemDatabase().getServerId();
+  }
+
   /**
    * Load an extension class by name.
    */
