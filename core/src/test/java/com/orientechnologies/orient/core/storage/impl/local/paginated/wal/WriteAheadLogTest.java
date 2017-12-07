@@ -1143,9 +1143,9 @@ public class WriteAheadLogTest {
     end = writeAheadLog.end();
     OLogSequenceNumber flushedLSN = walRecord.getLsn();
 
-    walRecord = new TestRecord(nextStart, SEGMENT_SIZE, ONE_KB, false, false);
+    walRecord = new TestRecord(nextStart, SEGMENT_SIZE, ONE_KB, false, true);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
-    duration += ONE_KB;
+    duration += walRecord.distance;
 
     Assert.assertEquals(writeAheadLog.getFlushedLsn(), flushedLSN);
     Assert.assertEquals(writeAheadLog.size(), duration);
