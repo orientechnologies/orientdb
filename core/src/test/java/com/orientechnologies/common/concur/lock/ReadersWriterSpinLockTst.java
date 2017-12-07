@@ -5,6 +5,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -14,21 +15,21 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Test(enabled = false)
 public class ReadersWriterSpinLockTst {
-  private final CountDownLatch         latch           = new CountDownLatch(1);
+  private final CountDownLatch latch = new CountDownLatch(1);
 
-  private final AtomicLong             readers         = new AtomicLong();
-  private final AtomicLong             writers         = new AtomicLong();
+  private final AtomicLong readers = new AtomicLong();
+  private final AtomicLong writers = new AtomicLong();
 
-  private final AtomicLong             readersCounter  = new AtomicLong();
-  private final AtomicLong             writersCounter  = new AtomicLong();
+  private final AtomicLong readersCounter = new AtomicLong();
+  private final AtomicLong writersCounter = new AtomicLong();
 
-  private final OReadersWriterSpinLock spinLock        = new OReadersWriterSpinLock();
+  private final OReadersWriterSpinLock spinLock = new OReadersWriterSpinLock();
 
-  private volatile boolean             stop            = false;
+  private volatile boolean stop = false;
 
-  private final ExecutorService        executorService = Executors.newCachedThreadPool();
+  private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-  private volatile long                c               = 47;
+  private volatile long c = 47;
 
   public void testCompetingAccess() throws Exception {
     List<Future> futures = new ArrayList<Future>();
@@ -41,7 +42,7 @@ public class ReadersWriterSpinLockTst {
       futures.add(executorService.submit(new Reader()));
 
     latch.countDown();
-    Thread.sleep(5 * 60 * 1000);
+    Thread.sleep(3 * 60 * 60 * 1000);
 
     stop = true;
 
@@ -53,6 +54,8 @@ public class ReadersWriterSpinLockTst {
   }
 
   private final class Reader implements Callable<Void> {
+    private final Random random = new Random();
+
     @Override
     public Void call() throws Exception {
       latch.await();
@@ -61,22 +64,28 @@ public class ReadersWriterSpinLockTst {
         while (!stop) {
           spinLock.acquireReadLock();
           try {
-						spinLock.acquireReadLock();
-						try {
-							readersCounter.incrementAndGet();
-							readers.incrementAndGet();
-							consumeCPU(100);
-							readersCounter.decrementAndGet();
-						} finally {
-							spinLock.releaseReadLock();
-						}
+            spinLock.acquireReadLock();
+            try {
+              readersCounter.incrementAndGet();
+
+              Assert.assertEquals(writersCounter.get(), 0);
+              readers.incrementAndGet();
+              consumeCPU(random.nextInt(100) + 50);
+
+              readersCounter.decrementAndGet();
+            } finally {
+              spinLock.releaseReadLock();
+            }
           } finally {
             spinLock.releaseReadLock();
           }
         }
-      } catch (Exception e) {
+      } catch (RuntimeException e) {
         e.printStackTrace();
-        throw new RuntimeException(e);
+        throw e;
+      } catch (Error e) {
+        e.printStackTrace();
+        throw e;
       }
 
       return null;
@@ -84,6 +93,8 @@ public class ReadersWriterSpinLockTst {
   }
 
   private final class Writer implements Callable<Void> {
+    private final Random random = new Random();
+
     @Override
     public Void call() throws Exception {
       latch.await();
@@ -92,42 +103,45 @@ public class ReadersWriterSpinLockTst {
         while (!stop) {
           spinLock.acquireWriteLock();
           try {
-						spinLock.acquireWriteLock();
-						try {
-							spinLock.acquireReadLock();
-							try {
-								writers.incrementAndGet();
-								writersCounter.incrementAndGet();
+            spinLock.acquireWriteLock();
+            try {
+              spinLock.acquireReadLock();
+              try {
+                writers.incrementAndGet();
+                writersCounter.incrementAndGet();
 
-								Assert.assertEquals(readersCounter.get(), 0);
+                Assert.assertEquals(readersCounter.get(), 0);
 
-								long rCounter = readersCounter.get();
-								long wCounter = writersCounter.get();
+                long rCounter = readersCounter.get();
+                long wCounter = writersCounter.get();
 
-								Assert.assertEquals(rCounter, 0);
-								Assert.assertEquals(wCounter, 1);
+                Assert.assertEquals(rCounter, 0);
+                Assert.assertEquals(wCounter, 1);
 
-								consumeCPU(1000);
+                consumeCPU(random.nextInt(1000) + 500);
 
-								Assert.assertEquals(rCounter, readersCounter.get());
-								Assert.assertEquals(wCounter, writersCounter.get());
+                Assert.assertEquals(rCounter, readersCounter.get());
+                Assert.assertEquals(wCounter, writersCounter.get());
 
-								writersCounter.decrementAndGet();
-							} finally {
-								spinLock.releaseReadLock();
-							}
-						} finally {
-							spinLock.releaseWriteLock();
-						}
+                writersCounter.decrementAndGet();
+              } finally {
+                spinLock.releaseReadLock();
+              }
+            } finally {
+              spinLock.releaseWriteLock();
+            }
           } finally {
             spinLock.releaseWriteLock();
           }
 
-          consumeCPU(1000);
+          consumeCPU(random.nextInt(50000) + 1000);
         }
-      } catch (Exception e) {
+      } catch (RuntimeException e) {
         e.printStackTrace();
-        throw new RuntimeException(e);
+        throw e;
+      } catch (Error e) {
+        e.printStackTrace();
+        throw e;
       }
 
       return null;
