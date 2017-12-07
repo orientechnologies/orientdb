@@ -31,6 +31,11 @@ public class ODeleteEdgeStatementTest {
         e.printStackTrace();
         fail();
       }
+    } catch (TokenMgrError e) {
+      if (isCorrect) {
+        e.printStackTrace();
+        fail();
+      }
     }
     return null;
   }
@@ -84,6 +89,8 @@ public class ODeleteEdgeStatementTest {
 
     } catch (ParseException e) {
       e.printStackTrace();
+    } catch (TokenMgrError e) {
+        e.printStackTrace();
     }
 
   }

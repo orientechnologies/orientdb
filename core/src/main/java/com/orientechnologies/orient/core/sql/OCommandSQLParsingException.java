@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
+import com.orientechnologies.orient.core.sql.parser.TokenMgrError;
 
 public class OCommandSQLParsingException extends OCoreException {
 
@@ -36,6 +37,13 @@ public class OCommandSQLParsingException extends OCoreException {
     this.statement = statement;
     this.line = e.currentToken.next.beginLine;
     this.column = e.currentToken.next.endColumn;
+  }
+
+  public OCommandSQLParsingException(TokenMgrError e, String statement) {
+    super("Error parsing query: " + statement);
+    this.statement = statement;
+    this.line = 0;
+    this.column = 0;
   }
 
   private static String generateMessage(ParseException e, String statement, Integer line, Integer column) {

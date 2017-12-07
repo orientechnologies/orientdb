@@ -41,6 +41,11 @@ public class OUpdateStatementTest {
         e.printStackTrace();
         fail();
       }
+    } catch (TokenMgrError e) {
+      if (isCorrect) {
+        e.printStackTrace();
+        fail();
+      }
     }
     return null;
   }
@@ -148,6 +153,8 @@ public class OUpdateStatementTest {
 
     } catch (ParseException e) {
       e.printStackTrace();
+    } catch (TokenMgrError e) {
+        e.printStackTrace();
     }
 
   }

@@ -34,6 +34,11 @@ public class OMatchStatementTest {
         e.printStackTrace();
         fail();
       }
+    } catch (TokenMgrError e) {
+      if (isCorrect) {
+        e.printStackTrace();
+        fail();
+      }
     }
     return null;
   }

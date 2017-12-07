@@ -43,6 +43,11 @@ import static org.testng.Assert.fail;
         e.printStackTrace();
         fail();
       }
+    } catch (TokenMgrError e) {
+      if (isCorrect) {
+        e.printStackTrace();
+        fail();
+      }
     }
     return null;
   }
@@ -133,6 +138,8 @@ import static org.testng.Assert.fail;
 
     } catch (ParseException e) {
       e.printStackTrace();
+    } catch (TokenMgrError e) {
+        e.printStackTrace();
     }
 
   }

@@ -31,6 +31,11 @@ public class OCreateVertexStatementTest {
         e.printStackTrace();
         fail();
       }
+    } catch (TokenMgrError e) {
+      if (isCorrect) {
+        e.printStackTrace();
+        fail();
+      }
     }
     return null;
   }
@@ -60,27 +65,22 @@ public class OCreateVertexStatementTest {
 
   }
 
-
   public void testEmptyArrayCreate() {
     checkRightSyntax("create vertex Foo set a = 'foo'");
     checkRightSyntax("create vertex Foo set a = []");
 //    checkRightSyntax("create vertex Foo set a = [ ]");
   }
 
-
   public void testEmptyMapCreate() {
     checkRightSyntax("create vertex Foo set a = {}");
     checkRightSyntax("create vertex Foo SET a = { }");
   }
 
-
   public void testInsertIntoCluster() {
-    checkRightSyntax("create vertex cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+    checkRightSyntax(
+        "create vertex cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
 
   }
-
-
-
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
@@ -88,6 +88,8 @@ public class OCreateVertexStatementTest {
       SimpleNode n = osql.parse();
 
     } catch (ParseException e) {
+      e.printStackTrace();
+    } catch (TokenMgrError e) {
       e.printStackTrace();
     }
 

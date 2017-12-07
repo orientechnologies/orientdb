@@ -180,6 +180,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     } catch (ParseException e) {
       OCommandSQLParsingException ex = new OCommandSQLParsingException(e, queryText);
       OErrorCode.QUERY_PARSE_ERROR.throwException(ex.getMessage(), ex);
+    } catch (TokenMgrError e) {
+      OCommandSQLParsingException ex = new OCommandSQLParsingException(e, queryText);
+      OErrorCode.QUERY_PARSE_ERROR.throwException(ex.getMessage(), ex);
     }
 
     assignDefaultAliases(this.matchExpressions);

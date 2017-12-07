@@ -48,6 +48,11 @@ public class OSelectStatementTest {
         e.printStackTrace();
         fail();
       }
+    } catch (TokenMgrError e) {
+      if (isCorrect) {
+        e.printStackTrace();
+        fail();
+      }
     }
     return null;
   }
@@ -331,6 +336,9 @@ public class OSelectStatementTest {
       assertEquals(parsed.toString(), "SELECT FROM bar WHERE name NOT IN []");
     } catch (Exception e) {
       fail();
+
+    } catch (TokenMgrError e) {
+        fail();
 
     }
 
@@ -658,6 +666,8 @@ public class OSelectStatementTest {
 
     } catch (ParseException e) {
       e.printStackTrace();
+    } catch (TokenMgrError e) {
+        e.printStackTrace();
     }
 
   }

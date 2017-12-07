@@ -39,6 +39,11 @@ public class OTraverseStatementTest {
         e.printStackTrace();
         fail();
       }
+    } catch (TokenMgrError e) {
+      if (isCorrect) {
+        e.printStackTrace();
+        fail();
+      }
     }
     return null;
   }
@@ -59,6 +64,8 @@ public class OTraverseStatementTest {
 
     } catch (ParseException e) {
       e.printStackTrace();
+    } catch (TokenMgrError e) {
+        e.printStackTrace();
     }
 
   }
