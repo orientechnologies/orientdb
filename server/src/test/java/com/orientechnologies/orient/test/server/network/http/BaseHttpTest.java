@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.test.server.network.http;
 
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.server.OServer;
 import org.apache.http.Consts;
 import org.apache.http.Header;
@@ -20,6 +22,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -28,9 +31,9 @@ import java.io.IOException;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public abstract class BaseHttpTest {
+  protected String serverDirectory;
 
   private static OServer server;
-  private boolean autoshutdownServer = false;
 
   private String serverCfg    = "/com/orientechnologies/orient/server/network/orientdb-server-config-httponly.xml";
   private String protocol     = "http";
@@ -59,15 +62,24 @@ public abstract class BaseHttpTest {
   protected void startServer() throws Exception {
     if (server == null) {
       server = new OServer(false);
+      if (serverDirectory != null) {
+        server.setServerRootDirectory(serverDirectory);
+      }
       server.startup(getClass().getResourceAsStream(getServerCfg()));
       server.activate();
     }
   }
 
   protected void stopServer() throws Exception {
-    if (autoshutdownServer && server != null) {
+    if (server != null) {
       server.shutdown();
       server = null;
+
+      Orient.instance().shutdown();
+      if (serverDirectory != null) {
+        OFileUtils.deleteRecursively(new File(serverDirectory));
+      }
+      Orient.instance().startup();
     }
   }
 

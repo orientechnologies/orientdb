@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.handler;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -112,6 +113,9 @@ public class AutomaticBackupTest {
     server.dropDatabase(database.getName());
     server.shutdown();
 
+    Orient.instance().shutdown();
+    OFileUtils.deleteRecursively(new File(tempDirectory));
+    Orient.instance().startup();
   }
 
   @Test
@@ -199,9 +203,8 @@ public class AutomaticBackupTest {
     final OAutomaticBackup aBackup = new OAutomaticBackup();
 
     final OServerParameterConfiguration[] config = new OServerParameterConfiguration[] {
-        new OServerParameterConfiguration("enabled", "true"),
-        new OServerParameterConfiguration("firstTime",
-            new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 5000))),
+        new OServerParameterConfiguration("enabled", "true"), new OServerParameterConfiguration("firstTime",
+        new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 5000))),
         new OServerParameterConfiguration("delay", "1d"), new OServerParameterConfiguration("mode", "FULL_BACKUP"),
         new OServerParameterConfiguration("target.directory", BACKUPDIR),
         new OServerParameterConfiguration("target.fileName", "fullBackup.zip") };
@@ -296,9 +299,8 @@ public class AutomaticBackupTest {
     final OAutomaticBackup aBackup = new OAutomaticBackup();
 
     final OServerParameterConfiguration[] config = new OServerParameterConfiguration[] {
-        new OServerParameterConfiguration("enabled", "true"),
-        new OServerParameterConfiguration("firstTime",
-            new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 5000))),
+        new OServerParameterConfiguration("enabled", "true"), new OServerParameterConfiguration("firstTime",
+        new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 5000))),
         new OServerParameterConfiguration("delay", "1d"), new OServerParameterConfiguration("mode", "EXPORT"),
         new OServerParameterConfiguration("target.directory", BACKUPDIR),
         new OServerParameterConfiguration("target.fileName", "fullExport.json.gz") };

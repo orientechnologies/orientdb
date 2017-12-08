@@ -30,7 +30,6 @@ import java.io.IOException;
 public abstract class BaseHttpTest {
 
   private static OServer server;
-  private boolean autoshutdownServer = false;
 
   private static String serverCfg    = "/com/orientechnologies/orient/server/network/orientdb-server-config-httponly.xml";
   private String protocol     = "http";

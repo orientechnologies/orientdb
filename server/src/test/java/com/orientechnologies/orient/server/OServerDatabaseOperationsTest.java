@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -20,6 +21,7 @@ import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class OServerDatabaseOperationsTest {
+  private static final String SERVER_DIRECTORY = "./target/db";
 
   private OServer server;
 
@@ -46,8 +49,8 @@ public class OServerDatabaseOperationsTest {
     rootUser.password = "root";
     rootUser.resources = "list";
     conf.users = new OServerUserConfiguration[] { rootUser };
-    conf.properties = new OServerEntryConfiguration[] { new OServerEntryConfiguration("server.database.path", "target/databases") };
     server = new OServer(false);
+    server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(conf);
     server.activate();
     ODocument securityConfig = new ODocument();
@@ -58,12 +61,9 @@ public class OServerDatabaseOperationsTest {
   @After
   public void after() {
     server.shutdown();
-    Orient.instance().startup();
-  }
 
-  @AfterClass
-  public static void afterClass() {
     Orient.instance().shutdown();
+    OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
     Orient.instance().startup();
   }
 

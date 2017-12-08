@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.network;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -110,14 +111,11 @@ public class TestNetworkSerializerIndipendency {
   @After
   public void after() {
     server.shutdown();
-    File iDirectory = new File(SERVER_DIRECTORY);
-    deleteDirectory(iDirectory);
-    ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerFactory.instance().getFormat(ORecordSerializerBinary.NAME));
-  }
 
-  @AfterClass
-  public static void afterClass() {
     Orient.instance().shutdown();
+    File directory = new File(SERVER_DIRECTORY);
+    OFileUtils.deleteRecursively(directory);
+    ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerFactory.instance().getFormat(ORecordSerializerBinary.NAME));
     Orient.instance().startup();
   }
 

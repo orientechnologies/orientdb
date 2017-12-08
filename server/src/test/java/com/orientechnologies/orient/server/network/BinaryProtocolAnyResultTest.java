@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.network;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
@@ -65,12 +66,9 @@ public class BinaryProtocolAnyResultTest {
   @After
   public void after() {
     server.shutdown();
-  }
 
-  @AfterClass
-  public static void afterClass() {
     Orient.instance().shutdown();
+    OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
     Orient.instance().startup();
   }
-
 }

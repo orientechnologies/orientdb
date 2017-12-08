@@ -59,7 +59,6 @@ public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
     stopServer();
 
     Orient.instance().shutdown();
-    Orient.instance().startup();
 
     if (oldOrientDBHome != null)
       System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
@@ -71,6 +70,7 @@ public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
 
     File file = new File(serverHome);
     deleteDirectory(file);
+    Orient.instance().startup();
   }
 
   protected void onAfterDatabaseCreated() throws Exception {

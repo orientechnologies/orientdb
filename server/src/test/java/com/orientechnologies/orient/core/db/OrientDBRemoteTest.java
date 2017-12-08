@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -12,6 +13,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -82,7 +84,7 @@ public class OrientDBRemoteTest {
 
   @Test
   public void testMultiThread() {
-   if (!factory.exists("test"))
+    if (!factory.exists("test"))
       factory.create("test", ODatabaseType.MEMORY);
 
     ODatabasePool pool = new ODatabasePool(factory, "test", "admin", "admin");
@@ -144,12 +146,9 @@ public class OrientDBRemoteTest {
 
     factory.close();
     server.shutdown();
-  }
 
-  @AfterClass
-  public static void  afterClass() {
     Orient.instance().shutdown();
+    OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
     Orient.instance().startup();
   }
-
 }

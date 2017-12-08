@@ -2,9 +2,11 @@ package com.orientechnologies.orient.server.network;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import com.orientechnologies.common.io.OFileUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -38,6 +40,8 @@ public class OLiveQueryShotdownTest {
 
   public void shutdownServer() {
     server.shutdown();
+    Orient.instance().shutdown();
+    OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
     Orient.instance().startup();
   }
 

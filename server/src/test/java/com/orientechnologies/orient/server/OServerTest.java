@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -11,6 +12,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
@@ -52,6 +54,8 @@ public class OServerTest {
     if (server.isActive())
       server.shutdown();
 
+    Orient.instance().shutdown();
+    OFileUtils.deleteRecursively(new File("./target/testhome"));
     // invariants
     OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.setValue(allowJvmShutdownPrev);
 

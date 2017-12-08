@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 
+import com.orientechnologies.common.io.OFileUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -25,6 +27,7 @@ import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerHookConfiguration;
 
 public class HookInstallServerTest {
+  private static final String SERVER_DIRECTORY = "./target/dbfactory";
 
   public static class MyHook extends ODocumentHookAbstract {
 
@@ -43,15 +46,18 @@ public class HookInstallServerTest {
   }
 
   private static int count = 0;
-  private OServer    server;
+  private OServer server;
 
   @Before
-  public void before() throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException,
-      NotCompliantMBeanException, ClassNotFoundException, NullPointerException, IOException, IllegalArgumentException,
-      SecurityException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+  public void before()
+      throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException,
+      ClassNotFoundException, NullPointerException, IOException, IllegalArgumentException, SecurityException,
+      InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
     server = new OServer(false);
-    OServerConfigurationManager ret = new OServerConfigurationManager(
-        this.getClass().getClassLoader().getResourceAsStream("com/orientechnologies/orient/server/network/orientdb-server-config.xml"));
+    server.setServerRootDirectory(SERVER_DIRECTORY);
+
+    OServerConfigurationManager ret = new OServerConfigurationManager(this.getClass().getClassLoader()
+        .getResourceAsStream("com/orientechnologies/orient/server/network/orientdb-server-config.xml"));
     OServerHookConfiguration hc = new OServerHookConfiguration();
     hc.clazz = MyHook.class.getName();
     ret.getConfiguration().hooks = new ArrayList<OServerHookConfiguration>();
@@ -73,11 +79,16 @@ public class HookInstallServerTest {
     admin.dropDatabase("test", "memory");
     admin.close();
     server.shutdown();
+
+    Orient.instance().shutdown();
+    OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
     Orient.instance().startup();
   }
 
   @Test
   public void test() {
+    final int initValue = count;
+
     OPartitionedDatabasePool pool = new OPartitionedDatabasePool("remote:localhost/test", "admin", "admin");
     for (int i = 0; i < 10; i++) {
       ODatabaseDocument some = pool.acquire();
@@ -88,13 +99,6 @@ public class HookInstallServerTest {
       }
     }
     pool.close();
-    Assert.assertEquals(10, count);
+    Assert.assertEquals(initValue + 10, count);
   }
-
-  @AfterClass
-  public static void afterClass() {
-    Orient.instance().shutdown();
-    Orient.instance().startup();
-  }
-
 }

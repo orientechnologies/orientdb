@@ -4,6 +4,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
+import java.nio.file.Paths;
+
 /**
  * Test HTTP "query" command.
  *
@@ -13,6 +15,9 @@ import org.junit.Before;
 public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
   @Before
   public void createDatabase() throws Exception {
+    serverDirectory = Paths.get(System.getProperty("buildDirectory", "target")).
+        resolve(this.getClass().getSimpleName() + "Server").toFile().getCanonicalPath();
+
     super.startServer();
     Assert.assertEquals(
         post("database/" + getDatabaseName() + "/memory").setUserName("root").setUserPassword("root").getResponse().getStatusLine()
