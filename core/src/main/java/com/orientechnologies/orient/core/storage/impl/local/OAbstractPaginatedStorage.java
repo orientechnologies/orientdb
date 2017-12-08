@@ -21,10 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.concur.lock.OComparableLockManager;
-import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
+import com.orientechnologies.common.concur.lock.*;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.log.OLogManager;
@@ -176,7 +173,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       .newSetFromMap(new ConcurrentHashMap<OPair<String, Long>, Boolean>());
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode, int id) {
-    super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
+    super(name, filePath, mode, new OReadersWriterSpinLock());
 
     this.id = id;
     lockManager = new ORIDOLockManager(OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());

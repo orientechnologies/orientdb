@@ -22,6 +22,7 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import com.orientechnologies.common.concur.lock.OSimpleReadWriteLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -130,7 +131,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode, final STATUS status,
       final boolean managePushMessages) throws IOException {
-    super(iURL, iURL, iMode, 0); // NO TIMEOUT @SINCE 1.5
+    super(iURL, iURL, iMode, new OSimpleReadWriteLock()); // NO TIMEOUT @SINCE 1.5
     if (status != null)
       this.status = status;
 

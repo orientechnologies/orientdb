@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.common.concur.lock.OReadWriteLock;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
@@ -66,9 +67,9 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     storageThreadGroup = new ThreadGroup(parentThreadGroup, "OrientDB Storage");
   }
 
-  protected final String                 url;
-  protected final String                 mode;
-  protected final OReadersWriterSpinLock stateLock;
+  protected final String         url;
+  protected final String         mode;
+  protected final OReadWriteLock stateLock;
 
   protected volatile OStorageConfiguration            configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
@@ -78,7 +79,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
 
   protected final OSharedContainerImpl sharedContainer = new OSharedContainerImpl();
 
-  public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout) {
+  public OStorageAbstract(final String name, final String iURL, final String mode, OReadWriteLock stateLock) {
     this.name = normalizeName(name);
 
     if (OStringSerializerHelper.contains(this.name, ','))
@@ -87,7 +88,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     url = iURL;
     this.mode = mode;
 
-    stateLock = new OReadersWriterSpinLock();
+    this.stateLock = stateLock;
   }
 
   protected String normalizeName(String name) {

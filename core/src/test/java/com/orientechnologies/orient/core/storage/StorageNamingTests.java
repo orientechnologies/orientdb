@@ -19,6 +19,7 @@
 
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.common.concur.lock.OSimpleReadWriteLock;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -71,7 +72,7 @@ public class StorageNamingTests {
   private static class NamingTestStorage extends OStorageAbstract {
 
     public NamingTestStorage(String name) {
-      super(name, name, "rw", Integer.MAX_VALUE);
+      super(name, name, "rw", new OSimpleReadWriteLock());
     }
 
     @Override

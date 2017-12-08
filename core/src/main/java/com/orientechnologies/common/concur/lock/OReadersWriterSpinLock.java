@@ -35,7 +35,7 @@ import java.util.concurrent.locks.LockSupport;
  * @since 8/18/14
  */
 @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
-public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
+public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implements OReadWriteLock {
   private static final long serialVersionUID = 7975120282194559960L;
 
   private final transient ODistributedCounter distributedCounter;
