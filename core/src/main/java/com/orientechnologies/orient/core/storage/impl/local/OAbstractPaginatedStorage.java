@@ -240,7 +240,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * That is internal method which is called once we encounter any error inside of JVM. In such case we need to restart JVM to avoid
    * any data corruption. Till JVM is not restarted storage will be put in read-only state.
    */
-  public void handleJVMError(Error e) {
+  private void handleJVMError(Error e) {
     jvmError.compareAndSet(null, e);
   }
 
@@ -335,7 +335,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     }
 
-    OLogManager.instance().infoNoDb(this, "Storage '%s' is opened under OrientDB distribution : %s", getURL(), OConstants.getVersion());
+    OLogManager.instance()
+        .infoNoDb(this, "Storage '%s' is opened under OrientDB distribution : %s", getURL(), OConstants.getVersion());
   }
 
   protected void openIndexes() {
@@ -982,9 +983,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * This method finds all the records which were updated starting from (but not including) current LSN and write result in provided
    * output stream. In output stream will be included all thw records which were updated/deleted/created since passed in LSN till
    * the current moment.
-   * <p>
    * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
-   * <p>
    * Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li> <li>Record's
    * cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only if record is
    * not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary presentation of
@@ -3370,7 +3369,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (RuntimeException e) {
       throw logAndPrepareForRethrow(e);
     } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
+      throw logAndPrepareForRethrow(e, false);
     } catch (Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
@@ -3456,7 +3455,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (RuntimeException e) {
       throw logAndPrepareForRethrow(e);
     } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
+      throw logAndPrepareForRethrow(e, false);
     } catch (Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
@@ -5036,9 +5035,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * Method which is called before any data modification operation to check alarm conditions such as: <ol> <li>Low disk space</li>
    * <li>Exception during data flush in background threads</li> <li>Broken files</li> </ol>
-   * <p>
    * If one of those conditions are satisfied data modification operation is aborted and storage is switched in "read only" mode.
-   * <p>
    * This method also performs "full checkpoint" if such one is requested by WAL.
    */
   private void checkLowDiskSpaceRequestsAndReadOnlyConditions() {
@@ -5133,17 +5130,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       throw new OPageIsBrokenException("Following files and pages are detected to be broken " + brokenPagesList + ", storage is "
           + "switched to 'read only' mode. Any modification operations are prohibited. To restore database and make it "
-          + "fully operational you may export and import database "
-          + "to and from JSON.");
+          + "fully operational you may export and import database " + "to and from JSON.");
 
     }
 
     if (jvmError.get() != null) {
-      throw new OJVMErrorException(
-          "JVM error '" + jvmError.get().getClass().getSimpleName() + " : " + jvmError.get().getMessage()
-              + "' occurred during data processing, storage is switched to 'read-only' mode. "
-              + "To prevent this exception please restart the JVM and check data consistency by calling of 'check database' "
-              + "command from database console.");
+      throw new OJVMErrorException("JVM error '" + jvmError.get().getClass().getSimpleName() + " : " + jvmError.get().getMessage()
+          + "' occurred during data processing, storage is switched to 'read-only' mode. "
+          + "To prevent this exception please restart the JVM and check data consistency by calling of 'check database' "
+          + "command from database console.");
     }
   }
 
@@ -5270,12 +5265,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected Error logAndPrepareForRethrow(Error error) {
+    return logAndPrepareForRethrow(error, true);
+  }
+
+  private Error logAndPrepareForRethrow(Error error, boolean swithcInReadOnlyMode) {
     if (!(error instanceof OHighLevelException))
       OLogManager.instance()
           .errorStorage(this, "Exception `%08X` in storage `%s`: %s", error, System.identityHashCode(error), getURL(),
               OConstants.getVersion());
 
-    handleJVMError(error);
+    if (swithcInReadOnlyMode) {
+      handleJVMError(error);
+    }
 
     return error;
   }

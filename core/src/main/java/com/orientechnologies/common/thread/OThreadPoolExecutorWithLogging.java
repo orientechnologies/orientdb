@@ -74,12 +74,6 @@ public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
           logManager.errorNoDb(this, "Uncaught exception in thread '%s'", t, thread.getName());
         }
       }
-
-      if (t instanceof Error) {
-        final Orient orient = Orient.instance();
-        if (orient != null)
-          orient.handleJVMError((Error) t);
-      }
     }
   }
 }

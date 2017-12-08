@@ -24,18 +24,17 @@ public class OStaticInitializerExceptionLoggerWeaver extends ClassTransformer {
     final ClassPool classPool = ctClass.getClassPool();
     if (staticInit != null) {
       try {
-        getLogger().debug("Wave static init of " + ctClass.getName());
+        getLogger().debug("Wave of static init of " + ctClass.getName());
 
         final CtClass runtimeType = classPool.get("java.lang.RuntimeException");
         final CtClass errorType = classPool.get("java.lang.Error");
 
-        staticInit.addCatch(
-            "{" + "com.orientechnologies.common.log.OLogManager.instance().errorNoDb(null, \"Error in static initializer\", $e, new String[0]);"
-                + "throw $e;" + "}", runtimeType);
-        staticInit.addCatch(
-            "{" + "com.orientechnologies.common.log.OLogManager.instance().errorNoDb(null, \"Error in static initializer\", $e, new String[0]);"
-                + "com.orientechnologies.orient.core.Orient orient = com.orientechnologies.orient.core.Orient.instance();"
-                + "if(orient != null) {" + "orient.handleJVMError($e);" + "}" + "throw $e;" + "}", errorType);
+        staticInit.addCatch("{"
+            + "com.orientechnologies.common.log.OLogManager.instance().errorNoDb(null, \"Error in static initializer\", $e, new String[0]);"
+            + "throw $e;" + "}", runtimeType);
+        staticInit.addCatch("{"
+            + "com.orientechnologies.common.log.OLogManager.instance().errorNoDb(null, \"Error in static initializer\", $e, new String[0]);"
+            + "throw $e;" + "}", errorType);
       } catch (NotFoundException e) {
         throw new IllegalStateException(e);
       } catch (CannotCompileException e) {

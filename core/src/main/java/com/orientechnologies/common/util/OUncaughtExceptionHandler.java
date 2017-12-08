@@ -36,14 +36,5 @@ public class OUncaughtExceptionHandler implements Thread.UncaughtExceptionHandle
       }
 
     }
-
-    if (e instanceof Error) {
-      final Orient orient = Orient.instance();
-
-      if (orient != null) {
-        orient.handleJVMError((Error) e);
-      }
-    }
-
   }
 }
