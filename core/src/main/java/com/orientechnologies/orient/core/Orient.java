@@ -401,23 +401,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     return this;
   }
 
-  /**
-   * This method is called once JVM Error is observed by OrientDB to be thrown. Typically it means that all storages will be put in
-   * read-only mode and user will be asked to restart JVM.
-   *
-   * @param e Error happened during JVM execution
-   */
-  public void handleJVMError(Error e) {
-    engineLock.readLock().lock();
-    try {
-      for (OrientDBInternal orientDB : runningInstances) {
-        orientDB.handleJVMError(e);
-      }
-    } finally {
-      engineLock.readLock().unlock();
-    }
-  }
-
   public void scheduleTask(final TimerTask task, final long delay, final long period) {
     engineLock.readLock().lock();
     try {

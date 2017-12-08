@@ -331,11 +331,4 @@ public class OrientDBRemote implements OrientDBInternal {
   public ODatabaseDocumentInternal openNoAuthorization(String name) {
     throw new UnsupportedOperationException("impossible skip authentication and authorization in remote");
   }
-
-  /**
-   * @inheritDoc
-   */
-  @Override
-  public void handleJVMError(Error e) {
-  }
 }

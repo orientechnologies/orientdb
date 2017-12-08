@@ -286,11 +286,4 @@ public interface OrientDBInternal extends AutoCloseable {
 
   OEmbeddedDatabaseInstanceFactory getFactory();
 
-  /**
-   * This method is called once JVM Error is observed by OrientDB to be thrown. Typically it means that all storages will be put in
-   * read-only mode and user will be asked to restart JVM, but that is not mandatory.
-   *
-   * @param e Error happened during JVM execution
-   */
-  void handleJVMError(Error e);
 }

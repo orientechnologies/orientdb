@@ -463,15 +463,4 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return true;
   }
 
-  /**
-   * @inheritDoc
-   */
-  @Override
-  public void handleJVMError(Error e) {
-    synchronized (this) {
-      for (OAbstractPaginatedStorage storage : storages.values()) {
-        storage.handleJVMError(e);
-      }
-    }
-  }
 }

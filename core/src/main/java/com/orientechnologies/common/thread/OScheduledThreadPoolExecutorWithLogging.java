@@ -1,9 +1,13 @@
 package com.orientechnologies.common.thread;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * The same as thread {@link ScheduledThreadPoolExecutor} but also logs all exceptions happened inside of the tasks which caused
@@ -18,10 +22,12 @@ public class OScheduledThreadPoolExecutorWithLogging extends ScheduledThreadPool
     super(corePoolSize, threadFactory);
   }
 
+  @SuppressWarnings("unused")
   public OScheduledThreadPoolExecutorWithLogging(int corePoolSize, RejectedExecutionHandler handler) {
     super(corePoolSize, handler);
   }
 
+  @SuppressWarnings("unused")
   public OScheduledThreadPoolExecutorWithLogging(int corePoolSize, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
     super(corePoolSize, threadFactory, handler);
   }
@@ -48,13 +54,7 @@ public class OScheduledThreadPoolExecutorWithLogging extends ScheduledThreadPool
 
     if (t != null) {
       final Thread thread = Thread.currentThread();
-      OLogManager.instance().error(this, "Exception in thread '%s'", t, thread.getName());
-
-      if (t instanceof Error) {
-        final Orient orient = Orient.instance();
-        if (orient != null)
-          orient.handleJVMError((Error) t);
-      }
+      OLogManager.instance().errorNoDb(this, "Exception in thread '%s'", t, thread.getName());
     }
   }
 }

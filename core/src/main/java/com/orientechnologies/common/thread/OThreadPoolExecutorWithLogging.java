@@ -1,9 +1,15 @@
 package com.orientechnologies.common.thread;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The same as thread {@link ThreadPoolExecutor} but also logs all exceptions happened inside of the tasks which caused tasks to
@@ -20,11 +26,13 @@ public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
     super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory);
   }
 
+  @SuppressWarnings("unused")
   public OThreadPoolExecutorWithLogging(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
       BlockingQueue<Runnable> workQueue, RejectedExecutionHandler handler) {
     super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, handler);
   }
 
+  @SuppressWarnings("unused")
   public OThreadPoolExecutorWithLogging(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
       BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
     super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
@@ -49,13 +57,7 @@ public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
 
     if (t != null) {
       final Thread thread = Thread.currentThread();
-      OLogManager.instance().error(this, "Exception in thread '%s'", t, thread.getName());
-
-      if (t instanceof Error) {
-        final Orient orient = Orient.instance();
-        if (orient != null)
-          orient.handleJVMError((Error) t);
-      }
+      OLogManager.instance().errorNoDb(this, "Exception in thread '%s'", t, thread.getName());
     }
   }
 }

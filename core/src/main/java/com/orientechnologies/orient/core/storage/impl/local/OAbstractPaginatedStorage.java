@@ -347,7 +347,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * That is internal method which is called once we encounter any error inside of JVM. In such case we need to restart JVM to avoid
    * any data corruption. Till JVM is not restarted storage will be put in read-only state.
    */
-  public void handleJVMError(Error e) {
+  private void handleJVMError(Error e) {
     jvmError.compareAndSet(null, e);
   }
 
@@ -3495,7 +3495,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
@@ -3584,7 +3584,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
-      throw logAndPrepareForRethrow(ee);
+      throw logAndPrepareForRethrow(ee, false);
     } catch (Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
@@ -5315,12 +5315,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected Error logAndPrepareForRethrow(Error error) {
+    return logAndPrepareForRethrow(error, true);
+  }
+
+  private Error logAndPrepareForRethrow(Error error, boolean putInReadOnlyMode) {
     if (!(error instanceof OHighLevelException))
       OLogManager.instance()
           .errorStorage(this, "Exception `%08X` in storage `%s`: %s", error, System.identityHashCode(error), getURL(),
               OConstants.getVersion());
 
-    handleJVMError(error);
+    if (putInReadOnlyMode) {
+      handleJVMError(error);
+    }
 
     return error;
   }
