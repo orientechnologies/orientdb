@@ -1,5 +1,7 @@
 package com.orientechnologies.common.concur.lock;
 
+import com.orientechnologies.common.exception.OException;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +38,7 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
         c = lock.newCondition();
         map.put(key, c);
       } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+        throw OException.wrapException(new OInterruptedException("Interrupted Lock"), e);
       }
     } finally {
       lock.unlock();
