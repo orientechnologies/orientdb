@@ -988,7 +988,13 @@ public enum OGlobalConfiguration {
 
   // DEPRECATED IN 2.0, LEVEL1 CACHE CANNOT BE DISABLED ANYMORE
   @Deprecated CACHE_LOCAL_ENABLED("cache.local.enabled", "Deprecated, Level1 cache cannot be disabled anymore", Boolean.class,
-      true);
+      true),
+
+  /**
+   * @Since 2.2.31
+   */
+  DISTRIBUTED_DB_SHUTDOWNTIMEOUT("distributed.shutdownTimeout", "Time in ms to wait for threads to shutdown. Set to 0 to wait forever",
+      Long.class, 2000, true);
 
   /**
    * Place holder for the "undefined" value of setting.

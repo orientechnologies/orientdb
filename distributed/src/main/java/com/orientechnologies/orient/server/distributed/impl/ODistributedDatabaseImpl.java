@@ -896,6 +896,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void shutdown() {
     running = false;
 
+    long shutdownTimeout = OGlobalConfiguration.DISTRIBUTED_DB_SHUTDOWNTIMEOUT.getValueAsLong();
+
     try {
       if (txTimeoutTask != null)
         txTimeoutTask.cancel();
@@ -913,23 +915,24 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           workerThread.sendShutdown();
       }
 
+
       // WAIT A BIT FOR PROPER SHUTDOWN
       if (lockThread != null)
         try {
-          lockThread.join(2000);
+          lockThread.join(shutdownTimeout);
         } catch (InterruptedException e) {
         }
 
       if (nowaitThread != null)
         try {
-          nowaitThread.join(2000);
+          nowaitThread.join(shutdownTimeout);
         } catch (InterruptedException e) {
         }
 
       for (ODistributedWorker workerThread : workerThreads) {
         if (workerThread != null) {
           try {
-            workerThread.join(2000);
+            workerThread.join(shutdownTimeout);
           } catch (InterruptedException e) {
           }
         }
