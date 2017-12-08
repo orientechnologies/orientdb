@@ -293,7 +293,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.metadata.schema.OSchema#dropClass(java.lang.String)
    */
   public abstract void dropClass(ODatabaseDocumentInternal database, final String className);
@@ -327,7 +327,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.metadata.schema.OSchema#getClass(java.lang.Class)
    */
   public OClass getClass(final Class<?> iClass) {
@@ -339,7 +339,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.metadata.schema.OSchema#getClass(java.lang.String)
    */
   public OClass getClass(final String iClassName) {
@@ -605,10 +605,10 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
     rwSpinLock.acquireWriteLock();
     try {
-      if (!new ORecordId(database.getStorage().getConfiguration().schemaRecordId).isValid())
+      if (!new ORecordId(database.getStorage().getConfiguration().getSchemaRecordId()).isValid())
         throw new OSchemaNotCreatedException("Schema is not created and cannot be loaded");
 
-      ((ORecordId) document.getIdentity()).fromString(database.getStorage().getConfiguration().schemaRecordId);
+      ((ORecordId) document.getIdentity()).fromString(database.getStorage().getConfiguration().getSchemaRecordId());
       reload("*:-1 index:0");
 
       snapshot = new OImmutableSchema(this);
@@ -623,7 +623,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     rwSpinLock.acquireWriteLock();
     try {
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-      database.getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
+      database.getStorage().getConfiguration().setSchemaRecordId(document.getIdentity().toString());
       database.getStorage().getConfiguration().update();
       snapshot = new OImmutableSchema(this);
     } finally {

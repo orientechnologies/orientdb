@@ -738,11 +738,11 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             final long position = physicalPosition.clusterPosition;
             rid.setClusterPosition(position);
 
-            if (rid.equals(new ORecordId(configuration1.indexMgrRecordId)) && rid
-                .equals(new ORecordId(configuration2.indexMgrRecordId)))
+            if (rid.equals(new ORecordId(configuration1.getIndexMgrRecordId())) && rid
+                .equals(new ORecordId(configuration2.getIndexMgrRecordId())))
               continue;
-            if (rid.equals(new ORecordId(configuration1.schemaRecordId)) && rid
-                .equals(new ORecordId(configuration2.schemaRecordId)))
+            if (rid.equals(new ORecordId(configuration1.getSchemaRecordId())) && rid
+                .equals(new ORecordId(configuration2.getSchemaRecordId())))
               continue;
 
             if (rid.getClusterId() == 0 && rid.getClusterPosition() == 0) {
@@ -825,8 +825,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
                     }
                   });
 
-                  if (rid.toString().equals(configuration1.schemaRecordId) && rid.toString()
-                      .equals(configuration2.schemaRecordId)) {
+                  if (rid.toString().equals(configuration1.getSchemaRecordId()) && rid.toString()
+                      .equals(configuration2.getSchemaRecordId())) {
                     makeDbCall(databaseOne, new ODocumentHelper.ODbRelatedCall<java.lang.Object>() {
                       public Object call(ODatabaseDocumentInternal database) {
                         convertSchemaDoc(doc1);

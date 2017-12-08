@@ -194,7 +194,7 @@ public class ODocumentHelper {
 
         DateFormat formatter = config.getDateFormatInstance();
 
-        if (((String) iValue).length() > config.dateFormat.length()) {
+        if (((String) iValue).length() > config.getDateFormat().length()) {
           // ASSUMES YOU'RE USING THE DATE-TIME FORMATTE
           formatter = config.getDateTimeFormatInstance();
         }
@@ -205,7 +205,7 @@ public class ODocumentHelper {
           return (RET) newValue;
         } catch (ParseException pe) {
           final String dateFormat =
-              ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat : config.dateFormat;
+              ((String) iValue).length() > config.getDateFormat().length() ? config.getDateTimeFormat() : config.getDateFormat();
           throw OException.wrapException(
               new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat), pe);
         }

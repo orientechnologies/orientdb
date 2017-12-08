@@ -182,11 +182,11 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     json.beginObject(1, true, "config");
 
     json.beginCollection(2, true, "values");
-    json.writeObjects(3, true, null, new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().dateFormat },
-        new Object[] { "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().dateTimeFormat }, new Object[] {
+    json.writeObjects(3, true, null, new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().getDateFormat() },
+        new Object[] { "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().getDateTimeFormat() }, new Object[] {
             "name", "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() }, new Object[] { "name",
             "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() }, new Object[] { "name",
-            "definitionVersion", "value", db.getStorage().getConfiguration().version });
+            "definitionVersion", "value", db.getStorage().getConfiguration().getVersion() });
     json.endCollection(2, true);
 
     json.beginCollection(2, true, "properties");

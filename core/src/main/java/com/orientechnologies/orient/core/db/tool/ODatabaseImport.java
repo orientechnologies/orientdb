@@ -375,10 +375,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 
     if (schemaRecordId == null)
-      schemaRecordId = new ORecordId(database.getStorage().getConfiguration().schemaRecordId);
+      schemaRecordId = new ORecordId(database.getStorage().getConfiguration().getSchemaRecordId());
 
     if (indexMgrRecordId == null)
-      indexMgrRecordId = new ORecordId(database.getStorage().getConfiguration().indexMgrRecordId);
+      indexMgrRecordId = new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId());
 
     listener.onMessage("OK");
   }
@@ -998,11 +998,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     listener.onMessage("\nDone. Imported " + total + " clusters");
 
-    if (database.load(new ORecordId(database.getStorage().getConfiguration().indexMgrRecordId)) == null) {
+    if (database.load(new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId())) == null) {
       ODocument indexDocument = new ODocument();
       indexDocument.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
 
-      database.getStorage().getConfiguration().indexMgrRecordId = indexDocument.getIdentity().toString();
+      database.getStorage().getConfiguration().setIndexMgrRecordId(indexDocument.getIdentity().toString());
       database.getStorage().getConfiguration().update();
     }
 

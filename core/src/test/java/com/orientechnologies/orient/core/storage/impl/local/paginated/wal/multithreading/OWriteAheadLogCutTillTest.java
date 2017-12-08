@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.multi
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
@@ -53,7 +53,7 @@ public class OWriteAheadLogCutTillTest {
     OLocalPaginatedStorage paginatedStorage = mock(OLocalPaginatedStorage.class);
     when(paginatedStorage.getName()).thenReturn("WriteAheadLogCutTillTest");
     when(paginatedStorage.getStoragePath()).thenReturn(Paths.get(testDir.getAbsolutePath()));
-    OStorageConfiguration configurationMock = mock(OStorageConfiguration.class);
+    OStorageConfigurationImpl configurationMock = mock(OStorageConfigurationImpl.class);
     when(configurationMock.getLocaleInstance()).thenReturn(Locale.getDefault());
     when(paginatedStorage.getConfiguration()).thenReturn(configurationMock);
     when(paginatedStorage.getPerformanceStatisticManager())

@@ -1394,20 +1394,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (dbCfg.getProperties() != null) {
       final List<ODocument> resultSet = new ArrayList<ODocument>();
 
-      if (dbCfg.name != null)
-        resultSet.add(new ODocument().field("NAME", "Name").field("VALUE", dbCfg.name));
+      if (dbCfg.getName() != null)
+        resultSet.add(new ODocument().field("NAME", "Name").field("VALUE", dbCfg.getName()));
 
-      resultSet.add(new ODocument().field("NAME", "Version").field("VALUE", dbCfg.version));
+      resultSet.add(new ODocument().field("NAME", "Version").field("VALUE", dbCfg.getVersion()));
       resultSet.add(new ODocument().field("NAME", "Conflict-Strategy").field("VALUE", dbCfg.getConflictStrategy()));
-      resultSet.add(new ODocument().field("NAME", "Date-Format").field("VALUE", dbCfg.dateFormat));
-      resultSet.add(new ODocument().field("NAME", "Datetime-Format").field("VALUE", dbCfg.dateTimeFormat));
+      resultSet.add(new ODocument().field("NAME", "Date-Format").field("VALUE", dbCfg.getDateFormat()));
+      resultSet.add(new ODocument().field("NAME", "Datetime-Format").field("VALUE", dbCfg.getDateTimeFormat()));
       resultSet.add(new ODocument().field("NAME", "Timezone").field("VALUE", dbCfg.getTimeZone().getID()));
       resultSet.add(new ODocument().field("NAME", "Locale-Country").field("VALUE", dbCfg.getLocaleCountry()));
       resultSet.add(new ODocument().field("NAME", "Locale-Language").field("VALUE", dbCfg.getLocaleLanguage()));
       resultSet.add(new ODocument().field("NAME", "Charset").field("VALUE", dbCfg.getCharset()));
-      resultSet.add(new ODocument().field("NAME", "Schema-RID").field("VALUE", dbCfg.schemaRecordId, OType.LINK));
-      resultSet.add(new ODocument().field("NAME", "Index-Manager-RID").field("VALUE", dbCfg.indexMgrRecordId, OType.LINK));
-      resultSet.add(new ODocument().field("NAME", "Dictionary-RID").field("VALUE", dbCfg.dictionaryRecordId, OType.LINK));
+      resultSet.add(new ODocument().field("NAME", "Schema-RID").field("VALUE", dbCfg.getSchemaRecordId(), OType.LINK));
+      resultSet.add(new ODocument().field("NAME", "Index-Manager-RID").field("VALUE", dbCfg.getIndexMgrRecordId(), OType.LINK));
+      resultSet.add(new ODocument().field("NAME", "Dictionary-RID").field("VALUE", dbCfg.getDictionaryRecordId(), OType.LINK));
 
       final OTableFormatter formatter = new OTableFormatter(this);
       formatter.writeRecords(resultSet, -1);

@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -115,7 +115,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private OContextConfiguration clientConfiguration;
   private int                   connectionRetry;
   private int                   connectionRetryDelay;
-  OCluster[] clusters = OCommonConst.EMPTY_CLUSTER_ARRAY;
+  private OCluster[] clusters = OCommonConst.EMPTY_CLUSTER_ARRAY;
   private int                      defaultClusterId;
   public  ORemoteConnectionManager connectionManager;
   private final Set<OStorageRemoteSession> sessions = Collections
@@ -396,7 +396,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
         openRemoteDatabase();
 
-        final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this,
+        final OStorageConfigurationImpl storageConfiguration = new OStorageRemoteConfiguration(this,
             ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString());
         storageConfiguration.load(conf);
 
@@ -426,7 +426,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void reload() {
-    final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this,
+    final OStorageConfigurationImpl storageConfiguration = new OStorageRemoteConfiguration(this,
         ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString());
     storageConfiguration.load(clientConfiguration);
 
@@ -1009,8 +1009,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       final OCluster cluster = clusters[iClusterId];
       clusters[iClusterId] = null;
       clusterMap.remove(cluster.getName());
-      if (configuration.clusters.size() > iClusterId)
-        configuration.dropCluster(iClusterId); // endResponse must be called before this line, which call updateRecord
+      configuration.dropCluster(iClusterId); // endResponse must be called before this line, which call updateRecord
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -1722,7 +1721,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return retry;
   }
 
-  public void updateStorageConfiguration(OStorageConfiguration storageConfiguration) {
+  public void updateStorageConfiguration(OStorageConfigurationImpl storageConfiguration) {
     stateLock.acquireWriteLock();
     this.configuration = storageConfiguration;
     OCluster[] clusters = new OCluster[storageConfiguration.clusters.size()];
