@@ -114,7 +114,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
       getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
       ORecordInternal
-          .setIdentity(delegate.getDocument(), new ORecordId(getDatabase().getStorage().getConfiguration().indexMgrRecordId));
+          .setIdentity(delegate.getDocument(), new ORecordId(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId()));
 
       if (progressListener != null)
         progressListener.onCompletition(this, true);

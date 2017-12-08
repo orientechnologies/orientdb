@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
@@ -109,8 +109,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     configuration = new OStorageConfigurationSegment(this);
 
-    DELETE_MAX_RETRIES = configuration.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.FILE_DELETE_RETRY);
-    DELETE_WAIT_TIME = configuration.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.FILE_DELETE_DELAY);
+    DELETE_MAX_RETRIES = getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.FILE_DELETE_RETRY);
+    DELETE_WAIT_TIME = getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.FILE_DELETE_DELAY);
 
     dirtyFlag = new OPaginatedStorageDirtyFlag(storagePath.resolve("dirty.fl"));
   }
@@ -266,7 +266,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  public OStorageConfiguration getConfiguration() {
+  public OStorageConfigurationImpl getConfiguration() {
     try {
       stateLock.acquireReadLock();
       try {
@@ -374,7 +374,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void preOpenSteps() throws IOException {
-    if (configuration.binaryFormatVersion >= 11) {
+    if (getConfiguration().binaryFormatVersion >= 11) {
       if (dirtyFlag.exists())
         dirtyFlag.open();
       else {
@@ -477,7 +477,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void initWalAndDiskCache(OContextConfiguration contextConfiguration) throws IOException, InterruptedException {
-    if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
+    if (getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
           OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(),
           OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(), TimeUnit.SECONDS);

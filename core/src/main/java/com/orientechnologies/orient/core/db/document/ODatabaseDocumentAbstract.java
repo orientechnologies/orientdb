@@ -1015,10 +1015,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     case TYPE:
       return getMetadata().getImmutableSchemaSnapshot().existsClass("V") ? "graph" : "document";
     case DATEFORMAT:
-      return storage.getConfiguration().dateFormat;
+      return storage.getConfiguration().getDateFormat();
 
     case DATETIMEFORMAT:
-      return storage.getConfiguration().dateTimeFormat;
+      return storage.getConfiguration().getDateTimeFormat();
 
     case TIMEZONE:
       return storage.getConfiguration().getTimeZone().getID();
@@ -1086,7 +1086,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       // CHECK FORMAT
       new SimpleDateFormat(stringValue).format(new Date());
 
-      storage.getConfiguration().dateFormat = stringValue;
+      storage.getConfiguration().setDateFormat(stringValue);
       storage.getConfiguration().update();
       break;
 
@@ -1097,7 +1097,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       // CHECK FORMAT
       new SimpleDateFormat(stringValue).format(new Date());
 
-      storage.getConfiguration().dateTimeFormat = stringValue;
+      storage.getConfiguration().setDateTimeFormat(stringValue);
       storage.getConfiguration().update();
       break;
 

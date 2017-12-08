@@ -270,15 +270,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
         transaction = new ThreadLocal<>();
-        configuration.load(contextConfiguration);
+        getConfiguration().load(contextConfiguration);
 
-        final String cs = configuration.getConflictStrategy();
+        final String cs = getConfiguration().getConflictStrategy();
         if (cs != null) {
           // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
           setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
         }
 
-        componentsFactory = new OCurrentStorageComponentsFactory(configuration);
+        componentsFactory = new OCurrentStorageComponentsFactory(getConfiguration());
 
         preOpenSteps();
 
@@ -364,7 +364,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    */
   @Override
   public String getCreatedAtVersion() {
-    return configuration.getCreatedAtVersion();
+    return getConfiguration().getCreatedAtVersion();
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -373,9 +373,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (cf == null)
       throw new OStorageException("Storage '" + name + "' is not properly initialized");
 
-    final Set<String> indexNames = configuration.indexEngines();
+    final Set<String> indexNames = getConfiguration().indexEngines();
     for (String indexName : indexNames) {
-      final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName);
+      final OStorageConfigurationImpl.IndexEngineData engineData = getConfiguration().getIndexEngine(indexName);
       final OIndexEngine engine = OIndexes
           .createIndexEngine(engineData.getName(), engineData.getAlgorithm(), engineData.getIndexType(),
               engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties(), null);
@@ -403,8 +403,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     addDefaultClusters();
 
     // REGISTER CLUSTER
-    for (int i = 0; i < configuration.clusters.size(); ++i) {
-      final OStorageClusterConfiguration clusterConfig = configuration.clusters.get(i);
+    for (int i = 0; i < getConfiguration().clusters.size(); ++i) {
+      final OStorageClusterConfiguration clusterConfig = getConfiguration().clusters.get(i);
 
       if (clusterConfig != null) {
         pos = createClusterFromConfig(clusterConfig);
@@ -451,8 +451,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         fuzzyCheckpointExecutor = Executors.newScheduledThreadPool(1, new FuzzyCheckpointThreadFactory());
 
-        configuration.initConfiguration(contextConfiguration);
-        componentsFactory = new OCurrentStorageComponentsFactory(configuration);
+        getConfiguration().initConfiguration(contextConfiguration);
+        componentsFactory = new OCurrentStorageComponentsFactory(getConfiguration());
         try {
           performanceStatisticManager.registerMBean(name, id);
         } catch (Exception e) {
@@ -474,8 +474,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
         doAddCluster(OMetadataDefault.CLUSTER_INTERNAL_NAME, null);
-        configuration.create();
-        configuration.setCreationVersion(OConstants.getVersion());
+        getConfiguration().create();
+        getConfiguration().setCreationVersion(OConstants.getVersion());
 
         // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
         // INDEXING
@@ -714,7 +714,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         clusters.set(clusterId, null);
 
         // UPDATE CONFIGURATION
-        configuration.dropCluster(clusterId);
+        getConfiguration().dropCluster(clusterId);
 
         return true;
       } catch (Exception e) {
@@ -762,7 +762,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           newCluster = new OOfflineCluster(this, clusterId, cluster.getName());
         } else {
 
-          newCluster = OPaginatedClusterFactory.INSTANCE.createCluster(cluster.getName(), configuration.version, this);
+          newCluster = OPaginatedClusterFactory.INSTANCE.createCluster(cluster.getName(), getConfiguration().version, this);
           newCluster.configure(this, clusterId, cluster.getName());
           newCluster.open();
         }
@@ -772,7 +772,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         // UPDATE CONFIGURATION
         makeStorageDirty();
-        configuration.setClusterStatus(clusterId, iStatus);
+        getConfiguration().setClusterStatus(clusterId, iStatus);
 
         makeFullCheckpoint();
         return true;
@@ -2046,7 +2046,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         // this method introduced for binary compatibility only
-        if (configuration.binaryFormatVersion > 15)
+        if (getConfiguration().binaryFormatVersion > 15)
           return -1;
 
         if (indexEngineNameMap.containsKey(engineName))
@@ -2059,7 +2059,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
         final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
 
-        final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(engineName, algorithm,
+        final OStorageConfigurationImpl.IndexEngineData engineData = new OStorageConfigurationImpl.IndexEngineData(engineName, algorithm,
             indexType, durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes,
             nullValuesSupport, keySize, engineProperties);
 
@@ -2070,7 +2070,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         indexEngineNameMap.put(engineName, engine);
         indexEngines.add(engine);
-        configuration.addIndexEngine(engineName, engineData);
+        getConfiguration().addIndexEngine(engineName, engineData);
 
         return indexEngines.size() - 1;
       } catch (IOException e) {
@@ -2106,7 +2106,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           final OIndexEngine engine = indexEngineNameMap.remove(engineName);
           if (engine != null) {
             indexEngines.remove(engine);
-            configuration.deleteIndexEngine(engineName);
+            getConfiguration().deleteIndexEngine(engineName);
             engine.delete();
           }
         }
@@ -2134,11 +2134,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         indexEngines.add(engine);
 
-        final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(engineName, algorithm,
+        final OStorageConfigurationImpl.IndexEngineData engineData = new OStorageConfigurationImpl.IndexEngineData(engineName, algorithm,
             indexType, durableInNonTxMode, version, serializerId, keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
             keySize, engineProperties);
 
-        configuration.addIndexEngine(engineName, engineData);
+        getConfiguration().addIndexEngine(engineName, engineData);
 
         return indexEngines.size() - 1;
       } catch (IOException e) {
@@ -2206,7 +2206,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         final String engineName = engine.getName();
         indexEngineNameMap.remove(engineName);
-        configuration.deleteIndexEngine(engineName);
+        getConfiguration().deleteIndexEngine(engineName);
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error on index deletion"), e);
       } finally {
@@ -3121,7 +3121,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           writeCache.flush();
 
           if (configuration != null)
-            configuration.synch();
+            getConfiguration().synch();
 
           clearStorageDirty();
         } catch (IOException e) {
@@ -3860,7 +3860,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         writeAheadLog.flush();
 
         if (configuration != null)
-          configuration.synch();
+          getConfiguration().synch();
 
         //so we will be able to cut almost all the log
         writeAheadLog.appendNewSegment();
@@ -4330,22 +4330,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final String stgConflictStrategy = getConflictStrategy().getName();
 
     createClusterFromConfig(
-        new OStoragePaginatedClusterConfiguration(configuration, clusters.size(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null,
+        new OStoragePaginatedClusterConfiguration(getConfiguration(), clusters.size(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null,
             true, 20, 4, storageCompression, storageEncryption, encryptionKey, stgConflictStrategy,
             OStorageClusterConfiguration.STATUS.ONLINE));
 
     createClusterFromConfig(
-        new OStoragePaginatedClusterConfiguration(configuration, clusters.size(), OMetadataDefault.CLUSTER_INDEX_NAME, null, false,
+        new OStoragePaginatedClusterConfiguration(getConfiguration(), clusters.size(), OMetadataDefault.CLUSTER_INDEX_NAME, null, false,
             OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
             storageCompression, storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
 
     createClusterFromConfig(
-        new OStoragePaginatedClusterConfiguration(configuration, clusters.size(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null,
+        new OStoragePaginatedClusterConfiguration(getConfiguration(), clusters.size(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null,
             false, 1, 1, storageCompression, storageEncryption, encryptionKey, stgConflictStrategy,
             OStorageClusterConfiguration.STATUS.ONLINE));
 
     defaultClusterId = createClusterFromConfig(
-        new OStoragePaginatedClusterConfiguration(configuration, clusters.size(), CLUSTER_DEFAULT_NAME, null, true,
+        new OStoragePaginatedClusterConfiguration(getConfiguration(), clusters.size(), CLUSTER_DEFAULT_NAME, null, true,
             OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
             storageCompression, storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
   }
@@ -4359,7 +4359,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     if (config.getStatus() == OStorageClusterConfiguration.STATUS.ONLINE)
-      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(config.getName(), configuration.version, this);
+      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(config.getName(), getConfiguration().version, this);
     else
       cluster = new OOfflineCluster(this, config.getId(), config.getName());
     cluster.configure(this, config);
@@ -4423,7 +4423,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (clusterName != null) {
       clusterName = clusterName.toLowerCase(configuration.getLocaleInstance());
 
-      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(clusterName, configuration.version, this);
+      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(clusterName, getConfiguration().version, this);
       cluster.configure(this, clusterPos, clusterName, parameters);
     } else {
       cluster = null;
@@ -4494,11 +4494,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       indexEngines.clear();
       indexEngineNameMap.clear();
 
-      if (configuration != null)
+      if (getConfiguration() != null)
         if (onDelete)
-          configuration.delete();
+          getConfiguration().delete();
         else
-          configuration.close();
+          getConfiguration().close();
 
       super.close(force, onDelete);
 
@@ -4968,7 +4968,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void backUpWAL(Exception e) {
     try {
-      final File rootDir = new File(configuration.getDirectory());
+      final File rootDir = new File(getConfiguration().getDirectory());
       final File backUpDir = new File(rootDir, "wal_backup");
       if (!backUpDir.exists()) {
         final boolean created = backUpDir.mkdir();
@@ -5406,4 +5406,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     }
   }
+
+  @Override
+  public OStorageConfigurationImpl getConfiguration() {
+    return (OStorageConfigurationImpl) configuration;
+  }
+
 }

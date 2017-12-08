@@ -21,14 +21,13 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Set;
 
-public class OStorageRemoteConfiguration extends OStorageConfiguration {
+public class OStorageRemoteConfiguration extends OStorageConfigurationImpl {
 
   private static final long serialVersionUID = -3850696054909943272L;
   private String networkRecordSerializer;

@@ -269,13 +269,13 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.beginObject("config");
 
       json.beginCollection("values");
-      json.writeObjects(null, new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().dateFormat },
-          new Object[] { "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().dateTimeFormat }, new Object[] {
+      json.writeObjects(null, new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().getDateFormat()},
+          new Object[] { "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().getDateTimeFormat() }, new Object[] {
               "name", "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() }, new Object[] { "name",
               "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() }, new Object[] { "name",
               "charSet", "value", db.getStorage().getConfiguration().getCharset() }, new Object[] { "name", "timezone", "value",
               db.getStorage().getConfiguration().getTimeZone().getID() }, new Object[] { "name", "definitionVersion", "value",
-              db.getStorage().getConfiguration().version }, new Object[] { "name", "clusterSelection", "value",
+              db.getStorage().getConfiguration().getVersion() }, new Object[] { "name", "clusterSelection", "value",
               db.getStorage().getConfiguration().getClusterSelection() }, new Object[] { "name", "minimumClusters", "value",
               db.getStorage().getConfiguration().getMinimumClusters() }, new Object[] { "name", "conflictStrategy", "value",
               db.getStorage().getConfiguration().getConflictStrategy() });
