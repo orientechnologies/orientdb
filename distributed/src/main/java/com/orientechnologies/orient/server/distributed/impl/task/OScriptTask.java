@@ -22,6 +22,8 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -31,6 +33,7 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.serialization.OStreamableHelper;
+import com.orientechnologies.orient.core.sql.OSoftQueryResultList;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -41,13 +44,12 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractCommandTask
 
 /**
  * Executes a script on distributed servers.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OScriptTask extends OAbstractCommandTask {
-  private static final long     serialVersionUID = 1L;
-  public static final int       FACTORYID        = 6;
+  private static final long serialVersionUID = 1L;
+  public static final  int  FACTORYID        = 6;
 
   protected String              text;
   protected Map<Object, Object> params;
@@ -63,8 +65,9 @@ public class OScriptTask extends OAbstractCommandTask {
 
   public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
-        text.toString(), database.getName());
+    ODistributedServerLog
+        .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s", text.toString(),
+            database.getName());
 
     final OCommandRequest cmd = database.command(new OCommandScript(text));
 
@@ -75,7 +78,10 @@ public class OScriptTask extends OAbstractCommandTask {
     else
       res = cmd.execute();
 
-    return res;
+    if (res instanceof OSoftQueryResultList) {
+      return new ArrayList<Object>((List<Object>) res);
+    } else
+      return res;
   }
 
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {

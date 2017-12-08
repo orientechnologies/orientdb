@@ -719,7 +719,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       else if (nodeResult instanceof Exception)
         // RECEIVED EXCEPTION
         throw (Exception) nodeResult;
-      else
+      else if (nodeResult != null)
         mergedResult.add(nodeResult);
     }
 

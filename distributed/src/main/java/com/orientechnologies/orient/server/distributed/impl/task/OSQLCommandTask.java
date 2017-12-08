@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.serialization.OStreamableHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OSoftQueryResultList;
 import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -40,10 +41,7 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Distributed task used for synchronization.
@@ -125,6 +123,10 @@ public class OSQLCommandTask extends OAbstractCommandTask {
       } catch (ORetryQueryException e) {
         continue;
       }
+    }
+
+    if (res instanceof OSoftQueryResultList) {
+      res = new ArrayList<Object>((List<Object>) res);
     }
 
     return res;
