@@ -79,7 +79,11 @@ public class OScriptTask extends OAbstractCommandTask {
       res = cmd.execute();
 
     if (res instanceof OSoftQueryResultList) {
-      return new ArrayList<Object>((List<Object>) res);
+      List<Object> finalRes = new ArrayList<Object>();
+      for (Object singleResult : (List<Object>) res) {
+        finalRes.add(singleResult);
+      }
+      return finalRes;
     } else
       return res;
   }

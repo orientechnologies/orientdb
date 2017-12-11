@@ -126,7 +126,11 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     }
 
     if (res instanceof OSoftQueryResultList) {
-      res = new ArrayList<Object>((List<Object>) res);
+      List<Object> finalRes = new ArrayList<Object>();
+      for (Object singleResult : (List<Object>) res) {
+        finalRes.add(singleResult);
+      }
+      res = finalRes;
     }
 
     return res;
