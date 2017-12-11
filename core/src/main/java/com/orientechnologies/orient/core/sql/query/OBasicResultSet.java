@@ -217,7 +217,15 @@ public class OBasicResultSet<T> implements OResultSet<T> {
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeObject(underlying);
+    if (underlying instanceof OSoftQueryResultList) {
+      List<Object> convertedUnderlying = new ArrayList<Object>();
+      for (Object singleResult : underlying) {
+        convertedUnderlying.add(singleResult);
+      }
+      out.writeObject(convertedUnderlying);
+    } else {
+      out.writeObject(underlying);
+    }
   }
 
   @Override
@@ -227,6 +235,7 @@ public class OBasicResultSet<T> implements OResultSet<T> {
   }
 
   public OBasicResultSet<T> copy() {
+
     final OBasicResultSet<T> newValue = new OBasicResultSet<T>(query);
     newValue.underlying.addAll(underlying);
     return newValue;
