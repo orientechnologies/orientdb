@@ -445,12 +445,11 @@ public class ODistributedConfiguration {
    * @param iClusterName Cluster name, or null for *
    */
   public String getClusterOwner(final String iClusterName) {
-
     String owner;
 
     final ODocument clusters = getConfiguredClusters();
 
-// GET THE CLUSTER CFG
+    // GET THE CLUSTER CFG
     final ODocument cfg = iClusterName != null ? (ODocument) clusters.field(iClusterName) : null;
 
     if (cfg != null) {
@@ -507,7 +506,6 @@ public class ODistributedConfiguration {
    * Returns the array of configured clusters
    */
   public String[] getClusterNames() {
-
     final ODocument clusters = configuration.field(CLUSTERS);
     return clusters.fieldNames();
   }

@@ -617,8 +617,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
               if (ddb != null && !(result instanceof Throwable) && task instanceof OAbstractReplicatedTask && !task
                   .isIdempotent()) {
+
                 // UPDATE LSN WITH LAST OPERATION
                 ddb.setLSN(sourceNodeName, ((OAbstractReplicatedTask) task).getLastLSN(), true);
+
+                // UPDATE LSN WITH LAST LOCAL OPERATION
+                ddb.setLSN(getLocalNodeName(), ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN(), true);
               }
             }
           }
@@ -1094,7 +1098,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           final Object value = r.getValue();
 
           if (value instanceof Boolean)
-            continue;
+            // FALSE: NO CHANGES, THE DATABASE IS ALIGNED
+            databaseInstalledCorrectly = true;
           else {
             final String server = r.getKey();
 
@@ -1289,6 +1294,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         conn.acquire();
         try {
           conn.getDatabase().replaceStorage(storage);
+          conn.getDatabase().getMetadata().reload();
         } finally {
           conn.release();
         }
@@ -1424,7 +1430,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final ODistributedDatabaseImpl distrDatabase, final String iNode, final ODistributedDatabaseChunk firstChunk,
       final boolean delta, final File uniqueClustersBackupDirectory, final OModifiableDistributedConfiguration cfg) {
 
-    final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
+    final String fileName = Orient.getTempPath() + "install_" + databaseName + "_server" + getLocalNodeId() + ".zip";
 
     final String localNodeName = nodeName;
 
@@ -1517,31 +1523,24 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODatabaseDocumentInternal db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta,
         uniqueClustersBackupDirectory, cfg);
 
-    if (db != null) {
-      // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER AND ADD LAST LOCAL LSN
-      try {
-        distrDatabase.getSyncConfiguration().load();
-        distrDatabase.getSyncConfiguration()
-            .setLastLSN(localNodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), false);
-      } catch (IOException e) {
-        ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on loading %s file for database '%s'", e,
-            DISTRIBUTED_SYNC_JSON_FILENAME, databaseName);
-      }
+    if (db == null)
+      return;
 
-      try {
-        try {
-          rebalanceClusterOwnership(nodeName, db, cfg, false);
-        } catch (Exception e) {
-          // HANDLE IT AS WARNING
-          ODistributedServerLog
-              .warn(this, nodeName, null, DIRECTION.NONE, "Error on re-balancing the cluster for database '%s'", e, databaseName);
-          // NOT CRITICAL, CONTINUE
-        }
-        distrDatabase.setOnline();
-      } finally {
-        db.activateOnCurrentThread();
-        db.close();
-      }
+    // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER AND ADD LAST LOCAL LSN
+    try {
+      distrDatabase.getSyncConfiguration().load();
+      distrDatabase.getSyncConfiguration()
+          .setLastLSN(localNodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), false);
+    } catch (IOException e) {
+      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on loading %s file for database '%s'", e,
+          DISTRIBUTED_SYNC_JSON_FILENAME, databaseName);
+    }
+
+    try {
+      distrDatabase.setOnline();
+    } finally {
+      db.activateOnCurrentThread();
+      db.close();
     }
 
     // ASK FOR INDIVIDUAL CLUSTERS IN CASE OF SHARDING AND NO LOCAL COPY
@@ -1563,6 +1562,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     for (String cl : toSynchClusters) {
       // FILTER CLUSTER CHECKING IF ANY NODE IS ACTIVE
       OCommandExecutorSQLHASyncCluster.replaceCluster(this, serverInstance, databaseName, cl);
+    }
+
+    try {
+      rebalanceClusterOwnership(nodeName, db, cfg, false);
+    } catch (Exception e) {
+      // HANDLE IT AS WARNING
+      ODistributedServerLog
+          .warn(this, nodeName, null, DIRECTION.NONE, "Error on re-balancing the cluster for database '%s'", e, databaseName);
+      // NOT CRITICAL, CONTINUE
     }
   }
 
