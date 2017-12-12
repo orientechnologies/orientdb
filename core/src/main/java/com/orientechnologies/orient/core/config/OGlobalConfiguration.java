@@ -862,6 +862,13 @@ public enum OGlobalConfiguration {
       "Try to execute an incremental backup first.", Boolean.class, true),
 
   /**
+   * @Since 2.2.27
+   */
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CHECKINTEGRITY_LAST_TX("distributed.checkIntegrityLastTxs",
+      "Before asking for a delta sync, checks the integrity of the records touched by the last X transactions committed on local server.",
+      Integer.class, 16),
+
+  /**
    * @Since 2.1
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY("distributed.concurrentTxMaxAutoRetry",

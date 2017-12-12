@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public interface OClusterOwnershipAssignmentStrategy {
 
-  List<String> assignClusterOwnershipOfClass(final ODatabaseInternal iDatabase, final OModifiableDistributedConfiguration cfg,
-      final OClass iClass, final Set<String> availableNodes);
+  List<String> assignClusterOwnershipOfClass(ODatabaseInternal iDatabase, OModifiableDistributedConfiguration cfg, OClass iClass,
+      Set<String> availableNodes, boolean canCreateNewClusters);
 
 }

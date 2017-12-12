@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
   public static final int FACTORYID = 13;
 
-  protected Set<String> excludedClusterNames = new HashSet<String>();
+  protected Set<String> includeClusterNames = new HashSet<String>();
 
   public OSyncDatabaseDeltaTask() {
   }
@@ -78,8 +78,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
     return Boolean.FALSE;
   }
 
-  public void excludeClusterName(final String name) {
-    excludedClusterNames.add(name);
+  public void includeClusterName(final String name) {
+    includeClusterNames.add(name);
   }
 
   protected Object deltaBackup(final ODistributedRequestId requestId, final ODistributedServerManager iManager,
@@ -135,7 +135,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
     try {
       final AtomicLong counter = new AtomicLong(0);
       endLSN.set(((OAbstractPaginatedStorage) storage)
-          .recordsChangedAfterLSN(lastLSN, fileOutputStream, excludedClusterNames, new OCommandOutputListener() {
+          .recordsChangedAfterLSN(lastLSN, fileOutputStream, includeClusterNames, new OCommandOutputListener() {
             @Override
             public void onMessage(final String iText) {
               if (iText.startsWith("read")) {
@@ -214,8 +214,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
     lastLSN.toStream(out);
     out.writeLong(lastOperationTimestamp);
     out.writeLong(random);
-    out.writeInt(excludedClusterNames.size());
-    for (String clName : excludedClusterNames) {
+    out.writeInt(includeClusterNames.size());
+    for (String clName : includeClusterNames) {
       out.writeUTF(clName);
     }
   }
@@ -225,10 +225,10 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
     lastLSN = new OLogSequenceNumber(in);
     lastOperationTimestamp = in.readLong();
     random = in.readLong();
-    excludedClusterNames.clear();
+    includeClusterNames.clear();
     final int total = in.readInt();
     for (int i = 0; i < total; ++i) {
-      excludedClusterNames.add(in.readUTF());
+      includeClusterNames.add(in.readUTF());
     }
   }
 
