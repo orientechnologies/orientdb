@@ -319,7 +319,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final String backupPath = omap.remove("-restore");
 
-    if (databaseURL.startsWith(OEngineRemote.NAME)) {
+    if (databaseURL.toLowerCase(Locale.ENGLISH).startsWith(OEngineRemote.NAME)) {
       // REMOTE CONNECTION
       final String dbURL = databaseURL.substring(OEngineRemote.NAME.length() + 1);
       OServerAdmin serverAdmin = new OServerAdmin(dbURL).connect(userName, userPassword);
