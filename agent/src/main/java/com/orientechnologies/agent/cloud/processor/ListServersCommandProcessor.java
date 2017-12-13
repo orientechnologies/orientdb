@@ -77,7 +77,7 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
     stats.setCpuUsage(getDouble(realtime, "statistics", "process.runtime.cpu", "last"));
     stats.setNumberOfCPUs(getLong(realtime, "sizes", "system.config.cpus"));
     stats.setActiveConnections(getLong(realtime, "counters", "server.connections.actives"));
-    stats.setNetworkRequets(getLong(realtime, "chronos", "server.network.requests", "last"));
+    stats.setNetworkRequests(getLong(realtime, "chronos", "server.network.requests", "last"));
     stats.setTotalDiskCache(getLong(realtime, "statistics", "process.runtime.diskCacheTotal", "last"));
     stats.setTotalDiskCache(getLong(realtime, "statistics", "process.runtime.diskCacheUsed", "last"));
     stats.setDiskSize(getLong(realtime, "sizes", "system.disk./.totalSpace"));
