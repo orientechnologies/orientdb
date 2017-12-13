@@ -281,7 +281,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               final ZipEntry configurationEntry = new ZipEntry(CONF_UTF_8_ENTRY_NAME);
 
               zipOutputStream.putNextEntry(configurationEntry);
-              final byte[] btConf = configuration.toStream(Charset.forName("UTF-8"));
+              final byte[] btConf =  getConfiguration() .toStream(Charset.forName("UTF-8"));
 
               zipOutputStream.write(btConf);
               zipOutputStream.closeEntry();
@@ -588,7 +588,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   }
 
   private void replaceConfiguration(ZipInputStream zipInputStream, Charset charset) throws IOException {
-    OContextConfiguration config = configuration.getContextConfiguration();
+    OContextConfiguration config = getConfiguration().getContextConfiguration();
 
     byte[] buffer = new byte[1024];
 
@@ -609,12 +609,12 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       }
     }
 
-    configuration.fromStream(buffer, 0, rb, charset);
-    configuration.update();
+    getConfiguration().fromStream(buffer, 0, rb, charset);
+    getConfiguration().update();
 
-    configuration.close();
+    getConfiguration().close();
 
-    configuration.load(config);
+    getConfiguration().load(config);
   }
 
 }
