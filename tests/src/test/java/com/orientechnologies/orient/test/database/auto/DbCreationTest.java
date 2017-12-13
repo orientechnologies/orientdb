@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -117,9 +119,15 @@ public class DbCreationTest extends ObjectDBBaseTest {
   public void testChangeLocale() throws IOException {
     database = new OObjectDatabaseTx(url);
     database.open("admin", "admin");
-    database.getStorage().getConfiguration().setLocaleLanguage(Locale.ENGLISH.getLanguage());
-    database.getStorage().getConfiguration().setLocaleCountry(Locale.ENGLISH.getCountry());
-    database.getStorage().getConfiguration().update();
+    database.command(new OCommandSQL(" ALTER DATABASE LOCALELANGUAGE  ?")).execute(Locale.GERMANY.getLanguage());
+    database.command(new OCommandSQL(" ALTER DATABASE LOCALECOUNTRY  ?")).execute(Locale.GERMANY.getCountry());
+    database.reload();
+    Assert.assertEquals(database.get(ODatabase.ATTRIBUTES.LOCALELANGUAGE), Locale.GERMANY.getLanguage());
+    Assert.assertEquals(database.get(ODatabase.ATTRIBUTES.LOCALECOUNTRY), Locale.GERMANY.getCountry());
+    database.set(ODatabase.ATTRIBUTES.LOCALECOUNTRY, Locale.ENGLISH.getCountry());
+    database.set(ODatabase.ATTRIBUTES.LOCALELANGUAGE, Locale.ENGLISH.getLanguage());
+    Assert.assertEquals(database.get(ODatabase.ATTRIBUTES.LOCALECOUNTRY), Locale.ENGLISH.getCountry());
+    Assert.assertEquals(database.get(ODatabase.ATTRIBUTES.LOCALELANGUAGE), Locale.ENGLISH.getLanguage());
     database.close();
   }
 

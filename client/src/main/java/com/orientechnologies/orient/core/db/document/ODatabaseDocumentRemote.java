@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.core.db.document;
@@ -114,6 +114,53 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public void drop() {
     throw new UnsupportedOperationException("use OrientDB");
+  }
+
+  @Override
+  public <DB extends ODatabase> DB set(ATTRIBUTES iAttribute, Object iValue) {
+
+    if (iAttribute == ATTRIBUTES.CUSTOM) {
+      String stringValue = iValue.toString();
+      int indx = stringValue != null ? stringValue.indexOf('=') : -1;
+      if (indx < 0) {
+        if ("clear".equalsIgnoreCase(stringValue)) {
+          String query = "alter database CUSTOM 'clear'";
+          //Bypass the database command for avoid transaction management
+          ORemoteQueryResult result = getStorage().command(this, query, new Object[] { iValue });
+          result.getResult().close();
+        } else
+          throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
+      } else {
+        String customName = stringValue.substring(0, indx).trim();
+        String customValue = stringValue.substring(indx + 1).trim();
+        setCustom(customName, customValue);
+      }
+    } else {
+      String query = "alter database " + iAttribute.name() + " ? ";
+      //Bypass the database command for avoid transaction management
+      ORemoteQueryResult result = getStorage().command(this, query, new Object[] { iValue });
+      result.getResult().close();
+      getStorage().reload();
+    }
+
+    return (DB) this;
+  }
+
+  @Override
+  public <DB extends ODatabase> DB setCustom(String name, Object iValue) {
+    if ("clear".equals(name) && iValue == null) {
+      String query = "alter database CUSTOM 'clear'";
+      //Bypass the database command for avoid transaction management
+      ORemoteQueryResult result = getStorage().command(this, query, new Object[] {});
+      result.getResult().close();
+    } else {
+      String query = "alter database CUSTOM  " + name + " = ?";
+      //Bypass the database command for avoid transaction management
+      ORemoteQueryResult result = getStorage().command(this, query, new Object[] { iValue });
+      result.getResult().close();
+      getStorage().reload();
+    }
+    return (DB) this;
   }
 
   public ODatabaseDocumentInternal copy() {
@@ -297,7 +344,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public OResultSet command(String query, Object[] args) {
+  public OResultSet command(String query, Object... args) {
     checkOpenness();
     checkAndSendTransaction();
     ORemoteQueryResult result = storage.command(this, query, args);

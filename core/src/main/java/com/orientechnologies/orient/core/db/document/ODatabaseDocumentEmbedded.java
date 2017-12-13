@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -54,9 +55,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
@@ -262,6 +262,176 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         this.set(attrs.getKey(), attrs.getValue());
       }
     }
+  }
+
+  @Override
+  public <DB extends ODatabase> DB set(final ATTRIBUTES iAttribute, final Object iValue) {
+    checkIfActive();
+
+    if (iAttribute == null)
+      throw new IllegalArgumentException("attribute is null");
+
+    final String stringValue = OIOUtils.getStringContent(iValue != null ? iValue.toString() : null);
+    final OStorage storage = getStorage();
+    switch (iAttribute) {
+    case STATUS:
+      if (stringValue == null)
+        throw new IllegalArgumentException("DB status can't be null");
+      setStatus(STATUS.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
+      break;
+
+    case DEFAULTCLUSTERID:
+      if (iValue != null) {
+        if (iValue instanceof Number)
+          storage.setDefaultClusterId(((Number) iValue).intValue());
+        else
+          storage.setDefaultClusterId(storage.getClusterIdByName(iValue.toString()));
+      }
+      break;
+
+    case TYPE:
+      throw new IllegalArgumentException("Database type cannot be changed at run-time");
+
+    case DATEFORMAT:
+      if (stringValue == null)
+        throw new IllegalArgumentException("date format is null");
+
+      // CHECK FORMAT
+      new SimpleDateFormat(stringValue).format(new Date());
+
+      storage.getConfiguration().setDateFormat(stringValue);
+      storage.getConfiguration().update();
+      break;
+
+    case DATETIMEFORMAT:
+      if (stringValue == null)
+        throw new IllegalArgumentException("date format is null");
+
+      // CHECK FORMAT
+      new SimpleDateFormat(stringValue).format(new Date());
+
+      storage.getConfiguration().setDateTimeFormat(stringValue);
+      storage.getConfiguration().update();
+      break;
+
+    case TIMEZONE:
+      if (stringValue == null)
+        throw new IllegalArgumentException("Timezone can't be null");
+
+      // for backward compatibility, until 2.1.13 OrientDB accepted timezones in lowercase as well
+      TimeZone timeZoneValue = TimeZone.getTimeZone(stringValue.toUpperCase(Locale.ENGLISH));
+      if (timeZoneValue.equals(TimeZone.getTimeZone("GMT"))) {
+        timeZoneValue = TimeZone.getTimeZone(stringValue);
+      }
+
+      storage.getConfiguration().setTimeZone(timeZoneValue);
+      storage.getConfiguration().update();
+      break;
+
+    case LOCALECOUNTRY:
+      storage.getConfiguration().setLocaleCountry(stringValue);
+      storage.getConfiguration().update();
+      break;
+
+    case LOCALELANGUAGE:
+      storage.getConfiguration().setLocaleLanguage(stringValue);
+      storage.getConfiguration().update();
+      break;
+
+    case CHARSET:
+      storage.getConfiguration().setCharset(stringValue);
+      storage.getConfiguration().update();
+      break;
+
+    case CUSTOM:
+      int indx = stringValue != null ? stringValue.indexOf('=') : -1;
+      if (indx < 0) {
+        if ("clear".equalsIgnoreCase(stringValue)) {
+          clearCustomInternal();
+        } else
+          throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
+      } else {
+        String customName = stringValue.substring(0, indx).trim();
+        String customValue = stringValue.substring(indx + 1).trim();
+        if (customValue.isEmpty())
+          removeCustomInternal(customName);
+        else
+          setCustomInternal(customName, customValue);
+      }
+      break;
+
+    case CLUSTERSELECTION:
+      storage.getConfiguration().setClusterSelection(stringValue);
+      storage.getConfiguration().update();
+      break;
+
+    case MINIMUMCLUSTERS:
+      if (iValue != null) {
+        if (iValue instanceof Number)
+          storage.getConfiguration().setMinimumClusters(((Number) iValue).intValue());
+        else
+          storage.getConfiguration().setMinimumClusters(Integer.parseInt(stringValue));
+      } else
+        // DEFAULT = 1
+        storage.getConfiguration().setMinimumClusters(1);
+
+      storage.getConfiguration().update();
+      break;
+
+    case CONFLICTSTRATEGY:
+      storage.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(stringValue));
+      storage.getConfiguration().setConflictStrategy(stringValue);
+      storage.getConfiguration().update();
+      break;
+
+    case VALIDATION:
+      storage.getConfiguration().setValidation(Boolean.parseBoolean(stringValue));
+      storage.getConfiguration().update();
+      break;
+
+    default:
+      throw new IllegalArgumentException("Option '" + iAttribute + "' not supported on alter database");
+
+    }
+
+    return (DB) this;
+  }
+
+  private void clearCustomInternal() {
+    getStorage().getConfiguration().clearProperties();
+  }
+
+  private void removeCustomInternal(final String iName) {
+    setCustomInternal(iName, null);
+  }
+
+  private void setCustomInternal(final String iName, final String iValue) {
+    final OStorage storage = getStorage();
+    if (iValue == null || "null".equalsIgnoreCase(iValue))
+      // REMOVE
+      storage.getConfiguration().removeProperty(iName);
+    else
+      // SET
+      storage.getConfiguration().setProperty(iName, iValue);
+
+    storage.getConfiguration().update();
+  }
+
+  public <DB extends ODatabase> DB setCustom(final String name, final Object iValue) {
+    checkIfActive();
+
+    if ("clear".equalsIgnoreCase(name) && iValue == null) {
+      clearCustomInternal();
+    } else {
+      String customName = name;
+      String customValue = iValue == null ? null : "" + iValue;
+      if (customName == null || customValue.isEmpty())
+        removeCustomInternal(customName);
+      else
+        setCustomInternal(customName, customValue);
+    }
+
+    return (DB) this;
   }
 
   /**

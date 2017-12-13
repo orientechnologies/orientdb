@@ -48,14 +48,14 @@ public class OStorageRemoteConfiguration extends OStorageConfigurationImpl {
     throw new UnsupportedOperationException("create");
   }
 
-//  @Override
-//  public void update() throws OSerializationException {
-//    throw new UnsupportedOperationException("update");
-//  }
+  @Override
+  public void update() {
+    throw new UnsupportedOperationException("update");
+  }
 
   @Override
   public void delete() throws IOException {
-    throw new UnsupportedOperationException( "delete");
+    throw new UnsupportedOperationException("delete");
   }
 
   @Override
@@ -92,6 +92,5 @@ public class OStorageRemoteConfiguration extends OStorageConfigurationImpl {
   public void removeProperty(String iName) {
     throw new UnsupportedOperationException("remove property");
   }
-
 
 }
