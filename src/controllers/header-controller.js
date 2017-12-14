@@ -4,7 +4,7 @@ import '../views/server/about.html';
 import '../views/database/loginServer.html';
 import angular from 'angular';
 
-let HeaderController = angular.module('header.controller', [databaseServices]).controller("HeaderController", ['$scope', '$rootScope', '$routeParams', '$http', '$location', '$modal', '$q', 'Database', 'Aside', 'DatabaseApi', '$timeout', function ($scope, $rootScope, $routeParams, $http, $location, $modal, $q, Database, Aside, DatabaseApi, $timeout) {
+let HeaderController = angular.module('header.controller', [databaseServices]).controller("HeaderController", ['$scope', '$rootScope', '$routeParams', '$http', '$location', '$modal', '$q', 'Database', 'Aside', 'DatabaseApi', '$timeout','localStorageService', function ($scope, $rootScope, $routeParams, $http, $location, $modal, $q, Database, Aside, DatabaseApi, $timeout,localStorageService) {
   $scope.database = Database;
   $scope.selectedMenu = null;
   $scope.menus = [];
@@ -114,6 +114,8 @@ let HeaderController = angular.module('header.controller', [databaseServices]).c
   $scope.logout = function () {
     Database.disconnect(function () {
       $scope.menus = [];
+
+      localStorageService.remove("SimpleAuth");
       $location.path("/");
     });
   }

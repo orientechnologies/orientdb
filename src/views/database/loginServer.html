@@ -13,16 +13,14 @@
               <label class="control-label col-md-2">Server User</label>
 
               <div class="col-md-10">
-                <input id="user" class="form-control" type="text" required ng-model="username"
-                       value=""/>
+                <input id="user" class="form-control" type="text" required ng-model="username" value="" />
               </div>
             </div>
             <div class="form-group">
               <label class="control-label col-md-2">Password</label>
 
               <div class="col-md-10">
-                <input id="password" type="password" class="form-control" required ng-model="password"
-                       value=""/>
+                <input id="password" type="password" class="form-control" required ng-model="password" value="" />
               </div>
 
             </div>
@@ -35,12 +33,10 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn" ng-click="$hide()">Close</button>
+        <button type="button" class="btn btn-default" ng-click="$hide()">Close</button>
         <button class="btn btn-primary" ng-disabled="!sso && newDB.$invalid" ng-click="login(username,password)">Login
         </button>
       </div>
     </div>
   </div>
 </div>
-
-
