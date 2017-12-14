@@ -1407,7 +1407,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       resultSet.add(new ODocument().field("NAME", "Charset").field("VALUE", dbCfg.getCharset()));
       resultSet.add(new ODocument().field("NAME", "Schema-RID").field("VALUE", dbCfg.getSchemaRecordId(), OType.LINK));
       resultSet.add(new ODocument().field("NAME", "Index-Manager-RID").field("VALUE", dbCfg.getIndexMgrRecordId(), OType.LINK));
-      resultSet.add(new ODocument().field("NAME", "Dictionary-RID").field("VALUE", dbCfg.getDictionaryRecordId(), OType.LINK));
 
       final OTableFormatter formatter = new OTableFormatter(this);
       formatter.writeRecords(resultSet, -1);

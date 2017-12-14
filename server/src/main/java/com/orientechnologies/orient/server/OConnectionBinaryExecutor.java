@@ -124,6 +124,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   @Override
+  public OBinaryResponse executeDBReload(OReloadRequest37 request) {
+    return new OReloadResponse37(connection.getDatabase().getStorage().getConfiguration());
+  }
+
+  @Override
   public OBinaryResponse executeCreateDatabase(OCreateDatabaseRequest request) {
 
     if (server.existsDatabase(request.getDatabaseName()))
@@ -255,7 +260,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
         @Override
         public byte[] call() throws Exception {
-          return ((OStorageConfigurationImpl)connection.getDatabase().getStorage().getConfiguration())
+          return ((OStorageConfigurationImpl) connection.getDatabase().getStorage().getConfiguration())
               .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
         }
       }, false);
@@ -316,7 +321,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
         @Override
         public byte[] call() throws Exception {
-          return ((OStorageConfigurationImpl)connection.getDatabase().getStorage().getConfiguration())
+          return ((OStorageConfigurationImpl) connection.getDatabase().getStorage().getConfiguration())
               .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
         }
       }, false);
@@ -1197,7 +1202,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     final long serverTimeout = connection.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
     //TODO set a timeout on the request?
 
-    OLocalResultSetLifecycleDecorator rs = (OLocalResultSetLifecycleDecorator) connection.getDatabase().getActiveQuery(request.getQueryId());
+    OLocalResultSetLifecycleDecorator rs = (OLocalResultSetLifecycleDecorator) connection.getDatabase()
+        .getActiveQuery(request.getQueryId());
 
     //copy the result-set to make sure that the execution is successful
     List<OResultInternal> rsCopy = new ArrayList<>(request.getRecordsPerPage());
@@ -1208,8 +1214,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       i++;
     }
     boolean hasNext = rs.hasNext();
-    return new OQueryResponse(rs.getQueryId(), false, rsCopy, rs.getExecutionPlan(), hasNext,
-        rs.getQueryStats());
+    return new OQueryResponse(rs.getQueryId(), false, rsCopy, rs.getExecutionPlan(), hasNext, rs.getQueryStats());
   }
 
   @Override

@@ -34,13 +34,12 @@ public class OIntentMassiveInsert implements OIntent {
   private boolean                                     previousRetainRecords;
   private boolean                                     previousRetainObjects;
   private boolean                                     previousValidation;
-  private boolean                                     previousTxRequiredForSQLGraphOperations;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION> removedHooks;
   private OSecurityUser                               currentUser;
-  private boolean                                     disableValidation = true;
-  private boolean                                     disableSecurity   = true;
-  private boolean                                     disableHooks      = true;
-  private boolean                                     enableCache       = true;
+  private boolean disableValidation = true;
+  private boolean disableSecurity   = true;
+  private boolean disableHooks      = true;
+  private boolean enableCache       = true;
 
   public void begin(final ODatabaseDocumentInternal iDatabase) {
     if (disableSecurity) {
@@ -49,11 +48,6 @@ public class OIntentMassiveInsert implements OIntent {
       iDatabase.getDatabaseOwner().setUser(null);
     }
     ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
-
-    // DISABLE TX IN GRAPH SQL OPERATIONS
-    previousTxRequiredForSQLGraphOperations = ownerDb.getStorage().getConfiguration().isTxRequiredForSQLGraphOperations();
-    if (previousTxRequiredForSQLGraphOperations)
-      ownerDb.getStorage().getConfiguration().setProperty("txRequiredForSQLGraphOperations", Boolean.FALSE.toString());
 
     if (!enableCache) {
       ownerDb.getLocalCache().setEnable(enableCache);
@@ -64,7 +58,7 @@ public class OIntentMassiveInsert implements OIntent {
       ((ODatabaseDocument) ownerDb).setRetainRecords(false);
 
       // VALIDATION
-      if (disableValidation && !iDatabase.getStorage().isRemote() ) {
+      if (disableValidation && !iDatabase.getStorage().isRemote()) {
         // Avoid to change server side validation if massive intent run on a client
         previousValidation = ((ODatabaseDocument) ownerDb).isValidationEnabled();
         if (previousValidation)
@@ -96,9 +90,6 @@ public class OIntentMassiveInsert implements OIntent {
       if (currentUser != null)
         // RE-ENABLE CHECK OF SECURITY
         ownerDb.setUser(currentUser);
-
-    if (previousTxRequiredForSQLGraphOperations)
-      ownerDb.getStorage().getConfiguration().setProperty("txRequiredForSQLGraphOperations", Boolean.TRUE.toString());
 
     if (!enableCache) {
       ownerDb.getLocalCache().setEnable(!enableCache);

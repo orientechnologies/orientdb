@@ -6,11 +6,11 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 public interface OStorageConfiguration {
-  String DEFAULT_CHARSET         = "UTF-8";
-  String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
-  String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
-  int CURRENT_VERSION = 17;
-  int CURRENT_BINARY_FORMAT_VERSION = 12;
+  String DEFAULT_CHARSET               = "UTF-8";
+  String DEFAULT_DATE_FORMAT           = "yyyy-MM-dd";
+  String DEFAULT_DATETIME_FORMAT       = "yyyy-MM-dd HH:mm:ss";
+  int    CURRENT_VERSION               = 17;
+  int    CURRENT_BINARY_FORMAT_VERSION = 12;
 
   SimpleDateFormat getDateTimeFormatInstance();
 
@@ -86,13 +86,9 @@ public interface OStorageConfiguration {
 
   int getRecordSerializerVersion();
 
-  boolean isTxRequiredForSQLGraphOperations();
-
   int getBinaryFormatVersion();
 
   void dropCluster(int iClusterId);
-
-  String getDictionaryRecordId();
 
   int getVersion();
 
@@ -101,4 +97,6 @@ public interface OStorageConfiguration {
   String getProperty(String graphConsistencyMode);
 
   String getDirectory();
+
+  List<OStorageClusterConfiguration> getClusters();
 }

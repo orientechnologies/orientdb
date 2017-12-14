@@ -65,7 +65,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   protected static final ORecordId CONFIG_RID = new OImmutableRecordId(0, 0);
 
   private String charset;
-  private final        List<OStorageEntryConfiguration> properties                    = new ArrayList<>();
+  private final List<OStorageEntryConfiguration> properties = new ArrayList<>();
   protected final transient  OStorage                               storage;
   private volatile           OContextConfiguration                  configuration;
   public volatile            int                                    version;
@@ -89,7 +89,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   private volatile           boolean                                strictSQL;
   private volatile           ConcurrentMap<String, IndexEngineData> indexEngines;
   private volatile transient boolean validation = true;
-  private volatile boolean txRequiredForSQLGraphOperations;
   /**
    * Version of product release under which storage was created
    */
@@ -156,14 +155,10 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     recordSerializer = null;
     recordSerializerVersion = 0;
     strictSQL = false;
-    txRequiredForSQLGraphOperations = true;
     indexEngines = new ConcurrentHashMap<>();
     validation = getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION);
 
     binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
-
-    txRequiredForSQLGraphOperations = getContextConfiguration().getValueAsString(OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE)
-        .equalsIgnoreCase("tx");
   }
 
   private void autoInitClusters() {
@@ -210,9 +205,13 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   }
 
   public String getDirectory() {
-    return fileTemplate.location != null ?
-        fileTemplate.getLocation() :
-        ((OLocalPaginatedStorage) storage).getStoragePath().toString();
+    if (fileTemplate.location != null) {
+      return fileTemplate.getLocation();
+    } else if (storage instanceof OLocalPaginatedStorage) {
+      return ((OLocalPaginatedStorage) storage).getStoragePath().toString();
+    } else {
+      return null;
+    }
   }
 
   public Locale getLocaleInstance() {
@@ -733,10 +732,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     return strictSQL;
   }
 
-  public boolean isTxRequiredForSQLGraphOperations() {
-    return txRequiredForSQLGraphOperations;
-  }
-
   public List<OStorageEntryConfiguration> getProperties() {
     return Collections.unmodifiableList(properties);
   }
@@ -745,14 +740,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     if (OStatement.CUSTOM_STRICT_SQL.equalsIgnoreCase(iName))
       // SET STRICT SQL VARIABLE
       strictSQL = "true".equalsIgnoreCase(iValue);
-
-    if ("txRequiredForSQLGraphOperations".equalsIgnoreCase(iName))
-      // SET TX SQL GRAPH OPERATIONS
-      txRequiredForSQLGraphOperations = "true".equalsIgnoreCase(iValue);
-
-    if ("txRequiredForSQLGraphOperations".equalsIgnoreCase(iName))
-      // SET TX SQL GRAPH OPERATIONS
-      txRequiredForSQLGraphOperations = "true".equalsIgnoreCase(iValue);
 
     if ("validation".equalsIgnoreCase(iName))
       validation = "true".equalsIgnoreCase(iValue);
@@ -1007,8 +994,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     return version;
   }
 
-  @Override
-  public String getDictionaryRecordId() {
-    return dictionaryRecordId;
+  public List<OStorageClusterConfiguration> getClusters() {
+    return clusters;
   }
 }

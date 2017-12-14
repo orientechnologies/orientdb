@@ -32,10 +32,7 @@ import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
+import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -358,7 +355,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     throw new UnsupportedOperationException("Supported only in embedded storage. Use 'SELECT FROM metadata:storage' instead.");
   }
 
-
   public int getSessionId() {
     OStorageRemoteSession session = getCurrentSession();
     return session != null ? session.getSessionId() : -1;
@@ -396,11 +392,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
         openRemoteDatabase();
 
-        final OStorageConfigurationImpl storageConfiguration = new OStorageRemoteConfiguration(this,
-            ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString());
-        storageConfiguration.load(conf);
-
-        updateStorageConfiguration(storageConfiguration);
+        reload();
 
         componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
@@ -426,9 +418,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void reload() {
-    final OStorageConfigurationImpl storageConfiguration = new OStorageRemoteConfiguration(this,
-        ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString());
-    storageConfiguration.load(clientConfiguration);
+    OReloadResponse37 res = networkOperation(new OReloadRequest37(), "error loading storage configuration");
+    final OStorageConfiguration storageConfiguration = new OStorageConfigurationRemote(
+        ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString(), res, clientConfiguration);
 
     updateStorageConfiguration(storageConfiguration);
   }
@@ -1721,11 +1713,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return retry;
   }
 
-  public void updateStorageConfiguration(OStorageConfigurationImpl storageConfiguration) {
+  public void updateStorageConfiguration(OStorageConfiguration storageConfiguration) {
     stateLock.acquireWriteLock();
     this.configuration = storageConfiguration;
-    OCluster[] clusters = new OCluster[storageConfiguration.clusters.size()];
-    for (OStorageClusterConfiguration clusterConfig : storageConfiguration.clusters) {
+    OCluster[] clusters = new OCluster[storageConfiguration.getClusters().size()];
+    for (OStorageClusterConfiguration clusterConfig : storageConfiguration.getClusters()) {
       if (clusterConfig != null) {
         final OClusterRemote cluster = new OClusterRemote();
         String clusterName = clusterConfig.getName();

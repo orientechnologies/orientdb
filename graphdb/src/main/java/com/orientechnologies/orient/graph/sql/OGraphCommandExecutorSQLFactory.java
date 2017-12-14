@@ -271,7 +271,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   }
 
   public static boolean isTxRequiredForSQLGraphOperations() {
-    return ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().isTxRequiredForSQLGraphOperations();
+    return true;
   }
 
   public static GRAPH_CONSISTENCY_MODE getConsistencyMode(final OrientBaseGraph graph) {
