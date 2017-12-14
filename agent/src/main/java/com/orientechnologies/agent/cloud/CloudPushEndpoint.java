@@ -63,18 +63,21 @@ public class CloudPushEndpoint extends Thread {
   }
 
   private void pushData() {
-    Command request = new Command();
-    request.setCmd(CommandType.LIST_SERVERS.command);
-    request.setResponseChannel(monitoringPath);
+    if (projectId != null && cloudBaseUrl != null) {
+      try {
+        Command request = new Command();
+        request.setCmd(CommandType.LIST_SERVERS.command);
+        request.setResponseChannel(monitoringPath);
 
-    try {
-      CommandResponse response = processRequest(request);
-      sendResponse(response);
-    } catch (Exception e) {
-      e.printStackTrace();
+        CommandResponse response = processRequest(request);
+        sendResponse(response);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } else {
+      init();//try to re-init for next round
     }
   }
-
 
   private void sendResponse(CommandResponse response) throws IOException {
     CloseableHttpClient client = HttpClients.createDefault();
@@ -89,11 +92,8 @@ public class CloudPushEndpoint extends Thread {
     httpPost.setHeader("Content-type", "application/json");
     CloseableHttpResponse r = client.execute(httpPost);
 
-
     client.close();
   }
-
-
 
   private String serialize(Object response) throws JsonProcessingException {
     return objectMapper.writeValueAsString(response);
@@ -133,7 +133,6 @@ public class CloudPushEndpoint extends Thread {
     result.setId(cmd.getId());
     return result;
   }
-
 
   public void shutdown() {
     terminate = true;
