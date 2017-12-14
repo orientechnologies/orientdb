@@ -27,6 +27,10 @@ public class ODatabaseDocumentTxInternal {
     return ODatabaseDocumentTx.getOrCreateEmbeddedFactory(databaseDirectory, config);
   }
 
+  public static OrientDBInternal getOrCreateRemoteFactory(String url) {
+    return ODatabaseDocumentTx.getOrCreateRemoteFactory(url);
+  }
+
   public static void closeAllOnShutdown() {
     synchronized (ODatabaseDocumentTx.embedded) {
       for (OrientDBInternal factory : ODatabaseDocumentTx.embedded.values()) {

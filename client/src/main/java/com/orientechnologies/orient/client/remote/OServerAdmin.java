@@ -26,6 +26,9 @@ import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBRemote;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
@@ -62,10 +65,20 @@ public class OServerAdmin {
     if (!iURL.contains("/"))
       iURL += "/";
 
-    ORemoteConnectionManager connectionManager = ((OEngineRemote) Orient.instance().getRunningEngine("remote"))
-        .getConnectionManager();
+    OrientDBRemote remote = (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(iURL);
 
-    storage = new OStorageRemote(iURL, null, "", connectionManager, OStorage.STATUS.OPEN) {
+    storage = new OStorageRemote(iURL, null, "", remote.getConnectionManager(), OStorage.STATUS.OPEN) {
+      @Override
+      protected OStorageRemoteSession getCurrentSession() {
+        return session;
+      }
+    };
+  }
+
+  public OServerAdmin(OrientDBRemote remote, String url) throws IOException {
+    ORemoteConnectionManager connectionManager = remote.getConnectionManager();
+
+    storage = new OStorageRemote(url, null, "", connectionManager, OStorage.STATUS.OPEN) {
       @Override
       protected OStorageRemoteSession getCurrentSession() {
         return session;

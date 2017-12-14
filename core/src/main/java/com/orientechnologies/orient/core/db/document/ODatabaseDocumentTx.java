@@ -124,7 +124,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     }
   }
 
-  protected OrientDBInternal getOrCreateRemoteFactory(String baseUrl) {
+  protected static OrientDBInternal getOrCreateRemoteFactory(String baseUrl) {
     OrientDBInternal factory;
     synchronized (remote) {
       factory = remote.get(baseUrl);

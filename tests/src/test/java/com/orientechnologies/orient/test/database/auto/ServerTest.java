@@ -61,18 +61,6 @@ public class ServerTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testConnectClose() throws IOException {
-    ORemoteConnectionManager connManager = (((OEngineRemote) Orient.instance().getRunningEngine("remote"))).getConnectionManager();
-
-    int count = connManager.getAvailableConnections(serverURL);
-    OServerAdmin server = new OServerAdmin(serverURL);
-    server.connect("root", ODatabaseHelper.getServerRootPassword());
-    server.close();
-
-    Assert.assertEquals(connManager.getAvailableConnections(serverURL), count);
-  }
-
-  @Test
   public void testOpenCloseCreateClass() throws IOException {
 
     OServerAdmin admin = new OServerAdmin("remote:localhost/doubleOpenTest");
