@@ -61,7 +61,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       getDatabase().command(createIndexDDL);
 
       ORecordInternal.setIdentity(document,
-          new ORecordId(getDatabase().getStorage().getConfiguration().indexMgrRecordId));
+          new ORecordId(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId()));
 
       if (progressListener != null)
         progressListener.onCompletition(this, true);

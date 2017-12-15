@@ -113,9 +113,6 @@ public class AutomaticBackupTest {
     server.dropDatabase(database.getName());
     server.shutdown();
 
-    Orient.instance().shutdown();
-    OFileUtils.deleteRecursively(new File(tempDirectory));
-    Orient.instance().startup();
   }
 
   @Test

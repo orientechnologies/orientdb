@@ -37,7 +37,6 @@ import java.util.Map;
 public class OEngineRemote extends OEngineAbstract {
   public static final String NAME   = "remote";
   public static final String PREFIX = NAME + ":";
-  protected volatile ORemoteConnectionManager connectionManager;
 
   public OEngineRemote() {
   }
@@ -54,25 +53,16 @@ public class OEngineRemote extends OEngineAbstract {
   public void startup() {
     super.startup();
 
-    connectionManager = new ORemoteConnectionManager(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsLong());
   }
 
   @Override
   public void shutdown() {
-    try {
-      connectionManager.close();
-    } finally {
-      super.shutdown();
-    }
+    super.shutdown();
   }
 
   @Override
   public String getNameFromPath(String dbPath) {
     return dbPath;
-  }
-
-  public ORemoteConnectionManager getConnectionManager() {
-    return connectionManager;
   }
 
   public String getName() {

@@ -25,9 +25,9 @@ import com.orientechnologies.common.util.OCommonConst;
 
 @SuppressWarnings("serial")
 public class OStorageSegmentConfiguration implements Serializable {
-  public transient OStorageConfiguration root;
-  public volatile int                    id;
-  public volatile String                 name;
+  public transient OStorageConfigurationImpl root;
+  public volatile  int                       id;
+  public volatile  String                    name;
   public volatile String                 maxSize           = "0";
   public volatile String                 fileType          = "mmap";
   public volatile String                 fileStartSize     = "500Kb";
@@ -46,14 +46,14 @@ public class OStorageSegmentConfiguration implements Serializable {
     infoFiles = OCommonConst.EMPTY_FILE_CONFIGURATIONS_ARRAY;
   }
 
-  public OStorageSegmentConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId) {
+  public OStorageSegmentConfiguration(final OStorageConfigurationImpl iRoot, final String iSegmentName, final int iId) {
     root = iRoot;
     name = iSegmentName;
     id = iId;
     infoFiles = OCommonConst.EMPTY_FILE_CONFIGURATIONS_ARRAY;
   }
 
-  public OStorageSegmentConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId,
+  public OStorageSegmentConfiguration(final OStorageConfigurationImpl iRoot, final String iSegmentName, final int iId,
       final String iDirectory) {
     root = iRoot;
     name = iSegmentName;
@@ -62,7 +62,7 @@ public class OStorageSegmentConfiguration implements Serializable {
     infoFiles = OCommonConst.EMPTY_FILE_CONFIGURATIONS_ARRAY;
   }
 
-  public void setRoot(OStorageConfiguration iRoot) {
+  public void setRoot(OStorageConfigurationImpl iRoot) {
     this.root = iRoot;
     for (OStorageFileConfiguration f : infoFiles)
       f.parent = this;

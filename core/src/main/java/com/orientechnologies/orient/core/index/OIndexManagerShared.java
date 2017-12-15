@@ -297,7 +297,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         // BUILDING ALREADY IN PROGRESS
         return;
 
-      document = database.load(new ORecordId(database.getStorage().getConfiguration().indexMgrRecordId));
+      document = database.load(new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()));
 
       Runnable recreateIndexesTask = new RecreateIndexesTask(database.getStorage());
       recreateIndexesThread = new Thread(recreateIndexesTask, "OrientDB rebuild indexes");

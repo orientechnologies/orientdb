@@ -160,9 +160,14 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   private void checkFinished(List<OTransactionResultPayload> results) {
     if (results.size() >= quorum) {
-      this.quorumReached = true;
-      this.finalResult = results;
-      this.notifyAll();
+      if (!quorumReached) {
+        this.quorumReached = true;
+        this.finalResult = results;
+        this.notifyAll();
+      }
+      if (responseCount == expectedResponses) {
+        this.finished = true;
+      }
     } else if (responseCount == expectedResponses) {
       if (quorumReached) {
         this.finished = true;

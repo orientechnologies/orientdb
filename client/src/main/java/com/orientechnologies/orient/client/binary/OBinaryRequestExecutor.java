@@ -11,6 +11,8 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeDBReload(OReloadRequest request);
 
+  OBinaryResponse executeDBReload(OReloadRequest37 request);
+
   OBinaryResponse executeCreateDatabase(OCreateDatabaseRequest request);
 
   OBinaryResponse executeClose(OCloseRequest request);

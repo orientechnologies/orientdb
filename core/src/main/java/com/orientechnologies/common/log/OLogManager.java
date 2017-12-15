@@ -391,23 +391,6 @@ public class OLogManager {
   }
 
   /**
-   * Inhibits the logs reset request which is typically done on shutdown. This allows to use JDK logging from shutdown hooks.
-   * -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager must be passed to the JVM, to
-   * activate this log manager.
-   */
-  public static class ShutdownLogManager extends LogManager {
-
-    @Override
-    public void reset() {
-      // do nothing
-    }
-
-    private void shutdown() {
-      super.reset();
-    }
-  }
-
-  /**
    * Removes all message which were issued by {@link OLogManager#errorStorage(Object, String, Throwable, Object...)} method.
    */
   private static class StorageFilter implements Filter {

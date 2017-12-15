@@ -27,7 +27,7 @@ public class TestNewDistributedResponseManager {
     nodes.add("three");
     ONewDistributedResponseManager responseManager = new ONewDistributedResponseManager(transaction, nodes, nodes, 3, 3, 2);
     assertFalse(responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "one"));
-    assertTrue(responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "two"));
+    assertFalse(responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "two"));
     assertTrue(responseManager.isQuorumReached());
   }
 
@@ -55,7 +55,21 @@ public class TestNewDistributedResponseManager {
     nodes.add("three");
     ONewDistributedResponseManager responseManager = new ONewDistributedResponseManager(transaction, nodes, nodes, 3, 3, 2);
     assertFalse(responseManager.setLocalResult("one", new OTxSuccess()));
-    assertTrue(responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "one"));
+    assertFalse(responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "three"));
+    assertTrue(responseManager.isQuorumReached());
+  }
+
+  @Test
+  public void testSimpleFinishLocal() {
+    OTransactionPhase1Task transaction = new OTransactionPhase1Task();
+    Set<String> nodes = new HashSet<>();
+    nodes.add("one");
+    nodes.add("two");
+    nodes.add("three");
+    ONewDistributedResponseManager responseManager = new ONewDistributedResponseManager(transaction, nodes, nodes, 3, 3, 2);
+    assertFalse(responseManager.setLocalResult("one", new OTxSuccess()));
+    assertFalse(responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "two"));
+    assertTrue(responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxSuccess()), "three"));
     assertTrue(responseManager.isQuorumReached());
   }
 
@@ -103,7 +117,7 @@ public class TestNewDistributedResponseManager {
     startedWaiting.await();
     assertFalse(future.isDone());
     assertTrue(responseManager.collectResponse(new OTransactionPhase1TaskResult(new OTxLockTimeout()), "one"));
-    assertTrue(future.get());
+    assertFalse(future.get());
     assertFalse(responseManager.isQuorumReached());
   }
 

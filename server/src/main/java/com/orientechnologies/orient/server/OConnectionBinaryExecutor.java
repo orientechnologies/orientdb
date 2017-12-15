@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -120,6 +121,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeDBReload(OReloadRequest request) {
     final Collection<? extends OCluster> clusters = connection.getDatabase().getStorage().getClusterInstances();
     return new OReloadResponse(clusters.toArray(new OCluster[clusters.size()]));
+  }
+
+  @Override
+  public OBinaryResponse executeDBReload(OReloadRequest37 request) {
+    return new OReloadResponse37(connection.getDatabase().getStorage().getConfiguration());
   }
 
   @Override
@@ -254,7 +260,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
         @Override
         public byte[] call() throws Exception {
-          return connection.getDatabase().getStorage().getConfiguration()
+          return ((OStorageConfigurationImpl) connection.getDatabase().getStorage().getConfiguration())
               .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
         }
       }, false);
@@ -315,7 +321,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
         @Override
         public byte[] call() throws Exception {
-          return connection.getDatabase().getStorage().getConfiguration()
+          return ((OStorageConfigurationImpl) connection.getDatabase().getStorage().getConfiguration())
               .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
         }
       }, false);
@@ -415,7 +421,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     database.save(currentRecord);
 
-    if (currentRecord.getIdentity().toString().equals(database.getStorage().getConfiguration().indexMgrRecordId)) {
+    if (currentRecord.getIdentity().toString().equals(database.getStorage().getConfiguration().getIndexMgrRecordId())) {
       // FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
       database.getMetadata().getIndexManager().reload();
     }
@@ -1196,7 +1202,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     final long serverTimeout = connection.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
     //TODO set a timeout on the request?
 
-    OLocalResultSetLifecycleDecorator rs = (OLocalResultSetLifecycleDecorator) connection.getDatabase().getActiveQuery(request.getQueryId());
+    OLocalResultSetLifecycleDecorator rs = (OLocalResultSetLifecycleDecorator) connection.getDatabase()
+        .getActiveQuery(request.getQueryId());
 
     //copy the result-set to make sure that the execution is successful
     List<OResultInternal> rsCopy = new ArrayList<>(request.getRecordsPerPage());
@@ -1207,8 +1214,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       i++;
     }
     boolean hasNext = rs.hasNext();
-    return new OQueryResponse(rs.getQueryId(), false, rsCopy, rs.getExecutionPlan(), hasNext,
-        rs.getQueryStats());
+    return new OQueryResponse(rs.getQueryId(), false, rsCopy, rs.getExecutionPlan(), hasNext, rs.getQueryStats());
   }
 
   @Override

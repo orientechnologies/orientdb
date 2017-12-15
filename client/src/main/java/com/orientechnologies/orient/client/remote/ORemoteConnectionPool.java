@@ -17,7 +17,7 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
   private OResourcePool<String, OChannelBinaryAsynchClient> pool;
 
   public ORemoteConnectionPool(int iMaxResources) {
-    pool = new OResourcePool<String, OChannelBinaryAsynchClient>(iMaxResources, this);
+    pool = new OResourcePool<>(iMaxResources, this);
   }
 
   protected OChannelBinaryAsynchClient createNetworkConnection(String iServerURL, final OContextConfiguration clientConfiguration)
@@ -89,4 +89,5 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
       final OContextConfiguration clientConfiguration) {
     return pool.getResource(iServerURL, timeout, clientConfiguration);
   }
+  
 }

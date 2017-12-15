@@ -26,7 +26,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -40,7 +40,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Handles the database configuration in one big record.
  */
 @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")
-public class OStorageConfigurationSegment extends OStorageConfiguration {
+public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
   private static final long serialVersionUID = 638874446554389034L;
 
   private static final int START_SIZE = 10000;
@@ -80,7 +80,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   }
 
   @Override
-  public OStorageConfiguration load(final OContextConfiguration configuration) throws OSerializationException {
+  public OStorageConfigurationImpl load(final OContextConfiguration configuration) throws OSerializationException {
     try {
       initConfiguration(configuration);
 

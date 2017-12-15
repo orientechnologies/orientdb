@@ -118,7 +118,7 @@ exec "$JAVA" $JAVA_OPTS \
     $JAVA_OPTS_SCRIPT \
     $ORIENTDB_SETTINGS \
     $DEBUG_OPTS \
-    -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager \
+    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager \
     -Djava.util.logging.config.file="$ORIENTDB_LOG_CONF" \
     -Dorientdb.config.file="$CONFIG_FILE" \
     -Dorientdb.www.path="$ORIENTDB_WWW_PATH" \

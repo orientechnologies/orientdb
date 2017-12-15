@@ -56,7 +56,8 @@ public class ODistributedConfiguration {
   protected static final String EXECUTION_MODE_SYNCHRONOUS = "synchronous";
 
   protected final ODocument configuration;
-  protected static final List<String> DEFAULT_CLUSTER_NAME = Collections.singletonList(ALL_WILDCARD);
+  protected static final List<String>         DEFAULT_CLUSTER_NAME = Collections.singletonList(ALL_WILDCARD);
+  private static         ThreadLocal<Integer> overwriteWriteQuorum = new ThreadLocal<Integer>();
 
   public enum ROLES {
     MASTER, REPLICA
@@ -445,12 +446,11 @@ public class ODistributedConfiguration {
    * @param iClusterName Cluster name, or null for *
    */
   public String getClusterOwner(final String iClusterName) {
-
     String owner;
 
     final ODocument clusters = getConfiguredClusters();
 
-// GET THE CLUSTER CFG
+    // GET THE CLUSTER CFG
     final ODocument cfg = iClusterName != null ? (ODocument) clusters.field(iClusterName) : null;
 
     if (cfg != null) {
@@ -507,7 +507,6 @@ public class ODistributedConfiguration {
    * Returns the array of configured clusters
    */
   public String[] getClusterNames() {
-
     final ODocument clusters = configuration.field(CLUSTERS);
     return clusters.fieldNames();
   }
@@ -715,7 +714,11 @@ public class ODistributedConfiguration {
    * @param totalConfiguredMasterServers Total node available
    */
   public int getWriteQuorum(final String clusterName, final int totalConfiguredMasterServers, final String server) {
-    return getQuorum("writeQuorum", clusterName, totalConfiguredMasterServers, DEFAULT_WRITE_QUORUM, server);
+    Integer overWrite = overwriteWriteQuorum.get();
+    if (overWrite != null)
+      return overWrite.intValue();
+    else
+      return getQuorum("writeQuorum", clusterName, totalConfiguredMasterServers, DEFAULT_WRITE_QUORUM, server);
   }
 
   private ODocument getConfiguredClusters() {
@@ -774,6 +777,14 @@ public class ODistributedConfiguration {
       return dcs.field(dataCenter);
     throw new OConfigurationException("Cannot find the data center '" + dataCenter + "' in distributed database configuration");
 
+  }
+
+  public void forceWriteQuorum(int quorum) {
+    overwriteWriteQuorum.set(quorum);
+  }
+
+  public void clearForceWriteQuorum() {
+    overwriteWriteQuorum.remove();
   }
 
   /**

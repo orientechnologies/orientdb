@@ -20,6 +20,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ public class StopNodeTest extends AbstractServerClusterTxTest {
   final private AtomicInteger nodeLefts     = new AtomicInteger();
 
   @Test
+  @Ignore
   public void test() throws Exception {
     startupNodesInSequence = true;
     useTransactions = false;

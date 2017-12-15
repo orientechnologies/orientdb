@@ -92,7 +92,7 @@ public enum OGlobalConfiguration {
   DIRECT_MEMORY_TRACK_MODE("memory.directMemory.trackMode",
       "Activates the direct memory pool [leak detector](Leak-Detector.md). This detector causes a large overhead and should be used for debugging "
           + "purposes only. It's also a good idea to pass the "
-          + "-Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$ShutdownLogManager switch to the JVM, "
+          + "-Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager switch to the JVM, "
           + "if you use this mode, this will enable the logging from JVM shutdown hooks.", Boolean.class, false),
 
   DIRECT_MEMORY_TRACE("memory.directMemory.trace",
@@ -860,6 +860,13 @@ public enum OGlobalConfiguration {
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST("distributed.backupTryIncrementalFirst",
       "Try to execute an incremental backup first.", Boolean.class, true),
+
+  /**
+   * @Since 2.2.27
+   */
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CHECKINTEGRITY_LAST_TX("distributed.checkIntegrityLastTxs",
+      "Before asking for a delta sync, checks the integrity of the records touched by the last X transactions committed on local server.",
+      Integer.class, 16),
 
   /**
    * @Since 2.1

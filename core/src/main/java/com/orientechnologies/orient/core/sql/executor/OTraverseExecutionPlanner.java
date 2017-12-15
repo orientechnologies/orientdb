@@ -207,9 +207,9 @@ public class OTraverseExecutionPlanner {
     ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
     String schemaRecordIdAsString = null;
     if (metadata.getName().equalsIgnoreCase(OCommandExecutorSQLAbstract.METADATA_SCHEMA)) {
-      schemaRecordIdAsString = db.getStorage().getConfiguration().schemaRecordId;
+      schemaRecordIdAsString = db.getStorage().getConfiguration().getSchemaRecordId();
     } else if (metadata.getName().equalsIgnoreCase(OCommandExecutorSQLAbstract.METADATA_INDEXMGR)) {
-      schemaRecordIdAsString = db.getStorage().getConfiguration().indexMgrRecordId;
+      schemaRecordIdAsString = db.getStorage().getConfiguration().getIndexMgrRecordId();
     } else {
       throw new UnsupportedOperationException("Invalid metadata: " + metadata.getName());
     }

@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
+import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.Orient;
@@ -38,25 +39,26 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_LOCK_TIMEOUT;
+
 /**
  * Created by tglman on 08/04/16.
  */
 public class OrientDBRemote implements OrientDBInternal {
   private final Map<String, OStorageRemote> storages = new HashMap<>();
   private final Set<ODatabasePoolInternal>  pools    = new HashSet<>();
-  private final String[]       hosts;
-  private final OEngineRemote  remote;
-  private final OrientDBConfig configurations;
-  private final Orient         orient;
+  private final      String[]                 hosts;
+  private final      OrientDBConfig           configurations;
+  private final      Orient                   orient;
+  protected volatile ORemoteConnectionManager connectionManager;
   private volatile boolean open = true;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
     this.hosts = hosts;
     this.orient = orient;
-    remote = (OEngineRemote) orient.getRunningEngine("remote");
-
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
+    connectionManager = new ORemoteConnectionManager(this.configurations.getConfigurations().getValueAsLong(NETWORK_LOCK_TIMEOUT));
     orient.addOrientDB(this);
   }
 
@@ -75,7 +77,7 @@ public class OrientDBRemote implements OrientDBInternal {
       OStorageRemote storage;
       storage = storages.get(name);
       if (storage == null) {
-        storage = new OStorageRemote(buildUrl(name), this, "rw", remote.getConnectionManager());
+        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager);
         storages.put(name, storage);
       }
       ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
@@ -110,7 +112,8 @@ public class OrientDBRemote implements OrientDBInternal {
     OStorageRemote storage = storages.get(name);
     if (storage == null) {
       try {
-        storage = new OStorageRemote(buildUrl(name), this, "rw", remote.getConnectionManager());
+        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager);
+        storages.put(name, storage);
       } catch (Exception e) {
         throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
       }
@@ -155,6 +158,10 @@ public class OrientDBRemote implements OrientDBInternal {
     return connectEndExecute(null, username, password, (admin) -> {
       return admin.getGlobalConfigurations();
     });
+  }
+
+  public ORemoteConnectionManager getConnectionManager() {
+    return connectionManager;
   }
 
   private interface Operation<T> {
@@ -250,8 +257,10 @@ public class OrientDBRemote implements OrientDBInternal {
       }
     }
     storages.clear();
+
+    connectionManager.close();
+
     // SHUTDOWN ENGINES
-    remote.shutdown();
     open = false;
   }
 
@@ -331,4 +340,5 @@ public class OrientDBRemote implements OrientDBInternal {
   public ODatabaseDocumentInternal openNoAuthorization(String name) {
     throw new UnsupportedOperationException("impossible skip authentication and authorization in remote");
   }
+
 }

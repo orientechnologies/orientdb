@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -38,6 +39,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
   final AtomicInteger nodeLefts        = new AtomicInteger();
 
   @Test
+  @Ignore
   public void test() throws Exception {
     startupNodesInSequence = true;
     count = 1000;
@@ -140,7 +142,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
 
                   if (file != null)
                     file.delete();
-                    
+
                   g.close();
                 }
                 return null;

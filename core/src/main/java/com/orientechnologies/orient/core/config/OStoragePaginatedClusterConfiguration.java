@@ -28,18 +28,18 @@ public class OStoragePaginatedClusterConfiguration implements OStorageClusterCon
   public static final float DEFAULT_GROW_FACTOR      = (float) 1.2;
   public              float recordOverflowGrowFactor = DEFAULT_GROW_FACTOR;
   public              float recordGrowFactor         = DEFAULT_GROW_FACTOR;
-  public String                          compression;
-  public           String                encryption;
-  public           String                encryptionKey;
-  public transient OStorageConfiguration root;
-  public           int                   id;
-  public           String                name;
-  public           String                location;
+  public           String                    compression;
+  public           String                    encryption;
+  public           String                    encryptionKey;
+  public transient OStorageConfigurationImpl root;
+  public           int                       id;
+  public           String                    name;
+  public           String                    location;
   public boolean useWal = true;
   public String conflictStrategy;
   private STATUS status = STATUS.ONLINE;
 
-  public OStoragePaginatedClusterConfiguration(final OStorageConfiguration root, final int id, final String name,
+  public OStoragePaginatedClusterConfiguration(final OStorageConfigurationImpl root, final int id, final String name,
       final String location, final boolean useWal, final float recordOverflowGrowFactor, final float recordGrowFactor,
       final String compression, final String iEncryption, final String iEncryptionKey, final String conflictStrategy, final STATUS iStatus) {
     this.root = root;

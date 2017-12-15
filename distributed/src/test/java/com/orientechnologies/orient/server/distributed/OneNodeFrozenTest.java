@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -37,6 +38,7 @@ public class OneNodeFrozenTest extends AbstractServerClusterTxTest {
   final AtomicInteger nodeLefts        = new AtomicInteger();
 
   @Test
+  @Ignore
   public void test() throws Exception {
     startupNodesInSequence = true;
     count = 1500;

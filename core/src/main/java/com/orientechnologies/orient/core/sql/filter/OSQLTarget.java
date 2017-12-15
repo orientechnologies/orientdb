@@ -235,10 +235,10 @@ public class OSQLTarget extends OBaseParser {
 
           if (metadataTarget.equals(OCommandExecutorSQLAbstract.METADATA_SCHEMA)) {
             ((ArrayList<OIdentifiable>) targetRecords).add(new ORecordId(ODatabaseRecordThreadLocal.instance().get().getStorage()
-                .getConfiguration().schemaRecordId));
+                .getConfiguration().getSchemaRecordId()));
           } else if (metadataTarget.equals(OCommandExecutorSQLAbstract.METADATA_INDEXMGR)) {
             ((ArrayList<OIdentifiable>) targetRecords).add(new ORecordId(ODatabaseRecordThreadLocal.instance().get().getStorage()
-                .getConfiguration().indexMgrRecordId));
+                .getConfiguration().getIndexMgrRecordId()));
           } else
             throw new OQueryParsingException("Metadata element not supported: " + metadataTarget);
 

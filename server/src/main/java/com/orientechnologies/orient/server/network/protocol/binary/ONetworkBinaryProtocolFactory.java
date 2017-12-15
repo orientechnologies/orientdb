@@ -257,7 +257,7 @@ public class ONetworkBinaryProtocolFactory {
       return new OServerInfoRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
-      return new OReloadRequest();
+      return new OReloadRequest37();
 
     case OChannelBinaryProtocol.REQUEST_DB_CREATE:
       return new OCreateDatabaseRequest();
