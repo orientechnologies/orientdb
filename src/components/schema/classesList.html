@@ -111,13 +111,13 @@
                     ng-click="$ctrl.rename(result)">
               Rename
             </button>
-            <button href="javascript:void(0)" class="btn  btn-xs"
+            <button href="javascript:void(0)" class="btn btn-default btn-xs"
                     ng-click="$ctrl.queryAll(result['name'])">
               <i
                 class="fa fa-list-alt"></i> Query All
             </button>
 
-            <button href="javascript:void(0)" class="btn btn-xs" ng-hide="result['abstract']"
+            <button href="javascript:void(0)" class="btn btn-default btn-xs" ng-hide="result['abstract']"
                     ng-click="$ctrl.createRecord(result['name'])">
               <i
                 class="fa fa-plus"></i> New Record
@@ -125,7 +125,7 @@
 
             </button>
 
-            <button href="javascript:void(0)" tabindex="1" class="btn btn-xs btn-disabled disabled"
+            <button href="javascript:void(0)" tabindex="1" class="btn btn-default btn-xs btn-disabled disabled"
                     ng-show="result['abstract']"
                     data-trigger="hover" data-placement="bottom"
                     data-container="body"

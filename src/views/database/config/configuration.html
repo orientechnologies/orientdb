@@ -4,7 +4,7 @@
         <div class="col-md-12">
             <div class="btn-toolbar pull-right">
                 <div class="btn-group">
-                    <button type="submit" class="btn" ng-click="save()">
+                    <button type="submit" class="btn btn-default" ng-click="save()">
                         <i class="fa fa-save"></i> Save
                     </button>
                 </div>
@@ -16,24 +16,22 @@
         <div class="col-md-12">
             <table class="table table-striped table-bordered table-condensed">
                 <thead>
-                <tr>
-                <th>Name</th>
-                <th>Value</th>
+                    <tr>
+                        <th>Name</th>
+                        <th>Value</th>
                 </thead>
                 <tbody>
-                <tr ng-repeat="val in values">
-                    <td>{{ val.name }}
-                        <a ng-show="links[val.name]" href="javascript:void(0)" tabindex="1"
-                           data-trigger="focus" data-placement="right"
-                           data-container="body"
-                           data-content="{{ 'configuration.'  + val.name | translate:links }}" bs-popover>
-                            <i class="fa fa-question-circle"></i>
-                        </a>
-                    </td>
-                    <td>
-                        <ng-include src="getRender(val)"></ng-include>
-                    </td>
-                </tr>
+                    <tr ng-repeat="val in values">
+                        <td>{{ val.name }}
+                            <a ng-show="links[val.name]" href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right" data-container="body"
+                                data-content="{{ 'configuration.'  + val.name | translate:links }}" bs-popover>
+                                <i class="fa fa-question-circle"></i>
+                            </a>
+                        </td>
+                        <td>
+                            <ng-include src="getRender(val)"></ng-include>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -43,25 +41,22 @@
             <h3>Custom Properties</h3>
             <table class="table table-striped table-bordered table-condensed">
                 <thead>
-                <tr>
-                <th>Name</th>
-                <th>Value</th>
+                    <tr>
+                        <th>Name</th>
+                        <th>Value</th>
                 </thead>
                 <tbody>
-                <tr ng-repeat="val in properties">
-                    <td>{{ val.name }}
-                        <a ng-show="links[val.name]" href="javascript:void(0)" tabindex="1"
-                           data-trigger="focus" data-placement="right"
-                           data-container="body"
-
-                           data-content="{{ 'configuration.'  + val.name | translate:links }}" bs-popover>
-                            <i class="fa fa-question-circle"></i>
-                        </a>
-                    </td>
-                    <td>
-                        <ng-include src="getRender(val)"></ng-include>
-                    </td>
-                </tr>
+                    <tr ng-repeat="val in properties">
+                        <td>{{ val.name }}
+                            <a ng-show="links[val.name]" href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right" data-container="body"
+                                data-content="{{ 'configuration.'  + val.name | translate:links }}" bs-popover>
+                                <i class="fa fa-question-circle"></i>
+                            </a>
+                        </td>
+                        <td>
+                            <ng-include src="getRender(val)"></ng-include>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
