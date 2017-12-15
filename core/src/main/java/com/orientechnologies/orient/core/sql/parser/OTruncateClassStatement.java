@@ -74,7 +74,7 @@ public class OTruncateClassStatement extends ODDLStatement {
     try {
       clazz.truncate();
       OResultInternal result = new OResultInternal();
-      result.setProperty("operation", "drop class");
+      result.setProperty("operation", "truncate class");
       result.setProperty("className", className.getStringValue());
       rs.add(result);
       invalidateCommandCache(clazz, db);
