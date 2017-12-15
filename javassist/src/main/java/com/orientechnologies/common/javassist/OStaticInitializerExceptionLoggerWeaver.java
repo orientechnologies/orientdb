@@ -15,6 +15,10 @@ public class OStaticInitializerExceptionLoggerWeaver extends ClassTransformer {
   @Override
   protected boolean shouldTransform(CtClass candidateClass) throws Exception {
     final String className = candidateClass.getName();
+
+    if (className.equals("com.orientechnologies.common.log.OLogManager")) {
+      return false;
+    }
     return className.startsWith("com.orientechnologies") && !className.startsWith("com.orientechnologies.common.javassist");
   }
 
