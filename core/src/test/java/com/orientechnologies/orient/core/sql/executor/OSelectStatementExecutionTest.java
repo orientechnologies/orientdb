@@ -3254,4 +3254,38 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test
+  public void testNamedParams() {
+    String className = "testNamedParams";
+    db.command("create class " + className).close();
+    db.command("insert into " + className + " set name = 'Foo', surname = 'Fox'").close();
+    db.command("insert into " + className + " set name = 'Bar', surname = 'Bax'").close();
+
+    Map<String, Object> params = new HashMap<>();
+    params.put("p1", "Foo");
+    params.put("p2", "Fox");
+    OResultSet result = db.query("select from " + className + " where name = :p1 and surname = :p2", params);
+    Assert.assertTrue(result.hasNext());
+    result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testNamedParamsWithIndex() {
+    String className = "testNamedParamsWithIndex";
+    db.command("create class " + className).close();
+    db.command("create property " + className + ".name STRING").close();
+    db.command("create index " + className + ".name ON " + className + " (name) NOTUNIQUE").close();
+    db.command("insert into " + className + " set name = 'Foo'").close();
+    db.command("insert into " + className + " set name = 'Bar'").close();
+
+    Map<String, Object> params = new HashMap<>();
+    params.put("p1", "Foo");
+    OResultSet result = db.query("select from " + className + " where name = :p1", params);
+    Assert.assertTrue(result.hasNext());
+    result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
 }
