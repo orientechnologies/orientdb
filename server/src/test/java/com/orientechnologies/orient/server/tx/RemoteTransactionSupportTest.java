@@ -19,12 +19,11 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.ORemoteImportTest;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -58,6 +57,9 @@ public class RemoteTransactionSupportTest {
 
     OClass klass = database.createClass("IndexedTx");
     klass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OClass uniqueClass = database.createClass("UniqueIndexedTx");
+    uniqueClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
 
   }
 
@@ -93,7 +95,7 @@ public class RemoteTransactionSupportTest {
   }
 
   @Test
-  public void testQueryUpdateCreatedInTxTransaction() {
+  public void testQueryUpdateCreatedInTxTransaction() throws InterruptedException {
     database.begin();
     ODocument doc1 = new ODocument("SomeTx");
     doc1.setProperty("name", "Jane");
@@ -409,6 +411,44 @@ public class RemoteTransactionSupportTest {
 
   }
 
+  @Test(expected = ORecordDuplicatedException.class)
+  public void testDuplicateIndexTx() {
+    database.begin();
+
+    OElement v1 = database.newElement("UniqueIndexedTx");
+    v1.setProperty("name", "a");
+    database.save(v1);
+
+    OElement v2 = database.newElement("UniqueIndexedTx");
+    v2.setProperty("name", "a");
+    database.save(v2);
+    database.commit();
+
+  }
+
+  @Test
+  public void testKilledSession() {
+    database.begin();
+    OElement v2 = database.newElement("SomeTx");
+    v2.setProperty("name", "a");
+    database.save(v2);
+
+    OResultSet result1 = database.query("select rids from SomeTx ");
+    assertTrue(result1.hasNext());
+    result1.close();
+
+    for (OClientConnection conn : server.getClientConnectionManager().getConnections()) {
+      conn.close();
+    }
+    database.activateOnCurrentThread();
+
+    database.commit();
+    result1 = database.query("select rids from SomeTx ");
+    assertTrue(result1.hasNext());
+    result1.close();
+
+  }
+
   @After
   public void after() {
     database.close();
@@ -419,6 +459,5 @@ public class RemoteTransactionSupportTest {
     OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
     Orient.instance().startup();
   }
-
 
 }

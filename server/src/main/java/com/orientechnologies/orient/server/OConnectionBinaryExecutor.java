@@ -1243,7 +1243,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
       }
     } else {
-      tx = (OTransactionOptimisticServer) database.getTransaction();
+      if (database.getTransaction().isActive()) {
+        tx = (OTransactionOptimisticServer) database.getTransaction();
+      } else {
+        throw new ODatabaseException("No transaction active on the server, send full content");
+      }
     }
     tx.assignClusters();
 
