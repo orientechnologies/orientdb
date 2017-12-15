@@ -437,7 +437,7 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(result.size() != 0);
     for (ODocument d : result) {
-      Assert.assertTrue(((Number) d.field("id")).longValue() <= 1000);
+      Assert.assertTrue((Integer) d.field("id") <= 1000);
     }
 
     OSQLEngine.getInstance().unregisterFunction("bigger");

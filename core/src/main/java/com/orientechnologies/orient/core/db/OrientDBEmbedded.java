@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OStorageAlreadyClosedException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -86,19 +85,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
       final ODatabaseDocumentEmbedded embedded;
       OrientDBConfig config = solveConfig(null);
       synchronized (this) {
-        OAbstractPaginatedStorage storage;
-
-        while (true) {
-          storage = getOrInitStorage(name);
-          // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-          try {
-            storage.open(config.getConfigurations());
-            break;
-          } catch (OStorageAlreadyClosedException e) {
-            storages.remove(storage.getName());
-          }
-        }
-
+        OAbstractPaginatedStorage storage = getOrInitStorage(name);
+        // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+        storage.open(config.getConfigurations());
         embedded = factory.newInstance(storage);
         embedded.init(config);
       }
@@ -116,19 +105,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
       final ODatabaseDocumentEmbedded embedded;
       OrientDBConfig config = solveConfig(null);
       synchronized (this) {
-        OAbstractPaginatedStorage storage;
-
-        while (true) {
-          storage = getOrInitStorage(name);
-          try {
-            // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-            storage.open(config.getConfigurations());
-            break;
-          } catch (OStorageAlreadyClosedException e) {
-            storages.remove(storage.getName());
-          }
-        }
-
+        OAbstractPaginatedStorage storage = getOrInitStorage(name);
+        // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+        storage.open(config.getConfigurations());
         embedded = factory.newInstance(storage);
         embedded.init(config);
       }
@@ -147,19 +126,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         checkOpen();
         config = solveConfig(config);
-        OAbstractPaginatedStorage storage;
-
-        while (true) {
-          storage = getOrInitStorage(name);
-          // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-          try {
-            storage.open(config.getConfigurations());
-            break;
-          } catch (OStorageAlreadyClosedException e) {
-            storages.remove(storage.getName());
-          }
-        }
-
+        OAbstractPaginatedStorage storage = getOrInitStorage(name);
+        // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+        storage.open(config.getConfigurations());
         embedded = factory.newInstance(storage);
         embedded.init(config);
       }
@@ -187,19 +156,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     final ODatabaseDocumentEmbedded embedded;
     synchronized (this) {
       checkOpen();
-      OAbstractPaginatedStorage storage;
-
-      while (true) {
-        storage = getOrInitStorage(name);
-
-        try {
-          storage.open(pool.getConfig().getConfigurations());
-          break;
-        } catch (OStorageAlreadyClosedException e) {
-          storages.remove(storage.getName());
-        }
-      }
-
+      OAbstractPaginatedStorage storage = getOrInitStorage(name);
+      storage.open(pool.getConfig().getConfigurations());
       embedded = factory.newPoolInstance(pool, storage);
       embedded.init(pool.getConfig());
     }
@@ -367,16 +325,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
     if (basePath != null) {
       scanDatabaseDirectory(new File(basePath), (name) -> {
         if (!storages.containsKey(name)) {
-          while (true) {
-            final OAbstractPaginatedStorage storage = getOrInitStorage(name);
-            // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-            try {
-              storage.open(getConfigurations().getConfigurations());
-              break;
-            } catch (OStorageAlreadyClosedException e) {
-              storages.remove(storage.getName());
-            }
-          }
+          OAbstractPaginatedStorage storage = getOrInitStorage(name);
+          // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+          storage.open(getConfigurations().getConfigurations());
         }
       });
     }

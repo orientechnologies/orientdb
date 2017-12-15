@@ -98,6 +98,7 @@
             <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
             <version>${javaassist.version}</version>
+            <type>jar</type>
         </dependency>
     </dependencies>
     <build>

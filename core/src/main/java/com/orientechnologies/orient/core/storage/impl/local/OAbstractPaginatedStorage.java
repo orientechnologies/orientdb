@@ -253,19 +253,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
           // REUSED
           return;
-
-        if (status == STATUS.CLOSED) {
-          throw new OStorageAlreadyClosedException("It is not allowed to open already closed storage, create new storage instance instead");
-        }
       } finally {
         stateLock.releaseReadLock();
       }
 
       stateLock.acquireWriteLock();
       try {
-        if (status == STATUS.CLOSED) {
-          throw new OStorageAlreadyClosedException("It is not allowed to open already closed storage, create new storage instance instead");
-        }
 
         if (status == STATUS.OPEN)
           // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
@@ -314,8 +307,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         readCache.loadCacheState(writeCache);
 
       } catch (OStorageException e) {
-        status = STATUS.CLOSED;
-
         throw e;
       } catch (Exception e) {
         for (OCluster c : clusters) {
@@ -451,9 +442,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       stateLock.acquireWriteLock();
       try {
-        if (status != STATUS.NOT_INITIALIZED)
-          throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' using current instance "
-              + "because it was already initialized in other thread/method");
+
+        if (status != STATUS.CLOSED)
+          throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it is not closed");
 
         if (exists())
           throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it already exists");
@@ -504,21 +495,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         postCreateSteps();
 
       } catch (InterruptedException e) {
-        status = STATUS.CLOSED;
         throw OException.wrapException(new OStorageException("Storage creation was interrupted"), e);
-      } catch (RuntimeException e) {
-        try {
-          close();
-        } finally {
-          status = STATUS.CLOSED;
-        }
+      } catch (OStorageException e) {
+        close();
         throw e;
       } catch (IOException e) {
-        try {
-          close();
-        } finally {
-          status = STATUS.CLOSED;
-        }
+        close();
         throw OException.wrapException(new OStorageException("Error on creation of storage '" + name + "'"), e);
       } finally {
         stateLock.releaseWriteLock();
@@ -4672,12 +4654,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       fuzzyCheckpointExecutor = null;
 
       status = STATUS.CLOSED;
-    } catch (RuntimeException e) {
-      status = STATUS.CLOSED;
-      throw e;
     } catch (IOException e) {
-      status = STATUS.CLOSED;
-
       final String message = "Error on closing of storage '" + name;
       OLogManager.instance().error(this, message, e);
 
@@ -5498,7 +5475,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     public void run() {
       stateLock.acquireReadLock();
       try {
-        if (status == STATUS.CLOSED || status == STATUS.NOT_INITIALIZED)
+        if (status == STATUS.CLOSED)
           return;
 
         final long[] nonActiveSegments = writeAheadLog.nonActiveSegments();

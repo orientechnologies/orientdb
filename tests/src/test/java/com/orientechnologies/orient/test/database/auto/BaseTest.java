@@ -4,7 +4,6 @@ import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -43,9 +42,9 @@ public abstract class BaseTest<T extends ODatabase> {
 
   protected T      database;
   protected String url;
-  private boolean dropDb = false;
-  private String storageType;
-  private boolean autoManageDatabase = true;
+  private boolean  dropDb             = false;
+  private String   storageType;
+  private boolean  autoManageDatabase = true;
 
   protected BaseTest() {
   }
@@ -178,7 +177,7 @@ public abstract class BaseTest<T extends ODatabase> {
     ODatabaseHelper.createDatabase(database, database.getURL());
   }
 
-  protected String getTestEnv() {
+  protected String getTestEnv(){
     return System.getProperty("orientdb.test.env");
   }
 
@@ -194,143 +193,45 @@ public abstract class BaseTest<T extends ODatabase> {
     if (database.getMetadata().getSchema().existsClass("Whiz"))
       return;
 
-    if (!database.existsCluster("csv")) {
-      database.addCluster("csv");
-    }
-    if (!database.existsCluster("flat")) {
-      database.addCluster("flat");
-    }
-    if (!database.existsCluster("binary")) {
-      database.addCluster("binary");
-    }
-
+    database.addCluster("csv");
+    database.addCluster("flat");
+    database.addCluster("binary");
 //    database.addBlobCluster("blobCluster");
 
-    final OSchema schema = database.getMetadata().getSchema();
-    OClass account;
-    if (!schema.existsClass("Account")) {
-      account = schema.createClass("Account", 1);
-    } else {
-      account = schema.getClass("Account");
-    }
 
-    if (!account.existsProperty("id")) {
-      account.createProperty("id", OType.INTEGER);
-    }
+    OClass account = database.getMetadata().getSchema().createClass("Account", 1, null);
+    account.createProperty("id", OType.INTEGER);
+    account.createProperty("birthDate", OType.DATE);
+    account.createProperty("binary", OType.BINARY);
 
-    if (!account.existsProperty("birthDate")) {
-      account.createProperty("birthDate", OType.DATE);
-    }
+    database.getMetadata().getSchema().createClass("Company", account);
 
-    if (!account.existsProperty("binary")) {
-      account.createProperty("binary", OType.BINARY);
-    }
+    OClass profile = database.getMetadata().getSchema().createClass("Profile", 1, null);
+    profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.UNIQUE, new ODocument().field("ignoreNullValues", true));
+    profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
+    profile.createProperty("registeredOn", OType.DATETIME).setMin("2010-01-01 00:00:00");
+    profile.createProperty("lastAccessOn", OType.DATETIME).setMin("2010-01-01 00:00:00");
+    profile.createProperty("photo", OType.TRANSIENT);
 
-    if (!schema.existsClass("Company")) {
-      schema.createClass("Company", account);
-    }
+    OClass whiz = database.getMetadata().getSchema().createClass("Whiz", 1, null);
+    whiz.createProperty("id", OType.INTEGER);
+    whiz.createProperty("account", OType.LINK, account);
+    whiz.createProperty("date", OType.DATE).setMin("2010-01-01");
+    whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140").createIndex(OClass.INDEX_TYPE.FULLTEXT);
+    whiz.createProperty("replyTo", OType.LINK, account);
 
-    OClass profile;
-    if (schema.existsClass("Profile")) {
-      profile = schema.getClass("Profile");
-    } else {
-      profile = schema.createClass("Profile", 1);
-    }
-
-    if (!profile.existsProperty("nick")) {
-      profile.createProperty("nick", OType.STRING).setMin("3").setMax("30")
-          .createIndex(OClass.INDEX_TYPE.UNIQUE, new ODocument().field("ignoreNullValues", true));
-    }
-
-    if (!profile.existsProperty("name")) {
-      profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-    }
-
-    if (!profile.existsProperty("surname")) {
-      profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
-    }
-
-    if (!profile.existsProperty("registeredOn")) {
-      profile.createProperty("registeredOn", OType.DATETIME).setMin("2010-01-01 00:00:00");
-    }
-
-    if (!profile.existsProperty("lastAccessOn")) {
-      profile.createProperty("lastAccessOn", OType.DATETIME).setMin("2010-01-01 00:00:00");
-    }
-
-    if (!profile.existsProperty("photo")) {
-      profile.createProperty("photo", OType.TRANSIENT);
-    }
-
-    OClass whiz;
-
-    if (schema.existsClass("Whiz")) {
-      whiz = schema.getClass("Whiz");
-    } else {
-      whiz = schema.createClass("Whiz", 1);
-    }
-
-    if (!whiz.existsProperty("id")) {
-      whiz.createProperty("id", OType.INTEGER);
-    }
-
-    if (!whiz.existsProperty("account")) {
-      whiz.createProperty("account", OType.LINK, account);
-    }
-
-    if (!whiz.existsProperty("date")) {
-      whiz.createProperty("date", OType.DATE).setMin("2010-01-01");
-    }
-
-    if (!whiz.existsProperty("text")) {
-      whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140")
-          .createIndex(OClass.INDEX_TYPE.FULLTEXT);
-    }
-
-    if (!whiz.existsProperty("replyTo")) {
-      whiz.createProperty("replyTo", OType.LINK, account);
-    }
-
-    OClass strictTest;
-    if (schema.existsClass("StrictTest")) {
-      strictTest = schema.getClass("StrictTest");
-    } else {
-      strictTest = schema.createClass("StrictTest", 1);
-    }
+    OClass strictTest = database.getMetadata().getSchema().createClass("StrictTest", 1, null);
     strictTest.setStrictMode(true);
+    strictTest.createProperty("id", OType.INTEGER).isMandatory();
+    strictTest.createProperty("name", OType.STRING);
 
-    if (!strictTest.existsProperty("id")) {
-      strictTest.createProperty("id", OType.INTEGER).isMandatory();
-    }
-    if (!strictTest.existsProperty("name")) {
-      strictTest.createProperty("name", OType.STRING);
-    }
+    OClass animalRace = database.getMetadata().getSchema().createClass("AnimalRace", 1, null);
+    animalRace.createProperty("name", OType.STRING);
 
-    OClass animalRace;
-    if (schema.existsClass("AnimalRace")) {
-      animalRace = schema.getClass("AnimalRace");
-    } else {
-      animalRace = schema.createClass("AnimalRace", 1);
-    }
-
-    if (!animalRace.existsProperty("name")) {
-      animalRace.createProperty("name", OType.STRING);
-    }
-
-    OClass animal;
-    if (schema.existsClass("Animal")) {
-      animal = schema.getClass("Animal");
-    } else {
-      animal = schema.createClass("Animal", 1);
-    }
-
-    if (!animal.existsProperty("races")) {
-      animal.createProperty("races", OType.LINKSET, animalRace);
-    }
-
-    if (!animal.existsProperty("name")) {
-      animal.createProperty("name", OType.STRING);
-    }
+    OClass animal = database.getMetadata().getSchema().createClass("Animal", 1, null);
+    animal.createProperty("races", OType.LINKSET, animalRace);
+    animal.createProperty("name", OType.STRING);
   }
 
   protected boolean isAutoManageDatabase() {

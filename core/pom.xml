@@ -256,7 +256,6 @@
                         <version>${javaassist.version}</version>
                     </dependency>
                 </dependencies>
-
             </plugin>
         </plugins>
     </build>
