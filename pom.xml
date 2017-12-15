@@ -188,6 +188,7 @@
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
         <heapSize>2048m</heapSize>
+        <javassist.version>3.22.0-GA</javassist.version>
     </properties>
 
     <build>
