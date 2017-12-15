@@ -80,8 +80,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(result.size(), 3);
 
-    Integer records = database.command(new OCommandSQL("update Profile set salary = 133.00 where @rid = ?")).execute(
-        result.get(0).<Object>field("rid"));
+    Integer records = database.command(new OCommandSQL("update Profile set salary = 133.00 where @rid = ?"))
+        .execute(result.get(0).<Object>field("rid"));
 
     Assert.assertEquals(records.intValue(), 1);
 
@@ -134,8 +134,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
       ODocument loadedDoc = database.load(doc.getIdentity(), "*:-1", true);
       Assert.assertEquals(((List<?>) loadedDoc.field("addresses")).size(), 3);
-      Assert.assertEquals(((OIdentifiable) ((List<?>) loadedDoc.field("addresses")).get(0)).getIdentity().toString(), "#"
-          + addressClusterId + ":" + positions.get(0));
+      Assert.assertEquals(((OIdentifiable) ((List<?>) loadedDoc.field("addresses")).get(0)).getIdentity().toString(),
+          "#" + addressClusterId + ":" + positions.get(0));
       loadedDoc.field("addresses", doc.<Object>field("addresses"));
       database.save(loadedDoc);
     }
@@ -310,6 +310,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     Assert.assertEquals("f", oDoc.field("gender"));
   }
 
+  @Test(enabled = false)
   public void updateIncrement() {
 
     List<ODocument> result1 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();

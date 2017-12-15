@@ -50,7 +50,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   String CLUSTER_DEFAULT_NAME = "default";
 
   enum STATUS {
-    CLOSED, OPEN, CLOSING, @Deprecated OPENING
+    NOT_INITIALIZED, CLOSED, OPEN, CLOSING
   }
 
   enum LOCKING_STRATEGY {

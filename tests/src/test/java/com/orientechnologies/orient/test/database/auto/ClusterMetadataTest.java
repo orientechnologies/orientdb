@@ -35,12 +35,9 @@ public class ClusterMetadataTest extends DocumentDBBaseTest {
     Assert.assertEquals(cluster.recordGrowFactor(), 2f);
     Assert.assertEquals(cluster.recordOverflowGrowFactor(), 2f);
 
-    OStorage storage = database.getStorage();
     database.close();
-    storage.close(true, false);
 
-    database.activateOnCurrentThread();
-    database.resetInitialization();
+    database = createDatabaseInstance(database.getURL());
     database.open("admin", "admin");
 
     cluster = database.getStorage().getClusterById(clusterId);
