@@ -930,13 +930,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public List<ORecordOperation> commit(final OTransactionInternal iTx, final Runnable callback) {
-    OCommit37Request request;
-    if (((OTransactionOptimistic) iTx).isChanged()) {
-      request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), (Iterable<ORecordOperation>) iTx.getRecordOperations(),
-          ((OTransactionOptimistic) iTx).getIndexOperations());
-    } else {
-      request = new OCommit37Request(iTx.getId(), false, iTx.isUsingLog(), null, null);
-    }
+    OCommit37Request request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), iTx.getRecordOperations(),
+        iTx.getIndexOperations());
 
     OCommit37Response response = networkOperationNoRetry(request, "Error on commit");
     for (OCommit37Response.OCreatedRecordResponse created : response.getCreated()) {

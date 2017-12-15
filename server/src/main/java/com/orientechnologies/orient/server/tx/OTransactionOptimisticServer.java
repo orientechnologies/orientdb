@@ -24,10 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
-import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
+import com.orientechnologies.orient.core.tx.*;
 
 import java.util.*;
 
@@ -43,6 +40,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
   private final int                           clientTxId;
   private       List<ORecordOperationRequest> operations;
   private final List<IndexChange>             indexChanges;
+  private       Map<ORID, ORecordOperation>   oldTxEntries;
 
   public OTransactionOptimisticServer(ODatabaseDocumentInternal database, int txId, boolean usingLong,
       List<ORecordOperationRequest> operations, List<IndexChange> indexChanges) {
@@ -54,6 +52,12 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     this.setUsingLog(usingLong);
     this.operations = operations;
     this.indexChanges = indexChanges;
+    if (database.getTransaction().isActive()) {
+      this.oldTxEntries = new HashMap<>();
+      for (ORecordOperation op : ((OTransactionOptimistic) database.getTransaction()).getRecordOperations()) {
+        this.oldTxEntries.put(op.getRID(), op);
+      }
+    }
   }
 
   @Override
@@ -147,7 +151,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
         }
 
         database.getLocalCache().updateRecord(entry.getValue().getRecord());
-        addRecord(entry.getValue().getRecord(), entry.getValue().type, null, database.getTransaction());
+        addRecord(entry.getValue().getRecord(), entry.getValue().type, null, oldTxEntries);
       }
       tempEntries.clear();
 
@@ -194,7 +198,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       }
       for (ORecord record : updatedRecords.values())
         unmarshallRecord(record);
-
+      oldTxEntries = null;
     } catch (Exception e) {
       rollback();
       throw OException
@@ -248,13 +252,15 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     }
   }
 
-  private boolean checkCallHooks(OTransaction oldTx, ORID id, byte type) {
+  private boolean checkCallHooks(Map<ORID, ORecordOperation> oldTx, ORID id, byte type) {
     if (oldTx != null) {
-      ORecordOperation entry = oldTx.getRecordEntry(id);
+      ORecordOperation entry = oldTx.get(id);
       if (entry == null || entry.getType() != type)
         return true;
+      return false;
+    } else {
+      return true;
     }
-    return false;
   }
 
   @Override
@@ -272,7 +278,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     return operation;
   }
 
-  public void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName, OTransaction oldTx) {
+  public void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName, Map<ORID, ORecordOperation> oldTx) {
     changed = true;
     checkTransaction();
 

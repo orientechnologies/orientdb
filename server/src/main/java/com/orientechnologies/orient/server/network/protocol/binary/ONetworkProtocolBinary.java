@@ -411,21 +411,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       if (connection == null && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE)
         return null;
 
-      if (connection != null && !Boolean.TRUE.equals(connection.getTokenBased())) {
-        // BACKWARD COMPATIBILITY MODE
-        connection.setTokenBytes(null);
-        connection.acquire();
-      } else {
-        // STANDARD FLOW
-        if (!tokenConnection) {
-          // ARRIVED HERE FOR DIRECT TOKEN CONNECTION, BUT OLD STYLE SESSION.
-          throw new OIOException("Found unknown session " + clientTxId);
-        }
-        if (connection == null && tokenBytes != null && tokenBytes.length > 0) {
-          // THIS IS THE CASE OF A TOKEN OPERATION WITHOUT HANDSHAKE ON THIS CONNECTION.
-          connection = server.getClientConnectionManager().connect(this);
-          connection.setDisconnectOnAfter(true);
-        }
+      if (handshakeInfo != null) {
         if (connection == null) {
           throw new OTokenSecurityException("missing session and token");
         }
@@ -435,6 +421,33 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         connection.init(server);
         if (connection.getData().serverUser) {
           connection.setServerUser(server.getUser(connection.getData().serverUsername));
+        }
+      } else {
+        if (connection != null && !Boolean.TRUE.equals(connection.getTokenBased())) {
+          // BACKWARD COMPATIBILITY MODE
+          connection.setTokenBytes(null);
+          connection.acquire();
+        } else {
+          // STANDARD FLOW
+          if (!tokenConnection) {
+            // ARRIVED HERE FOR DIRECT TOKEN CONNECTION, BUT OLD STYLE SESSION.
+            throw new OIOException("Found unknown session " + clientTxId);
+          }
+          if (connection == null && tokenBytes != null && tokenBytes.length > 0) {
+            // THIS IS THE CASE OF A TOKEN OPERATION WITHOUT HANDSHAKE ON THIS CONNECTION.
+            connection = server.getClientConnectionManager().connect(this);
+            connection.setDisconnectOnAfter(true);
+          }
+          if (connection == null) {
+            throw new OTokenSecurityException("missing session and token");
+          }
+          connection.acquire();
+          connection.validateSession(tokenBytes, server.getTokenHandler(), this);
+          waitDistribuedIsOnline(connection);
+          connection.init(server);
+          if (connection.getData().serverUser) {
+            connection.setServerUser(server.getUser(connection.getData().serverUsername));
+          }
         }
       }
 
@@ -636,11 +649,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {
         if (logClientFullStackTrace)
-          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t,
-              true, null, channel.socket.getRemoteSocketAddress(), t.toString());
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t, true, null,
+              channel.socket.getRemoteSocketAddress(), t.toString());
         else
-          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null,
-              true, null, channel.socket.getRemoteSocketAddress(), t.toString());
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null, true, null,
+              channel.socket.getRemoteSocketAddress(), t.toString());
       }
     } catch (Exception e) {
       if (e instanceof SocketException)
