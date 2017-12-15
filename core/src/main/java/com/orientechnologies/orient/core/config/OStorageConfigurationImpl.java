@@ -89,10 +89,11 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   private volatile           boolean                                strictSQL;
   private volatile           ConcurrentMap<String, IndexEngineData> indexEngines;
   private volatile transient boolean validation = true;
+  protected volatile OStorageConfigurationUpdateListener updateListener;
   /**
    * Version of product release under which storage was created
    */
-  private volatile String  createdAtVersion;
+  private volatile   String                              createdAtVersion;
 
   protected final Charset streamCharset;
 
@@ -202,6 +203,9 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   public void update() throws OSerializationException {
     final byte[] record = toStream(streamCharset);
     storage.updateRecord(CONFIG_RID, true, record, -1, OBlob.RECORD_TYPE, 0, null);
+    if (updateListener != null) {
+      updateListener.onUpdate(this);
+    }
   }
 
   public String getDirectory() {
@@ -996,5 +1000,9 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
   public List<OStorageClusterConfiguration> getClusters() {
     return clusters;
+  }
+
+  public void setConfigurationUpdateListener(OStorageConfigurationUpdateListener updateListener) {
+    this.updateListener = updateListener;
   }
 }

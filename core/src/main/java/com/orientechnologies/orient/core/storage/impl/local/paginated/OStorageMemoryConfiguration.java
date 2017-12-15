@@ -62,6 +62,10 @@ public class OStorageMemoryConfiguration extends OStorageConfigurationImpl {
     } catch (Exception e) {
       throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
     }
+    if (updateListener != null) {
+      updateListener.onUpdate(this);
+    }
+
   }
 
   @Override

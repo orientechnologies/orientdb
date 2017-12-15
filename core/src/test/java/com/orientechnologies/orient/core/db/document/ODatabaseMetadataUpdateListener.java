@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
@@ -12,6 +13,8 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -53,6 +56,13 @@ public class ODatabaseMetadataUpdateListener {
         count++;
         assertNotNull(oSequenceLibrary);
       }
+
+      @Override
+      public void onStorageConfigurationUpdate(OStorageConfiguration update) {
+        count++;
+        assertNotNull(update);
+
+      }
     };
 
     ((ODatabaseDocumentInternal) session).getSharedContext().registerListener(listener);
@@ -81,6 +91,12 @@ public class ODatabaseMetadataUpdateListener {
   public void testIndexUpdate() {
     session.createClass("Some").createProperty("test", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     assertEquals(count, 3);
+  }
+
+  @Test
+  public void testIndexConfigurationUpdate() {
+    session.set(ODatabase.ATTRIBUTES.LOCALECOUNTRY, Locale.GERMAN);
+    assertEquals(count, 1);
   }
 
   @After

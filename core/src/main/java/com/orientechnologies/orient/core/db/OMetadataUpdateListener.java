@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -13,4 +14,6 @@ public interface OMetadataUpdateListener {
   void onFunctionLibraryUpdate(OFunctionLibrary oFunctionLibrary);
 
   void onSequenceLibraryUpdate(OSequenceLibraryImpl oSequenceLibrary);
+
+  void onStorageConfigurationUpdate(OStorageConfiguration update);
 }
