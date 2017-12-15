@@ -322,7 +322,7 @@ public class OBinaryCondition extends OBooleanExpression {
 
         for (OExpression exp : coll.expressions) {
           if (exp.isBaseIdentifier()) {
-            OIdentifier identifier = ((OBaseExpression) left.mathExpression).identifier.suffix.identifier;
+            OIdentifier identifier = ((OBaseExpression) exp.mathExpression).identifier.suffix.identifier;
             OExpression val = identifierToStringExpr(identifier);
             newColl.expressions.add(val);
           } else {

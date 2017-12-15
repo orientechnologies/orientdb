@@ -21,6 +21,7 @@ package com.orientechnologies.lucene.test;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -70,6 +71,17 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
     //        new OSQLSynchQuery<ODocument>("select * from Song where [title,author] LUCENE \"(title:mountains)\""));
 
     assertThat(docs).hasSize(1);
+
+  }
+
+  @Test
+  public void testSelectSingleDocumentWithAndOperatorNEwExec() {
+
+    OResultSet docs = db.query("select * from Song where [title,author] LUCENE \"(title:mountain AND author:Fabbio)\"");
+
+    assertThat(docs.hasNext()).isTrue();
+    docs.next();
+    assertThat(docs.hasNext()).isFalse();
 
   }
 
