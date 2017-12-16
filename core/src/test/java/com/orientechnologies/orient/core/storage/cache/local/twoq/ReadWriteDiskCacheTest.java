@@ -54,6 +54,7 @@ public class ReadWriteDiskCacheTest {
   @BeforeClass
   public static void beforeClass() throws IOException {
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
+    OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.setValue(Boolean.FALSE);
 
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
@@ -113,6 +114,8 @@ public class ReadWriteDiskCacheTest {
       }
     }
 
+    OGlobalConfiguration.FILE_LOCK.setValue(Boolean.TRUE);
+    OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.setValue(Boolean.TRUE);
   }
 
   @Before

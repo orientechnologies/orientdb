@@ -25,16 +25,22 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -61,6 +67,21 @@ public class OFileClassic implements OFile, OClosableItem {
 
   private volatile long size;                                                                                // PART OF
 
+  /**
+   * Map which calculates which files are opened and how many users they have
+   */
+  private static final ConcurrentHashMap<Path, FileUser> openedFilesMap = new ConcurrentHashMap<>();
+
+  /**
+   * Whether only single file user is allowed.
+   */
+  private final boolean exclusiveFileAccess = OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.getValueAsBoolean();
+
+  /**
+   * Whether it should be tracked which thread opened file in exclusive mode.
+   */
+  private final boolean trackFileOpen = OGlobalConfiguration.STORAGE_TRACK_FILE_ACCESS.getValueAsBoolean();
+
   public OFileClassic(Path osFile) {
     this.osFile = osFile;
   }
@@ -70,11 +91,13 @@ public class OFileClassic implements OFile, OClosableItem {
     acquireWriteLock();
     try {
       final long currentSize = this.size;
+      //noinspection NonAtomicOperationOnVolatileField
       this.size += size;
 
       assert this.size >= size;
 
       setSize(this.size);
+      //noinspection resource
       channel.truncate(this.size + HEADER_SIZE);
 
       return currentSize;
@@ -91,6 +114,7 @@ public class OFileClassic implements OFile, OClosableItem {
       try {
         acquireWriteLock();
         try {
+          //noinspection resource
           channel.truncate(HEADER_SIZE + size);
           this.size = size;
           setSize(this.size);
@@ -173,6 +197,7 @@ public class OFileClassic implements OFile, OClosableItem {
         try {
           offset += HEADER_SIZE;
 
+          //noinspection resource
           channel.position(offset);
           readByteBuffers(buffers, channel, buffers.length * buffers[0].limit(), throwOnEof);
           break;
@@ -222,6 +247,7 @@ public class OFileClassic implements OFile, OClosableItem {
         acquireWriteLock();
         try {
           offset += HEADER_SIZE;
+          //noinspection resource
           channel.position(offset);
           writeByteBuffers(buffers, channel, buffers.length * buffers[0].limit());
 
@@ -456,6 +482,8 @@ public class OFileClassic implements OFile, OClosableItem {
   public void create() throws IOException {
     acquireWriteLock();
     try {
+      acquireExclusiveAccess();
+
       openChannel();
       init();
 
@@ -527,7 +555,7 @@ public class OFileClassic implements OFile, OClosableItem {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#open()
    */
   @Override
@@ -536,6 +564,8 @@ public class OFileClassic implements OFile, OClosableItem {
     try {
       if (!Files.exists(osFile))
         throw new FileNotFoundException("File: " + osFile);
+
+      acquireExclusiveAccess();
 
       openChannel();
       init();
@@ -553,9 +583,70 @@ public class OFileClassic implements OFile, OClosableItem {
     }
   }
 
+  private void acquireExclusiveAccess() {
+    if (exclusiveFileAccess) {
+      while (true) {
+        final FileUser fileUser = openedFilesMap.computeIfAbsent(osFile.toAbsolutePath(), p -> {
+          if (trackFileOpen) {
+            return new FileUser(0, Thread.currentThread().getStackTrace());
+          }
+
+          return new FileUser(0, null);
+        });
+
+        final int usersCount = fileUser.users;
+
+        if (usersCount > 0) {
+          if (!trackFileOpen) {
+            throw new IllegalStateException(
+                "File is allowed to be opened only once, to get more information start JVM with system property "
+                    + OGlobalConfiguration.STORAGE_TRACK_FILE_ACCESS.getKey() + " set to true.");
+          } else {
+            final StringWriter sw = new StringWriter();
+            try (final PrintWriter pw = new PrintWriter(sw)) {
+              pw.append("File is allowed to be opened only once.");
+              if (fileUser.openStackTrace != null) {
+                pw.append(" File is already opened under: \n");
+                for (StackTraceElement se : fileUser.openStackTrace) {
+                  pw.append("\t").append(se.toString());
+                }
+              }
+
+              pw.flush();
+              throw new IllegalStateException(sw.toString());
+            }
+          }
+        } else {
+          final FileUser newFileUser = new FileUser(1, Thread.currentThread().getStackTrace());
+          if (openedFilesMap.replace(osFile.toAbsolutePath(), fileUser, newFileUser)) {
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  private void releaseExclusiveAccess() {
+    if (exclusiveFileAccess) {
+      while (true) {
+        final FileUser fileUser = openedFilesMap.get(osFile.toAbsolutePath());
+        final FileUser newFileUser;
+        if (trackFileOpen) {
+          newFileUser = new FileUser(fileUser.users - 1, Thread.currentThread().getStackTrace());
+        } else {
+          newFileUser = new FileUser(fileUser.users - 1, null);
+        }
+
+        if (openedFilesMap.replace(osFile.toAbsolutePath(), fileUser, newFileUser)) {
+          break;
+        }
+      }
+    }
+  }
+
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#close()
    */
   @Override
@@ -575,6 +666,7 @@ public class OFileClassic implements OFile, OClosableItem {
           attempts++;
         }
 
+        releaseExclusiveAccess();
         break;
       } catch (IOException ioe) {
         OLogManager.instance().error(this, "Error during closing of file '" + getName() + "' " + attempts + "-th attempt", ioe);
@@ -591,7 +683,7 @@ public class OFileClassic implements OFile, OClosableItem {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#delete()
    */
   @Override
@@ -666,7 +758,7 @@ public class OFileClassic implements OFile, OClosableItem {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#isOpen()
    */
   @Override
@@ -682,7 +774,7 @@ public class OFileClassic implements OFile, OClosableItem {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#exists()
    */
   @Override
@@ -744,6 +836,7 @@ public class OFileClassic implements OFile, OClosableItem {
     try {
       close();
 
+      //noinspection NonAtomicOperationOnVolatileField
       osFile = Files.move(osFile, newFile);
 
       open();
@@ -784,7 +877,7 @@ public class OFileClassic implements OFile, OClosableItem {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#toString()
    */
   @Override
@@ -825,6 +918,41 @@ public class OFileClassic implements OFile, OClosableItem {
     } finally {
       releaseWriteLock();
     }
+  }
+
+  /**
+   * Container of information about files which are opened inside of storage in exclusive mode
+   *
+   * @see OGlobalConfiguration#STORAGE_EXCLUSIVE_FILE_ACCESS
+   * @see OGlobalConfiguration#STORAGE_TRACK_FILE_ACCESS
+   */
+  private static final class FileUser {
+    private final int                 users;
+    private final StackTraceElement[] openStackTrace;
+
+    FileUser(int users, StackTraceElement[] openStackTrace) {
+      this.users = users;
+      this.openStackTrace = openStackTrace;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+      FileUser fileUser = (FileUser) o;
+      return users == fileUser.users && Arrays.equals(openStackTrace, fileUser.openStackTrace);
+    }
+
+    @Override
+    public int hashCode() {
+
+      int result = Objects.hash(users);
+      result = 31 * result + Arrays.hashCode(openStackTrace);
+      return result;
+    }
+
   }
 
 }
