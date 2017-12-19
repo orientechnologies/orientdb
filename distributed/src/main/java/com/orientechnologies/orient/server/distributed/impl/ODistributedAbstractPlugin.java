@@ -952,10 +952,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
                     } catch (ODistributedDatabaseDeltaSyncException e) {
                       // FALL BACK TO FULL BACKUP
-                      final ODistributedStorage storage = storages.get(databaseName);
-                      if (storage != null)
-                        storage.close(true, false);
-
                       if (deploy == null || !deploy) {
                         // NO AUTO DEPLOY
                         ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
