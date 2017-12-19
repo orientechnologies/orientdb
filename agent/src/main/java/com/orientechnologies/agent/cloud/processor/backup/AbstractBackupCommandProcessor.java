@@ -1,0 +1,52 @@
+package com.orientechnologies.agent.cloud.processor.backup;
+
+import com.orientechnologies.agent.cloud.processor.CloudCommandProcessor;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orientdb.cloud.protocol.backup.BackupInfo;
+
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+/**
+ * Created by Enrico Risa on 19/12/2017.
+ */
+public abstract class AbstractBackupCommandProcessor implements CloudCommandProcessor {
+
+  protected ODocument toODocument(BackupInfo info) {
+    ODocument config = new ODocument();
+
+    config.field("uuid", info.getUuid());
+    config.field("dbName", info.getDbName());
+    config.field("directory", info.getDirectory());
+    config.field("enabled", info.getEnabled());
+    config.field("retentionDays", info.getRetentionDays());
+
+    Map<String, ODocument> modes = info.getModes().entrySet().stream()
+        .collect(Collectors.toMap(e -> e.getKey().toString(), e -> new ODocument().field("when", e.getValue().getWhen())));
+
+    config.field("modes", new ODocument().fromMap(modes));
+
+    return config;
+  }
+
+  protected BackupInfo fromODocument(ODocument document) {
+    BackupInfo info = new BackupInfo();
+    info.setUuid(document.field("uuid"));
+    info.setDbName(document.field("dbName"));
+    info.setDirectory(document.field("directory"));
+    info.setEnabled(document.field("enabled"));
+    info.setRetentionDays(document.field("retentionDays"));
+
+    ODocument modes = document.field("modes");
+
+    Iterable<Map.Entry<String, Object>> iterable = () -> modes.iterator();
+    Map<BackupInfo.BackupMode, BackupInfo.BackupModeConfig> mappedModes = StreamSupport.stream(iterable.spliterator(), false)
+        .collect(Collectors.toMap(e -> BackupInfo.BackupMode.valueOf(e.getKey()), (e) -> {
+          ODocument embedded = (ODocument) e.getValue();
+          return new BackupInfo.BackupModeConfig(embedded.field("when"));
+        }));
+    info.setModes(mappedModes);
+    return info;
+  }
+}
