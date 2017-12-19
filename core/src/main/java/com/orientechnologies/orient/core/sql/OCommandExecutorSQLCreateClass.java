@@ -122,6 +122,8 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
                 hasNext = true;
               else if (Character.isLetterOrDigit(ch))
                 break;
+              else if (ch == '`')
+                  break;
             }
           } while (hasNext);
           if (newParser) {
