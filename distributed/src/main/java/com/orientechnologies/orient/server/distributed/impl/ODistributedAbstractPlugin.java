@@ -1297,14 +1297,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         // DISABLED BECAUSE MOMENTUM IS NOT RELIABLE YET
         // distrDatabase.filterBeforeThisMomentum(((ODistributedDatabaseChunk) value).getMomentum());
         final File uniqueClustersBackupDirectory = getClusterOwnedExclusivelyByCurrentNode(dbPath, databaseName);
-
-        // CLOSE THE STORAGE FIRST
-        final ODistributedStorage stg = storages.remove(databaseName);
-        if (stg != null) {
-          stg.shutdownAsynchronousWorker();
-          serverInstance.getDatabases().forceDatabaseClose(databaseName);
-        }
-
         if (backupDatabase)
           backupCurrentDatabase(databaseName);
 
