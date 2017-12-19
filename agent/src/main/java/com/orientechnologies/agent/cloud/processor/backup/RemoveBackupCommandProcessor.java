@@ -4,7 +4,7 @@ import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 
-public class DeleteBackupCommandProcessor extends AbstractBackupCommandProcessor {
+public class RemoveBackupCommandProcessor extends AbstractBackupCommandProcessor {
   @Override
   public CommandResponse execute(Command command, OEnterpriseAgent agent) {
 

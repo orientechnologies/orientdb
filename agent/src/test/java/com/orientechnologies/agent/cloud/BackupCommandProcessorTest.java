@@ -1,9 +1,9 @@
 package com.orientechnologies.agent.cloud;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
-import com.orientechnologies.agent.cloud.processor.backup.DeleteBackupCommandProcessor;
+import com.orientechnologies.agent.cloud.processor.backup.AddBackupCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.backup.ListBackupCommandProcessor;
-import com.orientechnologies.agent.cloud.processor.backup.PostBackupCommandProcessor;
+import com.orientechnologies.agent.cloud.processor.backup.RemoveBackupCommandProcessor;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -15,6 +15,8 @@ import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import com.orientechnologies.orientdb.cloud.protocol.backup.BackupInfo;
 import com.orientechnologies.orientdb.cloud.protocol.backup.BackupList;
+import com.orientechnologies.orientdb.cloud.protocol.backup.BackupMode;
+import com.orientechnologies.orientdb.cloud.protocol.backup.BackupModeConfig;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -96,7 +98,7 @@ public class BackupCommandProcessorTest {
 
     BackupList payload = getBackupList();
 
-    assertThat(payload.getInfo()).hasSize(0);
+    assertThat(payload.getBackups()).hasSize(0);
 
   }
 
@@ -124,9 +126,9 @@ public class BackupCommandProcessorTest {
 
     BackupList payload = getBackupList();
 
-    assertThat(payload.getInfo()).hasSize(1);
+    assertThat(payload.getBackups()).hasSize(1);
 
-    BackupInfo backupInfo = payload.getInfo().get(0);
+    BackupInfo backupInfo = payload.getBackups().get(0);
 
     assertThat(backupInfo.getUuid()).isEqualTo(uuid);
 
@@ -138,12 +140,13 @@ public class BackupCommandProcessorTest {
 
     assertThat(backupInfo.getRetentionDays()).isEqualTo(30);
 
-    assertThat(backupInfo.getModes()).containsKeys(BackupInfo.BackupMode.FULL_BACKUP);
-    assertThat(backupInfo.getModes()).containsKeys(BackupInfo.BackupMode.INCREMENTAL_BACKUP);
+    assertThat(backupInfo.getModes()).containsKeys(BackupMode.FULL_BACKUP);
+    assertThat(backupInfo.getModes()).containsKeys(BackupMode.INCREMENTAL_BACKUP);
 
-    BackupInfo.BackupModeConfig incremental = backupInfo.getModes().get(BackupInfo.BackupMode.INCREMENTAL_BACKUP);
+    
+    BackupModeConfig incremental = backupInfo.getModes().get(BackupMode.INCREMENTAL_BACKUP);
 
-    BackupInfo.BackupModeConfig full = backupInfo.getModes().get(BackupInfo.BackupMode.FULL_BACKUP);
+    BackupModeConfig full = backupInfo.getModes().get(BackupMode.FULL_BACKUP);
 
     assertThat(full.getWhen()).isEqualTo("0/5 * * * * ?");
     assertThat(incremental.getWhen()).isEqualTo("0/2 * * * * ?");
@@ -172,7 +175,7 @@ public class BackupCommandProcessorTest {
   }
 
   @Test
-  public void testPostBackupCommandProcessor() {
+  public void testAddBackupCommandProcessor() {
 
     BackupInfo info = new BackupInfo();
     info.setDbName(DB_NAME);
@@ -180,10 +183,10 @@ public class BackupCommandProcessorTest {
     info.setEnabled(true);
     info.setRetentionDays(30);
 
-    info.setModes(new HashMap<BackupInfo.BackupMode, BackupInfo.BackupModeConfig>() {
+    info.setModes(new HashMap<BackupMode, BackupModeConfig>() {
       {
-        put(BackupInfo.BackupMode.FULL_BACKUP, new BackupInfo.BackupModeConfig("0/5 * * * * ?"));
-        put(BackupInfo.BackupMode.INCREMENTAL_BACKUP, new BackupInfo.BackupModeConfig("0/2 * * * * ?"));
+        put(BackupMode.FULL_BACKUP, new BackupModeConfig("0/5 * * * * ?"));
+        put(BackupMode.INCREMENTAL_BACKUP, new BackupModeConfig("0/2 * * * * ?"));
       }
     });
 
@@ -192,7 +195,7 @@ public class BackupCommandProcessorTest {
     command.setPayload(info);
     command.setResponseChannel("channelTest");
 
-    PostBackupCommandProcessor backupCommandProcessor = new PostBackupCommandProcessor();
+    AddBackupCommandProcessor backupCommandProcessor = new AddBackupCommandProcessor();
 
     CommandResponse execute = backupCommandProcessor.execute(command, agent);
 
@@ -210,12 +213,12 @@ public class BackupCommandProcessorTest {
 
     assertThat(backupInfo.getRetentionDays()).isEqualTo(30);
 
-    assertThat(backupInfo.getModes()).containsKeys(BackupInfo.BackupMode.FULL_BACKUP);
-    assertThat(backupInfo.getModes()).containsKeys(BackupInfo.BackupMode.INCREMENTAL_BACKUP);
+    assertThat(backupInfo.getModes()).containsKeys(BackupMode.FULL_BACKUP);
+    assertThat(backupInfo.getModes()).containsKeys(BackupMode.INCREMENTAL_BACKUP);
 
-    BackupInfo.BackupModeConfig incremental = backupInfo.getModes().get(BackupInfo.BackupMode.INCREMENTAL_BACKUP);
+    BackupModeConfig incremental = backupInfo.getModes().get(BackupMode.INCREMENTAL_BACKUP);
 
-    BackupInfo.BackupModeConfig full = backupInfo.getModes().get(BackupInfo.BackupMode.FULL_BACKUP);
+    BackupModeConfig full = backupInfo.getModes().get(BackupMode.FULL_BACKUP);
 
     assertThat(full.getWhen()).isEqualTo("0/5 * * * * ?");
     assertThat(incremental.getWhen()).isEqualTo("0/2 * * * * ?");
@@ -229,7 +232,7 @@ public class BackupCommandProcessorTest {
 
     BackupList backupList = getBackupList();
 
-    assertThat(backupList.getInfo()).hasSize(1);
+    assertThat(backupList.getBackups()).hasSize(1);
 
     String uuid = cfg.field("uuid");
 
@@ -238,14 +241,14 @@ public class BackupCommandProcessorTest {
     command.setPayload(uuid);
     command.setResponseChannel("channelTest");
 
-    DeleteBackupCommandProcessor backupCommandProcessor = new DeleteBackupCommandProcessor();
+    RemoveBackupCommandProcessor backupCommandProcessor = new RemoveBackupCommandProcessor();
 
     CommandResponse execute = backupCommandProcessor.execute(command, agent);
 
 
     backupList = getBackupList();
 
-    assertThat(backupList.getInfo()).hasSize(0);
+    assertThat(backupList.getBackups()).hasSize(0);
 
   }
 

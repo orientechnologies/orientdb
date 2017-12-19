@@ -6,7 +6,7 @@ import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import com.orientechnologies.orientdb.cloud.protocol.backup.BackupInfo;
 
-public class PostBackupCommandProcessor extends AbstractBackupCommandProcessor {
+public class AddBackupCommandProcessor extends AbstractBackupCommandProcessor {
   @Override
   public CommandResponse execute(Command command, OEnterpriseAgent agent) {
 

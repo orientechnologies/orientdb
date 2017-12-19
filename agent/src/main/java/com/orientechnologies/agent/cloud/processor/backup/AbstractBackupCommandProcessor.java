@@ -3,6 +3,8 @@ package com.orientechnologies.agent.cloud.processor.backup;
 import com.orientechnologies.agent.cloud.processor.CloudCommandProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orientdb.cloud.protocol.backup.BackupInfo;
+import com.orientechnologies.orientdb.cloud.protocol.backup.BackupMode;
+import com.orientechnologies.orientdb.cloud.protocol.backup.BackupModeConfig;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,10 +43,10 @@ public abstract class AbstractBackupCommandProcessor implements CloudCommandProc
     ODocument modes = document.field("modes");
 
     Iterable<Map.Entry<String, Object>> iterable = () -> modes.iterator();
-    Map<BackupInfo.BackupMode, BackupInfo.BackupModeConfig> mappedModes = StreamSupport.stream(iterable.spliterator(), false)
-        .collect(Collectors.toMap(e -> BackupInfo.BackupMode.valueOf(e.getKey()), (e) -> {
+    Map<BackupMode, BackupModeConfig> mappedModes = StreamSupport.stream(iterable.spliterator(), false)
+        .collect(Collectors.toMap(e -> BackupMode.valueOf(e.getKey()), (e) -> {
           ODocument embedded = (ODocument) e.getValue();
-          return new BackupInfo.BackupModeConfig(embedded.field("when"));
+          return new BackupModeConfig(embedded.field("when"));
         }));
     info.setModes(mappedModes);
     return info;

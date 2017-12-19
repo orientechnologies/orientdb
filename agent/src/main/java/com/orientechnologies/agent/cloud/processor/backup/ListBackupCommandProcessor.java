@@ -29,7 +29,7 @@ public class ListBackupCommandProcessor extends AbstractBackupCommandProcessor {
     List<BackupInfo> backupInfos = config.<List<ODocument>>field("backups").stream().map(this::fromODocument)
         .collect(Collectors.toList());
     BackupList backupList = new BackupList();
-    backupList.setInfo(backupInfos);
+    backupList.setBackups(backupInfos);
     return backupList;
   }
 
