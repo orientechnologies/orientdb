@@ -83,7 +83,10 @@ public class OIdentifier extends SimpleNode {
     if (value == null) {
       return null;
     }
-    return value.replaceAll("\\\\`", "`");
+    if (value.contains("`")) {
+      return value.replaceAll("\\\\`", "`");
+    }
+    return value;
   }
 
   /**
@@ -95,9 +98,12 @@ public class OIdentifier extends SimpleNode {
   private void setStringValue(String s) {
     if (s == null) {
       value = null;
-    } else {
+    } else if (s.contains("`")) {
       value = s.replaceAll("`", "\\\\`");
+    } else {
+      value = s;
     }
+
   }
 
   @Override
