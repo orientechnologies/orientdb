@@ -43,19 +43,19 @@ node("master") {
                     }
                 }
 
-                stage('Run QA/Integration tests on Java8') {
-                    lock("label": "memory", "quantity": 5) {
-                        docker.image("${mvnJdk8Image}").inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
-                                "--name ${containerName} --memory=5g ${env.VOLUMES}") {
-                            try {
-                                sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
-                            } finally {
-                                junit allowEmptyResults: true, testResults: '**/target/failsafe-reports/TEST-*.xml'
-
-                            }
-                        }
-                    }
-                }
+//                stage('Run QA/Integration tests on Java8') {
+//                    lock("label": "memory", "quantity": 5) {
+//                        docker.image("${mvnJdk8Image}").inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
+//                                "--name ${containerName} --memory=5g ${env.VOLUMES}") {
+//                            try {
+//                                sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
+//                            } finally {
+//                                junit allowEmptyResults: true, testResults: '**/target/failsafe-reports/TEST-*.xml'
+//
+//                            }
+//                        }
+//                    }
+//                }
 
                 stage('Publish Javadoc') {
                     lock("label": "memory", "quantity": 2) {
