@@ -105,6 +105,30 @@ public class OMatchFilter extends SimpleNode {
     return null;
   }
 
+  public String getClusterName(OCommandContext context) {
+    for (OMatchFilterItem item : items) {
+      if (item.clusterName != null) {
+        return item.clusterName.getStringValue();
+      } else if (item.clusterId != null) {
+        int cid = item.clusterId.value.intValue();
+        String clusterName = context.getDatabase().getClusterNameById(cid);
+        if (clusterName != null) {
+          return clusterName;
+        }
+      }
+    }
+    return null;
+  }
+
+  public ORid getRid(OCommandContext context) {
+    for (OMatchFilterItem item : items) {
+      if (item.rid != null) {
+        return item.rid;
+      }
+    }
+    return null;
+  }
+
   public Integer getMaxDepth() {
     for (OMatchFilterItem item : items) {
       if (item.maxDepth != null) {
@@ -180,5 +204,6 @@ public class OMatchFilter extends SimpleNode {
   public int hashCode() {
     return items != null ? items.hashCode() : 0;
   }
+
 }
 /* JavaCC - OriginalChecksum=6b099371c69e0d0c1c106fc96b3072de (do not edit this line) */

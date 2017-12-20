@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.parser.OMatchPathItem;
+import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
 import java.util.*;
@@ -105,11 +106,18 @@ public class MatchEdgeTraverser {
     OWhereClause whileCondition = null;
     Integer maxDepth = null;
     String className = null;
+    Integer clusterId = null;
+    ORid targetRid = null;
     if (item.getFilter() != null) {
       filter = getTargetFilter(item);
       whileCondition = item.getFilter().getWhileCondition();
       maxDepth = item.getFilter().getMaxDepth();
       className = targetClassName(item, iCommandContext);
+      String clusterName = targetClusterName(item, iCommandContext);
+      if (clusterName != null) {
+        clusterId = iCommandContext.getDatabase().getClusterIdByName(clusterName);
+      }
+      targetRid = targetRid(item, iCommandContext);
     }
 
     Set<OResultInternal> result = new HashSet<>();
@@ -122,7 +130,8 @@ public class MatchEdgeTraverser {
         Object previousMatch = iCommandContext.getVariable("$currentMatch");
         OElement elem = origin.toElement();
         iCommandContext.setVariable("$currentMatch", elem);
-        if (matchesFilters(iCommandContext, filter, elem) && matchesClass(iCommandContext, className, elem)) {
+        if (matchesFilters(iCommandContext, filter, elem) && matchesClass(iCommandContext, className, elem) && matchesCluster(
+            iCommandContext, clusterId, elem) && matchesRid(iCommandContext, targetRid, elem)) {
           result.add(origin);
         }
         iCommandContext.setVariable("$currentMatch", previousMatch);
@@ -132,7 +141,8 @@ public class MatchEdgeTraverser {
       Object previousMatch = iCommandContext.getVariable("$currentMatch");
       iCommandContext.setVariable("$currentMatch", startingPoint);
 
-      if (matchesFilters(iCommandContext, filter, startingPoint) && matchesClass(iCommandContext, className, startingPoint)) {
+      if (matchesFilters(iCommandContext, filter, startingPoint) && matchesClass(iCommandContext, className, startingPoint)
+          && matchesCluster(iCommandContext, clusterId, startingPoint) && matchesRid(iCommandContext, targetRid, startingPoint)) {
         OResultInternal rs = new OResultInternal(startingPoint);
         // set traversal depth in the metadata
         rs.setMetadata("$depth", depth);
@@ -184,6 +194,14 @@ public class MatchEdgeTraverser {
     return item.getFilter().getClassName(iCommandContext);
   }
 
+  protected String targetClusterName(OMatchPathItem item, OCommandContext iCommandContext) {
+    return item.getFilter().getClusterName(iCommandContext);
+  }
+
+  protected ORid targetRid(OMatchPathItem item, OCommandContext iCommandContext) {
+    return item.getFilter().getRid(iCommandContext);
+  }
+
   private boolean matchesClass(OCommandContext iCommandContext, String className, OIdentifiable origin) {
     if (className == null) {
       return true;
@@ -205,6 +223,34 @@ public class MatchEdgeTraverser {
       return clazz.get().isSubClassOf(className);
     }
     return false;
+  }
+
+  private boolean matchesCluster(OCommandContext iCommandContext, Integer clusterId, OIdentifiable origin) {
+    if (clusterId == null) {
+      return true;
+    }
+    if (origin == null) {
+      return false;
+    }
+
+    if (origin.getIdentity() == null) {
+      return false;
+    }
+    return clusterId.equals(origin.getIdentity().getClusterId());
+  }
+
+  private boolean matchesRid(OCommandContext iCommandContext, ORid rid, OIdentifiable origin) {
+    if (rid == null) {
+      return true;
+    }
+    if (origin == null) {
+      return false;
+    }
+
+    if (origin.getIdentity() == null) {
+      return false;
+    }
+    return origin.getIdentity().equals(rid.toRecordId(origin, iCommandContext));
   }
 
   protected boolean matchesFilters(OCommandContext iCommandContext, OWhereClause filter, OIdentifiable origin) {
@@ -243,8 +289,7 @@ public class MatchEdgeTraverser {
           result.add(new OResultInternal((OIdentifiable) o));
         } else if (o instanceof OResultInternal) {
           result.add((OResultInternal) o);
-        }
-        else{
+        } else {
           throw new UnsupportedOperationException();
         }
       }

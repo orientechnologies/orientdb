@@ -1919,6 +1919,49 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
+  @Test
+  public void testClusterTarget() {
+    String clazz = "testClusterTarget";
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
+    db.command("ALTER CLASS " + clazz + " ADDCLUSTER " + clazz.toLowerCase() + "_one").close();
+    db.command("ALTER CLASS " + clazz + " ADDCLUSTER " + clazz.toLowerCase() + "_two").close();
+    db.command("ALTER CLASS " + clazz + " ADDCLUSTER " + clazz.toLowerCase() + "_three").close();
+
+    OVertex v1 = db.newVertex(clazz);
+    v1.setProperty("name", "one");
+    v1.save(clazz.toLowerCase() + "_one");
+
+    OVertex vx = db.newVertex(clazz);
+    vx.setProperty("name", "onex");
+    vx.save(clazz.toLowerCase() + "_one");
+
+    OVertex v2 = db.newVertex(clazz);
+    v2.setProperty("name", "two");
+    v2.save(clazz.toLowerCase() + "_two");
+
+    OVertex v3 = db.newVertex(clazz);
+    v3.setProperty("name", "three");
+    v3.save(clazz.toLowerCase() + "_three");
+
+    v1.addEdge(v2).save();
+    v2.addEdge(v3).save();
+    v1.addEdge(v3).save();
+
+    String query =
+        "MATCH { cluster: " + clazz.toLowerCase() + "_one, as:a} --> {as:b, cluster:" + clazz.toLowerCase() + "_two} RETURN a.name as aname, b.name as bname";
+
+    OResultSet result = db.query(query);
+
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertEquals("one", item.getProperty("aname"));
+    Assert.assertEquals("two", item.getProperty("bname"));
+
+    Assert.assertFalse(result.hasNext());
+
+    result.close();
+  }
+
   private OResultSet getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");

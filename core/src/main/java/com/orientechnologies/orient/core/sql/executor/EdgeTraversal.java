@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
 /**
@@ -9,6 +10,8 @@ public class EdgeTraversal {
   boolean out = true;
   public  PatternEdge  edge;
   private String       leftClass;
+  private String       leftCluster;
+  private ORid       leftRid;
   private OWhereClause leftFilter;
 
   public EdgeTraversal(PatternEdge edge, boolean out) {
@@ -26,6 +29,21 @@ public class EdgeTraversal {
 
   public String getLeftClass() {
     return leftClass;
+  }
+  public String getLeftCluster() {
+    return leftCluster;
+  }
+
+  public ORid getLeftRid() {
+    return leftRid;
+  }
+
+  public void setLeftCluster(String leftCluster) {
+    this.leftCluster = leftCluster;
+  }
+
+  public void setLeftRid(ORid leftRid) {
+    this.leftRid = leftRid;
   }
 
   public OWhereClause getLeftFilter() {

@@ -7,6 +7,9 @@ import java.util.Map;
 public class OMatchFilterItem extends SimpleNode {
   protected OExpression         className;
   protected OExpression         classNames;
+  protected OIdentifier         clusterName;
+  protected OInteger            clusterId;
+  protected ORid                rid;
   protected OIdentifier         alias;
   protected OWhereClause        filter;
   protected OWhereClause        whileCondition;
@@ -40,6 +43,21 @@ public class OMatchFilterItem extends SimpleNode {
     if (classNames != null) {
       builder.append("classes: ");
       classNames.toString(params, builder);
+      return;
+    }
+    if (clusterName != null) {
+      builder.append("cluster: ");
+      clusterName.toString(params, builder);
+      return;
+    }
+    if (clusterId != null) {
+      builder.append("cluster: ");
+      clusterId.toString(params, builder);
+      return;
+    }
+    if (rid != null) {
+      builder.append("rid: ");
+      rid.toString(params, builder);
       return;
     }
 
@@ -94,6 +112,9 @@ public class OMatchFilterItem extends SimpleNode {
     OMatchFilterItem result = new OMatchFilterItem(-1);
     result.className = className == null ? null : className.copy();
     result.classNames = classNames == null ? null : classNames.copy();
+    result.clusterName = clusterName == null ? null : clusterName.copy();
+    result.clusterId = clusterId == null ? null : clusterId.copy();
+    result.rid = rid == null ? null : rid.copy();
     result.alias = alias == null ? null : alias.copy();
     result.filter = filter == null ? null : filter.copy();
     result.whileCondition = whileCondition == null ? null : whileCondition.copy();
@@ -118,6 +139,12 @@ public class OMatchFilterItem extends SimpleNode {
       return false;
     if (classNames != null ? !classNames.equals(that.classNames) : that.classNames != null)
       return false;
+    if (clusterName != null ? !clusterName.equals(that.clusterName) : that.clusterName != null)
+      return false;
+    if (clusterId != null ? !clusterId.equals(that.clusterId) : that.clusterId != null)
+      return false;
+    if (rid != null ? !rid.equals(that.rid) : that.rid != null)
+      return false;
     if (alias != null ? !alias.equals(that.alias) : that.alias != null)
       return false;
     if (filter != null ? !filter.equals(that.filter) : that.filter != null)
@@ -139,6 +166,9 @@ public class OMatchFilterItem extends SimpleNode {
   public int hashCode() {
     int result = className != null ? className.hashCode() : 0;
     result = 31 * result + (classNames != null ? classNames.hashCode() : 0);
+    result = 31 * result + (clusterName != null ? clusterName.hashCode() : 0);
+    result = 31 * result + (clusterId != null ? clusterId.hashCode() : 0);
+    result = 31 * result + (rid != null ? rid.hashCode() : 0);
     result = 31 * result + (alias != null ? alias.hashCode() : 0);
     result = 31 * result + (filter != null ? filter.hashCode() : 0);
     result = 31 * result + (whileCondition != null ? whileCondition.hashCode() : 0);

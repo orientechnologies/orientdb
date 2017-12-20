@@ -195,6 +195,18 @@ public class OMatchStatementTest {
   }
 
   @Test
+  public void testClusterTarget() {
+    checkRightSyntax("MATCH {cluster:v, as: foo} RETURN $elements");
+    checkRightSyntax("MATCH {cluster:12, as: foo} RETURN $elements");
+    checkRightSyntax("MATCH {cluster: v, as: foo} RETURN $elements");
+    checkRightSyntax("MATCH {cluster: `v`, as: foo} RETURN $elements");
+    checkRightSyntax("MATCH {cluster:`v`, as: foo} RETURN $elements");
+    checkRightSyntax("MATCH {cluster: 12, as: foo} RETURN $elements");
+
+    checkWrongSyntax("MATCH {cluster: 12.1, as: foo} RETURN $elements");
+  }
+
+  @Test
   public void testSkip() {
     checkRightSyntax("MATCH {class: 'V', as: foo}-->{as:bar} RETURN foo.name, bar.name skip 10 limit 10");
   }

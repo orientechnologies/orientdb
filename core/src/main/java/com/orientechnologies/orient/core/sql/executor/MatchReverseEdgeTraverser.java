@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.parser.OMatchPathItem;
+import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
 import java.util.ArrayList;
@@ -26,6 +27,15 @@ public class MatchReverseEdgeTraverser extends MatchEdgeTraverser {
   protected String targetClassName(OMatchPathItem item, OCommandContext iCommandContext) {
     return edge.getLeftClass();
   }
+
+  protected String targetClusterName(OMatchPathItem item, OCommandContext iCommandContext) {
+    return edge.getLeftCluster();
+  }
+
+  protected ORid targetRid(OMatchPathItem item, OCommandContext iCommandContext) {
+    return edge.getLeftRid();
+  }
+
 
   protected OWhereClause getTargetFilter(OMatchPathItem item) {
     return edge.getLeftFilter();

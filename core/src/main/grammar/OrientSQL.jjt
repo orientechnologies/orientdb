@@ -377,6 +377,8 @@ TOKEN:
 	|
 	< USER: ( "u" | "U" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) >
 	|
+	< RID: ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -891,6 +893,8 @@ OIdentifier Identifier():
     token = <ROLE>
     |
     token = <USER>
+    |
+    token = <RID>
     |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -3626,7 +3630,7 @@ OMatchFilter MatchFilter():
 }
 
 OMatchFilterItem MatchFilterItem():
-{}
+{Token lastToken;}
 {
     (
         (
@@ -3635,6 +3639,27 @@ OMatchFilterItem MatchFilterItem():
         |
         (
             <CLASSES> <COLON> jjtThis.classNames = Expression()
+        )
+        |
+        (
+            <CLUSTER> <COLON>
+            (
+               jjtThis.clusterName = Identifier()
+               |
+               jjtThis.clusterId = Integer()
+            )
+        )
+        |
+        (
+            (
+                lastToken = <CLUSTER_IDENTIFIER> {jjtThis.clusterName = new OIdentifier(lastToken.image.split(":")[1]);}
+                |
+                lastToken = <CLUSTER_NUMBER_IDENTIFIER> {jjtThis.clusterId = new OInteger(-1); jjtThis.clusterId.setValue(Integer.parseInt(lastToken.image.split(":")[1]));}
+            )
+        )
+        |
+        (
+            <RID> <COLON> jjtThis.rid = Rid()
         )
         |
         (
