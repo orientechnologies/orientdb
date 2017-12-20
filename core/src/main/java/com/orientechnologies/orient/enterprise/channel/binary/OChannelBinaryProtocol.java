@@ -60,7 +60,7 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_RECORD_UPDATE    = 32;
   public static final byte REQUEST_RECORD_DELETE    = 33;
   public static final byte REQUEST_RECORD_COPY      = 34;                 // NOT USED ANYMORE
-  public static final byte REQUEST_BATCH_OPERATIONS  = 35;                // since 3.0
+  public static final byte REQUEST_BATCH_OPERATIONS = 35;                // since 3.0
   public static final byte REQUEST_POSITIONS_HIGHER = 36;                 // since 1.3.0
   public static final byte REQUEST_POSITIONS_LOWER  = 37;                 // since 1.3.0
   public static final byte REQUEST_RECORD_CLEAN_OUT = 38;                 // since 1.3.0
@@ -100,7 +100,7 @@ public class OChannelBinaryProtocol {
   // IMPORT
   public static final byte REQUEST_DB_IMPORT = 98;
 
-  public static final byte SUBSCRIBE_PUSH = 100;
+  public static final byte SUBSCRIBE_PUSH   = 100;
   public static final byte UNSUBSCRIBE_PUSH = 101;
 
   // REMOTE SB-TREE COLLECTIONS
@@ -156,19 +156,21 @@ public class OChannelBinaryProtocol {
   public static final byte SUBSCRIBE_PUSH_LIVE_QUERY   = 2;
   public static final byte UNSUBSCRIBE_PUSH_LIVE_QUERY = 2;
 
+  public static final byte SUBSCRIBE_PUSH_STORAGE_CONFIG = 3;
+  public static final byte SUBSCRIBE_PUSH_SCHEMA         = 4;
 
   //Used by the client to identify what data was pushed
   public static final byte REQUEST_PUSH_DISTRIB_CONFIG = 80;
   public static final byte REQUEST_PUSH_LIVE_QUERY     = 81;                 // SINCE 2.1
   public static final byte REQUEST_PUSH_STORAGE_CONFIG = 82;
+  public static final byte REQUEST_PUSH_SCHEMA = 83;
 
   // Default encoding, in future will be possible to have other encodings
-  public static final byte ENCODING_DEFAULT     = 0;
+  public static final byte ENCODING_DEFAULT = 0;
 
   //Error encoding
   public static final byte ERROR_MESSAGE_JAVA   = 0;
   public static final byte ERROR_MESSAGE_STRING = 1;
   public static final byte ERROR_MESSAGE_NONE   = 1;
-
 
 }

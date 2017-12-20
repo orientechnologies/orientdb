@@ -90,8 +90,8 @@ public class OSequenceLibraryImpl {
     return seq;
   }
 
-  public synchronized OSequence createSequence(final ODatabaseDocumentInternal database, final String iName, final SEQUENCE_TYPE sequenceType,
-      final OSequence.CreateParams params) {
+  public synchronized OSequence createSequence(final ODatabaseDocumentInternal database, final String iName,
+      final SEQUENCE_TYPE sequenceType, final OSequence.CreateParams params) {
     init(database);
 
     final String key = iName.toUpperCase(Locale.ENGLISH);
@@ -183,7 +183,7 @@ public class OSequenceLibraryImpl {
 
   private void onSequenceLibraryUpdate(ODatabaseDocumentInternal database) {
     for (OMetadataUpdateListener one : database.getSharedContext().browseListeners()) {
-      one.onSequenceLibraryUpdate(this);
+      one.onSequenceLibraryUpdate(database.getName(), this);
     }
   }
 

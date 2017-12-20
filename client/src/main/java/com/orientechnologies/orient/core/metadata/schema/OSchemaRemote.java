@@ -254,4 +254,8 @@ public class OSchemaRemote extends OSchemaShared {
   public void checkEmbedded() {
     throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
   }
+
+  public void update(ODocument schema) {
+
+  }
 }

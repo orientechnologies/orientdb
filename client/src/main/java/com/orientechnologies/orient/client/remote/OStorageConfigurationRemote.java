@@ -1,10 +1,8 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.orient.client.remote.message.OReloadResponse37;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
+import com.orientechnologies.orient.core.config.*;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -36,34 +34,34 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   private List<OStorageClusterConfiguration>      clusters;
   private String                                  networkRecordSerializer;
 
-  public OStorageConfigurationRemote(String networkRecordSerializer, OReloadResponse37 response,
+  public OStorageConfigurationRemote(String networkRecordSerializer, OStorageConfigurationPayload payload ,
       OContextConfiguration contextConfiguration) {
     this.networkRecordSerializer = networkRecordSerializer;
     this.contextConfiguration = contextConfiguration;
-    this.dateFormat = response.getDateFormat();
-    this.dateTimeFormat = response.getDateTimeFormat();
-    this.name = response.getName();
-    this.version = response.getVersion();
-    this.directory = response.getDirectory();
+    this.dateFormat = payload.getDateFormat();
+    this.dateTimeFormat = payload.getDateTimeFormat();
+    this.name = payload.getName();
+    this.version = payload.getVersion();
+    this.directory = payload.getDirectory();
     this.properties = new HashMap<>();
-    for (OStorageEntryConfiguration conf : response.getProperties()) {
+    for (OStorageEntryConfiguration conf : payload.getProperties()) {
       this.properties.put(conf.name, conf);
     }
-    this.schemaRecordId = response.getSchemaRecordId().toString();
-    this.indexMgrRecordId = response.getIndexMgrRecordId().toString();
-    this.clusterSelection = response.getClusterSelection();
-    this.conflictStrategy = response.getConflictStrategy();
-    this.validationEnabled = response.isValidationEnabled();
-    this.localeLanguage = response.getLocaleLanguage();
-    this.minimumClusters = response.getMinimumClusters();
-    this.strictSql = response.isStrictSql();
-    this.charset = response.getCharset();
-    this.timeZone = response.getTimeZone();
-    this.localeCountry = response.getLocaleCountry();
-    this.recordSerializer = response.getRecordSerializer();
-    this.recordSerializerVersion = response.getRecordSerializerVersion();
-    this.binaryFormatVersion = response.getBinaryFormatVersion();
-    this.clusters = response.getClusters();
+    this.schemaRecordId = payload.getSchemaRecordId().toString();
+    this.indexMgrRecordId = payload.getIndexMgrRecordId().toString();
+    this.clusterSelection = payload.getClusterSelection();
+    this.conflictStrategy = payload.getConflictStrategy();
+    this.validationEnabled = payload.isValidationEnabled();
+    this.localeLanguage = payload.getLocaleLanguage();
+    this.minimumClusters = payload.getMinimumClusters();
+    this.strictSql = payload.isStrictSql();
+    this.charset = payload.getCharset();
+    this.timeZone = payload.getTimeZone();
+    this.localeCountry = payload.getLocaleCountry();
+    this.recordSerializer = payload.getRecordSerializer();
+    this.recordSerializerVersion = payload.getRecordSerializerVersion();
+    this.binaryFormatVersion = payload.getBinaryFormatVersion();
+    this.clusters = payload.getClusters();
   }
 
   @Override

@@ -141,8 +141,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       }
     });
 
-    for (OMetadataUpdateListener listener : getDatabase().getSharedContext().browseListeners()) {
-      listener.onIndexManagerUpdate(this);
+    ODatabaseDocumentInternal database = getDatabase();
+    for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
+      listener.onIndexManagerUpdate(database.getName(), this);
     }
 
     return (RET) this;

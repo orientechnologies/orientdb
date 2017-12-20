@@ -1,9 +1,7 @@
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
-import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
-import com.orientechnologies.orient.client.remote.message.OLiveQueryPushRequest;
-import com.orientechnologies.orient.client.remote.message.OPushDistributedConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.*;
+import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 /**
@@ -17,6 +15,8 @@ public interface ORemotePushHandler {
 
   OBinaryPushResponse executeUpdateDistributedConfig(OPushDistributedConfigurationRequest request);
 
+  OBinaryPushResponse executeUpdateStorageConfig(OPushStorageConfigurationRequest request);
+
   void executeLiveQueryPush(OLiveQueryPushRequest pushRequest);
 
   void onPushReconnect(String host);
@@ -24,4 +24,6 @@ public interface ORemotePushHandler {
   void onPushDisconnect(OChannelBinary network, Exception e);
 
   void returnSocket(OChannelBinary network);
+
+  OBinaryPushResponse executeUpdateSchema(OPushSchemaRequest request);
 }

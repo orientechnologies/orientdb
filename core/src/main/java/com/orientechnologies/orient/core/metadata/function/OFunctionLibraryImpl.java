@@ -185,7 +185,7 @@ public class OFunctionLibraryImpl {
 
   private void onFunctionsChanged(ODatabaseDocumentInternal database) {
     for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
-      listener.onFunctionLibraryUpdate(database.getMetadata().getFunctionLibrary());
+      listener.onFunctionLibraryUpdate(database.getName(), database.getMetadata().getFunctionLibrary());
     }
   }
 

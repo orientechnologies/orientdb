@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.client.remote.message;
 
+import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -38,36 +39,36 @@ public class OReloadMessageTest {
     channel.close();
     OReloadResponse37 responseRead = new OReloadResponse37();
     responseRead.read(channel, null);
-
-    assertEquals(configuration.getProperties().size(), responseRead.getProperties().size());
+    OStorageConfigurationPayload payload = responseRead.getPayload();
+    assertEquals(configuration.getProperties().size(), payload.getProperties().size());
     for (int i = 0; i < configuration.getProperties().size(); i++) {
-      assertEquals(configuration.getProperties().get(i).name, responseRead.getProperties().get(i).name);
-      assertEquals(configuration.getProperties().get(i).value, responseRead.getProperties().get(i).value);
+      assertEquals(configuration.getProperties().get(i).name, payload.getProperties().get(i).name);
+      assertEquals(configuration.getProperties().get(i).value, payload.getProperties().get(i).value);
     }
-    assertEquals(configuration.getDateFormat(), responseRead.getDateFormat());
-    assertEquals(configuration.getDateTimeFormat(), responseRead.getDateTimeFormat());
-    assertEquals(configuration.getName(), responseRead.getName());
-    assertEquals(configuration.getVersion(), responseRead.getVersion());
-    assertEquals(configuration.getDirectory(), responseRead.getDirectory());
-    assertEquals(configuration.getSchemaRecordId(), responseRead.getSchemaRecordId().toString());
-    assertEquals(configuration.getIndexMgrRecordId(), responseRead.getIndexMgrRecordId().toString());
-    assertEquals(configuration.getClusterSelection(), responseRead.getClusterSelection());
-    assertEquals(configuration.getConflictStrategy(), responseRead.getConflictStrategy());
-    assertEquals(configuration.isValidationEnabled(), responseRead.isValidationEnabled());
-    assertEquals(configuration.getLocaleLanguage(), responseRead.getLocaleLanguage());
-    assertEquals(configuration.getMinimumClusters(), responseRead.getMinimumClusters());
-    assertEquals(configuration.isStrictSql(), responseRead.isStrictSql());
-    assertEquals(configuration.getCharset(), responseRead.getCharset());
-    assertEquals(configuration.getLocaleCountry(), responseRead.getLocaleCountry());
-    assertEquals(configuration.getTimeZone(), responseRead.getTimeZone());
-    assertEquals(configuration.getRecordSerializer(), responseRead.getRecordSerializer());
-    assertEquals(configuration.getRecordSerializerVersion(), responseRead.getRecordSerializerVersion());
-    assertEquals(configuration.getBinaryFormatVersion(), responseRead.getBinaryFormatVersion());
+    assertEquals(configuration.getDateFormat(), payload.getDateFormat());
+    assertEquals(configuration.getDateTimeFormat(), payload.getDateTimeFormat());
+    assertEquals(configuration.getName(), payload.getName());
+    assertEquals(configuration.getVersion(), payload.getVersion());
+    assertEquals(configuration.getDirectory(), payload.getDirectory());
+    assertEquals(configuration.getSchemaRecordId(), payload.getSchemaRecordId().toString());
+    assertEquals(configuration.getIndexMgrRecordId(), payload.getIndexMgrRecordId().toString());
+    assertEquals(configuration.getClusterSelection(), payload.getClusterSelection());
+    assertEquals(configuration.getConflictStrategy(), payload.getConflictStrategy());
+    assertEquals(configuration.isValidationEnabled(), payload.isValidationEnabled());
+    assertEquals(configuration.getLocaleLanguage(), payload.getLocaleLanguage());
+    assertEquals(configuration.getMinimumClusters(), payload.getMinimumClusters());
+    assertEquals(configuration.isStrictSql(), payload.isStrictSql());
+    assertEquals(configuration.getCharset(), payload.getCharset());
+    assertEquals(configuration.getLocaleCountry(), payload.getLocaleCountry());
+    assertEquals(configuration.getTimeZone(), payload.getTimeZone());
+    assertEquals(configuration.getRecordSerializer(), payload.getRecordSerializer());
+    assertEquals(configuration.getRecordSerializerVersion(), payload.getRecordSerializerVersion());
+    assertEquals(configuration.getBinaryFormatVersion(), payload.getBinaryFormatVersion());
 
-    assertEquals(configuration.getClusters().size(), responseRead.getClusters().size());
+    assertEquals(configuration.getClusters().size(), payload.getClusters().size());
     for (int i = 0; i < configuration.getClusters().size(); i++) {
-      assertEquals(configuration.getClusters().get(i).getId(), responseRead.getClusters().get(i).getId());
-      assertEquals(configuration.getClusters().get(i).getName(), responseRead.getClusters().get(i).getName());
+      assertEquals(configuration.getClusters().get(i).getId(), payload.getClusters().get(i).getId());
+      assertEquals(configuration.getClusters().get(i).getName(), payload.getClusters().get(i).getName());
     }
 
   }
