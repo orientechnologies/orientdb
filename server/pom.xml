@@ -210,39 +210,6 @@
                     </archive>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>de.icongmbh.oss.maven.plugins</groupId>
-                <artifactId>javassist-maven-plugin</artifactId>
-                <version>1.1.0</version>
-                <configuration>
-                    <includeTestClasses>false</includeTestClasses>
-                    <transformerClasses>
-                        <transformerClass>
-                            <className>com.orientechnologies.common.javassist.OStaticInitializerExceptionLoggerWeaver</className>
-                        </transformerClass>
-                    </transformerClasses>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>javassist</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.orientechnologies</groupId>
-                        <artifactId>orientdb-javassist</artifactId>
-                        <version>${version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.javassist</groupId>
-                        <artifactId>javassist</artifactId>
-                        <version>${javaassist.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
         </plugins>
     </build>
 
