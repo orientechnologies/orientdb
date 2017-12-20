@@ -173,4 +173,5 @@ public interface OResult {
     return result;
   }
 
+  boolean hasProperty(String varName);
 }

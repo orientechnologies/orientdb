@@ -63,6 +63,13 @@ public class OResultInternal implements OResult {
     return result;
   }
 
+  public boolean hasProperty(String propName){
+    if (element != null && ((ODocument) element.getRecord()).containsField(propName)) {
+      return true;
+    }
+    return content.keySet().contains(propName);
+  }
+
   @Override
   public boolean isElement() {
     return this.element != null;

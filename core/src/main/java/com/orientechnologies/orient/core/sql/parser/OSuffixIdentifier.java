@@ -94,7 +94,7 @@ public class OSuffixIdentifier extends SimpleNode {
         return ctx.getVariable(varName);
       }
       if (iCurrentRecord != null) {
-        if (iCurrentRecord.getPropertyNames().contains(varName)) {
+        if (iCurrentRecord.hasProperty(varName)) {
           return iCurrentRecord.getProperty(varName);
         }
         if (iCurrentRecord.getMetadataKeys().contains(varName)) {

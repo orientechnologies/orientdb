@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Optional;
 import java.util.Set;
@@ -23,6 +24,14 @@ public class OUpdatableResult extends OResultInternal {
   @Override public Set<String> getPropertyNames() {
     return element.getPropertyNames();
   }
+
+  public boolean hasProperty(String propName){
+    if (element != null && ((ODocument) element.getRecord()).containsField(propName)) {
+      return true;
+    }
+    return false;
+  }
+
 
   @Override public boolean isElement() {
     return true;
