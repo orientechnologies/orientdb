@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
@@ -744,7 +743,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
     snapshot = new OImmutableSchema(this);
     for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
-      listener.onSchemaUpdate(snapshot);
+      listener.onSchemaUpdate(database.getName(), this);
     }
 
   }

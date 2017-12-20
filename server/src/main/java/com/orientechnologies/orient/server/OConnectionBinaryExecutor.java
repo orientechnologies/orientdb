@@ -20,11 +20,9 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -40,7 +38,11 @@ import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -1309,11 +1311,25 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   @Override
-  public OBinaryResponse executeSubscribePushRequest(OSubscribeDistributedConfigurationRequest request) {
-    OClientConnectionManager manager = server.getClientConnectionManager();
+  public OBinaryResponse executeSubscribeDistributedConfiguration(OSubscribeDistributedConfigurationRequest request) {
+    OPushManager manager = server.getPushManager();
 
     manager.subscribeDistributeConfig((ONetworkProtocolBinary) connection.getProtocol());
     return new OSubscribeDistributedConfigurationResponse();
+  }
+
+  @Override
+  public OBinaryResponse executeSubscribeStorageConfiguration(OSubscribeStorageConfigurationRequest request) {
+    OPushManager manager = server.getPushManager();
+    manager.subscribeStorageConfiguration(connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol());
+    return new OSubscribeStorageConfigurationResponse();
+  }
+
+  @Override
+  public OBinaryResponse executeSubscribeSchemaConfiguration(OSubscribeSchemaRequest request) {
+    OPushManager manager = server.getPushManager();
+    manager.subscribeSchema(connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol());
+    return new OSubscribeSchemaResponse();
   }
 
   @Override

@@ -48,6 +48,10 @@ public class OSubscribeRequest implements OBinaryRequest<OSubscribeResponse> {
       return new OSubscribeDistributedConfigurationRequest();
     case OChannelBinaryProtocol.SUBSCRIBE_PUSH_LIVE_QUERY:
       return new OSubscribeLiveQueryRequest();
+    case OChannelBinaryProtocol.SUBSCRIBE_PUSH_STORAGE_CONFIG:
+      return new OSubscribeStorageConfigurationRequest();
+    case OChannelBinaryProtocol.SUBSCRIBE_PUSH_SCHEMA:
+      return new OSubscribeSchemaRequest();
     }
 
     throw new ODatabaseException("Unknown message response for code:" + message);

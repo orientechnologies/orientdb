@@ -25,10 +25,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -1849,7 +1846,8 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
   }
 
   private void addClusterIdToIndexes(int iId) {
-    if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
+    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (database != null && database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToAdd = new ArrayList<String>();
 

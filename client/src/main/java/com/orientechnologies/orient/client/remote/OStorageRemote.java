@@ -423,7 +423,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void reload() {
     OReloadResponse37 res = networkOperation(new OReloadRequest37(), "error loading storage configuration");
     final OStorageConfiguration storageConfiguration = new OStorageConfigurationRemote(
-        ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString(), res, clientConfiguration);
+        ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString(), res.getPayload(), clientConfiguration);
 
     updateStorageConfiguration(storageConfiguration);
   }
@@ -1398,6 +1398,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           pushThread.start();
           subscribeStorageConfiguration(session);
           subscribeDistributedConfiguration(session);
+          subscribeSchema(session);
 
         }
       } finally {
@@ -1411,7 +1412,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   private void subscribeStorageConfiguration(OStorageRemoteSession nodeSession) {
-    //TODO
+    pushThread.subscribe(new OSubscribeStorageConfigurationRequest(), nodeSession);
+  }
+
+  private void subscribeSchema(OStorageRemoteSession nodeSession) {
+    pushThread.subscribe(new OSubscribeSchemaRequest(), nodeSession);
   }
 
   protected void openRemoteDatabase(String currentURL) {
@@ -1883,9 +1888,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       return new OPushDistributedConfigurationRequest();
     case OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY:
       return new OLiveQueryPushRequest();
-//    case OChannelBinaryProtocol.REQUEST_PUSH_STORAGE_CONFIG:
-//
-//      return  new
+    case OChannelBinaryProtocol.REQUEST_PUSH_STORAGE_CONFIG:
+      return new OPushStorageConfigurationRequest();
+    case OChannelBinaryProtocol.REQUEST_PUSH_SCHEMA:
+      return new OPushSchemaRequest();
+
     }
     return null;
   }
@@ -1893,6 +1900,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   @Override
   public OBinaryPushResponse executeUpdateDistributedConfig(OPushDistributedConfigurationRequest request) {
     updateDistributedNodes(request.getHosts());
+    return null;
+  }
+
+  @Override
+  public OBinaryPushResponse executeUpdateStorageConfig(OPushStorageConfigurationRequest payload) {
+    final OStorageConfiguration storageConfiguration = new OStorageConfigurationRemote(
+        ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString(), payload.getPayload(), clientConfiguration);
+
+    updateStorageConfiguration(storageConfiguration);
+    return null;
+  }
+
+  @Override
+  public OBinaryPushResponse executeUpdateSchema(OPushSchemaRequest request) {
+    ODatabaseDocumentRemote.updateSchema(this, request.getSchema());
     return null;
   }
 

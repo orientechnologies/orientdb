@@ -34,11 +34,13 @@ import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -424,4 +426,15 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       sharedContext.close();
   }
 
+  public static void updateSchema(OStorageRemote storage, ODocument schema) {
+//    storage.get
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+      @Override
+      public OSharedContext call() throws Exception {
+        OSharedContext shared = new OSharedContextRemote();
+        return shared;
+      }
+    });
+    ((OSchemaRemote)shared.getSchema()).update(schema);
+  }
 }

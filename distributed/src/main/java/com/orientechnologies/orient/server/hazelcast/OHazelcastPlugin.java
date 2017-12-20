@@ -853,7 +853,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           }
       }
     }
-    serverInstance.getClientConnectionManager().pushDistributedConfig(databaseName, hosts);
+    serverInstance.getPushManager().pushDistributedConfig(databaseName, hosts);
   }
 
   @Override

@@ -14,7 +14,7 @@ import java.io.IOException;
 /**
  * Created by tglman on 11/01/17.
  */
-public class OSubscribeDistributedConfigurationRequest implements OBinaryRequest<OSubscribeDistributedConfigurationResponse> {
+public class OSubscribeStorageConfigurationRequest implements OBinaryRequest<OSubscribeStorageConfigurationResponse> {
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
 
@@ -27,21 +27,22 @@ public class OSubscribeDistributedConfigurationRequest implements OBinaryRequest
 
   @Override
   public byte getCommand() {
-    return OChannelBinaryProtocol.SUBSCRIBE_PUSH_DISTRIB_CONFIG;
+    return OChannelBinaryProtocol.SUBSCRIBE_PUSH_STORAGE_CONFIG;
   }
 
   @Override
-  public OSubscribeDistributedConfigurationResponse createResponse() {
-    return new OSubscribeDistributedConfigurationResponse();
+  public OSubscribeStorageConfigurationResponse createResponse() {
+    return new OSubscribeStorageConfigurationResponse();
   }
 
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
-    return executor.executeSubscribeDistributedConfiguration(this);
+    return executor.executeSubscribeStorageConfiguration(this);
   }
 
   @Override
   public String getDescription() {
     return "Subscribe Distributed Configuration";
   }
+
 }

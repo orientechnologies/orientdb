@@ -95,6 +95,7 @@ public class OServer {
   private String                   serverRootDirectory;
   private String                   databaseDirectory;
   private OClientConnectionManager clientConnectionManager;
+  private OPushManager             pushManager;
   private ClassLoader              extensionClassLoader;
   private OTokenHandler            tokenHandler;
   private OSystemDatabase          systemDatabase;
@@ -184,6 +185,10 @@ public class OServer {
 
   public OClientConnectionManager getClientConnectionManager() {
     return clientConnectionManager;
+  }
+
+  public OPushManager getPushManager() {
+    return pushManager;
   }
 
   public void saveConfiguration() throws IOException {
@@ -306,6 +311,7 @@ public class OServer {
       shutdownLatch = new CountDownLatch(1);
 
     clientConnectionManager = new OClientConnectionManager(this);
+    pushManager = new OPushManager();
     rejectRequests = false;
 
     initFromConfiguration();
@@ -531,6 +537,7 @@ public class OServer {
           }
 
         rejectRequests = true;
+        pushManager.shutdown();
         clientConnectionManager.shutdown();
 
         if (pluginManager != null)
@@ -956,21 +963,21 @@ public class OServer {
     /*
      * String type; for (OServerStorageConfiguration stg : configuration.storages) if (stg.loadOnStartup) { // @COMPATIBILITY if
      * (stg.userName == null) stg.userName = OUser.ADMIN; if (stg.userPassword == null) stg.userPassword = OUser.ADMIN;
-     * 
+     *
      * int idx = stg.path.indexOf(':'); if (idx == -1) { OLogManager.instance().error(this, "-> Invalid path '" + stg.path +
      * "' for database '" + stg.name + "'"); return; } type = stg.path.substring(0, idx);
-     * 
+     *
      * ODatabaseDocument db = null; try { db = new ODatabaseDocumentTx(stg.path);
-     * 
+     *
      * if (db.exists()) db.open(stg.userName, stg.userPassword); else { db.create(); if (stg.userName.equals(OUser.ADMIN)) { if
      * (!stg.userPassword.equals(OUser.ADMIN)) // CHANGE ADMIN PASSWORD
      * db.getMetadata().getSecurity().getUser(OUser.ADMIN).setPassword(stg.userPassword); } else { // CREATE A NEW USER AS ADMIN AND
      * REMOVE THE DEFAULT ONE db.getMetadata().getSecurity().createUser(stg.userName, stg.userPassword, ORole.ADMIN);
      * db.getMetadata().getSecurity().dropUser(OUser.ADMIN); db.close(); db.open(stg.userName, stg.userPassword); } }
-     * 
+     *
      * OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'"); } catch (Exception e) {
      * OLogManager.instance().error(this, "-> Cannot load " + type + " database '" + stg.name + "': " + e);
-     * 
+     *
      * } finally { if (db != null) db.close(); } }
      */
     for (OServerStorageConfiguration stg : configuration.storages) {
