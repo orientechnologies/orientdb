@@ -34,7 +34,7 @@ node("master") {
                                 //clean distribution to enable recreation of databases
                                 sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
                                 sh "${mvnHome}/bin/mvn -f distribution-tp2/pom.xml clean"
-                                sh "${mvnHome}/bin/mvn deploy -DskipTests -DskipITs"
+                                sh "${mvnHome}/bin/mvn clean deploy -DskipTests -DskipITs"
                             } finally {
                                 junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
 
