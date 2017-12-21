@@ -610,12 +610,15 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     if (storedProperties != null)
       for (OIdentifiable id : storedProperties) {
         ODocument p = id.getRecord();
-        prop = createPropertyInstance(p);
-        prop.fromStream();
-
-        if (properties.containsKey(prop.getName())) {
-          prop = (OPropertyImpl) properties.get(prop.getName());
+        String name = p.field("name");
+        //To lower case ?
+        if (properties.containsKey(name)) {
+          prop = (OPropertyImpl) properties.get(name);
           prop.fromStream(p);
+        } else {
+          prop = createPropertyInstance(p);
+          prop.fromStream();
+
         }
 
         newProperties.put(prop.getName(), prop);

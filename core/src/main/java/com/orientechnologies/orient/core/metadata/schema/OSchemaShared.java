@@ -377,13 +377,15 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
         // if it is embedded storage modification of schema is done by internal methods otherwise it is done by
         // by sql commands and we need to reload local replica
 
-        if (iSave)
-          if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+        if (iSave) {
+          if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
             saveInternal(database);
-          else
+          } else {
             reload();
-        else
+          }
+        } else {
           snapshot = new OImmutableSchema(this);
+        }
         version++;
       }
     } finally {
@@ -465,12 +467,13 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       Collection<ODocument> storedClasses = document.field("classes");
       for (ODocument c : storedClasses) {
 
-        cls = createClassInstance(c);
-        cls.fromStream();
-
-        if (classes.containsKey(cls.getName().toLowerCase(Locale.ENGLISH))) {
-          cls = (OClassImpl) classes.get(cls.getName().toLowerCase(Locale.ENGLISH));
+        String name = c.field("name");
+        if (classes.containsKey(name.toLowerCase(Locale.ENGLISH))) {
+          cls = (OClassImpl) classes.get(name.toLowerCase(Locale.ENGLISH));
           cls.fromStream(c);
+        } else {
+          cls = createClassInstance(c);
+          cls.fromStream();
         }
 
         newClasses.put(cls.getName().toLowerCase(Locale.ENGLISH), cls);
