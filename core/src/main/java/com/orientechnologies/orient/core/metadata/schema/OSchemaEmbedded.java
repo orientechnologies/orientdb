@@ -96,12 +96,19 @@ public class OSchemaEmbedded extends OSchemaShared {
 
         if (clusters == 0)
           cmd.append(" abstract");
-        else {
-          cmd.append(" clusters ");
-          cmd.append(clusters);
-        }
         final int[] clusterIds = createClusters(database, className, clusters);
         createClassInternal(database, className, clusterIds, superClassesList);
+
+        if (clusters > 0) {
+          cmd.append(" cluster ");
+          for (int i = 0; i < clusterIds.length; ++i) {
+            if (i > 0)
+              cmd.append(',');
+            else
+              cmd.append(' ');
+            cmd.append(clusterIds[i]);
+          }
+        }
 
         final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
         OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
