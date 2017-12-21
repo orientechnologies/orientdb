@@ -48,4 +48,12 @@ public class OBackupScheduledLog extends OBackupLog {
   public OBackupLogType getType() {
     return OBackupLogType.BACKUP_SCHEDULED;
   }
+
+  public long getNextExecution() {
+    return nextExecution;
+  }
+
+  public void setNextExecution(long nextExecution) {
+    this.nextExecution = nextExecution;
+  }
 }

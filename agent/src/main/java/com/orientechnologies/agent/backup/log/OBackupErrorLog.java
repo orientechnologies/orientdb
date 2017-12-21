@@ -59,4 +59,12 @@ public class OBackupErrorLog extends OBackupLog {
   public void setStackTrace(String stackTrace) {
     this.stackTrace = stackTrace;
   }
+
+  public String getMessage() {
+    return message;
+  }
+
+  public String getStackTrace() {
+    return stackTrace;
+  }
 }

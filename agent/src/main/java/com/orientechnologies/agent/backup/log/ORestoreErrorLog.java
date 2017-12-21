@@ -52,4 +52,8 @@ public class ORestoreErrorLog extends OBackupLog {
   public void setMessage(String message) {
     this.message = message;
   }
+
+  public String getMessage() {
+    return message;
+  }
 }

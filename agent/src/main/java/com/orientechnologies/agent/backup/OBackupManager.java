@@ -23,16 +23,14 @@ import com.orientechnologies.agent.backup.log.OBackupDiskLogger;
 import com.orientechnologies.agent.backup.log.OBackupLog;
 import com.orientechnologies.agent.backup.log.OBackupLogger;
 import com.orientechnologies.agent.backup.strategy.OBackupStrategy;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.OServerMain;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -40,9 +38,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OBackupManager implements OServerLifecycleListener {
 
-  private final OServer              server;
-  OBackupConfig                      config;
-  OBackupLogger                      logger;
+  private final OServer server;
+  OBackupConfig config;
+  OBackupLogger logger;
   protected Map<String, OBackupTask> tasks = new ConcurrentHashMap<String, OBackupTask>();
 
   public OBackupManager() {
@@ -134,6 +132,15 @@ public class OBackupManager implements OServerLifecycleListener {
       e.printStackTrace();
     }
     return history;
+  }
+
+  public List<OBackupLog> findLogs(String uuid, int page, int pageSize, Map<String, String> params) {
+    try {
+      return logger.findByUUID(uuid, page, pageSize, params);
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Cannot find logs", e);
+      return Collections.emptyList();
+    }
   }
 
   public ODocument logs(String uuid, Long unitId, int page, int pageSize, Map<String, String> params) {

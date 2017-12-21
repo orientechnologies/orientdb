@@ -383,7 +383,7 @@ public class OBackupDBLogger implements OBackupLogger {
       String directory = ((OBackupFinishedLog) oBackupLog).getPath();
       try {
 
-        path = directory + File.separator + ((OBackupFinishedLog) oBackupLog).fileName;
+        path = directory + File.separator + ((OBackupFinishedLog) oBackupLog).getFileName();
         File f = new File(path);
         f.delete();
         File dir = new File(directory);

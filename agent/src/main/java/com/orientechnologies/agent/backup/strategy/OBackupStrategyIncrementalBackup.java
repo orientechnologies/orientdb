@@ -53,7 +53,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
       e.printStackTrace();
     }
 
-    if (last != null && !Boolean.TRUE.equals(last.prevChange)) {
+    if (last != null && !Boolean.TRUE.equals(last.getPrevChange())) {
       return last.getPath();
     }
 
@@ -86,7 +86,7 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
         Long unitId = logger.nextOpId();
         try {
           OBackupFinishedLog lastCompleted = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
-          if (lastCompleted != null && !Boolean.TRUE.equals(lastCompleted.prevChange)) {
+          if (lastCompleted != null && !Boolean.TRUE.equals(lastCompleted.getPrevChange())) {
             unitId = lastCompleted.getUnitId();
           }
         } catch (Exception e) {

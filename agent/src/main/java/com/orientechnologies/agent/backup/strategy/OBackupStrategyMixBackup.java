@@ -97,7 +97,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
         Long unitId = logger.nextOpId();
         try {
           lastCompleted = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
-          if (lastCompleted != null && nextIncremental.before(nextFull) && !Boolean.TRUE.equals(lastCompleted.prevChange)) {
+          if (lastCompleted != null && nextIncremental.before(nextFull) && !Boolean.TRUE.equals(lastCompleted.getPrevChange())) {
             unitId = lastCompleted.getUnitId();
             isIncremental = true;
           } else {

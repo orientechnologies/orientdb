@@ -1,8 +1,10 @@
 package com.orientechnologies.agent.cloud;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.backup.OBackupTask;
 import com.orientechnologies.agent.cloud.processor.backup.AddBackupCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.backup.ListBackupCommandProcessor;
+import com.orientechnologies.agent.cloud.processor.backup.ListBackupLogsCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.backup.RemoveBackupCommandProcessor;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
@@ -13,10 +15,8 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
-import com.orientechnologies.orientdb.cloud.protocol.backup.BackupInfo;
-import com.orientechnologies.orientdb.cloud.protocol.backup.BackupList;
-import com.orientechnologies.orientdb.cloud.protocol.backup.BackupMode;
-import com.orientechnologies.orientdb.cloud.protocol.backup.BackupModeConfig;
+import com.orientechnologies.orientdb.cloud.protocol.backup.*;
+import com.orientechnologies.orientdb.cloud.protocol.backup.log.BackupLogsList;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -143,7 +144,6 @@ public class BackupCommandProcessorTest {
     assertThat(backupInfo.getModes()).containsKeys(BackupMode.FULL_BACKUP);
     assertThat(backupInfo.getModes()).containsKeys(BackupMode.INCREMENTAL_BACKUP);
 
-    
     BackupModeConfig incremental = backupInfo.getModes().get(BackupMode.INCREMENTAL_BACKUP);
 
     BackupModeConfig full = backupInfo.getModes().get(BackupMode.FULL_BACKUP);
@@ -245,10 +245,45 @@ public class BackupCommandProcessorTest {
 
     CommandResponse execute = backupCommandProcessor.execute(command, agent);
 
-
     backupList = getBackupList();
 
     assertThat(backupList.getBackups()).hasSize(0);
+
+  }
+
+  @Test
+  public void testListLogsCommandProcessor() throws InterruptedException {
+
+    ODocument cfg = createBackupConfig();
+
+    BackupList backupList = getBackupList();
+
+    assertThat(backupList.getBackups()).hasSize(1);
+
+    String uuid = cfg.field("uuid");
+
+    final OBackupTask task = agent.getBackupManager().getTask(uuid);
+
+    final CountDownLatch latch = new CountDownLatch(3);
+    task.registerListener((cfg1, log) -> {
+      latch.countDown();
+      return latch.getCount() > 0;
+
+    });
+    latch.await();
+
+    Command command = new Command();
+    command.setId("test");
+    command.setPayload(new BackupLogRequest(uuid, null, null));
+    command.setResponseChannel("channelTest");
+
+    ListBackupLogsCommandProcessor backupCommandProcessor = new ListBackupLogsCommandProcessor();
+
+    CommandResponse execute = backupCommandProcessor.execute(command, agent);
+
+    BackupLogsList backupLogsList = (BackupLogsList) execute.getPayload();
+
+    assertThat(backupLogsList.getLogs()).hasSize(4);
 
   }
 

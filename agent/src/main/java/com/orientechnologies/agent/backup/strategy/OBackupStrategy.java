@@ -146,10 +146,10 @@ public abstract class OBackupStrategy {
       ORestoreFinishedLog finishedLog = new ORestoreFinishedLog(restoreStartedLog.getUnitId(), restoreStartedLog.getTxId(),
           getUUID(), getDbName(), restoreStartedLog.getMode());
 
-      finishedLog.elapsedTime = finishedLog.getTimestamp().getTime() - restoreStartedLog.getTimestamp().getTime();
+      finishedLog.setElapsedTime(finishedLog.getTimestamp().getTime() - restoreStartedLog.getTimestamp().getTime());
       finishedLog.setTargetDB(databaseName);
-      finishedLog.path = finished.path;
-      finishedLog.restoreUnitId = finished.getUnitId();
+      finishedLog.setPath(finished.getPath());
+      finishedLog.setRestoreUnitId(finished.getUnitId());
 
       logger.log(finishedLog);
 
@@ -180,8 +180,8 @@ public abstract class OBackupStrategy {
       OBackupFinishedLog end = endBackup(start.getUnitId(), start.getTxId());
       end.setFileName(fName);
       end.setPath(path);
-      end.fileSize = calculateFileSize(path + File.separator + fName);
-      end.elapsedTime = end.getTimestamp().getTime() - start.getTimestamp().getTime();
+      end.setFileSize(calculateFileSize(path + File.separator + fName));
+      end.setElapsedTime(end.getTimestamp().getTime() - start.getTimestamp().getTime());
       return end;
     } finally {
       if (db != null) {
@@ -302,8 +302,8 @@ public abstract class OBackupStrategy {
     try {
       OBackupFinishedLog lastCompleted = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
 
-      if(lastCompleted!=null) {
-        lastCompleted.prevChange = true;
+      if (lastCompleted != null) {
+        lastCompleted.setPrevChange(true);
         logger.updateLog(lastCompleted);
       }
 

@@ -27,24 +27,24 @@ import java.util.Map;
  */
 public interface OBackupLogger {
 
-  public void log(OBackupLog log);
+  void log(OBackupLog log);
 
-  public long nextOpId();
+  long nextOpId();
 
-  public OBackupLog findLast(OBackupLogType op, String uuid) throws IOException;
+  OBackupLog findLast(OBackupLogType op, String uuid) throws IOException;
 
-  public OBackupLog findLast(OBackupLogType op, String uuid, Long unitId) throws IOException;
+  OBackupLog findLast(OBackupLogType op, String uuid, Long unitId) throws IOException;
 
-  public List<OBackupLog> findByUUID(String uuid, int page, int pageSize, Map<String, String> params) throws IOException;
+  List<OBackupLog> findByUUID(String uuid, int page, int pageSize, Map<String, String> params) throws IOException;
 
-  public List<OBackupLog> findByUUIDAndUnitId(String uuid, Long unitId, int page, int pageSize, Map<String, String> params)
+  List<OBackupLog> findByUUIDAndUnitId(String uuid, Long unitId, int page, int pageSize, Map<String, String> params)
       throws IOException;
 
-  public void deleteByUUIDAndUnitIdAndTx(String uuid, Long unitId, Long tx) throws IOException;
+  void deleteByUUIDAndUnitIdAndTx(String uuid, Long unitId, Long tx) throws IOException;
 
-  public void deleteByUUIDAndTimestamp(String uuid, Long timestamp) throws IOException;
+  void deleteByUUIDAndTimestamp(String uuid, Long timestamp) throws IOException;
 
-  public List<OBackupLog> findAllLatestByUUID(String uuid, int page, int pageSize) throws IOException;
+  List<OBackupLog> findAllLatestByUUID(String uuid, int page, int pageSize) throws IOException;
 
   void deleteLog(OBackupLog scheduled);
 
