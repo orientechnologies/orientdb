@@ -13,7 +13,7 @@ public class OCacheEntryImpl implements OCacheEntry {
   private final long          pageIndex;
 
   private boolean dirty;
-  private AtomicInteger usagesCount = new AtomicInteger();
+  private final AtomicInteger usagesCount = new AtomicInteger();
 
   public OCacheEntryImpl(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty) {
     this.fileId = fileId;
