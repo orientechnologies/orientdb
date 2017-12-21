@@ -59,16 +59,29 @@ public class MetadataPushTest {
   }
 
   @Test
-  public void testStorageUpdate() {
+  public void testStorageUpdate() throws InterruptedException {
     database.command(" ALTER DATABASE LOCALELANGUAGE  ?", Locale.GERMANY.getLanguage());
+    //Push done in background for now, do not guarantee update before command return.
+    Thread.sleep(500);
     assertEquals(database.get(ODatabase.ATTRIBUTES.LOCALELANGUAGE), Locale.GERMANY.getLanguage());
   }
 
   @Test
-  @Ignore
-  public void testSchemaUpdate() {
+  public void testSchemaUpdate() throws InterruptedException {
     database.command(" create class X");
+    //Push done in background for now, do not guarantee update before command return.
+    Thread.sleep(500);
     assertTrue(database.getMetadata().getSchema().existsClass("X"));
+  }
+
+  @Test
+  public void testIndexManagerUpdate() throws InterruptedException {
+    database.command(" create class X");
+    database.command(" create property X.y STRING");
+    database.command(" create index X.y on X(y) NOTUNIQUE");
+    //Push done in background for now, do not guarantee update before command return.
+    Thread.sleep(500);
+    assertTrue(database.getMetadata().getIndexManager().existsIndex("X.y"));
   }
 
 }

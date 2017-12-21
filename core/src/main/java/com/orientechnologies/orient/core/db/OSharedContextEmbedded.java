@@ -28,7 +28,7 @@ public class OSharedContextEmbedded extends OSharedContext {
   public OSharedContextEmbedded(OStorage storage) {
     schema = new OSchemaEmbedded();
     security = OSecurityManager.instance().newSecurity();
-    indexManager = new OIndexManagerShared();
+    indexManager = new OIndexManagerShared(storage);
     functionLibrary = new OFunctionLibraryImpl();
     scheduler = new OSchedulerImpl();
     sequenceLibrary = new OSequenceLibraryImpl();

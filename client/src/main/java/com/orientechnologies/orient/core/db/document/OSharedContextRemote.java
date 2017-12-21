@@ -8,16 +8,17 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Created by tglman on 13/06/17.
  */
 public class OSharedContextRemote extends OSharedContext {
 
-  public OSharedContextRemote() {
+  public OSharedContextRemote(OStorage storage) {
     schema = new OSchemaRemote();
     security = OSecurityManager.instance().newSecurity();
-    indexManager = new OIndexManagerRemote();
+    indexManager = new OIndexManagerRemote(storage);
     functionLibrary = new OFunctionLibraryImpl();
     scheduler = new OSchedulerImpl();
     sequenceLibrary = new OSequenceLibraryImpl();

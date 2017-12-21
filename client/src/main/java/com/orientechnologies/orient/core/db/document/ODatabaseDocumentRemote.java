@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
@@ -234,7 +235,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
       @Override
       public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote();
+        OSharedContext shared = new OSharedContextRemote(getStorage());
         return shared;
       }
     });
@@ -431,10 +432,21 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
       @Override
       public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote();
+        OSharedContext shared = new OSharedContextRemote(storage);
         return shared;
       }
     });
-    ((OSchemaRemote)shared.getSchema()).update(schema);
+    ((OSchemaRemote) shared.getSchema()).update(schema);
+  }
+
+  public static void updateIndexManager(OStorageRemote storage, ODocument indexManager) {
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+      @Override
+      public OSharedContext call() throws Exception {
+        OSharedContext shared = new OSharedContextRemote(storage);
+        return shared;
+      }
+    });
+    ((OIndexManagerRemote) shared.getIndexManager()).update(indexManager);
   }
 }

@@ -28,17 +28,22 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OIndexManagerRemote extends OIndexManagerAbstract {
-  private static final String QUERY_DROP       = "drop index `%s` if exists";
-  private static final long   serialVersionUID = -6570577338095096235L;
+  private              AtomicBoolean skipPush         = new AtomicBoolean(false);
+  private static final String        QUERY_DROP       = "drop index `%s` if exists";
+  private static final long          serialVersionUID = -6570577338095096235L;
+  private OStorage storage;
 
-  public OIndexManagerRemote() {
+  public OIndexManagerRemote(OStorage storage) {
     super();
+    this.storage = storage;
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
@@ -60,8 +65,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
       getDatabase().command(createIndexDDL);
 
-      ORecordInternal.setIdentity(document,
-          new ORecordId(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId()));
+      ORecordInternal.setIdentity(document, new ORecordId(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId()));
 
       if (progressListener != null)
         progressListener.onCompletition(this, true);
@@ -107,10 +111,10 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   public void recreateIndexes() {
     throw new UnsupportedOperationException("recreateIndexes()");
   }
-  
+
   @Override
   public void recreateIndexes(ODatabaseDocumentInternal database) {
-    throw new UnsupportedOperationException("recreateIndexes(ODatabaseDocumentInternal)");    
+    throw new UnsupportedOperationException("recreateIndexes(ODatabaseDocumentInternal)");
   }
 
   @Override
@@ -121,7 +125,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   public boolean autoRecreateIndexesAfterCrash(ODatabaseDocumentInternal database) {
     return false;
   }
-  
+
   @Override
   public boolean autoRecreateIndexesAfterCrash() {
     return false;
@@ -134,9 +138,11 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   protected OIndex<?> getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, String algorithm,
       Set<String> clustersToIndex, OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
     if (isMultiValueIndex)
-      return new OIndexRemoteMultiValue(name, type, algorithm, identity, indexDefinition, configuration, clustersToIndex);
+      return new OIndexRemoteMultiValue(name, type, algorithm, identity, indexDefinition, configuration, clustersToIndex,
+          getStorage().getName());
 
-    return new OIndexRemoteOneValue(name, type, algorithm, identity, indexDefinition, configuration, clustersToIndex);
+    return new OIndexRemoteOneValue(name, type, algorithm, identity, indexDefinition, configuration, clustersToIndex,
+        getStorage().getName());
   }
 
   @Override
@@ -152,9 +158,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
           try {
             final boolean isMultiValue = ODefaultIndexFactory.isMultiValueIndex((String) d.field(OIndexInternal.CONFIG_TYPE));
 
-            final OIndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataInternal(d,
-                (String) d.field(OIndexInternal.CONFIG_TYPE), d.<String> field(OIndexInternal.ALGORITHM),
-                d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+            final OIndexMetadata newIndexMetadata = OIndexAbstract
+                .loadMetadataInternal(d, (String) d.field(OIndexInternal.CONFIG_TYPE), d.<String>field(OIndexInternal.ALGORITHM),
+                    d.<String>field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
             addIndexInternal(getRemoteIndexInstance(isMultiValue, newIndexMetadata.getType(), newIndexMetadata.getName(),
                 newIndexMetadata.getAlgorithm(), newIndexMetadata.getClustersToIndex(), newIndexMetadata.getIndexDefinition(),
@@ -178,6 +184,28 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       return new OIndexTxAwareOneValue(database, (OIndex<OIdentifiable>) index);
 
     return index;
+  }
+
+  @Override
+  protected void acquireExclusiveLock() {
+    skipPush.set(true);
+    super.acquireExclusiveLock();
+  }
+
+  @Override
+  protected void releaseExclusiveLock() {
+    super.releaseExclusiveLock();
+    skipPush.set(false);
+  }
+
+  public void update(ODocument indexManager) {
+    if (!skipPush.get()) {
+      super.fromStream(indexManager);
+    }
+  }
+
+  protected OStorage getStorage() {
+    return storage;
   }
 
 }

@@ -52,6 +52,9 @@ public class OSubscribeRequest implements OBinaryRequest<OSubscribeResponse> {
       return new OSubscribeStorageConfigurationRequest();
     case OChannelBinaryProtocol.SUBSCRIBE_PUSH_SCHEMA:
       return new OSubscribeSchemaRequest();
+    case OChannelBinaryProtocol.SUBSCRIBE_PUSH_INDEX_MANAGER:
+      return new OSubscribeIndexManagerRequest();
+
     }
 
     throw new ODatabaseException("Unknown message response for code:" + message);

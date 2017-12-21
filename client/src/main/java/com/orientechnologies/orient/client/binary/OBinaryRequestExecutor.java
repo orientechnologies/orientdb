@@ -129,5 +129,7 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeSubscribeStorageConfiguration(OSubscribeStorageConfigurationRequest request);
 
-  OBinaryResponse executeSubscribeSchemaConfiguration(OSubscribeSchemaRequest request);
+  OBinaryResponse executeSubscribeSchema(OSubscribeSchemaRequest request);
+
+  OBinaryResponse executeSubscribeIndexManager(OSubscribeIndexManagerRequest request);
 }

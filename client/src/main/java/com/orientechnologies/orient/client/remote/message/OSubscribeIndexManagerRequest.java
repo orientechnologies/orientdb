@@ -14,7 +14,7 @@ import java.io.IOException;
 /**
  * Created by tglman on 11/01/17.
  */
-public class OSubscribeSchemaRequest implements OBinaryRequest<OSubscribeSchemaResponse> {
+public class OSubscribeIndexManagerRequest implements OBinaryRequest<OSubscribeIndexManagerResponse> {
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
 
@@ -27,17 +27,17 @@ public class OSubscribeSchemaRequest implements OBinaryRequest<OSubscribeSchemaR
 
   @Override
   public byte getCommand() {
-    return OChannelBinaryProtocol.SUBSCRIBE_PUSH_SCHEMA;
+    return OChannelBinaryProtocol.SUBSCRIBE_PUSH_INDEX_MANAGER;
   }
 
   @Override
-  public OSubscribeSchemaResponse createResponse() {
-    return new OSubscribeSchemaResponse();
+  public OSubscribeIndexManagerResponse createResponse() {
+    return new OSubscribeIndexManagerResponse();
   }
 
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
-    return executor.executeSubscribeSchema(this);
+    return executor.executeSubscribeIndexManager(this);
   }
 
   @Override
