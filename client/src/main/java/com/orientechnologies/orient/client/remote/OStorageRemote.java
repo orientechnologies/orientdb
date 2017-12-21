@@ -1914,7 +1914,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   @Override
   public OBinaryPushResponse executeUpdateSchema(OPushSchemaRequest request) {
-    ODatabaseDocumentRemote.updateSchema(this, request.getSchema());
+    ODocument schema = request.getSchema();
+    ORecordInternal.setIdentity(schema, new ORecordId(getConfiguration().getSchemaRecordId()));
+    ODatabaseDocumentRemote.updateSchema(this, schema);
     return null;
   }
 
