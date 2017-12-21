@@ -41,20 +41,21 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
   protected final static String QUERY_GET = "select expand( rid ) from index:%s where key = ?";
 
   public OIndexRemoteMultiValue(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
-      final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
-    super(iName, iWrappedType, algorithm, iRid, iIndexDefinition, iConfiguration, clustersToIndex);
+      final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex, String database) {
+    super(iName, iWrappedType, algorithm, iRid, iIndexDefinition, iConfiguration, clustersToIndex, database);
   }
 
   public Collection<OIdentifiable> get(final Object iKey) {
-    try(final OResultSet result = getDatabase().command(String.format(QUERY_GET, name), iKey)) {
+    try (final OResultSet result = getDatabase().command(String.format(QUERY_GET, name), iKey)) {
       return result.stream().map((res) -> res.getIdentity().orElse(null)).collect(Collectors.toSet());
     }
   }
 
   public Iterator<Entry<Object, Collection<OIdentifiable>>> iterator() {
-    try(final OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES, name))) {
+    try (final OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES, name))) {
 
-      final Map<Object, Collection<OIdentifiable>> map = result.stream().collect(Collectors.toMap((r) -> r.getProperty("key"), (r) -> r.getProperty("rid")));
+      final Map<Object, Collection<OIdentifiable>> map = result.stream()
+          .collect(Collectors.toMap((r) -> r.getProperty("key"), (r) -> r.getProperty("rid")));
       return map.entrySet().iterator();
     }
   }

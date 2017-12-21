@@ -1326,10 +1326,17 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   @Override
-  public OBinaryResponse executeSubscribeSchemaConfiguration(OSubscribeSchemaRequest request) {
+  public OBinaryResponse executeSubscribeSchema(OSubscribeSchemaRequest request) {
     OPushManager manager = server.getPushManager();
     manager.subscribeSchema(connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol());
     return new OSubscribeSchemaResponse();
+  }
+
+  @Override
+  public OBinaryResponse executeSubscribeIndexManager(OSubscribeIndexManagerRequest request) {
+    OPushManager manager = server.getPushManager();
+    manager.subscribeIndexManager(connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol());
+    return new OSubscribeIndexManagerResponse();
   }
 
   @Override

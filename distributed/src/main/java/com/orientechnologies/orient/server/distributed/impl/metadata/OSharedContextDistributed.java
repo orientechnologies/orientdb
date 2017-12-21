@@ -25,7 +25,7 @@ public class OSharedContextDistributed extends OSharedContext {
   public OSharedContextDistributed(OStorage storage) {
     schema = new OSchemaDistributed();
     security = OSecurityManager.instance().newSecurity();
-    indexManager = new OIndexManagerDistributed();
+    indexManager = new OIndexManagerDistributed(storage);
     functionLibrary = new OFunctionLibraryImpl();
     scheduler = new OSchedulerImpl();
     sequenceLibrary = new OSequenceLibraryImpl();

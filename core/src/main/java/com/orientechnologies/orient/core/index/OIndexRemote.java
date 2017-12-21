@@ -77,7 +77,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   protected       Set<String>      clustersToIndex;
 
   public OIndexRemote(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
-      final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
+      final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex, String database) {
     this.name = iName;
     this.wrappedType = iWrappedType;
     this.algorithm = algorithm;
@@ -85,7 +85,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     this.indexDefinition = iIndexDefinition;
     this.configuration = iConfiguration;
     this.clustersToIndex = new HashSet<String>(clustersToIndex);
-    this.databaseName = ODatabaseRecordThreadLocal.instance().get().getName();
+    this.databaseName = database;
   }
 
   public OIndexRemote<T> create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
@@ -309,7 +309,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       }
     }
 
-    try(OResultSet rs = getDatabase().command(String.format(QUERY_GET_ENTRIES, name, params.toString()), iKeys.toArray())) {
+    try (OResultSet rs = getDatabase().command(String.format(QUERY_GET_ENTRIES, name, params.toString()), iKeys.toArray())) {
       return rs.stream().map((res) -> (ODocument) res.toElement()).collect(Collectors.toList());
     }
 
@@ -386,7 +386,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
         .command(String.format(QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC"), keys.toArray());
 
     final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
-    res.forEachRemaining(x->copy.add(x));
+    res.forEachRemaining(x -> copy.add(x));
     res.close();
 
     return new OIndexAbstractCursor() {
@@ -426,7 +426,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   public OIndexCursor cursor() {
     OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES, name));
     final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
-    result.forEachRemaining(x->copy.add(x));
+    result.forEachRemaining(x -> copy.add(x));
     result.close();
 
     return new OIndexAbstractCursor() {
@@ -463,7 +463,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   public OIndexCursor descCursor() {
     final OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES_DESC, name));
     final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
-    result.forEachRemaining(x->copy.add(x));
+    result.forEachRemaining(x -> copy.add(x));
     result.close();
 
     return new OIndexAbstractCursor() {
@@ -499,7 +499,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   public OIndexKeyCursor keyCursor() {
     final OResultSet result = getDatabase().command(String.format(QUERY_KEYS, name));
     final OInternalResultSet copy = new OInternalResultSet();//TODO a raw array instead...?
-    result.forEachRemaining(x->copy.add(x));
+    result.forEachRemaining(x -> copy.add(x));
     result.close();
     return new OIndexKeyCursor() {
 

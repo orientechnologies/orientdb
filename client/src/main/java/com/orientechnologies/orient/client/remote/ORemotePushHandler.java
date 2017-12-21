@@ -26,4 +26,6 @@ public interface ORemotePushHandler {
   void returnSocket(OChannelBinary network);
 
   OBinaryPushResponse executeUpdateSchema(OPushSchemaRequest request);
+
+  OBinaryPushResponse executeUpdateIndexManager(OPushIndexManagerRequest request);
 }

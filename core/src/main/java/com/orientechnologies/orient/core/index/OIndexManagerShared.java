@@ -56,9 +56,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
   protected volatile transient Thread  recreateIndexesThread = null;
   private volatile             boolean rebuildCompleted      = false;
+  private OStorage storage;
 
-  public OIndexManagerShared() {
+  public OIndexManagerShared(OStorage storage) {
     super();
+    this.storage = storage;
   }
 
   /**
@@ -680,4 +682,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     return index;
   }
 
+  public OStorage getStorage() {
+    return storage;
+  }
 }

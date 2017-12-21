@@ -77,7 +77,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
       final int[] clusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata) {
 
     if (isDistributedCommand()) {
-      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote();
+      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database.getStorage());
       return remoteIndexManager.createIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
     }
 
@@ -134,7 +134,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
 
   public OIndexManager dropIndex(final String iIndexName) {
     if (isDistributedCommand()) {
-      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote();
+      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database.getStorage());
       return remoteIndexManager.dropIndex(iIndexName);
     }
 

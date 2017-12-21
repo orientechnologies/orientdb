@@ -6,8 +6,8 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
@@ -21,6 +21,7 @@ public class OPushManager implements OMetadataUpdateListener {
   protected final Set<WeakReference<ONetworkProtocolBinary>>              distributedConfigPush = new HashSet<>();
   protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> storageConfigurations = new HashMap<>();
   protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> schema                = new HashMap<>();
+  protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> indexManager          = new HashMap<>();
   private         Set<String>                                             registerDatabase      = new HashSet<>();
 
   public synchronized void pushDistributedConfig(String database, List<String> hosts) {
@@ -81,6 +82,10 @@ public class OPushManager implements OMetadataUpdateListener {
     genericSubscribe(schema, database, protocol);
   }
 
+  public void subscribeIndexManager(ODatabaseDocumentInternal database, ONetworkProtocolBinary protocol) {
+    genericSubscribe(indexManager, database, protocol);
+  }
+
   @Override
   public void onSchemaUpdate(String database, OSchemaShared schema) {
     OPushSchemaRequest request = new OPushSchemaRequest(schema.toStream());
@@ -89,7 +94,8 @@ public class OPushManager implements OMetadataUpdateListener {
 
   @Override
   public void onIndexManagerUpdate(String database, OIndexManager indexManager) {
-
+    OPushIndexManagerRequest request = new OPushIndexManagerRequest(((OIndexManagerShared) indexManager).toStream());
+    genericNotify(this.indexManager, database, request);
   }
 
   @Override
