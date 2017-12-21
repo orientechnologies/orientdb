@@ -340,6 +340,18 @@ public class O2QCache implements OReadCache {
           pageKeys[i] = new PageKey(fileId, pageIndex + i);
 
         }
+
+        if (checkPinnedPages) {
+          cacheEntry = pinnedPages.get(new PinnedPage(fileId, pageIndex));
+
+          if (cacheEntry != null) {
+            cacheHit.setValue(true);
+            cacheEntry.incrementUsages();
+
+            return new UpdateCacheResult(false, cacheEntry);
+          }
+        }
+
         pageLocks = pageLockManager.acquireExclusiveLocksInBatch(pageKeys);
         try {
           if (checkPinnedPages)
@@ -364,7 +376,7 @@ public class O2QCache implements OReadCache {
           }
         }
       } finally {
-        fileLockManager.releaseSharedLock(fileId);
+        fileLock.unlock();
       }
     } finally {
       cacheLock.releaseReadLock();
@@ -632,7 +644,6 @@ public class O2QCache implements OReadCache {
   /**
    * Loads state of 2Q cache queues stored during storage close {@link #closeStorage(OWriteCache)} back into memory if flag
    * {@link OGlobalConfiguration#STORAGE_KEEP_DISK_CACHE_STATE} is set to <code>true</code>.
-   * <p>
    * If maximum size of cache was decreased cache state will not be restored.
    *
    * @param writeCache Write cache is used to load pages back into cache if needed.
@@ -700,7 +711,6 @@ public class O2QCache implements OReadCache {
 
   /**
    * Following format is used to store queue state:
-   * <p>
    * <ol>
    * <li>File id or -1 if end of queue is reached (int)</li>
    * <li>Page index (long), is absent if end of the queue is reached</li>
@@ -722,9 +732,7 @@ public class O2QCache implements OReadCache {
 
   /**
    * Restores queues state if it is NOT needed to load cache page from disk to cache.
-   * <p>
    * Following format is used to store queue state:
-   * <p>
    * <ol>
    * <li>File id or -1 if end of queue is reached (int)</li>
    * <li>Page index (long), is absent if end of the queue is reached</li>
@@ -788,9 +796,7 @@ public class O2QCache implements OReadCache {
 
   /**
    * Restores queues state if it is needed to load cache page from disk to cache.
-   * <p>
    * Following format is used to store queue state:
-   * <p>
    * <ol>
    * <li>File id or -1 if end of queue is reached (int)</li>
    * <li>Page index (long), is absent if end of the queue is reached</li>
@@ -887,9 +893,7 @@ public class O2QCache implements OReadCache {
   /**
    * Stores state of queues of 2Q cache inside of {@link #CACHE_STATE_FILE} file if flag
    * {@link OGlobalConfiguration#STORAGE_KEEP_DISK_CACHE_STATE} is set to <code>true</code>.
-   * <p>
    * Following format is used to store queue state:
-   * <p>
    * <ol>
    * <li>Max cache size, single item (long)</li>
    * <li>File id or -1 if end of queue is reached (int)</li>
@@ -954,12 +958,8 @@ public class O2QCache implements OReadCache {
   /**
    * Stores state of single queue to the {@link OutputStream} . Items are stored from least recently used to most recently used, so
    * in case of sequential read of data we will restore the same state of queue.
-   * <p>
    * Not all queue items are stored, only ones which contains pages of selected files.
-   * <p>
-   * <p>
    * Following format is used to store queue state:
-   * <p>
    * <ol>
    * <li>File id or -1 if end of queue is reached (int)</li>
    * <li>Page index (long), is absent if end of the queue is reached</li>
@@ -1566,7 +1566,6 @@ public class O2QCache implements OReadCache {
 
   /**
    * That is immutable class which contains information about current memory limits for 2Q cache.
-   * <p>
    * This class is needed to change all parameters atomically when cache memory limits are changed outside of 2Q cache.
    */
   private static final class MemoryData {
