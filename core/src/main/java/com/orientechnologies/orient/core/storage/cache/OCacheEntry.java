@@ -20,18 +20,20 @@
 
 package com.orientechnologies.orient.core.storage.cache;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * @author Andrey Lomakin
  * @since 7/23/13
  */
 public class OCacheEntry {
-  OCachePointer dataPointer;
+  private OCachePointer dataPointer;
 
-  final long    fileId;
-  final long    pageIndex;
+  private final long fileId;
+  private final long pageIndex;
 
-  boolean       dirty;
-  int           usagesCount;
+  private boolean dirty;
+  private final AtomicInteger usagesCount = new AtomicInteger();
 
   public OCacheEntry(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty) {
     this.fileId = fileId;
@@ -90,11 +92,11 @@ public class OCacheEntry {
   }
 
   public int getUsagesCount() {
-    return usagesCount;
+    return usagesCount.get();
   }
 
   public void incrementUsages() {
-    usagesCount++;
+    usagesCount.incrementAndGet();
   }
 
   /**
@@ -107,7 +109,7 @@ public class OCacheEntry {
   }
 
   public void decrementUsages() {
-    usagesCount--;
+    usagesCount.decrementAndGet();
   }
 
   @Override
@@ -125,7 +127,7 @@ public class OCacheEntry {
       return false;
     if (pageIndex != that.pageIndex)
       return false;
-    if (usagesCount != that.usagesCount)
+    if (usagesCount.get() != that.usagesCount.get())
       return false;
     if (dataPointer != null ? !dataPointer.equals(that.dataPointer) : that.dataPointer != null)
       return false;
@@ -139,7 +141,7 @@ public class OCacheEntry {
     result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
     result = 31 * result + (dataPointer != null ? dataPointer.hashCode() : 0);
     result = 31 * result + (dirty ? 1 : 0);
-    result = 31 * result + usagesCount;
+    result = 31 * result + usagesCount.get();
     return result;
   }
 
