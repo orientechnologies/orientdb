@@ -155,7 +155,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
    */
   @Override
   public long getMemoryConsumption() {
-    return memoryConsumption.longValue();
+    return memoryConsumption.get();
   }
 
   /**
