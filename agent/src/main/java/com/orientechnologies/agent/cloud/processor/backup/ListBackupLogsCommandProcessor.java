@@ -6,8 +6,6 @@ import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import com.orientechnologies.orientdb.cloud.protocol.backup.BackupLogRequest;
 import com.orientechnologies.orientdb.cloud.protocol.backup.log.BackupLogsList;
 
-import java.util.HashMap;
-
 public class ListBackupLogsCommandProcessor extends AbstractBackupCommandProcessor {
   @Override
   public CommandResponse execute(Command command, OEnterpriseAgent agent) {
@@ -28,7 +26,7 @@ public class ListBackupLogsCommandProcessor extends AbstractBackupCommandProcess
 
     int page = request.getPage() != null ? request.getPage().intValue() : 1;
     int pageSide = request.getPageSize() != null ? request.getPageSize().intValue() : -1;
-    agent.getBackupManager().findLogs(request.getBackupId(), page, pageSide, new HashMap<>()).stream()
+    agent.getBackupManager().findLogs(request.getBackupId(), page, pageSide, request.getParams()).stream()
         .map(BackupLogConverter::convert).forEach(l -> backupLogsList.addLog(l));
 
     return backupLogsList;

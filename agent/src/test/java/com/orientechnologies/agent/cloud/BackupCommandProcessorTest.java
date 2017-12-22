@@ -274,7 +274,7 @@ public class BackupCommandProcessorTest {
 
     Command command = new Command();
     command.setId("test");
-    command.setPayload(new BackupLogRequest(uuid, null, null));
+    command.setPayload(new BackupLogRequest(uuid, null, null, new HashMap<>()));
     command.setResponseChannel("channelTest");
 
     ListBackupLogsCommandProcessor backupCommandProcessor = new ListBackupLogsCommandProcessor();
