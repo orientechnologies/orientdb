@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Manages all allocations/deallocations from/to direct memory.
@@ -86,7 +87,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
   /**
    * Amount of direct memory consumed by using this allocator.
    */
-  private static final AtomicLong memoryConsumption = new AtomicLong();
+  private final LongAdder memoryConsumption = new LongAdder();
 
   /**
    * @return singleton instance.
@@ -131,7 +132,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
     }
 
     final OPointer ptr = new OPointer(new Pointer(pointer), size);
-    memoryConsumption.getAndAdd(size);
+    memoryConsumption.add(size);
 
     return track(ptr);
   }
@@ -146,7 +147,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
 
     final Pointer ptr = pointer.getNativePointer();
     Native.free(Pointer.nativeValue(ptr));
-    memoryConsumption.getAndAdd(-pointer.getSize());
+    memoryConsumption.add(-pointer.getSize());
     untrack(pointer);
   }
 
@@ -155,7 +156,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
    */
   @Override
   public long getMemoryConsumption() {
-    return memoryConsumption.get();
+    return memoryConsumption.longValue();
   }
 
   /**
