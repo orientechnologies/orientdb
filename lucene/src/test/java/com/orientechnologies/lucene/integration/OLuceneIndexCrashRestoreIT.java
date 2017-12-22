@@ -81,14 +81,8 @@ public class OLuceneIndexCrashRestoreIT {
     String javaExec = System.getProperty("java.home") + "/bin/java";
     javaExec = new File(javaExec).getCanonicalPath();
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec,
-        "-Xmx2048m",
-        "-XX:MaxDirectMemorySize=512g",
-        "-classpath",
-        System.getProperty("java.class.path"),
-        "-DmutexFile=" + mutexFile.getAbsolutePath(),
-        "-DORIENTDB_HOME=" + buildDirectory,
-        RemoteDBRunner.class.getName());
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
+        "-DmutexFile=" + mutexFile.getAbsolutePath(), "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
 
     processBuilder.inheritIO();
     serverProcess = processBuilder.start();
@@ -152,7 +146,7 @@ public class OLuceneIndexCrashRestoreIT {
     }
     //crash the server
 
-   serverProcess.destroyForcibly();
+    serverProcess.destroyForcibly();
 
     serverProcess.waitFor();
     //crash the server
@@ -190,10 +184,8 @@ public class OLuceneIndexCrashRestoreIT {
     assertThat((Iterable<? extends Map.Entry<String, Object>>) index.getMetadata()).isNotNull();
 
     assertThat(index.getMetadata().<String>field("default")).isNotNull();
-    assertThat(index.getMetadata().<String>field("default"))
-        .isEqualTo("org.apache.lucene.analysis.core.KeywordAnalyzer");
-    assertThat(index.getMetadata().<String>field("unknownKey"))
-        .isEqualTo("unknownValue");
+    assertThat(index.getMetadata().<String>field("default")).isEqualTo("org.apache.lucene.analysis.core.KeywordAnalyzer");
+    assertThat(index.getMetadata().<String>field("unknownKey")).isEqualTo("unknownValue");
 
     //sometimes it is not null, and all works fine
     res = db.query("select from Person where name lucene 'Rob*' ");
@@ -307,8 +299,7 @@ public class OLuceneIndexCrashRestoreIT {
 
           for (int i = 0; i < 10; i++) {
             if (id % 1000 == 0) {
-              String insert =
-                  "insert into person (name) values ('" + names.get(nameIdx) + "')";
+              String insert = "insert into person (name) values ('" + names.get(nameIdx) + "')";
               testDB.command(insert).close();
             } else {
               String insert =

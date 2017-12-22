@@ -22,8 +22,6 @@ package com.orientechnologies;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 
 import org.testng.Assert;
 import org.testng.ISuite;
@@ -60,9 +58,14 @@ public class OTestNGTestListener implements ISuiteListener {
       Assert.fail(msg);
     }
     if (!isFailed(suite)) {
-      ODatabaseDocumentTx.closeAll();
-      System.out.println("Checking for direct memory leaks...");
-      OByteBufferPool.instance().verifyState();
+      System.out.println("Shutting down engine and checking for direct memory leaks...");
+      final Orient orient = Orient.instance();
+      if (orient != null) {
+        //state is verified during shutdown
+        orient.shutdown();
+      } else {
+        OByteBufferPool.instance().checkMemoryLeaks();
+      }
     }
   }
 

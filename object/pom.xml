@@ -154,7 +154,6 @@
         <argLine>
             -ea
             -Xmx${heapSize}
-            -XX:MaxDirectMemorySize=512g
             -Dstorage.diskCache.bufferSize=4096
             -Dmemory.directMemory.trackMode=true
             -Dstorage.makeFullCheckpointAfterCreate=false

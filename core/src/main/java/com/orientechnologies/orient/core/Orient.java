@@ -35,6 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -252,6 +253,9 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (timer == null)
         timer = new Timer(true);
 
+      OByteBufferPool.instance().registerMBean();
+      ODirectMemoryAllocator.instance().registerMBean();
+
       profiler = new OProfilerStub(false);
 
       shutdownHook = new OrientShutdownHook();
@@ -384,6 +388,16 @@ public class Orient extends OListenerManger<OOrientListener> {
       }
 
       shutdownHandlers.clear();
+
+      OLogManager.instance().info(this, "Clearing byte buffer pool");
+      OByteBufferPool.instance().clear();
+
+      OByteBufferPool.instance().checkMemoryLeaks();
+      ODirectMemoryAllocator.instance().checkMemoryLeaks();
+
+      OByteBufferPool.instance().unregisterMBean();
+      ODirectMemoryAllocator.instance().unregisterMBean();
+
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
     } finally {
@@ -774,7 +788,6 @@ public class Orient extends OListenerManger<OOrientListener> {
         internal.internalClose();
       }
       runningInstances.clear();
-      OByteBufferPool.instance().verifyState();
     }
 
     @Override

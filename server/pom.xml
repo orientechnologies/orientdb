@@ -40,7 +40,6 @@
             -ea
             -Xmx${heapSize}
             -Dstorage.diskCache.bufferSize=4096
-            -XX:MaxDirectMemorySize=512g
             -Dsecurity.userPasswordSaltIterations=10
             -Dmemory.directMemory.trackMode=true
             -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager

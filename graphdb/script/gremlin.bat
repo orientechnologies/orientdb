@@ -11,15 +11,6 @@ for %%i in (%LIBDIR%\*.jar) do call :concatsep %%i
 
 set JAVA_OPTIONS=-Xms32M -Xmx512M
 
-if "%PROCESSOR_ARCHITECTURE%"=="AMD64" goto 64BIT
-set JAVA_MAX_DIRECT=-XX:MaxDirectMemorySize=2g
-goto END
-:64BIT
-set JAVA_MAX_DIRECT=-XX:MaxDirectMemorySize=512g
-:END
-
-set ORIENTDB_SETTINGS=%JAVA_MAX_DIRECT%
-
 :: Launch the application
 
 if "%1" == "" goto console
@@ -32,7 +23,7 @@ if "%1" == "-v" goto version
 
 :console
 
-java %JAVA_OPTIONS% %ORIENTDB_SETTINGS% %JAVA_ARGS% -cp %CP%;%PLUGINDIR%\* com.tinkerpop.gremlin.groovy.console.Console
+java %JAVA_OPTIONS% %JAVA_ARGS% -cp %CP%;%PLUGINDIR%\* com.tinkerpop.gremlin.groovy.console.Console
 
 goto :eof
 

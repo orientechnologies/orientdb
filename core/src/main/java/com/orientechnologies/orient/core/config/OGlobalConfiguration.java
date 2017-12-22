@@ -1,22 +1,22 @@
 /*
-*
-*  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-*  *
-*  *  Licensed under the Apache License, Version 2.0 (the "License");
-*  *  you may not use this file except in compliance with the License.
-*  *  You may obtain a copy of the License at
-*  *
-*  *       http://www.apache.org/licenses/LICENSE-2.0
-*  *
-*  *  Unless required by applicable law or agreed to in writing, software
-*  *  distributed under the License is distributed on an "AS IS" BASIS,
-*  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  *  See the License for the specific language governing permissions and
-*  *  limitations under the License.
-*  *
-*  * For more information: http://orientdb.com
-*
-*/
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
@@ -67,6 +67,7 @@ public enum OGlobalConfiguration {
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used, if it is present", Boolean.class, true),
 
+  @Deprecated
   MEMORY_CHUNK_SIZE("memory.chunk.size", "Size of single memory chunk (in bytes) which will be preallocated by OrientDB",
       Integer.class, Integer.MAX_VALUE),
 
@@ -89,25 +90,14 @@ public enum OGlobalConfiguration {
           + "but usually it can be safely set to false. It should only be to true after dramatic changes have been made in the storage structures",
       Boolean.class, true),
 
+  DIRECT_MEMORY_POOL_LIMIT("memory.pool.limit",
+      "Limit of the pages cached inside of direct memory pool to avoid frequent reallocation of memory in OS", Integer.class, 256),
+
   DIRECT_MEMORY_TRACK_MODE("memory.directMemory.trackMode",
       "Activates the direct memory pool [leak detector](Leak-Detector.md). This detector causes a large overhead and should be used for debugging "
           + "purposes only. It's also a good idea to pass the "
           + "-Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager switch to the JVM, "
           + "if you use this mode, this will enable the logging from JVM shutdown hooks.", Boolean.class, false),
-
-  DIRECT_MEMORY_TRACE("memory.directMemory.trace",
-      "Activates [direct memory tracing](Direct-Memory-Tracing.md). The tracing causes a large overhead and should be used for"
-          + "debugging purposes only. False by default.", Boolean.class, false, (iCurrentValue, iNewValue) -> {
-    OByteBufferPool.instance().setTraceEnabled((Boolean) iNewValue);
-  }),
-
-  DIRECT_MEMORY_TRACE_AGGREGATION("memory.directMemory.trace.aggregation",
-      "Controls the aggregation level of the direct memory tracing. Possible values: 'none' – for no aggregation, events are "
-          + "traced one-by-one; 'low' – for low aggregation which provides more details; 'medium' (default) – provides medium "
-          + "level of details; 'high' – provides low level of details.", OByteBufferPool.TraceAggregation.class,
-      OByteBufferPool.TraceAggregation.Medium, (iCurrentValue, iNewValue) -> {
-    OByteBufferPool.instance().setTraceAggregation((OByteBufferPool.TraceAggregation) iNewValue);
-  }),
 
   DIRECT_MEMORY_ONLY_ALIGNED_ACCESS("memory.directMemory.onlyAlignedMemoryAccess",
       "Some architectures do not allow unaligned memory access or may suffer from speed degradation. For such platforms, this flag should be set to true",
@@ -194,12 +184,12 @@ public enum OGlobalConfiguration {
       + " 'storeAndSwitchReadOnlyMode' (default) - Same as 'storeAndVerify' with addition that storage will be switched in read only mode "
       + "till it will not be repaired.", OChecksumMode.class, OChecksumMode.StoreAndSwitchReadOnlyMode, false),
 
-  STORAGE_EXCLUSIVE_FILE_ACCESS("storage.exclusiveFileAccess","Limit access to the datafiles to the single API user, set to "
+  STORAGE_EXCLUSIVE_FILE_ACCESS("storage.exclusiveFileAccess", "Limit access to the datafiles to the single API user, set to "
       + "true to prevent concurrent modification files by different instances of storage", Boolean.class, true),
 
-  STORAGE_TRACK_FILE_ACCESS("storage.trackFileAccess","Works only if storage.exclusiveFileAccess is set to true. "
-      + "Tracks stack trace of thread which initially opened a file", Boolean.class, true),
-
+  STORAGE_TRACK_FILE_ACCESS("storage.trackFileAccess",
+      "Works only if storage.exclusiveFileAccess is set to true. " + "Tracks stack trace of thread which initially opened a file",
+      Boolean.class, true),
 
   @Deprecated STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Indicates a force sync should be performed for each update on the storage configuration", Boolean.class, true),

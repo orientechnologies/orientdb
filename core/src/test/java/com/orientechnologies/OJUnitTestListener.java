@@ -21,7 +21,7 @@ package com.orientechnologies;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.Orient;
 import org.junit.Assert;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
@@ -52,12 +52,6 @@ public class OJUnitTestListener extends RunListener {
   public void testRunFinished(Result result) throws Exception {
     super.testRunFinished(result);
 
-    if (result.wasSuccessful()) {
-      ODatabaseDocumentTx.closeAll();
-      System.out.println("Checking for direct memory leaks...");
-      OByteBufferPool.instance().verifyState();
-    }
-
     if (OLogManager.instance().isShutdown()) {
       final String msg = "LogManager was switched off before shutdown";
 
@@ -65,6 +59,17 @@ public class OJUnitTestListener extends RunListener {
       Assert.fail(msg);
     }
 
+    if (result.wasSuccessful()) {
+      System.out.println("Shutting down OrientDB engine and checking for direct memory leaks...");
+      final Orient orient = Orient.instance();
+
+      if (orient != null) {
+        //state is verified during engine shutdown
+        orient.shutdown();
+      } else {
+        OByteBufferPool.instance().checkMemoryLeaks();
+      }
+    }
   }
 
 }

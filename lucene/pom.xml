@@ -37,7 +37,6 @@
         <geotools.version>13.2</geotools.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-ea
-            -XX:MaxDirectMemorySize=512g
             -Xmx${heapSize}
             -Dstorage.diskCache.bufferSize=4096
             -Dindex.flushAfterCreate=false
