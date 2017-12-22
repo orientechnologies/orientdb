@@ -604,12 +604,14 @@ public class OFileClassic implements OFile, OClosableItem {
           } else {
             final StringWriter sw = new StringWriter();
             try (final PrintWriter pw = new PrintWriter(sw)) {
-              pw.append("File is allowed to be opened only once.");
+              pw.append("File is allowed to be opened only once.\n");
               if (fileUser.openStackTrace != null) {
-                pw.append(" File is already opened under: \n");
+                pw.append("File is already opened under: \n");
+                pw.append("----------------------------------------------------------------------------------------------------\n");
                 for (StackTraceElement se : fileUser.openStackTrace) {
-                  pw.append("\t").append(se.toString());
+                  pw.append("\t").append(se.toString()).append("\n");
                 }
+                pw.append("----------------------------------------------------------------------------------------------------\n");
               }
 
               pw.flush();
