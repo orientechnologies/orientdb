@@ -32,6 +32,7 @@ public class ONullBucketTest {
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
+    bufferPool.clear();
   }
 
   @Test
@@ -53,6 +54,7 @@ public class ONullBucketTest {
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
+    bufferPool.clear();
   }
 
   @Test
@@ -76,6 +78,7 @@ public class ONullBucketTest {
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
+    bufferPool.clear();
   }
 
   @Test
@@ -104,6 +107,7 @@ public class ONullBucketTest {
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
+    bufferPool.clear();
   }
 
 }

@@ -47,6 +47,8 @@ public class ReadWriteCacheConcurrentTest {
   private AtomicBoolean                                continuousWrite = new AtomicBoolean(true);
   private AtomicInteger                                version         = new AtomicInteger(1);
   private OClosableLinkedContainer<Long, OFileClassic> files           = new OClosableLinkedContainer<Long, OFileClassic>(1024);
+  private OByteBufferPool                              bufferPool      = new OByteBufferPool(8 + systemOffset);
+  ;
 
   @Before
   public void beforeClass() throws IOException {
@@ -93,8 +95,8 @@ public class ReadWriteCacheConcurrentTest {
   }
 
   private void initBuffer() throws IOException, InterruptedException {
-    writeBuffer = new OWOWCache(8 + systemOffset, new OByteBufferPool(8 + systemOffset), null, -1, 15000 * (8 + systemOffset),
-        storageLocal, true, files, 1, OChecksumMode.StoreAndThrow);
+    writeBuffer = new OWOWCache(8 + systemOffset, bufferPool, null, -1, 15000 * (8 + systemOffset), storageLocal, true, files, 1,
+        OChecksumMode.StoreAndThrow);
     writeBuffer.loadRegisteredFiles();
     readBuffer = new O2QCache(4 * (8 + systemOffset), 8 + systemOffset, true, 20);
   }
@@ -107,6 +109,7 @@ public class ReadWriteCacheConcurrentTest {
     deleteUsedFiles(FILE_COUNT);
 
     storageLocal.delete();
+    bufferPool.clear();
   }
 
   private void deleteUsedFiles(int filesCount) throws IOException {

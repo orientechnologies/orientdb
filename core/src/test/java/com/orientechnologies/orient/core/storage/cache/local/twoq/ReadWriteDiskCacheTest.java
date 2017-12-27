@@ -51,6 +51,8 @@ public class ReadWriteDiskCacheTest {
   private static ODiskWriteAheadLog     writeAheadLog;
   private        byte                   seed;
 
+  private static final OByteBufferPool BUFFER_POOL = new OByteBufferPool(PAGE_SIZE);
+
   @BeforeClass
   public static void beforeClass() throws IOException {
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
@@ -114,6 +116,7 @@ public class ReadWriteDiskCacheTest {
       }
     }
 
+    BUFFER_POOL.clear();
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.TRUE);
     OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.setValue(Boolean.TRUE);
   }
@@ -177,8 +180,8 @@ public class ReadWriteDiskCacheTest {
   }
 
   private void initBuffer() throws IOException, InterruptedException {
-    writeBuffer = new OWOWCache(PAGE_SIZE, new OByteBufferPool(PAGE_SIZE), writeAheadLog, -1, WRITE_CACHE_MAX_SIZE, storageLocal,
-        false, files, 1, OChecksumMode.StoreAndThrow);
+    writeBuffer = new OWOWCache(PAGE_SIZE, BUFFER_POOL, writeAheadLog, -1, WRITE_CACHE_MAX_SIZE, storageLocal, false, files, 1,
+        OChecksumMode.StoreAndThrow);
     writeBuffer.loadRegisteredFiles();
 
     readBuffer = new O2QCache(READ_CACHE_MAX_MEMORY, PAGE_SIZE, false, 50);

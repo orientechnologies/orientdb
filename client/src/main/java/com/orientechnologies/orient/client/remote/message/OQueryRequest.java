@@ -124,6 +124,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   }
 
   @Override
+
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeQuery(this);
   }
@@ -149,6 +150,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   }
 
   public Object[] getPositionalParameters() {
+    if(params==null) return  null;
     Object[] result = new Object[params.size()];
     params.entrySet().forEach(e -> {
       result[Integer.parseInt(e.getKey())] = e.getValue();

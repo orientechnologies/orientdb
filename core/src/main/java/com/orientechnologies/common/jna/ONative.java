@@ -1,3 +1,22 @@
+/*
+ *
+ *  *  Copyright 2010-2018 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.common.jna;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -18,6 +37,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.URL;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -143,7 +165,7 @@ public class ONative {
     return new MemoryLimitResult(memoryLimit, insideContainer);
   }
 
-  private long updateMemoryLimit(long memoryLimit,final long newMemoryLimit) {
+  private long updateMemoryLimit(long memoryLimit, final long newMemoryLimit) {
     if (newMemoryLimit <= 0) {
       return memoryLimit;
     }
@@ -159,7 +181,7 @@ public class ONative {
     return memoryLimit;
   }
 
-  private long fetchCGroupSoftMemoryLimit(final File memoryCGroup,final boolean printSteps) {
+  private long fetchCGroupSoftMemoryLimit(final File memoryCGroup, final boolean printSteps) {
     final File softMemoryCGroupLimit = new File(memoryCGroup, "memory.soft_limit_in_bytes");
     if (softMemoryCGroupLimit.exists()) {
       try {
@@ -201,7 +223,7 @@ public class ONative {
     return -1;
   }
 
-  private long fetchCGroupHardMemoryLimit(final File memoryCGroup,final boolean printSteps) {
+  private long fetchCGroupHardMemoryLimit(final File memoryCGroup, final boolean printSteps) {
     final File hardMemoryCGroupLimit = new File(memoryCGroup, "memory.limit_in_bytes");
     if (hardMemoryCGroupLimit.exists()) {
       try {
@@ -391,7 +413,7 @@ public class ONative {
     public final long    memoryLimit;
     public final boolean insideContainer;
 
-    MemoryLimitResult(final long memoryLimit,final boolean insideContainer) {
+    MemoryLimitResult(final long memoryLimit, final boolean insideContainer) {
       this.memoryLimit = memoryLimit;
       this.insideContainer = insideContainer;
     }

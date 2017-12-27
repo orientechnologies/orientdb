@@ -40,7 +40,7 @@ public class OJUnitTestLeaksListener extends RunListener {
     if (result.wasSuccessful()) {
       ODatabaseDocumentTx.closeAll();
       System.out.println("Checking for direct memory leaks...");
-      OByteBufferPool.instance().verifyState();
+      OByteBufferPool.instance().checkMemoryLeaks();
     }
   }
 

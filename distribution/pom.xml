@@ -29,7 +29,7 @@
         <VERSION>${project.version}</VERSION>
         <BUILD>${implementation.build}; ${maven.build.timestamp}</BUILD>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-Xmx${heapSize} -Xms${heapSize} -XX:MaxDirectMemorySize=512g -Dstorage.diskCache.bufferSize=4096</argLine>
+        <argLine>-Xmx${heapSize} -Xms${heapSize} -Dstorage.diskCache.bufferSize=4096</argLine>
     </properties>
 
     <dependencies>
@@ -132,7 +132,6 @@
                             <workingDirectory>${project.basedir}</workingDirectory>
                             <arguments>
                                 <argument>-Xmx${heapSize}</argument>
-                                <argument>-XX:MaxDirectMemorySize=512g</argument>
                                 <argument>-DridBag.embeddedToSbtreeBonsaiThreshold=10000000</argument>
                                 <argument>-classpath</argument>
                                 <classpath/>

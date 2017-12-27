@@ -24,82 +24,8 @@ package com.orientechnologies.common.directmemory;
  * @author Sergey Sitnikov
  */
 public interface OByteBufferPoolMXBean {
-
   /**
-   * @return the buffer AKA page size in bytes of the associated {@link OByteBufferPool}.
-   */
-  int getBufferSize();
-
-  /**
-   * @return the number of the free buffers currently in the pool of the associated {@link OByteBufferPool}.
-   */
-  int getBuffersInThePool();
-
-  /**
-   * @return the number of the allocated buffers of the associated {@link OByteBufferPool},
-   * this does not include the overflow buffers.
-   */
-  long getPreAllocatedBufferCount();
-
-  /**
-   * @return the number of the allocated overflow buffers of the associated {@link OByteBufferPool}.
-   */
-  long getOverflowBufferCount();
-
-  /**
-   * @return the current total memory allocation size in bytes of the the associated {@link OByteBufferPool},
-   * including the overflow buffer allocations.
-   */
-  long getAllocatedMemory();
-
-  /**
-   * @return the current total memory allocation size in megabytes of the the associated {@link OByteBufferPool},
-   * including the overflow buffer allocations.
-   */
-  long getAllocatedMemoryInMB();
-
-  /**
-   * @return the current total memory allocation size in gigabytes of the the associated {@link OByteBufferPool},
-   * including the overflow buffer allocations.
-   */
-  double getAllocatedMemoryInGB();
-
-  /**
-   * @return Maximum amount of bytes which may be allocated using big chunks of memory
-   */
-  long getPreAllocationLimit();
-
-  /**
-   * @return Amount of pages which fit in single big chunk of memory preallocated during page allocation request.
-   */
-  int getMaxPagesPerSingleArea();
-
-  /**
-   * @return Size of the pool which contains records which were allocated but now were fried to the pool by database.
+   * @return Current size of the memory pool
    */
   int getPoolSize();
-
-  /**
-   * Starts the tracing.
-   */
-  void startTracing();
-
-  /**
-   * Stops the tracing.
-   */
-  void stopTracing();
-
-  /**
-   * @return the active trace aggregation level.
-   */
-  OByteBufferPool.TraceAggregation getTraceAggregation();
-
-  /**
-   * Sets trace aggregation level.
-   *
-   * @param traceAggregation the new trace aggregation level.
-   *
-   * @see OByteBufferPool.TraceAggregation
-   */
-  void setTraceAggregation(OByteBufferPool.TraceAggregation traceAggregation);
 }

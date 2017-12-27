@@ -61,26 +61,5 @@ public class OEngineMemory extends OEngineAbstract {
   public void startup() {
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
     super.startup();
-
-    try {
-      if (OByteBufferPool.instance() != null)
-        OByteBufferPool.instance().registerMBean();
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for byte buffer pool cannot be registered", e);
-    }
-  }
-
-  @Override
-  public void shutdown() {
-    try {
-      try {
-        if (OByteBufferPool.instance() != null)
-          OByteBufferPool.instance().unregisterMBean();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for byte buffer pool cannot be unregistered", e);
-      }
-    } finally {
-      super.shutdown();
-    }
   }
 }

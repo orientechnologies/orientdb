@@ -35,9 +35,6 @@ import java.util.List;
  * @author Sergey Sitnikov
  */
 public class OMemory {
-  // JVM accepts this option exactly as it appears here, no lowercase/uppercase mixing and additional spacing allowed
-  private static final String XX_MAX_DIRECT_MEMORY_SIZE = "-XX:MaxDirectMemorySize=";
-
   /**
    * @param unlimitedCap the upper limit on reported memory, if JVM reports unlimited memory.
    *
@@ -50,37 +47,6 @@ public class OMemory {
   }
 
   /**
-   * Obtains the configured value of the {@code -XX:MaxDirectMemorySize} JVM option in bytes.
-   *
-   * @return the configured maximum direct memory size or {@code -1} if no configuration provided.
-   */
-  public static long getConfiguredMaxDirectMemory() {
-    long maxDirectMemorySize = -1;
-
-    final RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
-    final List<String> vmArgs = runtimeMXBean.getInputArguments();
-    for (String arg : vmArgs)
-      if (arg.startsWith(XX_MAX_DIRECT_MEMORY_SIZE)) {
-        try {
-          maxDirectMemorySize = parseVmArgsSize(arg.substring(XX_MAX_DIRECT_MEMORY_SIZE.length()));
-        } catch (IllegalArgumentException e) {
-          OLogManager.instance().errorNoDb(OMemory.class, "Unable to parse the value of -XX:MaxDirectMemorySize option.", e);
-        }
-        break;
-      }
-
-    if (maxDirectMemorySize == -1) {
-      try {
-        maxDirectMemorySize = (Long) Class.forName("sun.misc.VM").getMethod("maxDirectMemory").invoke(null);
-      } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
-        OLogManager.instance().warnNoDb(OMemory.class, "Unable to determine the amount of MaxDirectMemorySize.", e);
-      }
-    }
-
-    return maxDirectMemorySize;
-  }
-
-  /**
    * Calculates the total configured maximum size of all OrientDB caches.
    *
    * @return the total maximum size of all OrientDB caches in bytes.
@@ -90,42 +56,12 @@ public class OMemory {
   }
 
   /**
-   * Checks the direct memory configuration and emits a warning if configuration is invalid.
-   */
-  public static void checkDirectMemoryConfiguration() {
-    final ONative.MemoryLimitResult physicalMemory = com.orientechnologies.common.jna.ONative.instance().getMemoryLimit(false);
-    final long maxDirectMemory = getConfiguredMaxDirectMemory();
-
-    if (maxDirectMemory == -1) {
-      if (physicalMemory != null)
-        OLogManager.instance().warnNoDb(OMemory.class, "MaxDirectMemorySize JVM option is not set or has invalid value, "
-            + "that may cause out of memory errors. Please set the -XX:MaxDirectMemorySize=" + physicalMemory.memoryLimit / (1024
-            * 1024) + "m option when you start the JVM.");
-      else
-        OLogManager.instance().warnNoDb(OMemory.class, "MaxDirectMemorySize JVM option is not set or has invalid value, "
-            + "that may cause out of memory errors. Please set the -XX:MaxDirectMemorySize=<SIZE>m JVM option "
-            + "when you start the JVM, where <SIZE> is the memory size of this machine in megabytes.");
-    } else if (maxDirectMemory < 64 * 1024 * 1024)
-      throw new OConfigurationException("MaxDirectMemorySize JVM option value is too low (" + maxDirectMemory + " bytes),"
-          + " OrientDB requires at least 64MB of direct memory to function properly. Please tune the value of "
-          + "-XX:MaxDirectMemorySize JVM option.");
-  }
-
-  /**
    * Checks the OrientDB cache memory configuration and emits a warning if configuration is invalid.
    */
   public static void checkCacheMemoryConfiguration() {
     final long maxHeapSize = Runtime.getRuntime().maxMemory();
     final long maxCacheSize = getMaxCacheMemorySize();
     final ONative.MemoryLimitResult physicalMemory = ONative.instance().getMemoryLimit(false);
-    final long maxDirectMemory = getConfiguredMaxDirectMemory();
-
-    if (maxDirectMemory != -1 && maxCacheSize > maxDirectMemory)
-      OLogManager.instance().warnNoDb(OMemory.class, "Configured maximum amount of memory available to the cache (" + maxCacheSize
-          + " bytes) is larger than configured JVM maximum direct memory size (" + maxDirectMemory + " bytes). That may cause "
-          + "out of memory errors, please tune the configuration up. Use the -XX:MaxDirectMemorySize JVM option to raise the JVM "
-          + "maximum direct memory size or storage.diskCache.bufferSize OrientDB option to lower memory requirements of the "
-          + "cache.");
 
     if (maxHeapSize != Long.MAX_VALUE && physicalMemory != null && maxHeapSize + maxCacheSize > physicalMemory.memoryLimit)
       OLogManager.instance().warnNoDb(OMemory.class,
@@ -137,48 +73,11 @@ public class OMemory {
   }
 
   /**
-   * Checks the {@link com.orientechnologies.common.directmemory.OByteBufferPool} configuration and emits a warning if configuration
-   * is invalid.
-   */
-  public static void checkByteBufferPoolConfiguration() {
-    final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
-    final long memoryChunkSize = OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsLong();
-    final long maxCacheSize = getMaxCacheMemorySize();
-
-    if (maxDirectMemory != -1 && memoryChunkSize > maxDirectMemory)
-      OLogManager.instance().warnNoDb(OMemory.class,
-          "The configured memory chunk size (" + memoryChunkSize + " bytes) is larger than the configured maximum amount of "
-              + "JVM direct memory (" + maxDirectMemory + " bytes). That may cause out of memory errors, please tune the "
-              + "configuration up. Use the -XX:MaxDirectMemorySize JVM option to raise the JVM maximum direct memory size "
-              + "or memory.chunk.size OrientDB option to lower memory chunk size.");
-
-    if (memoryChunkSize > maxCacheSize)
-      OLogManager.instance().warnNoDb(OMemory.class,
-          "The configured memory chunk size (" + memoryChunkSize + " bytes) is larger than the configured maximum cache size ("
-              + maxCacheSize + " bytes). That may cause overallocation of a memory which will be wasted, please tune the "
-              + "configuration up. Use the storage.diskCache.bufferSize OrientDB option to raise the cache memory size "
-              + "or memory.chunk.size OrientDB option to lower memory chunk size.");
-  }
-
-  /**
    * Tries to fix some common cache/memory configuration problems: <ul> <li>Cache size is larger than direct memory size.</li>
    * <li>Memory chunk size is larger than cache size.</li> <ul/>
    */
   public static void fixCommonConfigurationProblems() {
-    final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
     long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
-
-    if (maxDirectMemory != -1) {
-      //subtract 2MB because Java also uses direct byte buffers
-      final long maxDiskCacheSize = Math.min(maxDirectMemory / 1024 / 1024, Integer.MAX_VALUE) - 2;
-
-      if (diskCacheSize > maxDiskCacheSize) {
-        OLogManager.instance()
-            .infoNoDb(OGlobalConfiguration.class, "Lowering disk cache size from %,dMB to %,dMB.", diskCacheSize, maxDiskCacheSize);
-        OGlobalConfiguration.DISK_CACHE_SIZE.setValue(maxDiskCacheSize);
-        diskCacheSize = maxDiskCacheSize;
-      }
-    }
 
     final int max32BitCacheSize = 512;
     if (getJavaBitWidth() == 32 && diskCacheSize > max32BitCacheSize) {
@@ -186,14 +85,6 @@ public class OMemory {
           .infoNoDb(OGlobalConfiguration.class, "32 bit JVM is detected. Lowering disk cache size from %,dMB to %,dMB.",
               diskCacheSize, max32BitCacheSize);
       OGlobalConfiguration.DISK_CACHE_SIZE.setValue(max32BitCacheSize);
-    }
-
-    if (OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsLong()
-        > OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024) {
-      final long newChunkSize = Math.min(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024, Integer.MAX_VALUE);
-      OLogManager.instance().infoNoDb(OGlobalConfiguration.class, "Lowering memory chunk size from %,dB to %,dB.",
-          OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsLong(), newChunkSize);
-      OGlobalConfiguration.MEMORY_CHUNK_SIZE.setValue(newChunkSize);
     }
   }
 

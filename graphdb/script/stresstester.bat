@@ -38,15 +38,6 @@ goto setArgs
 
 :doneSetArgs
 
-if "%PROCESSOR_ARCHITECTURE%"=="AMD64" goto 64BIT
-set JAVA_MAX_DIRECT=-XX:MaxDirectMemorySize=2g
-goto END
-:64BIT
-set JAVA_MAX_DIRECT=-XX:MaxDirectMemorySize=512g
-:END
-
-set ORIENTDB_SETTINGS=%JAVA_MAX_DIRECT%  
-
-call %JAVA% -client %ORIENTDB_SETTINGS% -cp "%ORIENTDB_HOME%\lib\*;%ORIENTDB_HOME%\plugins\*" com.orientechnologies.orient.stresstest.OStressTester %CMD_LINE_ARGS%
+call %JAVA% -client -cp "%ORIENTDB_HOME%\lib\*;%ORIENTDB_HOME%\plugins\*" com.orientechnologies.orient.stresstest.OStressTester %CMD_LINE_ARGS%
 
 :end

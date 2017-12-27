@@ -59,13 +59,6 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     readCache = new O2QCache(calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
         OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger());
-
-    try {
-      if (OByteBufferPool.instance() != null)
-        OByteBufferPool.instance().registerMBean();
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for byte buffer pool cannot be registered", e);
-    }
   }
 
   private long calculateReadCacheMaxMemory(final long cacheSize) {
@@ -74,11 +67,12 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   /**
    * @param cacheSize Cache size in bytes.
+   *
    * @see O2QCache#changeMaximumAmountOfMemory(long)
    */
   public void changeCacheSize(final long cacheSize) {
     if (readCache != null)
-     readCache.changeMaximumAmountOfMemory(calculateReadCacheMaxMemory(cacheSize));
+      readCache.changeMaximumAmountOfMemory(calculateReadCacheMaxMemory(cacheSize));
 
     //otherwise memory size will be set during cache initialization.
   }
@@ -114,13 +108,6 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     try {
       readCache.clear();
       files.clear();
-
-      try {
-        if (OByteBufferPool.instance() != null)
-          OByteBufferPool.instance().unregisterMBean();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for byte buffer pool cannot be unregistered", e);
-      }
     } finally {
       super.shutdown();
     }

@@ -32,19 +32,21 @@ import java.util.*;
  * @since 26.07.13
  */
 public class WOWCacheTestIT {
-  private int systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
-  private int pageSize     = systemOffset + 8;
+  private static final int systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
+  private static final int pageSize     = systemOffset + 8;
 
   private static OLocalPaginatedStorage storageLocal;
   private static String                 fileName;
 
   private static ODiskWriteAheadLog writeAheadLog;
+  private static final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
 
   private static OWOWCache wowCache;
   private OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(1024);
 
   @BeforeClass
   public static void beforeClass() throws IOException {
+    OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.setValue(Boolean.FALSE);
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
     String buildDirectory = System.getProperty("buildDirectory", ".");
 
@@ -107,10 +109,14 @@ public class WOWCacheTestIT {
 
     File file = new File(storageLocal.getConfiguration().getDirectory());
     Assert.assertTrue(file.delete());
+    bufferPool.clear();
+
+    OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.setValue(Boolean.TRUE);
+    OGlobalConfiguration.FILE_LOCK.setValue(Boolean.TRUE);
   }
 
   private void initBuffer() throws IOException, InterruptedException {
-    wowCache = new OWOWCache(pageSize, new OByteBufferPool(pageSize), writeAheadLog, 10, 100, storageLocal, false, files, 1,
+    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 100, storageLocal, false, files, 1,
         OChecksumMode.StoreAndVerify);
     wowCache.loadRegisteredFiles();
   }

@@ -2,16 +2,18 @@ package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Created by tglman on 23/06/16.
  */
-public class OCacheEntryImpl implements OCacheEntry{
+public class OCacheEntryImpl implements OCacheEntry {
   private       OCachePointer dataPointer;
   private final long          fileId;
   private final long          pageIndex;
 
   private boolean dirty;
-  private int     usagesCount;
+  private final AtomicInteger usagesCount = new AtomicInteger();
 
   public OCacheEntryImpl(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty) {
     this.fileId = fileId;
@@ -83,12 +85,12 @@ public class OCacheEntryImpl implements OCacheEntry{
 
   @Override
   public int getUsagesCount() {
-    return usagesCount;
+    return usagesCount.get();
   }
 
   @Override
   public void incrementUsages() {
-    usagesCount++;
+    usagesCount.incrementAndGet();
   }
 
   /**
@@ -103,7 +105,7 @@ public class OCacheEntryImpl implements OCacheEntry{
 
   @Override
   public void decrementUsages() {
-    usagesCount--;
+    usagesCount.decrementAndGet();
   }
 
   @Override
@@ -126,7 +128,7 @@ public class OCacheEntryImpl implements OCacheEntry{
       return false;
     if (pageIndex != that.pageIndex)
       return false;
-    if (usagesCount != that.usagesCount)
+    if (usagesCount.get() != that.usagesCount.get())
       return false;
     if (dataPointer != null ? !dataPointer.equals(that.dataPointer) : that.dataPointer != null)
       return false;
@@ -140,7 +142,7 @@ public class OCacheEntryImpl implements OCacheEntry{
     result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
     result = 31 * result + (dataPointer != null ? dataPointer.hashCode() : 0);
     result = 31 * result + (dirty ? 1 : 0);
-    result = 31 * result + usagesCount;
+    result = 31 * result + usagesCount.get();
     return result;
   }
 
