@@ -33,13 +33,15 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 3/2/2015
  */
 public class OSequenceLibraryImpl {
-  private final Map<String, OSequence> sequences = new ConcurrentHashMap<String, OSequence>();
+  private final Map<String, OSequence> sequences    = new ConcurrentHashMap<String, OSequence>();
+  private final AtomicBoolean          reloadNeeded = new AtomicBoolean(false);
 
   public void create(ODatabaseDocumentInternal database) {
     init(database);
@@ -63,17 +65,19 @@ public class OSequenceLibraryImpl {
     sequences.clear();
   }
 
-  public synchronized Set<String> getSequenceNames() {
+  public synchronized Set<String> getSequenceNames(ODatabaseDocumentInternal database) {
+    reloadIfNeeded(database);
     return sequences.keySet();
   }
 
-  public synchronized int getSequenceCount() {
+  public synchronized int getSequenceCount(ODatabaseDocumentInternal database) {
+    reloadIfNeeded(database);
     return sequences.size();
   }
 
   public OSequence getSequence(final ODatabaseDocumentInternal database, final String iName) {
     final String name = iName.toUpperCase(Locale.ENGLISH);
-
+    reloadIfNeeded(database);
     OSequence seq;
     synchronized (this) {
       seq = sequences.get(name);
@@ -93,6 +97,7 @@ public class OSequenceLibraryImpl {
   public synchronized OSequence createSequence(final ODatabaseDocumentInternal database, final String iName,
       final SEQUENCE_TYPE sequenceType, final OSequence.CreateParams params) {
     init(database);
+    reloadIfNeeded(database);
 
     final String key = iName.toUpperCase(Locale.ENGLISH);
     validateSequenceNoExists(key);
@@ -175,16 +180,20 @@ public class OSequenceLibraryImpl {
     }
   }
 
-  private void validateSequenceExists(final String iName) {
-    if (!sequences.containsKey(iName)) {
-      throw new OSequenceException("Sequence '" + iName + "' does not exists");
-    }
-  }
-
   private void onSequenceLibraryUpdate(ODatabaseDocumentInternal database) {
     for (OMetadataUpdateListener one : database.getSharedContext().browseListeners()) {
-      one.onSequenceLibraryUpdate(database.getName(), this);
+      one.onSequenceLibraryUpdate(database.getName());
     }
   }
 
+  private void reloadIfNeeded(ODatabaseDocumentInternal database) {
+    if (reloadNeeded.get()) {
+      load(database);
+      reloadNeeded.set(false);
+    }
+  }
+
+  public void update() {
+    reloadNeeded.set(true);
+  }
 }

@@ -87,10 +87,18 @@ public class MetadataPushTest {
 
   @Test
   public void testFunctionUpdate() throws InterruptedException {
-    database.command("CREATE FUNCTION test \"print('\\nTest!')\"\n");
+    database.command("CREATE FUNCTION test \"print('\\nTest!')\"");
     //Push done in background for now, do not guarantee update before command return.
     Thread.sleep(500);
     assertNotNull(database.getMetadata().getFunctionLibrary().getFunction("test"));
+  }
+
+  @Test
+  public void testSequencesUpdate() throws InterruptedException {
+    database.command("CREATE SEQUENCE test TYPE CACHED");
+    //Push done in background for now, do not guarantee update before command return.
+    Thread.sleep(500);
+    assertNotNull(database.getMetadata().getSequenceLibrary().getSequence("test"));
   }
 
 }

@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,9 +48,8 @@ public class ODatabaseMetadataUpdateListener {
       }
 
       @Override
-      public void onSequenceLibraryUpdate(String database, OSequenceLibraryImpl oSequenceLibrary) {
+      public void onSequenceLibraryUpdate(String database) {
         count++;
-        assertNotNull(oSequenceLibrary);
       }
 
       @Override

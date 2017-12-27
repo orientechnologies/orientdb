@@ -36,12 +36,12 @@ public class OSequenceLibraryProxy extends OProxedResource<OSequenceLibraryImpl>
 
   @Override
   public Set<String> getSequenceNames() {
-    return delegate.getSequenceNames();
+    return delegate.getSequenceNames(database);
   }
 
   @Override
   public int getSequenceCount() {
-    return delegate.getSequenceCount();
+    return delegate.getSequenceCount(database);
   }
 
   @Override

@@ -461,4 +461,15 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     (shared.getFunctionLibrary()).update();
 
   }
+
+  public static void updateSequences(OStorageRemote storage) {
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+      @Override
+      public OSharedContext call() throws Exception {
+        OSharedContext shared = new OSharedContextRemote(storage);
+        return shared;
+      }
+    });
+    (shared.getSequenceLibrary()).update();
+  }
 }
