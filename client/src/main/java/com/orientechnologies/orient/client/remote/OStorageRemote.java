@@ -1398,7 +1398,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           subscribeSchema(session);
           subscribeIndexManager(session);
           subscribeFunctions(session);
-
+          subscribeSequences(session);
         }
       } finally {
         stateLock.releaseWriteLock();
@@ -1420,6 +1420,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   private void subscribeFunctions(OStorageRemoteSession nodeSession) {
     pushThread.subscribe(new OSubscribeFunctionsRequest(), nodeSession);
+  }
+
+  private void subscribeSequences(OStorageRemoteSession nodeSession) {
+    pushThread.subscribe(new OSubscribeSequencesRequest(), nodeSession);
   }
 
   private void subscribeIndexManager(OStorageRemoteSession nodeSession) {
@@ -1903,6 +1907,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       return new OPushIndexManagerRequest();
     case OChannelBinaryProtocol.REQUEST_PUSH_FUNCTIONS:
       return new OPushFunctionsRequest();
+    case OChannelBinaryProtocol.REQUEST_PUSH_SEQUENCES:
+      return new OPushSequencesRequest();
+
     }
     return null;
   }
@@ -1916,6 +1923,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   @Override
   public OBinaryPushResponse executeUpdateFunction(OPushFunctionsRequest request) {
     ODatabaseDocumentRemote.updateFunction(this);
+    return null;
+  }
+
+  @Override
+  public OBinaryPushResponse executeUpdateSequences(OPushSequencesRequest request) {
+    ODatabaseDocumentRemote.updateSequences(this);
     return null;
   }
 

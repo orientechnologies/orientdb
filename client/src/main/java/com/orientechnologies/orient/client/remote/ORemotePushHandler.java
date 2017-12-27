@@ -30,4 +30,6 @@ public interface ORemotePushHandler {
   OBinaryPushResponse executeUpdateIndexManager(OPushIndexManagerRequest request);
 
   OBinaryPushResponse executeUpdateFunction(OPushFunctionsRequest request);
+
+  OBinaryPushResponse executeUpdateSequences(OPushSequencesRequest request);
 }

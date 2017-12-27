@@ -1347,6 +1347,14 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   @Override
+  public OBinaryResponse executeSubscribeSequences(OSubscribeSequencesRequest request) {
+    OPushManager manager = server.getPushManager();
+    manager.subscribeSequences(connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol());
+    return new OSubscribeSequencesResponse();
+  }
+
+
+  @Override
   public OBinaryResponse executeUnsubscribeLiveQuery(OUnsubscribeLiveQueryRequest request) {
     ODatabaseDocumentInternal database = connection.getDatabase();
     OLiveQueryHookV2.unsubscribe((int) request.getMonitorId(), database);

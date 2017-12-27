@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 import java.io.IOException;
@@ -22,6 +21,7 @@ public class OPushManager implements OMetadataUpdateListener {
   protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> schema                = new HashMap<>();
   protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> indexManager          = new HashMap<>();
   protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> functions             = new HashMap<>();
+  protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> sequences             = new HashMap<>();
   private         Set<String>                                             registerDatabase      = new HashSet<>();
 
   public synchronized void pushDistributedConfig(String database, List<String> hosts) {
@@ -90,6 +90,10 @@ public class OPushManager implements OMetadataUpdateListener {
     genericSubscribe(functions, database, protocol);
   }
 
+  public synchronized void subscribeSequences(ODatabaseDocumentInternal database, ONetworkProtocolBinary protocol) {
+    genericSubscribe(sequences, database, protocol);
+  }
+
   @Override
   public void onSchemaUpdate(String database, OSchemaShared schema) {
     OPushSchemaRequest request = new OPushSchemaRequest(schema.toStream());
@@ -109,8 +113,9 @@ public class OPushManager implements OMetadataUpdateListener {
   }
 
   @Override
-  public void onSequenceLibraryUpdate(String database, OSequenceLibraryImpl oSequenceLibrary) {
-
+  public void onSequenceLibraryUpdate(String database) {
+    OPushSequencesRequest request = new OPushSequencesRequest();
+    genericNotify(this.functions, database, request);
   }
 
   @Override

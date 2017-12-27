@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 
 public interface OMetadataUpdateListener {
 
@@ -13,7 +12,7 @@ public interface OMetadataUpdateListener {
 
   void onFunctionLibraryUpdate(String database);
 
-  void onSequenceLibraryUpdate(String database, OSequenceLibraryImpl oSequenceLibrary);
+  void onSequenceLibraryUpdate(String database);
 
   void onStorageConfigurationUpdate(String database, OStorageConfiguration update);
 }
