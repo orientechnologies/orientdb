@@ -28,12 +28,14 @@ public class ODistributedConnectResponse implements OBinaryResponse {
 
   @Override
   public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+    channel.writeInt(sessionId);
     channel.writeInt(distributedProtocolVersion);
     channel.writeBytes(token);
   }
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
+    this.sessionId = network.readInt();
     distributedProtocolVersion = network.readInt();
     token = network.readBytes();
   }
