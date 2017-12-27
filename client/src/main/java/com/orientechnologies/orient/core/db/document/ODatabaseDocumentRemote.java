@@ -449,4 +449,16 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     });
     ((OIndexManagerRemote) shared.getIndexManager()).update(indexManager);
   }
+
+  public static void updateFunction(OStorageRemote storage) {
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+      @Override
+      public OSharedContext call() throws Exception {
+        OSharedContext shared = new OSharedContextRemote(storage);
+        return shared;
+      }
+    });
+    (shared.getFunctionLibrary()).update();
+
+  }
 }

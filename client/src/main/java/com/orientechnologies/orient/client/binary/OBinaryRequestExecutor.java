@@ -132,4 +132,6 @@ public interface OBinaryRequestExecutor {
   OBinaryResponse executeSubscribeSchema(OSubscribeSchemaRequest request);
 
   OBinaryResponse executeSubscribeIndexManager(OSubscribeIndexManagerRequest request);
+
+  OBinaryResponse executeSubscribeFunctions(OSubscribeFunctionsRequest request);
 }
