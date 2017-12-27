@@ -47,11 +47,27 @@ public class OPushManager implements OMetadataUpdateListener {
     distributedConfigPush.add(new WeakReference<ONetworkProtocolBinary>(channel));
   }
 
-  public synchronized void clearPushSockets() {
+  public synchronized void cleanPushSockets() {
     Iterator<WeakReference<ONetworkProtocolBinary>> iter = distributedConfigPush.iterator();
     while (iter.hasNext()) {
       if (iter.next().get() == null) {
         iter.remove();
+      }
+    }
+    cleanListeners(storageConfigurations);
+    cleanListeners(schema);
+    cleanListeners(indexManager);
+    cleanListeners(functions);
+    cleanListeners(sequences);
+  }
+
+  private void cleanListeners(Map<String, Set<WeakReference<ONetworkProtocolBinary>>> toClean) {
+    for (Set<WeakReference<ONetworkProtocolBinary>> value : toClean.values()) {
+      Iterator<WeakReference<ONetworkProtocolBinary>> iter = value.iterator();
+      while (iter.hasNext()) {
+        if (iter.next().get() == null) {
+          iter.remove();
+        }
       }
     }
   }
