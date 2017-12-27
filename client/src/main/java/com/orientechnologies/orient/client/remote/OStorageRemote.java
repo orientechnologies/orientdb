@@ -37,10 +37,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
-import com.orientechnologies.orient.core.db.OrientDBRemote;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.db.document.OLiveQueryMonitorRemote;
@@ -1400,6 +1397,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           subscribeDistributedConfiguration(session);
           subscribeSchema(session);
           subscribeIndexManager(session);
+          subscribeFunctions(session);
 
         }
       } finally {
@@ -1418,6 +1416,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   private void subscribeSchema(OStorageRemoteSession nodeSession) {
     pushThread.subscribe(new OSubscribeSchemaRequest(), nodeSession);
+  }
+
+  private void subscribeFunctions(OStorageRemoteSession nodeSession) {
+    pushThread.subscribe(new OSubscribeFunctionsRequest(), nodeSession);
   }
 
   private void subscribeIndexManager(OStorageRemoteSession nodeSession) {
@@ -1899,6 +1901,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       return new OPushSchemaRequest();
     case OChannelBinaryProtocol.REQUEST_PUSH_INDEX_MANAGER:
       return new OPushIndexManagerRequest();
+    case OChannelBinaryProtocol.REQUEST_PUSH_FUNCTIONS:
+      return new OPushFunctionsRequest();
     }
     return null;
   }
@@ -1906,6 +1910,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   @Override
   public OBinaryPushResponse executeUpdateDistributedConfig(OPushDistributedConfigurationRequest request) {
     updateDistributedNodes(request.getHosts());
+    return null;
+  }
+
+  @Override
+  public OBinaryPushResponse executeUpdateFunction(OPushFunctionsRequest request) {
+    ODatabaseDocumentRemote.updateFunction(this);
     return null;
   }
 

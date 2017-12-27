@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
-import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
@@ -22,6 +21,7 @@ public class OPushManager implements OMetadataUpdateListener {
   protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> storageConfigurations = new HashMap<>();
   protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> schema                = new HashMap<>();
   protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> indexManager          = new HashMap<>();
+  protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> functions             = new HashMap<>();
   private         Set<String>                                             registerDatabase      = new HashSet<>();
 
   public synchronized void pushDistributedConfig(String database, List<String> hosts) {
@@ -82,8 +82,12 @@ public class OPushManager implements OMetadataUpdateListener {
     genericSubscribe(schema, database, protocol);
   }
 
-  public void subscribeIndexManager(ODatabaseDocumentInternal database, ONetworkProtocolBinary protocol) {
+  public synchronized void subscribeIndexManager(ODatabaseDocumentInternal database, ONetworkProtocolBinary protocol) {
     genericSubscribe(indexManager, database, protocol);
+  }
+
+  public synchronized void subscribeFunctions(ODatabaseDocumentInternal database, ONetworkProtocolBinary protocol) {
+    genericSubscribe(functions, database, protocol);
   }
 
   @Override
@@ -99,8 +103,9 @@ public class OPushManager implements OMetadataUpdateListener {
   }
 
   @Override
-  public void onFunctionLibraryUpdate(String database, OFunctionLibrary oFunctionLibrary) {
-
+  public void onFunctionLibraryUpdate(String database) {
+    OPushFunctionsRequest request = new OPushFunctionsRequest();
+    genericNotify(this.functions, database, request);
   }
 
   @Override

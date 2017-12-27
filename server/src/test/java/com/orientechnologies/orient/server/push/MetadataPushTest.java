@@ -23,6 +23,7 @@ import java.util.Locale;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Created by tglman on 23/05/17.
@@ -82,6 +83,14 @@ public class MetadataPushTest {
     //Push done in background for now, do not guarantee update before command return.
     Thread.sleep(500);
     assertTrue(database.getMetadata().getIndexManager().existsIndex("X.y"));
+  }
+
+  @Test
+  public void testFunctionUpdate() throws InterruptedException {
+    database.command("CREATE FUNCTION test \"print('\\nTest!')\"\n");
+    //Push done in background for now, do not guarantee update before command return.
+    Thread.sleep(500);
+    assertNotNull(database.getMetadata().getFunctionLibrary().getFunction("test"));
   }
 
 }

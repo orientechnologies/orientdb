@@ -3,9 +3,7 @@ package com.orientechnologies.orient.core.db.document;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
@@ -46,9 +44,8 @@ public class ODatabaseMetadataUpdateListener {
       }
 
       @Override
-      public void onFunctionLibraryUpdate(String database, OFunctionLibrary oFunctionLibrary) {
+      public void onFunctionLibraryUpdate(String database) {
         count++;
-        assertNotNull(oFunctionLibrary);
       }
 
       @Override

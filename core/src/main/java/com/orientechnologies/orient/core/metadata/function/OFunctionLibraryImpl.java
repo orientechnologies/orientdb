@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Manages stored functions.
@@ -46,7 +47,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OFunctionLibraryImpl {
-  protected Map<String, OFunction> functions = new ConcurrentHashMap<String, OFunction>();
+  protected final Map<String, OFunction> functions  = new ConcurrentHashMap<String, OFunction>();
+  private         AtomicBoolean          needReload = new AtomicBoolean(false);
 
   static {
     OCommandManager.instance().registerExecutor(OCommandFunction.class, OCommandExecutorFunction.class);
@@ -110,6 +112,7 @@ public class OFunctionLibraryImpl {
   }
 
   public OFunction getFunction(final String iName) {
+    reloadIfNeeded(ODatabaseRecordThreadLocal.instance().get());
     return functions.get(iName.toUpperCase(Locale.ENGLISH));
   }
 
@@ -119,6 +122,7 @@ public class OFunctionLibraryImpl {
 
   public synchronized OFunction createFunction(ODatabaseDocumentInternal database, final String iName) {
     init(database);
+    reloadIfNeeded(ODatabaseRecordThreadLocal.instance().get());
 
     final OFunction f = new OFunction().setName(iName);
     try {
@@ -156,6 +160,7 @@ public class OFunctionLibraryImpl {
   }
 
   public synchronized void dropFunction(OFunction function) {
+    reloadIfNeeded(ODatabaseRecordThreadLocal.instance().get());
     String name = function.getName();
     ODocument doc = function.getDocument();
     doc.delete();
@@ -163,6 +168,7 @@ public class OFunctionLibraryImpl {
   }
 
   public synchronized void dropFunction(String iName) {
+    reloadIfNeeded(ODatabaseRecordThreadLocal.instance().get());
     OFunction function = getFunction(iName);
     ODocument doc = function.getDocument();
     doc.delete();
@@ -170,6 +176,7 @@ public class OFunctionLibraryImpl {
   }
 
   public void updatedFunction(ODocument function) {
+    reloadIfNeeded(ODatabaseRecordThreadLocal.instance().get());
     ODocument metadataCopy = function.copy();
     OCallable<Object, Map<Object, Object>> callBack = null;
     OFunction oldFunction = functions.get(metadataCopy.field("name").toString());
@@ -183,10 +190,20 @@ public class OFunctionLibraryImpl {
     functions.put(metadataCopy.field("name").toString().toUpperCase(Locale.ENGLISH), f);
   }
 
-  private void onFunctionsChanged(ODatabaseDocumentInternal database) {
-    for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
-      listener.onFunctionLibraryUpdate(database.getName(), database.getMetadata().getFunctionLibrary());
+  private void reloadIfNeeded(ODatabaseDocumentInternal database) {
+    if (needReload.get()) {
+      load(database);
+      needReload.set(false);
     }
   }
 
+  private void onFunctionsChanged(ODatabaseDocumentInternal database) {
+    for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
+      listener.onFunctionLibraryUpdate(database.getName());
+    }
+  }
+
+  public synchronized void update() {
+    needReload.set(true);
+  }
 }

@@ -158,14 +158,16 @@ public class OChannelBinaryProtocol {
 
   public static final byte SUBSCRIBE_PUSH_STORAGE_CONFIG = 3;
   public static final byte SUBSCRIBE_PUSH_SCHEMA         = 4;
-  public static final byte REQUEST_PUSH_INDEX_MANAGER    = 5;
+  public static final byte SUBSCRIBE_PUSH_INDEX_MANAGER  = 5;
+  public static final byte SUBSCRIBE_PUSH_FUNCTIONS      = 6;
 
   //Used by the client to identify what data was pushed
-  public static final byte REQUEST_PUSH_DISTRIB_CONFIG  = 80;
-  public static final byte REQUEST_PUSH_LIVE_QUERY      = 81;                 // SINCE 2.1
-  public static final byte REQUEST_PUSH_STORAGE_CONFIG  = 82;
-  public static final byte REQUEST_PUSH_SCHEMA          = 83;
-  public static final byte SUBSCRIBE_PUSH_INDEX_MANAGER = 84;
+  public static final byte REQUEST_PUSH_DISTRIB_CONFIG = 80;
+  public static final byte REQUEST_PUSH_LIVE_QUERY     = 81;                 // SINCE 2.1
+  public static final byte REQUEST_PUSH_STORAGE_CONFIG = 82;
+  public static final byte REQUEST_PUSH_SCHEMA         = 83;
+  public static final byte REQUEST_PUSH_INDEX_MANAGER  = 84;
+  public static final byte REQUEST_PUSH_FUNCTIONS      = 85;
 
   // Default encoding, in future will be possible to have other encodings
   public static final byte ENCODING_DEFAULT = 0;
