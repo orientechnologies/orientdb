@@ -12,6 +12,9 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by luigidellaquila on 03/01/17.
  */
@@ -37,7 +40,6 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
 
     ODatabase db = iContext != null ? iContext.getDatabase() : ODatabaseRecordThreadLocal.instance().getIfDefined();
 
-
     final String[] labels;
     if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
       labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
@@ -59,32 +61,35 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
 
   }
 
-  protected Object v2v(final ODatabase graph, final OIdentifiable iRecord, final ODirection iDirection,
-      final String[] iLabels) {
+  protected Object v2v(final ODatabase graph, final OIdentifiable iRecord, final ODirection iDirection, final String[] iLabels) {
     OElement rec = iRecord.getRecord();
-    if(rec.isVertex()){
+    if (rec.isVertex()) {
       return rec.asVertex().get().getVertices(iDirection, iLabels);
-    }else{
+    } else {
       return null;
     }
   }
 
-  protected Object v2e(final ODatabase graph, final OIdentifiable iRecord, final ODirection iDirection,
-      final String[] iLabels) {
+  protected Object v2e(final ODatabase graph, final OIdentifiable iRecord, final ODirection iDirection, final String[] iLabels) {
     OElement rec = iRecord.getRecord();
-    if(rec.isVertex()){
+    if (rec.isVertex()) {
       return rec.asVertex().get().getEdges(iDirection, iLabels);
-    }else{
+    } else {
       return null;
     }
   }
 
-  protected Object e2v(final ODatabase graph, final OIdentifiable iRecord, final ODirection iDirection,
-      final String[] iLabels) {
+  protected Object e2v(final ODatabase graph, final OIdentifiable iRecord, final ODirection iDirection, final String[] iLabels) {
     OElement rec = iRecord.getRecord();
-    if(rec.isEdge()){
+    if (rec.isEdge()) {
+      if (iDirection == ODirection.BOTH) {
+        List results = new ArrayList();
+        results.add(rec.asEdge().get().getVertex(ODirection.OUT));
+        results.add(rec.asEdge().get().getVertex(ODirection.IN));
+        return results;
+      }
       return rec.asEdge().get().getVertex(iDirection);
-    }else{
+    } else {
       return null;
     }
   }
