@@ -24,7 +24,6 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -375,6 +374,23 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   protected ORecordAbstract fill(final ORID iRid, final int iVersion, final byte[] iBuffer, boolean iDirty) {
+    _recordId.setClusterId(iRid.getClusterId());
+    _recordId.setClusterPosition(iRid.getClusterPosition());
+    _recordVersion = iVersion;
+    _status = ORecordElement.STATUS.LOADED;
+    _source = iBuffer;
+    _size = iBuffer != null ? iBuffer.length : 0;
+    if (_source != null && _source.length > 0) {
+      _dirty = iDirty;
+      _contentChanged = iDirty;
+      if (!iDirty && _dirtyManager != null)
+        _dirtyManager.removePointed(this);
+    }
+
+    return this;
+  }
+
+  protected ORecordAbstract fill(final ORID iRid, final int iVersion, final byte[] iBuffer, boolean iDirty, ODatabaseDocumentInternal db) {
     _recordId.setClusterId(iRid.getClusterId());
     _recordId.setClusterPosition(iRid.getClusterPosition());
     _recordVersion = iVersion;

@@ -2491,6 +2491,12 @@ public class ODocument extends ORecordAbstract
     return super.fill(iRid, iVersion, iBuffer, iDirty);
   }
 
+  protected ORecordAbstract fill(final ORID iRid, final int iVersion, final byte[] iBuffer, final boolean iDirty, ODatabaseDocumentInternal db) {
+    _schema = null;
+    fetchSchemaIfCan(db);
+    return super.fill(iRid, iVersion, iBuffer, iDirty, db);
+  }
+
   @Override
   protected void clearSource() {
     super.clearSource();
@@ -2979,6 +2985,15 @@ public class ODocument extends ORecordAbstract
   private void fetchSchemaIfCan() {
     if (_schema == null) {
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+      if (db != null && !db.isClosed()) {
+        OMetadataInternal metadata = db.getMetadata();
+        _schema = metadata.getImmutableSchemaSnapshot();
+      }
+    }
+  }
+
+  private void fetchSchemaIfCan(ODatabaseDocumentInternal db) {
+    if (_schema == null) {
       if (db != null && !db.isClosed()) {
         OMetadataInternal metadata = db.getMetadata();
         _schema = metadata.getImmutableSchemaSnapshot();
