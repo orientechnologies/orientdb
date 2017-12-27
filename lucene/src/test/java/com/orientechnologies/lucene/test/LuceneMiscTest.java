@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
@@ -172,4 +172,30 @@ public class LuceneMiscTest {
     }
   }
 
+  @Test
+  public void testUnderscoreField() {
+
+    OrientGraphNoTx graph = new OrientGraphNoTx("memory:doubleLucene");
+    try {
+      ODatabaseDocumentTx db = graph.getRawGraph();
+
+
+      db.command(new OCommandSQL("create class Test extends V")).execute();
+
+      db.command(new OCommandSQL("create property V._attr1 string")).execute();
+
+      db.command(new OCommandSQL("create index V._attr1 on V (_attr1) fulltext engine lucene")).execute();
+
+      db.command(new OCommandSQL("insert into Test set _attr1='anyPerson', attr2='bar'")).execute();
+
+      OSQLSynchQuery query = new OSQLSynchQuery("select from Test where _attr1 lucene :name");
+      Map params = new HashMap();
+      params.put("name", "anyPerson");
+      List results = db.command(query).execute(params);
+      Assert.assertEquals(results.size(), 1);
+    } finally {
+      graph.drop();
+    }
+
+  }
 }
