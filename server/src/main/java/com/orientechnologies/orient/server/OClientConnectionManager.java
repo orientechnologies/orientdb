@@ -23,8 +23,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
-import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
-import com.orientechnologies.orient.client.remote.message.OPushDistributedConfigurationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -41,7 +39,6 @@ import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.net.Socket;
 import java.util.*;
 import java.util.Map.Entry;
@@ -121,7 +118,7 @@ public class OClientConnectionManager {
         }
       }
     }
-    server.getPushManager().clearPushSockets();
+    server.getPushManager().cleanPushSockets();
   }
 
   /**
