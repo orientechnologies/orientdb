@@ -1396,4 +1396,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new ODistributedConnectResponse(connection.getId(), token, chosenProtocolVersion);
   }
 
+  @Override
+  public OBinaryResponse executeExperimental(OExperimentalRequest request) {
+    return new OExperimentalResponse(request.getRequest().execute(this));
+  }
 }
