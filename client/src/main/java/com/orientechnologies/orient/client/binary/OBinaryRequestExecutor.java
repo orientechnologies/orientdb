@@ -136,4 +136,6 @@ public interface OBinaryRequestExecutor {
   OBinaryResponse executeSubscribeFunctions(OSubscribeFunctionsRequest request);
 
   OBinaryResponse executeSubscribeSequences(OSubscribeSequencesRequest request);
+
+  OBinaryResponse executeExperimental(OExperimentalRequest request);
 }

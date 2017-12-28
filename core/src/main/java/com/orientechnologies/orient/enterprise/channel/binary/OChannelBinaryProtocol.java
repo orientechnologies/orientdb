@@ -102,6 +102,7 @@ public class OChannelBinaryProtocol {
 
   public static final byte SUBSCRIBE_PUSH   = 100;
   public static final byte UNSUBSCRIBE_PUSH = 101;
+  public static final byte EXPERIMENTAL     = 102;
 
   // REMOTE SB-TREE COLLECTIONS
   public static final byte REQUEST_CREATE_SBTREE_BONSAI            = 110;
