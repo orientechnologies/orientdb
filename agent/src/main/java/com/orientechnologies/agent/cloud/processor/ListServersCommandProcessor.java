@@ -10,7 +10,11 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orientdb.cloud.protocol.*;
 
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ListServersCommandProcessor implements CloudCommandProcessor {
   @Override
@@ -48,18 +52,33 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
 
       ODocument clusterStats = command.getClusterConfig(manager);
       Map statsDoc = clusterStats.getProperty("clusterStats");
-      Map realtime = (Map) statsDoc.get("realtime");
 
-      Iterable<Map.Entry<String, Map>> nodesStats = statsDoc.entrySet();
+      List<ODocument> members = clusterStats.field("members");
 
-      for (Map.Entry<String, Map> nodesStat : nodesStats) {
-        ServerBasicInfo server = new ServerBasicInfo();
-        server.setName(nodesStat.getKey());
-        server.setId(nodesStat.getKey());
-        ServerStats stats = populateStats(((ODocument)nodesStat.getValue()).getProperty("realtime"));
-        server.setStats(stats);
-        result.addInfo(server);
+      if (members != null) {
+        List<ServerBasicInfo> collected = members.stream().map(m -> {
+          String name = m.field("name");
+          Date startedOn = m.field("startedOn");
+          String status = m.field("status");
+          Collection<String> databases = m.field("databases");
+
+
+          ServerBasicInfo server = new ServerBasicInfo();
+          server.setName(name);
+          server.setId(name);
+          server.setStartedOn(startedOn);
+          server.setStatus(status);
+          server.setDatabases(databases);
+          ODocument nodeStats = (ODocument) statsDoc.get(name);
+          if(nodeStats!=null) {
+            server.setStats(populateStats(nodeStats.getProperty("realtime")));
+          }
+          return server;
+        }).collect(Collectors.toList());
+
+        result.setInfo(collected);
       }
+
     }
 
     return result;
