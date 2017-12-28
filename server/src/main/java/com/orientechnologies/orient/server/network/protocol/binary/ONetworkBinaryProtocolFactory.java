@@ -40,7 +40,6 @@ public class ONetworkBinaryProtocolFactory {
 
   public static Function<Integer, OBinaryRequest<? extends OBinaryResponse>> matchProtocol(short protocolVersion) {
     switch (protocolVersion) {
-    case 38:
     case 37:
       return ONetworkBinaryProtocolFactory::createRequest37;
     default:

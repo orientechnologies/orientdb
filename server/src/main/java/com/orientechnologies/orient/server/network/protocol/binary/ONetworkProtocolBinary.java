@@ -28,10 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
-import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
-import com.orientechnologies.orient.client.remote.message.OError37Response;
-import com.orientechnologies.orient.client.remote.message.OErrorResponse;
+import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -193,6 +190,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     String driverVersion = channel.readString();
     byte encoding = channel.readByte();
     byte errorEncoding = channel.readByte();
+    OBinaryProtocolHelper.checkProtocolVersion(this, protocolVersion);
     this.handshakeInfo = new HandshakeInfo(protocolVersion, driverName, driverVersion, encoding, errorEncoding);
     this.factory = ONetworkBinaryProtocolFactory.matchProtocol(protocolVersion);
   }

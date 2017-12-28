@@ -66,9 +66,8 @@ public enum OGlobalConfiguration {
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used, if it is present", Boolean.class, true),
 
-  @Deprecated
-  MEMORY_CHUNK_SIZE("memory.chunk.size", "Size of single memory chunk (in bytes) which will be preallocated by OrientDB",
-      Integer.class, Integer.MAX_VALUE),
+  @Deprecated MEMORY_CHUNK_SIZE("memory.chunk.size",
+      "Size of single memory chunk (in bytes) which will be preallocated by OrientDB", Integer.class, Integer.MAX_VALUE),
 
   MEMORY_LEFT_TO_OS("memory.leftToOS",
       "Amount of free memory which should be left unallocated in case of OrientDB is started outside of container. "
@@ -489,6 +488,10 @@ public enum OGlobalConfiguration {
   @Deprecated NETWORK_BINARY_READ_RESPONSE_MAX_TIMES("network.binary.readResponse.maxTimes",
       "Maximum attempts, until a response can be read. Otherwise, the response will be dropped from the channel", Integer.class, 20,
       true),
+
+  NETWORK_BINARY_MIN_PROTOCOL_VERSION("network.binary.minProtocolVersion",
+      "Set the minimum enabled binary protocol version and disable all backward compatible behaviour for version previous the one specified",
+      Integer.class, 26, false),
 
   NETWORK_BINARY_DEBUG("network.binary.debug", "Debug mode: print all data incoming on the binary channel", Boolean.class, false,
       true),
