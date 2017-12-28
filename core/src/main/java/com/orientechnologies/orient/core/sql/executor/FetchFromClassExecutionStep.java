@@ -108,7 +108,9 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
           if (totDispatched >= nRecords) {
             return false;
           }
-          if (currentResultSet == null || !currentResultSet.hasNext()) {
+          if (currentResultSet != null && currentResultSet.hasNext()) {
+            return true;
+          } else {
             if (currentStep >= getSubSteps().size()) {
               return false;
             }
@@ -117,10 +119,6 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
               currentResultSet = ((AbstractExecutionStep) getSubSteps().get(currentStep++)).syncPull(ctx, nRecords);
             }
           }
-          if (!currentResultSet.hasNext()) {
-            continue;
-          }
-          return true;
         }
       }
 
@@ -130,7 +128,12 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
           if (totDispatched >= nRecords) {
             throw new IllegalStateException();
           }
-          if (currentResultSet == null || !currentResultSet.hasNext()) {
+          if (currentResultSet != null && currentResultSet.hasNext()) {
+            totDispatched++;
+            OResult result = currentResultSet.next();
+            ctx.setVariable("$current", result);
+            return result;
+          } else {
             if (currentStep >= getSubSteps().size()) {
               throw new IllegalStateException();
             }
@@ -139,13 +142,6 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
               currentResultSet = ((AbstractExecutionStep) getSubSteps().get(currentStep++)).syncPull(ctx, nRecords);
             }
           }
-          if (!currentResultSet.hasNext()) {
-            continue;
-          }
-          totDispatched++;
-          OResult result = currentResultSet.next();
-          ctx.setVariable("$current", result);
-          return result;
         }
       }
 
