@@ -846,7 +846,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
-    return new ORemoteQueryResult(rs, response.isTxChanges());
+    return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
   public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Map args) {
@@ -859,7 +859,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
-    return new ORemoteQueryResult(rs, response.isTxChanges());
+    return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
   public ORemoteQueryResult command(ODatabaseDocumentRemote db, String query, Object[] args) {
@@ -871,7 +871,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
-    return new ORemoteQueryResult(rs, response.isTxChanges());
+    return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
   public ORemoteQueryResult command(ODatabaseDocumentRemote db, String query, Map args) {
@@ -883,7 +883,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
-    return new ORemoteQueryResult(rs, response.isTxChanges());
+    return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
   public ORemoteQueryResult execute(ODatabaseDocumentRemote db, String language, String query, Object[] args) {
@@ -895,7 +895,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
-    return new ORemoteQueryResult(rs, response.isTxChanges());
+    return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
   public ORemoteQueryResult execute(ODatabaseDocumentRemote db, String language, String query, Map args) {
@@ -907,7 +907,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
-    return new ORemoteQueryResult(rs, response.isTxChanges());
+    return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
   public void closeQuery(ODatabaseDocumentRemote database, String queryId) {

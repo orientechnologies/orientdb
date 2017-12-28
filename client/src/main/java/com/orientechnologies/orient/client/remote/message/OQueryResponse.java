@@ -32,15 +32,17 @@ public class OQueryResponse implements OBinaryResponse {
   private Optional<OExecutionPlan> executionPlan;
   private boolean                  hasNextPage;
   private Map<String, Long>        queryStats;
+  private boolean                  reloadMetadata;
 
   public OQueryResponse(String queryId, boolean txChanges, List<OResultInternal> result, Optional<OExecutionPlan> executionPlan,
-      boolean hasNextPage, Map<String, Long> queryStats) {
+      boolean hasNextPage, Map<String, Long> queryStats, boolean reloadMetadata) {
     this.queryId = queryId;
     this.txChanges = txChanges;
     this.result = result;
     this.executionPlan = executionPlan;
     this.hasNextPage = hasNextPage;
     this.queryStats = queryStats;
+    this.reloadMetadata = reloadMetadata;
   }
 
   public OQueryResponse() {
@@ -57,6 +59,7 @@ public class OQueryResponse implements OBinaryResponse {
     }
     channel.writeBoolean(hasNextPage);
     writeQueryStats(queryStats, channel);
+    channel.writeBoolean(reloadMetadata);
   }
 
   @Override
@@ -71,7 +74,7 @@ public class OQueryResponse implements OBinaryResponse {
     }
     this.hasNextPage = network.readBoolean();
     this.queryStats = readQueryStats(network);
-
+    reloadMetadata = network.readBoolean();
   }
 
   private void writeQueryStats(Map<String, Long> queryStats, OChannelDataOutput channel) throws IOException {
@@ -166,4 +169,7 @@ public class OQueryResponse implements OBinaryResponse {
     return txChanges;
   }
 
+  public boolean isReloadMetadata() {
+    return reloadMetadata;
+  }
 }

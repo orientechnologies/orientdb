@@ -1,7 +1,13 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
+import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -9,6 +15,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+
+import java.util.ArrayList;
 
 /**
  * Created by tglman on 14/06/17.
@@ -259,4 +267,49 @@ public class OPropertyRemote extends OPropertyImpl {
     return this;
   }
 
+  @Override
+  public OIndex<?> createIndex(String iType) {
+    return owner.createIndex(getFullName(), iType, globalRef.getName());
+  }
+
+  @Override
+  public OIndex<?> createIndex(OClass.INDEX_TYPE iType) {
+    return createIndex(iType.toString());
+  }
+
+  @Override
+  public OIndex<?> createIndex(String iType, ODocument metadata) {
+    return owner.createIndex(getFullName(), iType, null, metadata, new String[] { globalRef.getName() });
+  }
+
+  @Override
+  public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
+    return createIndex(iType.name(), metadata);
+  }
+
+  @Override
+  public OPropertyImpl dropIndexes() {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
+
+    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+
+    final ArrayList<OIndex<?>> relatedIndexes = new ArrayList<OIndex<?>>();
+    for (final OIndex<?> index : indexManager.getClassIndexes(owner.getName())) {
+      final OIndexDefinition definition = index.getDefinition();
+
+      if (OCollections.indexOf(definition.getFields(), globalRef.getName(), new OCaseInsentiveComparator()) > -1) {
+        if (definition instanceof OPropertyIndexDefinition) {
+          relatedIndexes.add(index);
+        } else {
+          throw new IllegalArgumentException(
+              "This operation applicable only for property indexes. " + index.getName() + " is " + index.getDefinition());
+        }
+      }
+    }
+
+    for (final OIndex<?> index : relatedIndexes)
+      getDatabase().getMetadata().getIndexManager().dropIndex(index.getName());
+
+    return this;
+  }
 }

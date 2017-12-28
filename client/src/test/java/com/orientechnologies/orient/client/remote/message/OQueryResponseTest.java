@@ -27,7 +27,7 @@ public class OQueryResponseTest {
       item.setProperty("counter", i);
       resuls.add(item);
     }
-    OQueryResponse response = new OQueryResponse("query", false, resuls, Optional.empty(), false, new HashMap<>());
+    OQueryResponse response = new OQueryResponse("query", true, resuls, Optional.empty(), false, new HashMap<>(), true);
 
     MockChannel channel = new MockChannel();
     response.write(channel, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, ORecordSerializerNetworkFactory.INSTANCE.current());
@@ -46,6 +46,8 @@ public class OQueryResponseTest {
       Assert.assertEquals((Integer) i, item.getProperty("counter"));
     }
     Assert.assertFalse(responseRs.hasNext());
+    Assert.assertTrue(newResponse.isReloadMetadata());
+    Assert.assertTrue(newResponse.isTxChanges());
   }
 
 }
