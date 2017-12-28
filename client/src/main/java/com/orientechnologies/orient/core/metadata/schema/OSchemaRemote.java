@@ -258,12 +258,10 @@ public class OSchemaRemote extends OSchemaShared {
   @Override
   public void acquireSchemaWriteLock(ODatabaseDocumentInternal database) {
     skipPush.set(true);
-    super.acquireSchemaWriteLock(database);
   }
 
   @Override
   public void releaseSchemaWriteLock(ODatabaseDocumentInternal database, final boolean iSave) {
-    super.releaseSchemaWriteLock(database, iSave);
     skipPush.set(false);
   }
 

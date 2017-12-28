@@ -333,6 +333,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     ORemoteQueryResult result = storage.query(this, query, args);
     if (result.isTransactionUpdated())
       fetchTransacion();
+    if (result.isReloadMetadata())
+      reload();
     return result.getResult();
   }
 
@@ -343,6 +345,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     ORemoteQueryResult result = storage.query(this, query, args);
     if (result.isTransactionUpdated())
       fetchTransacion();
+    if (result.isReloadMetadata())
+      reload();
     return result.getResult();
   }
 
@@ -353,6 +357,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     ORemoteQueryResult result = storage.command(this, query, args);
     if (result.isTransactionUpdated())
       fetchTransacion();
+    if (result.isReloadMetadata())
+      reload();
     return result.getResult();
   }
 
@@ -363,6 +369,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     ORemoteQueryResult result = storage.command(this, query, args);
     if (result.isTransactionUpdated())
       fetchTransacion();
+    if (result.isReloadMetadata())
+      reload();
     return result.getResult();
   }
 
@@ -374,6 +382,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     ORemoteQueryResult result = storage.execute(this, language, script, args);
     if (result.isTransactionUpdated())
       fetchTransacion();
+    if (result.isReloadMetadata())
+      reload();
     return result.getResult();
   }
 
@@ -385,6 +395,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     ORemoteQueryResult result = storage.execute(this, language, script, args);
     if (result.isTransactionUpdated())
       fetchTransacion();
+    if (result.isReloadMetadata())
+      reload();
     return result.getResult();
   }
 

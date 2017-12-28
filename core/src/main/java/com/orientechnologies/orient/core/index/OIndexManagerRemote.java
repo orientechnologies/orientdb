@@ -189,13 +189,22 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   @Override
   protected void acquireExclusiveLock() {
     skipPush.set(true);
-    super.acquireExclusiveLock();
   }
 
   @Override
   protected void releaseExclusiveLock() {
-    super.releaseExclusiveLock();
     skipPush.set(false);
+  }
+
+  @Override
+  public void fromStream(ODocument iDocument) {
+    //This is the only case where the write locking make sense enabling it using super
+    super.acquireExclusiveLock();
+    try {
+      super.fromStream(iDocument);
+    } finally {
+      super.releaseExclusiveLock();
+    }
   }
 
   public void update(ODocument indexManager) {

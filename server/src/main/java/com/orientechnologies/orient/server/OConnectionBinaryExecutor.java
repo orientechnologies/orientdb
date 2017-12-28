@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -38,11 +37,7 @@ import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -1143,8 +1138,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeQuery(OQueryRequest request) {
     ODatabaseDocumentInternal database = connection.getDatabase();
-    //TODO set a timeout on the request?
-    final long serverTimeout = database.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
+    OQueryMetadataUpdateListener metadataListener = new OQueryMetadataUpdateListener();
+    database.getSharedContext().registerListener(metadataListener);
     if (database.getTransaction().isActive()) {
       ((OTransactionOptimistic) database.getTransaction()).resetChangesTracking();
     }
@@ -1183,9 +1178,10 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     if (database.getTransaction().isActive()) {
       txChanges = ((OTransactionOptimistic) database.getTransaction()).isChanged();
     }
+    database.getSharedContext().unregisterListener(metadataListener);
 
     return new OQueryResponse(((OLocalResultSetLifecycleDecorator) rs).getQueryId(), txChanges, rsCopy, rs.getExecutionPlan(),
-        hasNext, rs.getQueryStats());
+        hasNext, rs.getQueryStats(), metadataListener.isUpdated());
   }
 
   @Override
@@ -1201,9 +1197,6 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeQueryNextPage(OQueryNextPageRequest request) {
-    final long serverTimeout = connection.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
-    //TODO set a timeout on the request?
-
     OLocalResultSetLifecycleDecorator rs = (OLocalResultSetLifecycleDecorator) connection.getDatabase()
         .getActiveQuery(request.getQueryId());
 
@@ -1216,7 +1209,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       i++;
     }
     boolean hasNext = rs.hasNext();
-    return new OQueryResponse(rs.getQueryId(), false, rsCopy, rs.getExecutionPlan(), hasNext, rs.getQueryStats());
+    return new OQueryResponse(rs.getQueryId(), false, rsCopy, rs.getExecutionPlan(), hasNext, rs.getQueryStats(), false);
   }
 
   @Override
@@ -1353,7 +1346,6 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new OSubscribeSequencesResponse();
   }
 
-
   @Override
   public OBinaryResponse executeUnsubscribeLiveQuery(OUnsubscribeLiveQueryRequest request) {
     ODatabaseDocumentInternal database = connection.getDatabase();
@@ -1397,4 +1389,5 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     return new ODistributedConnectResponse(connection.getId(), token, chosenProtocolVersion);
   }
+
 }
