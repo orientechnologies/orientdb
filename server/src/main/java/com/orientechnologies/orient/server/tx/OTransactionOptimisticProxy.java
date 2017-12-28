@@ -218,20 +218,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           continue;
 
         final Object key;
-        ODocument keyContainer;
-        if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_24) {
-
-          final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
-          if (serializedKey.equals("*"))
-            keyContainer = null;
-          else {
-            keyContainer = new ODocument();
-            keyContainer.setLazyLoad(false);
-            ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
-          }
-        } else {
-          keyContainer = entry.field("k");
-        }
+        ODocument keyContainer = entry.field("k");
         if (keyContainer != null) {
           final Object storedKey = keyContainer.field("key");
           if (storedKey instanceof List)

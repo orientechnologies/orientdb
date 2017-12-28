@@ -77,6 +77,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_BINARY_MIN_PROTOCOL_VERSION;
+
 public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   private final OClientConnection connection;
@@ -893,6 +895,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeConnect(OConnectRequest request) {
+
+    OBinaryProtocolHelper.checkProtocolVersion(this, request.getProtocolVersion());
     connection.getData().driverName = request.getDriverName();
     connection.getData().driverVersion = request.getDriverVersion();
     connection.getData().protocolVersion = request.getProtocolVersion();
@@ -954,6 +958,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeDatabaseOpen(OOpenRequest request) {
+    OBinaryProtocolHelper.checkProtocolVersion(this, request.getProtocolVersion());
+
     connection.getData().driverName = request.getDriverName();
     connection.getData().driverVersion = request.getDriverVersion();
     connection.getData().protocolVersion = request.getProtocolVersion();
