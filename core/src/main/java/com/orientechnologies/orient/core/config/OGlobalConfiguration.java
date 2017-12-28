@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -633,6 +632,9 @@ public enum OGlobalConfiguration {
       Integer.class, 500),
 
   // QUERY
+  QUERY_REMOTE_RESULTSET_PAGE_SIZE("query.remoteResultSet.pageSize", "The size of a remote ResultSet page, ie. the number of records"
+      + "that are fetched together during remote query execution. This has to be set on the client.", Integer.class, 100),
+
   QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query, if requirements are met", Boolean.class, false),
 
   QUERY_PARALLEL_MINIMUM_RECORDS("query.parallelMinimumRecords",
