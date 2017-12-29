@@ -60,24 +60,24 @@ import java.util.concurrent.Callable;
  */
 @SuppressWarnings("unchecked")
 public abstract class OClassImpl extends ODocumentWrapperNoClass implements OClass {
-  private static final long serialVersionUID        = 1L;
-  private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
+  private static final   long serialVersionUID        = 1L;
+  protected static final int  NOT_EXISTENT_CLUSTER_ID = -1;
   protected final OSchemaShared owner;
   protected final Map<String, OProperty> properties       = new HashMap<String, OProperty>();
-  private         int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
+  protected       int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
   protected String name;
-  private   String description;
+  protected String description;
   protected int[]  clusterIds;
-  private List<OClassImpl> superClasses = new ArrayList<OClassImpl>();
-  private int[]        polymorphicClusterIds;
-  private List<OClass> subclasses;
-  private float overSize = 0f;
-  private String shortName;
-  private boolean strictMode    = false;                           // @SINCE v1.0rc8
-  private boolean abstractClass = false;                           // @SINCE v1.2.0
-  private          Map<String, String>       customFields;
-  private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
-  private volatile int                       hashCode;
+  protected List<OClassImpl> superClasses = new ArrayList<OClassImpl>();
+  protected int[]        polymorphicClusterIds;
+  protected List<OClass> subclasses;
+  protected float overSize = 0f;
+  protected String shortName;
+  protected boolean strictMode    = false;                           // @SINCE v1.0rc8
+  protected boolean abstractClass = false;                           // @SINCE v1.2.0
+  protected          Map<String, String>       customFields;
+  protected volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
+  protected volatile int                       hashCode;
 
   private static Set<String> reserved = new HashSet<String>();
 
@@ -303,87 +303,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     return setSuperClasses(classes);
   }
 
-  protected void setSuperClassesInternal(final List<? extends OClass> classes) {
-    List<OClassImpl> newSuperClasses = new ArrayList<OClassImpl>();
-    OClassImpl cls;
-    for (OClass superClass : classes) {
-      if (superClass instanceof OClassAbstractDelegate)
-        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
-      else
-        cls = (OClassImpl) superClass;
-
-      if (newSuperClasses.contains(cls)) {
-        throw new OSchemaException("Duplicated superclass '" + cls.getName() + "'");
-      }
-
-      newSuperClasses.add(cls);
-    }
-
-    List<OClassImpl> toAddList = new ArrayList<OClassImpl>(newSuperClasses);
-    toAddList.removeAll(superClasses);
-    List<OClassImpl> toRemoveList = new ArrayList<OClassImpl>(superClasses);
-    toRemoveList.removeAll(newSuperClasses);
-
-    for (OClassImpl toRemove : toRemoveList) {
-      toRemove.removeBaseClassInternal(this);
-    }
-    for (OClassImpl addTo : toAddList) {
-      addTo.addBaseClass(this);
-    }
-    superClasses.clear();
-    superClasses.addAll(newSuperClasses);
-  }
-
-  protected void addSuperClassInternal(ODatabaseDocumentInternal database, final OClass superClass) {
-    acquireSchemaWriteLock();
-    try {
-      final OClassImpl cls;
-
-      if (superClass instanceof OClassAbstractDelegate)
-        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
-      else
-        cls = (OClassImpl) superClass;
-
-      if (cls != null) {
-
-        // CHECK THE USER HAS UPDATE PRIVILEGE AGAINST EXTENDING CLASS
-        final OSecurityUser user = database.getUser();
-        if (user != null)
-          user.allow(ORule.ResourceGeneric.CLASS, cls.getName(), ORole.PERMISSION_UPDATE);
-
-        if (superClasses.contains(superClass)) {
-          throw new OSchemaException(
-              "Class: '" + this.getName() + "' already has the class '" + superClass.getName() + "' as superclass");
-        }
-
-        cls.addBaseClass(this);
-        superClasses.add(cls);
-      }
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void removeSuperClassInternal(final OClass superClass) {
-    acquireSchemaWriteLock();
-    try {
-      final OClassImpl cls;
-
-      if (superClass instanceof OClassAbstractDelegate)
-        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
-      else
-        cls = (OClassImpl) superClass;
-
-      if (superClasses.contains(cls)) {
-        if (cls != null)
-          cls.removeBaseClassInternal(this);
-
-        superClasses.remove(superClass);
-      }
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
+  protected abstract void setSuperClassesInternal(final List<? extends OClass> classes);
 
   public long getSize() {
     acquireSchemaReadLock();
@@ -821,22 +741,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  protected OClass removeBaseClassInternal(final OClass baseClass) {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      if (subclasses == null)
-        return this;
-
-      if (subclasses.remove(baseClass))
-        removePolymorphicClusterIds((OClassImpl) baseClass);
-
-      return this;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
+  protected abstract OClass removeBaseClassInternal(final OClass baseClass);
 
   public float getOverSize() {
     acquireSchemaReadLock();
@@ -1429,22 +1334,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     owner.checkEmbedded();
   }
 
-  public void setClusterSelectionInternal(final String clusterSelection) {
-    // AVOID TO CHECK THIS IN LOCK TO AVOID RE-GENERATION OF IMMUTABLE SCHEMAS
-    if (this.clusterSelection.getName().equals(clusterSelection))
-      // NO CHANGES
-      return;
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      this.clusterSelection = owner.getClusterSelectionFactory().newInstance(clusterSelection);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
   public void setClusterSelectionInternal(final OClusterSelectionStrategy iClusterSelection) {
     // AVOID TO CHECK THIS IN LOCK TO AVOID RE-GENERATION OF IMMUTABLE SCHEMAS
     if (this.clusterSelection.getClass().equals(iClusterSelection.getClass()))
@@ -1558,60 +1447,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     hashCode = result;
   }
 
-  protected void setOverSizeInternal(ODatabaseDocumentInternal database, final float overSize) {
-    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      this.overSize = overSize;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void setCustomInternal(final String name, final String value) {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      if (customFields == null)
-        customFields = new HashMap<String, String>();
-      if (value == null || "null".equalsIgnoreCase(value))
-        customFields.remove(name);
-      else
-        customFields.put(name, value);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void clearCustomInternal() {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      customFields = null;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void setNameInternal(ODatabaseDocumentInternal database, final String name) {
-    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-      final String oldName = this.name;
-      owner.changeClassName(database, this.name, name, this);
-      this.name = name;
-      renameCluster(oldName, this.name);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  private void renameCluster(String oldName, String newName) {
+  protected void renameCluster(String oldName, String newName) {
     oldName = oldName.toLowerCase(Locale.ENGLISH);
     newName = newName.toLowerCase(Locale.ENGLISH);
 
@@ -1631,83 +1467,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     database.command("alter cluster `" + oldName + "` NAME \"" + newName + "\"");
   }
 
-  protected void setShortNameInternal(ODatabaseDocumentInternal database, final String iShortName) {
-    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      String oldName = null;
-
-      if (this.shortName != null)
-        oldName = this.shortName;
-
-      owner.changeClassName(database, oldName, iShortName, this);
-
-      this.shortName = iShortName;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void setDescriptionInternal(final String iDescription) {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-      this.description = iDescription;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void dropPropertyInternal(ODatabaseDocumentInternal database, final String iPropertyName) {
-    if (database.getTransaction().isActive())
-      throw new IllegalStateException("Cannot drop a property inside a transaction");
-    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      final OProperty prop = properties.remove(iPropertyName);
-
-      if (prop == null)
-        throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected OClass addClusterIdInternal(ODatabaseDocumentInternal database, final int clusterId) {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      owner.checkClusterCanBeAdded(clusterId, this);
-
-      for (int currId : clusterIds)
-        if (currId == clusterId)
-          // ALREADY ADDED
-          return this;
-
-      clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
-      clusterIds[clusterIds.length - 1] = clusterId;
-      Arrays.sort(clusterIds);
-
-      addPolymorphicClusterId(clusterId);
-
-      if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID)
-        defaultClusterId = clusterId;
-
-      owner.addClusterForClass(database, clusterId, this);
-      return this;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  private void addPolymorphicClusterId(int clusterId) {
+  protected void addPolymorphicClusterId(int clusterId) {
     if (Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0)
       return;
 
@@ -1719,112 +1479,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
 
     for (OClassImpl superClass : superClasses) {
       superClass.addPolymorphicClusterId(clusterId);
-    }
-  }
-
-  protected OClass removeClusterIdInternal(ODatabaseDocumentInternal database, final int clusterToRemove) {
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      boolean found = false;
-      for (int clusterId : clusterIds) {
-        if (clusterId == clusterToRemove) {
-          found = true;
-          break;
-        }
-      }
-
-      if (found) {
-        final int[] newClusterIds = new int[clusterIds.length - 1];
-        for (int i = 0, k = 0; i < clusterIds.length; ++i) {
-          if (clusterIds[i] == clusterToRemove)
-            // JUMP IT
-            continue;
-
-          newClusterIds[k] = clusterIds[i];
-          k++;
-        }
-        clusterIds = newClusterIds;
-
-        removePolymorphicClusterId(clusterToRemove);
-      }
-
-      if (defaultClusterId == clusterToRemove) {
-        if (clusterIds.length >= 1)
-          defaultClusterId = clusterIds[0];
-        else
-          defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
-      }
-
-      owner.removeClusterForClass(database, clusterToRemove, this);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-    return this;
-  }
-
-  protected void setAbstractInternal(ODatabaseDocumentInternal database, final boolean isAbstract) {
-    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      if (isAbstract) {
-        // SWITCH TO ABSTRACT
-        if (defaultClusterId != NOT_EXISTENT_CLUSTER_ID) {
-          // CHECK
-          if (count() > 0)
-            throw new IllegalStateException("Cannot set the class as abstract because contains records.");
-
-          tryDropCluster(defaultClusterId);
-          for (int clusterId : getClusterIds()) {
-            tryDropCluster(clusterId);
-            removePolymorphicClusterId(clusterId);
-            owner.removeClusterForClass(database, clusterId, this);
-          }
-
-          setClusterIds(new int[] { NOT_EXISTENT_CLUSTER_ID });
-
-          defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
-        }
-      } else {
-        if (!abstractClass)
-          return;
-
-        int clusterId = database.getClusterIdByName(name);
-        if (clusterId == -1)
-          clusterId = database.addCluster(name);
-
-        this.defaultClusterId = clusterId;
-        this.clusterIds[0] = this.defaultClusterId;
-        this.polymorphicClusterIds = Arrays.copyOf(clusterIds, clusterIds.length);
-        for (OClass clazz : getAllSubclasses()) {
-          if (clazz instanceof OClassImpl) {
-            addPolymorphicClusterIds((OClassImpl) clazz);
-          } else {
-            OLogManager.instance().warn(this, "Warning: cannot set polymorphic cluster IDs for class " + name);
-          }
-        }
-      }
-
-      this.abstractClass = isAbstract;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void setStrictModeInternal(final boolean iStrict) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      this.strictMode = iStrict;
-    } finally {
-      releaseSchemaWriteLock();
     }
   }
 
@@ -1868,7 +1522,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
    *
    * @param iBaseClass The base class to add.
    */
-  private OClass addBaseClass(final OClassImpl iBaseClass) {
+  protected OClass addBaseClass(final OClassImpl iBaseClass) {
     checkRecursion(iBaseClass);
 
     if (subclasses == null)
@@ -1929,12 +1583,12 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  private void removePolymorphicClusterIds(final OClassImpl iBaseClass) {
+  protected void removePolymorphicClusterIds(final OClassImpl iBaseClass) {
     for (final int clusterId : iBaseClass.polymorphicClusterIds)
       removePolymorphicClusterId(clusterId);
   }
 
-  private void removePolymorphicClusterId(final int clusterId) {
+  protected void removePolymorphicClusterId(final int clusterId) {
     final int index = Arrays.binarySearch(polymorphicClusterIds, clusterId);
     if (index < 0)
       return;
@@ -1964,14 +1618,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  private void tryDropCluster(final int defaultClusterId) {
-    if (name.toLowerCase(Locale.ENGLISH).equals(getDatabase().getClusterNameById(defaultClusterId))) {
-      // DROP THE DEFAULT CLUSTER CALLED WITH THE SAME NAME ONLY IF EMPTY
-      if (getDatabase().getClusterRecordSizeById(defaultClusterId) == 0)
-        getDatabase().getStorage().dropCluster(defaultClusterId, true);
-    }
-  }
-
   protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.instance().get();
   }
@@ -1979,7 +1625,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
   /**
    * Add different cluster id to the "polymorphic cluster ids" array.
    */
-  private void addPolymorphicClusterIds(final OClassImpl iBaseClass) {
+  protected void addPolymorphicClusterIds(final OClassImpl iBaseClass) {
     Set<Integer> clusters = new TreeSet<Integer>();
 
     for (int clusterId : polymorphicClusterIds) {
@@ -2022,7 +1668,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     return types;
   }
 
-  private OClass setClusterIds(final int[] iClusterIds) {
+  protected OClass setClusterIds(final int[] iClusterIds) {
     clusterIds = iClusterIds;
     Arrays.sort(clusterIds);
 

@@ -524,4 +524,37 @@ public class OSchemaEmbedded extends OSchemaShared {
   public void checkEmbedded() {
   }
 
+  void addClusterForClass(ODatabaseDocumentInternal database, final int clusterId, final OClass cls) {
+    acquireSchemaWriteLock(database);
+    try {
+      if (clusterId < 0)
+        return;
+
+      checkEmbedded();
+
+      final OClass existingCls = clustersToClasses.get(clusterId);
+      if (existingCls != null && !cls.equals(existingCls))
+        throw new OSchemaException(
+            "Cluster with id " + clusterId + " already belongs to class " + clustersToClasses.get(clusterId));
+
+      clustersToClasses.put(clusterId, cls);
+    } finally {
+      releaseSchemaWriteLock(database);
+    }
+  }
+
+  void removeClusterForClass(ODatabaseDocumentInternal database, int clusterId, OClass cls) {
+    acquireSchemaWriteLock(database);
+    try {
+      if (clusterId < 0)
+        return;
+
+      checkEmbedded();
+
+      clustersToClasses.remove(clusterId);
+    } finally {
+      releaseSchemaWriteLock(database);
+    }
+  }
+
 }

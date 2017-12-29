@@ -228,39 +228,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   public abstract void checkEmbedded();
 
-  void addClusterForClass(ODatabaseDocumentInternal database, final int clusterId, final OClass cls) {
-    acquireSchemaWriteLock(database);
-    try {
-      if (clusterId < 0)
-        return;
-
-      checkEmbedded();
-
-      final OClass existingCls = clustersToClasses.get(clusterId);
-      if (existingCls != null && !cls.equals(existingCls))
-        throw new OSchemaException(
-            "Cluster with id " + clusterId + " already belongs to class " + clustersToClasses.get(clusterId));
-
-      clustersToClasses.put(clusterId, cls);
-    } finally {
-      releaseSchemaWriteLock(database);
-    }
-  }
-
-  void removeClusterForClass(ODatabaseDocumentInternal database, int clusterId, OClass cls) {
-    acquireSchemaWriteLock(database);
-    try {
-      if (clusterId < 0)
-        return;
-
-      checkEmbedded();
-
-      clustersToClasses.remove(clusterId);
-    } finally {
-      releaseSchemaWriteLock(database);
-    }
-  }
-
   void checkClusterCanBeAdded(int clusterId, OClass cls) {
     acquireSchemaReadLock();
     try {
@@ -764,13 +731,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   private void ensurePropertiesSize(int size) {
     while (properties.size() <= size)
       properties.add(null);
-  }
-
-  private static class OModificationsCounter extends ThreadLocal<OModifiableInteger> {
-    @Override
-    protected OModifiableInteger initialValue() {
-      return new OModifiableInteger(0);
-    }
   }
 
   public int addBlobCluster(ODatabaseDocumentInternal database, int clusterId) {
