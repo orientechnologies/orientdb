@@ -91,39 +91,51 @@ public class OFunctionCall extends SimpleNode {
 
   private Object execute(Object targetObjects, OCommandContext ctx, String name) {
     List<Object> paramValues = new ArrayList<Object>();
-    Object current = ctx == null ? null : ctx.getVariable("$current");
-    OIdentifiable record = null;
-    if (current != null) {
-      if (current instanceof OIdentifiable) {
-        record = (OIdentifiable) current;
-      } else if (current instanceof OResult) {
-        record = ((OResult) current).toElement();
+
+    Object record = null;
+
+    if (record == null) {
+      if (targetObjects instanceof OIdentifiable) {
+        record = (OIdentifiable) targetObjects;
+      } else if (targetObjects instanceof OResult) {
+        record = ((OResult) targetObjects).toElement();
+      } else {
+        record = targetObjects;
       }
     }
-    if (record == null && targetObjects instanceof OIdentifiable) {
-      record = (OIdentifiable) targetObjects;
+    if (record == null) {
+      Object current = ctx == null ? null : ctx.getVariable("$current");
+      if (current != null) {
+        if (current instanceof OIdentifiable) {
+          record = current;
+        } else if (current instanceof OResult) {
+          record = ((OResult) current).toElement();
+        } else {
+          record = current;
+        }
+      }
     }
     for (OExpression expr : this.params) {
-      if (current instanceof OIdentifiable) {
-        paramValues.add(expr.execute((OIdentifiable) current, ctx));
-      } else if (current instanceof OResult) {
-        paramValues.add(expr.execute((OResult) current, ctx));
-      } else if (current == null) {
-        paramValues.add(expr.execute((OResult) current, ctx));
+      if (record instanceof OIdentifiable) {
+        paramValues.add(expr.execute((OIdentifiable) record, ctx));
+      } else if (record instanceof OResult) {
+        paramValues.add(expr.execute((OResult) record, ctx));
+      } else if (record == null) {
+        paramValues.add(expr.execute((OResult) record, ctx));
       } else {
-        throw new OCommandExecutionException("Invalid value for $current: " + current);
+        throw new OCommandExecutionException("Invalid value for $current: " + record);
       }
     }
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
     if (function != null) {
-      if (current instanceof OIdentifiable) {
-        return function.execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
-      } else if (current instanceof OResult) {
-        return function.execute(targetObjects, ((OResult) current).getElement().orElse(null), null, paramValues.toArray(), ctx);
-      } else if (current == null) {
+      if (record instanceof OIdentifiable) {
+        return function.execute(targetObjects, (OIdentifiable) record, null, paramValues.toArray(), ctx);
+      } else if (record instanceof OResult) {
+        return function.execute(targetObjects, ((OResult) record).getElement().orElse(null), null, paramValues.toArray(), ctx);
+      } else if (record == null) {
         return function.execute(targetObjects, null, null, paramValues.toArray(), ctx);
       } else {
-        throw new OCommandExecutionException("Invalid value for $current: " + current);
+        throw new OCommandExecutionException("Invalid value for $current: " + record);
       }
     } else {
       throw new OCommandExecutionException("Funciton not found: " + name);
@@ -214,9 +226,9 @@ public class OFunctionCall extends SimpleNode {
   }
 
   /**
-   * tests if current expression is an indexed function AND the function has also to be executed after the index search.
-   * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
-   * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * tests if current expression is an indexed function AND the function has also to be executed after the index search. In some
+   * cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases the result from
+   * the index is a superset of the expected result, so the function has to be executed anyway for further filtering
    *
    * @param target  the query target
    * @param context the execution context

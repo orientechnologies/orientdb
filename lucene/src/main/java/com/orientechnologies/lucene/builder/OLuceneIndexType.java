@@ -41,7 +41,7 @@ public class OLuceneIndexType {
     }
 
     //metadata fileds: _CLASS, _CLUSTER
-    if (fieldName.startsWith("_")) {
+    if (fieldName.startsWith("_CLASS") || fieldName.startsWith("_CLUSTER")) {
       StringField ridField = new StringField(fieldName, value.toString(), store);
       return ridField;
     }
