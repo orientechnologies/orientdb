@@ -50,20 +50,20 @@ import java.util.*;
  */
 public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty {
   protected final   OClassImpl owner;
-  private           OType      linkedType;
-  private           OClass     linkedClass;
+  protected         OType      linkedType;
+  protected         OClass     linkedClass;
   transient private String     linkedClassName;
 
-  private String  description;
-  private boolean mandatory;
-  private boolean notNull = false;
-  private String              min;
-  private String              max;
-  private String              defaultValue;
-  private String              regexp;
-  private boolean             readonly;
-  private Map<String, String> customFields;
-  private OCollate collate = new ODefaultCollate();
+  protected String  description;
+  protected boolean mandatory;
+  protected boolean notNull = false;
+  protected String              min;
+  protected String              max;
+  protected String              defaultValue;
+  protected String              regexp;
+  protected boolean             readonly;
+  protected Map<String, String> customFields;
+  protected OCollate collate = new ODefaultCollate();
   protected OGlobalProperty globalRef;
 
   private volatile int hashCode;
@@ -287,21 +287,6 @@ public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements O
     }
   }
 
-  protected void setLinkedClassInternal(final OClass iLinkedClass) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      this.linkedClass = iLinkedClass;
-
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-  }
-
   protected static void checkSupportLinkedClass(OType type) {
     if (type != OType.LINK && type != OType.LINKSET && type != OType.LINKLIST && type != OType.LINKMAP && type != OType.EMBEDDED
         && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDMAP && type != OType.LINKBAG)
@@ -317,19 +302,6 @@ public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements O
     }
   }
 
-  protected void setLinkedTypeInternal(final OType iLinkedType) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-      this.linkedType = iLinkedType;
-
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-  }
-
   protected static void checkLinkTypeSupport(OType type) {
     if (type != OType.EMBEDDEDSET && type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDMAP)
       throw new OSchemaException("Linked type is not supported for type: " + type);
@@ -343,7 +315,6 @@ public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements O
       releaseSchemaReadLock();
     }
   }
-
 
   public boolean isMandatory() {
     acquireSchemaReadLock();
@@ -765,225 +736,7 @@ public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements O
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
-  protected void setNameInternal(final String name) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    String oldName = this.globalRef.getName();
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      owner.renameProperty(oldName, name);
-      this.globalRef = owner.owner.findOrCreateGlobalProperty(name, this.globalRef.getType());
-    } finally {
-      releaseSchemaWriteLock();
-    }
-    owner.firePropertyNameMigration(getDatabase(), oldName, name, this.globalRef.getType());
-  }
-
-  protected void setNotNullInternal(final boolean isNotNull) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      notNull = isNotNull;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void setMandatoryInternal(final boolean isMandatory) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      this.mandatory = isMandatory;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void setReadonlyInternal(final boolean isReadonly) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      this.readonly = isReadonly;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void setMinInternal(final String min) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      checkForDateFormat(min);
-      this.min = min;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void setDefaultValueInternal(final String defaultValue) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      this.defaultValue = defaultValue;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void setMaxInternal(final String max) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      checkForDateFormat(max);
-      this.max = max;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void setRegexpInternal(final String regexp) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      this.regexp = regexp;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void setDescriptionInternal(final String iDescription) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      this.description = iDescription;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void setCustomInternal(final String iName, final String iValue) {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      if (customFields == null)
-        customFields = new HashMap<String, String>();
-      if (iValue == null || "null".equalsIgnoreCase(iValue))
-        customFields.remove(iName);
-      else
-        customFields.put(iName, iValue);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected void clearCustomInternal() {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      customFields = null;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-  }
-
-  /**
-   * Change the type. It checks for compatibility between the change of type.
-   *
-   * @param iType
-   */
-  protected void setTypeInternal(final OType iType) {
-    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      if (iType == globalRef.getType())
-        // NO CHANGES
-        return;
-
-      if (!iType.getCastable().contains(globalRef.getType()))
-        throw new IllegalArgumentException("Cannot change property type from " + globalRef.getType() + " to " + iType);
-
-      this.globalRef = owner.owner.findOrCreateGlobalProperty(this.globalRef.getName(), iType);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  protected OProperty setCollateInternal(String iCollate) {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      final OCollate oldCollate = this.collate;
-
-      if (iCollate == null)
-        iCollate = ODefaultCollate.NAME;
-
-      collate = OSQLEngine.getCollate(iCollate);
-
-      if ((this.collate != null && !this.collate.equals(oldCollate)) || (this.collate == null && oldCollate != null)) {
-        final Set<OIndex<?>> indexes = owner.getClassIndexes();
-        final List<OIndex<?>> indexesToRecreate = new ArrayList<OIndex<?>>();
-
-        for (OIndex<?> index : indexes) {
-          OIndexDefinition definition = index.getDefinition();
-
-          final List<String> fields = definition.getFields();
-          if (fields.contains(getName()))
-            indexesToRecreate.add(index);
-        }
-
-        if (!indexesToRecreate.isEmpty()) {
-          OLogManager.instance().info(this, "Collate value was changed, following indexes will be rebuilt %s", indexesToRecreate);
-
-          final ODatabaseDocument database = getDatabase();
-          final OIndexManager indexManager = database.getMetadata().getIndexManager();
-
-          for (OIndex<?> indexToRecreate : indexesToRecreate) {
-            final OIndexMetadata indexMetadata = indexToRecreate.getInternal().loadMetadata(indexToRecreate.getConfiguration());
-
-            final ODocument metadata = indexToRecreate.getMetadata();
-            final List<String> fields = indexMetadata.getIndexDefinition().getFields();
-            final String[] fieldsToIndex = fields.toArray(new String[fields.size()]);
-
-            indexManager.dropIndex(indexMetadata.getName());
-            owner.createIndex(indexMetadata.getName(), indexMetadata.getType(), null, metadata, indexMetadata.getAlgorithm(),
-                fieldsToIndex);
-          }
-        }
-      }
-    } finally {
-      releaseSchemaWriteLock();
-    }
-    return this;
-  }
-
-  private void checkForDateFormat(final String iDateAsString) {
+  protected void checkForDateFormat(final String iDateAsString) {
     if (iDateAsString != null)
       if (globalRef.getType() == OType.DATE) {
         try {
@@ -1003,7 +756,8 @@ public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements O
   }
 
   protected boolean isDistributedCommand() {
-    return getDatabase().getStorage() instanceof OAutoshardedStorage && !((OAutoshardedStorage) getDatabase().getStorage()).isLocalEnv();
+    return getDatabase().getStorage() instanceof OAutoshardedStorage && !((OAutoshardedStorage) getDatabase().getStorage())
+        .isLocalEnv();
   }
 
   @Override

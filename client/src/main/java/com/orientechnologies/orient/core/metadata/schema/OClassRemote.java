@@ -414,4 +414,52 @@ public class OClassRemote extends OClassImpl {
     return this;
   }
 
+  protected OClass removeBaseClassInternal(final OClass baseClass) {
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      if (subclasses == null)
+        return this;
+
+      if (subclasses.remove(baseClass))
+        removePolymorphicClusterIds((OClassImpl) baseClass);
+
+      return this;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  protected void setSuperClassesInternal(final List<? extends OClass> classes) {
+    List<OClassImpl> newSuperClasses = new ArrayList<OClassImpl>();
+    OClassImpl cls;
+    for (OClass superClass : classes) {
+      if (superClass instanceof OClassAbstractDelegate)
+        cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
+      else
+        cls = (OClassImpl) superClass;
+
+      if (newSuperClasses.contains(cls)) {
+        throw new OSchemaException("Duplicated superclass '" + cls.getName() + "'");
+      }
+
+      newSuperClasses.add(cls);
+    }
+
+    List<OClassImpl> toAddList = new ArrayList<OClassImpl>(newSuperClasses);
+    toAddList.removeAll(superClasses);
+    List<OClassImpl> toRemoveList = new ArrayList<OClassImpl>(superClasses);
+    toRemoveList.removeAll(newSuperClasses);
+
+    for (OClassImpl toRemove : toRemoveList) {
+      toRemove.removeBaseClassInternal(this);
+    }
+    for (OClassImpl addTo : toAddList) {
+      addTo.addBaseClass(this);
+    }
+    superClasses.clear();
+    superClasses.addAll(newSuperClasses);
+  }
+
 }

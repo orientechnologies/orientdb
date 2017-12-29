@@ -52,7 +52,7 @@ public class OClassDistributed extends OClassEmbedded {
   }
 
   @Override
-  protected OPropertyImpl createPropertyInstance(OGlobalProperty global) {
+  protected OPropertyEmbedded createPropertyInstance(OGlobalProperty global) {
     return new OPropertyDistributed(this, global);
   }
 
