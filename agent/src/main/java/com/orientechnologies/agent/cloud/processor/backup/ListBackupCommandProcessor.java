@@ -2,6 +2,7 @@ package com.orientechnologies.agent.cloud.processor.backup;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import com.orientechnologies.orientdb.cloud.protocol.backup.BackupInfo;
@@ -22,13 +23,21 @@ public class ListBackupCommandProcessor extends AbstractBackupCommandProcessor {
     return response;
   }
 
+  // TODO Call ALL agents
+
   private BackupList getBackupConfig(OEnterpriseAgent agent) {
 
+    ODistributedServerManager manager = agent.server.getDistributedManager();
+    String server = manager != null ? manager.getLocalNodeName() : "orientdb";
     ODocument config = agent.getBackupManager().getConfiguration();
 
-    List<BackupInfo> backupInfos = config.<List<ODocument>>field("backups").stream().map(this::fromODocument)
-        .collect(Collectors.toList());
+    List<BackupInfo> backupInfos = config.<List<ODocument>>field("backups").stream().map(c -> {
+      BackupInfo backupInfo = fromODocument(c);
+      backupInfo.setServer(server);
+      return backupInfo;
+    }).collect(Collectors.toList());
     BackupList backupList = new BackupList();
+
     backupList.setBackups(backupInfos);
     return backupList;
   }
