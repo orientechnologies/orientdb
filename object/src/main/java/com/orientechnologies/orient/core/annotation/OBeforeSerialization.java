@@ -32,5 +32,6 @@ import java.lang.annotation.Target;
  * Tells to OrientDB to call the method BEFORE the record is marshalled and written to the database.
  * Applies only to the entity Objects reachable by the OrientDB engine after have registered them.
  */
+@Deprecated
 public @interface OBeforeSerialization {
 }

@@ -32,5 +32,6 @@ import java.lang.annotation.Target;
  * Tells to OrientDB to call the method AFTER the record is read and unmarshalled from database.
  * Applies only to the entity Objects reachable by the OrientDB engine after have registered them.
  */
+@Deprecated
 public @interface OAfterDeserialization {
 }
