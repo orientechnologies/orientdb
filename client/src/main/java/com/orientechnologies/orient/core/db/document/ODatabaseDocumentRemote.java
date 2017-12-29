@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
@@ -484,4 +485,16 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     });
     (shared.getSequenceLibrary()).update();
   }
+
+  @Override
+  public int addBlobCluster(final String iClusterName, final Object... iParameters) {
+    int id;
+    OResultSet resultSet = command("create blob cluster :1", iClusterName);
+    assert resultSet.hasNext();
+    OResult result = resultSet.next();
+    assert result.getProperty("value") != null;
+    id = result.getProperty("value");
+    return id;
+  }
+
 }
