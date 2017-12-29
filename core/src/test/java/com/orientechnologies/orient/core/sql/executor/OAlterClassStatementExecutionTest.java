@@ -224,4 +224,31 @@ public class OAlterClassStatementExecutionTest {
     result.close();
   }
 
+  @Test
+  public void testDefaultCluster() {
+    String className = "testDefaultCluster";
+    OSchema schema = db.getMetadata().getSchema();
+    OClass clazz = schema.createClass(className);
+    int[] clusterIds = clazz.getClusterIds();
+    if (clusterIds.length < 2) {
+      clazz.addCluster(className + "_1");
+      clusterIds = clazz.getClusterIds();
+    }
+    int currentDefault = clazz.getDefaultClusterId();
+    int firstNonDefault = -1;
+    for (int clusterId : clusterIds) {
+      if (clusterId != currentDefault) {
+        firstNonDefault = clusterId;
+      }
+    }
+
+    try {
+      db.command("alter class " + className + " defaultcluster " + firstNonDefault).close();
+    } catch (OCommandExecutionException ex) {
+    }
+
+    schema.reload();
+    Assert.assertEquals(firstNonDefault, schema.getClass(className).getDefaultClusterId());
+  }
+
 }

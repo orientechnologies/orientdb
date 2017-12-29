@@ -70,6 +70,9 @@ public class OAlterClassStatementTest extends OParserTestAbstract {
 
     checkRightSyntax("ALTER CLASS Person CUSTOM `onCreate.identityType`=role");
 
+    checkRightSyntax("ALTER CLASS Person DEFAULTCLUSTER foo");
+    checkRightSyntax("ALTER CLASS Person DEFAULTCLUSTER 15");
+
     checkWrongSyntax("ALTER CLASS Foo NAME Bar baz");
 
     checkWrongSyntax("ALTER CLASS Foo SUPERCLASS *Bar");
