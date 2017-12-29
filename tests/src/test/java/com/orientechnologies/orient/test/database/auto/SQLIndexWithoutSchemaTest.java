@@ -1,11 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
-import java.util.Locale;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -14,6 +8,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
+import java.util.List;
+import java.util.Locale;
 
 /**
  * There is a possibility to create an automatic index for class without creation property in schema.
@@ -61,7 +60,7 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
 
   @Test
   public void testCreateIndex() {
-    database.command(new OCommandSQL("CREATE INDEX indexWithoutSchema ON " + TEST_CLASS + " (prop2) NOTUNIQUE INTEGER")).execute();
+    database.command(new OCommandSQL("CREATE INDEX indexWithoutSchema ON " + TEST_CLASS + " (prop2) NOTUNIQUE INTEGER METADATA { ignoreNullValues: true }")).execute();
 
     database.getMetadata().getIndexManager().reload();
 
