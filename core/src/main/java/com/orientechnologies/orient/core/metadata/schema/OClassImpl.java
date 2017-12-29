@@ -615,16 +615,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  public void setDefaultClusterId(final int defaultClusterId) {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-      this.defaultClusterId = defaultClusterId;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
   public int[] getClusterIds() {
     acquireSchemaReadLock();
     try {

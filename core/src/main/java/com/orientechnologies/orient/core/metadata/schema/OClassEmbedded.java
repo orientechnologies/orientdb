@@ -478,6 +478,16 @@ public class OClassEmbedded extends OClassImpl {
     }
   }
 
+  public void setDefaultClusterId(final int defaultClusterId) {
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+      this.defaultClusterId = defaultClusterId;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
   protected OClass addClusterIdInternal(ODatabaseDocumentInternal database, final int clusterId) {
     acquireSchemaWriteLock();
     try {
