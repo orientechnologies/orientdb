@@ -195,7 +195,7 @@ public enum OGlobalConfiguration {
       "Indicates a force sync should be performed for each update on the storage configuration", Boolean.class, true),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method used in storage"
-      + " Possible values : gzip, nothing, snappy, snappy-native. Default is 'nothing' that means no compression", String.class,
+      + " Possible values : gzip, nothing. Default is 'nothing' that means no compression", String.class,
       "nothing"),
 
   STORAGE_ENCRYPTION_METHOD("storage.encryptionMethod",

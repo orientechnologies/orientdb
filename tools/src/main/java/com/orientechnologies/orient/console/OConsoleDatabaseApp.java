@@ -268,7 +268,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "password", optional = true, description = "Server administrator password") String userPassword,
       @ConsoleParameter(name = "storage-type", optional = true, description = "The type of the storage: 'plocal' for disk-based databases and 'memory' for in-memory database") String storageType,
       @ConsoleParameter(name = "db-type", optional = true, description = "The type of the database used between 'document' and 'graph'. By default is graph.") String databaseType,
-      @ConsoleParameter(name = "[options]", optional = true, description = "Additional options, example: -encryption=aes -compression=snappy") final String options)
+      @ConsoleParameter(name = "[options]", optional = true, description = "Additional options, example: -encryption=aes -compression=nothing") final String options)
       throws IOException {
 
     disconnect();
@@ -321,7 +321,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   protected Map<String, String> parseCommandOptions(
-      @ConsoleParameter(name = "[options]", optional = true, description = "Additional options, example: -encryption=aes -compression=snappy") String options) {
+      @ConsoleParameter(name = "[options]", optional = true, description = "Additional options, example: -encryption=aes -compression=nothing") String options) {
     final Map<String, String> omap = new HashMap<String, String>();
     if (options != null) {
       final List<String> kvOptions = OStringSerializerHelper.smartSplit(options, ',', false);
