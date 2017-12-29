@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.compression.impl.OGZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.OHighZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.OLowZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
-import com.orientechnologies.orient.core.compression.impl.OSnappyCompression;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 
 import java.util.HashMap;
@@ -52,7 +51,6 @@ public class OCompressionFactory {
     register(new OHighZIPCompression());
     register(new OLowZIPCompression());
     register(new OGZIPCompression());
-    register(new OSnappyCompression());
     register(new ONothingCompression());
   }
 

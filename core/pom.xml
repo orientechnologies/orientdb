@@ -37,7 +37,6 @@
             javax.imageio.spi,sun.misc;resolution:=optional,
             com.orientechnologies.orient.client.remote;resolution:=optional,
             com.sun.jna;resolution:=optional,
-            org.xerial.snappy;resolution:=optional,
             sun.nio.ch;resolution:=optional,
             com.orientechnologies.orient.server.distributed.impl;resolution:=optional,
             com.orientechnologies.orient.server.distributed.impl.task;resolution:=optional,
@@ -238,12 +237,6 @@
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna-platform</artifactId>
             <version>4.5.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.xerial.snappy</groupId>
-            <artifactId>snappy-java</artifactId>
-            <version>1.1.0.1</version>
         </dependency>
 
         <dependency>
