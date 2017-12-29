@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.db.document;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -65,7 +64,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSaveThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
@@ -78,7 +76,6 @@ import com.orientechnologies.orient.core.tx.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -2801,22 +2798,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       throw new IllegalStateException(
           "The current database instance (" + toString() + ") is not active on the current thread (" + Thread.currentThread()
               + "). Current active database is: " + currentDatabase);
-  }
-
-  @Override
-  public int addBlobCluster(final String iClusterName, final Object... iParameters) {
-    int id;
-    if (getStorage() instanceof OStorageProxy) {
-      id = command(new OCommandSQL("create blob cluster :1")).execute(iClusterName);
-      getMetadata().getSchema().reload();
-    } else {
-      if (!existsCluster(iClusterName)) {
-        id = addCluster(iClusterName, iParameters);
-      } else
-        id = getClusterIdByName(iClusterName);
-      getMetadata().getSchema().addBlobCluster(id);
-    }
-    return id;
   }
 
   public Set<Integer> getBlobClusterIds() {

@@ -275,4 +275,14 @@ public class OSchemaRemote extends OSchemaShared {
       super.fromStream(schema);
     }
   }
+
+  @Override
+  public int addBlobCluster(ODatabaseDocumentInternal database, int clusterId) {
+    throw new OSchemaException("Not supported operation use instead ODatabaseSession.addBlobCluster");
+  }
+
+  @Override
+  public void removeBlobCluster(ODatabaseDocumentInternal database, String clusterName) {
+    throw new OSchemaException("Not supported operation use instead ODatabaseSession.dropCluster");
+  }
 }

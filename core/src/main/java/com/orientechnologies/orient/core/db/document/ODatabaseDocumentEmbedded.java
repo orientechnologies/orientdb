@@ -656,4 +656,16 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       sharedContext.close();
   }
 
+  @Override
+  public int addBlobCluster(final String iClusterName, final Object... iParameters) {
+    int id;
+    if (!existsCluster(iClusterName)) {
+      id = addCluster(iClusterName, iParameters);
+    } else {
+      id = getClusterIdByName(iClusterName);
+    }
+    getMetadata().getSchema().addBlobCluster(id);
+    return id;
+  }
+
 }
