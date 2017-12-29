@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
  * it.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIterator<REC> {
@@ -142,7 +142,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during read of record", e);
 
-        final ORID recordRid = currentRecord.getIdentity();
+        final ORID recordRid = record == null ? null : record.getIdentity();
 
         if (recordRid != null)
           brokenRIDs.add(recordRid.copy());
@@ -163,7 +163,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
 
   /**
    * Return the element at the current position and move backward the cursor to the previous position available.
-   * 
+   *
    * @return the previous record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
    */
   @SuppressWarnings("unchecked")
@@ -192,7 +192,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
 
   /**
    * Return the element at the current position and move forward the cursor to the next position available.
-   * 
+   *
    * @return the next record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
    */
   @SuppressWarnings("unchecked")
@@ -222,7 +222,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
 
   /**
    * Move the iterator to the begin of the range. If no range was specified move to the first record of the cluster.
-   * 
+   *
    * @return The object itself
    */
   @Override
@@ -239,7 +239,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
 
   /**
    * Move the iterator to the end of the range. If no range was specified move to the last record of the cluster.
-   * 
+   *
    * @return The object itself
    */
   @Override
@@ -257,7 +257,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   /**
    * Tell to the iterator that the upper limit must be checked at every cycle. Useful when concurrent deletes or additions change
    * the size of the cluster while you're browsing it. Default is false.
-   * 
+   *
    * @param iLiveUpdated
    *          True to activate it, otherwise false (default)
    * @see #isLiveUpdated()
