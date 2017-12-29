@@ -379,6 +379,8 @@ TOKEN:
 	|
 	< RID: ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" ) >
 	|
+	< DEFAULTCLUSTER: ( "D" | "d") ( "E" | "e") ( "F" | "f") ( "A" | "a") ( "U" | "u") ( "L" | "l") ( "T" | "t") ( "C" | "c" ) ( "L" | "l" ) ( "U" | "u" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "R" | "r" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -895,6 +897,8 @@ OIdentifier Identifier():
     token = <USER>
     |
     token = <RID>
+    |
+    token = <DEFAULTCLUSTER>
     |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -4163,6 +4167,15 @@ OAlterClassStatement AlterClassStatement():
 				<NULL>
 			)
 		)
+		|
+        (
+            <DEFAULTCLUSTER>
+            (
+                jjtThis.defaultClusterId = Integer()
+                |
+                jjtThis.defaultClusterName = Identifier()
+            )
+        )
 	)
 	[ <UNSAFE> { jjtThis.unsafe = true; } ]
 	{ return jjtThis; }
