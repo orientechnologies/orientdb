@@ -70,7 +70,12 @@ public class FilterByClustersStep extends AbstractExecutionStep {
           }
           nextItem = prevResult.next();
           if (nextItem.isElement()) {
-            if (clusterIds.contains(nextItem.getIdentity().get().getClusterId())) {
+            int clusterId = nextItem.getIdentity().get().getClusterId();
+            if (clusterId < 0) {
+              // this record comes from a TX, it still doesn't have a cluster assigned
+              break;
+            }
+            if (clusterIds.contains(clusterId)) {
               break;
             }
           }
