@@ -3,6 +3,7 @@ package com.orientechnologies.agent.cloud;
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.backup.OBackupTask;
 import com.orientechnologies.agent.backup.log.OBackupLog;
+import com.orientechnologies.agent.backup.log.OBackupLogType;
 import com.orientechnologies.agent.cloud.processor.backup.AddBackupCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.backup.ListBackupCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.backup.ListBackupLogsCommandProcessor;
@@ -240,7 +241,7 @@ public class BackupCommandProcessorTest {
 
     Command command = new Command();
     command.setId("test");
-    command.setPayload(uuid);
+    command.setPayload(new BackupLogRequest(uuid));
     command.setResponseChannel("channelTest");
 
     RemoveBackupCommandProcessor backupCommandProcessor = new RemoveBackupCommandProcessor();
@@ -274,6 +275,13 @@ public class BackupCommandProcessorTest {
     });
     latch.await();
 
+    BackupLogsList backupLogsList = getBackupLogList(uuid);
+
+    assertThat(backupLogsList.getLogs()).hasSize(4);
+
+  }
+
+  private BackupLogsList getBackupLogList(String uuid) {
     Command command = new Command();
     command.setId("test");
     command.setPayload(new BackupLogRequest(uuid, null, null, new HashMap<>()));
@@ -283,10 +291,7 @@ public class BackupCommandProcessorTest {
 
     CommandResponse execute = backupCommandProcessor.execute(command, agent);
 
-    BackupLogsList backupLogsList = (BackupLogsList) execute.getPayload();
-
-    assertThat(backupLogsList.getLogs()).hasSize(4);
-
+    return (BackupLogsList) execute.getPayload();
   }
 
   @Test
@@ -326,6 +331,49 @@ public class BackupCommandProcessorTest {
     BackupLogsList backupLogsList = (BackupLogsList) execute.getPayload();
 
     assertThat(backupLogsList.getLogs()).hasSize(1);
+
+  }
+
+  @Test
+  public void testRemoveBackupLogsCommandProcessor() throws InterruptedException {
+
+    ODocument cfg = createBackupConfig();
+
+    BackupList backupList = getBackupList();
+
+    assertThat(backupList.getBackups()).hasSize(1);
+
+    String uuid = cfg.field("uuid");
+
+    final OBackupTask task = agent.getBackupManager().getTask(uuid);
+
+    AtomicReference<OBackupLog> lastLog = new AtomicReference<>();
+    final CountDownLatch latch = new CountDownLatch(3);
+    task.registerListener((cfg1, log) -> {
+      latch.countDown();
+
+      if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
+        lastLog.set(log);
+      }
+      return latch.getCount() > 0;
+
+    });
+    latch.await();
+
+    Command command = new Command();
+    command.setId("test");
+    command.setPayload(new BackupLogRequest(uuid, lastLog.get().getUnitId(), lastLog.get().getTxId()));
+    command.setResponseChannel("channelTest");
+
+    RemoveBackupCommandProcessor remove = new RemoveBackupCommandProcessor();
+
+    CommandResponse execute = remove.execute(command, agent);
+
+    String result = (String) execute.getPayload();
+
+    BackupLogsList backupLogsList = getBackupLogList(uuid);
+
+    assertThat(backupLogsList.getLogs()).hasSize(0);
 
   }
 
