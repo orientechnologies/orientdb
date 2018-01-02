@@ -2010,9 +2010,12 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext(); ) {
             final ODocument curr = getDocument(it.next(), forceReload);
 
-            if (curr == null)
+            if (curr == null) {
               // EDGE REMOVED
+              it.remove();
+              iVertex.save();
               continue;
+            }
 
             if (curr == null)
               // ALREADY DELETED (BYPASSING GRAPH API?), JUST REMOVE THE REFERENCE FROM BAG
@@ -2047,7 +2050,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         // DELETE ALL THE EDGES
         for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext(); ) {
           OIdentifiable edge = it.next();
-
           if (iAlsoInverse)
             removeInverseEdge(graph, iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels, autoScaleEdgeType, forceReload);
 

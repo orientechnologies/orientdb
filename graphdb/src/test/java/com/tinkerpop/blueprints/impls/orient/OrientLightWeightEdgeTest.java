@@ -1,8 +1,16 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.Edge;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.testng.Assert;
+
+import java.util.Iterator;
 
 public class OrientLightWeightEdgeTest {
 
@@ -35,4 +43,38 @@ public class OrientLightWeightEdgeTest {
     graph.commit();
   }
 
+  @Test
+  public void testDeleteVertex() throws Exception {
+    graph.setUseLightweightEdges(true);
+    OrientVertex vertex = graph.addVertex(null);
+    OrientVertex vertex2 = graph.addVertex(null);
+    Edge edge = vertex.addEdge("testDeleteVertex", vertex2);
+    graph.commit();
+    ORID vertexId = vertex.getIdentity();
+    vertex = null;
+
+    Iterable result = graph.command(new OSQLSynchQuery("SELECT FROM " + vertexId)).execute();
+    Iterator iterator = result.iterator();
+    Assert.assertTrue(iterator.hasNext());
+    OrientVertex item = (OrientVertex) iterator.next();
+
+    ODocument doc = (ODocument) item.rawElement;
+    Object fieldVal = doc.rawField("out_testDeleteVertex");
+    Assert.assertTrue(fieldVal instanceof Iterable);
+    Assert.assertTrue(((Iterable)fieldVal).iterator().hasNext());
+    graph.commit();
+
+    graph.command(new OCommandSQL("DELETE VERTEX "+vertex2.getIdentity())).execute();
+    graph.commit();
+    result = graph.command(new OSQLSynchQuery("SELECT FROM " + vertexId)).execute();
+    iterator = result.iterator();
+    Assert.assertTrue(iterator.hasNext());
+    item = (OrientVertex) iterator.next();
+
+    doc = (ODocument) item.rawElement;
+    fieldVal = doc.rawField("out_testDeleteVertex");
+    Assert.assertTrue(fieldVal instanceof Iterable);
+    Assert.assertFalse(((Iterable)fieldVal).iterator().hasNext());
+
+  }
 }
