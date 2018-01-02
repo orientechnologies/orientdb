@@ -147,7 +147,7 @@ public class StorageNamingTests {
     }
 
     @Override
-    public List<ORecordOperation> commit(OTransactionInternal iTx, Runnable callback) {
+    public List<ORecordOperation> commit(OTransactionInternal iTx) {
       return null;
     }
 

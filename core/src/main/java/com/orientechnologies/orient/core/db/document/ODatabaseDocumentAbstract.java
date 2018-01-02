@@ -2998,6 +2998,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public void internalCommit(OTransactionInternal transaction) {
-    this.getStorage().commit(transaction, null);
+    this.getStorage().commit(transaction);
   }
 }

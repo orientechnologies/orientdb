@@ -926,7 +926,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     rs.fetched(response.getResult(), response.isHasNextPage(), response.getExecutionPlan(), response.getQueryStats());
   }
 
-  public List<ORecordOperation> commit(final OTransactionInternal iTx, final Runnable callback) {
+  public List<ORecordOperation> commit(final OTransactionInternal iTx) {
     OCommit37Request request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), iTx.getRecordOperations(),
         iTx.getIndexOperations());
 
