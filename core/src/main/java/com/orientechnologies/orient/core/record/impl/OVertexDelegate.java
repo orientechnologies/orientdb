@@ -210,10 +210,25 @@ public class OVertexDelegate implements OVertex {
     }
     String edgeField = fieldPrefix + className;
     Object edgeProp = getProperty(edgeField);
+    OIdentifiable edgeId = null;
+
+    edgeId = ((OIdentifiable) edge).getIdentity();
+    if (edgeId == null) {
+      //lightweight edge
+
+      Object out = edge.getFrom();
+      Object in = edge.getTo();
+      if (getIdentity().equals(out)) {
+        edgeId = (OIdentifiable) in;
+      } else {
+        edgeId = (OIdentifiable) out;
+      }
+    }
+
     if (edgeProp instanceof Collection) {
-      ((Collection) edgeProp).remove(edge.getRecord());
+      ((Collection) edgeProp).remove(edgeId);
     } else if (edgeProp instanceof ORidBag) {
-      ((ORidBag) edgeProp).remove(edge.getRecord());
+      ((ORidBag) edgeProp).remove(edgeId);
     }
   }
 
