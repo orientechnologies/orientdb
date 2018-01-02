@@ -1,9 +1,6 @@
 package com.orientechnologies.agent.cloud.processor;
 
-import com.orientechnologies.agent.cloud.processor.backup.AddBackupCommandProcessor;
-import com.orientechnologies.agent.cloud.processor.backup.ListBackupCommandProcessor;
-import com.orientechnologies.agent.cloud.processor.backup.ListBackupLogsCommandProcessor;
-import com.orientechnologies.agent.cloud.processor.backup.RemoveBackupCommandProcessor;
+import com.orientechnologies.agent.cloud.processor.backup.*;
 import com.orientechnologies.orientdb.cloud.protocol.CommandType;
 
 import java.util.HashMap;
@@ -22,6 +19,7 @@ public class CloudCommandProcessorFactory {
     processors.put(CommandType.ADD_BACKUP.command, new AddBackupCommandProcessor());
     processors.put(CommandType.LIST_BACKUP_LOGS.command, new ListBackupLogsCommandProcessor());
     processors.put(CommandType.REMOVE_BACKUP.command, new RemoveBackupCommandProcessor());
+    processors.put(CommandType.RESTORE_BACKUP.command, new RestoreBackupCommandProcessor());
   }
 
   public CloudCommandProcessor getProcessorFor(String type) {

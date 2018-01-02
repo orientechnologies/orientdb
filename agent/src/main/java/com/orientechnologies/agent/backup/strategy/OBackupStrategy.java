@@ -25,7 +25,6 @@ import com.orientechnologies.agent.backup.log.*;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
@@ -104,10 +103,7 @@ public abstract class OBackupStrategy {
     OServer server = OServerMain.server();
     ODatabaseDocument database = null;
 
-    final String url = "plocal:" + server.getDatabaseDirectory() + databaseName;
-    database = new ODatabaseDocumentTx(url);
-
-    if (database.exists()) {
+    if (server.existsDatabase(databaseName)) {
       throw new IllegalArgumentException("Cannot restore the backup to an existing database (" + databaseName + ").");
     }
     try {
@@ -122,7 +118,7 @@ public abstract class OBackupStrategy {
       new Thread(new Runnable() {
         @Override
         public void run() {
-          doRestoreBackup(url, finished, databaseName, listener);
+          doRestoreBackup(server, databaseName, finished, databaseName, listener);
         }
       }).start();
     } catch (IOException e) {
@@ -130,19 +126,16 @@ public abstract class OBackupStrategy {
     }
   }
 
-  private void doRestoreBackup(String url, OBackupFinishedLog finished, String databaseName, OBackupListener listener) {
+  private void doRestoreBackup(OServer server, String dbName, OBackupFinishedLog finished, String databaseName,
+      OBackupListener listener) {
     ORestoreStartedLog restoreStartedLog = null;
-    ODatabaseDocument db = null;
     try {
-
-      db = new ODatabaseDocumentTx(url);
 
       restoreStartedLog = new ORestoreStartedLog(finished.getUnitId(), logger.nextOpId(), getUUID(), getDbName(),
           finished.getMode());
       logger.log(restoreStartedLog);
-      if (!db.exists()) {
-        db.create(finished.getPath());
-      }
+
+      server.restore(databaseName, finished.getPath());
       ORestoreFinishedLog finishedLog = new ORestoreFinishedLog(restoreStartedLog.getUnitId(), restoreStartedLog.getTxId(),
           getUUID(), getDbName(), restoreStartedLog.getMode());
 
@@ -152,6 +145,8 @@ public abstract class OBackupStrategy {
       finishedLog.setRestoreUnitId(finished.getUnitId());
 
       logger.log(finishedLog);
+
+      listener.onEvent(cfg,finishedLog);
 
     } catch (Exception e) {
 
@@ -163,9 +158,7 @@ public abstract class OBackupStrategy {
         listener.onEvent(cfg, error);
       }
     } finally {
-      if (db != null) {
-        db.close();
-      }
+
     }
   }
 

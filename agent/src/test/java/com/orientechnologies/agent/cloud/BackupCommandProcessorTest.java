@@ -4,10 +4,7 @@ import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.backup.OBackupTask;
 import com.orientechnologies.agent.backup.log.OBackupLog;
 import com.orientechnologies.agent.backup.log.OBackupLogType;
-import com.orientechnologies.agent.cloud.processor.backup.AddBackupCommandProcessor;
-import com.orientechnologies.agent.cloud.processor.backup.ListBackupCommandProcessor;
-import com.orientechnologies.agent.cloud.processor.backup.ListBackupLogsCommandProcessor;
-import com.orientechnologies.agent.cloud.processor.backup.RemoveBackupCommandProcessor;
+import com.orientechnologies.agent.cloud.processor.backup.*;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -42,6 +39,7 @@ public class BackupCommandProcessorTest {
   private OServer server;
 
   private final String DB_NAME     = "backupDB";
+  private final String NEW_DB_NAME = "newDB";
   private final String BACKUP_PATH =
       System.getProperty("buildDirectory", "target") + File.separator + "databases" + File.separator + DB_NAME;
   private OEnterpriseAgent agent;
@@ -55,6 +53,13 @@ public class BackupCommandProcessorTest {
     server.startup(stream);
 
     OrientDB orientDB = server.getContext();
+
+    if (orientDB.exists(DB_NAME))
+      orientDB.drop(DB_NAME);
+
+    if (orientDB.exists(NEW_DB_NAME))
+      orientDB.drop(NEW_DB_NAME);
+    
     orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
 
     server.activate();
@@ -79,6 +84,9 @@ public class BackupCommandProcessorTest {
     OrientDB orientDB = server.getContext();
     if (orientDB.exists(DB_NAME))
       orientDB.drop(DB_NAME);
+
+    if (orientDB.exists(NEW_DB_NAME))
+      orientDB.drop(NEW_DB_NAME);
 
     if (server != null)
       server.shutdown();
@@ -374,6 +382,59 @@ public class BackupCommandProcessorTest {
     BackupLogsList backupLogsList = getBackupLogList(uuid);
 
     assertThat(backupLogsList.getLogs()).hasSize(0);
+
+  }
+
+  @Test
+  public void testRestoreDatabaseCommandProcessor() throws InterruptedException {
+
+    ODocument cfg = createBackupConfig();
+
+    BackupList backupList = getBackupList();
+
+    assertThat(backupList.getBackups()).hasSize(1);
+
+    String uuid = cfg.field("uuid");
+
+    final OBackupTask task = agent.getBackupManager().getTask(uuid);
+
+    AtomicReference<OBackupLog> lastLog = new AtomicReference<>();
+    final CountDownLatch latch = new CountDownLatch(3);
+    task.registerListener((cfg1, log) -> {
+      latch.countDown();
+      if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
+        lastLog.set(log);
+      }
+      return latch.getCount() > 0;
+
+    });
+    latch.await();
+
+    CountDownLatch latch1 = new CountDownLatch(1);
+    task.registerListener((cfg1, log) -> {
+      if (OBackupLogType.RESTORE_FINISHED.equals(log.getType()) || OBackupLogType.RESTORE_ERROR.equals(log.getType())) {
+        latch1.countDown();
+      }
+      return latch1.getCount() > 0;
+
+    });
+
+    Command command = new Command();
+    command.setId("test");
+    command.setPayload(new BackupLogRequest(uuid, lastLog.get().getUnitId(), new HashMap<String, String>() {{
+      put("target", NEW_DB_NAME);
+    }}));
+    command.setResponseChannel("channelTest");
+
+    RestoreBackupCommandProcessor remove = new RestoreBackupCommandProcessor();
+
+    CommandResponse execute = remove.execute(command, agent);
+
+    String result = (String) execute.getPayload();
+
+    latch1.await();
+
+    assertThat(server.existsDatabase(NEW_DB_NAME)).isTrue();
 
   }
 
