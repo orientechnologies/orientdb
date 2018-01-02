@@ -142,6 +142,14 @@ public class OBackupManager implements OServerLifecycleListener {
       return Collections.emptyList();
     }
   }
+  public List<OBackupLog> findLogs(String uuid, Long unitId, int page, int pageSize, Map<String, String> params) {
+    try {
+      return logger.findByUUIDAndUnitId(uuid, unitId, page, pageSize, params);
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Cannot find logs", e);
+      return Collections.emptyList();
+    }
+  }
 
   public ODocument logs(String uuid, Long unitId, int page, int pageSize, Map<String, String> params) {
     ODocument history = new ODocument();

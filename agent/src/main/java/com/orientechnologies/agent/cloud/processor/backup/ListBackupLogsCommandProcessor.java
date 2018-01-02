@@ -26,8 +26,14 @@ public class ListBackupLogsCommandProcessor extends AbstractBackupCommandProcess
 
     int page = request.getPage() != null ? request.getPage().intValue() : 1;
     int pageSide = request.getPageSize() != null ? request.getPageSize().intValue() : -1;
-    agent.getBackupManager().findLogs(request.getBackupId(), page, pageSide, request.getParams()).stream()
-        .map(BackupLogConverter::convert).forEach(l -> backupLogsList.addLog(l));
+
+    if (request.getUnitId() == null) {
+      agent.getBackupManager().findLogs(request.getBackupId(), page, pageSide, request.getParams()).stream()
+          .map(BackupLogConverter::convert).forEach(l -> backupLogsList.addLog(l));
+    } else {
+      agent.getBackupManager().findLogs(request.getBackupId(),request.getUnitId(), page, pageSide, request.getParams()).stream()
+          .map(BackupLogConverter::convert).forEach(l -> backupLogsList.addLog(l));
+    }
 
     return backupLogsList;
   }

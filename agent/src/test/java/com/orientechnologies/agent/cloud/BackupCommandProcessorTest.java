@@ -2,6 +2,7 @@ package com.orientechnologies.agent.cloud;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.backup.OBackupTask;
+import com.orientechnologies.agent.backup.log.OBackupLog;
 import com.orientechnologies.agent.cloud.processor.backup.AddBackupCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.backup.ListBackupCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.backup.ListBackupLogsCommandProcessor;
@@ -27,6 +28,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -284,6 +286,46 @@ public class BackupCommandProcessorTest {
     BackupLogsList backupLogsList = (BackupLogsList) execute.getPayload();
 
     assertThat(backupLogsList.getLogs()).hasSize(4);
+
+  }
+
+  @Test
+  public void testListLogsWithUnitIdCommandProcessor() throws InterruptedException {
+
+    ODocument cfg = createBackupConfig();
+
+    BackupList backupList = getBackupList();
+
+    assertThat(backupList.getBackups()).hasSize(1);
+
+    String uuid = cfg.field("uuid");
+
+    final OBackupTask task = agent.getBackupManager().getTask(uuid);
+
+    AtomicReference<OBackupLog> lastLog = new AtomicReference<>();
+    final CountDownLatch latch = new CountDownLatch(3);
+    task.registerListener((cfg1, log) -> {
+      latch.countDown();
+      lastLog.set(log);
+      return latch.getCount() > 0;
+
+    });
+    latch.await();
+
+    Command command = new Command();
+    command.setId("test");
+    command.setPayload(new BackupLogRequest(uuid, lastLog.get().getUnitId(), null, null, new HashMap<String, String>() {{
+      put("op", "BACKUP_FINISHED");
+    }}));
+    command.setResponseChannel("channelTest");
+
+    ListBackupLogsCommandProcessor backupCommandProcessor = new ListBackupLogsCommandProcessor();
+
+    CommandResponse execute = backupCommandProcessor.execute(command, agent);
+
+    BackupLogsList backupLogsList = (BackupLogsList) execute.getPayload();
+
+    assertThat(backupLogsList.getLogs()).hasSize(1);
 
   }
 
