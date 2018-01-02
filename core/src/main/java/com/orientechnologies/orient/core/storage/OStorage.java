@@ -102,7 +102,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   boolean cleanOutRecord(ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
-  List<ORecordOperation> commit(OTransactionInternal iTx, Runnable callback);
+  List<ORecordOperation> commit(OTransactionInternal iTx);
 
   // TX OPERATIONS
   void rollback(OTransactionInternal iTx);
