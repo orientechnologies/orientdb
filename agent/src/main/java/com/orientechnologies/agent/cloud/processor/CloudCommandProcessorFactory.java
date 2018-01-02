@@ -17,6 +17,7 @@ public class CloudCommandProcessorFactory {
     processors.put(CommandType.LIST_SERVERS.command, new ListServersCommandProcessor());
     processors.put(CommandType.LIST_BACKUPS.command, new ListBackupCommandProcessor());
     processors.put(CommandType.ADD_BACKUP.command, new AddBackupCommandProcessor());
+    processors.put(CommandType.CHANGE_BACKUP.command, new ChangeBackupCommandProcessor());
     processors.put(CommandType.LIST_BACKUP_LOGS.command, new ListBackupLogsCommandProcessor());
     processors.put(CommandType.REMOVE_BACKUP.command, new RemoveBackupCommandProcessor());
     processors.put(CommandType.RESTORE_BACKUP.command, new RestoreBackupCommandProcessor());
