@@ -27,16 +27,21 @@ import java.util.*;
  * Created by tglman on 31/03/16.
  */
 public class OStorageRemoteSession {
-  public boolean                         commandExecuting       = false;
+  public boolean commandExecuting = false;
   int                                    serverURLIndex         = -1;
   String                                 connectionUserName     = null;
   String                                 connectionUserPassword = null;
   Map<String, OStorageRemoteNodeSession> sessions               = new HashMap<String, OStorageRemoteNodeSession>();
 
-  private Set<OChannelBinary>            connections            = Collections
-      .newSetFromMap(new WeakHashMap<OChannelBinary, Boolean>());
-  private final int                      uniqueClientSessionId;
-  private boolean                        closed                 = true;
+  private Set<OChannelBinary> connections = Collections.newSetFromMap(new WeakHashMap<OChannelBinary, Boolean>());
+  private final int uniqueClientSessionId;
+  private boolean closed = true;
+  /**
+   * Make the retry to happen only on the current session, if the current session is invalid or the server is offline it kill the operation.
+   * <p>
+   * this is for avoid to send to the server wrong request expecting a specific state that is not there anymore.
+   */
+  private boolean stickToSession;
 
   public OStorageRemoteSession(final int sessionId) {
     this.uniqueClientSessionId = sessionId;
@@ -96,5 +101,13 @@ public class OStorageRemoteSession {
 
   public synchronized Collection<OStorageRemoteNodeSession> getAllServerSessions() {
     return sessions.values();
+  }
+
+  public void setStickToSession(boolean stickToSession) {
+    this.stickToSession = stickToSession;
+  }
+
+  public boolean isStickToSession() {
+    return stickToSession;
   }
 }

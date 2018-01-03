@@ -261,9 +261,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         try {
           network = getNetwork(serverUrl);
         } catch (OException e) {
-          serverUrl = useNewServerURL(serverUrl);
-          if (serverUrl == null)
+          if (session.isStickToSession()) {
             throw e;
+          } else {
+            serverUrl = useNewServerURL(serverUrl);
+            if (serverUrl == null) {
+              throw e;
+            }
+          }
         }
       } while (network == null);
 
@@ -291,9 +296,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         serverUrl = null;
       } catch (OTokenException | OTokenSecurityException e) {
         connectionManager.release(network);
-        session.removeServerSession(network.getServerURL());
-        if (--retry <= 0)
+        if (session.isStickToSession()) {
           throw OException.wrapException(new OStorageException(errorMessage), e);
+        } else {
+          session.removeServerSession(network.getServerURL());
+          if (--retry <= 0)
+            throw OException.wrapException(new OStorageException(errorMessage), e);
+        }
         serverUrl = null;
       } catch (OOfflineNodeException e) {
         connectionManager.release(network);
@@ -837,7 +846,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   }
 
+  public void stickToSession() {
+    OStorageRemoteSession session = getCurrentSession();
+    session.setStickToSession(true);
+  }
+
+  public void unstickToSession() {
+    OStorageRemoteSession session = getCurrentSession();
+    session.setStickToSession(true);
+  }
+
   public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Object[] args) {
+    stickToSession();
     int recordsPerPage = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
@@ -850,6 +870,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Map args) {
+    stickToSession();
     int recordsPerPage = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
@@ -913,6 +934,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void closeQuery(ODatabaseDocumentRemote database, String queryId) {
     OCloseQueryRequest request = new OCloseQueryRequest(queryId);
     OCloseQueryResponse response = networkOperation(request, "Error closing query: " + queryId);
+    unstickToSession();
   }
 
   public void fetchNextPage(ODatabaseDocumentRemote database, ORemoteResultSet rs) {
@@ -927,44 +949,52 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public List<ORecordOperation> commit(final OTransactionInternal iTx, final Runnable callback) {
-    OCommit37Request request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), iTx.getRecordOperations(),
-        iTx.getIndexOperations());
+    try {
+      OCommit37Request request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), iTx.getRecordOperations(),
+          iTx.getIndexOperations());
 
-    OCommit37Response response = networkOperationNoRetry(request, "Error on commit");
-    for (OCommit37Response.OCreatedRecordResponse created : response.getCreated()) {
-      iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
-      ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
-      if (rop != null) {
-        if (created.getVersion() > rop.getRecord().getVersion() + 1)
-          // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
-          rop.getRecord().unload();
-        ORecordInternal.setVersion(rop.getRecord(), created.getVersion());
+      OCommit37Response response = networkOperationNoRetry(request, "Error on commit");
+      for (OCommit37Response.OCreatedRecordResponse created : response.getCreated()) {
+        iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
+        ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
+        if (rop != null) {
+          if (created.getVersion() > rop.getRecord().getVersion() + 1)
+            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+            rop.getRecord().unload();
+          ORecordInternal.setVersion(rop.getRecord(), created.getVersion());
+        }
       }
-    }
-    for (OCommit37Response.OUpdatedRecordResponse updated : response.getUpdated()) {
-      ORecordOperation rop = iTx.getRecordEntry(updated.getRid());
-      if (rop != null) {
-        if (updated.getVersion() > rop.getRecord().getVersion() + 1)
-          // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
-          rop.getRecord().unload();
-        ORecordInternal.setVersion(rop.getRecord(), updated.getVersion());
+      for (OCommit37Response.OUpdatedRecordResponse updated : response.getUpdated()) {
+        ORecordOperation rop = iTx.getRecordEntry(updated.getRid());
+        if (rop != null) {
+          if (updated.getVersion() > rop.getRecord().getVersion() + 1)
+            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+            rop.getRecord().unload();
+          ORecordInternal.setVersion(rop.getRecord(), updated.getVersion());
+        }
       }
-    }
-    updateCollectionsFromChanges(((OTransactionOptimistic) iTx).getDatabase().getSbTreeCollectionManager(),
-        response.getCollectionChanges());
-    // SET ALL THE RECORDS AS UNDIRTY
-    for (ORecordOperation txEntry : iTx.getRecordOperations())
-      ORecordInternal.unsetDirty(txEntry.getRecord());
+      updateCollectionsFromChanges(((OTransactionOptimistic) iTx).getDatabase().getSbTreeCollectionManager(),
+          response.getCollectionChanges());
+      // SET ALL THE RECORDS AS UNDIRTY
+      for (ORecordOperation txEntry : iTx.getRecordOperations())
+        ORecordInternal.unsetDirty(txEntry.getRecord());
 
-    // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT. 
-    OTransactionAbstract.updateCacheFromEntries(iTx.getDatabase(), iTx.getRecordOperations(), true);
+      // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT.
+      OTransactionAbstract.updateCacheFromEntries(iTx.getDatabase(), iTx.getRecordOperations(), true);
+    } finally {
+      unstickToSession();
+    }
     return null;
   }
 
   public void rollback(OTransactionInternal iTx) {
-    if (((OTransactionOptimistic) iTx).isAlreadyCleared()) {
-      ORollbackTransactionRequest request = new ORollbackTransactionRequest(iTx.getId());
-      ORollbackTransactionResponse response = networkOperation(request, "Error on fetching next page for statment: " + request);
+    try {
+      if (((OTransactionOptimistic) iTx).isAlreadyCleared()) {
+        ORollbackTransactionRequest request = new ORollbackTransactionRequest(iTx.getId());
+        ORollbackTransactionResponse response = networkOperation(request, "Error on fetching next page for statment: " + request);
+      }
+    } finally {
+      unstickToSession();
     }
   }
 
@@ -1642,7 +1672,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   protected String getNextAvailableServerURL(boolean iIsConnectOperation, OStorageRemoteSession session) {
     String url = null;
-    switch (connectionStrategy) {
+    CONNECTION_STRATEGY strategy = connectionStrategy;
+    if (session.isStickToSession()) {
+      strategy = CONNECTION_STRATEGY.STICKY;
+    }
+    switch (strategy) {
     case STICKY:
       url = session != null ? session.getServerUrl() : null;
       if (url == null)
@@ -1869,6 +1903,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void beginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
+    stickToSession();
     OBeginTransactionRequest request = new OBeginTransactionRequest(transaction.getId(), true, transaction.isUsingLog(),
         transaction.getRecordOperations(), transaction.getIndexOperations());
     OBeginTransactionResponse response = networkOperationNoRetry(request, "Error on remote treansaction begin");
