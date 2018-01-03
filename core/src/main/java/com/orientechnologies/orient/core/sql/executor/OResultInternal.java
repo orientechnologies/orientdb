@@ -59,7 +59,7 @@ public class OResultInternal implements OResult {
       OResultInternal result = new OResultInternal();
       OElement elem = (OElement) input;
       for (String prop : elem.getPropertyNames()) {
-        result.setProperty(prop, wrap(elem.getProperty(prop)));
+        result.setProperty(prop, elem.getProperty(prop));
       }
       elem.getSchemaType().ifPresent(x -> result.setProperty("@class", x.getName()));
       return result;

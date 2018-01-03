@@ -118,6 +118,27 @@ public class RemoteQuerySupportTest {
   }
 
   @Test
+  public void testQueryDoubleEmbedded() {
+    ODocument doc = new ODocument("Some");
+    doc.setProperty("prop", "value");
+    ODocument emb1 = new ODocument();
+    emb1.setProperty("two", "value");
+    ODocument emb = new ODocument();
+    emb.setProperty("one", "value");
+    emb.setProperty("secEmb", emb1, OType.EMBEDDED);
+
+    doc.setProperty("emb", emb, OType.EMBEDDED);
+    session.save(doc);
+    OResultSet res = session.query("select emb from Some");
+
+    OResult item = res.next();
+    assertNotNull(item.getProperty("emb"));
+    OResult resEmb = item.getProperty("emb");
+    assertEquals(resEmb.getProperty("one"), "value");
+    assertEquals(((OResult) resEmb.getProperty("secEmb")).getProperty("two"), "value");
+  }
+
+  @Test
   public void testQueryEmbeddedList() {
     ODocument doc = new ODocument("Some");
     doc.setProperty("prop", "value");
