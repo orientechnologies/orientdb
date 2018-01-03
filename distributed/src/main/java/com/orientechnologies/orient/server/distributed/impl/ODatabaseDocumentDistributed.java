@@ -661,13 +661,4 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
-  @Override
-  public void queryStarted(String id, OResultSet rs) {
-    //do nothing
-  }
-
-  @Override
-  public void queryClosed(String id) {
-    //do nothing
-  }
 }
