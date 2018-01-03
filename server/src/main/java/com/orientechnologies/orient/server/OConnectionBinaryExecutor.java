@@ -1206,6 +1206,10 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OLocalResultSetLifecycleDecorator rs = (OLocalResultSetLifecycleDecorator) connection.getDatabase()
         .getActiveQuery(request.getQueryId());
 
+    if (rs == null) {
+      throw new ODatabaseException(String.format("No query with id '%s' found probably expired session", request.getQueryId()));
+    }
+
     //copy the result-set to make sure that the execution is successful
     List<OResultInternal> rsCopy = new ArrayList<>(request.getRecordsPerPage());
     int i = 0;
