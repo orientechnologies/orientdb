@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -619,6 +620,21 @@ public class OExpression extends SimpleNode {
       json.deserialize(fromResult.getProperty("json"));
     }
     booleanValue = fromResult.getProperty("booleanValue");
+  }
+
+  public boolean isDefinedFor(OResult currentRecord) {
+    if(mathExpression!=null){
+      return mathExpression.isDefinedFor(currentRecord);
+    }else {
+      return true;
+    }
+  }
+  public boolean isDefinedFor(OElement currentRecord) {
+    if(mathExpression!=null){
+      return mathExpression.isDefinedFor(currentRecord);
+    }else {
+      return true;
+    }
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

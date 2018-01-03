@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Collections;
@@ -30,12 +31,18 @@ public class OIsDefinedCondition extends OBooleanExpression implements OSimpleBo
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement IS DEFINED!!!");//TODO
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    Object elem = currentRecord.getRecord();
+    if (elem instanceof OElement) {
+      return expression.isDefinedFor((OElement) elem);
+    }
+    return false;
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement IS DEFINED!!!");//TODO
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    return expression.isDefinedFor(currentRecord);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -43,40 +50,48 @@ public class OIsDefinedCondition extends OBooleanExpression implements OSimpleBo
     builder.append(" is defined");
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     return 0;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     return Collections.EMPTY_LIST;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     return expression.needsAliases(aliases);
   }
 
-  @Override public OIsDefinedCondition copy() {
+  @Override
+  public OIsDefinedCondition copy() {
     OIsDefinedCondition result = new OIsDefinedCondition(-1);
     result.expression = expression.copy();
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     this.expression.extractSubQueries(collector);
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     if (expression != null && expression.refersToParent()) {
       return true;
     }
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -90,11 +105,13 @@ public class OIsDefinedCondition extends OBooleanExpression implements OSimpleBo
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return expression != null ? expression.hashCode() : 0;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     return expression.getMatchPatternInvolvedAliases();
   }
 }

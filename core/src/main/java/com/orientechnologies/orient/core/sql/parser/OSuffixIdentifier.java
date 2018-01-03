@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -398,6 +399,20 @@ public class OSuffixIdentifier extends SimpleNode {
       recordAttribute.deserialize(fromResult.getProperty("recordAttribute"));
     }
     star = fromResult.getProperty("star");
+  }
+
+  public boolean isDefinedFor(OResult currentRecord) {
+    if (identifier != null) {
+      return currentRecord.hasProperty(identifier.getStringValue());
+    }
+    return true;
+  }
+
+  public boolean isDefinedFor(OElement currentRecord) {
+    if (identifier != null) {
+      return ((ODocument) currentRecord.getRecord()).containsField(identifier.getStringValue());
+    }
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */

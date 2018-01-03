@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -323,5 +324,18 @@ public class OBaseIdentifier extends SimpleNode {
     }
   }
 
+  public boolean isDefinedFor(OResult currentRecord) {
+    if(suffix!=null){
+      return suffix.isDefinedFor(currentRecord);
+    }
+    return true;
+  }
+
+  public boolean isDefinedFor(OElement currentRecord) {
+    if(suffix!=null){
+      return suffix.isDefinedFor(currentRecord);
+    }
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

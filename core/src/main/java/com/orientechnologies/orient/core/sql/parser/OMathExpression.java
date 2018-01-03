@@ -6,6 +6,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -20,6 +21,14 @@ public class OMathExpression extends SimpleNode {
 
   public OExpression getExpandContent() {
     throw new OCommandExecutionException("Invalid expand expression");
+  }
+
+  public boolean isDefinedFor(OResult currentRecord) {
+    return true;
+  }
+
+  public boolean isDefinedFor(OElement currentRecord) {
+    return true;
   }
 
   public enum Operator {

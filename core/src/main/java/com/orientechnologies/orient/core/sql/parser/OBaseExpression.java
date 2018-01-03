@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -414,6 +415,30 @@ public class OBaseExpression extends OMathExpression {
       modifier = new OModifier(-1);
       modifier.deserialize(fromResult.getProperty("modifier"));
     }
+  }
+
+  @Override
+  public boolean isDefinedFor(OResult currentRecord) {
+    if(this.identifier!=null){
+      if(modifier==null){
+        return identifier.isDefinedFor(currentRecord);
+      }
+
+    }
+    return true;
+
+  }
+
+  @Override
+  public boolean isDefinedFor(OElement currentRecord) {
+    if(this.identifier!=null){
+      if(modifier==null){
+        return identifier.isDefinedFor(currentRecord);
+      }
+
+    }
+    return true;
+
   }
 }
 

@@ -3288,4 +3288,20 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
+
+  @Test
+  public void testIsDefined() {
+    String className = "testIsDefined";
+    db.command("create class " + className).close();
+    db.command("insert into " + className + " set name = 'Foo'").close();
+    db.command("insert into " + className + " set sur = 'Bar'").close();
+
+    Map<String, Object> params = new HashMap<>();
+    params.put("p1", "Foo");
+    OResultSet result = db.query("select from " + className + " where name = :p1", params);
+    Assert.assertTrue(result.hasNext());
+    result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
 }
