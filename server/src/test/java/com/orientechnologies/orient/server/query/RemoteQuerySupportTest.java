@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -18,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.*;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE;
 import static org.junit.Assert.*;
@@ -98,6 +100,75 @@ public class RemoteQuerySupportTest {
       OResult item = res.next();
       assertEquals(item.getProperty("prop"), "value");
     }
+  }
+
+  @Test
+  public void testQueryEmbedded() {
+    ODocument doc = new ODocument("Some");
+    doc.setProperty("prop", "value");
+    ODocument emb = new ODocument();
+    emb.setProperty("one", "value");
+    doc.setProperty("emb", emb, OType.EMBEDDED);
+    session.save(doc);
+    OResultSet res = session.query("select emb from Some");
+
+    OResult item = res.next();
+    assertNotNull(item.getProperty("emb"));
+    assertNotEquals(((OResult) item.getProperty("emb")).getProperty("one"), "value");
+  }
+
+  @Test
+  public void testQueryEmbeddedList() {
+    ODocument doc = new ODocument("Some");
+    doc.setProperty("prop", "value");
+    ODocument emb = new ODocument();
+    emb.setProperty("one", "value");
+    List<Object> list = new ArrayList<>();
+    list.add(emb);
+    doc.setProperty("list", list, OType.EMBEDDEDLIST);
+    session.save(doc);
+    OResultSet res = session.query("select list from Some");
+
+    OResult item = res.next();
+    assertNotNull(item.getProperty("list"));
+    assertEquals(((List<OResult>) item.getProperty("list")).size(), 1);
+    assertNotEquals(((List<OResult>) item.getProperty("list")).get(0).getProperty("one"), "value");
+  }
+
+  @Test
+  public void testQueryEmbeddedSet() {
+    ODocument doc = new ODocument("Some");
+    doc.setProperty("prop", "value");
+    ODocument emb = new ODocument();
+    emb.setProperty("one", "value");
+    Set<ODocument> set = new HashSet<>();
+    set.add(emb);
+    doc.setProperty("set", set, OType.EMBEDDEDSET);
+    session.save(doc);
+    OResultSet res = session.query("select set from Some");
+
+    OResult item = res.next();
+    assertNotNull(item.getProperty("set"));
+    assertEquals(((Set<OResult>) item.getProperty("set")).size(), 1);
+    assertNotEquals(((Set<OResult>) item.getProperty("set")).iterator().next().getProperty("one"), "value");
+  }
+
+  @Test
+  public void testQueryEmbeddedMap() {
+    ODocument doc = new ODocument("Some");
+    doc.setProperty("prop", "value");
+    ODocument emb = new ODocument();
+    emb.setProperty("one", "value");
+    Map<String, ODocument> map = new HashMap<>();
+    map.put("key", emb);
+    doc.setProperty("map", map, OType.EMBEDDEDMAP);
+    session.save(doc);
+    OResultSet res = session.query("select map from Some");
+
+    OResult item = res.next();
+    assertNotNull(item.getProperty("map"));
+    assertEquals(((Set<OResult>) item.getProperty("map")).size(), 1);
+    assertNotEquals(((Map<String, OResult>) item.getProperty("map")).get("key").getProperty("one"), "value");
   }
 
   @After
