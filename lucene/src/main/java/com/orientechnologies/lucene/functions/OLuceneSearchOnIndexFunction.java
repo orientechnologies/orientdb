@@ -38,9 +38,7 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] params, OCommandContext ctx) {
-
-    OResult result = (OResult) iThis;
-    OElement element = result.toElement();
+    OElement element = iThis instanceof OElement ? (OElement) iThis : ((OResult) iThis).toElement();
 
     String indexName = (String) params[0];
 
