@@ -114,7 +114,7 @@ public class RemoteQuerySupportTest {
 
     OResult item = res.next();
     assertNotNull(item.getProperty("emb"));
-    assertNotEquals(((OResult) item.getProperty("emb")).getProperty("one"), "value");
+    assertEquals(((OResult) item.getProperty("emb")).getProperty("one"), "value");
   }
 
   @Test
@@ -132,7 +132,7 @@ public class RemoteQuerySupportTest {
     OResult item = res.next();
     assertNotNull(item.getProperty("list"));
     assertEquals(((List<OResult>) item.getProperty("list")).size(), 1);
-    assertNotEquals(((List<OResult>) item.getProperty("list")).get(0).getProperty("one"), "value");
+    assertEquals(((List<OResult>) item.getProperty("list")).get(0).getProperty("one"), "value");
   }
 
   @Test
@@ -150,7 +150,7 @@ public class RemoteQuerySupportTest {
     OResult item = res.next();
     assertNotNull(item.getProperty("set"));
     assertEquals(((Set<OResult>) item.getProperty("set")).size(), 1);
-    assertNotEquals(((Set<OResult>) item.getProperty("set")).iterator().next().getProperty("one"), "value");
+    assertEquals(((Set<OResult>) item.getProperty("set")).iterator().next().getProperty("one"), "value");
   }
 
   @Test
@@ -167,8 +167,8 @@ public class RemoteQuerySupportTest {
 
     OResult item = res.next();
     assertNotNull(item.getProperty("map"));
-    assertEquals(((Set<OResult>) item.getProperty("map")).size(), 1);
-    assertNotEquals(((Map<String, OResult>) item.getProperty("map")).get("key").getProperty("one"), "value");
+    assertEquals(((Map<String, OResult>) item.getProperty("map")).size(), 1);
+    assertEquals(((Map<String, OResult>) item.getProperty("map")).get("key").getProperty("one"), "value");
   }
 
   @After

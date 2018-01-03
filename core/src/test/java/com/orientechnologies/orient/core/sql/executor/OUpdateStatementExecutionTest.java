@@ -615,7 +615,7 @@ public class OUpdateStatementExecutionTest {
     Assert.assertTrue(result.hasNext());
     item = result.next();
     Assert.assertNotNull(item);
-    ODocument ls = item.getProperty("theProperty");
+    OResult ls = item.getProperty("theProperty");
     Assert.assertNotNull(ls);
     Assert.assertFalse(ls.getPropertyNames().contains("sub"));
     Assert.assertEquals("bar", ls.getProperty("aaa"));
