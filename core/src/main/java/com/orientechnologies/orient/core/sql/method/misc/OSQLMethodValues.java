@@ -20,8 +20,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Johann Sorel (Geomatys)
@@ -42,6 +41,13 @@ public class OSQLMethodValues extends OAbstractSQLMethod {
     }
     if (ioResult instanceof ODocument) {
       return Arrays.asList(((ODocument) ioResult).fieldValues());
+    }
+    if (ioResult instanceof Collection) {
+      List result = new ArrayList();
+      for (Object o : (Collection) ioResult) {
+        result.addAll((Collection) execute(iThis, iCurrentRecord, iContext, o, iParams));
+      }
+      return result;
     }
     return null;
   }
