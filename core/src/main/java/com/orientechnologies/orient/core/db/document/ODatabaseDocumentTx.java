@@ -504,172 +504,38 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   public OVertex newVertex(final String iClassName) {
-    ODocument doc = newInstance(iClassName);
-    if (!doc.isVertex()) {
-      throw new IllegalArgumentException("" + iClassName + " is not a vertex class");
-    }
-    return doc.asVertex().get();
+    checkOpenness();
+    return internal.newVertex(iClassName);
   }
 
   @Override
   public OVertex newVertex(OClass type) {
-    if (type == null) {
-      return newVertex("V");
-    }
-    return newVertex(type.getName());
+    checkOpenness();
+    return internal.newVertex(type);
   }
 
   @Override
   public OEdge newEdge(OVertex from, OVertex to, String type) {
-    ODocument doc = newInstance(type);
-    if (!doc.isEdge()) {
-      throw new IllegalArgumentException("" + type + " is not an edge class");
-    }
-
-    return addEdgeInternal(from, to, type);
+    checkOpenness();
+    return internal.newEdge(from, to, type);
   }
 
   @Override
   public OEdge newEdge(OVertex from, OVertex to, OClass type) {
-    if (type == null) {
-      return newEdge(from, to, "E");
-    }
-    return newEdge(from, to, type.getName());
+    checkOpenness();
+    return internal.newEdge(from, to, type);
   }
 
   @Override
   public OElement newElement() {
-    return newInstance();
+    checkOpenness();
+    return internal.newInstance();
   }
 
   @Override
   public OElement newElement(String className) {
-    return newInstance(className);
-  }
-
-  public OElement newElement(OClass clazz) {
-    return newInstance(clazz.getName());
-  }
-
-  private OEdge addEdgeInternal(final OVertex currentVertex, final OVertex inVertex, String iClassName, final Object... fields) {
-
-    OEdge edge = null;
-    ODocument outDocument = null;
-    ODocument inDocument = null;
-    boolean outDocumentModified = false;
-
-    if (checkDeletedInTx(currentVertex))
-      throw new ORecordNotFoundException(currentVertex.getIdentity(),
-          "The vertex " + currentVertex.getIdentity() + " has been deleted");
-
-    if (checkDeletedInTx(inVertex))
-      throw new ORecordNotFoundException(inVertex.getIdentity(), "The vertex " + inVertex.getIdentity() + " has been deleted");
-
-    final int maxRetries = 1;//TODO
-    for (int retry = 0; retry < maxRetries; ++retry) {
-      try {
-        // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
-        if (outDocument == null) {
-          outDocument = currentVertex.getRecord();
-          if (outDocument == null)
-            throw new IllegalArgumentException("source vertex is invalid (rid=" + currentVertex.getIdentity() + ")");
-        }
-
-        if (inDocument == null) {
-          inDocument = inVertex.getRecord();
-          if (inDocument == null)
-            throw new IllegalArgumentException("source vertex is invalid (rid=" + inVertex.getIdentity() + ")");
-        }
-
-        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
-          throw new IllegalArgumentException("source record is not a vertex");
-
-        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
-          throw new IllegalArgumentException("destination record is not a vertex");
-
-        OVertex to = inVertex;
-        OVertex from = currentVertex;
-
-        OSchema schema = getMetadata().getSchema();
-        final OClass edgeType = schema.getClass(iClassName);
-        if (edgeType == null)
-          // AUTO CREATE CLASS
-          schema.createClass(iClassName);
-        else
-          // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
-          iClassName = edgeType.getName();
-
-        final String outFieldName = getConnectionFieldName(ODirection.OUT, iClassName);
-        final String inFieldName = getConnectionFieldName(ODirection.IN, iClassName);
-
-        // since the label for the edge can potentially get re-assigned
-        // before being pushed into the OrientEdge, the
-        // null check has to go here.
-        if (iClassName == null)
-          throw new IllegalArgumentException("Class " + iClassName + " cannot be found");
-
-        // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
-
-        if (isUseLightweightEdges() && (fields == null || fields.length == 0)) {
-          edge = newLightweightEdge(iClassName, from, to);
-          OVertexDelegate.createLink(from.getRecord(), to.getRecord(), outFieldName);
-          OVertexDelegate.createLink(to.getRecord(), from.getRecord(), inFieldName);
-        } else {
-          edge = newInstance(iClassName).asEdge().get();
-          edge.setProperty("out", currentVertex.getRecord());
-          edge.setProperty("in", inDocument.getRecord());
-
-          if (fields != null) {
-            for (int i = 0; i < fields.length; i += 2) {
-              String fieldName = "" + fields[i];
-              if (fields.length <= i + 1) {
-                break;
-              }
-              Object fieldValue = fields[i + 1];
-              edge.setProperty(fieldName, fieldValue);
-
-            }
-          }
-
-          if (!outDocumentModified) {
-            // OUT-VERTEX ---> IN-VERTEX/EDGE
-            OVertexDelegate.createLink(outDocument, edge.getRecord(), outFieldName);
-
-          }
-
-          // IN-VERTEX ---> OUT-VERTEX/EDGE
-          OVertexDelegate.createLink(inDocument, edge.getRecord(), inFieldName);
-
-        }
-
-        // OK
-        break;
-
-      } catch (ONeedRetryException ignore) {
-        // RETRY
-        if (!outDocumentModified)
-          outDocument.reload();
-        else if (inDocument != null)
-          inDocument.reload();
-      } catch (RuntimeException e) {
-        // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
-        try {
-          edge.delete();
-        } catch (Exception ex) {
-          OLogManager.instance().error(this, "Error during edge deletion", ex);
-        }
-        throw e;
-      } catch (Exception e) {
-        // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
-        try {
-          edge.delete();
-        } catch (Exception ex) {
-          OLogManager.instance().error(this, "Error during edge deletion", ex);
-        }
-        throw new IllegalStateException("Error on addEdge in non tx environment", e);
-      }
-    }
-    return edge;
+    checkOpenness();
+    return internal.newElement(className);
   }
 
   public boolean isUseLightweightEdges() {
@@ -678,32 +544,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   public void setUseLightweightEdges(boolean b) {
     internal.setUseLightweightEdges(b);
-  }
-
-  private boolean checkDeletedInTx(OVertex currentVertex) {
-    ORID id;
-    if (currentVertex.getRecord() != null)
-      id = currentVertex.getRecord().getIdentity();
-    else
-      return false;
-
-    final ORecordOperation oper = getTransaction().getRecordEntry(id);
-    if (oper == null)
-      return id.isTemporary();
-    else
-      return oper.type == ORecordOperation.DELETED;
-  }
-
-  private static String getConnectionFieldName(final ODirection iDirection, final String iClassName) {
-    if (iDirection == null || iDirection == ODirection.BOTH)
-      throw new IllegalArgumentException("Direction not valid");
-
-    // PREFIX "out_" or "in_" TO THE FIELD NAME
-    final String prefix = iDirection == ODirection.OUT ? "out_" : "in_";
-    if (iClassName == null || iClassName.isEmpty() || iClassName.equals("E"))
-      return prefix;
-
-    return prefix + iClassName;
   }
 
   @Override

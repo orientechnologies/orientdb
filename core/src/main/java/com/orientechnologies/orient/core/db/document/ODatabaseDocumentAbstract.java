@@ -1939,7 +1939,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   private OEdge addEdgeInternal(final OVertex currentVertex, final OVertex inVertex, String iClassName, final Object... fields) {
-
+    if (currentVertex == null)
+      throw new IllegalArgumentException("To vertex is null");
+    if (inVertex == null)
+      throw new IllegalArgumentException("To vertex is null");
     OEdge edge = null;
     ODocument outDocument = null;
     ODocument inDocument = null;
