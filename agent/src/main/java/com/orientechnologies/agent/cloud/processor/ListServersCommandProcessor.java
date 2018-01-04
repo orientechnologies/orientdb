@@ -3,6 +3,7 @@ package com.orientechnologies.agent.cloud.processor;
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.http.command.OServerCommandDistributedManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
@@ -35,6 +36,8 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
       server.setName("orientdb");
       server.setId("orientdb");
       server.setStatus("ONLINE");
+
+      server.setVersion(OConstants.getRawVersion());
       server.setDistributed(false);
       OProfiler profiler = Orient.instance().getProfiler();
       ODocument statsDoc = new ODocument().fromJSON(profiler.getStatsAsJson());//change this!!!
@@ -65,6 +68,7 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
           String name = m.field("name");
           Date startedOn = m.field("startedOn");
           String status = m.field("status");
+          String version = m.field("version");
           Collection<String> databases = m.field("databases");
 
           List<Map<String,String>> listeners = m.field("listeners");
@@ -77,6 +81,7 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
           server.setDistributed(true);
           server.setName(name);
           server.setId(name);
+          server.setVersion(version);
           server.setAddresses(addresses);
           server.setStartedOn(startedOn);
           server.setStatus(status);
