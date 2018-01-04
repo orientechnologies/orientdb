@@ -65,6 +65,7 @@ public class ListDistributedServerCommandProcessorTest extends AbstractServerClu
     assertThat(info.getOsVersion()).isNotNull();
     assertThat(info.getStartedOn()).isNotNull();
     assertThat(info.getStatus()).isEqualTo("ONLINE");
+    assertThat(info.getAddresses()).isNotEmpty();
     assertThat(info.getStats()).isNotNull();
 
     ServerStats stats = info.getStats();

@@ -43,6 +43,8 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
 
       ServerStats stats = populateStats(server, null, realtime);
 
+      List<String> addresses = srv.getNetworkListeners().stream().map((l) -> l.toString()).collect(Collectors.toList());
+      server.setAddresses(addresses);
       server.setStats(stats);
 
       result.addInfo(server);
@@ -65,10 +67,17 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
           String status = m.field("status");
           Collection<String> databases = m.field("databases");
 
+          List<Map<String,String>> listeners = m.field("listeners");
+
+          List<String> addresses = new ArrayList<>();
+          if(listeners!=null){
+            addresses = listeners.stream().map((l) -> l.get("listen")).collect(Collectors.toList());
+          }
           ServerBasicInfo server = new ServerBasicInfo();
           server.setDistributed(true);
           server.setName(name);
           server.setId(name);
+          server.setAddresses(addresses);
           server.setStartedOn(startedOn);
           server.setStatus(status);
           server.setDatabases(databases);
