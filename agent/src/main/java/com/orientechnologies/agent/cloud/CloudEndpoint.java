@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.cloud.processor.CloudCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.CloudCommandProcessorFactory;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
@@ -18,6 +19,7 @@ import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ConnectException;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -55,8 +57,10 @@ public class CloudEndpoint extends Thread {
     while (!terminate) {
       try {
         handleRequest();
+      } catch (ConnectException e) {
+        OLogManager.instance().debug(this, "Connection Refused");
       } catch (Exception e) {
-        e.printStackTrace();
+        OLogManager.instance().warn(this, "Error handling request", e);
       }
       if (requestInterval > 0) {
         try {
@@ -193,17 +197,17 @@ public class CloudEndpoint extends Thread {
     }
 
     InputStream content = response.getEntity().getContent();
-//    StringBuilder builder = new StringBuilder();
-//    BufferedReader reader = new BufferedReader(new InputStreamReader(content));
-//    String line;
-//    do {
-//      line = reader.readLine();
-//      if (line != null) {
-//        builder.append(line);
-//      }
-//    } while (line != null);
-//    content.close();
-//    client.close();
+    //    StringBuilder builder = new StringBuilder();
+    //    BufferedReader reader = new BufferedReader(new InputStreamReader(content));
+    //    String line;
+    //    do {
+    //      line = reader.readLine();
+    //      if (line != null) {
+    //        builder.append(line);
+    //      }
+    //    } while (line != null);
+    //    content.close();
+    //    client.close();
 
     try {
       return deserializeRequest(content);

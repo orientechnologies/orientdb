@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.cloud.processor.CloudCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.CloudCommandProcessorFactory;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
@@ -16,6 +17,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
+import java.net.ConnectException;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -52,8 +54,10 @@ public class CloudPushEndpoint extends Thread {
     while (!terminate) {
       try {
         pushData();
+      } catch (ConnectException e) {
+        OLogManager.instance().debug(this, "Connection Refused");
       } catch (Exception e) {
-        e.printStackTrace();
+        OLogManager.instance().warn(this, "Error handling request", e);
       }
       try {
         Thread.sleep(REQUEST_INTERVAL);
@@ -62,18 +66,15 @@ public class CloudPushEndpoint extends Thread {
     }
   }
 
-  private void pushData() {
+  private void pushData() throws Exception {
     if (projectId != null && cloudBaseUrl != null) {
-      try {
-        Command request = new Command();
-        request.setCmd(CommandType.LIST_SERVERS.command);
-        request.setResponseChannel(monitoringPath);
+      Command request = new Command();
+      request.setCmd(CommandType.LIST_SERVERS.command);
+      request.setResponseChannel(monitoringPath);
 
-        CommandResponse response = processRequest(request);
-        sendResponse(response);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      CommandResponse response = processRequest(request);
+      sendResponse(response);
+
     } else {
       init();//try to re-init for next round
     }
