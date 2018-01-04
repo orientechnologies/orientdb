@@ -31,9 +31,8 @@ import java.util.concurrent.CountDownLatch;
 
 /**
  * Task wrapper to manage synchronized operations like transactions.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
   private boolean        usesDatabase;
@@ -88,5 +87,13 @@ public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
   @Override
   public boolean isUsingDatabase() {
     return usesDatabase;
+  }
+
+  @Override
+  public boolean hasResponse() {
+    if (task == null)
+      return super.hasResponse();
+    else
+      return task.hasResponse();
   }
 }
