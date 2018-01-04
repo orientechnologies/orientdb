@@ -101,6 +101,7 @@ public class OServer {
   private OSystemDatabase          systemDatabase;
   private OrientDB                 context;
   private OrientDBInternal         databases;
+  protected Date startedOn = new Date();
 
   public OServer()
       throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
@@ -652,7 +653,6 @@ public class OServer {
    *
    * @param iUserName Username to authenticate
    * @param iPassword Password in clear
-   *
    * @return true if authentication is ok, otherwise false
    */
   public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
@@ -690,7 +690,6 @@ public class OServer {
    * Checks if a server user is allowed to operate with a resource.
    *
    * @param iUserName Username to authenticate
-   *
    * @return true if authentication is ok, otherwise false
    */
   public boolean isAllowed(final String iUserName, final String iResourceToCheck) {
@@ -1199,5 +1198,9 @@ public class OServer {
 
   public void restore(String name, String path) {
     databases.restore(name, null, null, null, path, OrientDBConfig.defaultConfig());
+  }
+
+  public Date getStartedOn() {
+    return startedOn;
   }
 }
