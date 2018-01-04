@@ -489,7 +489,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     return os.contains("win");
   }
 
-  protected void registerEngine(final OEngine iEngine) throws IllegalArgumentException {
+  public void registerEngine(final OEngine iEngine) throws IllegalArgumentException {
     OEngine oEngine = engines.get(iEngine.getName());
 
     if (oEngine != null) {
