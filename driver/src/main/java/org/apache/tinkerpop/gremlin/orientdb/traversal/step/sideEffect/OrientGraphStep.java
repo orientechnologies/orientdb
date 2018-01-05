@@ -121,11 +121,11 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
     return (OGraph) this.getTraversal().getGraph().get();
   }
 
-  public Optional<OrientGraphQuery> buildQuery() {
+  public Optional<OrientGraphBaseQuery> buildQuery() {
 
     OrientGraphQueryBuilder builder = new OrientGraphQueryBuilder(isVertexStep());
     this.hasContainers.forEach(builder::addCondition);
-    return builder.build();
+    return builder.build(getGraph());
   }
 
   @VisibleForTesting

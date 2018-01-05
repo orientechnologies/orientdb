@@ -7,6 +7,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
 import org.apache.tinkerpop.gremlin.structure.T;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Enrico Risa on 08/08/2017.
@@ -37,10 +38,16 @@ public class OrientGraphQueryBuilder {
     return this;
   }
 
-  public Optional<OrientGraphQuery> build() {
+  public Optional<OrientGraphBaseQuery> build(OGraph graph) {
     if (classes.size() == 0) {
       classes.add(vertexStep ? "V" : "E");
+    } else {
+      classes = classes.stream().filter(graph::existClass).collect(Collectors.toList());
+      if (classes.size() == 0) {
+        return Optional.of(new OrientGraphEmptyQuery());
+      }
     }
+
     StringBuilder builder = new StringBuilder();
     builder.append("SELECT expand($union) ");
     Map<String, Object> parameters = new HashMap<>();

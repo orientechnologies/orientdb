@@ -42,6 +42,7 @@ public interface OGraph extends Graph {
   @Deprecated
   Set<String> getIndexedKeys(final Class<? extends Element> elementClass, String label);
 
+  boolean existClass(String label);
 
   OElementFactory elementFactory();
 

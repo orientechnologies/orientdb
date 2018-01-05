@@ -80,12 +80,12 @@ public final class OrientGraph implements OGraph {
   public static String CONFIG_MAX_PARTITION_SIZE = "orient-max-partitionsize";
   public static String CONFIG_LABEL_AS_CLASSNAME = "orient-label-as-classname";
 
-  protected       boolean            connectionFailed;
-  protected       ODatabaseDocument  database;
-  protected final Features           features;
-  protected final Configuration      configuration;
-  protected final String             user;
-  protected final String             password;
+  protected       boolean                connectionFailed;
+  protected       ODatabaseDocument      database;
+  protected final Features               features;
+  protected final Configuration          configuration;
+  protected final String                 user;
+  protected final String                 password;
   protected       OrientGraphBaseFactory factory;
   protected boolean shouldCloseFactory = false;
   protected OElementFactory   elementFactory;
@@ -617,6 +617,14 @@ public final class OrientGraph implements OGraph {
       throw new IllegalArgumentException("unable to find class " + superClassName + ". Available classes: " + allClasses);
     }
     createClass(className, superClass);
+  }
+
+  @Override
+  public boolean existClass(String label) {
+    makeActive();
+    OSchema schema = database.getMetadata().getSchema();
+    OClass cls = schema.getClass(label);
+    return cls != null;
   }
 
   public void createClass(final String className, final OClass superClass) {

@@ -190,6 +190,11 @@ public class OrientStandardGraph implements OGraph {
   }
 
   @Override
+  public boolean existClass(String label) {
+    return graph().existClass(label);
+  }
+
+  @Override
   public OElementFactory elementFactory() {
     return graph().elementFactory();
   }

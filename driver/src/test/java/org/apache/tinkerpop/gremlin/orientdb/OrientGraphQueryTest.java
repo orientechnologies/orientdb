@@ -108,6 +108,31 @@ public class OrientGraphQueryTest extends OrientGraphBaseTest {
   }
 
   @Test
+  public void shouldNotBlowWithWrongClass() {
+
+    OrientGraph graph = factory.getNoTx();
+
+    try {
+
+      initGraph(graph);
+
+
+      Integer count = graph.traversal().V().hasLabel("Wrong").toList().size();
+
+      Assert.assertEquals(new Integer(0), count);
+
+      // Count on Person + Wrong Class
+
+      count = graph.traversal().V().hasLabel("Person", "Wrong").toList().size();
+
+      Assert.assertEquals(new Integer(2), count);
+    } finally {
+      graph.close();
+    }
+
+  }
+
+  @Test
   public void shouldCountVerticesEdgesOnTXCommit() {
 
     OrientGraph graph = factory.getTx();
