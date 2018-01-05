@@ -37,6 +37,6 @@ public class OSQLFunctionTraversedVertex extends OSQLFunctionTraversedElement {
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       final OCommandContext iContext) {
-    return evaluate( iParams, iContext, "V" );
+    return evaluate(iThis, iParams, iContext, "V" );
   }
 }

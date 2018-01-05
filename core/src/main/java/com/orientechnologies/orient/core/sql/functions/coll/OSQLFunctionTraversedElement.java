@@ -19,24 +19,24 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.traverse.OTraverseRecordProcess;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Returns a traversed element from the stack. Use it with SQL traverse only.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstract {
   public static final String NAME = "traversedElement";
@@ -69,14 +69,17 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       final OCommandContext iContext) {
-    return evaluate(iParams, iContext, null);
+    return evaluate(iThis, iParams, iContext, null);
   }
 
-  protected Object evaluate(final Object[] iParams, final OCommandContext iContext, final String iClassName) {
+  protected Object evaluate(final Object iThis, final Object[] iParams, final OCommandContext iContext, final String iClassName) {
     final int beginIndex = (Integer) iParams[0];
     final int items = iParams.length > 1 ? (Integer) iParams[1] : 1;
 
-    final ArrayDeque stack = (ArrayDeque) iContext.getVariable("stack");
+    ArrayDeque stack = (ArrayDeque) iContext.getVariable("stack");
+    if (stack == null && iThis instanceof OResult) {
+      stack = (ArrayDeque) ((OResult) iThis).getMetadata("$stack");
+    }
     if (stack == null)
       throw new OCommandExecutionException("Cannot invoke " + getName() + "() against non traverse command");
 
@@ -84,13 +87,29 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
 
     if (beginIndex < 0) {
       int i = -1;
-      for (Iterator it = stack.iterator(); it.hasNext();) {
+      for (Iterator it = stack.iterator(); it.hasNext(); ) {
         final Object o = it.next();
         if (o instanceof OTraverseRecordProcess) {
           final OIdentifiable record = ((OTraverseRecordProcess) o).getTarget();
 
-          if (iClassName == null
-              || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord()).isSubClassOf(iClassName)) {
+          if (iClassName == null || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord())
+              .isSubClassOf(iClassName)) {
+            if (i <= beginIndex) {
+              if (items == 1)
+                return record;
+              else {
+                result.add(record);
+                if (result.size() >= items)
+                  break;
+              }
+            }
+            i--;
+          }
+        } else if (o instanceof OIdentifiable) {
+          final OIdentifiable record = (OIdentifiable) o;
+
+          if (iClassName == null || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord())
+              .isSubClassOf(iClassName)) {
             if (i <= beginIndex) {
               if (items == 1)
                 return record;
@@ -103,16 +122,33 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
             i--;
           }
         }
+
       }
     } else {
       int i = 0;
-      for (Iterator it = stack.descendingIterator(); it.hasNext();) {
+      for (Iterator it = stack.descendingIterator(); it.hasNext(); ) {
         final Object o = it.next();
         if (o instanceof OTraverseRecordProcess) {
           final OIdentifiable record = ((OTraverseRecordProcess) o).getTarget();
 
-          if (iClassName == null
-              || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord()).isSubClassOf(iClassName)) {
+          if (iClassName == null || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord())
+              .isSubClassOf(iClassName)) {
+            if (i >= beginIndex) {
+              if (items == 1)
+                return record;
+              else {
+                result.add(record);
+                if (result.size() >= items)
+                  break;
+              }
+            }
+            i++;
+          }
+        } else if (o instanceof OIdentifiable) {
+          final OIdentifiable record = (OIdentifiable) o;
+
+          if (iClassName == null || ODocumentInternal.getImmutableSchemaClass((ODocument) record.getRecord())
+              .isSubClassOf(iClassName)) {
             if (i >= beginIndex) {
               if (items == 1)
                 return record;
@@ -125,6 +161,7 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
             i++;
           }
         }
+
       }
     }
 

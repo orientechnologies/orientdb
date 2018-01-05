@@ -6,9 +6,7 @@ import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 26/10/16.
@@ -30,6 +28,10 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       }
       ((OResultInternal) item).setMetadata("$depth", 0);
 
+      ArrayDeque stack = new ArrayDeque();
+      item.getIdentity().ifPresent(x -> stack.push(x));
+      ((OResultInternal) item).setMetadata("$stack", stack);
+
       List<OIdentifiable> path = new ArrayList<>();
       path.add(item.getIdentity().get());
       ((OResultInternal) item).setMetadata("$path", path);
@@ -49,7 +51,6 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       res = new OTraverseResult();
       res.setElement(item.getElement().get());
       res.depth = 0;
-      res.setMetadata("$depth", 0);
     } else if (item.getPropertyNames().size() == 1) {
       Object val = item.getProperty(item.getPropertyNames().iterator().next());
       if (val instanceof OIdentifiable) {
@@ -101,10 +102,20 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     res.setElement(nextStep);
     res.depth = depth;
     res.setMetadata("$depth", depth);
+
     List<OIdentifiable> newPath = new ArrayList<>();
     newPath.addAll(path);
     newPath.add(res.getIdentity().get());
     res.setMetadata("$path", newPath);
+
+    List reverseStack = new ArrayList();
+    reverseStack.addAll(newPath);
+    Collections.reverse(reverseStack);
+    ArrayDeque newStack = new ArrayDeque();
+    newStack.addAll(reverseStack);
+
+    res.setMetadata("$stack", newStack);
+
     tryAddEntryPoint(res, ctx);
   }
 
@@ -120,8 +131,16 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       ((OTraverseResult) nextStep).setMetadata("$depth", depth);
       List<OIdentifiable> newPath = new ArrayList<>();
       newPath.addAll(path);
-      nextStep.getIdentity().ifPresent(x->newPath.add(x.getIdentity()));
+      nextStep.getIdentity().ifPresent(x -> newPath.add(x.getIdentity()));
       ((OTraverseResult) nextStep).setMetadata("$path", newPath);
+
+      List reverseStack = new ArrayList();
+      reverseStack.addAll(newPath);
+      Collections.reverse(reverseStack);
+      ArrayDeque newStack = new ArrayDeque();
+      newStack.addAll(reverseStack);
+      ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
+
       tryAddEntryPoint(nextStep, ctx);
     } else {
       OTraverseResult res = new OTraverseResult();
@@ -130,8 +149,16 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       res.setMetadata("$depth", depth);
       List<OIdentifiable> newPath = new ArrayList<>();
       newPath.addAll(path);
-      nextStep.getIdentity().ifPresent(x->newPath.add(x.getIdentity()));
+      nextStep.getIdentity().ifPresent(x -> newPath.add(x.getIdentity()));
       ((OTraverseResult) nextStep).setMetadata("$path", newPath);
+
+      List reverseStack = new ArrayList();
+      reverseStack.addAll(newPath);
+      Collections.reverse(reverseStack);
+      ArrayDeque newStack = new ArrayDeque();
+      newStack.addAll(reverseStack);
+      ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
+
       tryAddEntryPoint(res, ctx);
     }
   }

@@ -37,6 +37,6 @@ public class OSQLFunctionTraversedEdge extends OSQLFunctionTraversedElement {
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       final OCommandContext iContext) {
-    return evaluate( iParams, iContext, "E" );
+    return evaluate(iThis, iParams, iContext, "E" );
   }
 }

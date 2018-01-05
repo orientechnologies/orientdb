@@ -6,9 +6,7 @@ import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 26/10/16.
@@ -26,6 +24,11 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     while (nextN.hasNext()) {
       while (nextN.hasNext()) {
         OResult item = toTraverseResult(nextN.next());
+
+        ArrayDeque stack = new ArrayDeque();
+        item.getIdentity().ifPresent(x -> stack.push(x));
+        ((OResultInternal) item).setMetadata("$stack", stack);
+
 
         List<OIdentifiable> path = new ArrayList<>();
         path.add(item.getIdentity().get());
@@ -100,6 +103,13 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     newPath.add(res.getIdentity().get());
     res.setMetadata("$path", newPath);
 
+    List reverseStack = new ArrayList();
+    reverseStack.addAll(newPath);
+    Collections.reverse(reverseStack);
+    ArrayDeque newStack = new ArrayDeque();
+    newStack.addAll(reverseStack);
+    res.setMetadata("$stack", newStack);
+
     tryAddEntryPoint(res, ctx);
 
   }
@@ -120,6 +130,13 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
       newPath.add(((OTraverseResult) nextStep).getIdentity().get());
       ((OTraverseResult) nextStep).setMetadata("$path", newPath);
 
+      List reverseStack = new ArrayList();
+      reverseStack.addAll(newPath);
+      Collections.reverse(reverseStack);
+      ArrayDeque newStack = new ArrayDeque();
+      newStack.addAll(reverseStack);
+      ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
+
       tryAddEntryPoint(nextStep, ctx);
     } else {
       OTraverseResult res = new OTraverseResult();
@@ -131,6 +148,13 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
       newPath.addAll(path);
       newPath.add(((OTraverseResult) nextStep).getIdentity().get());
       ((OTraverseResult) nextStep).setMetadata("$path", newPath);
+
+      List reverseStack = new ArrayList();
+      reverseStack.addAll(newPath);
+      Collections.reverse(reverseStack);
+      ArrayDeque newStack = new ArrayDeque();
+      newStack.addAll(reverseStack);
+      ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
 
       tryAddEntryPoint(res, ctx);
     }
