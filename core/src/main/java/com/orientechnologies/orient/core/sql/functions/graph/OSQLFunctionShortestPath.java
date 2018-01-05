@@ -60,7 +60,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   }
 
   public List<ORID> execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams,
-                            final OCommandContext iContext) {
+      final OCommandContext iContext) {
 
     final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
 
@@ -230,9 +230,9 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   }
 
   /**
+   * @return
    *
    * @author Thomas Young (YJJThomasYoung@hotmail.com)
-   * @return
    */
   private Boolean toBoolean(Object fromObject) {
     if (fromObject == null) {
@@ -252,14 +252,17 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
   /**
    * get adjacent vertices and edges
-   * @author Thomas Young (YJJThomasYoung@hotmail.com)
+   *
    * @param srcVertex
    * @param direction
    * @param types
+   *
    * @return
+   *
+   * @author Thomas Young (YJJThomasYoung@hotmail.com)
    */
-  private ORawPair<Iterable<OVertex>, Iterable<OEdge>> getVerticesAndEdges(OVertex srcVertex, ODirection direction, String... types)
-  {
+  private ORawPair<Iterable<OVertex>, Iterable<OEdge>> getVerticesAndEdges(OVertex srcVertex, ODirection direction,
+      String... types) {
     if (direction == ODirection.BOTH) {
       OMultiCollectionIterator<OVertex> vertexIterator = new OMultiCollectionIterator<>();
       OMultiCollectionIterator<OEdge> edgeIterator = new OMultiCollectionIterator<>();
@@ -279,13 +282,15 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
   /**
    * get adjacent vertices and edges
-   * @author Thomas Young (YJJThomasYoung@hotmail.com)
+   *
    * @param srcVertex
    * @param direction
+   *
    * @return
+   *
+   * @author Thomas Young (YJJThomasYoung@hotmail.com)
    */
-  private ORawPair<Iterable<OVertex>, Iterable<OEdge>> getVerticesAndEdges(OVertex srcVertex, ODirection direction)
-  {
+  private ORawPair<Iterable<OVertex>, Iterable<OEdge>> getVerticesAndEdges(OVertex srcVertex, ODirection direction) {
     return getVerticesAndEdges(srcVertex, direction, (String[]) null);
   }
 
@@ -295,7 +300,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
   protected List<ORID> walkLeft(final OSQLFunctionShortestPath.OShortestPathContext ctx) {
     ArrayDeque<OVertex> nextLevelQueue = new ArrayDeque<>();
-    if(!ctx.edge) {
+    if (!Boolean.TRUE.equals(ctx.edge)) {
       while (!ctx.queueLeft.isEmpty()) {
         ctx.current = ctx.queueLeft.poll();
 
@@ -322,8 +327,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
         }
       }
-    }
-    else {
+    } else {
       while (!ctx.queueLeft.isEmpty()) {
         ctx.current = ctx.queueLeft.poll();
 
@@ -361,7 +365,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
   protected List<ORID> walkRight(final OSQLFunctionShortestPath.OShortestPathContext ctx) {
     final ArrayDeque<OVertex> nextLevelQueue = new ArrayDeque<>();
-    if(!ctx.edge) {
+    if (!Boolean.TRUE.equals(ctx.edge)) {
       while (!ctx.queueRight.isEmpty()) {
         ctx.currentRight = ctx.queueRight.poll();
 
@@ -389,8 +393,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
         }
       }
-    }
-    else {
+    } else {
       while (!ctx.queueRight.isEmpty()) {
         ctx.currentRight = ctx.queueRight.poll();
 
