@@ -37,6 +37,7 @@ public class ODatabaseDocumentEmbeddedPooled extends ODatabaseDocumentEmbedded {
   @Override
   public void close() {
     closeActiveQueries();
+    rollback(true);
     super.setStatus(STATUS.CLOSED);
     getLocalCache().clear();
     ODatabaseRecordThreadLocal.instance().remove();

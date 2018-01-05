@@ -71,21 +71,6 @@ public class OrientDBEmbeddedTests {
   }
 
   @Test
-  public void testPool() {
-    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-
-    if (!orientDb.exists("test"))
-      orientDb.create("test", ODatabaseType.MEMORY);
-
-    ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
-    ODatabaseDocument db = pool.acquire();
-    db.save(new ODocument(), db.getClusterNameById(db.getDefaultClusterId()));
-    db.close();
-    pool.close();
-    orientDb.close();
-  }
-
-  @Test
   public void testMultiThread() {
 
     OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());

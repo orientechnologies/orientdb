@@ -22,6 +22,7 @@ public class ODatabaseDocumentDistributedPooled extends ODatabaseDocumentDistrib
   @Override
   public void close() {
     closeActiveQueries();
+    rollback(true);
     super.setStatus(STATUS.CLOSED);
     ODatabaseRecordThreadLocal.instance().remove();
     getLocalCache().clear();
