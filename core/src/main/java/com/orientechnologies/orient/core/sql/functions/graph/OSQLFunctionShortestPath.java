@@ -1,16 +1,16 @@
 package com.orientechnologies.orient.core.sql.functions.graph;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ODirection;
-import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.OEdgeToVertexIterable;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
@@ -53,10 +53,14 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     OVertex current;
     OVertex currentRight;
     public Integer maxDepth;
+    /**
+     * option that decides whether or not to return the edge information
+     */
+    public Boolean edge;
   }
 
   public List<ORID> execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams,
-      final OCommandContext iContext) {
+                            final OCommandContext iContext) {
 
     final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
 
@@ -204,6 +208,8 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     }
     if (mapParams != null) {
       ctx.maxDepth = integer(mapParams.get("maxDepth"));
+      Boolean withEdge = toBoolean(mapParams.get("edge"));
+      ctx.edge = Boolean.TRUE.equals(withEdge) ? Boolean.TRUE : Boolean.FALSE;
     }
   }
 
@@ -223,36 +229,130 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     return null;
   }
 
+  /**
+   *
+   * @author Thomas Young (YJJThomasYoung@hotmail.com)
+   * @return
+   */
+  private Boolean toBoolean(Object fromObject) {
+    if (fromObject == null) {
+      return null;
+    }
+    if (fromObject instanceof Boolean) {
+      return (Boolean) fromObject;
+    }
+    if (fromObject instanceof String) {
+      try {
+        return Boolean.parseBoolean(fromObject.toString());
+      } catch (NumberFormatException ignore) {
+      }
+    }
+    return null;
+  }
+
+  /**
+   * get adjacent vertices and edges
+   * @author Thomas Young (YJJThomasYoung@hotmail.com)
+   * @param srcVertex
+   * @param direction
+   * @param types
+   * @return
+   */
+  private ORawPair<Iterable<OVertex>, Iterable<OEdge>> getVerticesAndEdges(OVertex srcVertex, ODirection direction, String... types)
+  {
+    if (direction == ODirection.BOTH) {
+      OMultiCollectionIterator<OVertex> vertexIterator = new OMultiCollectionIterator<>();
+      OMultiCollectionIterator<OEdge> edgeIterator = new OMultiCollectionIterator<>();
+      ORawPair<Iterable<OVertex>, Iterable<OEdge>> pair1 = getVerticesAndEdges(srcVertex, ODirection.OUT, types);
+      ORawPair<Iterable<OVertex>, Iterable<OEdge>> pair2 = getVerticesAndEdges(srcVertex, ODirection.IN, types);
+      vertexIterator.add(pair1.getFirst());
+      vertexIterator.add(pair2.getFirst());
+      edgeIterator.add(pair1.getSecond());
+      edgeIterator.add(pair2.getSecond());
+      return new ORawPair<>(vertexIterator, edgeIterator);
+    } else {
+      Iterable<OEdge> edges1 = srcVertex.getEdges(direction, types);
+      Iterable<OEdge> edges2 = srcVertex.getEdges(direction, types);
+      return new ORawPair<>(new OEdgeToVertexIterable(edges1, direction), edges2);
+    }
+  }
+
+  /**
+   * get adjacent vertices and edges
+   * @author Thomas Young (YJJThomasYoung@hotmail.com)
+   * @param srcVertex
+   * @param direction
+   * @return
+   */
+  private ORawPair<Iterable<OVertex>, Iterable<OEdge>> getVerticesAndEdges(OVertex srcVertex, ODirection direction)
+  {
+    return getVerticesAndEdges(srcVertex, direction, (String[]) null);
+  }
+
   public String getSyntax() {
     return "shortestPath(<sourceVertex>, <destinationVertex>, [<direction>, [ <edgeTypeAsString> ]])";
   }
 
   protected List<ORID> walkLeft(final OSQLFunctionShortestPath.OShortestPathContext ctx) {
-    ArrayDeque<OVertex> nextLevelQueue = new ArrayDeque<OVertex>();
-    while (!ctx.queueLeft.isEmpty()) {
-      ctx.current = ctx.queueLeft.poll();
+    ArrayDeque<OVertex> nextLevelQueue = new ArrayDeque<>();
+    if(!ctx.edge) {
+      while (!ctx.queueLeft.isEmpty()) {
+        ctx.current = ctx.queueLeft.poll();
 
-      Iterable<OVertex> neighbors;
-      if (ctx.edgeType == null) {
-        neighbors = ctx.current.getVertices(ctx.directionLeft);
-      } else {
-        neighbors = ctx.current.getVertices(ctx.directionLeft, ctx.edgeTypeParam);
+        Iterable<OVertex> neighbors;
+        if (ctx.edgeType == null) {
+          neighbors = ctx.current.getVertices(ctx.directionLeft);
+        } else {
+          neighbors = ctx.current.getVertices(ctx.directionLeft, ctx.edgeTypeParam);
+        }
+        for (OVertex neighbor : neighbors) {
+          final OVertex v = (OVertex) neighbor;
+          final ORID neighborIdentity = v.getIdentity();
+
+          if (ctx.rightVisited.contains(neighborIdentity)) {
+            ctx.previouses.put(neighborIdentity, ctx.current.getIdentity());
+            return computePath(ctx.previouses, ctx.nexts, neighborIdentity);
+          }
+          if (!ctx.leftVisited.contains(neighborIdentity)) {
+            ctx.previouses.put(neighborIdentity, ctx.current.getIdentity());
+
+            nextLevelQueue.offer(v);
+            ctx.leftVisited.add(neighborIdentity);
+          }
+
+        }
       }
-      for (OVertex neighbor : neighbors) {
-        final OVertex v = (OVertex) neighbor;
-        final ORID neighborIdentity = v.getIdentity();
+    }
+    else {
+      while (!ctx.queueLeft.isEmpty()) {
+        ctx.current = ctx.queueLeft.poll();
 
-        if (ctx.rightVisited.contains(neighborIdentity)) {
-          ctx.previouses.put(neighborIdentity, ctx.current.getIdentity());
-          return computePath(ctx.previouses, ctx.nexts, neighborIdentity);
+        ORawPair<Iterable<OVertex>, Iterable<OEdge>> neighbors;
+        if (ctx.edgeType == null) {
+          neighbors = getVerticesAndEdges(ctx.current, ctx.directionLeft);
+        } else {
+          neighbors = getVerticesAndEdges(ctx.current, ctx.directionLeft, ctx.edgeTypeParam);
         }
-        if (!ctx.leftVisited.contains(neighborIdentity)) {
-          ctx.previouses.put(neighborIdentity, ctx.current.getIdentity());
+        Iterator<OVertex> vertexIterator = neighbors.getFirst().iterator();
+        Iterator<OEdge> edgeIterator = neighbors.getSecond().iterator();
+        while (vertexIterator.hasNext() && edgeIterator.hasNext()) {
+          OVertex v = vertexIterator.next();
+          final ORID neighborVertexIdentity = v.getIdentity();
+          final ORID neighborEdgeIdentity = edgeIterator.next().getIdentity();
 
-          nextLevelQueue.offer(v);
-          ctx.leftVisited.add(neighborIdentity);
+          if (ctx.rightVisited.contains(neighborVertexIdentity)) {
+            ctx.previouses.put(neighborVertexIdentity, neighborEdgeIdentity);
+            ctx.previouses.put(neighborEdgeIdentity, ctx.current.getIdentity());
+            return computePath(ctx.previouses, ctx.nexts, neighborVertexIdentity);
+          }
+          if (!ctx.leftVisited.contains(neighborVertexIdentity)) {
+            ctx.previouses.put(neighborVertexIdentity, neighborEdgeIdentity);
+            ctx.previouses.put(neighborEdgeIdentity, ctx.current.getIdentity());
+
+            nextLevelQueue.offer(v);
+            ctx.leftVisited.add(neighborVertexIdentity);
+          }
         }
-
       }
     }
     ctx.queueLeft = nextLevelQueue;
@@ -260,33 +360,67 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   }
 
   protected List<ORID> walkRight(final OSQLFunctionShortestPath.OShortestPathContext ctx) {
-    final ArrayDeque<OVertex> nextLevelQueue = new ArrayDeque<OVertex>();
+    final ArrayDeque<OVertex> nextLevelQueue = new ArrayDeque<>();
+    if(!ctx.edge) {
+      while (!ctx.queueRight.isEmpty()) {
+        ctx.currentRight = ctx.queueRight.poll();
 
-    while (!ctx.queueRight.isEmpty()) {
-      ctx.currentRight = ctx.queueRight.poll();
+        Iterable<OVertex> neighbors;
+        if (ctx.edgeType == null) {
+          neighbors = ctx.currentRight.getVertices(ctx.directionRight);
+        } else {
+          neighbors = ctx.currentRight.getVertices(ctx.directionRight, ctx.edgeTypeParam);
+        }
+        for (OVertex neighbor : neighbors) {
+          final OVertex v = (OVertex) neighbor;
+          final ORID neighborIdentity = v.getIdentity();
 
-      Iterable<OVertex> neighbors;
-      if (ctx.edgeType == null) {
-        neighbors = ctx.currentRight.getVertices(ctx.directionRight);
-      } else {
-        neighbors = ctx.currentRight.getVertices(ctx.directionRight, ctx.edgeTypeParam);
+          if (ctx.leftVisited.contains(neighborIdentity)) {
+            ctx.nexts.put(neighborIdentity, ctx.currentRight.getIdentity());
+            return computePath(ctx.previouses, ctx.nexts, neighborIdentity);
+          }
+          if (!ctx.rightVisited.contains(neighborIdentity)) {
+
+            ctx.nexts.put(neighborIdentity, ctx.currentRight.getIdentity());
+
+            nextLevelQueue.offer(v);
+            ctx.rightVisited.add(neighborIdentity);
+          }
+
+        }
       }
-      for (OVertex neighbor : neighbors) {
-        final OVertex v = (OVertex) neighbor;
-        final ORID neighborIdentity = v.getIdentity();
+    }
+    else {
+      while (!ctx.queueRight.isEmpty()) {
+        ctx.currentRight = ctx.queueRight.poll();
 
-        if (ctx.leftVisited.contains(neighborIdentity)) {
-          ctx.nexts.put(neighborIdentity, ctx.currentRight.getIdentity());
-          return computePath(ctx.previouses, ctx.nexts, neighborIdentity);
-        }
-        if (!ctx.rightVisited.contains(neighborIdentity)) {
-
-          ctx.nexts.put(neighborIdentity, ctx.currentRight.getIdentity());
-
-          nextLevelQueue.offer(v);
-          ctx.rightVisited.add(neighborIdentity);
+        ORawPair<Iterable<OVertex>, Iterable<OEdge>> neighbors;
+        if (ctx.edgeType == null) {
+          neighbors = getVerticesAndEdges(ctx.currentRight, ctx.directionRight);
+        } else {
+          neighbors = getVerticesAndEdges(ctx.currentRight, ctx.directionRight, ctx.edgeTypeParam);
         }
 
+        Iterator<OVertex> vertexIterator = neighbors.getFirst().iterator();
+        Iterator<OEdge> edgeIterator = neighbors.getSecond().iterator();
+        while (vertexIterator.hasNext() && edgeIterator.hasNext()) {
+          final OVertex v = vertexIterator.next();
+          final ORID neighborVertexIdentity = v.getIdentity();
+          final ORID neighborEdgeIdentity = edgeIterator.next().getIdentity();
+
+          if (ctx.leftVisited.contains(neighborVertexIdentity)) {
+            ctx.nexts.put(neighborVertexIdentity, neighborEdgeIdentity);
+            ctx.nexts.put(neighborEdgeIdentity, ctx.currentRight.getIdentity());
+            return computePath(ctx.previouses, ctx.nexts, neighborVertexIdentity);
+          }
+          if (!ctx.rightVisited.contains(neighborVertexIdentity)) {
+            ctx.nexts.put(neighborVertexIdentity, neighborEdgeIdentity);
+            ctx.nexts.put(neighborEdgeIdentity, ctx.currentRight.getIdentity());
+
+            nextLevelQueue.offer(v);
+            ctx.rightVisited.add(neighborVertexIdentity);
+          }
+        }
       }
     }
     ctx.queueRight = nextLevelQueue;
