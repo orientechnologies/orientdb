@@ -51,6 +51,21 @@ public class ODatabasePoolRemoteTest {
     orientDb.close();
   }
 
+  @Test
+  public void testPoolDoubleClose() {
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
+
+    if (!orientDb.exists("test")) {
+      orientDb.create("test", ODatabaseType.MEMORY);
+    }
+
+    ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
+    ODatabaseDocument db = pool.acquire();
+    db.close();
+    db.close();
+    orientDb.close();
+  }
+
   @After
   public void after() {
 

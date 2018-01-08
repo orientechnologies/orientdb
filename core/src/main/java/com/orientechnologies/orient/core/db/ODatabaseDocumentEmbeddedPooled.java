@@ -36,6 +36,8 @@ public class ODatabaseDocumentEmbeddedPooled extends ODatabaseDocumentEmbedded {
 
   @Override
   public void close() {
+    if (isClosed())
+      return;
     closeActiveQueries();
     rollback(true);
     super.setStatus(STATUS.CLOSED);
