@@ -66,45 +66,6 @@ public abstract class AbstractServerClusterTest {
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
   }
 
-  @SuppressWarnings("unchecked")
-  public static void main(final String[] args) throws Exception {
-    Class<? extends AbstractServerClusterTest> testClass = null;
-    String command = null;
-    int servers = 2;
-
-    if (args.length > 0)
-      testClass = (Class<? extends AbstractServerClusterTest>) Class.forName(args[0]);
-    else
-      syntaxError();
-
-    if (args.length > 1)
-      command = args[1];
-    else
-      syntaxError();
-
-    if (args.length > 2)
-      servers = Integer.parseInt(args[2]);
-
-    final AbstractServerClusterTest main = testClass.newInstance();
-    main.init(servers);
-
-    if (command.equals("prepare"))
-      main.prepare(true);
-    else if (command.equals("execute"))
-      main.execute();
-    else if (command.equals("prepare+execute")) {
-      main.prepare(true);
-      main.execute();
-    } else
-      System.out.println("Usage: prepare, execute or prepare+execute ...");
-  }
-
-  private static void syntaxError() {
-    System.err
-        .println("Syntax error. Usage: <class> <operation> [<servers>]\nWhere <operation> can be: prepare|execute|prepare+execute");
-    System.exit(1);
-  }
-
   public void init(final int servers) {
     ODatabaseDocumentTx.closeAll();
 
@@ -214,29 +175,6 @@ public abstract class AbstractServerClusterTest {
       Assert.assertNotNull(mgr);
       final ODocument cfg = mgr.getClusterConfiguration();
       Assert.assertNotNull(cfg);
-    }
-  }
-
-  protected void executeOnMultipleThreads(final int numOfThreads, final OCallable<Void, Integer> callback) {
-    final Thread[] threads = new Thread[numOfThreads];
-
-    for (int s = 0; s < numOfThreads; ++s) {
-      final int serverId = s;
-      threads[s] = new Thread(new Runnable() {
-        @Override
-        public void run() {
-          callback.call(serverId);
-        }
-      });
-      threads[s].start();
-    }
-
-    for (int s = 0; s < numOfThreads; ++s) {
-      try {
-        threads[s].join();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
     }
   }
 

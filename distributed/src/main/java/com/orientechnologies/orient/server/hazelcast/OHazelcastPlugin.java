@@ -609,6 +609,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     serverInstance.getDatabases().replaceFactory(new ODefaultEmbeddedDatabaseInstanceFactory());
     setNodeStatus(NODE_STATUS.OFFLINE);
+    OServer.unregisterServerInstance(getLocalNodeName());
   }
 
   public ORemoteServerController getRemoteServer(final String rNodeName) throws IOException {

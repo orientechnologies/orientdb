@@ -141,6 +141,36 @@ public class OServer {
     }
   }
 
+  public static OServer startFromFileConfig(String config)
+      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
+      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
+      IllegalAccessException {
+    OServer server = new OServer();
+    server.startup(config);
+    server.activate();
+    return server;
+  }
+
+  public static OServer startFromClasspathConfig(String config)
+      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
+      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
+      IllegalAccessException {
+    OServer server = new OServer();
+    server.startup(Thread.currentThread().getContextClassLoader().getResourceAsStream(config));
+    server.activate();
+    return server;
+  }
+
+  public static OServer startFromStreamConfig(InputStream config)
+      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
+      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
+      IllegalAccessException {
+    OServer server = new OServer();
+    server.startup(config);
+    server.activate();
+    return server;
+  }
+
   public static OServer getInstance(final String iServerId) {
     return distributedServers.get(iServerId);
   }
@@ -155,6 +185,10 @@ public class OServer {
 
   public static void registerServerInstance(final String iServerId, final OServer iServer) {
     distributedServers.put(iServerId, iServer);
+  }
+
+  public static void unregisterServerInstance(final String iServerId) {
+    distributedServers.remove(iServerId);
   }
 
   /**
@@ -653,6 +687,7 @@ public class OServer {
    *
    * @param iUserName Username to authenticate
    * @param iPassword Password in clear
+   *
    * @return true if authentication is ok, otherwise false
    */
   public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
@@ -690,6 +725,7 @@ public class OServer {
    * Checks if a server user is allowed to operate with a resource.
    *
    * @param iUserName Username to authenticate
+   *
    * @return true if authentication is ok, otherwise false
    */
   public boolean isAllowed(final String iUserName, final String iResourceToCheck) {
