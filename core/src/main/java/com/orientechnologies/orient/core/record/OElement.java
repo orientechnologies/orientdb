@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.record;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -94,4 +95,31 @@ public interface OElement extends ORecord{
    * @return the type of current element. An empty optional is returned if current element does not have a schema
    */
   public Optional<OClass> getSchemaType();
+
+  default boolean isLabeled(String[] labels) {
+    if (labels == null) {
+      return true;
+    }
+    if (labels.length == 0) {
+      return true;
+    }
+    Set<String> types = new HashSet<>();
+
+    Optional<OClass> typeClass = getSchemaType();
+    if (typeClass.isPresent()) {
+      types.add(typeClass.get().getName());
+      typeClass.get().getAllSuperClasses().stream().map(OClass::getName).forEach(types::add);
+    } else {
+      types.add("E");
+    }
+    for (String s : labels) {
+      for (String type : types) {
+        if (type.equalsIgnoreCase(s)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
 }

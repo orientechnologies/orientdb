@@ -61,6 +61,11 @@ public class OEdgeDelegate implements OEdge {
 
   @Override
   public OVertex getFrom() {
+    return getFrom((String) null);
+  }
+
+  @Override
+  public OVertex getFrom(String... labels) {
     if (vOut != null)
       // LIGHTWEIGHT EDGE
       return vOut;
@@ -77,11 +82,20 @@ public class OEdgeDelegate implements OEdge {
     if (!v.isVertex()) {
       return null;//TODO optional...?
     }
-    return v.asVertex().get();
+
+    Optional<OVertex> vOptional = v.asVertex();
+    if(vOptional.isPresent() && vOptional.get().isLabeled(labels))
+      return vOptional.get();
+    return null;
   }
 
   @Override
   public OVertex getTo() {
+    return getTo((String) null);
+  }
+
+  @Override
+  public OVertex getTo(String... labels) {
     if (vIn != null)
       // LIGHTWEIGHT EDGE
       return vIn;
@@ -98,7 +112,11 @@ public class OEdgeDelegate implements OEdge {
     if (!v.isVertex()) {
       return null;//TODO optional...?
     }
-    return v.asVertex().get();
+
+    Optional<OVertex> vOptional = v.asVertex();
+    if(vOptional.isPresent() && vOptional.get().isLabeled(labels))
+      return vOptional.get();
+    return null;
   }
 
   @Override

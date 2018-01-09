@@ -84,11 +84,11 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     if (rec.isEdge()) {
       if (iDirection == ODirection.BOTH) {
         List results = new ArrayList();
-        results.add(rec.asEdge().get().getVertex(ODirection.OUT));
-        results.add(rec.asEdge().get().getVertex(ODirection.IN));
+        results.add(rec.asEdge().get().getVertex(ODirection.OUT, iLabels));
+        results.add(rec.asEdge().get().getVertex(ODirection.IN, iLabels));
         return results;
       }
-      return rec.asEdge().get().getVertex(iDirection);
+      return rec.asEdge().get().getVertex(iDirection, iLabels);
     } else {
       return null;
     }

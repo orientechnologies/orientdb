@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-
 /**
  * @author Luigi Dell'Aquila
  */
@@ -34,43 +28,43 @@ public interface OEdge extends OElement {
 
   public OVertex getFrom();
 
+  /**
+   * returns vertices with specific types
+   * @author Thomas Young (YJJThomasYoung@hotmail.com)
+   * @param labels names of vertex classes
+   * @return
+   */
+  OVertex getFrom(String... labels);
+
   public OVertex getTo();
+
+  /**
+   * returns vertices with specific types
+   * @author Thomas Young (YJJThomasYoung@hotmail.com)
+   * @param labels names of vertex classes
+   * @return
+   */
+  OVertex getTo(String... labels);
 
   public boolean isLightweight();
 
   default OVertex getVertex(ODirection dir) {
-    if (dir == ODirection.IN) {
-      return getTo();
-    } else if (dir == ODirection.OUT) {
-      return getFrom();
-    }
-    return null;
+    return getVertex(dir, (String) null);
   }
 
-  default boolean isLabeled(String[] labels) {
-    if (labels == null) {
-      return true;
+  /**
+   * get vertex with specific types
+   * @author Thomas Young (YJJThomasYoung@hotmail.com)
+   * @param dir direction
+   * @param labels names of vertex classes
+   * @return
+   */
+  default OVertex getVertex(ODirection dir, String... labels) {
+    if (dir == ODirection.IN) {
+      return getTo(labels);
+    } else if (dir == ODirection.OUT) {
+      return getFrom(labels);
     }
-    if (labels.length == 0) {
-      return true;
-    }
-    Set<String> types = new HashSet<>();
-
-    Optional<OClass> typeClass = getSchemaType();
-    if (typeClass.isPresent()) {
-      types.add(typeClass.get().getName());
-      typeClass.get().getAllSuperClasses().stream().map(x -> x.getName()).forEach(name -> types.add(name));
-    } else {
-      types.add("E");
-    }
-    for (String s : labels) {
-      for (String type : types) {
-        if (type.equalsIgnoreCase(s)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return null;
   }
 }
