@@ -1,22 +1,17 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -47,6 +42,25 @@ public class SimpleQueryDistributedTests {
     OResultSet res = session.query("select from V");
     assertTrue(res.hasNext());
     assertEquals(res.next().getProperty("name"), "one");
+  }
+
+  @Test
+  public void testRecords() {
+    int records = (OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger() + 10);
+    for (int i = 0; i < records; i++) {
+      OVertex vertex = session.newVertex("V");
+      vertex.setProperty("name", "one");
+      vertex.setProperty("pos", i);
+      session.save(vertex);
+    }
+
+    OResultSet res = session.query("select from V order by pos");
+    for (int i = 0; i < records; i++) {
+      assertTrue(res.hasNext());
+      OResult ele = res.next();
+      assertEquals((int) ele.getProperty("pos"), i);
+      assertEquals(ele.getProperty("name"), "one");
+    }
   }
 
   @After
