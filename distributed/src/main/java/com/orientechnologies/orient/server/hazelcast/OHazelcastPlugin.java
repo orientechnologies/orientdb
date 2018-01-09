@@ -539,8 +539,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void shutdown() {
     if (!enabled)
       return;
-
-    Orient.instance().getSignalHandler().unregisterListener(signalListener);
+    OSignalHandler signalHandler = Orient.instance().getSignalHandler();
+    if (signalHandler != null)
+      signalHandler.unregisterListener(signalListener);
 
     for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
       nl.unregisterBeforeConnectNetworkEventListener(this);

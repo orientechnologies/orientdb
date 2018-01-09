@@ -85,11 +85,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public Map<String, Set<String>> getActiveClusterMap() {
     Map<String, Set<String>> result = new HashMap<>();
     ODistributedConfiguration cfg = getStorageDistributed().getDistributedConfiguration();
-    for (String server : cfg.getRegisteredServers()) {
-      if (server.equals("*") && cfg.getClustersOnServer(getLocalNodeName()).size() == 1 && cfg
-          .getClustersOnServer(getLocalNodeName()).iterator().next().equals("*")) {
+
+    for (String server : getStorageDistributed().getDistributedManager().getActiveServers()) {
+      if (getClustersOnServer(cfg, server).contains("*")) {
         //TODO check this!!!
-        result.put(getLocalNodeName(), getStorage().getClusterNames());
+        result.put(server, getStorage().getClusterNames());
       } else {
         result.put(server, getClustersOnServer(cfg, server));
       }

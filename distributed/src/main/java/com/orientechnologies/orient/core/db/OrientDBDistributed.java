@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
+import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 /**
@@ -26,7 +27,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public synchronized OHazelcastPlugin getPlugin() {
     if (plugin == null) {
-      plugin = server.getPlugin("cluster");
+      if (server != null && server.isActive())
+        plugin = server.getPlugin("cluster");
     }
     return plugin;
   }
