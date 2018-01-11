@@ -24,9 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Set;
 
 /**
- * 
  * @author Luca Garulli (l.garulli--at--orientdb.com)
- * 
  */
 public interface ODistributedMessageService {
   ODistributedDatabase registerDatabase(String iDatabaseName, ODistributedConfiguration cfg);
@@ -54,4 +52,6 @@ public interface ODistributedMessageService {
   long getCurrentLatency(String server);
 
   ODistributedResponseManager getResponseManager(ODistributedRequestId reqId);
+
+  void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr);
 }
