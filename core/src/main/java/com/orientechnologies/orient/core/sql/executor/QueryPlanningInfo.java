@@ -48,5 +48,5 @@ public class QueryPlanningInfo {
   boolean orderApplied          = false;
   boolean projectionsCalculated = false;
 
-
+  OAndBlock ridRangeConditions;
 }

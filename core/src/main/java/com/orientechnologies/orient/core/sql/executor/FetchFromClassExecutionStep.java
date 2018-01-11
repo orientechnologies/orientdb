@@ -21,6 +21,11 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   OResultSet currentResultSet;
   int currentStep = 0;
 
+  public FetchFromClassExecutionStep(String className, Set<String> clusters, OCommandContext ctx, Boolean ridOrder,
+      boolean profilingEnabled) {
+    this(className, clusters, null, ctx, ridOrder, profilingEnabled);
+  }
+
   /**
    * iterates over a class and its subclasses
    *
@@ -29,8 +34,8 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
    * @param ctx       the query context
    * @param ridOrder  true to sort by RID asc, false to sort by RID desc, null for no sort.
    */
-  public FetchFromClassExecutionStep(String className, Set<String> clusters, OCommandContext ctx, Boolean ridOrder,
-      boolean profilingEnabled) {
+  public FetchFromClassExecutionStep(String className, Set<String> clusters, QueryPlanningInfo planningInfo, OCommandContext ctx,
+      Boolean ridOrder, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
 
     this.className = className;
@@ -61,7 +66,7 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     for (int i = 0; i < clusterIds.length; i++) {
       int clusterId = clusterIds[i];
       if (clusterId > 0) {
-        FetchFromClusterExecutionStep step = new FetchFromClusterExecutionStep(clusterId, ctx, profilingEnabled);
+        FetchFromClusterExecutionStep step = new FetchFromClusterExecutionStep(clusterId, planningInfo, ctx, profilingEnabled);
         if (orderByRidAsc) {
           step.setOrder(FetchFromClusterExecutionStep.ORDER_ASC);
         } else if (orderByRidDesc) {
