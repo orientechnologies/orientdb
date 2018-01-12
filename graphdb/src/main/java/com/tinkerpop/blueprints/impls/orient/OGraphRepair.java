@@ -2,6 +2,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -262,7 +263,6 @@ public class OGraphRepair {
       final long beginTime = System.currentTimeMillis();
 
       for (ODocument vertex : db.browseClass(vertexClass.getName())) {
-
         parsedVertices++;
         if (skipVertices > 0 && parsedVertices <= skipVertices)
           continue;
@@ -283,8 +283,6 @@ public class OGraphRepair {
 
         final OrientVertex v = graph.getVertex(vertex);
 
-        boolean modifiedVertex = false;
-
         for (String fieldName : vertex.fieldNames()) {
           final OPair<Direction, String> connection = v.getConnection(Direction.BOTH, fieldName, null);
           if (connection == null)
@@ -298,7 +296,6 @@ public class OGraphRepair {
               if (isEdgeBroken(vertex, fieldName, connection.getKey(), (OIdentifiable) fieldValue, stats,
                   graph.settings.isUseVertexFieldsForEdgeLabels())) {
                 if (!checkOnly) {
-                  modifiedVertex = true;
                   vertex.field(fieldName, (Object) null);
                 } else
                   message(outputListener,
@@ -314,27 +311,33 @@ public class OGraphRepair {
                 if (isEdgeBroken(vertex, fieldName, connection.getKey(), (OIdentifiable) o, stats,
                     graph.settings.isUseVertexFieldsForEdgeLabels())) {
                   if (!checkOnly) {
-                    modifiedVertex = true;
                     it.remove();
                   } else
                     message(outputListener,
-                        "+ found corrupted vertex " + vertex + " the edge should be removed from property " + fieldName + " (collection)\n");
+                        "+ found corrupted vertex " + vertex + " the edge should be removed from property " + fieldName
+                            + " (collection)\n");
                 }
               }
 
             } else if (fieldValue instanceof ORidBag) {
-
+              //In case of ridbags force save for trigger eventual conversions
               final ORidBag ridbag = ((ORidBag) fieldValue);
+              if (ridbag.size() == 0) {
+                vertex.removeField(fieldName);
+              } else if (!ridbag.isEmbedded() && ridbag.size() < OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD
+                  .getValueAsInteger()) {
+                vertex.setDirty();
+              }
               for (Iterator<?> it = ridbag.rawIterator(); it.hasNext(); ) {
                 final Object o = it.next();
                 if (isEdgeBroken(vertex, fieldName, connection.getKey(), (OIdentifiable) o, stats,
                     graph.settings.isUseVertexFieldsForEdgeLabels())) {
                   if (!checkOnly) {
-                    modifiedVertex = true;
                     it.remove();
                   } else
                     message(outputListener,
-                        "+ found corrupted vertex " + vertex + " the edge should be removed from property " + fieldName + " (ridbag)\n");
+                        "+ found corrupted vertex " + vertex + " the edge should be removed from property " + fieldName
+                            + " (ridbag)\n");
                 }
               }
             }
@@ -342,7 +345,7 @@ public class OGraphRepair {
           }
         }
 
-        if (modifiedVertex) {
+        if (vertex.isDirty()) {
           stats.repairedVertices++;
           if (eventListener != null)
             eventListener.onRepairedVertex(vertex);
