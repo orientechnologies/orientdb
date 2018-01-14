@@ -74,6 +74,7 @@ public class OBackupFinishedLog extends OBackupLog {
     return path;
   }
 
+
   public void setFileSize(long fileSize) {
     this.fileSize = fileSize;
   }
@@ -83,9 +84,11 @@ public class OBackupFinishedLog extends OBackupLog {
     return fileSize;
   }
 
+
   public String getFileName() {
     return fileName;
   }
+
 
   public long getElapsedTime() {
     return elapsedTime;

@@ -20,13 +20,11 @@ package com.orientechnologies.backup.uploader;
 
 import com.jcraft.jsch.*;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -35,8 +33,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
 
-  public OSFTPDeltaUploadingStrategy() {}
+  private String  host;
+  private Integer port;
+  private String  username;
+  private String  password;
+  private String  path;
 
+  public OSFTPDeltaUploadingStrategy() {
+  }
 
   //
 
@@ -45,15 +49,10 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
    *
    * @param sourceBackupDirectory
    * @param destinationDirectoryPath
-   * @param accessParameters (String host, String port, String username, String password)
+   * @param accessParameters         (String host, String port, String username, String password)
    * @return success
    */
   public boolean executeUpload(String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters) {
-
-    String host = accessParameters[0];
-    String port = accessParameters[1];
-    String username = accessParameters[2];
-    String password = accessParameters[3];
 
     boolean success = false;
     Session session = null;
@@ -64,7 +63,7 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
 
       // SFTP connection
       JSch ssh = new JSch();
-      session = ssh.getSession(username, host, Integer.parseInt(port));
+      session = ssh.getSession(username, host, port);
       session.setPassword(password);
       java.util.Properties config = new java.util.Properties();
       config.put("StrictHostKeyChecking", "no");
@@ -75,60 +74,59 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
       ChannelSftp sftp = (ChannelSftp) channel;
 
       // browsing remote path, and if a directory doesn't exist it will be created
-      String[] folders = destinationDirectoryPath.split( "/" );
-      for ( String folder : folders ) {
-        if ( folder.length() > 0 ) {
+      String[] folders = destinationDirectoryPath.split("/");
+      for (String folder : folders) {
+        if (folder.length() > 0) {
           try {
             sftp.cd(folder);
-          }
-          catch ( SftpException e ) {
+          } catch (SftpException e) {
             sftp.mkdir(folder);
             sftp.cd(folder);
           }
         }
       }
 
-    /*
-     * uploading file to the bucket
-     */
+      /*
+       * uploading file to the bucket
+       */
 
       File localBackupDirectory = new File(sourceBackupDirectory);
 
       File[] filesLocalBackup = localBackupDirectory.listFiles();
-      Map<String, File> localFileName2File = new ConcurrentHashMap<String,File>();
-      for(File f: filesLocalBackup) {
+      Map<String, File> localFileName2File = new ConcurrentHashMap<String, File>();
+      for (File f : filesLocalBackup) {
         localFileName2File.put(f.getName(), f);
       }
 
       List<String> remoteFileNames = new LinkedList<String>();
       Vector remoteFiles = sftp.ls("*");
-      for(Object entry: remoteFiles) {
-        remoteFileNames.add(((ChannelSftp.LsEntry)entry).getFilename());
+      for (Object entry : remoteFiles) {
+        remoteFileNames.add(((ChannelSftp.LsEntry) entry).getFilename());
       }
 
       // compare files in the bucket with the local ones and populate filesToUpload list
-      for(String fileName: localFileName2File.keySet()) {
-        if(remoteFileNames.contains(fileName)) {
+      for (String fileName : localFileName2File.keySet()) {
+        if (remoteFileNames.contains(fileName)) {
           localFileName2File.remove(fileName);
         }
       }
 
       // upload each file contained in the filesToUpload list
-      for (File currentFile: localFileName2File.values()) {
+      for (File currentFile : localFileName2File.values()) {
         sftp.put(new FileInputStream(currentFile), currentFile.getName());
       }
 
-      success =  true;
+      success = true;
 
     } catch (JSchException e) {
-      OLogManager.instance().info(this,"Caught a JSchException.");
-      OLogManager.instance().info(this,"Error Message:    %s", e.getMessage());
+      OLogManager.instance().info(this, "Caught a JSchException.");
+      OLogManager.instance().info(this, "Error Message:    %s", e.getMessage());
     } catch (SftpException e) {
-      OLogManager.instance().info(this,"Caught a SftpException.");
-      OLogManager.instance().info(this,"Error Message:    %s", e.getMessage());
+      OLogManager.instance().info(this, "Caught a SftpException.");
+      OLogManager.instance().info(this, "Error Message:    %s", e.getMessage());
     } catch (Exception e) {
-      OLogManager.instance().info(this,"Caught a Exception.");
-      OLogManager.instance().info(this,"Error Message:    %s", e.getMessage());
+      OLogManager.instance().info(this, "Caught a Exception.");
+      OLogManager.instance().info(this, "Error Message:    %s", e.getMessage());
     } finally {
       if (channel != null) {
         channel.disconnect();
@@ -139,5 +137,59 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
     }
 
     return success;
+  }
+
+  @Override
+  public OUploadMetadata executeUpload(String sourceFile, String fName, String destinationDirectoryPath) {
+
+    boolean success = false;
+    Session session = null;
+    Channel channel = null;
+    ChannelSftp channelSftp = null;
+
+    try {
+      // SFTP connection
+      JSch ssh = new JSch();
+      session = ssh.getSession(username, host, port);
+      session.setPassword(password);
+      java.util.Properties config = new java.util.Properties();
+      config.put("StrictHostKeyChecking", "no");
+      session.setConfig(config);
+      session.connect();
+      channel = session.openChannel("sftp");
+      channel.connect();
+      ChannelSftp sftp = (ChannelSftp) channel;
+
+      String dest = path + File.separator + destinationDirectoryPath;
+
+      // browsing remote path, and if a directory doesn't exist it will be created
+      String[] folders = dest.split("/");
+      for (String folder : folders) {
+        try {
+          sftp.cd(folder.isEmpty() ? "/" : folder);
+        } catch (SftpException e) {
+          sftp.mkdir(folder);
+          sftp.cd(folder);
+        }
+      }
+
+      File file = new File(sourceFile);
+      sftp.put(new FileInputStream(file), fName);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    return new OUploadMetadata("sftp", 0, new HashMap<>());
+  }
+
+  @Override
+  public void config(ODocument cfg) {
+
+    host = cfg.field("host");
+    port = cfg.field("port");
+    username = cfg.field("username");
+    password = cfg.field("password");
+    path = cfg.field("path");
   }
 }
