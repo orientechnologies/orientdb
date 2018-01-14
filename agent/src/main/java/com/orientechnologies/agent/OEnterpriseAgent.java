@@ -82,8 +82,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   private   OBackupManager      backupManager;
   protected OEnterpriseProfiler profiler;
 
-  protected CloudEndpoint     cloudEndpoint;
-  private   CloudPushEndpoint cloudPushEndpoint;
+
+
+  private OEnterpriseCloudManager cloudManager;
 
   public OEnterpriseAgent() {
   }
@@ -157,18 +158,18 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       installer.setDaemon(true);
       installer.start();
       Orient.instance().addDbLifecycleListener(this);
-      cloudEndpoint = new CloudEndpoint(this);
-      cloudEndpoint.start();
-      cloudPushEndpoint = new CloudPushEndpoint(this);
-      cloudPushEndpoint.start();
+      cloudManager = new OEnterpriseCloudManager(this);
+
+      cloudManager.start();
     }
   }
 
   @Override
   public void shutdown() {
     if (enabled) {
-      cloudEndpoint.shutdown();
-      cloudPushEndpoint.shutdown();
+
+      cloudManager.shutdown();
+
       unregisterSecurityComponents();
       uninstallBackupManager();
       uninstallCommands();
