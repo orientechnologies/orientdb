@@ -19,6 +19,7 @@ import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -255,6 +256,9 @@ public class OEnterpriseCloudManager extends Thread {
     while (authToken == null) {
       try {
         negotiationToken();
+
+      } catch(ConnectException exception){
+        OLogManager.instance().warn(this, "OrientDB cloud is offline");
       } catch (Exception e) {
         OLogManager.instance().warn(this, "Error negotiating token", e);
       }

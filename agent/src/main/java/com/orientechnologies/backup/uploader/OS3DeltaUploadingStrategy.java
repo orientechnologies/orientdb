@@ -28,11 +28,13 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,9 +48,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
 
   private final String SUFFIX = "/";
+  private String bucketName;
+  private String accessKey;
+  private String secretKey;
 
-  public OS3DeltaUploadingStrategy() {}
-
+  public OS3DeltaUploadingStrategy() {
+  }
 
   //
 
@@ -57,7 +62,7 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
    *
    * @param sourceBackupDirectory
    * @param destinationDirectoryPath
-   * @param accessParameters (String bucketName, String accessKey, String secretKey)
+   * @param accessParameters         (String bucketName, String accessKey, String secretKey)
    * @return success
    */
   public boolean executeUpload(String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters) {
@@ -98,8 +103,8 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
       File localBackupDirectory = new File(sourceBackupDirectory);
 
       File[] filesLocalBackup = localBackupDirectory.listFiles();
-      Map<String, File> localFileName2File = new ConcurrentHashMap<String,File>();
-      for(File f: filesLocalBackup) {
+      Map<String, File> localFileName2File = new ConcurrentHashMap<String, File>();
+      for (File f : filesLocalBackup) {
         localFileName2File.put(f.getName(), f);
       }
 
@@ -107,58 +112,95 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
       List<String> remoteFileNames = new ArrayList<String>();
 
       String currentFileName;
-      for(S3ObjectSummary obj: filesOnBucket) {
+      for (S3ObjectSummary obj : filesOnBucket) {
         remoteFileNames.add(obj.getKey());
       }
 
       // preparing folder: if folder does not exist  it's created (case: first incremental backup)
-      int lastIndex = destinationDirectoryPath.length()-1;
-      if(destinationDirectoryPath.charAt(lastIndex) == '/')
-        destinationDirectoryPath = destinationDirectoryPath.substring(0,lastIndex);
-      if(destinationDirectoryPath.charAt(0) == '/')
+      int lastIndex = destinationDirectoryPath.length() - 1;
+      if (destinationDirectoryPath.charAt(lastIndex) == '/')
+        destinationDirectoryPath = destinationDirectoryPath.substring(0, lastIndex);
+      if (destinationDirectoryPath.charAt(0) == '/')
         destinationDirectoryPath = destinationDirectoryPath.substring(1);
 
-      if(!(remoteFileNames.contains(destinationDirectoryPath))) {
+      if (!(remoteFileNames.contains(destinationDirectoryPath))) {
         this.createFolder(s3client, bucketName, destinationDirectoryPath);
       }
 
       // compare files in the bucket with the local ones and populate filesToUpload list
-      for(String fileName: localFileName2File.keySet()) {
-        if(remoteFileNames.contains(destinationDirectoryPath + SUFFIX + fileName)) {
+      for (String fileName : localFileName2File.keySet()) {
+        if (remoteFileNames.contains(destinationDirectoryPath + SUFFIX + fileName)) {
           localFileName2File.remove(fileName);
         }
       }
 
       // upload each file contained in the filesToUpload list
-      for (File currentFile: localFileName2File.values()) {
-        s3client.putObject(new PutObjectRequest(bucketName, destinationDirectoryPath + SUFFIX + currentFile.getName(), currentFile));
+      for (File currentFile : localFileName2File.values()) {
+        s3client
+            .putObject(new PutObjectRequest(bucketName, destinationDirectoryPath + SUFFIX + currentFile.getName(), currentFile));
       }
 
-      success =  true;
+      success = true;
 
     } catch (AmazonServiceException ase) {
-      OLogManager.instance().info(this,"Caught an AmazonServiceException, which " +
-          "means your request made it " +
-          "to Amazon S3, but was rejected with an error response" +
-          " for some reason.");
-      OLogManager.instance().info(this,"Error Message:    %s", ase.getMessage());
-      OLogManager.instance().info(this,"HTTP Status Code: %s", ase.getStatusCode());
-      OLogManager.instance().info(this,"AWS Error Code:   %s", ase.getErrorCode());
-      OLogManager.instance().info(this,"Error Type:       %s", ase.getErrorType());
-      OLogManager.instance().info(this,"Request ID:       %s", ase.getRequestId());
+      OLogManager.instance().info(this, "Caught an AmazonServiceException, which " + "means your request made it "
+          + "to Amazon S3, but was rejected with an error response" + " for some reason.");
+      OLogManager.instance().info(this, "Error Message:    %s", ase.getMessage());
+      OLogManager.instance().info(this, "HTTP Status Code: %s", ase.getStatusCode());
+      OLogManager.instance().info(this, "AWS Error Code:   %s", ase.getErrorCode());
+      OLogManager.instance().info(this, "Error Type:       %s", ase.getErrorType());
+      OLogManager.instance().info(this, "Request ID:       %s", ase.getRequestId());
     } catch (AmazonClientException ace) {
-      OLogManager.instance().info(this,"Caught an AmazonClientException, which " +
-          "means the client encountered " +
-          "an internal error while trying to " +
-          "communicate with S3, " +
-          "such as not being able to access the network.");
-      OLogManager.instance().info(this,"Error Message: %s", ace.getMessage());
+      OLogManager.instance().info(this,
+          "Caught an AmazonClientException, which " + "means the client encountered " + "an internal error while trying to "
+              + "communicate with S3, " + "such as not being able to access the network.");
+      OLogManager.instance().info(this, "Error Message: %s", ace.getMessage());
     } catch (Exception e) {
-      OLogManager.instance().info(this,"Caught an exception client side.");
-      OLogManager.instance().info(this,"Error Message: %s", e.getMessage());
+      OLogManager.instance().info(this, "Caught an exception client side.");
+      OLogManager.instance().info(this, "Error Message: %s", e.getMessage());
     }
 
     return success;
+  }
+
+  @Override
+  public OUploadMetadata executeUpload(String sourceFile, String fName, String destinationDirectoryPath) {
+
+    long start = System.currentTimeMillis();
+    long end = System.currentTimeMillis();
+    long elapsed = end - start;
+    // Do the Upload
+    Map<String, String> metadata = new HashMap<>();
+    metadata.putIfAbsent("directory", destinationDirectoryPath);
+    metadata.putIfAbsent("bucketName", bucketName);
+
+    AWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
+    AmazonS3Client s3client = new AmazonS3Client(awsCredentials);
+
+
+    if (!s3client.doesBucketExist(bucketName)) {
+      s3client.createBucket(bucketName);
+    }
+
+    if (!s3client.doesObjectExist(bucketName, destinationDirectoryPath)) {
+      this.createFolder(s3client, bucketName, destinationDirectoryPath);
+    }
+
+    File file = new File(sourceFile);
+    s3client.putObject(bucketName, destinationDirectoryPath + SUFFIX + file.getName(), file);
+    return new OUploadMetadata("s3", elapsed, metadata);
+  }
+
+  @Override
+  public void config(ODocument cfg) {
+
+    this.bucketName = cfg.field("bucketName");
+    this.accessKey = cfg.field("accessKey");
+    this.secretKey = cfg.field("secretKey");
+
+    if (this.accessKey == null || this.accessKey == null || this.accessKey == null) {
+      throw new IllegalArgumentException("Cannot configure the backup in s3. Parameters are missing");
+    }
   }
 
   public void createFolder(AmazonS3Client s3Client, String bucketName, String folderName) {

@@ -22,6 +22,8 @@ import com.orientechnologies.agent.backup.OBackupConfig;
 import com.orientechnologies.agent.backup.OBackupListener;
 import com.orientechnologies.agent.backup.OBackupTask;
 import com.orientechnologies.agent.backup.log.*;
+import com.orientechnologies.backup.uploader.OLocalBackupUploader;
+import com.orientechnologies.backup.uploader.OUploadMetadata;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -36,18 +38,21 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Optional;
 
 /**
  * Created by Enrico Risa on 25/03/16.
  */
 public abstract class OBackupStrategy {
 
-  protected ODocument     cfg;
-  protected OBackupLogger logger;
+  protected ODocument                      cfg;
+  protected OBackupLogger                  logger;
+  protected Optional<OLocalBackupUploader> uploader;
 
   public OBackupStrategy(ODocument cfg, OBackupLogger logger) {
     this.cfg = cfg;
     this.logger = logger;
+    this.uploader = OLocalBackupUploader.from(cfg.field("upload"));
   }
 
   public OBackupStartedLog startBackup() throws IOException {
@@ -81,6 +86,8 @@ public abstract class OBackupStrategy {
     try {
       end = doBackup(start);
       logger.log(end);
+      listener.onEvent(cfg, end);
+      doUpload(listener, end);
     } catch (Exception e) {
       OBackupErrorLog error = new OBackupErrorLog(start.getUnitId(), start.getTxId(), getUUID(), getDbName(), getMode().toString());
       StringWriter sw = new StringWriter();
@@ -93,7 +100,44 @@ public abstract class OBackupStrategy {
       return;
     }
 
-    listener.onEvent(cfg, end);
+//    listener.onEvent(cfg, end);
+  }
+
+  public void doUpload(final OBackupListener listener, OBackupFinishedLog log) {
+
+    uploader.ifPresent((uploader) -> {
+      OBackupUploadStartedLog uploadStarted = new OBackupUploadStartedLog(log.getUnitId(), log.getTxId(), getUUID(), getDbName(),
+          getMode().toString());
+
+      uploadStarted.setFileName(log.getFileName());
+      uploadStarted.setPath(log.getPath());
+
+      logger.log(uploadStarted);
+      String[] fragments = log.getPath().split(File.separator);
+      try {
+        OUploadMetadata metadata = uploader
+            .executeUpload(log.getPath() + File.separator + log.getFileName(),log.getFileName(), fragments[fragments.length - 1]);
+        OBackupUploadFinishedLog finishedLog = new OBackupUploadFinishedLog(uploadStarted.getUnitId(), uploadStarted.getTxId(),
+            getUUID(), getDbName(), getMode().toString());
+
+        finishedLog.setElapsedTime(metadata.getElapsedTime());
+        finishedLog.setFileSize(log.getFileSize());
+        finishedLog.setMetadata(metadata.getMetadata());
+        finishedLog.setType(metadata.getType());
+        logger.log(finishedLog);
+
+      } catch (Exception e) {
+        OBackupUploadErrorLog error = new OBackupUploadErrorLog(log.getUnitId(), log.getTxId(), getUUID(), getDbName(),
+            getMode().toString());
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        error.setMessage(e.getMessage());
+        error.setStackTrace(sw.toString());
+        logger.log(error);
+      }
+      listener.onEvent(cfg, uploadStarted);
+    });
   }
 
   public void doRestore(final OBackupListener listener, ODocument doc) {
