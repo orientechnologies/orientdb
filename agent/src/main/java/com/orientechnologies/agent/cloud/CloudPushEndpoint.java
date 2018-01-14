@@ -2,7 +2,7 @@ package com.orientechnologies.agent.cloud;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.OEnterpriseCloudManager;
 import com.orientechnologies.agent.cloud.processor.CloudCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.CloudCommandProcessorFactory;
 import com.orientechnologies.common.log.OLogManager;
@@ -10,11 +10,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import com.orientechnologies.orientdb.cloud.protocol.CommandType;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -26,24 +21,23 @@ public class CloudPushEndpoint extends Thread {
 
   ObjectMapper objectMapper = new ObjectMapper();
 
-  private final OEnterpriseAgent agent;
-  private       boolean          terminate;
+  private final OEnterpriseCloudManager cloudManager;
+  private       boolean                 terminate;
 
   private long REQUEST_INTERVAL = 5000;//milliseconds TODO make it parametric or tunable
 
-  private String token;
   private String projectId;
   private String cloudBaseUrl;
 
   private static String monitoringPath = "/monitoring/collectStats/{projectId}";
 
-  public CloudPushEndpoint(OEnterpriseAgent oEnterpriseAgent) {
-    agent = oEnterpriseAgent;
+  public CloudPushEndpoint(OEnterpriseCloudManager oEnterpriseAgent) {
+    cloudManager = oEnterpriseAgent;
     init();
   }
 
   private void init() {
-    token = OGlobalConfiguration.CLOUD_PROJECT_TOKEN.getValue();
+
     projectId = OGlobalConfiguration.CLOUD_PROJECT_ID.getValue();
     cloudBaseUrl = OGlobalConfiguration.CLOUD_BASE_URL.getValue();
 
@@ -56,6 +50,8 @@ public class CloudPushEndpoint extends Thread {
         pushData();
       } catch (ConnectException e) {
         OLogManager.instance().debug(this, "Connection Refused");
+      } catch (CloudException e) {
+        OLogManager.instance().debug(this, "Error on api request", e);
       } catch (Exception e) {
         OLogManager.instance().warn(this, "Error handling request", e);
       }
@@ -80,20 +76,14 @@ public class CloudPushEndpoint extends Thread {
     }
   }
 
-  private void sendResponse(CommandResponse response) throws IOException {
-    CloseableHttpClient client = HttpClients.createDefault();
-    String fetchRequestsUrl = cloudBaseUrl + response.getResponseChannel().replaceAll("\\{projectId\\}", projectId);
-    HttpPost httpPost = new HttpPost(fetchRequestsUrl);
-    httpPost.addHeader("Authorization", "Bearer " + token);
+  private void sendResponse(final CommandResponse response) throws IOException, ClassNotFoundException, CloudException {
 
-    String json = serialize(response.getPayload());
-    StringEntity entity = new StringEntity(json);
-    httpPost.setEntity(entity);
-    httpPost.setHeader("Accept", "application/json");
-    httpPost.setHeader("Content-type", "application/json");
-    CloseableHttpResponse r = client.execute(httpPost);
+    cloudManager.runWithToken((token) -> {
+      String json = serialize(response.getPayload());
+      cloudManager.post(response.getResponseChannel().replaceAll("\\{projectId\\}", projectId), "Bearer " + token, json);
+      return null;
+    });
 
-    client.close();
   }
 
   private String serialize(Object response) throws JsonProcessingException {
@@ -106,7 +96,7 @@ public class CloudPushEndpoint extends Thread {
       return commandNotSupported(request);
     }
     try {
-      return processor.execute(request, this.agent);
+      return processor.execute(request, this.cloudManager.getAgent());
     } catch (Exception e) {
       return exceptionDuringExecution(request, e);
     }
