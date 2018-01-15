@@ -3,21 +3,16 @@ package com.orientechnologies.agent.cloud;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.OEnterpriseCloudManager;
 import com.orientechnologies.agent.cloud.processor.CloudCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.CloudCommandProcessorFactory;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.ConnectException;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -26,9 +21,9 @@ public class CloudEndpoint extends Thread {
 
   ObjectMapper objectMapper = new ObjectMapper();
 
-  private final OEnterpriseAgent agent;
-  private       boolean          terminate;
-  private       long             requestInterval;
+  private final OEnterpriseCloudManager cloudManager;
+  private       boolean                 terminate;
+  private       long                    requestInterval;
   private long MAX_REQUEST_INTERVAL = 4000;//milliseconds TODO make it parametric or tunable
 
   private String token;
@@ -38,8 +33,8 @@ public class CloudEndpoint extends Thread {
   private static String requestPath  = "/agent/commands/{projectId}";
   private static String responsePath = "/agent/commands/{projectId}/response";
 
-  public CloudEndpoint(OEnterpriseAgent oEnterpriseAgent) {
-    agent = oEnterpriseAgent;
+  public CloudEndpoint(OEnterpriseCloudManager oEnterpriseAgent) {
+    cloudManager = oEnterpriseAgent;
     init();
   }
 
@@ -55,8 +50,12 @@ public class CloudEndpoint extends Thread {
     while (!terminate) {
       try {
         handleRequest();
+      } catch (ConnectException e) {
+        OLogManager.instance().debug(this, "Connection Refused");
+      } catch (CloudException e) {
+        OLogManager.instance().debug(this, "Error on api request", e);
       } catch (Exception e) {
-        e.printStackTrace();
+        OLogManager.instance().warn(this, "Error handling request", e);
       }
       if (requestInterval > 0) {
         try {
@@ -67,7 +66,7 @@ public class CloudEndpoint extends Thread {
     }
   }
 
-  private void handleRequest() throws IOException, ClassNotFoundException {
+  private void handleRequest() throws IOException, ClassNotFoundException, CloudException {
     Command request = fetchRequest();
     if (request == null) {
       if (requestInterval < 500) {
@@ -87,22 +86,17 @@ public class CloudEndpoint extends Thread {
     }
   }
 
-  private void sendResponse(CommandResponse response) throws IOException {
-    CloseableHttpClient client = HttpClients.createDefault();
-    String fetchRequestsUrl = cloudBaseUrl + responsePath.replaceAll("\\{projectId\\}", projectId);
-    HttpPost httpPost = new HttpPost(fetchRequestsUrl);
-    httpPost.addHeader("Authorization", "Bearer " + token);
+  private void sendResponse(CommandResponse response) throws IOException, CloudException, ClassNotFoundException {
 
-    String json = serialize(response);
-    StringEntity entity = new StringEntity(json);
-    httpPost.setEntity(entity);
-    httpPost.setHeader("Accept", "application/json");
-    httpPost.setHeader("Content-type", "application/json");
-    client.execute(httpPost);
-    client.close();
+    cloudManager.runWithToken((token) -> {
+      String json = serialize(response);
+      cloudManager.post(responsePath.replaceAll("\\{projectId\\}", projectId), "Bearer " + token, json);
+      return null;
+    });
+
   }
 
-  private Command deserializeRequest(InputStream content) throws IOException, ClassNotFoundException {
+  private Command deserializeRequest(String content) throws IOException, ClassNotFoundException {
     JsonNode tree = objectMapper.readTree(content);
 
     if (tree == null) {
@@ -114,7 +108,7 @@ public class CloudEndpoint extends Thread {
     JsonNode responseChannel = tree.get("responseChannel");
 
     if (id == null || command == null || responseChannel == null) {
-      System.out.println("ERROR, invalid packet " + id + command + responseChannel);
+      OLogManager.instance().warn(this, "ERROR, invalid packet " + id + command + responseChannel);
       return null;
     }
 
@@ -146,7 +140,7 @@ public class CloudEndpoint extends Thread {
       return commandNotSupported(request);
     }
     try {
-      return processor.execute(request, this.agent);
+      return processor.execute(request, this.cloudManager.getAgent());
     } catch (Exception e) {
       return exceptionDuringExecution(request, e);
     }
@@ -175,41 +169,25 @@ public class CloudEndpoint extends Thread {
     return result;
   }
 
-  private Command fetchRequest() throws IOException, ClassNotFoundException {
+  private Command fetchRequest() throws IOException, ClassNotFoundException, CloudException {
     if (cloudBaseUrl == null || projectId == null || token == null) {
       init();
       return null;
     }
-    CloseableHttpClient client = HttpClients.createDefault();
-    String fetchRequestsUrl = cloudBaseUrl + requestPath.replaceAll("\\{projectId\\}", projectId);
-    HttpGet request = new HttpGet(fetchRequestsUrl);
 
-    request.addHeader("Authorization", "Bearer " + token);
+    return cloudManager.runWithToken((token) -> {
 
-    HttpResponse response = client.execute(request);
-    if (response.getStatusLine().getStatusCode() != 200) {
-      System.out.println("Request Error: " + response.getStatusLine().getStatusCode());
-      return null;
-    }
-
-    InputStream content = response.getEntity().getContent();
-//    StringBuilder builder = new StringBuilder();
-//    BufferedReader reader = new BufferedReader(new InputStreamReader(content));
-//    String line;
-//    do {
-//      line = reader.readLine();
-//      if (line != null) {
-//        builder.append(line);
-//      }
-//    } while (line != null);
-//    content.close();
-//    client.close();
-
-    try {
-      return deserializeRequest(content);
-    } finally {
-      client.close();
-    }
+      try {
+        String payload = cloudManager.get(requestPath.replaceAll("\\{projectId\\}", projectId), "Bearer " + token);
+        return deserializeRequest(payload);
+      } catch (CloudException e) {
+        if (e.getStatus() == 404) {
+          return null;
+        } else {
+          throw e;
+        }
+      }
+    });
   }
 
   public void shutdown() {

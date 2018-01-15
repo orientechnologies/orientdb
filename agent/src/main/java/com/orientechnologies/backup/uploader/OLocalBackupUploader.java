@@ -18,6 +18,11 @@
 
 package com.orientechnologies.backup.uploader;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Optional;
+
 /**
  * It has the responsibility to upload a local backup to a remote destination according to a certain strategy.
  */
@@ -31,11 +36,38 @@ public class OLocalBackupUploader {
     this.uploadingStrategy = FACTORY.buildStrategy(uploadingStrategy);
   }
 
+  public static Optional<OLocalBackupUploader> from(ODocument cfg) {
+    if (cfg == null) {
+      return Optional.empty();
+    }
+    String uploadStrategy = cfg.field("strategy");
+    if (uploadStrategy == null) {
+      OLogManager.instance().warn(null, "Cannot configure the cloud uploader, strategy parameters is missing", null);
+      return Optional.empty();
+    }
+    OLocalBackupUploader uploader = new OLocalBackupUploader(uploadStrategy);
+    try {
+      uploader.config(cfg);
+    } catch (Exception e) {
+      OLogManager.instance().warn(uploader, "Cannot configure the cloud uploader", e);
+      return Optional.empty();
+    }
+    return Optional.of(uploader);
+  }
+
   /*
 
    */
   public boolean executeUpload(String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters) {
     return this.uploadingStrategy.executeUpload(sourceBackupDirectory, destinationDirectoryPath, accessParameters);
+  }
+
+  public OUploadMetadata executeUpload(String sourceFile, String fname, String destinationDirectoryPath) throws Exception {
+    return this.uploadingStrategy.executeUpload(sourceFile, fname, destinationDirectoryPath);
+  }
+
+  protected void config(ODocument cfg) {
+    this.uploadingStrategy.config(cfg);
   }
 
 }
