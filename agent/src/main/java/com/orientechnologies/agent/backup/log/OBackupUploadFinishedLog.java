@@ -9,7 +9,8 @@ import java.util.Map;
  */
 public class OBackupUploadFinishedLog extends OBackupLog {
 
-  protected String type;
+  protected String uploadType;
+  protected String fileName;
   protected long elapsedTime = 0;
   protected long fileSize    = 0;
   protected Map<String, String> metadata;
@@ -23,8 +24,20 @@ public class OBackupUploadFinishedLog extends OBackupLog {
     return OBackupLogType.UPLOAD_FINISHED;
   }
 
-  public void setType(String type) {
-    this.type = type;
+  public void setFileName(String fileName) {
+    this.fileName = fileName;
+  }
+
+  public String getFileName() {
+    return fileName;
+  }
+
+  public void setUploadType(String type) {
+    this.uploadType = type;
+  }
+
+  public String getUploadType() {
+    return uploadType;
   }
 
   public void setElapsedTime(long elapsedTime) {
@@ -35,6 +48,10 @@ public class OBackupUploadFinishedLog extends OBackupLog {
     this.metadata = metadata;
   }
 
+  public Map<String, String> getMetadata() {
+    return metadata;
+  }
+
   public void setFileSize(long fileSize) {
     this.fileSize = fileSize;
   }
@@ -43,9 +60,10 @@ public class OBackupUploadFinishedLog extends OBackupLog {
   public ODocument toDoc() {
     ODocument document = super.toDoc();
     document.field("metadata", this.metadata);
-    document.field("type", this.type);
+    document.field("uploadType", this.uploadType);
     document.field("elapsedTime", this.elapsedTime);
     document.field("fileSize", this.fileSize);
+    document.field("fileName", this.fileName);
 
     return document;
   }
@@ -54,8 +72,9 @@ public class OBackupUploadFinishedLog extends OBackupLog {
   public void fromDoc(ODocument doc) {
     super.fromDoc(doc);
     this.metadata = doc.field("metadata");
-    this.type = doc.field("type");
+    this.uploadType = doc.field("uploadType");
     this.elapsedTime = doc.field("elapsedTime");
     this.fileSize = doc.field("fileSize");
+    this.fileName = doc.field("fileName");
   }
 }

@@ -18,6 +18,7 @@
 
 package com.orientechnologies.backup.uploader;
 
+import com.orientechnologies.agent.backup.log.OBackupUploadFinishedLog;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -30,4 +31,6 @@ public interface OUploadingStrategy {
   OUploadMetadata executeUpload(String sourceFile,String fName, String destinationDirectoryPath);
 
   void config(ODocument cfg);
+
+  String executeDownload(OBackupUploadFinishedLog upload);
 }

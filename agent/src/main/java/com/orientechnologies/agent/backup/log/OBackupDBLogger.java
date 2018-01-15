@@ -29,16 +29,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.OSystemDatabase;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Enrico Risa on 30/03/16.
@@ -80,15 +79,15 @@ public class OBackupDBLogger implements OBackupLogger {
   }
 
   @Override
-  public void log(final OBackupLog log) {
+  public OBackupLog log(final OBackupLog log) {
 
-    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
+    return getDatabase().executeWithDB(new OCallable<OBackupLog, ODatabase>() {
       @Override
-      public Void call(ODatabase iArgument) {
+      public OBackupLog call(ODatabase iArgument) {
         ODocument document = log.toDoc();
         document.setClassName(CLASS_NAME);
-        iArgument.save(document);
-        return null;
+        ODocument saved = (ODocument) iArgument.save(document);
+        return factory.fromDoc(saved);
       }
     });
 
@@ -110,21 +109,28 @@ public class OBackupDBLogger implements OBackupLogger {
       }
     };
 
+    Optional<OBackupLog> backupLog = getLogs(query, params,
+        (results) -> results.stream().map((r) -> factory.fromDoc((ODocument) r.toElement())).findFirst());
+
+    if (backupLog.isPresent()) {
+      return backupLog.get();
+
+    }
+
+    return null;
+  }
+
+  public <T> T getLogs(String query, Map<String, Object> params, OCallable<T, OResultSet> callback) {
+
     final OSystemDatabase database = getDatabase();
 
     if (database != null) {
-      List<ODocument> results = (List<ODocument>) database.execute(new OCallable<Object, Object>() {
-        @Override
-        public Object call(Object iArgument) {
-          return iArgument;
+      return database.executeWithDB((db) -> {
+        try (OResultSet resultSet = db.query(query, params)) {
+          return callback.call(resultSet);
         }
-      }, query, params);
-
-      if (results.size() > 0) {
-        return factory.fromDoc(results.get(0));
-      }
+      });
     }
-
     return null;
   }
 
@@ -140,16 +146,14 @@ public class OBackupDBLogger implements OBackupLogger {
       }
     };
 
-    List<ODocument> results = (List<ODocument>) getDatabase().execute(new OCallable<Object, Object>() {
-      @Override
-      public Object call(Object iArgument) {
-        return iArgument;
-      }
-    }, query, params);
+    Optional<OBackupLog> logs = getLogs(query, params,
+        (results) -> results.stream().map((r) -> factory.fromDoc((ODocument) r.toElement())).findFirst());
 
-    if (results.size() > 0) {
-      return factory.fromDoc(results.get(0));
+    if (logs.isPresent()) {
+      return logs.get();
+
     }
+
     return null;
   }
 
@@ -183,18 +187,9 @@ public class OBackupDBLogger implements OBackupLogger {
       query = String.format("select * from %s where  uuid = :uuid  order by timestamp desc limit :limit", CLASS_NAME);
     }
 
-    final List<ODocument> results = (List<ODocument>) getDatabase().execute(new OCallable<Object, Object>() {
-      @Override
-      public Object call(Object iArgument) {
-        return iArgument;
-      }
-    }, query, queryParams);
+    return getLogs(query, queryParams,
+        (results) -> results.stream().map(r -> factory.fromDoc((ODocument) r.toElement())).collect(Collectors.toList()));
 
-    for (ODocument result : results) {
-      logs.add(factory.fromDoc(result));
-    }
-
-    return logs;
   }
 
   @Override
@@ -218,16 +213,8 @@ public class OBackupDBLogger implements OBackupLogger {
     } else {
       query = String.format("select * from %s where uuid = :uuid and unitId = :unitId  order by timestamp desc ", CLASS_NAME);
     }
-    List<ODocument> results = (List<ODocument>) getDatabase().execute(new OCallable<Object, Object>() {
-      @Override
-      public Object call(Object iArgument) {
-        return iArgument;
-      }
-    }, query, queryParams);
-    for (ODocument result : results) {
-      logs.add(factory.fromDoc(result));
-    }
-    return logs;
+    return getLogs(query, queryParams,
+        (results) -> results.stream().map(r -> factory.fromDoc((ODocument) r.toElement())).collect(Collectors.toList()));
   }
 
   @Override
@@ -411,18 +398,8 @@ public class OBackupDBLogger implements OBackupLogger {
     String query = String
         .format("select * from %s where  uuid = :uuid  group by unitId  order by timestamp desc limit :limit", CLASS_NAME);
 
-    final List<ODocument> results = (List<ODocument>) getDatabase().execute(new OCallable<Object, Object>() {
-      @Override
-      public Object call(Object iArgument) {
-        return iArgument;
-      }
-    }, query, params);
-
-    for (ODocument result : results) {
-      logs.add(factory.fromDoc(result));
-    }
-
-    return logs;
+    return getLogs(query, params,
+        (results) -> results.stream().map(r -> factory.fromDoc((ODocument) r.toElement())).collect(Collectors.toList()));
   }
 
   @Override

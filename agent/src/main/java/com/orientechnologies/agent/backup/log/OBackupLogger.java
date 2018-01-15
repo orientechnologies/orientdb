@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public interface OBackupLogger {
 
-  void log(OBackupLog log);
+  OBackupLog log(OBackupLog log);
 
   long nextOpId();
 

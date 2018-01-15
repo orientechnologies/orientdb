@@ -18,6 +18,7 @@
 
 package com.orientechnologies.backup.uploader;
 
+import com.orientechnologies.agent.backup.log.OBackupUploadFinishedLog;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -70,4 +71,7 @@ public class OLocalBackupUploader {
     this.uploadingStrategy.config(cfg);
   }
 
+  public String executeDownload(OBackupUploadFinishedLog upload) {
+    return this.uploadingStrategy.executeDownload(upload);
+  }
 }

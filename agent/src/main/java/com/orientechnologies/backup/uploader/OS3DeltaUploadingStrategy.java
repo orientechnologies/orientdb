@@ -23,16 +23,17 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.*;
+import com.orientechnologies.agent.backup.log.OBackupUploadFinishedLog;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -77,9 +78,9 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
 
     try {
 
-    /*
-     * preparing bucket: if not present it's built
-     */
+      /*
+       * preparing bucket: if not present it's built
+       */
 
       List<Bucket> buckets = s3client.listBuckets();
 
@@ -96,9 +97,9 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
       }
 
 
-    /*
-     * uploading file to the bucket
-     */
+      /*
+       * uploading file to the bucket
+       */
 
       File localBackupDirectory = new File(sourceBackupDirectory);
 
@@ -177,7 +178,6 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
     AWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
     AmazonS3Client s3client = new AmazonS3Client(awsCredentials);
 
-
     if (!s3client.doesBucketExist(bucketName)) {
       s3client.createBucket(bucketName);
     }
@@ -218,5 +218,38 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
     // send request to S3 to create folder
     s3Client.putObject(putObjectRequest);
 
+  }
+
+  @Override
+  public String executeDownload(OBackupUploadFinishedLog upload) {
+
+    AWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
+    AmazonS3Client s3client = new AmazonS3Client(awsCredentials);
+
+    Map<String, String> metadata = upload.getMetadata();
+
+    String directory = metadata.get("directory");
+    String bucketName = metadata.get("bucketName");
+
+    ObjectListing objectListing = s3client.listObjects(bucketName, directory);
+
+    try {
+      Path tempDir = Files.createTempDirectory(directory);
+      for (S3ObjectSummary s3ObjectSummary : objectListing.getObjectSummaries()) {
+
+        String[] strings = s3ObjectSummary.getKey().split("/");
+
+        if (strings.length > 1) {
+          S3Object object = s3client.getObject(bucketName, s3ObjectSummary.getKey());
+          Files.copy(object.getObjectContent(), tempDir.resolve(strings[1]));
+        }
+
+      }
+      return tempDir.toString();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return null;
   }
 }
