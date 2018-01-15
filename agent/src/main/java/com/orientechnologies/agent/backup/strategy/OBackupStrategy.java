@@ -39,6 +39,7 @@ import java.io.StringWriter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Created by Enrico Risa on 25/03/16.
@@ -85,9 +86,9 @@ public abstract class OBackupStrategy {
     OBackupFinishedLog end;
     try {
       end = doBackup(start);
-      logger.log(end);
-      listener.onEvent(cfg, end);
-      doUpload(listener, end);
+      OBackupFinishedLog finishedLog = (OBackupFinishedLog) logger.log(end);
+      listener.onEvent(cfg, finishedLog);
+      doUpload(listener, finishedLog);
     } catch (Exception e) {
       OBackupErrorLog error = new OBackupErrorLog(start.getUnitId(), start.getTxId(), getUUID(), getDbName(), getMode().toString());
       StringWriter sw = new StringWriter();
@@ -100,7 +101,6 @@ public abstract class OBackupStrategy {
       return;
     }
 
-//    listener.onEvent(cfg, end);
   }
 
   public void doUpload(final OBackupListener listener, OBackupFinishedLog log) {
@@ -113,18 +113,25 @@ public abstract class OBackupStrategy {
       uploadStarted.setPath(log.getPath());
 
       logger.log(uploadStarted);
+
       String[] fragments = log.getPath().split(File.separator);
       try {
         OUploadMetadata metadata = uploader
-            .executeUpload(log.getPath() + File.separator + log.getFileName(),log.getFileName(), fragments[fragments.length - 1]);
+            .executeUpload(log.getPath() + File.separator + log.getFileName(), log.getFileName(), fragments[fragments.length - 1]);
         OBackupUploadFinishedLog finishedLog = new OBackupUploadFinishedLog(uploadStarted.getUnitId(), uploadStarted.getTxId(),
             getUUID(), getDbName(), getMode().toString());
 
         finishedLog.setElapsedTime(metadata.getElapsedTime());
         finishedLog.setFileSize(log.getFileSize());
+        finishedLog.setFileName(log.getFileName());
         finishedLog.setMetadata(metadata.getMetadata());
-        finishedLog.setType(metadata.getType());
-        logger.log(finishedLog);
+        finishedLog.setUploadType(metadata.getType());
+        OBackupUploadFinishedLog uploadLog = (OBackupUploadFinishedLog) logger.log(finishedLog);
+
+        log.setUpload(uploadLog);
+        logger.updateLog(log);
+
+        listener.onEvent(cfg, uploadLog);
 
       } catch (Exception e) {
         OBackupUploadErrorLog error = new OBackupUploadErrorLog(log.getUnitId(), log.getTxId(), getUUID(), getDbName(),
@@ -136,7 +143,7 @@ public abstract class OBackupStrategy {
         error.setStackTrace(sw.toString());
         logger.log(error);
       }
-      listener.onEvent(cfg, uploadStarted);
+
     });
   }
 
@@ -162,7 +169,7 @@ public abstract class OBackupStrategy {
       new Thread(new Runnable() {
         @Override
         public void run() {
-          doRestoreBackup(server, databaseName, finished, databaseName, listener);
+          startRestoreBackup(server, finished, databaseName, listener);
         }
       }).start();
     } catch (IOException e) {
@@ -170,8 +177,7 @@ public abstract class OBackupStrategy {
     }
   }
 
-  private void doRestoreBackup(OServer server, String dbName, OBackupFinishedLog finished, String databaseName,
-      OBackupListener listener) {
+  private void startRestoreBackup(OServer server, OBackupFinishedLog finished, String databaseName, OBackupListener listener) {
     ORestoreStartedLog restoreStartedLog = null;
     try {
 
@@ -179,18 +185,21 @@ public abstract class OBackupStrategy {
           finished.getMode());
       logger.log(restoreStartedLog);
 
-      server.restore(databaseName, finished.getPath());
-      ORestoreFinishedLog finishedLog = new ORestoreFinishedLog(restoreStartedLog.getUnitId(), restoreStartedLog.getTxId(),
-          getUUID(), getDbName(), restoreStartedLog.getMode());
+      if (finished.getUpload() != null) {
+        OBackupUploadFinishedLog upload = finished.getUpload();
+        ORestoreStartedLog finalRestoreStartedLog = restoreStartedLog;
+        uploader.ifPresent((u) -> {
+          String path = u.executeDownload(upload);
+          doRestore(server, finished, path, databaseName, listener, finalRestoreStartedLog, (log) -> {
+            //TODO additional cloud info
 
-      finishedLog.setElapsedTime(finishedLog.getTimestamp().getTime() - restoreStartedLog.getTimestamp().getTime());
-      finishedLog.setTargetDB(databaseName);
-      finishedLog.setPath(finished.getPath());
-      finishedLog.setRestoreUnitId(finished.getUnitId());
-
-      logger.log(finishedLog);
-
-      listener.onEvent(cfg,finishedLog);
+          });
+        });
+      } else {
+        doRestore(server, finished, finished.getPath(), databaseName, listener, restoreStartedLog, (log) -> {
+          log.setPath(finished.getPath());
+        });
+      }
 
     } catch (Exception e) {
 
@@ -204,6 +213,22 @@ public abstract class OBackupStrategy {
     } finally {
 
     }
+  }
+
+  private void doRestore(OServer server, OBackupFinishedLog finished, String path, String databaseName, OBackupListener listener,
+      ORestoreStartedLog restoreStartedLog, Consumer<ORestoreFinishedLog> consumer) {
+    server.restore(databaseName, path);
+    ORestoreFinishedLog finishedLog = new ORestoreFinishedLog(restoreStartedLog.getUnitId(), restoreStartedLog.getTxId(), getUUID(),
+        getDbName(), restoreStartedLog.getMode());
+
+    finishedLog.setElapsedTime(finishedLog.getTimestamp().getTime() - restoreStartedLog.getTimestamp().getTime());
+    finishedLog.setTargetDB(databaseName);
+    finishedLog.setRestoreUnitId(finished.getUnitId());
+    consumer.accept(finishedLog);
+
+    logger.log(finishedLog);
+
+    listener.onEvent(cfg, finishedLog);
   }
 
   protected OBackupFinishedLog doBackup(OBackupStartedLog start) {

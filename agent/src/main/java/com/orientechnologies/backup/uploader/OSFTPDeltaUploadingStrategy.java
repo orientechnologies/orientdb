@@ -19,6 +19,7 @@
 package com.orientechnologies.backup.uploader;
 
 import com.jcraft.jsch.*;
+import com.orientechnologies.agent.backup.log.OBackupUploadFinishedLog;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -191,5 +192,10 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
     username = cfg.field("username");
     password = cfg.field("password");
     path = cfg.field("path");
+  }
+
+  @Override
+  public String executeDownload(OBackupUploadFinishedLog upload) {
+    return null;
   }
 }

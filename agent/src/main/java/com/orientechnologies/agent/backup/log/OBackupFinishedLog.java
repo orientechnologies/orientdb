@@ -18,6 +18,8 @@
 
 package com.orientechnologies.agent.backup.log;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -25,11 +27,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OBackupFinishedLog extends OBackupLog {
 
+  OBackupLogFactory factory = new OBackupLogFactory();
   private String fileName;
   private String path;
   private long elapsedTime = 0;
   private long fileSize    = 0;
-  private Boolean prevChange;
+  private Boolean                  prevChange;
+  private OBackupUploadFinishedLog upload;
 
   public OBackupFinishedLog(long unitId, long opsId, String uuid, String dbName, String mode) {
     super(unitId, opsId, uuid, dbName, mode);
@@ -43,6 +47,9 @@ public class OBackupFinishedLog extends OBackupLog {
     doc.field("elapsedTime", elapsedTime);
     doc.field("fileSize", fileSize);
     doc.field("prevChange", prevChange);
+    if (upload != null) {
+      doc.field("upload", new ORecordId(upload.getInternalId()));
+    }
     return doc;
   }
 
@@ -55,6 +62,12 @@ public class OBackupFinishedLog extends OBackupLog {
     elapsedTime = doc.field("elapsedTime");
     fileSize = doc.field("fileSize");
     prevChange = doc.field("prevChange");
+
+    OIdentifiable upload = doc.field("upload");
+
+    if (upload != null) {
+      this.upload = ((OBackupUploadFinishedLog) factory.fromDoc(upload.getRecord()));
+    }
   }
 
   @Override
@@ -74,21 +87,25 @@ public class OBackupFinishedLog extends OBackupLog {
     return path;
   }
 
-
   public void setFileSize(long fileSize) {
     this.fileSize = fileSize;
   }
-
 
   public long getFileSize() {
     return fileSize;
   }
 
-
   public String getFileName() {
     return fileName;
   }
 
+  public void setUpload(OBackupUploadFinishedLog upload) {
+    this.upload = upload;
+  }
+
+  public OBackupUploadFinishedLog getUpload() {
+    return upload;
+  }
 
   public long getElapsedTime() {
     return elapsedTime;
@@ -105,6 +122,5 @@ public class OBackupFinishedLog extends OBackupLog {
   public void setPrevChange(Boolean prevChange) {
     this.prevChange = prevChange;
   }
-
 
 }
