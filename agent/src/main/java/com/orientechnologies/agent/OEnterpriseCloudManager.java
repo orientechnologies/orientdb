@@ -23,6 +23,8 @@ import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -253,25 +255,45 @@ public class OEnterpriseCloudManager extends Thread {
 
     init();
 
-    while (authToken == null) {
-      try {
-        negotiationToken();
+    if (cloudBaseUrl != null && projectId != null && token != null) {
 
-      } catch(ConnectException exception){
-        OLogManager.instance().warn(this, "OrientDB cloud is offline");
-      } catch (Exception e) {
-        OLogManager.instance().warn(this, "Error negotiating token", e);
+      while (authToken == null) {
+        try {
+          negotiationToken();
+
+        } catch (ConnectException exception) {
+          OLogManager.instance().warn(this, "OrientDB cloud is offline");
+        } catch (Exception e) {
+          OLogManager.instance().warn(this, "Error negotiating token", e);
+        }
+
+        try {
+          Thread.sleep(2000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
       }
 
-      try {
-        Thread.sleep(2000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+      cloudEndpoint.start();
+      cloudPushEndpoint.start();
+    } else {
+
+      List<String> params = new ArrayList<>();
+
+      if (cloudBaseUrl == null) {
+        params.add(OGlobalConfiguration.CLOUD_BASE_URL.getKey());
       }
+      if (projectId == null) {
+        params.add(OGlobalConfiguration.CLOUD_PROJECT_ID.getKey());
+      }
+      if (token == null) {
+        params.add(OGlobalConfiguration.CLOUD_PROJECT_TOKEN.getKey());
+      }
+
+      String missing = String.join(" , ", params);
+
+      OLogManager.instance().info(this, "OrientDB cloud is disabled. Configuration parameters missing : [%s]", missing);
     }
-
-    cloudEndpoint.start();
-    cloudPushEndpoint.start();
 
   }
 
