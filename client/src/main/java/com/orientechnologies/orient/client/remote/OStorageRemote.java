@@ -316,8 +316,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         }
         serverUrl = null;
       } catch (IOException | OIOException e) {
-        connectionManager.release(network);
-        retry = handleIOException(retry, network, e);
+        OLogManager.instance()
+            .info(this, "Caught Network I/O errors on %s, trying an automatic reconnection... (error: %s)", network.getServerURL(),
+                e.getMessage());
+        OLogManager.instance().debug(this, "I/O error stack: ", e);
+        connectionManager.remove(network);
+        if (--retry <= 0)
+          throw OException.wrapException(new OIOException(e.getMessage()), e);
+        else {
+          try {
+            Thread.sleep(connectionRetryDelay);
+          } catch (InterruptedException e1) {
+            OLogManager.instance().error(this, "Exception was suppressed, original exception is ", e);
+            throw OException.wrapException(new OInterruptedException(e1.getMessage()), e1);
+          }
+        }
         serverUrl = null;
       } catch (OException e) {
         connectionManager.release(network);
@@ -335,25 +348,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   @Override
   public boolean isAssigningClusterIds() {
     return false;
-  }
-
-  private int handleIOException(int retry, final OChannelBinaryAsynchClient network, final Exception e) {
-    OLogManager.instance()
-        .info(this, "Caught Network I/O errors on %s, trying an automatic reconnection... (error: %s)", network.getServerURL(),
-            e.getMessage());
-    OLogManager.instance().debug(this, "I/O error stack: ", e);
-    connectionManager.remove(network);
-    if (--retry <= 0)
-      throw OException.wrapException(new OIOException(e.getMessage()), e);
-    else {
-      try {
-        Thread.sleep(connectionRetryDelay);
-      } catch (InterruptedException e1) {
-        OLogManager.instance().error(this, "Exception was suppressed, original exception is ", e);
-        throw OException.wrapException(new OInterruptedException(e1.getMessage()), e1);
-      }
-    }
-    return retry;
   }
 
   /**
@@ -853,7 +847,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public void unstickToSession() {
     OStorageRemoteSession session = getCurrentSession();
-    session.setStickToSession(true);
+    session.setStickToSession(false);
   }
 
   public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Object[] args) {
