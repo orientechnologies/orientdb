@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -148,6 +150,11 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
     Channel channel = null;
     ChannelSftp channelSftp = null;
 
+    Map<String, String> metadata = new HashMap<>();
+    metadata.putIfAbsent("directory", destinationDirectoryPath);
+
+    long start = System.currentTimeMillis();
+
     try {
       // SFTP connection
       JSch ssh = new JSch();
@@ -181,7 +188,10 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
       e.printStackTrace();
     }
 
-    return new OUploadMetadata("sftp", 0, new HashMap<>());
+    long end = System.currentTimeMillis();
+    long elapsed = end - start;
+
+    return new OUploadMetadata("sftp", elapsed, metadata);
   }
 
   @Override
@@ -196,6 +206,44 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
 
   @Override
   public String executeDownload(OBackupUploadFinishedLog upload) {
+
+    boolean success = false;
+    Session session = null;
+    Channel channel = null;
+    ChannelSftp channelSftp = null;
+    try {
+      // SFTP connection
+      Map<String, String> metadata = upload.getMetadata();
+      JSch ssh = new JSch();
+      session = ssh.getSession(username, host, port);
+      session.setPassword(password);
+      java.util.Properties config = new java.util.Properties();
+      config.put("StrictHostKeyChecking", "no");
+      session.setConfig(config);
+      session.connect();
+      channel = session.openChannel("sftp");
+      channel.connect();
+      ChannelSftp sftp = (ChannelSftp) channel;
+
+      String directory = metadata.get("directory");
+
+      String dest = path + File.separator + directory;
+
+      sftp.cd(dest);
+
+      Vector<ChannelSftp.LsEntry> ls = sftp.ls(".");
+
+      Path tempDir = Files.createTempDirectory(directory);
+      for (ChannelSftp.LsEntry l : ls) {
+        if (!l.getFilename().equalsIgnoreCase(".") && !l.getFilename().equalsIgnoreCase("..")) {
+          Files.copy(sftp.get(l.getFilename()), tempDir.resolve(l.getFilename()));
+        }
+      }
+
+      return tempDir.toString();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return null;
   }
 }

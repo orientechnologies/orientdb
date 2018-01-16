@@ -168,8 +168,7 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
   public OUploadMetadata executeUpload(String sourceFile, String fName, String destinationDirectoryPath) {
 
     long start = System.currentTimeMillis();
-    long end = System.currentTimeMillis();
-    long elapsed = end - start;
+
     // Do the Upload
     Map<String, String> metadata = new HashMap<>();
     metadata.putIfAbsent("directory", destinationDirectoryPath);
@@ -188,6 +187,10 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
 
     File file = new File(sourceFile);
     s3client.putObject(bucketName, destinationDirectoryPath + SUFFIX + file.getName(), file);
+
+    long end = System.currentTimeMillis();
+    long elapsed = end - start;
+
     return new OUploadMetadata("s3", elapsed, metadata);
   }
 
