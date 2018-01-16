@@ -586,6 +586,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
   }
 
+  @Override
+  public void executeOnLocalNodeFromRemote(ODistributedRequest request) {
+    Object response = executeOnLocalNode(request.getId(), request.getTask(), null);
+    ODistributedWorker.sendResponseBack(this, this, request, response);
+  }
+
   /**
    * Executes the request on local node. In case of error returns the Exception itself
    */

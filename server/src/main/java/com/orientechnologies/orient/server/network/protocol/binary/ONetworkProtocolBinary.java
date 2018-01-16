@@ -535,8 +535,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     if (ddb != null)
       ddb.processRequest(req, true);
-    else
-      manager.executeOnLocalNode(req.getId(), req.getTask(), null);
+    else {
+      manager.executeOnLocalNodeFromRemote(req);
+    }
   }
 
   private void executeDistributedResponse(OClientConnection connection) throws IOException {
