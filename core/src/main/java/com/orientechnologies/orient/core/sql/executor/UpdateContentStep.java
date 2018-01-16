@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.parser.OJson;
@@ -24,42 +25,48 @@ public class UpdateContentStep extends AbstractExecutionStep {
 
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
     return new OResultSet() {
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         return upstream.hasNext();
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         OResult result = upstream.next();
         if (result instanceof OResultInternal) {
-          if (!(result.getElement().get() instanceof ODocument)) {
+          if (!(result.getElement().get() instanceof OElement)) {
             ((OResultInternal) result).setElement(result.getElement().get().getRecord());
           }
-          if (!(result.getElement().get() instanceof ODocument)) {
+          if (!(result.getElement().get() instanceof OElement)) {
             return result;
           }
-          handleContent((ODocument) result.getElement().get(), ctx);
+          handleContent((OElement) result.getElement().get(), ctx);
         }
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
         upstream.close();
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
   }
 
-  private boolean handleContent(ODocument record, OCommandContext ctx) {
+  private boolean handleContent(OElement record, OCommandContext ctx) {
     boolean updated = false;
 
     // REPLACE ALL THE CONTENT
@@ -67,35 +74,37 @@ public class UpdateContentStep extends AbstractExecutionStep {
 
     final OClass restricted = ctx.getDatabase().getMetadata().getSchema().getClass(OSecurity.RESTRICTED_CLASSNAME);
 
-    if (restricted != null && restricted.isSuperClassOf(record.getSchemaClass())) {
+    if (restricted != null && restricted.isSuperClassOf(record.getSchemaType().orElse(null))) {
       for (OProperty prop : restricted.properties()) {
-        fieldsToPreserve.field(prop.getName(), record.<Object>field(prop.getName()));
+        fieldsToPreserve.field(prop.getName(), record.<Object>getProperty(prop.getName()));
       }
     }
 
-    OClass recordClass = ODocumentInternal.getImmutableSchemaClass(record);
+    OClass recordClass = ODocumentInternal.getImmutableSchemaClass(record.getRecord());
     if (recordClass != null && recordClass.isSubClassOf("V")) {
-      for (String fieldName : record.fieldNames()) {
+      for (String fieldName : record.getPropertyNames()) {
         if (fieldName.startsWith("in_") || fieldName.startsWith("out_")) {
-          fieldsToPreserve.field(fieldName, record.<Object>field(fieldName));
+          fieldsToPreserve.field(fieldName, record.<Object>getProperty(fieldName));
         }
       }
     } else if (recordClass != null && recordClass.isSubClassOf("E")) {
-      for (String fieldName : record.fieldNames()) {
+      for (String fieldName : record.getPropertyNames()) {
         if (fieldName.equals("in") || fieldName.equals("out")) {
-          fieldsToPreserve.field(fieldName, record.<Object>field(fieldName));
+          fieldsToPreserve.field(fieldName, record.<Object>getProperty(fieldName));
         }
       }
     }
-    record.merge(fieldsToPreserve, false, false);
-    record.merge(json.toDocument(record, ctx), true, false);
+    ODocument doc = record.getRecord();
+    doc.merge(json.toDocument(record, ctx), false, false);
+    doc.merge(fieldsToPreserve, true, false);
 
     updated = true;
 
     return updated;
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
