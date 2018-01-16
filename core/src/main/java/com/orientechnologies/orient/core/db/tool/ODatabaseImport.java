@@ -25,6 +25,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODocumentFieldWalker;
@@ -95,7 +96,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   private Set<String>         indexesToRebuild    = new HashSet<String>();
   private Map<String, String> convertedClassNames = new HashMap<String, String>();
-  
+
   public ODatabaseImport(final ODatabaseDocumentInternal database, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
     super(database, iFileName, iListener);
@@ -1304,10 +1305,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         if (indexDefinition == null) {
           indexDefinition = new OSimpleKeyIndexDefinition(0, OType.STRING);
         }
-
+        
+        boolean oldValue = OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean();
+        OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(indexDefinition.isNullValuesIgnored());
         final OIndex index = indexManager
             .createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata, indexAlgorithm);
-
+        OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(oldValue);
         if (blueprintsIndexClass != null) {
           ODocument configuration = index.getConfiguration();
           configuration.field("blueprintsIndexClass", blueprintsIndexClass);

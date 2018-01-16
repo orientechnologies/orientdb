@@ -210,6 +210,26 @@ public class OSystemDatabase {
 
   }
 
+  public <T> T executeWithDB(OCallable<T, ODatabase> callback) {
+
+    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
+
+    try {
+      final ODatabase<?> db = openSystemDatabase();
+      try {
+        return callback.call(db);
+      } finally {
+        db.close();
+      }
+    } finally {
+      if (currentDB != null)
+        ODatabaseRecordThreadLocal.instance().set(currentDB);
+      else
+        ODatabaseRecordThreadLocal.instance().remove();
+    }
+
+  }
+
   public boolean exists() {
     return server.existsDatabase(getSystemDatabaseName());
   }

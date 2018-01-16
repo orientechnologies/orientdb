@@ -21,6 +21,7 @@ import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -268,12 +269,16 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
   @Override
   @ConsoleCommand(description = "Repair database structure", splitInWords = false)
   public void repairDatabase(
-      @ConsoleParameter(name = "options", description = "Options: [--fix-graph] [--fix-links] [-v]] [--fix-ridbags] [--fix-bonsai]", optional = true) String iOptions)
+      @ConsoleParameter(name = "options", description = "Options: [--fix-graph] [--force-embedded-ridbags] [--fix-links] [-v]] [--fix-ridbags] [--fix-bonsai]", optional = true) String iOptions)
       throws IOException {
     checkForDatabase();
-
+    final boolean force_embedded = iOptions == null || iOptions.contains("--force-embedded-ridbags");
     final boolean fix_graph = iOptions == null || iOptions.contains("--fix-graph");
-    if (fix_graph) {
+    if (force_embedded) {
+      OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(Integer.MAX_VALUE);
+      OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
+    }
+    if (fix_graph || force_embedded) {
       // REPAIR GRAPH
       final Map<String, List<String>> options = parseOptions(iOptions);
       new OGraphRepair().repair(OrientGraphFactory.getNoTxGraphImplFactory().getGraph(currentDatabase), this, options);
@@ -291,16 +296,12 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     }
 
     final boolean fix_ridbags = iOptions == null || iOptions.contains("--fix-ridbags");
-    if (fix_ridbags) {
+    final boolean fix_bonsai = iOptions == null || iOptions.contains("--fix-bonsai");
+    if (fix_ridbags || fix_bonsai || force_embedded) {
       OBonsaiTreeRepair repairer = new OBonsaiTreeRepair();
       repairer.repairDatabaseRidbags(currentDatabase, this);
     }
 
-    final boolean fix_bonsai = iOptions == null || iOptions.contains("--fix-bonsai");
-    if (fix_bonsai) {
-      OBonsaiTreeRepair repairer = new OBonsaiTreeRepair();
-      repairer.repairDatabaseRidbags(currentDatabase, this);
-    }
   }
 
   @Override
