@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
@@ -9,8 +10,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Returns the number of records contained in a class (including subclasses)
- * Executes a count(*) on a class and returns a single record that contains that value (with a specific alias).
+ * Returns the number of records contained in a class (including subclasses) Executes a count(*) on a class and returns a single
+ * record that contains that value (with a specific alias).
  *
  * @author Luigi Dell'Aquila (luigi.dellaquila - at - gmail.com)
  */
@@ -23,10 +24,9 @@ public class CountFromClassStep extends AbstractExecutionStep {
   private boolean executed = false;
 
   /**
-   *
-   * @param targetClass An identifier containing the name of the class to count
-   * @param alias the name of the property returned in the result-set
-   * @param ctx the query context
+   * @param targetClass      An identifier containing the name of the class to count
+   * @param alias            the name of the property returned in the result-set
+   * @param ctx              the query context
    * @param profilingEnabled true to enable the profiling of the execution (for SQL PROFILE)
    */
   public CountFromClassStep(OIdentifier targetClass, String alias, OCommandContext ctx, boolean profilingEnabled) {
@@ -52,13 +52,18 @@ public class CountFromClassStep extends AbstractExecutionStep {
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           OClass clazz = ctx.getDatabase().getClass(target.getStringValue());
+          if (clazz == null) {
+            throw new OCommandExecutionException("Class " + target.getStringValue() + " does not exist in the database schema");
+          }
           long size = clazz.count();
           executed = true;
           OResultInternal result = new OResultInternal();
           result.setProperty(alias, size);
           return result;
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
