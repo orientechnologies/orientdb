@@ -191,8 +191,8 @@ public abstract class OBackupStrategy {
         uploader.ifPresent((u) -> {
           String path = u.executeDownload(upload);
           doRestore(server, finished, path, databaseName, listener, finalRestoreStartedLog, (log) -> {
-            //TODO additional cloud info
-
+            log.setPath(path);
+            log.setMetadata(upload.getMetadata());
           });
         });
       } else {

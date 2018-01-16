@@ -20,15 +20,19 @@ package com.orientechnologies.agent.backup.log;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Map;
+
 /**
  * Created by Enrico Risa on 25/03/16.
  */
 public class ORestoreFinishedLog extends OBackupLog {
 
-  private long   elapsedTime = 0;
+  private long elapsedTime = 0;
   private String targetDB;
   private Long   restoreUnitId;
   private String path;
+
+  protected Map<String, String> metadata;
 
   public ORestoreFinishedLog(long unitId, long opsId, String uuid, String dbName, String mode) {
     super(unitId, opsId, uuid, dbName, mode);
@@ -46,6 +50,7 @@ public class ORestoreFinishedLog extends OBackupLog {
     doc.field("targetDB", targetDB);
     doc.field("unitId", restoreUnitId);
     doc.field("path", path);
+    doc.field("metadata", metadata);
     return doc;
   }
 
@@ -60,6 +65,7 @@ public class ORestoreFinishedLog extends OBackupLog {
     targetDB = doc.field("targetDB");
     restoreUnitId = doc.field("unitId");
     path = doc.field("path");
+    metadata = doc.field("metadata");
   }
 
   public long getElapsedTime() {
@@ -80,6 +86,14 @@ public class ORestoreFinishedLog extends OBackupLog {
 
   public void setRestoreUnitId(Long restoreUnitId) {
     this.restoreUnitId = restoreUnitId;
+  }
+
+  public void setMetadata(Map<String, String> metadata) {
+    this.metadata = metadata;
+  }
+
+  public Map<String, String> getMetadata() {
+    return metadata;
   }
 
   public String getPath() {
