@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -3303,5 +3304,75 @@ public class OSelectStatementExecutionTest {
     result.next();
     Assert.assertFalse(result.hasNext());
     result.close();
+  }
+
+  @Test
+  public void testRidPagination1() {
+    String className = "testRidPagination1";
+    OClass clazz = db.createClassIfNotExist(className);
+    int[] clusterIds = new int[clazz.getClusterIds().length];
+    if (clusterIds.length < 3) {
+      return;
+    }
+    System.arraycopy(clazz.getClusterIds(), 0, clusterIds, 0, clusterIds.length);
+    Arrays.sort(clusterIds);
+
+    for (int i = 0; i < clusterIds.length; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("cid", clusterIds[i]);
+      elem.save(db.getClusterNameById(clusterIds[i]));
+    }
+
+    OResultSet result = db.query("select from " + className + " where @rid >= #" + clusterIds[1] + ":0");
+    OExecutionPlan execPlan = result.getExecutionPlan().get();
+    for (OExecutionStep oExecutionStep : execPlan.getSteps()) {
+      if (oExecutionStep instanceof FetchFromClassExecutionStep) {
+        Assert.assertEquals(clusterIds.length, oExecutionStep.getSubSteps().size());
+        // clusters - 1 + fetch from tx...
+      }
+    }
+    int count = 0;
+    while (result.hasNext()) {
+      count++;
+      result.next();
+    }
+    result.close();
+    Assert.assertEquals(clusterIds.length - 1, count);
+  }
+
+  @Test
+  public void testRidPagination2() {
+    String className = "testRidPagination2";
+    OClass clazz = db.createClassIfNotExist(className);
+    int[] clusterIds = new int[clazz.getClusterIds().length];
+    if (clusterIds.length < 3) {
+      return;
+    }
+    System.arraycopy(clazz.getClusterIds(), 0, clusterIds, 0, clusterIds.length);
+    Arrays.sort(clusterIds);
+
+    for (int i = 0; i < clusterIds.length; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("cid", clusterIds[i]);
+      elem.save(db.getClusterNameById(clusterIds[i]));
+    }
+
+    Map<String, Object> params = new HashMap<>();
+    params.put("rid", new ORecordId(clusterIds[1], 0));
+    OResultSet result = db.query("select from " + className + " where @rid >= :rid", params);
+    OExecutionPlan execPlan = result.getExecutionPlan().get();
+    for (OExecutionStep oExecutionStep : execPlan.getSteps()) {
+      if (oExecutionStep instanceof FetchFromClassExecutionStep) {
+        Assert.assertEquals(clusterIds.length, oExecutionStep.getSubSteps().size());
+        // clusters - 1 + fetch from tx...
+      }
+    }
+    int count = 0;
+    while (result.hasNext()) {
+      count++;
+      result.next();
+    }
+    result.close();
+    Assert.assertEquals(clusterIds.length - 1, count);
   }
 }

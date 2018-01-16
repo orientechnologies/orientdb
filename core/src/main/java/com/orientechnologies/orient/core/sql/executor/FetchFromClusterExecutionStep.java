@@ -4,7 +4,9 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.parser.*;
@@ -166,14 +168,23 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
     for (OBooleanExpression ridRangeCondition : queryPlanning.ridRangeConditions.getSubBlocks()) {
       if (ridRangeCondition instanceof OBinaryCondition) {
         OBinaryCondition cond = (OBinaryCondition) ridRangeCondition;
-        ORid condRid = cond.getRight().getRid();
+        ORID conditionRid;
+
+        Object obj;
+        if (((OBinaryCondition) ridRangeCondition).getRight().getRid() != null) {
+          obj = ((OBinaryCondition) ridRangeCondition).getRight().getRid().toRecordId((OResult) null, ctx);
+        } else {
+          obj = ((OBinaryCondition) ridRangeCondition).getRight().execute((OResult) null, ctx);
+        }
+
+        conditionRid = ((OIdentifiable) obj).getIdentity();
         OBinaryCompareOperator operator = cond.getOperator();
-        if (condRid != null) {
-          if (condRid.getCluster().getValue().intValue() != this.clusterId) {
+        if (conditionRid != null) {
+          if (conditionRid.getClusterId() != this.clusterId) {
             continue;
           }
           if (operator instanceof OLtOperator || operator instanceof OLeOperator) {
-            minValue = Math.min(minValue, condRid.getPosition().getValue().longValue());
+            minValue = Math.min(minValue, conditionRid.getClusterPosition());
           }
         }
       }

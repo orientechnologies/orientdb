@@ -929,11 +929,11 @@ public class OSelectExecutionPlanner {
       } else if (target.getIdentifier() != null) {
         Set<String> filterClusters = info.serverToClusters.get(shardedPlan.getKey());
 
-        OAndBlock ridRangeConditions = extractRidRanges(info.flattenedWhereClause);
+        OAndBlock ridRangeConditions = extractRidRanges(info.flattenedWhereClause, ctx);
         if (ridRangeConditions != null && !ridRangeConditions.isEmpty()) {
           info.ridRangeConditions = ridRangeConditions;
-          filterClusters = filterClusters.stream().filter(x -> clusterMatchesRidRange(x, ridRangeConditions, ctx.getDatabase()))
-              .collect(Collectors.toSet());
+          filterClusters = filterClusters.stream()
+              .filter(x -> clusterMatchesRidRange(x, ridRangeConditions, ctx.getDatabase(), ctx)).collect(Collectors.toSet());
         }
 
         handleClassAsTarget(shardedPlan.getValue(), filterClusters, info, ctx, profilingEnabled);
@@ -995,14 +995,25 @@ public class OSelectExecutionPlanner {
     }
   }
 
-  private boolean clusterMatchesRidRange(String clusterName, OAndBlock ridRangeConditions, ODatabase database) {
+  private boolean clusterMatchesRidRange(String clusterName, OAndBlock ridRangeConditions, ODatabase database,
+      OCommandContext ctx) {
     int thisClusterId = database.getClusterIdByName(clusterName);
     for (OBooleanExpression ridRangeCondition : ridRangeConditions.getSubBlocks()) {
       if (ridRangeCondition instanceof OBinaryCondition) {
         OBinaryCompareOperator operator = ((OBinaryCondition) ridRangeCondition).getOperator();
-        ORid conditionRid = ((OBinaryCondition) ridRangeCondition).getRight().getRid();
+        ORID conditionRid;
+
+        Object obj;
+        if (((OBinaryCondition) ridRangeCondition).getRight().getRid() != null) {
+          obj = ((OBinaryCondition) ridRangeCondition).getRight().getRid().toRecordId((OResult) null, ctx);
+        } else {
+          obj = ((OBinaryCondition) ridRangeCondition).getRight().execute((OResult) null, ctx);
+        }
+
+        conditionRid = ((OIdentifiable) obj).getIdentity();
+
         if (conditionRid != null) {
-          int conditionClusterId = conditionRid.getCluster().getValue().intValue();
+          int conditionClusterId = conditionRid.getClusterId();
           if (operator instanceof OGtOperator || operator instanceof OGeOperator) {
             if (thisClusterId < conditionClusterId) {
               return false;
@@ -1018,7 +1029,7 @@ public class OSelectExecutionPlanner {
     return true;
   }
 
-  private OAndBlock extractRidRanges(List<OAndBlock> flattenedWhereClause) {
+  private OAndBlock extractRidRanges(List<OAndBlock> flattenedWhereClause, OCommandContext ctx) {
     OAndBlock result = new OAndBlock(-1);
 
     if (flattenedWhereClause == null || flattenedWhereClause.size() != 1) {
@@ -1027,7 +1038,7 @@ public class OSelectExecutionPlanner {
     //TODO optimization: merge multiple conditions
 
     for (OBooleanExpression booleanExpression : flattenedWhereClause.get(0).getSubBlocks()) {
-      if (isRidRange(booleanExpression)) {
+      if (isRidRange(booleanExpression, ctx)) {
         result.getSubBlocks().add(booleanExpression.copy());
       }
     }
@@ -1035,15 +1046,21 @@ public class OSelectExecutionPlanner {
     return result;
   }
 
-  private boolean isRidRange(OBooleanExpression booleanExpression) {
+  private boolean isRidRange(OBooleanExpression booleanExpression, OCommandContext ctx) {
     if (booleanExpression instanceof OBinaryCondition) {
       OBinaryCondition cond = ((OBinaryCondition) booleanExpression);
       OBinaryCompareOperator operator = cond.getOperator();
-      if (isRangeOperator(operator)) {
-        return cond.getLeft().toString().equalsIgnoreCase("@rid") && cond.getRight().getRid() != null;
+      if (isRangeOperator(operator) && cond.getLeft().toString().equalsIgnoreCase("@rid")) {
+        Object obj;
+        if (cond.getRight().getRid() != null) {
+          obj = cond.getRight().getRid().toRecordId((OResult) null, ctx);
+        } else {
+          obj = cond.getRight().execute((OResult) null, ctx);
+        }
+        return obj instanceof OIdentifiable;
       }
     }
-    return false;//TODO
+    return false;
   }
 
   private boolean isRangeOperator(OBinaryCompareOperator operator) {
