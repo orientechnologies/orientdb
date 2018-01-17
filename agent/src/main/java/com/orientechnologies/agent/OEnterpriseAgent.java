@@ -1,27 +1,26 @@
 /*
  * Copyright 2010-2013 Orient Technologies LTD (info--at--orientechnologies.com)
  * All Rights Reserved. Commercial License.
- * 
+ *
  * NOTICE:  All information contained herein is, and remains the property of
  * Orient Technologies LTD and its suppliers, if any.  The intellectual and
  * technical concepts contained herein are proprietary to
  * Orient Technologies LTD and its suppliers and may be covered by United
  * Kingdom and Foreign Patents, patents in process, and are protected by trade
  * secret or copyright law.
- * 
+ *
  * Dissemination of this information or reproduction of this material
  * is strictly forbidden unless prior written permission is obtained
  * from Orient Technologies LTD.
- * 
+ *
  * For more information: http://www.orientechnologies.com
  */
 package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.backup.OBackupManager;
-import com.orientechnologies.agent.cloud.CloudEndpoint;
-import com.orientechnologies.agent.cloud.CloudPushEndpoint;
 import com.orientechnologies.agent.ha.OEnterpriseDistributedStrategy;
 import com.orientechnologies.agent.http.command.*;
+import com.orientechnologies.agent.operation.NodesManager;
 import com.orientechnologies.agent.plugins.OEventPlugin;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.agent.profiler.OEnterpriseProfilerListener;
@@ -83,8 +82,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   protected OEnterpriseProfiler profiler;
 
 
-
   private OEnterpriseCloudManager cloudManager;
+
+  private NodesManager nodesManager;
 
   public OEnterpriseAgent() {
   }
@@ -139,6 +139,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
               continue;
             } else {
               OHazelcastPlugin plugin = (OHazelcastPlugin) manager;
+              nodesManager = new NodesManager(plugin);
               try {
                 plugin.waitUntilNodeOnline();
               } catch (InterruptedException e) {
@@ -185,6 +186,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   public OBackupManager getBackupManager() {
     return backupManager;
+  }
+
+  public NodesManager getNodesManager() {
+    return nodesManager;
   }
 
   @Override
@@ -450,5 +455,14 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     } catch (Throwable th) {
       OLogManager.instance().error(this, "unregisterSecurityComponents()", th);
     }
+  }
+
+  public boolean isDistributed() {
+    return server.getDistributedManager() != null;
+  }
+
+  public ODistributedServerManager getDistributedManager(){
+
+    return server.getDistributedManager();
   }
 }

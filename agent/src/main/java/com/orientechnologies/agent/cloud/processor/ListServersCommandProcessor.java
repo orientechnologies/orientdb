@@ -1,15 +1,19 @@
 package com.orientechnologies.agent.cloud.processor;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
-import com.orientechnologies.agent.http.command.OServerCommandDistributedManager;
+import com.orientechnologies.agent.cloud.processor.tasks.EnterpriseStatsResponse;
+import com.orientechnologies.agent.cloud.processor.tasks.EnterpriseStatsTask;
+import com.orientechnologies.agent.operation.NodeResponse;
+import com.orientechnologies.agent.operation.OperationResponseFromNode;
+import com.orientechnologies.agent.operation.ResponseOk;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orientdb.cloud.protocol.*;
 
 import java.util.*;
@@ -21,13 +25,13 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
 
     CommandResponse response = fromRequest(command);
 
-    ServerList serverList = getClusterConfig(agent.server, agent.server.getDistributedManager());
+    ServerList serverList = getClusterConfig(agent, agent.server, agent.server.getDistributedManager());
     response.setPayload(serverList);
 
     return response;
   }
 
-  public ServerList getClusterConfig(OServer srv, final ODistributedServerManager manager) {
+  public ServerList getClusterConfig(OEnterpriseAgent agent, OServer srv, final ODistributedServerManager manager) {
     ServerList result = new ServerList();
     if (manager == null) { //single node
       ServerBasicInfo server = new ServerBasicInfo();
@@ -53,15 +57,12 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
       result.addInfo(server);
     } else { //distributed
 
-      final OServerNetworkListener listener = manager.getServerInstance().getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+      Map<String, NodeResponse> responses = agent.getNodesManager().sendAll(new EnterpriseStatsTask()).stream()
+          .collect(Collectors.toMap(OperationResponseFromNode::getSenderNodeName, OperationResponseFromNode::getNodeResponse));
 
-      OServerCommandDistributedManager command = (OServerCommandDistributedManager) listener
-          .getCommand(OServerCommandDistributedManager.class);
+      ODocument clusterConfig = getClusterConfig(manager);
 
-      ODocument clusterStats = command.getClusterConfig(manager);
-      Map statsDoc = clusterStats.getProperty("clusterStats");
-
-      List<ODocument> members = clusterStats.field("members");
+      List<ODocument> members = clusterConfig.field("members");
 
       if (members != null) {
         List<ServerBasicInfo> collected = members.stream().map(m -> {
@@ -71,10 +72,10 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
           String version = m.field("version");
           Collection<String> databases = m.field("databases");
 
-          List<Map<String,String>> listeners = m.field("listeners");
+          List<Map<String, String>> listeners = m.field("listeners");
 
           List<String> addresses = new ArrayList<>();
-          if(listeners!=null){
+          if (listeners != null) {
             addresses = listeners.stream().map((l) -> l.get("listen")).collect(Collectors.toList());
           }
           ServerBasicInfo server = new ServerBasicInfo();
@@ -86,9 +87,12 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
           server.setStartedOn(startedOn);
           server.setStatus(status);
           server.setDatabases(databases);
-          ODocument nodeStats = (ODocument) statsDoc.get(name);
-          if (nodeStats != null) {
-            server.setStats(populateStats(server, m, nodeStats.getProperty("realtime")));
+          NodeResponse nodeResponse = responses.get(name);
+          if (nodeResponse != null && nodeResponse.getResponseType() == 1) {
+            ResponseOk ok = (ResponseOk) nodeResponse;
+            EnterpriseStatsResponse response = (EnterpriseStatsResponse) ok.getPayload();
+            ODocument stats = new ODocument().fromJSON(response.getStats());
+            server.setStats(populateStats(server, m, stats.getProperty("realtime")));
           }
           return server;
         }).collect(Collectors.toList());
@@ -99,6 +103,53 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
     }
 
     return result;
+  }
+
+  public ODocument getClusterConfig(final ODistributedServerManager manager) {
+    final ODocument doc = manager.getClusterConfiguration();
+
+    final Collection<ODocument> documents = doc.field("members");
+    List<String> servers = new ArrayList<String>(documents.size());
+    for (ODocument document : documents)
+      servers.add((String) document.field("name"));
+
+    Set<String> databases = manager.getServerInstance().listDatabases();
+    if (databases.isEmpty()) {
+      OLogManager.instance().warn(this, "Cannot load stats, no databases on this server");
+      return doc;
+    }
+
+    doc.field("databasesStatus", calculateDBStatus(manager, doc));
+    return doc;
+  }
+
+  private ODocument calculateDBStatus(final ODistributedServerManager manager, final ODocument cfg) {
+
+    final ODocument doc = new ODocument();
+    final Collection<ODocument> members = cfg.field("members");
+
+    Set<String> databases = new HashSet<String>();
+    for (ODocument m : members) {
+      final Collection<String> dbs = m.field("databases");
+      for (String db : dbs) {
+        databases.add(db);
+      }
+    }
+    for (String database : databases) {
+      doc.field(database, singleDBStatus(manager, database));
+    }
+    return doc;
+  }
+
+  private ODocument singleDBStatus(ODistributedServerManager manager, String database) {
+    final ODocument entries = new ODocument();
+    final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(database, false);
+    final Set<String> servers = dbCfg.getAllConfiguredServers();
+    for (String serverName : servers) {
+      final ODistributedServerManager.DB_STATUS databaseStatus = manager.getDatabaseStatus(serverName, database);
+      entries.field(serverName, databaseStatus.toString());
+    }
+    return entries;
   }
 
   private ServerStats populateStats(ServerBasicInfo serverBasicInfo, ODocument member, Map realtime) {

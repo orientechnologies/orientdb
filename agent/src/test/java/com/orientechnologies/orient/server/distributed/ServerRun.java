@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
@@ -174,5 +173,9 @@ public class ServerRun {
 
   public static String getDatabasePath(final String iServerId, final String iDatabaseName) {
     return new File(getServerHome(iServerId) + "/databases/" + iDatabaseName).getAbsolutePath();
+  }
+
+  public String getNodeName(){
+    return server.getDistributedManager().getLocalNodeName();
   }
 }
