@@ -6,7 +6,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import java.io.DataInput;
 import java.io.DataOutput;
 
-public interface NodeOperation {
+public interface NodeOperation  {
 
   NodeOperationResponse execute(OServer iServer, ODistributedServerManager iManager);
 

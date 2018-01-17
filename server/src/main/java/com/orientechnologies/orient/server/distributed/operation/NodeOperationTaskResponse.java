@@ -9,6 +9,9 @@ public class NodeOperationTaskResponse implements Externalizable {
   private int                   messageId;
   private NodeOperationResponse response;
 
+  public NodeOperationTaskResponse() {
+  }
+
   public NodeOperationTaskResponse(int messageId, NodeOperationResponse response) {
     this.messageId = messageId;
     this.response = response;
@@ -16,7 +19,7 @@ public class NodeOperationTaskResponse implements Externalizable {
 
   @Override
   public void writeExternal(ObjectOutput out) throws IOException {
-    out.write(this.messageId);
+    out.writeInt(this.messageId);
     response.write(out);
   }
 
