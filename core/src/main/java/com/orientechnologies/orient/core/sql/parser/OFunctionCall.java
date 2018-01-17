@@ -435,5 +435,17 @@ public class OFunctionCall extends SimpleNode {
     }
   }
 
+  public void extractSubQueries(OIdentifier letAlias, SubQueryCollector collector) {
+    for (OExpression param : this.params) {
+      param.extractSubQueries(letAlias, collector);
+    }
+  }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    for (OExpression param : this.params) {
+      param.extractSubQueries(collector);
+    }
+  }
+
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */

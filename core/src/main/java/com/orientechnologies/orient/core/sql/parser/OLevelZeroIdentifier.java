@@ -306,5 +306,16 @@ public class OLevelZeroIdentifier extends SimpleNode {
     }
   }
 
+  public void extractSubQueries(OIdentifier letAlias, SubQueryCollector collector) {
+    if (this.functionCall != null) {
+      this.functionCall.extractSubQueries(letAlias, collector);
+    }
+  }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (this.functionCall != null) {
+      this.functionCall.extractSubQueries(collector);
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=0305fcf120ba9395b4c975f85cdade72 (do not edit this line) */

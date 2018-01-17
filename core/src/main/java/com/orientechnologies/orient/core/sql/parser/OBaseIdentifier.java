@@ -337,5 +337,17 @@ public class OBaseIdentifier extends SimpleNode {
     }
     return true;
   }
+
+  public void extractSubQueries(OIdentifier letAlias, SubQueryCollector collector) {
+    if (this.levelZero != null) {
+      this.levelZero.extractSubQueries(letAlias, collector);
+    }
+  }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (this.levelZero != null) {
+      this.levelZero.extractSubQueries(collector);
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

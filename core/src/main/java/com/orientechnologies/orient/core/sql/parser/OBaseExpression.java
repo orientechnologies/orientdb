@@ -192,9 +192,9 @@ public class OBaseExpression extends OMathExpression {
   }
 
   /**
-   * tests if current expression is an indexed function AND the function has also to be executed after the index search.
-   * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
-   * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * tests if current expression is an indexed function AND the function has also to be executed after the index search. In some
+   * cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases the result from
+   * the index is a superset of the expected result, so the function has to be executed anyway for further filtering
    *
    * @param target  the query target
    * @param context the execution context
@@ -419,8 +419,8 @@ public class OBaseExpression extends OMathExpression {
 
   @Override
   public boolean isDefinedFor(OResult currentRecord) {
-    if(this.identifier!=null){
-      if(modifier==null){
+    if (this.identifier != null) {
+      if (modifier == null) {
         return identifier.isDefinedFor(currentRecord);
       }
 
@@ -431,14 +431,25 @@ public class OBaseExpression extends OMathExpression {
 
   @Override
   public boolean isDefinedFor(OElement currentRecord) {
-    if(this.identifier!=null){
-      if(modifier==null){
+    if (this.identifier != null) {
+      if (modifier == null) {
         return identifier.isDefinedFor(currentRecord);
       }
 
     }
     return true;
+  }
 
+  public void extractSubQueries(OIdentifier letAlias, SubQueryCollector collector) {
+    if (this.identifier != null) {
+      this.identifier.extractSubQueries(letAlias, collector);
+    }
+  }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (this.identifier != null) {
+      this.identifier.extractSubQueries(collector);
+    }
   }
 }
 
