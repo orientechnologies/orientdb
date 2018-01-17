@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.orient.server.distributed.operation.NodeOperationTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
@@ -119,6 +120,10 @@ public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
     case OUnreachableServerLocalTask.FACTORYID: // 28
       throw new IllegalArgumentException("Task with code " + code + " is not supported in remote configuration");
 
+    case OEnterpriseStatsTask.FACTORYID: // 29
+      return new OEnterpriseStatsTask();
+
+
 
     //--- here starts V2 ----
 
@@ -137,9 +142,8 @@ public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
     case OTransactionPhase2Task.FACTORYID: // 44
       return new OTransactionPhase2Task();
 
-    case OEnterpriseStatsTask.FACTORYID: // 29
-      return new OEnterpriseStatsTask();
-      
+    case NodeOperationTask.FACTORYID: //55
+      return new NodeOperationTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

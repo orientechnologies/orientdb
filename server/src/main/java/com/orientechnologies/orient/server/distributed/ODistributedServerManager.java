@@ -44,6 +44,7 @@ import java.util.Set;
 public interface ODistributedServerManager {
   String FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
 
+
   /**
    * Server status.
    */
@@ -144,6 +145,8 @@ public interface ODistributedServerManager {
   ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
 
   Object executeOnLocalNode(ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentInternal database);
+
+  void executeOnLocalNodeFromRemote(ODistributedRequest request);
 
   ORemoteServerController getRemoteServer(String nodeName) throws IOException;
 

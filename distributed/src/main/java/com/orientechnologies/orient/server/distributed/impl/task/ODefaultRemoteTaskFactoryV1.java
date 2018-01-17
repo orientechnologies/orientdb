@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.orient.server.distributed.operation.NodeOperationTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
@@ -117,7 +118,7 @@ public class ODefaultRemoteTaskFactoryV1 extends ODefaultRemoteTaskFactoryV0 {
       return new ORequestDatabaseConfigurationTask();
 
     case OTransactionPhase1Task.FACTORYID:
-      return  new OTransactionPhase1Task();
+      return new OTransactionPhase1Task();
 
     case OTransactionPhase2Task.FACTORYID:
       return new OTransactionPhase2Task();
@@ -127,6 +128,9 @@ public class ODefaultRemoteTaskFactoryV1 extends ODefaultRemoteTaskFactoryV0 {
 
     case OEnterpriseStatsTask.FACTORYID: // 29
       return new OEnterpriseStatsTask();
+
+    case NodeOperationTask.FACTORYID: //55
+      return new NodeOperationTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");
