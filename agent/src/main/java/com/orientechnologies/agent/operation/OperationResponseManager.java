@@ -7,6 +7,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
+import com.orientechnologies.orient.server.distributed.operation.NodeOperationTaskResponse;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +31,12 @@ public class OperationResponseManager implements ODistributedResponseManager {
 
   @Override
   public synchronized boolean setLocalResult(String localNodeName, Object localResult) {
-    responses.add(new OperationResponseFromNode(localNodeName, new ResponseOk((NodeOperationResponse) localResult)));
+    NodeOperationResponse result = (NodeOperationResponse) localResult;
+    if (result.isOk()) {
+      responses.add(new OperationResponseFromNode(localNodeName, new ResponseOk(result)));
+    } else {
+      responses.add(new OperationResponseFromNode(localNodeName, new ResponseFailed(result)));
+    }
     return false;
   }
 
@@ -46,7 +52,7 @@ public class OperationResponseManager implements ODistributedResponseManager {
   }
 
   @Override
-  public synchronized boolean waitForSynchronousResponses() throws InterruptedException {
+  public boolean waitForSynchronousResponses() throws InterruptedException {
     return waitingFor.await(OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS);
   }
 
@@ -123,8 +129,12 @@ public class OperationResponseManager implements ODistributedResponseManager {
 
   @Override
   public synchronized boolean collectResponse(ODistributedResponse response) {
-    NodeOperationResponse nodeResponse = (NodeOperationResponse) response.getPayload();
-    responses.add(new OperationResponseFromNode(response.getSenderNodeName(), new ResponseOk(nodeResponse)));
+    NodeOperationTaskResponse nodeResponse = (NodeOperationTaskResponse) response.getPayload();
+    if (nodeResponse.getResponse().isOk()) {
+      responses.add(new OperationResponseFromNode(response.getSenderNodeName(), new ResponseOk(nodeResponse.getResponse())));
+    } else {
+      responses.add(new OperationResponseFromNode(response.getSenderNodeName(), new ResponseFailed(nodeResponse.getResponse())));
+    }
     waitingFor.countDown();
     return waitingFor.getCount() == 0;
   }

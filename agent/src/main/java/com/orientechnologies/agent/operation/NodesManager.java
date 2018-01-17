@@ -1,5 +1,11 @@
 package com.orientechnologies.agent.operation;
 
+import com.orientechnologies.agent.cloud.processor.tasks.EnterpriseStatsResponse;
+import com.orientechnologies.agent.cloud.processor.tasks.EnterpriseStatsTask;
+import com.orientechnologies.agent.cloud.processor.tasks.backup.AddBackupTask;
+import com.orientechnologies.agent.cloud.processor.tasks.backup.AddBackupTaskResponse;
+import com.orientechnologies.agent.cloud.processor.tasks.backup.ListBackupTask;
+import com.orientechnologies.agent.cloud.processor.tasks.backup.ListBackupTaskResponse;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperation;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperationTask;
@@ -15,6 +21,14 @@ public class NodesManager {
 
   public NodesManager(ODistributedServerManager manager) {
     this.manager = manager;
+
+    initCommands();
+  }
+
+  private void initCommands() {
+    NodeOperationTask.register(1, () -> new EnterpriseStatsTask(), () -> new EnterpriseStatsResponse());
+    NodeOperationTask.register(10, () -> new AddBackupTask(), () -> new AddBackupTaskResponse());
+    NodeOperationTask.register(11, () -> new ListBackupTask(), () -> new ListBackupTaskResponse());
   }
 
   public List<OperationResponseFromNode> sendAll(NodeOperation task) {

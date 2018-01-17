@@ -1,7 +1,5 @@
 package com.orientechnologies.agent.operation;
 
-import com.orientechnologies.agent.operation.NodeResponse;
-
 public class OperationResponseFromNode {
   private String       senderNodeName;
   private NodeResponse nodeResponse;

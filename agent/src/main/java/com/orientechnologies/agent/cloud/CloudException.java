@@ -3,7 +3,7 @@ package com.orientechnologies.agent.cloud;
 /**
  * Created by Enrico Risa on 08/01/2018.
  */
-public class CloudException extends Exception {
+public class CloudException extends RuntimeException {
 
   private Integer status;
   private String  error;
