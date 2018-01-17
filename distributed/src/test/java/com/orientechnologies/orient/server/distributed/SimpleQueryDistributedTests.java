@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -64,13 +65,14 @@ public class SimpleQueryDistributedTests {
   }
 
   @After
-  public void after() {
+  public void after() throws InterruptedException {
     remote.drop("test");
     remote.close();
 
     server0.shutdown();
     server1.shutdown();
     server2.shutdown();
+    ODatabaseDocumentTx.closeAll();
   }
 
 }

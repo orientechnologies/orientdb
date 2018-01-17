@@ -26,7 +26,7 @@
                     name="binary"/>
         </protocols>
         <listeners>
-            <listener protocol="binary" port-range="2424-2430"
+            <listener protocol="binary" port-range="2426"
                       ip-address="0.0.0.0"/>
         </listeners>
     </network>

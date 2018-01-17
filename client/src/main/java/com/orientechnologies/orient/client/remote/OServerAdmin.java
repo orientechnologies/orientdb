@@ -138,7 +138,6 @@ public class OServerAdmin {
       } finally {
         storage.endResponse(network);
       }
-      storage.connectionManager.release(network);
       return null;
     }, "Cannot connect to the remote server/database '" + storage.getURL() + "'");
 
@@ -457,7 +456,6 @@ public class OServerAdmin {
         } finally {
           storage.endResponse(network);
         }
-        storage.connectionManager.release(network);
         return response;
       }
     }, errorMessage);

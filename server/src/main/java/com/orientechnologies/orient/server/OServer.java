@@ -145,7 +145,7 @@ public class OServer {
       throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
       MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
       IllegalAccessException {
-    OServer server = new OServer();
+    OServer server = new OServer(false);
     server.startup(config);
     server.activate();
     return server;
@@ -155,7 +155,7 @@ public class OServer {
       throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
       MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
       IllegalAccessException {
-    OServer server = new OServer();
+    OServer server = new OServer(false);
     server.startup(Thread.currentThread().getContextClassLoader().getResourceAsStream(config));
     server.activate();
     return server;
@@ -165,7 +165,7 @@ public class OServer {
       throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
       MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
       IllegalAccessException {
-    OServer server = new OServer();
+    OServer server = new OServer(false);
     server.startup(config);
     server.activate();
     return server;
