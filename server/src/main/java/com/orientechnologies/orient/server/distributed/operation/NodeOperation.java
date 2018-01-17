@@ -5,14 +5,15 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.IOException;
 
 public interface NodeOperation  {
 
   NodeOperationResponse execute(OServer iServer, ODistributedServerManager iManager);
 
-  void write(DataOutput out);
+  void write(DataOutput out) throws IOException;
 
-  void read(DataInput in);
+  void read(DataInput in) throws IOException;
 
   int getMessageId();
 }
