@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 
 import java.util.Map;
 
@@ -92,10 +93,15 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLAbstract im
 
       return totalIndexed;
 
-    } else
-      getDatabase().getMetadata().getIndexManager().dropIndex(name);
+    } else {
+      OIndexManagerProxy indexMgr = getDatabase().getMetadata().getIndexManager();
+      if (indexMgr.existsIndex(name)) {
+        indexMgr.dropIndex(name);
+        return 1;
+      }
+      return 0;
 
-    return 1;
+    }
   }
 
   @Override
