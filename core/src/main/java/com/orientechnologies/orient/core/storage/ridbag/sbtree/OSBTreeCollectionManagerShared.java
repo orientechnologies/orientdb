@@ -106,15 +106,11 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
 
   @Override
   public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer) {
-    checkAccess();
-
     return super.loadSBTree(collectionPointer);
   }
 
   @Override
   public void delete(OBonsaiCollectionPointer collectionPointer) {
-    checkAccess();
-
     super.delete(collectionPointer);
   }
 

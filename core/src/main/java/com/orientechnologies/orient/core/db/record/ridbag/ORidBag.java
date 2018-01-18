@@ -24,11 +24,15 @@ import com.orientechnologies.common.collection.OCollection;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -83,7 +87,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   public ORidBag(final ORidBag ridBag) {
     init();
-    for (Iterator<OIdentifiable> it = ridBag.rawIterator(); it.hasNext();)
+    for (Iterator<OIdentifiable> it = ridBag.rawIterator(); it.hasNext(); )
       add(it.next());
   }
 
@@ -207,7 +211,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     checkAndConvert();
 
     final UUID oldUuid = uuid;
-    final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
+    final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.instance().get()
+        .getSbTreeCollectionManager();
     if (sbTreeCollectionManager != null)
       uuid = sbTreeCollectionManager.listenForChanges(this);
     else
@@ -239,9 +244,9 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return pointer;
   }
 
-  private void checkAndConvert() {
-    final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-    if (context != null) {
+  public void checkAndConvert() {
+    ODatabaseInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (database != null && !database.getStorage().isRemote()) {
       if (isEmbedded() && ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager() != null
           && delegate.size() >= topThreshold) {
         ORidBagDelegate oldDelegate = delegate;
@@ -468,7 +473,6 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   public void fireCollectionChangedEvent(OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
     delegate.fireCollectionChangedEvent(event);
   }
-
 
   public NavigableMap<OIdentifiable, Change> getChanges() {
     return delegate.getChanges();
