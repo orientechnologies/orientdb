@@ -227,7 +227,6 @@ public class O2QCache implements OReadCache {
           cacheEntry.decrementUsages();
 
           assert cacheEntry.getUsagesCount() >= 0;
-          assert cacheEntry.getUsagesCount() > 0 || !cacheEntry.isLockAcquiredByCurrentThread();
 
           if (cacheEntry.getUsagesCount() == 0 && cacheEntry.isDirty()) {
             final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = writeCache
