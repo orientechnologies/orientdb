@@ -20,4 +20,12 @@ public class CloudException extends RuntimeException {
   public Integer getStatus() {
     return status;
   }
+
+  public String getError() {
+    return error;
+  }
+
+  public String getPath() {
+    return path;
+  }
 }
