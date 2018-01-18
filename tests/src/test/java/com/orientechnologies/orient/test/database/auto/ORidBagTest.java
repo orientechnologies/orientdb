@@ -1467,8 +1467,8 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
   @Test
   public void testDocumentHelper() {
     ODocument document = new ODocument();
-    ODocument embeddedDocument = new ODocument();
-    List<ODocument> embeddedList = new ArrayList<ODocument>();
+//    ODocument embeddedDocument = new ODocument();
+//    List<ODocument> embeddedList = new ArrayList<ODocument>();
 
     ORidBag highLevelRidBag = new ORidBag();
     for (int i = 0; i < 10; i++) {
@@ -1478,17 +1478,17 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
         highLevelRidBag.add(docToAdd);
     }
 
-    ORidBag embeddedRidBag = new ORidBag();
-    for (int i = 0; i < 10; i++) {
-      ODocument docToAdd = new ODocument();
-      docToAdd.save(database.getClusterNameById(database.getDefaultClusterId()));
-      embeddedRidBag.add(docToAdd);
-    }
+//    ORidBag embeddedRidBag = new ORidBag();
+//    for (int i = 0; i < 10; i++) {
+//      ODocument docToAdd = new ODocument();
+//      docToAdd.save(database.getClusterNameById(database.getDefaultClusterId()));
+//      embeddedRidBag.add(docToAdd);
+//    }
 
     document.field("ridBag", highLevelRidBag);
-    embeddedList.add(embeddedDocument);
-    embeddedDocument.field("ridBag", embeddedRidBag);
-    document.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
+//    embeddedList.add(embeddedDocument);
+//    embeddedDocument.field("ridBag", embeddedRidBag);
+//    document.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
 
     document.save(database.getClusterNameById(database.getDefaultClusterId()));
 
@@ -1505,14 +1505,14 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
     documentCopy.reload("*:-1", true);
 
-    embeddedList = documentCopy.field("embeddedList");
-    ODocument doc = embeddedList.get(0);
+//    embeddedList = documentCopy.field("embeddedList");
+//    ODocument doc = embeddedList.get(0);
 
-    iterator = doc.<ORidBag>field("ridBag").iterator();
-    iterator.next();
-    iterator.remove();
+//    iterator = doc.<ORidBag>field("ridBag").iterator();
+//    iterator.next();
+//    iterator.remove();
 
-    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
+//    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
 
     documentCopy.reload("*:-1", true);
     ODocument docToAdd = new ODocument();
@@ -1526,19 +1526,19 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
 
     documentCopy.reload("*:-1", true);
-    embeddedList = documentCopy.field("embeddedList");
-    doc = embeddedList.get(0);
+//    embeddedList = documentCopy.field("embeddedList");
+//    doc = embeddedList.get(0);
 
-    iterator = doc.<ORidBag>field("ridBag").iterator();
-    OIdentifiable remvedItem = iterator.next();
-    iterator.remove();
-    doc.<ORidBag>field("ridBag").add(docToAdd.getIdentity());
+//    iterator = doc.<ORidBag>field("ridBag").iterator();
+//    OIdentifiable remvedItem = iterator.next();
+//    iterator.remove();
+//    doc.<ORidBag>field("ridBag").add(docToAdd.getIdentity());
 
-    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
-    doc.<ORidBag>field("ridBag").remove(docToAdd.getIdentity());
-    doc.<ORidBag>field("ridBag").add(remvedItem);
+//    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
+//    doc.<ORidBag>field("ridBag").remove(docToAdd.getIdentity());
+//    doc.<ORidBag>field("ridBag").add(remvedItem);
 
-    Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
+//    Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
   }
 
   public void testAddNewItemsAndRemoveThem() {
