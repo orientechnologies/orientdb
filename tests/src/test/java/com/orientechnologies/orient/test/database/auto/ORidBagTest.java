@@ -1458,8 +1458,6 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
   @Test
   public void testDocumentHelper() {
     ODocument document = new ODocument();
-    ODocument embeddedDocument = new ODocument();
-    List<ODocument> embeddedList = new ArrayList<ODocument>();
 
     ORidBag highLevelRidBag = new ORidBag();
     for (int i = 0; i < 10; i++) {
@@ -1468,16 +1466,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
         highLevelRidBag.add(docToAdd);
     }
 
-    ORidBag embeddedRidBag = new ORidBag();
-    for (int i = 0; i < 10; i++) {
-      ODocument docToAdd = new ODocument();
-      embeddedRidBag.add(docToAdd);
-    }
-
     document.field("ridBag", highLevelRidBag);
-    embeddedList.add(embeddedDocument);
-    embeddedDocument.field("ridBag", embeddedRidBag);
-    document.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
 
     document.save();
 
@@ -1494,14 +1483,6 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
     documentCopy.reload("*:-1", true);
 
-    embeddedList = documentCopy.field("embeddedList");
-    ODocument doc = embeddedList.get(0);
-
-    iterator = doc.<ORidBag>field("ridBag").iterator();
-    iterator.next();
-    iterator.remove();
-
-    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
 
     documentCopy.reload("*:-1", true);
     ODocument docToAdd = new ODocument();
@@ -1515,19 +1496,6 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     Assert.assertFalse(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
 
     documentCopy.reload("*:-1", true);
-    embeddedList = documentCopy.field("embeddedList");
-    doc = embeddedList.get(0);
-
-    iterator = doc.<ORidBag>field("ridBag").iterator();
-    OIdentifiable remvedItem = iterator.next();
-    iterator.remove();
-    doc.<ORidBag>field("ridBag").add(docToAdd.getIdentity());
-
-    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
-    doc.<ORidBag>field("ridBag").remove(docToAdd.getIdentity());
-    doc.<ORidBag>field("ridBag").add(remvedItem);
-
-    Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
   }
 
   @Test
@@ -1681,39 +1649,6 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     testDocument.field("ridBag", highLevelRidBag);
     testDocument.field("externalDoc", externalDoc);
-
-    final List<ODocument> embeddedList = new ArrayList<ODocument>();
-    ODocument embeddedListDoc = new ODocument();
-    ORidBag embeddedListDocRidBag = new ORidBag();
-    for (int i = 0; i < 10; i++)
-      embeddedListDocRidBag.add(new ODocument());
-
-    embeddedListDoc.field("ridBag", embeddedListDocRidBag);
-    embeddedListDoc.field("externalDoc", externalDoc);
-    embeddedList.add(embeddedListDoc);
-
-    Set<ODocument> embeddedSet = new HashSet<ODocument>();
-    ODocument embeddedSetDoc = new ODocument();
-    ORidBag embeddedSetDocRidBag = new ORidBag();
-    for (int i = 0; i < 10; i++)
-      embeddedSetDocRidBag.add(new ODocument());
-
-    embeddedSetDoc.field("ridBag", embeddedSetDocRidBag);
-    embeddedSetDoc.field("externalDoc", externalDoc);
-    embeddedSet.add(embeddedSetDoc);
-
-    Map<String, ODocument> embeddedMap = new HashMap<String, ODocument>();
-    ODocument embeddedMapDoc = new ODocument();
-    ORidBag embeddedMapDocRidBag = new ORidBag();
-    for (int i = 0; i < 10; i++)
-      embeddedMapDocRidBag.add(new ODocument());
-    embeddedMapDoc.field("ridBag", embeddedMapDocRidBag);
-    embeddedMapDoc.field("externalDoc", externalDoc);
-    embeddedMap.put("k1", embeddedMapDoc);
-
-    testDocument.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
-    testDocument.field("embeddedSet", embeddedSet, OType.EMBEDDEDSET);
-    testDocument.field("embeddedMap", embeddedMap, OType.EMBEDDEDMAP);
 
     testDocument.save();
     testDocument.reload();
