@@ -20,6 +20,7 @@ package com.orientechnologies.agent.backup.log;
 
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.OServer;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -34,6 +35,7 @@ import java.util.Map;
  */
 public class OBackupDiskLogger implements OBackupLogger {
 
+  private final OServer server;
   private String configFile = "${ORIENTDB_HOME}/log/backups_log.txt";
 
   private File             file;
@@ -41,7 +43,9 @@ public class OBackupDiskLogger implements OBackupLogger {
   FileChannel       channel;
   OBackupLogFactory factory;
 
-  public OBackupDiskLogger() {
+  public OBackupDiskLogger(OServer server) {
+
+    this.server = server;
     initLogger();
     factory = new OBackupLogFactory();
 
@@ -288,5 +292,10 @@ public class OBackupDiskLogger implements OBackupLogger {
       baos.reset();
       return new String(bytes);
     }
+  }
+
+  @Override
+  public OServer getServer() {
+    return server;
   }
 }

@@ -18,6 +18,8 @@
 
 package com.orientechnologies.agent.backup.log;
 
+import com.orientechnologies.orient.server.OServer;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -49,4 +51,6 @@ public interface OBackupLogger {
   void deleteLog(OBackupLog scheduled);
 
   void updateLog(OBackupLog log);
+
+  OServer getServer();
 }

@@ -42,7 +42,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -80,7 +79,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   private   OBackupManager      backupManager;
   protected OEnterpriseProfiler profiler;
-
 
   private OEnterpriseCloudManager cloudManager;
 
@@ -125,7 +123,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
           int retry = 0;
           while (true) {
-            ODistributedServerManager manager = OServerMain.server().getDistributedManager();
+            ODistributedServerManager manager = server.getDistributedManager();
             if (manager == null) {
               if (retry == 5) {
                 break;
@@ -409,7 +407,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       final ODatabaseDocumentInternal db = iConnection.getDatabase();
       if (db != null) {
         if (((OAbstractPaginatedStorage) db.getStorage().getUnderlying()).isFrozen()) {
-          final ODistributedServerManager manager = OServerMain.server().getDistributedManager();
+          final ODistributedServerManager manager = server.getDistributedManager();
           final ODistributedConfiguration dCfg = manager.getDatabaseConfiguration(db.getName());
           final List<String> masters = dCfg.getMasterServers();
           masters.remove(manager.getLocalNodeName());
@@ -461,7 +459,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     return server.getDistributedManager() != null;
   }
 
-  public ODistributedServerManager getDistributedManager(){
+  public ODistributedServerManager getDistributedManager() {
 
     return server.getDistributedManager();
   }

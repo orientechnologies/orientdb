@@ -27,7 +27,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
-import com.orientechnologies.orient.server.OServerMain;
 
 import java.io.IOException;
 import java.util.*;
@@ -43,10 +42,6 @@ public class OBackupManager implements OServerLifecycleListener {
   OBackupLogger logger;
   protected Map<String, OBackupTask> tasks = new ConcurrentHashMap<String, OBackupTask>();
 
-  public OBackupManager() {
-    this(OServerMain.server());
-  }
-
   public OBackupManager(final OServer server) {
     this(server, new OBackupConfig().load());
   }
@@ -61,9 +56,9 @@ public class OBackupManager implements OServerLifecycleListener {
 
   private void initLogger() {
     if (server.getSystemDatabase().exists()) {
-      logger = new OBackupDBLogger();
+      logger = new OBackupDBLogger(server);
     } else {
-      logger = new OBackupDiskLogger();
+      logger = new OBackupDiskLogger(server);
     }
   }
 
@@ -75,6 +70,7 @@ public class OBackupManager implements OServerLifecycleListener {
 
   public void shutdown() {
     server.unregisterLifecycleListener(this);
+    tasks.values().stream().forEach((t) -> t.stop());
   }
 
   public ODocument getConfiguration() {
@@ -142,6 +138,7 @@ public class OBackupManager implements OServerLifecycleListener {
       return Collections.emptyList();
     }
   }
+
   public List<OBackupLog> findLogs(String uuid, Long unitId, int page, int pageSize, Map<String, String> params) {
     try {
       return logger.findByUUIDAndUnitId(uuid, unitId, page, pageSize, params);

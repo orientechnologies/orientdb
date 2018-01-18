@@ -1,43 +1,31 @@
 package com.orientechnologies.agent.cloud.processor.tasks.backup;
 
-import com.orientechnologies.agent.cloud.processor.tasks.AbstractRPCTask;
+import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.cloud.processor.tasks.AbstractDocumentTask;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperationResponse;
-import com.orientechnologies.orientdb.cloud.protocol.backup.BackupInfo;
 
 /**
  * Created by Enrico Risa on 17/01/2018.
  */
-public class AddBackupTask extends AbstractRPCTask<BackupInfo> {
-
-  private BackupInfo info;
+public class AddBackupTask extends AbstractDocumentTask {
 
   public AddBackupTask() {
   }
 
-  public AddBackupTask(BackupInfo info) {
-    this.info = info;
+  public AddBackupTask(ODocument document) {
+    super(document);
   }
 
   @Override
   public NodeOperationResponse execute(OServer iServer, ODistributedServerManager iManager) {
-    return null;
-  }
 
-  @Override
-  protected BackupInfo getPayload() {
-    return info;
-  }
-
-  @Override
-  protected void setPayload(BackupInfo payload) {
-    info = payload;
-  }
-
-  @Override
-  protected Class<BackupInfo> getPayloadType() {
-    return BackupInfo.class;
+    OEnterpriseAgent agent = iServer.getPluginByClass(OEnterpriseAgent.class);
+    ODocument backup = agent.getBackupManager().addBackup(payload);
+    backup.field("server", iManager.getLocalNodeName());
+    return new AddBackupTaskResponse(backup);
   }
 
   @Override

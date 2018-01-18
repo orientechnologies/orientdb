@@ -1,6 +1,11 @@
 package com.orientechnologies.agent.cloud.processor.backup;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.cloud.processor.tasks.backup.ListBackupLogsResponse;
+import com.orientechnologies.agent.cloud.processor.tasks.backup.ListBackupLogsTask;
+import com.orientechnologies.agent.operation.NodeResponse;
+import com.orientechnologies.agent.operation.OperationResponseFromNode;
+import com.orientechnologies.agent.operation.ResponseOk;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import com.orientechnologies.orientdb.cloud.protocol.backup.BackupLogRequest;
@@ -22,6 +27,27 @@ public class ListBackupLogsCommandProcessor extends AbstractBackupCommandProcess
 
   private BackupLogsList fetchBackupLogs(OEnterpriseAgent agent, BackupLogRequest request) {
 
+    if (!agent.isDistributed()) {
+      return getBackupLogsList(agent, request);
+    } else {
+
+      OperationResponseFromNode response = agent.getNodesManager().send(request.getServer(), new ListBackupLogsTask(request));
+
+      NodeResponse nodeResponse = response.getNodeResponse();
+
+      if (nodeResponse.getResponseType() == 1) {
+        ResponseOk ok = (ResponseOk) nodeResponse;
+
+        ListBackupLogsResponse res = (ListBackupLogsResponse) ok.getPayload();
+
+        return res.getPayload();
+
+      }
+      return null;
+    }
+  }
+
+  public static BackupLogsList getBackupLogsList(OEnterpriseAgent agent, BackupLogRequest request) {
     BackupLogsList backupLogsList = new BackupLogsList();
 
     int page = request.getPage() != null ? request.getPage().intValue() : 1;
@@ -31,7 +57,7 @@ public class ListBackupLogsCommandProcessor extends AbstractBackupCommandProcess
       agent.getBackupManager().findLogs(request.getBackupId(), page, pageSide, request.getParams()).stream()
           .map(BackupLogConverter::convert).forEach(l -> backupLogsList.addLog(l));
     } else {
-      agent.getBackupManager().findLogs(request.getBackupId(),request.getUnitId(), page, pageSide, request.getParams()).stream()
+      agent.getBackupManager().findLogs(request.getBackupId(), request.getUnitId(), page, pageSide, request.getParams()).stream()
           .map(BackupLogConverter::convert).forEach(l -> backupLogsList.addLog(l));
     }
 

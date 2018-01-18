@@ -15,7 +15,7 @@ import java.util.stream.StreamSupport;
  */
 public abstract class AbstractBackupCommandProcessor implements CloudCommandProcessor {
 
-  protected ODocument toODocument(BackupInfo info) {
+  public static ODocument toODocument(BackupInfo info) {
     ODocument config = new ODocument();
 
     config.field("uuid", info.getUuid());
@@ -32,14 +32,14 @@ public abstract class AbstractBackupCommandProcessor implements CloudCommandProc
     return config;
   }
 
-  protected BackupInfo fromODocument(ODocument document) {
+  public static BackupInfo fromODocument(ODocument document) {
     BackupInfo info = new BackupInfo();
     info.setUuid(document.field("uuid"));
     info.setDbName(document.field("dbName"));
     info.setDirectory(document.field("directory"));
     info.setEnabled(document.field("enabled"));
     info.setRetentionDays(document.field("retentionDays"));
-
+    info.setServer(document.field("server"));
     ODocument modes = document.field("modes");
 
     Iterable<Map.Entry<String, Object>> iterable = () -> modes.iterator();

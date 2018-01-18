@@ -34,7 +34,7 @@ public class AddBackupCommandProcessor extends AbstractBackupCommandProcessor {
       addedBackup = agent.getBackupManager().addBackup(toODocument(info));
     } else {
 
-      OperationResponseFromNode response = agent.getNodesManager().send(info.getServer(), new AddBackupTask(info));
+      OperationResponseFromNode response = agent.getNodesManager().send(info.getServer(), new AddBackupTask(toODocument(info)));
 
       NodeResponse nodeResponse = response.getNodeResponse();
 

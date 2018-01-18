@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
 
 import java.io.File;
@@ -151,10 +150,10 @@ public abstract class OBackupStrategy {
 
     final String databaseName = doc.field("target");
     Long unitId = doc.field("unitId");
-    OServer server = OServerMain.server();
+
     ODatabaseDocument database = null;
 
-    if (server.existsDatabase(databaseName)) {
+    if (logger.getServer().existsDatabase(databaseName)) {
       throw new IllegalArgumentException("Cannot restore the backup to an existing database (" + databaseName + ").");
     }
     try {
@@ -169,7 +168,7 @@ public abstract class OBackupStrategy {
       new Thread(new Runnable() {
         @Override
         public void run() {
-          startRestoreBackup(server, finished, databaseName, listener);
+          startRestoreBackup(logger.getServer(), finished, databaseName, listener);
         }
       }).start();
     } catch (IOException e) {
@@ -271,7 +270,7 @@ public abstract class OBackupStrategy {
 
     String dbName = cfg.field(OBackupConfig.DBNAME);
 
-    OServer server = OServerMain.server();
+    OServer server = logger.getServer();
 
     String url = server.getAvailableStorageNames().get(dbName);
 

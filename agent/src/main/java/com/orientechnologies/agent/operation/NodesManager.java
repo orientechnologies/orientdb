@@ -2,10 +2,8 @@ package com.orientechnologies.agent.operation;
 
 import com.orientechnologies.agent.cloud.processor.tasks.EnterpriseStatsResponse;
 import com.orientechnologies.agent.cloud.processor.tasks.EnterpriseStatsTask;
-import com.orientechnologies.agent.cloud.processor.tasks.backup.AddBackupTask;
-import com.orientechnologies.agent.cloud.processor.tasks.backup.AddBackupTaskResponse;
-import com.orientechnologies.agent.cloud.processor.tasks.backup.ListBackupTask;
-import com.orientechnologies.agent.cloud.processor.tasks.backup.ListBackupTaskResponse;
+import com.orientechnologies.agent.cloud.processor.tasks.OkEmptyResponse;
+import com.orientechnologies.agent.cloud.processor.tasks.backup.*;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperation;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperationTask;
@@ -29,6 +27,8 @@ public class NodesManager {
     NodeOperationTask.register(1, () -> new EnterpriseStatsTask(), () -> new EnterpriseStatsResponse());
     NodeOperationTask.register(10, () -> new AddBackupTask(), () -> new AddBackupTaskResponse());
     NodeOperationTask.register(11, () -> new ListBackupTask(), () -> new ListBackupTaskResponse());
+    NodeOperationTask.register(12, () -> new RemoveBackupTask(), () -> new OkEmptyResponse());
+    NodeOperationTask.register(13, () -> new ListBackupLogsTask(), () -> new ListBackupLogsResponse());
   }
 
   public List<OperationResponseFromNode> sendAll(NodeOperation task) {
@@ -66,6 +66,11 @@ public class NodesManager {
       manager.getMessageService().registerRequest(requestId, responseManager);
     } catch (IOException e) {
       responseManager.removeServerBecauseUnreachable(nodeName);
+    }
+    try {
+      responseManager.waitForSynchronousResponses();
+    } catch (InterruptedException e) {
+      throw new OInterruptedException(e.getMessage());
     }
     return responseManager.getResponses().get(0);
   }
