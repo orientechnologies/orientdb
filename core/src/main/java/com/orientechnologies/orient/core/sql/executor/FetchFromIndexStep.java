@@ -72,13 +72,14 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         }
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
-          Map.Entry<Object, OIdentifiable> currentEntry = nextEntry;
+          Object key = nextEntry.getKey();
+          OIdentifiable value = nextEntry.getValue();
           fetchNextEntry();
 
           localCount++;
           OResultInternal result = new OResultInternal();
-          result.setProperty("key", currentEntry.getKey());
-          result.setProperty("rid", currentEntry.getValue());
+          result.setProperty("key", key);
+          result.setProperty("rid", value);
           ctx.setVariable("$current", result);
           return result;
         } finally {
