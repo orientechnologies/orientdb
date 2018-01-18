@@ -211,7 +211,8 @@ public class O2QCache implements OReadCache {
 
   @Override
   public void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache) {
-    cacheEntry.releaseExclusiveLock();
+    final OCachePointer cachePointer = cacheEntry.getCachePointer();
+    assert cachePointer != null;
 
     CountDownLatch latch = null;
 
@@ -255,6 +256,21 @@ public class O2QCache implements OReadCache {
     } finally {
       cacheLock.releaseReadLock();
     }
+
+    //We need to release exclusive lock from cache pointer after we put it into the write cache so both "dirty pages" of write
+    //cache and write cache itself will contain actual values simultaneously. But because cache entry can be cleared after we put it back to the
+    //read cache we make copy of cache pointer before head.
+    //
+    //Following situation can happen, if we release exclusive lock before we put entry to the write cache.
+    //1. Page is loaded for write, locked and related LSN is written to the "dirty pages" table.
+    //2. Page lock is released.
+    //3. Page is chosen to be flushed on disk and its entry removed from "dirty pages" table
+    //4. Page is added to write cache as dirty
+    //
+    //So we have situation when page is added as dirty into the write cache but its related entry in "dirty pages" table is removed
+    //it is treated as flushed during fuzzy checkpoint and portion of write ahead log which contains not flushed changes is removed.
+    //This can lead to the data loss after restore and corruption of data structures
+    cachePointer.releaseExclusiveLock();
 
     if (latch != null) {
       try {
