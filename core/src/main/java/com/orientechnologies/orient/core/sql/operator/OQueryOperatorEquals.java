@@ -75,11 +75,11 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       return true;
     }
 
-    if(iLeft instanceof OResult && !(iRight instanceof OResult)){
+    if (iLeft instanceof OResult && !(iRight instanceof OResult)) {
       iLeft = ((OResult) iLeft).toElement();
     }
 
-    if(iRight instanceof OResult && !(iLeft instanceof OResult)){
+    if (iRight instanceof OResult && !(iLeft instanceof OResult)) {
       iRight = ((OResult) iRight).toElement();
     }
 
@@ -88,7 +88,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       return comparesValues(iRight, (ORecord) iLeft, true);
     else if (iRight instanceof ORecord)
       return comparesValues(iLeft, (ORecord) iRight, true);
-    else if(iRight instanceof OResult){
+    else if (iRight instanceof OResult) {
       return comparesValues(iLeft, (OResult) iRight, true);
     }
 
@@ -119,9 +119,9 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 
     if (!other.isPersistent() && iRecord instanceof ODocument) {
       // ODOCUMENT AS RESULT OF SUB-QUERY: GET THE FIRST FIELD IF ANY
-      final String[] firstFieldName = ((ODocument) iRecord).fieldNames();
-      if (firstFieldName.length > 0) {
-        Object fieldValue = ((ODocument) iRecord).field(firstFieldName[0]);
+      final Set<String> firstFieldName = ((ODocument) iRecord).getPropertyNames();
+      if (firstFieldName.size() > 0) {
+        Object fieldValue = ((ODocument) iRecord).getProperty(firstFieldName.iterator().next());
         if (fieldValue != null) {
           if (iConsiderIn && OMultiValue.isMultiValue(fieldValue)) {
             for (Object o : OMultiValue.getMultiValueIterable(fieldValue, false)) {
@@ -137,7 +137,6 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
     }
     return other.equals(iValue);
   }
-
 
   protected static boolean comparesValues(final Object iValue, final OResult iRecord, final boolean iConsiderIn) {
     // ODOCUMENT AS RESULT OF SUB-QUERY: GET THE FIRST FIELD IF ANY
