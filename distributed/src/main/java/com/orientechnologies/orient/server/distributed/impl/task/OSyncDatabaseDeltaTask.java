@@ -135,7 +135,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
     try {
       final AtomicLong counter = new AtomicLong(0);
       endLSN.set(((OAbstractPaginatedStorage) storage)
-          .recordsChangedAfterLSN(lastLSN, fileOutputStream, includeClusterNames, new OCommandOutputListener() {
+          .recordsChangedAfterLSN(lastLSN, fileOutputStream, new OCommandOutputListener() {
             @Override
             public void onMessage(final String iText) {
               if (iText.startsWith("read")) {

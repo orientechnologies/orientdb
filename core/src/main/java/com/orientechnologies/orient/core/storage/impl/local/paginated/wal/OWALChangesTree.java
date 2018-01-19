@@ -303,6 +303,11 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   @Override
+  public void applyOriginalValues(ByteBuffer buffer) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public int serializedSize() {
     return serializedSize;
   }
@@ -411,11 +416,6 @@ public class OWALChangesTree implements OWALChanges {
     offset = toStream(root, offset, stream);
 
     return offset;
-  }
-
-  @Override
-  public OWALChanges inverse(ByteBuffer buffer) {
-    throw new UnsupportedOperationException("Inverse changes generation is not supported by OWALChangesTree.");
   }
 
   private int toStream(Node node, int offset, byte[] stream) {

@@ -1204,7 +1204,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     final OAbstractPaginatedStorage stg = ((OAbstractPaginatedStorage) db.getStorage().getUnderlying());
 
-    final Set<ORecordId> changedRecords = stg.recordsChangedRecently(checkIntegrityLastTxs, clusters2Include);
+    final Set<ORecordId> changedRecords = stg.recordsChangedRecently(checkIntegrityLastTxs);
     int av = getAvailableNodes(distrDatabase.getDatabaseName());
     if (!changedRecords.isEmpty()) {
       ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,

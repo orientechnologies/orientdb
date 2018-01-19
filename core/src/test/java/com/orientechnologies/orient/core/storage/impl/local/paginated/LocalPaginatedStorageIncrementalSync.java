@@ -23,7 +23,6 @@ import org.junit.Test;
 import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
-import java.util.HashSet;
 import java.util.Random;
 
 public class LocalPaginatedStorageIncrementalSync {
@@ -99,8 +98,7 @@ public class LocalPaginatedStorageIncrementalSync {
       final OutputStream outputStream = Channels.newOutputStream(channel);
       final OutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
 
-      ((OAbstractPaginatedStorage) originalDB.getStorage()).recordsChangedAfterLSN(startLSN, bufferedOutputStream,
-          new HashSet<String>(),null);
+      ((OAbstractPaginatedStorage) originalDB.getStorage()).recordsChangedAfterLSN(startLSN, bufferedOutputStream, null);
       bufferedOutputStream.close();
 
       dataFile.close();

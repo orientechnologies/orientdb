@@ -113,6 +113,8 @@ public class OAtomicOperation {
         } else {
           OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
           pageChangesContainer.delegate = delegate;
+          pageChangesContainer.originalLsn = ODurablePage
+              .getLogSequenceNumberFromPage(delegate.getCachePointer().getSharedBuffer());
           return pageChangesContainer;
         }
       }
@@ -162,7 +164,7 @@ public class OAtomicOperation {
     pageChangesContainer.pinPage = true;
   }
 
-  public OCacheEntry addPage(long fileId) throws IOException {
+  public OCacheEntry addPage(long fileId) {
     fileId = checkFileIdCompatibility(fileId, storageId);
 
     if (deletedFiles.contains(fileId))
@@ -198,7 +200,7 @@ public class OAtomicOperation {
     }
   }
 
-  public long filledUpTo(long fileId) throws IOException {
+  public long filledUpTo(long fileId) {
     fileId = checkFileIdCompatibility(fileId, storageId);
 
     if (deletedFiles.contains(fileId))
@@ -357,8 +359,8 @@ public class OAtomicOperation {
               final long pageIndex = filePageChangesEntry.getKey();
               final OCacheEntryChanges filePageChanges = filePageChangesEntry.getValue();
 
-              filePageChanges.lsn = writeAheadLog
-                  .log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes));
+              filePageChanges.lsn = writeAheadLog.log(
+                  new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes, filePageChanges.originalLsn));
             } else
               filePageChangesIterator.remove();
           }

@@ -20,20 +20,29 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 26.04.13
  */
 public class OUpdatePageRecord extends OAbstractPageWALRecord {
-  private OWALChanges changes;
+  private OWALChanges        changes;
+  /**
+   * Previous value of LSN for current page.
+   * This value is used when we want to rollback changes of not completed transactions after restore.
+   */
+  private OLogSequenceNumber prevLsn;
 
+  @SuppressWarnings("WeakerAccess")
   public OUpdatePageRecord() {
   }
 
   public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
-                           final OWALChanges changes) {
+      final OWALChanges changes, final OLogSequenceNumber prevLsn) {
     super(pageIndex, fileId, operationUnitId);
     this.changes = changes;
+    this.prevLsn = prevLsn;
   }
 
   public OWALChanges getChanges() {
@@ -45,13 +54,31 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     int serializedSize = super.serializedSize();
     serializedSize += changes.serializedSize();
 
+    serializedSize += 2 * OLongSerializer.LONG_SIZE;
+
     return serializedSize;
+  }
+
+  /**
+   * Previous value of LSN for current page.
+   *
+   * This value is used when we want to rollback changes of not completed transactions at the end of restore procedure which was
+   * triggered at server start after its abnormal crash.
+   */
+  public OLogSequenceNumber getPrevLsn() {
+    return prevLsn;
   }
 
   @Override
   public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
     offset = changes.toStream(offset, content);
+
+    OLongSerializer.INSTANCE.serializeNative(prevLsn.getSegment(), content, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    OLongSerializer.INSTANCE.serializeNative(prevLsn.getPosition(), content, offset);
+    offset += OLongSerializer.LONG_SIZE;
 
     return offset;
   }
@@ -62,6 +89,14 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
 
     changes = new OWALPageChangesPortion();
     offset = changes.fromStream(offset, content);
+
+    final long segment = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    final long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    prevLsn = new OLogSequenceNumber(segment, position);
 
     return offset;
   }
