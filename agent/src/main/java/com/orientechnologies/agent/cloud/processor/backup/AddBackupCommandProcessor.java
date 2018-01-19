@@ -38,7 +38,6 @@ public class AddBackupCommandProcessor extends AbstractBackupCommandProcessor {
 
       NodeResponse nodeResponse = response.getNodeResponse();
 
-      // OK
       if (nodeResponse.getResponseType() == 1) {
         ResponseOk ok = (ResponseOk) nodeResponse;
         AddBackupTaskResponse payload = (AddBackupTaskResponse) ok.getPayload();

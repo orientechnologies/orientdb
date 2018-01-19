@@ -14,23 +14,11 @@ import com.orientechnologies.orientdb.cloud.protocol.backup.log.BackupLogsList;
  */
 public class ListBackupLogsTask extends AbstractRPCTask<BackupLogRequest> {
 
-  BackupLogRequest request;
-
   public ListBackupLogsTask() {
   }
 
   public ListBackupLogsTask(BackupLogRequest request) {
-    this.request = request;
-  }
-
-  @Override
-  protected BackupLogRequest getPayload() {
-    return request;
-  }
-
-  @Override
-  protected void setPayload(BackupLogRequest payload) {
-    this.request = payload;
+    super(request);
   }
 
   @Override
@@ -42,7 +30,7 @@ public class ListBackupLogsTask extends AbstractRPCTask<BackupLogRequest> {
   public NodeOperationResponse execute(OServer iServer, ODistributedServerManager iManager) {
 
     OEnterpriseAgent agent = iServer.getPluginByClass(OEnterpriseAgent.class);
-    BackupLogsList logsList = ListBackupLogsCommandProcessor.getBackupLogsList(agent, request);
+    BackupLogsList logsList = ListBackupLogsCommandProcessor.getBackupLogsList(agent, getPayload());
     return new ListBackupLogsResponse(logsList);
   }
 

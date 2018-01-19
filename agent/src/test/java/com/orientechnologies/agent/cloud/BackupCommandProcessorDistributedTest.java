@@ -4,10 +4,7 @@ import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.backup.OBackupTask;
 import com.orientechnologies.agent.backup.log.OBackupLog;
 import com.orientechnologies.agent.backup.log.OBackupLogType;
-import com.orientechnologies.agent.cloud.processor.backup.AddBackupCommandProcessor;
-import com.orientechnologies.agent.cloud.processor.backup.ListBackupCommandProcessor;
-import com.orientechnologies.agent.cloud.processor.backup.ListBackupLogsCommandProcessor;
-import com.orientechnologies.agent.cloud.processor.backup.RemoveBackupCommandProcessor;
+import com.orientechnologies.agent.cloud.processor.backup.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.AbstractEnterpriseServerClusterTest;
 import com.orientechnologies.orient.server.distributed.ServerRun;
@@ -33,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseServerClusterTest {
 
   private final String DB_NAME     = "backupDB";
+  private final String NEW_DB_NAME = "newDB";
   private final String BACKUP_PATH =
       System.getProperty("buildDirectory", "target") + File.separator + "databases" + File.separator + DB_NAME;
 
@@ -106,6 +104,69 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
       payload = getBackupList(firstServer.getNodeName());
 
       assertThat(payload.getBackups()).hasSize(2);
+
+      return null;
+    });
+
+  }
+
+  @Test
+  public void testChangeBackupCommand() throws Exception {
+
+    execute(2, () -> {
+
+      ServerRun firstServer = this.serverInstance.get(0);
+      ServerRun secondServer = this.serverInstance.get(1);
+
+      deleteBackupConfig(getAgent(firstServer.getNodeName()));
+      deleteBackupConfig(getAgent(secondServer.getNodeName()));
+
+      BackupInfo info = new BackupInfo();
+      info.setDbName(DB_NAME);
+      info.setDirectory(BACKUP_PATH);
+      info.setServer(firstServer.getNodeName());
+      info.setEnabled(true);
+      info.setRetentionDays(30);
+
+      info.setModes(new HashMap<BackupMode, BackupModeConfig>() {
+        {
+          put(BackupMode.FULL_BACKUP, new BackupModeConfig("0/5 * * * * ?"));
+          put(BackupMode.INCREMENTAL_BACKUP, new BackupModeConfig("0/2 * * * * ?"));
+        }
+      });
+
+      Command command = new Command();
+      command.setId("test");
+      command.setPayload(info);
+      command.setResponseChannel("channelTest");
+
+      AddBackupCommandProcessor backupCommandProcessor = new AddBackupCommandProcessor();
+
+      CommandResponse execute = backupCommandProcessor.execute(command, getAgent(secondServer.getNodeName()));
+
+      Assert.assertTrue(execute.getPayload() instanceof BackupInfo);
+
+      BackupInfo backupInfo = (BackupInfo) execute.getPayload();
+
+      backupInfo.setEnabled(false);
+
+      command.setPayload(backupInfo);
+
+      ChangeBackupCommandProcessor changeBackupCommandProcessor = new ChangeBackupCommandProcessor();
+
+      execute = changeBackupCommandProcessor.execute(command, getAgent(secondServer.getNodeName()));
+
+      backupInfo = (BackupInfo) execute.getPayload();
+
+      assertThat(backupInfo.getUuid()).isNotNull();
+
+      assertThat(backupInfo.getEnabled()).isEqualTo(false);
+
+      assertThat(backupInfo.getServer()).isEqualTo(firstServer.getNodeName());
+
+      BackupList payload = getBackupList(firstServer.getNodeName());
+
+      assertThat(payload.getBackups()).hasSize(1);
 
       return null;
     });
@@ -427,6 +488,74 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
       BackupLogsList backupLogsList = getBackupLogList(getAgent(secondServer.getNodeName()), uuid, firstServer.getNodeName());
 
       assertThat(backupLogsList.getLogs()).hasSize(0);
+      return null;
+    });
+
+  }
+
+  @Test
+  public void testRestoreDatabaseCommandProcessor() throws Exception {
+
+    execute(2, () -> {
+
+      ServerRun firstServer = this.serverInstance.get(0);
+      ServerRun secondServer = this.serverInstance.get(1);
+
+      deleteBackupConfig(getAgent(firstServer.getNodeName()));
+      deleteBackupConfig(getAgent(secondServer.getNodeName()));
+
+      ODocument cfg = createBackupConfig(getAgent(firstServer.getNodeName()));
+
+      BackupList backupList = getBackupList(secondServer.getNodeName());
+
+      assertThat(backupList.getBackups()).hasSize(1);
+
+      String uuid = cfg.field("uuid");
+
+      final OBackupTask task = getAgent(firstServer.getNodeName()).getBackupManager().getTask(uuid);
+
+      final OBackupTask task1 = getAgent(secondServer.getNodeName()).getBackupManager().getTask(uuid);
+
+      assertThat(task1).isNull();
+
+      AtomicReference<OBackupLog> lastLog = new AtomicReference<>();
+      final CountDownLatch latch = new CountDownLatch(3);
+      task.registerListener((cfg1, log) -> {
+        latch.countDown();
+        if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
+          lastLog.set(log);
+        }
+        return latch.getCount() > 0;
+
+      });
+      latch.await();
+
+      CountDownLatch latch1 = new CountDownLatch(1);
+      task.registerListener((cfg1, log) -> {
+        if (OBackupLogType.RESTORE_FINISHED.equals(log.getType()) || OBackupLogType.RESTORE_ERROR.equals(log.getType())) {
+          latch1.countDown();
+        }
+        return latch1.getCount() > 0;
+
+      });
+
+      Command command = new Command();
+      command.setId("test");
+      command.setPayload(new BackupLogRequest(uuid, lastLog.get().getUnitId(), new HashMap<String, String>() {{
+        put("target", NEW_DB_NAME);
+      }}).setServer(firstServer.getNodeName()));
+      command.setResponseChannel("channelTest");
+
+      RestoreBackupCommandProcessor remove = new RestoreBackupCommandProcessor();
+
+      CommandResponse execute = remove.execute(command, getAgent(secondServer.getNodeName()));
+
+      String result = (String) execute.getPayload();
+
+      latch1.await();
+
+      assertThat(serverInstance.get(0).getServerInstance().existsDatabase(NEW_DB_NAME)).isTrue();
+      assertThat(serverInstance.get(1).getServerInstance().existsDatabase(NEW_DB_NAME)).isTrue();
       return null;
     });
 

@@ -21,6 +21,7 @@ public class CloudCommandProcessorFactory {
     processors.put(CommandType.LIST_BACKUP_LOGS.command, new ListBackupLogsCommandProcessor());
     processors.put(CommandType.REMOVE_BACKUP.command, new RemoveBackupCommandProcessor());
     processors.put(CommandType.RESTORE_BACKUP.command, new RestoreBackupCommandProcessor());
+    processors.put(CommandType.SERVER_CONNECTIONS.command, new ListConnectionsCommandProcessor());
   }
 
   public CloudCommandProcessor getProcessorFor(String type) {

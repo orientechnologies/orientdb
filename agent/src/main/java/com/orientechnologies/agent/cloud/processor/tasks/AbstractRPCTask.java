@@ -12,18 +12,27 @@ import java.io.IOException;
  */
 public abstract class AbstractRPCTask<T> implements NodeOperation {
 
+  T payload;
+
+  public AbstractRPCTask() {
+  }
+
+  public AbstractRPCTask(T payload) {
+    this.payload = payload;
+  }
+
   ObjectMapper mapper = new ObjectMapper();
 
-  protected abstract T getPayload();
-
-  protected abstract void setPayload(T payload);
+  protected T getPayload() {
+    return payload;
+  }
 
   protected abstract Class<T> getPayloadType();
 
   @Override
   public void write(DataOutput out) throws IOException {
 
-    String msg = mapper.writeValueAsString(getPayload());
+    String msg = mapper.writeValueAsString(payload);
     out.writeUTF(msg);
 
   }
@@ -32,7 +41,7 @@ public abstract class AbstractRPCTask<T> implements NodeOperation {
   public void read(DataInput in) throws IOException {
 
     String msg = in.readUTF();
-    T payload = mapper.readValue(msg, getPayloadType());
-    setPayload(payload);
+    payload = mapper.readValue(msg, getPayloadType());
+
   }
 }
