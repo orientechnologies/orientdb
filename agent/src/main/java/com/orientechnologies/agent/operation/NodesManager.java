@@ -74,7 +74,7 @@ public class NodesManager {
     } catch (InterruptedException e) {
       throw new OInterruptedException(e.getMessage());
     }
-    return responseManager.getResponses().get(0);
+    return responseManager.getResponses().size() > 0 ? responseManager.getResponses().get(0) : null;
   }
 
 }

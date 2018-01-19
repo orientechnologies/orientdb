@@ -29,6 +29,8 @@ public abstract class AbstractBackupCommandProcessor implements CloudCommandProc
 
     config.field("modes", new ODocument().fromMap(modes));
 
+    if (info.getUpload() != null)
+      config.field("upload", new ODocument().fromMap(info.getUpload()));
     return config;
   }
 
@@ -48,6 +50,12 @@ public abstract class AbstractBackupCommandProcessor implements CloudCommandProc
           ODocument embedded = (ODocument) e.getValue();
           return new BackupModeConfig(embedded.field("when"));
         }));
+
+    ODocument upload = document.field("upload");
+
+    if (upload != null) {
+      info.setUpload(upload.toMap());
+    }
     info.setModes(mappedModes);
     return info;
   }

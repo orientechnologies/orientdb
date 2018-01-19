@@ -18,6 +18,7 @@ import org.junit.Test;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -244,6 +245,16 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
         }
       });
 
+      info.setUpload(new HashMap<String, Object>() {
+        {
+          put("strategy", "sftp");
+          put("host", "localhost");
+          put("port", 22);
+          put("username", "localhost");
+          put("password", "localhost");
+          put("path", "localhost");
+        }
+      });
       Command command = new Command();
       command.setId("test");
       command.setPayload(info);
@@ -278,6 +289,10 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
       assertThat(full.getWhen()).isEqualTo("0/5 * * * * ?");
       assertThat(incremental.getWhen()).isEqualTo("0/2 * * * * ?");
+
+      Map<String, Object> upload = backupInfo.getUpload();
+
+      assertThat(upload).containsKeys("strategy", "host", "port", "username", "password", "path");
 
       BackupList payload = getBackupList(firstServer.getNodeName());
 
