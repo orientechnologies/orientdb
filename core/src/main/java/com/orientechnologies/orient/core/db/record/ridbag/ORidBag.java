@@ -24,6 +24,7 @@ import com.orientechnologies.common.collection.OCollection;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
@@ -36,7 +37,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -86,7 +86,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   public ORidBag(final ORidBag ridBag) {
     init();
-    for (Iterator<OIdentifiable> it = ridBag.rawIterator(); it.hasNext();)
+    for (Iterator<OIdentifiable> it = ridBag.rawIterator(); it.hasNext(); )
       add(it.next());
   }
 
@@ -197,10 +197,46 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   public int toStream(BytesContainer bytesContainer) throws OSerializationException {
 
-    final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-    if (context != null) {
-      if (isEmbedded() && ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager() != null
-          && delegate.size() >= topThreshold) {
+    checkAndConvert();
+
+    final UUID oldUuid = uuid;
+    final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.instance().get()
+        .getSbTreeCollectionManager();
+    if (sbTreeCollectionManager != null)
+      uuid = sbTreeCollectionManager.listenForChanges(this);
+    else
+      uuid = null;
+
+    boolean hasUuid = uuid != null;
+
+    final int serializedSize =
+        OByteSerializer.BYTE_SIZE + delegate.getSerializedSize() + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
+    int pointer = bytesContainer.alloc(serializedSize);
+    int offset = pointer;
+    final byte[] stream = bytesContainer.bytes;
+
+    byte configByte = 0;
+    if (isEmbedded())
+      configByte |= 1;
+
+    if (hasUuid)
+      configByte |= 2;
+
+    stream[offset++] = configByte;
+
+    if (hasUuid) {
+      OUUIDSerializer.INSTANCE.serialize(uuid, stream, offset);
+      offset += OUUIDSerializer.UUID_SIZE;
+    }
+
+    delegate.serialize(stream, offset, oldUuid);
+    return pointer;
+  }
+
+  public void checkAndConvert() {
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (db != null && !db.getStorage().isRemote()) {
+      if (isEmbedded() && db.getSbTreeCollectionManager() != null && delegate.size() >= topThreshold) {
         ORidBagDelegate oldDelegate = delegate;
         delegate = new OSBTreeRidBag();
         boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
@@ -240,38 +276,6 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         oldDelegate.requestDelete();
       }
     }
-
-    final UUID oldUuid = uuid;
-    final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
-    if (sbTreeCollectionManager != null)
-      uuid = sbTreeCollectionManager.listenForChanges(this);
-    else
-      uuid = null;
-
-    boolean hasUuid = uuid != null;
-
-    final int serializedSize =
-        OByteSerializer.BYTE_SIZE + delegate.getSerializedSize() + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
-    int pointer = bytesContainer.alloc(serializedSize);
-    int offset = pointer;
-    final byte[] stream = bytesContainer.bytes;
-
-    byte configByte = 0;
-    if (isEmbedded())
-      configByte |= 1;
-
-    if (hasUuid)
-      configByte |= 2;
-
-    stream[offset++] = configByte;
-
-    if (hasUuid) {
-      OUUIDSerializer.INSTANCE.serialize(uuid, stream, offset);
-      offset += OUUIDSerializer.UUID_SIZE;
-    }
-
-    delegate.serialize(stream, offset, oldUuid);
-    return pointer;
   }
 
   @Override

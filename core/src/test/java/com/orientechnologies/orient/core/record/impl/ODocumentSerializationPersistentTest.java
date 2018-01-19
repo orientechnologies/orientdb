@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -76,33 +77,4 @@ public class ODocumentSerializationPersistentTest {
     }
   }
 
-  @Test
-  public void testRidBagInEmbeddedDocument() {
-    ODatabaseRecordThreadLocal.instance().set(db);
-    ODocument doc = new ODocument();
-    ORidBag rids = new ORidBag();
-    rids.add(new ORecordId(2, 3));
-    rids.add(new ORecordId(2, 4));
-    rids.add(new ORecordId(2, 5));
-    rids.add(new ORecordId(2, 6));
-    List<ODocument> docs = new ArrayList<ODocument>();
-    ODocument doc1 = new ODocument();
-    doc1.field("rids", rids);
-    docs.add(doc1);
-    ODocument doc2 = new ODocument();
-    doc2.field("text", "text");
-    docs.add(doc2);
-    doc.field("emb", docs, OType.EMBEDDEDLIST);
-    doc.field("some", "test");
-
-    byte[] res = db.getSerializer().toStream(doc, false);
-    ODocument extr = (ODocument) db.getSerializer().fromStream(res, new ODocument(), new String[] {});
-
-    List<ODocument> emb = extr.field("emb");
-    assertNotNull(emb);
-    assertEquals(((ORidBag) emb.get(0).field("rids")).size(), rids.size());
-    assertEquals(emb.get(1).field("text"), doc2.field("text"));
-    assertEquals(extr.field("name"), doc.field("name"));
-
-  }
 }

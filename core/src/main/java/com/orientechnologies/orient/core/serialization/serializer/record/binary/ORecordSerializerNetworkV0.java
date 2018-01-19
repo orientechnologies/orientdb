@@ -604,7 +604,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     return pointer;
   }
 
-  private int writeLinkMap(final BytesContainer bytes, final Map<Object, OIdentifiable> map) {
+  private int  writeLinkMap(final BytesContainer bytes, final Map<Object, OIdentifiable> map) {
     final boolean disabledAutoConversion =
         map instanceof ORecordLazyMultiValue && ((ORecordLazyMultiValue) map).isAutoConvertToRecord();
 

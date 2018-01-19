@@ -2446,6 +2446,9 @@ public class ODocument extends ORecordAbstract
       return;
     for (Map.Entry<String, ODocumentEntry> fieldEntry : _fields.entrySet()) {
       final Object fieldValue = fieldEntry.getValue().value;
+      if (fieldValue instanceof ORidBag) {
+        ((ORidBag) fieldValue).checkAndConvert();
+      }
       if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>) && !(fieldValue instanceof ODocument))
         continue;
       if (addCollectionChangeListener(fieldEntry.getValue())) {
