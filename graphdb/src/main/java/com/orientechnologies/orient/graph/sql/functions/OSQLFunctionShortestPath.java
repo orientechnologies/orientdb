@@ -127,7 +127,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
         if (iParams.length > 3) {
           ctx.edgeType = iParams[3] == null ? null : "" + iParams[3];
         }
-        if (iParams != null && iParams.length > 2 && iParams[3] instanceof Collection) {
+        if (iParams != null && iParams.length > 3 && iParams[3] instanceof Collection) {
           ctx.edgeTypeParam = new String[((Collection) iParams[3]).size()];
           Collection coll = (Collection) iParams[3];
           int i = 0;
