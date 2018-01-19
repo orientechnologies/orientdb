@@ -98,6 +98,7 @@ public class ODurablePage {
    * @param offset Offset of data inside page
    * @param length Length of data to be copied
    */
+  @SuppressWarnings("unused")
   public static void getPageData(ByteBuffer buffer, byte[] data, int offset, int length) {
     buffer.position(0);
     buffer.get(data, offset, length);
@@ -111,6 +112,7 @@ public class ODurablePage {
    * @param offset Offset inside of byte array from which LSN value will be read.
    * @param data   Byte array from which LSN value will be read.
    */
+  @SuppressWarnings("unused")
   public static OLogSequenceNumber getLogSequenceNumber(int offset, byte[] data) {
     final long segment = OLongSerializer.INSTANCE.deserializeNative(data, offset + WAL_SEGMENT_OFFSET);
     final long position = OLongSerializer.INSTANCE.deserializeNative(data, offset + WAL_POSITION_OFFSET);
@@ -286,6 +288,17 @@ public class ODurablePage {
 
     buffer.position(0);
     changes.applyChanges(buffer);
+
+    cacheEntry.markDirty();
+  }
+
+  public void rollbackChanges(OWALChanges changes) {
+    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+
+    final ByteBuffer buffer = cacheEntry.getCachePointer().getExclusiveBuffer();
+
+    buffer.position(0);
+    changes.applyOriginalValues(buffer);
 
     cacheEntry.markDirty();
   }

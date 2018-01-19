@@ -20,14 +20,16 @@ public class OWALPageChangesPortion implements OWALChanges {
   private static final int PORTION_SIZE  = 32;
   static final         int PORTION_BYTES = PORTION_SIZE * CHUNK_SIZE;
 
-  private       byte[][][] pageChunks;
-  private final int        pageSize;
+  private byte[][][] pageChunks;
+  private byte[][][] originalChunks;
+
+  private final int pageSize;
 
   public OWALPageChangesPortion() {
     this(PAGE_SIZE);
   }
 
-  public OWALPageChangesPortion(int pageSize) {
+  OWALPageChangesPortion(int pageSize) {
     this.pageSize = pageSize;
     if (pageSize % PORTION_BYTES != 0) {
       throw new IllegalArgumentException("Page size should be a multiple of " + PORTION_BYTES);
@@ -137,23 +139,48 @@ public class OWALPageChangesPortion implements OWALChanges {
     }
   }
 
+  /**
+   * @inheritDoc
+   */
   @Override
-  public int serializedSize() {
-    if (pageChunks == null) {
-      return OShortSerializer.SHORT_SIZE;
-    }
-    int offset = OShortSerializer.SHORT_SIZE;
-    for (byte[][] pageChunk : pageChunks) {
-      if (pageChunk != null) {
+  public void applyOriginalValues(ByteBuffer buffer) {
+    if (originalChunks == null)
+      return;
+    for (int i = 0; i < originalChunks.length; i++) {
+      if (originalChunks[i] != null) {
         for (int j = 0; j < PORTION_SIZE; j++) {
-          if (pageChunk[j] != null) {
-            offset += OByteSerializer.BYTE_SIZE;
-            offset += OByteSerializer.BYTE_SIZE;
-            offset += CHUNK_SIZE;
+          byte[] chunk = originalChunks[i][j];
+          if (chunk != null) {
+            buffer.position(i * PORTION_BYTES + j * CHUNK_SIZE);
+            buffer.put(chunk, 0, chunk.length);
           }
         }
       }
     }
+  }
+
+  @Override
+  public int serializedSize() {
+    int offset;
+
+    if (pageChunks == null) {
+      offset = OShortSerializer.SHORT_SIZE;
+    } else {
+      offset = OShortSerializer.SHORT_SIZE;
+
+      for (byte[][] pageChunk : pageChunks) {
+        if (pageChunk != null) {
+          for (int j = 0; j < PORTION_SIZE; j++) {
+            if (pageChunk[j] != null) {
+              offset += OByteSerializer.BYTE_SIZE;
+              offset += OByteSerializer.BYTE_SIZE;
+              offset += 2 * CHUNK_SIZE;
+            }
+          }
+        }
+      }
+    }
+
     return offset;
   }
 
@@ -163,9 +190,11 @@ public class OWALPageChangesPortion implements OWALChanges {
       OShortSerializer.INSTANCE.serializeNative((short) 0, stream, offset);
       return offset + OShortSerializer.SHORT_SIZE;
     }
+
     int countPos = offset;
     int count = 0;
     offset += OShortSerializer.SHORT_SIZE;
+
     for (int i = 0; i < pageChunks.length; i++) {
       if (pageChunks[i] != null) {
         for (int j = 0; j < PORTION_SIZE; j++) {
@@ -174,13 +203,19 @@ public class OWALPageChangesPortion implements OWALChanges {
             offset += OByteSerializer.BYTE_SIZE;
             OByteSerializer.INSTANCE.serializeNative((byte) j, stream, offset);
             offset += OByteSerializer.BYTE_SIZE;
+
             System.arraycopy(pageChunks[i][j], 0, stream, offset, CHUNK_SIZE);
             offset += CHUNK_SIZE;
+
+            System.arraycopy(originalChunks[i][j], 0, stream, offset, CHUNK_SIZE);
+            offset += CHUNK_SIZE;
+
             count++;
           }
         }
       }
     }
+
     OShortSerializer.INSTANCE.serializeNative((short) count, stream, countPos);
     return offset;
   }
@@ -188,50 +223,35 @@ public class OWALPageChangesPortion implements OWALChanges {
   @Override
   public int fromStream(int offset, byte[] stream) {
     int chunkLength = OShortSerializer.INSTANCE.deserializeNative(stream, offset);
+
     offset += OShortSerializer.SHORT_SIZE;
+
     for (int c = 0; c < chunkLength; c++) {
       int i = OByteSerializer.INSTANCE.deserializeNative(stream, offset);
       offset += OByteSerializer.BYTE_SIZE;
       int j = OByteSerializer.INSTANCE.deserializeNative(stream, offset);
       offset += OByteSerializer.BYTE_SIZE;
-      if (pageChunks == null)
+
+      if (pageChunks == null) {
         pageChunks = new byte[(pageSize + (PORTION_BYTES - 1)) / PORTION_BYTES][][];
-      if (pageChunks[i] == null)
+        originalChunks = new byte[(pageSize + (PORTION_BYTES - 1)) / PORTION_BYTES][][];
+      }
+      if (pageChunks[i] == null) {
         pageChunks[i] = new byte[PORTION_SIZE][];
-      if (pageChunks[i][j] == null)
+        originalChunks[i] = new byte[PORTION_SIZE][];
+      }
+
+      if (pageChunks[i][j] == null) {
         pageChunks[i][j] = new byte[CHUNK_SIZE];
+        originalChunks[i][j] = new byte[CHUNK_SIZE];
+      }
+
       System.arraycopy(stream, offset, pageChunks[i][j], 0, CHUNK_SIZE);
+      offset += CHUNK_SIZE;
+      System.arraycopy(stream, offset, originalChunks[i][j], 0, CHUNK_SIZE);
       offset += CHUNK_SIZE;
     }
     return offset;
-  }
-
-  @Override
-  public OWALChanges inverse(ByteBuffer buffer) {
-    final OWALPageChangesPortion inverse = new OWALPageChangesPortion(pageSize);
-
-    if (pageChunks != null) {
-      final byte[][][] inversePageChunks = inverse.pageChunks = new byte[(pageSize + (PORTION_BYTES - 1)) / PORTION_BYTES][][];
-
-      for (int portionIndex = 0; portionIndex < pageChunks.length; ++portionIndex) {
-        final byte[][] portion = pageChunks[portionIndex];
-        if (portion == null)
-          continue;
-
-        final byte[][] inversePortion = inversePageChunks[portionIndex] = new byte[PORTION_SIZE][];
-        for (int chunkIndex = 0; chunkIndex < portion.length; ++chunkIndex) {
-          final byte[] chunk = portion[chunkIndex];
-          if (chunk == null)
-            continue;
-
-          final byte[] inverseChunk = inversePortion[chunkIndex] = new byte[CHUNK_SIZE];
-          buffer.position(portionIndex * PORTION_BYTES + chunkIndex * CHUNK_SIZE);
-          buffer.get(inverseChunk);
-        }
-      }
-    }
-
-    return inverse;
   }
 
   private void readData(ByteBuffer pointer, int offset, byte[] data) {
@@ -291,11 +311,16 @@ public class OWALPageChangesPortion implements OWALChanges {
   private void updateData(ByteBuffer pointer, int offset, byte[] data) {
     if (pageChunks == null) {
       pageChunks = new byte[(pageSize + (PORTION_BYTES - 1)) / PORTION_BYTES][][];
+      originalChunks = new byte[(pageSize + (PORTION_BYTES - 1)) / PORTION_BYTES][][];
     }
+
     int portionIndex = offset / PORTION_BYTES;
+
     if (pageChunks[portionIndex] == null) {
       pageChunks[portionIndex] = new byte[PORTION_SIZE][];
+      originalChunks[portionIndex] = new byte[PORTION_SIZE][];
     }
+
     int chunkIndex = (offset - portionIndex * PORTION_BYTES) / CHUNK_SIZE;
     int chunkOffset = offset - (portionIndex * PORTION_BYTES + chunkIndex * CHUNK_SIZE);
 
@@ -303,15 +328,22 @@ public class OWALPageChangesPortion implements OWALChanges {
 
     while (written < data.length) {
       byte[] chunk = pageChunks[portionIndex][chunkIndex];
+      byte[] originalChunk;
 
       if (chunk == null) {
         chunk = new byte[CHUNK_SIZE];
+        originalChunk = new byte[CHUNK_SIZE];
+
+        //pointer can be null for new pages
         if (pointer != null) {
           pointer.position(portionIndex * PORTION_BYTES + (chunkIndex) * CHUNK_SIZE);
           pointer.get(chunk);
+
+          System.arraycopy(chunk, 0, originalChunk, 0, chunk.length);
         }
 
         pageChunks[portionIndex][chunkIndex] = chunk;
+        originalChunks[portionIndex][chunkIndex] = originalChunk;
       }
 
       final int wl = Math.min(CHUNK_SIZE - chunkOffset, data.length - written);
@@ -320,10 +352,15 @@ public class OWALPageChangesPortion implements OWALChanges {
       written += wl;
       chunkOffset = 0;
       chunkIndex++;
+
       if (chunkIndex == PORTION_SIZE && written < data.length) {
         portionIndex++;
-        if (pageChunks[portionIndex] == null)
+
+        if (pageChunks[portionIndex] == null) {
           pageChunks[portionIndex] = new byte[PORTION_SIZE][];
+          originalChunks[portionIndex] = new byte[PORTION_SIZE][];
+        }
+
         chunkIndex = 0;
       }
     }
