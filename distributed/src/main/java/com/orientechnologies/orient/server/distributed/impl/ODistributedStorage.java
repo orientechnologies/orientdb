@@ -108,6 +108,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     this.name = dbName;
   }
 
+  public synchronized void replaceIfNeeded(final OAbstractPaginatedStorage wrapped) {
+    if (this.wrapped != wrapped)
+      this.wrapped = wrapped;
+  }
+
   public synchronized void wrap(final OAbstractPaginatedStorage wrapped) {
     if (this.wrapped != null)
       // ALREADY WRAPPED
