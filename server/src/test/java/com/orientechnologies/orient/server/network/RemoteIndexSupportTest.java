@@ -29,13 +29,11 @@ import static org.junit.Assert.assertTrue;
  */
 public class RemoteIndexSupportTest {
 
-  private static final String SERVER_DIRECTORY = "./target/db";
   private OServer server;
 
   @Before
   public void before() throws Exception {
     server = new OServer(false);
-    server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
 
@@ -70,7 +68,7 @@ public class RemoteIndexSupportTest {
     server.shutdown();
 
     Orient.instance().shutdown();
-    OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
+    OFileUtils.deleteRecursively(new File(server.getDatabaseDirectory()));
     Orient.instance().startup();
   }
 }
