@@ -1393,13 +1393,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public List<ORecordOperation> commit(final OTransactionInternal iTx, final Runnable callback) {
+  public List<ORecordOperation> commit(final OTransactionInternal iTx) {
     resetLastValidBackup();
 
     if (isLocalEnv()) {
       // ALREADY DISTRIBUTED
       try {
-        return wrapped.commit(iTx, callback);
+        return wrapped.commit(iTx);
       } catch (ORecordDuplicatedException e) {
         // CHECK THE RECORD HAS THE SAME KEY IS STILL UNDER DISTRIBUTED TX
         final ODistributedDatabase dDatabase = dManager.getMessageService().getDatabase(getName());
@@ -1422,7 +1422,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         OScenarioThreadLocal.executeAsDistributed(new Callable() {
           @Override
           public Object call() throws Exception {
-            return wrapped.commit(iTx, callback);
+            return wrapped.commit(iTx);
           }
         });
       } else {
@@ -1441,7 +1441,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           try {
 
             final List<ORecordOperation> result = txManager
-                .commit(ODatabaseRecordThreadLocal.instance().get(), iTx, callback, eventListener);
+                .commit(ODatabaseRecordThreadLocal.instance().get(), iTx, eventListener);
 
             if (result != null) {
               for (ORecordOperation r : result) {

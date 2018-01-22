@@ -183,6 +183,10 @@ public class OMathExpression extends SimpleNode {
         if (left instanceof Number && right instanceof Number) {
           return super.apply(left, right);
         }
+        if (left instanceof Date || right instanceof Date) {
+          Number result = apply(toLong(left), toLong(right));
+          return new Date(result.longValue());
+        }
         return String.valueOf(left) + String.valueOf(right);
       }
     }, MINUS(20) {
@@ -218,21 +222,21 @@ public class OMathExpression extends SimpleNode {
 
       @Override
       public Object apply(Object left, Object right) {
+        Object result = null;
         if (left == null && right == null) {
-          return null;
-        }
-        if (left instanceof Number && right == null) {
-          return left;
-        }
-        if (right instanceof Number && left == null) {
-          return apply(0, this, (Number) right);
+          result = null;
+        } else if (left instanceof Number && right == null) {
+          result = left;
+        } else if (right instanceof Number && left == null) {
+          result = apply(0, this, (Number) right);
+        } else if (left instanceof Number && right instanceof Number) {
+          result = apply((Number) left, this, (Number) right);
+        } else if (left instanceof Date || right instanceof Date) {
+          Number r = apply(toLong(left), toLong(right));
+          result = new Date(r.longValue());
         }
 
-        if (left instanceof Number && right instanceof Number) {
-          return apply((Number) left, this, (Number) right);
-        }
-
-        return null;
+        return result;
       }
 
     }, LSHIFT(30) {
@@ -447,6 +451,16 @@ public class OMathExpression extends SimpleNode {
       }
 
     };
+
+    private static Long toLong(Object left) {
+      if (left instanceof Number) {
+        return ((Number) left).longValue();
+      }
+      if (left instanceof Date) {
+        return ((Date) left).getTime();
+      }
+      return null;
+    }
 
     private final int priority;
 
@@ -814,9 +828,9 @@ public class OMathExpression extends SimpleNode {
   }
 
   /**
-   * tests if current expression is an indexed function AND the function has also to be executed after the index search.
-   * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
-   * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * tests if current expression is an indexed function AND the function has also to be executed after the index search. In some
+   * cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases the result from
+   * the index is a superset of the expected result, so the function has to be executed anyway for further filtering
    *
    * @param target  the query target
    * @param context the execution context

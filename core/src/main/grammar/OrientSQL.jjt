@@ -3094,7 +3094,14 @@ OBooleanExpression InCondition():
 	jjtThis.operator = InOperator()
 	(
 	    LOOKAHEAD(2)
-	    ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
+	    ( <LPAREN>
+	      (
+	         LOOKAHEAD(SelectStatement())(jjtThis.rightStatement = SelectStatement())
+	         |
+	         jjtThis.rightStatement = SelectWithoutTargetStatement()
+	      )
+	      <RPAREN>
+	    )
 	    |
 	    LOOKAHEAD(2)
 	    ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
@@ -3113,7 +3120,14 @@ OBooleanExpression NotInCondition():
     	jjtThis.left = Expression() <NOT> InOperator()
     	(
             LOOKAHEAD(2)
-            ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
+            ( <LPAREN>
+              (
+                 LOOKAHEAD(SelectStatement())(jjtThis.rightStatement = SelectStatement())
+                 |
+                 jjtThis.rightStatement = SelectWithoutTargetStatement()
+              )
+              <RPAREN>
+            )
             |
             LOOKAHEAD(2)
             ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
