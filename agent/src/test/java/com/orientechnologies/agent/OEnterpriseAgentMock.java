@@ -13,7 +13,7 @@ public class OEnterpriseAgentMock extends OEnterpriseAgent {
   protected void installProfiler() {
     final OAbstractProfiler currentProfiler = (OAbstractProfiler) Orient.instance().getProfiler();
 
-    profiler = new OEnterpriseProfiler(60, currentProfiler, server) {
+    profiler = new OEnterpriseProfiler(60, currentProfiler, server, this) {
 
       // do not shutdown in test
       @Override

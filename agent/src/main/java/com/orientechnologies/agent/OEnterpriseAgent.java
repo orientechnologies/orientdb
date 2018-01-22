@@ -112,46 +112,43 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       enabled = true;
       installProfiler();
       installBackupManager();
-      installCommands();
+
       installPlugins();
 
       registerSecurityComponents();
 
-      Thread installer = new Thread(new Runnable() {
-        @Override
-        public void run() {
+      Thread installer = new Thread(() -> {
 
-          int retry = 0;
-          while (true) {
-            ODistributedServerManager manager = server.getDistributedManager();
-            if (manager == null) {
-              if (retry == 5) {
-                break;
-              }
-              try {
-                Thread.sleep(2000);
-              } catch (InterruptedException e) {
-                e.printStackTrace();
-              }
-              retry++;
-              continue;
-            } else {
-              OHazelcastPlugin plugin = (OHazelcastPlugin) manager;
-              nodesManager = new NodesManager(plugin);
-              try {
-                plugin.waitUntilNodeOnline();
-              } catch (InterruptedException e) {
-                e.printStackTrace();
-              }
-              Map<String, Object> map = manager.getConfigurationMap();
-              map.put(EE + manager.getLocalNodeName(), TOKEN);
-              manager.registerLifecycleListener(profiler);
+        int retry = 0;
+        while (true) {
+          ODistributedServerManager manager = server.getDistributedManager();
+          if (manager == null) {
+            if (retry == 5) {
               break;
             }
-
+            try {
+              Thread.sleep(2000);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+            retry++;
+            continue;
+          } else {
+            OHazelcastPlugin plugin = (OHazelcastPlugin) manager;
+            nodesManager = new NodesManager(plugin);
+            try {
+              plugin.waitUntilNodeOnline();
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+            Map<String, Object> map = manager.getConfigurationMap();
+            map.put(EE + manager.getLocalNodeName(), TOKEN);
+            manager.registerLifecycleListener(profiler);
+            break;
           }
 
         }
+
       });
 
       installer.setDaemon(true);
@@ -245,7 +242,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   }
 
-  private void installCommands() {
+  public void installCommands() {
     final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
     if (listener == null)
       throw new OConfigurationException("HTTP listener not found");
@@ -290,7 +287,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   protected void installProfiler() {
     final OAbstractProfiler currentProfiler = (OAbstractProfiler) Orient.instance().getProfiler();
 
-    profiler = new OEnterpriseProfiler(60, currentProfiler, server);
+    profiler = new OEnterpriseProfiler(60, currentProfiler, server, this);
 
     Orient.instance().setProfiler(profiler);
     Orient.instance().getProfiler().startup();
@@ -462,5 +459,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   public ODistributedServerManager getDistributedManager() {
 
     return server.getDistributedManager();
+  }
+
+  public boolean isCloudConnected() {
+    return cloudManager.isConnected();
   }
 }

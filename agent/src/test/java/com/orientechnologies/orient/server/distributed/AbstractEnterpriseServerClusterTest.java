@@ -44,7 +44,7 @@ public abstract class AbstractEnterpriseServerClusterTest {
   protected int     delayServerStartup     = 0;
   protected int     delayServerAlign       = 0;
   protected boolean startupNodesInSequence = true;
-  protected boolean terminateAtShutdown    = true;
+  protected boolean terminateAtShutdown    = false;
 
   protected String     rootDirectory = "target/servers/";
   protected AtomicLong totalVertices = new AtomicLong(0);

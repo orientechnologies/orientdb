@@ -1,23 +1,24 @@
 /*
  * Copyright 2010-2013 Orient Technologies LTD (info--at--orientechnologies.com)
  * All Rights Reserved. Commercial License.
- * 
+ *
  * NOTICE:  All information contained herein is, and remains the property of
  * Orient Technologies LTD and its suppliers, if any.  The intellectual and
  * technical concepts contained herein are proprietary to
  * Orient Technologies LTD and its suppliers and may be covered by United
  * Kingdom and Foreign Patents, patents in process, and are protected by trade
  * secret or copyright law.
- * 
+ *
  * Dissemination of this information or reproduction of this material
  * is strictly forbidden unless prior written permission is obtained
  * from Orient Technologies LTD.
- * 
+ *
  * For more information: http://www.orientechnologies.com
  */
 
 package com.orientechnologies.agent.profiler;
 
+import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
@@ -54,14 +55,15 @@ import java.util.concurrent.atomic.AtomicReference;
  * @copyrights Orient Technologies.com
  */
 public class OEnterpriseProfiler extends OAbstractProfiler implements ODistributedLifecycleListener {
-  protected final static Timer                          timer                   = new Timer(true);
-  protected final static int                            BUFFER_SIZE             = 2048;
-  public static final    int                            KEEP_ALIVE              = 60 * 1000;
-  protected final        int                            metricProcessors        = Runtime.getRuntime().availableProcessors();
-  protected              Date                           lastReset               = new Date();
-  protected              OProfilerData                  realTime                = new OProfilerData();
-  protected final        AtomicReference<OProfilerData> lastSnapshot            = new AtomicReference<OProfilerData>();
-  protected              int                            elapsedToCreateSnapshot = 0;
+  protected final static Timer timer            = new Timer(true);
+  protected final static int   BUFFER_SIZE      = 2048;
+  public static final    int   KEEP_ALIVE       = 60 * 1000;
+  protected final        int   metricProcessors = Runtime.getRuntime().availableProcessors();
+  private OEnterpriseAgent agent;
+  protected       Date                           lastReset               = new Date();
+  protected       OProfilerData                  realTime                = new OProfilerData();
+  protected final AtomicReference<OProfilerData> lastSnapshot            = new AtomicReference<OProfilerData>();
+  protected       int                            elapsedToCreateSnapshot = 0;
   protected TimerTask archiverTask;
   protected TimerTask autoPause;
   protected OServer   server;
@@ -75,10 +77,12 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
     init();
   }
 
-  public OEnterpriseProfiler(final int iElapsedToCreateSnapshot, final OAbstractProfiler iParentProfiler, OServer server) {
+  public OEnterpriseProfiler(final int iElapsedToCreateSnapshot, final OAbstractProfiler iParentProfiler, OServer server,
+      OEnterpriseAgent agent) {
     super(iParentProfiler);
     elapsedToCreateSnapshot = iElapsedToCreateSnapshot;
     this.server = server;
+    this.agent = agent;
     init();
   }
 
@@ -116,7 +120,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
   @Override
   public boolean isEnterpriseEdition() {
-    return true;
+    return agent.isCloudConnected();
   }
 
   public boolean startRecording() {
@@ -583,7 +587,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
           }
           timer.schedule(autoPause, KEEP_ALIVE, KEEP_ALIVE);
         }
-      } ;
+      };
     }
   }
 

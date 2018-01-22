@@ -48,6 +48,8 @@ public class OEnterpriseCloudManager extends Thread {
 
   private String cloudBaseUrl;
 
+  private volatile boolean isConnected = false;
+
   public OEnterpriseCloudManager(OEnterpriseAgent agent) {
     this.agent = agent;
     init();
@@ -172,6 +174,7 @@ public class OEnterpriseCloudManager extends Thread {
       JsonNode error = tree.get("error");
       msg = message != null ? message.asText() : msg;
       errMsg = error != null ? error.asText() : errMsg;
+      msg = msg.isEmpty() ? errMsg : msg;
     }
 
     throw new CloudException(path, statusCode, msg, errMsg);
@@ -260,7 +263,8 @@ public class OEnterpriseCloudManager extends Thread {
       while (authToken == null) {
         try {
           negotiationToken();
-
+          isConnected = true;
+          agent.installCommands();
         } catch (ConnectException exception) {
           OLogManager.instance().warn(this, "OrientDB cloud is offline");
         } catch (Exception e) {
@@ -299,5 +303,9 @@ public class OEnterpriseCloudManager extends Thread {
 
   public interface ConsumerWithToken<T> {
     T accept(String token) throws IOException, CloudException, ClassNotFoundException;
+  }
+
+  public boolean isConnected() {
+    return isConnected;
   }
 }
