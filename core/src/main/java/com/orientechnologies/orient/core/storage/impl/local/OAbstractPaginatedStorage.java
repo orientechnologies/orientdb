@@ -4923,10 +4923,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         lsn = writeAheadLog.next(lsn);
       }
 
-      if (!operationUnits.isEmpty()) {
-        OLogManager.instance()
-            .infoNoDb(this, "There are %d unfinished atomic operations left, they will be rolled back", operationUnits.size());
+      OLogManager.instance()
+          .infoNoDb(this, "There are %d unfinished atomic operations left, they will be rolled back", operationUnits.size());
 
+      if (!operationUnits.isEmpty()) {
         for (List<OWALRecord> atomicOperation : operationUnits.values()) {
           revertAtomicUnit(atomicOperation, atLeastOnePageUpdate);
         }
