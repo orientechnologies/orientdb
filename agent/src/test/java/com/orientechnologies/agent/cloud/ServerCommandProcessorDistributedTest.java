@@ -11,25 +11,14 @@ import com.orientechnologies.orientdb.cloud.protocol.ServerInfo;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Collection;
 
 /**
  * Created by Enrico Risa on 19/12/2017.
  */
 public class ServerCommandProcessorDistributedTest extends AbstractEnterpriseServerClusterTest {
 
-  private final String DB_NAME     = "backupDB";
-  private final String BACKUP_PATH =
-      System.getProperty("buildDirectory", "target") + File.separator + "databases" + File.separator + DB_NAME;
-
-  private void deleteBackupConfig(OEnterpriseAgent agent) {
-    ODocument configuration = agent.getBackupManager().getConfiguration();
-
-    configuration.<List<ODocument>>field("backups").stream().map(cfg -> cfg.<String>field("uuid")).collect(Collectors.toList())
-        .forEach((b) -> agent.getBackupManager().removeAndStopBackup(b));
-  }
+  private final String DB_NAME = "backupDB";
 
   @Test
   public void testListConnectionsCommand() throws Exception {
@@ -39,9 +28,11 @@ public class ServerCommandProcessorDistributedTest extends AbstractEnterpriseSer
       ServerRun firstServer = this.serverInstance.get(0);
       ServerRun secondServer = this.serverInstance.get(1);
 
+      ServerInfo payload = new ServerInfo();
+      payload.setName(firstServer.getNodeName());
       Command command = new Command();
       command.setId("test");
-      command.setPayload(new ServerInfo());
+      command.setPayload(payload);
       command.setResponseChannel("channelTest");
 
       ListConnectionsCommandProcessor remove = new ListConnectionsCommandProcessor();
@@ -51,6 +42,10 @@ public class ServerCommandProcessorDistributedTest extends AbstractEnterpriseSer
       String result = (String) execute.getPayload();
 
       Assert.assertNotNull(result);
+
+      ODocument entries = new ODocument().fromJSON(result);
+      Collection connections = entries.field("connections");
+      Assert.assertTrue(connections.size() > 0);
       return null;
     });
 
