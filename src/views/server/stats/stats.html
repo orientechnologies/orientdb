@@ -4,8 +4,15 @@
     <div class="col-md-12 studio-well-tips">
       <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
     </div>
+
+    
   </div>
-  <div class="row" ng-show="agentActive">
+  <div ng-show="agentActive">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.moved' | translate:links "></h4>
+    </div>
+  </div>
+  <!-- <div class="row" ng-show="agentActive">
     <div class="{{serverClass}}" ng-repeat="server in servers" ng-controller="SingleServerController">
       <div class="panel panel-default">
         <div class="panel-heading">
@@ -92,12 +99,12 @@
           <b>Server {{ server.name}} Operations / Sec </b>
         </div>
         <div class="panel-body">
-          <!--<div id="{{server.name}}" c3chart></div>-->
+          
 
           <div server-chart server="server" headers="transactionHeaders"></div>
 
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
 </div>

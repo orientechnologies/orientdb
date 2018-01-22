@@ -2231,7 +2231,7 @@ ee.controller("SingleBackupController", ["$scope", "BackupService", "Notificatio
     return logs.filter(function (e) {
       return $scope.selectedEvents.indexOf(e.op) != -1;
     }).map(function (e, idx, arr) {
-      var date = new Date(e.timestampUnix);
+      var date = new Date(e.timestamp);
       return {
         id: idx,
         title: $scope.info(e),
