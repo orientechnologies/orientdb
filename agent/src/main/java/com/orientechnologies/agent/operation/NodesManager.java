@@ -31,6 +31,7 @@ public class NodesManager {
     NodeOperationTask.register(15, () -> new RestoreBackupTask(), () -> new OkEmptyResponse());
 
     NodeOperationTask.register(20, () -> new ListConnectionsTask(), () -> new ListConnectionsTaskResponse());
+    NodeOperationTask.register(21, () -> new ThreadDumpTask(), () -> new ThreadDumpTaskResponse());
   }
 
   public List<OperationResponseFromNode> sendAll(NodeOperation task) {

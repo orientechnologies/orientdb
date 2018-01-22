@@ -1,7 +1,8 @@
-package com.orientechnologies.agent.cloud.processor.backup;
+package com.orientechnologies.agent.cloud.processor.server;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.cloud.CloudException;
+import com.orientechnologies.agent.cloud.processor.backup.AbstractBackupCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.tasks.ListConnectionsTask;
 import com.orientechnologies.agent.cloud.processor.tasks.ListConnectionsTaskResponse;
 import com.orientechnologies.agent.operation.NodeResponse;

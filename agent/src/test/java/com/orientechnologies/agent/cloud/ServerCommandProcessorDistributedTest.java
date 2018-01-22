@@ -1,13 +1,15 @@
 package com.orientechnologies.agent.cloud;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
-import com.orientechnologies.agent.cloud.processor.backup.ListConnectionsCommandProcessor;
+import com.orientechnologies.agent.cloud.processor.server.ListConnectionsCommandProcessor;
+import com.orientechnologies.agent.cloud.processor.server.ThreadsDumpCommandProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.AbstractEnterpriseServerClusterTest;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import com.orientechnologies.orientdb.cloud.protocol.ServerInfo;
+import com.orientechnologies.orientdb.cloud.protocol.ServerThreadDump;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -46,6 +48,35 @@ public class ServerCommandProcessorDistributedTest extends AbstractEnterpriseSer
       ODocument entries = new ODocument().fromJSON(result);
       Collection connections = entries.field("connections");
       Assert.assertTrue(connections.size() > 0);
+      return null;
+    });
+
+  }
+
+  @Test
+  public void testThreadDump() throws Exception {
+
+    execute(2, () -> {
+
+      ServerRun firstServer = this.serverInstance.get(0);
+      ServerRun secondServer = this.serverInstance.get(1);
+
+      ServerInfo payload = new ServerInfo();
+      payload.setName(firstServer.getNodeName());
+      Command command = new Command();
+      command.setId("test");
+      command.setPayload(payload);
+      command.setResponseChannel("channelTest");
+
+      ThreadsDumpCommandProcessor remove = new ThreadsDumpCommandProcessor();
+
+      CommandResponse execute = remove.execute(command, getAgent(secondServer.getNodeName()));
+
+      ServerThreadDump result = (ServerThreadDump) execute.getPayload();
+
+      Assert.assertNotNull(result);
+      Assert.assertNotNull(result.getThreadDump());
+
       return null;
     });
 

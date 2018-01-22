@@ -1,6 +1,7 @@
 package com.orientechnologies.agent.cloud.processor;
 
 import com.orientechnologies.agent.cloud.processor.backup.*;
+import com.orientechnologies.agent.cloud.processor.server.ListConnectionsCommandProcessor;
 import com.orientechnologies.orientdb.cloud.protocol.CommandType;
 
 import java.util.HashMap;

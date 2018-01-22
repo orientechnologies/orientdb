@@ -22,10 +22,9 @@ public abstract class AbstractRPCTaskResponse<T> implements NodeOperationRespons
     this.payload = payload;
   }
 
-  public  T getPayload() {
+  public T getPayload() {
     return payload;
   }
-
 
   protected abstract Class<T> getPayloadType();
 
@@ -33,13 +32,19 @@ public abstract class AbstractRPCTaskResponse<T> implements NodeOperationRespons
   public void write(DataOutput out) throws IOException {
 
     String msg = mapper.writeValueAsString(getPayload());
-    out.writeUTF(msg);
+    byte[] message = msg.getBytes("UTF-8");
+    out.writeInt(message.length);
+    out.write(message);
 
   }
 
   @Override
   public void read(DataInput in) throws IOException {
-    String msg = in.readUTF();
+
+    int size = in.readInt();
+    byte[] message = new byte[size];
+    in.readFully(message, 0, size);
+    String msg = new String(message, "UTF-8");
     payload = mapper.readValue(msg, getPayloadType());
   }
 }
