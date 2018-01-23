@@ -23,13 +23,11 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 
 public class TestNetworkSerializerIndipendency {
-  private static final String SERVER_DIRECTORY = "./target/db";
   private OServer server;
 
   @Before
   public void before() throws Exception {
     server = new OServer(false);
-    server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
   }
@@ -113,7 +111,7 @@ public class TestNetworkSerializerIndipendency {
     server.shutdown();
 
     Orient.instance().shutdown();
-    File directory = new File(SERVER_DIRECTORY);
+    File directory = new File(server.getDatabaseDirectory());
     OFileUtils.deleteRecursively(directory);
     ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerFactory.instance().getFormat(ORecordSerializerBinary.NAME));
     Orient.instance().startup();

@@ -21,14 +21,12 @@ import static org.junit.Assert.assertNotNull;
 public class TestConcurrentSequenceGenerationIT {
   static final         int    THREADS          = 20;
   static final         int    RECORDS          = 100;
-  private static final String SERVER_DIRECTORY = "./target/db";
   private OServer  server;
   private OrientDB orientDB;
 
   @Before
   public void before() throws Exception {
     server = new OServer(false);
-    server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
     orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
@@ -81,7 +79,7 @@ public class TestConcurrentSequenceGenerationIT {
     server.shutdown();
 
     Orient.instance().shutdown();
-    OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
+    OFileUtils.deleteRecursively(new File(server.getDatabaseDirectory()));
     Orient.instance().startup();
   }
 }

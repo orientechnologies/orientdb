@@ -75,8 +75,7 @@ public class ODistributedTransactionManager {
     this.localDistributedDatabase = iDDatabase;
   }
 
-  public List<ORecordOperation> commit(final ODatabaseDocumentInternal database, final OTransactionInternal iTx, final Runnable callback,
-      final ODistributedStorageEventListener eventListener) {
+  public List<ORecordOperation> commit(final ODatabaseDocumentInternal database, final OTransactionInternal iTx, final ODistributedStorageEventListener eventListener) {
     final String localNodeName = dManager.getLocalNodeName();
 
     try {
@@ -113,7 +112,7 @@ public class ODistributedTransactionManager {
         final List<ORecordOperation> uResult = (List<ORecordOperation>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
           @Override
           public Object call() throws Exception {
-            return storage.commit(iTx, callback);
+            return storage.commit(iTx);
           }
         });
 

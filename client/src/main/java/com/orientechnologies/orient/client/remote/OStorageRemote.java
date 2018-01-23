@@ -926,9 +926,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void closeQuery(ODatabaseDocumentRemote database, String queryId) {
+    unstickToSession();
     OCloseQueryRequest request = new OCloseQueryRequest(queryId);
     OCloseQueryResponse response = networkOperation(request, "Error closing query: " + queryId);
-    unstickToSession();
   }
 
   public void fetchNextPage(ODatabaseDocumentRemote database, ORemoteResultSet rs) {
@@ -942,7 +942,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     rs.fetched(response.getResult(), response.isHasNextPage(), response.getExecutionPlan(), response.getQueryStats());
   }
 
-  public List<ORecordOperation> commit(final OTransactionInternal iTx, final Runnable callback) {
+  public List<ORecordOperation> commit(final OTransactionInternal iTx) {
     try {
       OCommit37Request request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), iTx.getRecordOperations(),
           iTx.getIndexOperations());

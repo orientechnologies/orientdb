@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class OLiveQueryRemoteTest {
 
-  private static final String SERVER_DIRECTORY = "./target/dbfactory";
   private OServer           server;
   private OrientDB          orientDB;
   private ODatabaseDocument database;
@@ -38,7 +37,6 @@ public class OLiveQueryRemoteTest {
   public void before() throws Exception {
     OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
     server = new OServer(false);
-    server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(
         getClass().getClassLoader().getResourceAsStream("com/orientechnologies/orient/server/network/orientdb-server-config.xml"));
     server.activate();
@@ -54,7 +52,7 @@ public class OLiveQueryRemoteTest {
     server.shutdown();
 
     Orient.instance().shutdown();
-    OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
+    OFileUtils.deleteRecursively(new File(server.getDatabaseDirectory()));
     Orient.instance().startup();
   }
 
