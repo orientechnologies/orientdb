@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.cloud.CloudEndpoint;
 import com.orientechnologies.agent.cloud.CloudException;
 import com.orientechnologies.agent.cloud.CloudPushEndpoint;
+import com.orientechnologies.agent.cloud.processor.CloudCommandProcessorFactory;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -50,12 +51,14 @@ public class OEnterpriseCloudManager extends Thread {
 
   private volatile boolean isConnected = false;
 
+  private CloudCommandProcessorFactory commandFactory;
+
   public OEnterpriseCloudManager(OEnterpriseAgent agent) {
     this.agent = agent;
     init();
     cloudEndpoint = new CloudEndpoint(this);
     cloudPushEndpoint = new CloudPushEndpoint(this);
-
+    commandFactory = new CloudCommandProcessorFactory();
   }
 
   public void shutdown() {
@@ -307,5 +310,9 @@ public class OEnterpriseCloudManager extends Thread {
 
   public boolean isConnected() {
     return isConnected;
+  }
+
+  public CloudCommandProcessorFactory getCommandFactory() {
+    return commandFactory;
   }
 }

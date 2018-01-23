@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.OEnterpriseCloudManager;
 import com.orientechnologies.agent.cloud.processor.CloudCommandProcessor;
-import com.orientechnologies.agent.cloud.processor.CloudCommandProcessorFactory;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
@@ -91,7 +90,7 @@ public class CloudPushEndpoint extends Thread {
   }
 
   private CommandResponse processRequest(Command request) {
-    CloudCommandProcessor processor = CloudCommandProcessorFactory.INSTANCE.getProcessorFor(request.getCmd());
+    CloudCommandProcessor processor = cloudManager.getCommandFactory().getProcessorFor(request.getCmd());
     if (processor == null) {
       return commandNotSupported(request);
     }

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.OEnterpriseCloudManager;
 import com.orientechnologies.agent.cloud.processor.CloudCommandProcessor;
-import com.orientechnologies.agent.cloud.processor.CloudCommandProcessorFactory;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
@@ -20,6 +19,7 @@ import java.net.ConnectException;
 public class CloudEndpoint extends Thread {
 
   ObjectMapper objectMapper = new ObjectMapper();
+
 
   private final OEnterpriseCloudManager cloudManager;
   private       boolean                 terminate;
@@ -135,7 +135,7 @@ public class CloudEndpoint extends Thread {
   }
 
   private CommandResponse processRequest(Command request) {
-    CloudCommandProcessor processor = CloudCommandProcessorFactory.INSTANCE.getProcessorFor(request.getCmd());
+    CloudCommandProcessor processor = cloudManager.getCommandFactory().getProcessorFor(request.getCmd());
     if (processor == null) {
       return commandNotSupported(request);
     }

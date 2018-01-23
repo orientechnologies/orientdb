@@ -10,11 +10,13 @@ import java.util.Map;
 
 public class CloudCommandProcessorFactory {
 
-  public static final CloudCommandProcessorFactory INSTANCE = new CloudCommandProcessorFactory();
-
   private Map<String, CloudCommandProcessor> processors;
 
-  private CloudCommandProcessorFactory() {
+  public CloudCommandProcessorFactory() {
+    initCommands();
+  }
+
+  private void initCommands() {
     processors = new HashMap<>();
     processors.put(CommandType.LIST_SERVERS.command, new ListServersCommandProcessor());
     processors.put(CommandType.LIST_BACKUPS.command, new ListBackupCommandProcessor());
