@@ -1,35 +1,19 @@
 package com.orientechnologies.agent.cloud.processor.tasks;
 
-import com.orientechnologies.orient.server.distributed.operation.NodeOperationResponse;
+import com.orientechnologies.orientdb.cloud.protocol.ServerConnections;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
-public class ListConnectionsTaskResponse implements NodeOperationResponse {
-  private String connections;
+public class ListConnectionsTaskResponse extends AbstractRPCTaskResponse<ServerConnections> {
 
   public ListConnectionsTaskResponse() {
   }
 
-  public ListConnectionsTaskResponse(String connections) {
-    this.connections = connections;
+  public ListConnectionsTaskResponse(ServerConnections connections) {
+    super(connections);
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
-
-    out.writeUTF(this.connections);
-
+  protected Class<ServerConnections> getPayloadType() {
+    return ServerConnections.class;
   }
 
-  @Override
-  public void read(DataInput in) throws IOException {
-
-    this.connections = in.readUTF();
-  }
-
-  public String getConnections() {
-    return connections;
-  }
 }

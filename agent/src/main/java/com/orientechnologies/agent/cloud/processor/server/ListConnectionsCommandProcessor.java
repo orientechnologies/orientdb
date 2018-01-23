@@ -8,14 +8,14 @@ import com.orientechnologies.agent.cloud.processor.tasks.ListConnectionsTaskResp
 import com.orientechnologies.agent.operation.NodeResponse;
 import com.orientechnologies.agent.operation.OperationResponseFromNode;
 import com.orientechnologies.agent.operation.ResponseOk;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.OClientConnectionStats;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerInfo;
-import com.orientechnologies.orientdb.cloud.protocol.Command;
-import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
-import com.orientechnologies.orientdb.cloud.protocol.ServerInfo;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import com.orientechnologies.orientdb.cloud.protocol.*;
 
-import java.io.StringWriter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ListConnectionsCommandProcessor extends AbstractBackupCommandProcessor {
   @Override
@@ -26,8 +26,7 @@ public class ListConnectionsCommandProcessor extends AbstractBackupCommandProces
     ServerInfo request = (ServerInfo) command.getPayload();
 
     if (!agent.isDistributed()) {
-      String asJson = getConnectionsAsJson(agent.server);
-      response.setPayload(asJson);
+      response.setPayload(getConnections(agent.server));
     } else {
       OperationResponseFromNode res = agent.getNodesManager().send(request.getName(), new ListConnectionsTask());
       NodeResponse nodeResponse = res.getNodeResponse();
@@ -35,7 +34,7 @@ public class ListConnectionsCommandProcessor extends AbstractBackupCommandProces
       if (nodeResponse.getResponseType() == 1) {
         ResponseOk ok = (ResponseOk) nodeResponse;
         ListConnectionsTaskResponse taskResponse = (ListConnectionsTaskResponse) ok.getPayload();
-        response.setPayload(taskResponse.getConnections());
+        response.setPayload(taskResponse.getPayload());
       } else {
         throw new CloudException("", 500, String.format("Cannot execute request on node %d", request.getName()), "");
       }
@@ -44,20 +43,52 @@ public class ListConnectionsCommandProcessor extends AbstractBackupCommandProces
     return response;
   }
 
-  public static String getConnectionsAsJson(OServer server) {
-    final StringWriter jsonBuffer = new StringWriter();
-    final OJSONWriter json = new OJSONWriter(jsonBuffer);
-    try {
+  public static ServerConnections getConnections(OServer server) {
 
-      json.beginObject();
-      OServerInfo.getConnections(server, json, null);
+    ServerConnections connections = new ServerConnections();
+    final List<OClientConnection> conns = server.getClientConnectionManager().getConnections();
 
-      json.endObject();
+    List<ServerConnection> serverConnections = conns.stream().map((c) -> mapConnection(c)).collect(Collectors.toList());
 
-      return jsonBuffer.toString();
-    } catch (Exception e) {
+    connections.setConnections(serverConnections);
+    return connections;
+  }
+
+  private static ServerConnection mapConnection(OClientConnection c) {
+    final ONetworkProtocolData data = c.getData();
+    final OClientConnectionStats stats = c.getStats();
+    ServerConnection conn = new ServerConnection();
+
+    String lastDatabase;
+    String lastUser;
+    conn.setConnectionId(c.getId());
+    conn.setSince(c.getSince());
+    if (stats.lastDatabase != null && stats.lastUser != null) {
+      lastDatabase = stats.lastDatabase;
+      lastUser = stats.lastUser;
+    } else {
+      lastDatabase = data.lastDatabase;
+      lastUser = data.lastUser;
     }
-    return "";
+    conn.setRemoteAddress(c.getProtocol().getChannel() != null ? c.getProtocol().getChannel().toString() : "Disconnected");
+    conn.setLastCommandOn(stats.lastCommandReceived);
+    conn.setDatabase(lastDatabase);
+    conn.setUser(lastUser);
+    conn.setTotalRequest(stats.totalRequests);
+    conn.setCommandInfo(data.commandInfo);
+    conn.setCommandDetail(data.commandDetail);
+    conn.setLastCommandInfo(stats.lastCommandInfo);
+    conn.setLastCommandDetail(stats.lastCommandDetail);
+    conn.setLastCommandExecutionTime(stats.lastCommandExecutionTime);
+    conn.setTotalCommandExecutionTime(stats.totalCommandExecutionTime);
+    conn.setProtocolType(c.getProtocol().getType());
+    conn.setSessionId(data.sessionId);
+    conn.setClientId(data.clientId);
+    conn.setDriverName(data.driverName);
+    conn.setDriverVersion(data.driverVersion);
+    conn.setProtocolVersion(data.protocolVersion);
+
+    return conn;
   }
 
 }

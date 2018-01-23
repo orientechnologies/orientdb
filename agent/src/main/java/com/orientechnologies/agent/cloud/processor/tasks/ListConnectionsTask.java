@@ -15,7 +15,7 @@ import java.io.DataOutput;
 public class ListConnectionsTask implements NodeOperation {
   @Override
   public NodeOperationResponse execute(OServer iServer, ODistributedServerManager iManager) {
-    return new ListConnectionsTaskResponse(ListConnectionsCommandProcessor.getConnectionsAsJson(iServer));
+    return new ListConnectionsTaskResponse(ListConnectionsCommandProcessor.getConnections(iServer));
   }
 
   @Override
