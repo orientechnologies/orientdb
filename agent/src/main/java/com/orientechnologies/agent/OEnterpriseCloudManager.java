@@ -315,4 +315,8 @@ public class OEnterpriseCloudManager extends Thread {
   public CloudCommandProcessorFactory getCommandFactory() {
     return commandFactory;
   }
+
+  public CloudEndpoint getCloudEndpoint() {
+    return cloudEndpoint;
+  }
 }

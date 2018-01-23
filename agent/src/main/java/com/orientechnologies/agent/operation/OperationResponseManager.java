@@ -131,9 +131,9 @@ public class OperationResponseManager implements ODistributedResponseManager {
   public synchronized boolean collectResponse(ODistributedResponse response) {
     NodeOperationTaskResponse nodeResponse = (NodeOperationTaskResponse) response.getPayload();
     if (nodeResponse.getResponse().isOk()) {
-      responses.add(new OperationResponseFromNode(response.getSenderNodeName(), new ResponseOk(nodeResponse.getResponse())));
+      responses.add(new OperationResponseFromNode(response.getExecutorNodeName(), new ResponseOk(nodeResponse.getResponse())));
     } else {
-      responses.add(new OperationResponseFromNode(response.getSenderNodeName(), new ResponseFailed(nodeResponse.getResponse())));
+      responses.add(new OperationResponseFromNode(response.getExecutorNodeName(), new ResponseFailed(nodeResponse.getResponse())));
     }
     waitingFor.countDown();
     return waitingFor.getCount() == 0;

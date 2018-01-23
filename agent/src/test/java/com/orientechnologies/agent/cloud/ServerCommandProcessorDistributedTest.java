@@ -1,6 +1,5 @@
 package com.orientechnologies.agent.cloud;
 
-import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.cloud.processor.server.ListConnectionsCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.server.ThreadsDumpCommandProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -82,13 +81,7 @@ public class ServerCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-  private OEnterpriseAgent getAgent(String server) {
 
-    return this.serverInstance.stream().filter(serverRun -> serverRun.getNodeName().equals(server)).findFirst()
-        .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot find server with name %s", server)))
-        .getServerInstance().getPluginByClass(OEnterpriseAgent.class);
-
-  }
 
   @Override
   protected String getDatabaseName() {

@@ -134,7 +134,7 @@ public class CloudEndpoint extends Thread {
     return objectMapper.writeValueAsString(response);
   }
 
-  private CommandResponse processRequest(Command request) {
+  public CommandResponse processRequest(Command request) {
     CloudCommandProcessor processor = cloudManager.getCommandFactory().getProcessorFor(request.getCmd());
     if (processor == null) {
       return commandNotSupported(request);

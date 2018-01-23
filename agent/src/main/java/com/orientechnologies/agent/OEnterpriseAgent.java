@@ -452,6 +452,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     }
   }
 
+  public OEnterpriseCloudManager getCloudManager() {
+    return cloudManager;
+  }
+
   public boolean isDistributed() {
     return server.getDistributedManager() != null;
   }

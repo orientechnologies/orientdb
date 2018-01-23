@@ -212,14 +212,6 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
     return (BackupList) execute.getPayload();
   }
 
-  private OEnterpriseAgent getAgent(String server) {
-
-    return this.serverInstance.stream().filter(serverRun -> serverRun.getNodeName().equals(server)).findFirst()
-        .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot find server with name %s", server)))
-        .getServerInstance().getPluginByClass(OEnterpriseAgent.class);
-
-  }
-
   @Test
   public void testAddBackupCommandProcessor() throws Exception {
 

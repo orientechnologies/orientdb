@@ -29,6 +29,10 @@ public class CloudCommandProcessorFactory {
     processors.put(CommandType.SERVER_THREAD_DUMP.command, new ThreadsDumpCommandProcessor());
   }
 
+  public CloudCommandProcessor removeCommand(String command) {
+    return processors.remove(command);
+  }
+
   public CloudCommandProcessor getProcessorFor(String type) {
     return processors.get(type);
   }

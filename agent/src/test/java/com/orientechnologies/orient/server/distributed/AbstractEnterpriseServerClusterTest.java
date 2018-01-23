@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spi.properties.GroupProperty;
+import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -431,4 +432,11 @@ public abstract class AbstractEnterpriseServerClusterTest {
     return null;
   }
 
+  protected OEnterpriseAgent getAgent(String server) {
+
+    return this.serverInstance.stream().filter(serverRun -> serverRun.getNodeName().equals(server)).findFirst()
+        .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot find server with name %s", server)))
+        .getServerInstance().getPluginByClass(OEnterpriseAgent.class);
+
+  }
 }
