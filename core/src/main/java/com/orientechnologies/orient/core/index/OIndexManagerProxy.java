@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -134,11 +133,28 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
 
   public OIndexManager dropIndex(final String iIndexName) {
     if (isDistributedCommand()) {
-      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database.getStorage());
-      return remoteIndexManager.dropIndex(iIndexName);
+      distributedDropIndex(iIndexName);
+      return this;
     }
 
     return delegate.dropIndex(iIndexName);
+  }
+
+  public void distributedDropIndex(final String iName) {
+
+    String dropIndexDDL = "DROP INDEX `" + iName + "`";
+
+    delegate.acquireExclusiveLock();
+    try {
+      getDatabase().command(new OCommandSQL(dropIndexDDL)).execute();
+      ORecordInternal
+          .setIdentity(delegate.getDocument(), new ORecordId(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId()));
+
+      reload();
+
+    } finally {
+      delegate.releaseExclusiveLock();
+    }
   }
 
   public String getDefaultClusterName() {
