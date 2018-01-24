@@ -2,17 +2,11 @@ package com.orientechnologies.agent.cloud;
 
 import com.orientechnologies.agent.cloud.processor.server.ListConnectionsCommandProcessor;
 import com.orientechnologies.agent.cloud.processor.server.ThreadsDumpCommandProcessor;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.AbstractEnterpriseServerClusterTest;
 import com.orientechnologies.orient.server.distributed.ServerRun;
-import com.orientechnologies.orientdb.cloud.protocol.Command;
-import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
-import com.orientechnologies.orientdb.cloud.protocol.ServerInfo;
-import com.orientechnologies.orientdb.cloud.protocol.ServerThreadDump;
+import com.orientechnologies.orientdb.cloud.protocol.*;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Collection;
 
 /**
  * Created by Enrico Risa on 19/12/2017.
@@ -40,13 +34,11 @@ public class ServerCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
       CommandResponse execute = remove.execute(command, getAgent(secondServer.getNodeName()));
 
-      String result = (String) execute.getPayload();
+      ServerConnections result = (ServerConnections) execute.getPayload();
 
       Assert.assertNotNull(result);
 
-      ODocument entries = new ODocument().fromJSON(result);
-      Collection connections = entries.field("connections");
-      Assert.assertTrue(connections.size() > 0);
+      Assert.assertTrue(result.getConnections().size() > 0);
       return null;
     });
 
