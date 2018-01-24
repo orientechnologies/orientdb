@@ -86,7 +86,58 @@ public class CloudEndpointDistributedTest extends AbstractEnterpriseServerCluste
       connections.getConnections().forEach((c) -> {
         assertThat(c.getConnectionId()).isNotNull();
         assertThat(c.getSince()).isNotNull();
+        assertThat(c.getCommandDetail()).isNotNull();
+        assertThat(c.getCommandInfo()).isNotNull();
+        assertThat(c.getDriverVersion()).isNotNull();
+        assertThat(c.getProtocolType()).isNotNull();
+        assertThat(c.getProtocolVersion()).isNotNull();
+        assertThat(c.getLastCommandDetail()).isNotNull();
+        assertThat(c.getLastCommandInfo()).isNotNull();
+        assertThat(c.getLastCommandOn()).isNotNull();
+        assertThat(c.getRemoteAddress()).isNotNull();
+        assertThat(c.getSessionId()).isNotNull();
+
       });
+
+      commandResponse = secondAgent.getCloudManager().getCloudEndpoint().processRequest(command);
+
+      Assert.assertFalse(commandResponse.isSuccess());
+      return null;
+    });
+  }
+
+  @Test
+  public void testServerThreadDump() throws Exception {
+
+    execute(2, () -> {
+
+      ServerRun firstServer = this.serverInstance.get(0);
+      ServerRun secondServer = this.serverInstance.get(1);
+
+      OEnterpriseAgent firstAgent = getAgent(firstServer.getNodeName());
+      OEnterpriseAgent secondAgent = getAgent(secondServer.getNodeName());
+
+      secondAgent.getCloudManager().getCommandFactory().removeCommand(CommandType.SERVER_THREAD_DUMP.command);
+
+      ServerInfo info = new ServerInfo();
+
+      info.setName(firstServer.getNodeName());
+
+      Command command = new Command();
+      command.setId(UUID.randomUUID().toString());
+      command.setPayload(info);
+      command.setResponseChannel("fake");
+      command.setCmd(CommandType.SERVER_THREAD_DUMP.command);
+
+      CommandResponse commandResponse = firstAgent.getCloudManager().getCloudEndpoint().processRequest(command);
+
+      Assert.assertTrue(commandResponse.isSuccess());
+
+      assertThat(commandResponse.getPayload()).isInstanceOf(ServerThreadDump.class);
+
+      ServerThreadDump connections = (ServerThreadDump) commandResponse.getPayload();
+
+      assertThat(connections.getThreadDump()).isNotEmpty();
 
       commandResponse = secondAgent.getCloudManager().getCloudEndpoint().processRequest(command);
 
