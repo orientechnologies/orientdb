@@ -24,8 +24,6 @@ import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -285,21 +283,21 @@ public class OEnterpriseCloudManager extends Thread {
       cloudPushEndpoint.start();
     } else {
 
-      List<String> params = new ArrayList<>();
-
-      if (cloudBaseUrl == null) {
-        params.add(OGlobalConfiguration.CLOUD_BASE_URL.getKey());
-      }
-      if (projectId == null) {
-        params.add(OGlobalConfiguration.CLOUD_PROJECT_ID.getKey());
-      }
-      if (token == null) {
-        params.add(OGlobalConfiguration.CLOUD_PROJECT_TOKEN.getKey());
-      }
-
-      String missing = String.join(" , ", params);
-
-      OLogManager.instance().info(this, "OrientDB cloud is disabled. Configuration parameters missing : [%s]", missing);
+//      List<String> params = new ArrayList<>();
+//
+//      if (cloudBaseUrl == null) {
+//        params.add(OGlobalConfiguration.CLOUD_BASE_URL.getKey());
+//      }
+//      if (projectId == null) {
+//        params.add(OGlobalConfiguration.CLOUD_PROJECT_ID.getKey());
+//      }
+//      if (token == null) {
+//        params.add(OGlobalConfiguration.CLOUD_PROJECT_TOKEN.getKey());
+//      }
+//
+//      String missing = String.join(" , ", params);
+//
+//      OLogManager.instance().info(this, "OrientDB cloud is disabled. Configuration parameters missing : [%s]", missing);
     }
 
   }
