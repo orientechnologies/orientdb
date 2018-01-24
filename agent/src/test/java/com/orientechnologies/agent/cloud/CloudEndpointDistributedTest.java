@@ -88,7 +88,6 @@ public class CloudEndpointDistributedTest extends AbstractEnterpriseServerCluste
         assertThat(c.getSince()).isNotNull();
         assertThat(c.getCommandDetail()).isNotNull();
         assertThat(c.getCommandInfo()).isNotNull();
-        assertThat(c.getDriverVersion()).isNotNull();
         assertThat(c.getProtocolType()).isNotNull();
         assertThat(c.getProtocolVersion()).isNotNull();
         assertThat(c.getLastCommandDetail()).isNotNull();
