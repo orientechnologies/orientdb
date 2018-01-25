@@ -262,7 +262,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
         if (!itemFound)
-          setSize(size() + 1, atomicOperation);
+          updateSize(1, atomicOperation);
 
         endAtomicOperation(false, null);
         return result;
@@ -500,6 +500,18 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
+  private void updateSize(long diffSize, OAtomicOperation atomicOperation) throws IOException {
+    OCacheEntry rootCacheEntry = loadPageForWrite(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false);
+
+    try {
+      OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootCacheEntry, rootBucketPointer.getPageOffset(),
+          keySerializer, valueSerializer, this);
+      rootBucket.setTreeSize(rootBucket.getTreeSize() + diffSize);
+    } finally {
+      releasePageFromWrite(atomicOperation, rootCacheEntry);
+    }
+  }
+
   private void setSize(long size, OAtomicOperation atomicOperation) throws IOException {
     OCacheEntry rootCacheEntry = loadPageForWrite(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false);
 
@@ -580,7 +592,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         } finally {
           releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
         }
-        setSize(size() - 1, atomicOperation);
+        updateSize(-1, atomicOperation);
 
         endAtomicOperation(false, null);
         return removed;
