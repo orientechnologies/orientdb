@@ -344,11 +344,12 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   public void setOwner(ORecord owner) {
-    if (owner instanceof ODocument) {
-      if (((ODocument) owner).isEmbedded()) {
-        throw new ODatabaseException("RidBag not supported in embedded document");
-      }
-    }
+    //DISABLED FOR BACKWARD COMPATIBILITY RE-ENABLE IN FUTURE
+//    if (owner instanceof ODocument) {
+//      if (((ODocument) owner).isEmbedded()) {
+//        throw new ODatabaseException("RidBag not supported in embedded document");
+//      }
+//    }
     delegate.setOwner(owner);
   }
 
