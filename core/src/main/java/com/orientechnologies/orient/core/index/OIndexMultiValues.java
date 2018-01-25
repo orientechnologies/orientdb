@@ -118,35 +118,21 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       else
         durable = false;
 
-      Set<OIdentifiable> values = null;
-
-      while (true) {
-        try {
-          values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
-          break;
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
-      }
-
-      final Set<OIdentifiable> cvalues = values;
-
-      final Callable<Object> creator = new Callable<Object>() {
+      final OIndexKeyUpdater<Object> creator = new OIndexKeyUpdater<Object>() {
         @Override
-        public Object call() throws Exception {
-          Set<OIdentifiable> result = cvalues;
-
-          if (result == null) {
+        public Object update(Object oldValue) {
+          Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
+          if (toUpdate == null) {
             if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-              result = new OIndexRIDContainer(getName(), durable);
+              toUpdate = new OIndexRIDContainer(getName(), durable);
             } else {
               throw new IllegalStateException("MVRBTree is not supported any more");
             }
           }
 
-          result.add(identity);
+          toUpdate.add(identity);
 
-          return result;
+          return toUpdate;
         }
       };
 
@@ -186,7 +172,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
       final OModifiableBoolean removed = new OModifiableBoolean(false);
 
-      final Callable<Object> creator = new EntityRemover(value, removed, values);
+      final OIndexKeyUpdater<Object> creator = new EntityRemover(value, removed);
 
       while (true)
         try {
@@ -416,19 +402,18 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
   }
 
-  private static class EntityRemover implements Callable<Object> {
+  private static class EntityRemover implements OIndexKeyUpdater<Object> {
     private final OIdentifiable      value;
     private final OModifiableBoolean removed;
-    private final Set<OIdentifiable> values;
 
-    public EntityRemover(OIdentifiable value, OModifiableBoolean removed, Set<OIdentifiable> values) {
+    public EntityRemover(OIdentifiable value, OModifiableBoolean removed) {
       this.value = value;
       this.removed = removed;
-      this.values = values;
     }
 
     @Override
-    public Object call() throws Exception {
+    public Object update(Object persistentValue) {
+      Set<OIdentifiable> values = (Set<OIdentifiable>) persistentValue;
       if (value == null) {
         removed.setValue(true);
 

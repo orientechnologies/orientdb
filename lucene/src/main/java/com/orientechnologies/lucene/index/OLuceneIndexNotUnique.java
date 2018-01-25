@@ -300,7 +300,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
       } else {
         while (true) {
           try {
-            storage.updateIndexEntry(indexId, key, () -> Arrays.asList(singleValue));
+            storage.updateIndexEntry(indexId, key, (x) -> Arrays.asList(singleValue));
             break;
           } catch (OInvalidIndexEngineIdException e) {
             doReloadIndexEngine();

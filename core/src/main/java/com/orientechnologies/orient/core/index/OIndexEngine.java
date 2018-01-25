@@ -61,6 +61,10 @@ public interface OIndexEngine {
 
   void put(Object key, Object value);
 
+  default void update(Object key, OIndexKeyUpdater<Object> value) {
+    throw new UnsupportedOperationException();
+  }
+
   /**
    * Puts the given value under the given key into this index engine. Validates the operation using the provided validator.
    *
@@ -102,7 +106,7 @@ public interface OIndexEngine {
 
   /**
    * <p>Acquires exclusive lock in the active atomic operation running on the current thread for this index engine.
-   *
+   * <p>
    * <p>If this index engine supports a more narrow locking, for example key-based sharding, it may use the provided {@code key} to
    * infer a more narrow lock scope, but that is not a requirement.
    *
