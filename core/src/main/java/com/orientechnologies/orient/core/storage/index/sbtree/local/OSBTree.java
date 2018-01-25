@@ -26,13 +26,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
-import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
-import com.orientechnologies.orient.core.index.OAlwaysLessKey;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -239,8 +237,14 @@ public class OSBTree<K, V> extends ODurableComponent {
     return put(key, value, validator);
   }
 
-  @SuppressWarnings("unchecked")
   private boolean put(K key, V value, OIndexEngine.Validator<K, V> validator) {
+    return update(key, (x) -> {
+      return value;
+    }, validator);
+  }
+
+  @SuppressWarnings("unchecked")
+  public boolean update(K key, OIndexKeyUpdater<V> updater, OIndexEngine.Validator<K, V> validator) {
     final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
     if (statistic != null)
@@ -260,34 +264,34 @@ public class OSBTree<K, V> extends ODurableComponent {
         if (key != null) {
           final int keySize = keySerializer.getObjectSize(key, (Object[]) keyTypes);
 
-          final int valueSize = valueSerializer.getObjectSize(value);
           if (keySize > MAX_KEY_SIZE)
             throw new OTooBigIndexKeyException(
                 "Key size is more than allowed, operation was canceled. Current key size " + keySize + ", allowed  " + MAX_KEY_SIZE,
                 getName());
 
-          final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
-
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
           long valueLink = -1;
+
+          BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
+
+          OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false);
+          OSBTreeBucket<K, V> keyBucket = new OSBTreeBucket<K, V>(keyBucketCacheEntry, keySerializer, keyTypes, valueSerializer);
+          final V oldValue = bucketSearchResult.itemIndex > -1 ?
+              readValue(keyBucket.getValue(bucketSearchResult.itemIndex), atomicOperation) :
+              null;
+          V value = updater.update(oldValue);
+          final int valueSize = valueSerializer.getObjectSize(value);
+          final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
           if (createLinkToTheValue)
             valueLink = createLinkToTheValue(value, atomicOperation);
 
           final OSBTreeValue<V> treeValue = new OSBTreeValue<V>(createLinkToTheValue, valueLink,
               createLinkToTheValue ? null : value);
-          BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
-
-          OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false);
-          OSBTreeBucket<K, V> keyBucket = new OSBTreeBucket<K, V>(keyBucketCacheEntry, keySerializer, keyTypes, valueSerializer);
-
           if (validator != null) {
             boolean failure = true; // assuming validation throws by default
             boolean ignored = false;
 
             try {
-              final V oldValue = bucketSearchResult.itemIndex > -1 ?
-                  readValue(keyBucket.getValue(bucketSearchResult.itemIndex), atomicOperation) :
-                  null;
 
               final Object result = validator.validate(key, oldValue, value);
               if (result == OIndexEngine.Validator.IGNORE) {
@@ -359,25 +363,26 @@ public class OSBTree<K, V> extends ODurableComponent {
           } else
             cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
 
-          final int valueSize = valueSerializer.getObjectSize(value);
-          final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
-
-          long valueLink = -1;
-          if (createLinkToTheValue)
-            valueLink = createLinkToTheValue(value, atomicOperation);
-
-          final OSBTreeValue<V> treeValue = new OSBTreeValue<V>(createLinkToTheValue, valueLink,
-              createLinkToTheValue ? null : value);
-
           int sizeDiff = 0;
 
           boolean ignored = false;
           try {
             final ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, valueSerializer, isNew);
             final OSBTreeValue<V> oldValue = nullBucket.getValue();
+            final V oldValueValue = oldValue == null ? null : readValue(oldValue, atomicOperation);
+            V value = (V) updater.update(oldValueValue);
+
+            final int valueSize = valueSerializer.getObjectSize(value);
+            final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
+
+            long valueLink = -1;
+            if (createLinkToTheValue)
+              valueLink = createLinkToTheValue(value, atomicOperation);
+
+            final OSBTreeValue<V> treeValue = new OSBTreeValue<V>(createLinkToTheValue, valueLink,
+                createLinkToTheValue ? null : value);
 
             if (validator != null) {
-              final V oldValueValue = oldValue == null ? null : readValue(oldValue, atomicOperation);
 
               final Object result = validator.validate(null, oldValueValue, value);
               if (result == OIndexEngine.Validator.IGNORE) {
@@ -406,8 +411,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         return true;
       } catch (IOException e) {
         rollback(e);
-        throw OException
-            .wrapException(new OSBTreeException("Error during index update with key " + key + " and value " + value, this), e);
+        throw OException.wrapException(new OSBTreeException("Error during index update with key " + key, this), e);
       } catch (RuntimeException e) {
         rollback(e);
         throw e;
