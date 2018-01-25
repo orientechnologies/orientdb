@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-  public class NodeOperationTask implements ORemoteTask {
+public class NodeOperationTask implements ORemoteTask {
   public static final int FACTORYID = 55;
   private NodeOperation task;
   private String        nodeSource;
@@ -172,9 +172,9 @@ import java.util.concurrent.Callable;
     }
   }
 
-  public static void register(int messageId, Callable<NodeOperation> requestFActory,
+  public static void register(int messageId, Callable<NodeOperation> requestFactory,
       Callable<NodeOperationResponse> responseFactory) {
-    MESSAGES.put(messageId, new NodeOperationFactory(requestFActory, responseFactory));
+    MESSAGES.put(messageId, new NodeOperationFactory(requestFactory, responseFactory));
   }
 
   public static NodeOperationResponse createOperationResponse(int messageId) {
