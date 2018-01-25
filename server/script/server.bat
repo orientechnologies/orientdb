@@ -1,6 +1,6 @@
 @echo off
 rem
-rem Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
+rem Copyright (c) OrientDB LTD (http://www.orientdb.com)
 rem
 
 echo            .                                          
@@ -23,9 +23,9 @@ echo       ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::  
 echo            ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::
 echo            ,,:` `,,.                                  
 echo           ,,,    .,`                                  
-echo          ,,.     `,                                          GRAPH DATABASE
+echo          ,,.     `,                                              VELOCE
 echo        ``        `.                                         
-echo                  ``                                         www.orientdb.org
+echo                  ``                                         www.orientdb.com
 echo                  `                                    
 
 rem Guess ORIENTDB_HOME if not defined
