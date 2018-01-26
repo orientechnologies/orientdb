@@ -9,6 +9,7 @@ import java.util.Properties;
 public class OConstants {
   public static final String ORIENT_URL = "https://www.orientdb.com";
   public static final String COPYRIGHT  = "Copyrights (c) 2017 OrientDB LTD";
+  public static final String CODENAME   = "Veloce";
 
   private static final Properties properties = new Properties();
 
@@ -102,8 +103,8 @@ public class OConstants {
    * Returns the complete text of the current OrientDB version.
    */
   public static String getVersion() {
-    return properties.getProperty("version") + " (build " + properties.getProperty("revision") + ", branch " + properties
-        .getProperty("branch") + ")";
+    return properties.getProperty("version") + " - " + CODENAME + " (build " + properties.getProperty("revision") + ", branch "
+        + properties.getProperty("branch") + ")";
   }
 
   /**

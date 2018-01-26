@@ -47,7 +47,15 @@ public class OInsertExecutionPlanner {
       handleTargetClass(result, targetClass, ctx, enableProfiling);
       handleSetFields(result, insertBody, ctx, enableProfiling);
       handleReturn(result, returnStatement, ctx, enableProfiling);
-      handleSave(result, targetClusterName, ctx, enableProfiling);
+      if (targetCluster != null) {
+        String name = targetCluster.getClusterName();
+        if (name == null) {
+          name = ctx.getDatabase().getClusterNameById(targetCluster.getClusterNumber());
+        }
+        handleSave(result, new OIdentifier(name), ctx, enableProfiling);
+      } else {
+        handleSave(result, targetClusterName, ctx, enableProfiling);
+      }
     }
     return result;
   }

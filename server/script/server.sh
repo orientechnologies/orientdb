@@ -23,9 +23,9 @@ echo "      ...,::,,,,::.. \`:  .,,  :,    :   :     :   .:    :::::::::::   :::
 echo "           ,::::,,,. \`:   ,,   :::::    :     :   .:    :::::::::     ::::::::::  "
 echo "           ,,:\` \`,,.                                  "
 echo "          ,,,    .,\`                                  "
-echo "         ,,.     \`,                                          GRAPH DATABASE  "
+echo "         ,,.     \`,                                              VELOCE  "
 echo "       \`\`        \`.                                                          "
-echo "                 \`\`                                          orientdb.com"
+echo "                 \`\`                                       www.orientdb.com"
 echo "                 \`                                    "
 
 # resolve links - $0 may be a softlink
