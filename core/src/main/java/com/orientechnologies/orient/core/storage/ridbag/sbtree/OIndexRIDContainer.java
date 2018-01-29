@@ -62,6 +62,13 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     this.durableNonTxMode = durableNonTxMode;
   }
 
+  public OIndexRIDContainer(long fileId, Set<OIdentifiable> underlying, boolean durableNonTxMode) {
+    this.fileId = fileId;
+    this.underlying = underlying;
+    isEmbedded = !(underlying instanceof OIndexRIDContainerSBTree);
+    this.durableNonTxMode = durableNonTxMode;
+  }
+
   public void setTopThreshold(int topThreshold) {
     this.topThreshold = topThreshold;
   }
@@ -109,13 +116,6 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
-  }
-
-  public OIndexRIDContainer(long fileId, Set<OIdentifiable> underlying, boolean durableNonTxMode) {
-    this.fileId = fileId;
-    this.underlying = underlying;
-    isEmbedded = !(underlying instanceof OIndexRIDContainerSBTree);
-    this.durableNonTxMode = durableNonTxMode;
   }
 
   public long getFileId() {

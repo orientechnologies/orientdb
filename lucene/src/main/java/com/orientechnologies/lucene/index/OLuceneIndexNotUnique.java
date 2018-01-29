@@ -300,7 +300,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
       } else {
         while (true) {
           try {
-            storage.updateIndexEntry(indexId, key, (x) -> Arrays.asList(singleValue));
+            storage.putIndexValue(indexId, key, Arrays.asList(singleValue));
             break;
           } catch (OInvalidIndexEngineIdException e) {
             doReloadIndexEngine();
@@ -340,12 +340,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   @Override
   public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
 
-    String query = (String) keys.stream()
-        .findFirst()
-        .map(k -> (OCompositeKey) k)
-        .map(ck -> ck.getKeys())
-        .orElse(Arrays.asList("q=*:*"))
-        .get(0);
+    String query = (String) keys.stream().findFirst().map(k -> (OCompositeKey) k).map(ck -> ck.getKeys())
+        .orElse(Arrays.asList("q=*:*")).get(0);
 
     OLuceneResultSet identifiables = (OLuceneResultSet) get(query);
 

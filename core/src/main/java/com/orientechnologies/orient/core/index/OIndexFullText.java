@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
+import jdk.nashorn.internal.runtime.options.Option;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -107,27 +108,24 @@ public class OIndexFullText extends OIndexMultiValues {
         // SAVE THE INDEX ENTRY
         while (true) {
           try {
-            storage.updateIndexEntry(indexId, word, new OIndexKeyUpdater<Object>() {
-              @Override
-              public Object update(Object oldValue) {
-                Set<OIdentifiable> result = null;
+            storage.updateIndexEntry(indexId, word, oldValue -> {
+              Set<OIdentifiable> result = null;
 
-                if (refsc == null) {
-                  // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-                  if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-                    result = new OIndexRIDContainer(getName(), durable);
-                  } else {
-                    throw new IllegalStateException("MBRBTreeContainer is not supported any more");
-                  }
+              if (refsc == null) {
+                // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+                if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+                  result = new OIndexRIDContainer(getName(), durable);
                 } else {
-                  result = refsc;
+                  throw new IllegalStateException("MBRBTreeContainer is not supported any more");
                 }
-
-                // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-                result.add(singleValue);
-
-                return result;
+              } else {
+                result = refsc;
               }
+
+              // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+              result.add(singleValue);
+
+              return OIndexUpdateAction.changed(result);
             });
 
             break;
@@ -321,19 +319,19 @@ public class OIndexFullText extends OIndexMultiValues {
     }
 
     @Override
-    public Object update(Object old) {
+    public OIndexUpdateAction<Object> update(Object old) {
       Set<OIdentifiable> recs = (Set<OIdentifiable>) old;
       if (recs.remove(value)) {
         removed.setValue(true);
 
         if (recs.isEmpty())
-          return null;
+          return OIndexUpdateAction.remove();
         else
-          return recs;
+          return OIndexUpdateAction.changed(recs);
 
       }
 
-      return recs;
+      return OIndexUpdateAction.changed(recs);
     }
   }
 

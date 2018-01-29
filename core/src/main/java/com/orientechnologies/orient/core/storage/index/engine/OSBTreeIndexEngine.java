@@ -156,8 +156,8 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void update(Object key, OIndexKeyUpdater<Object> value) {
-    sbTree.update(key, value, null);
+  public void update(Object key, OIndexKeyUpdater<Object> updater) {
+    sbTree.update(key, updater, null);
   }
 
   @SuppressWarnings("unchecked")

@@ -118,22 +118,19 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       else
         durable = false;
 
-      final OIndexKeyUpdater<Object> creator = new OIndexKeyUpdater<Object>() {
-        @Override
-        public Object update(Object oldValue) {
-          Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
-          if (toUpdate == null) {
-            if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-              toUpdate = new OIndexRIDContainer(getName(), durable);
-            } else {
-              throw new IllegalStateException("MVRBTree is not supported any more");
-            }
+      final OIndexKeyUpdater<Object> creator = oldValue -> {
+        Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
+        if (toUpdate == null) {
+          if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+            toUpdate = new OIndexRIDContainer(getName(), durable);
+          } else {
+            throw new IllegalStateException("MVRBTree is not supported any more");
           }
-
-          toUpdate.add(identity);
-
-          return toUpdate;
         }
+
+        toUpdate.add(identity);
+
+        return OIndexUpdateAction.changed(toUpdate);
       };
 
       while (true) {
@@ -412,22 +409,22 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
 
     @Override
-    public Object update(Object persistentValue) {
+    public OIndexUpdateAction<Object> update(Object persistentValue) {
       Set<OIdentifiable> values = (Set<OIdentifiable>) persistentValue;
       if (value == null) {
         removed.setValue(true);
 
-        return null;
+        return OIndexUpdateAction.remove();
       } else if (values.remove(value)) {
         removed.setValue(true);
 
         if (values.isEmpty())
-          return null;
+          return OIndexUpdateAction.remove();
         else
-          return values;
+          return OIndexUpdateAction.changed(values);
       }
 
-      return values;
+      return OIndexUpdateAction.changed(values);
     }
   }
 }
