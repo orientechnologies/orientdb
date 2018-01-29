@@ -61,9 +61,7 @@ public interface OIndexEngine {
 
   void put(Object key, Object value);
 
-  default void update(Object key, OIndexKeyUpdater<Object> value) {
-    throw new UnsupportedOperationException();
-  }
+  void update(Object key, OIndexKeyUpdater<Object> updater);
 
   /**
    * Puts the given value under the given key into this index engine. Validates the operation using the provided validator.

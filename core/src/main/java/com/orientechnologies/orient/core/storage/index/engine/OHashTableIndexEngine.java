@@ -149,6 +149,17 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     hashTable.put(key, value);
   }
 
+  @Override
+  public void update(Object key, OIndexKeyUpdater<Object> updater) {
+    Object value = get(key);
+    OIndexUpdateAction<Object> updated = updater.update(value);
+    if (updated.isChange())
+      put(key, updated.getValue());
+    else if (updated.isRemove()) {
+      remove(key);
+    }
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
