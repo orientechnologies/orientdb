@@ -9,7 +9,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.After;
 import org.junit.Assert;
@@ -336,6 +339,30 @@ public class ODatabaseDocumentTxTest {
     Assert.assertEquals(nThreads, (int) v.getProperty("count"));
   }
 
+  @Test
+  public void testVertexProperty() {
+    String className = "testVertexProperty";
+    db.createClass(className, "V");
+    OVertex doc1 = db.newVertex(className);
+    doc1.setProperty("name", "a");
+    doc1.save();
 
+    OVertex doc2 = db.newVertex(className);
+    doc2.setProperty("name", "b");
+    doc2.setProperty("linked", doc1);
+    doc2.save();
+
+    try (OResultSet rs = db.query("SELECT FROM " + className + " WHERE name = 'b'")) {
+      Assert.assertTrue(rs.hasNext());
+      OResult res = rs.next();
+
+      Object linkedVal = res.getProperty("linked");
+      Assert.assertTrue(linkedVal instanceof OVertex);
+
+      Assert.assertTrue(res.toElement().getProperty("linked") instanceof OVertex);
+
+    }
+
+  }
 
 }
