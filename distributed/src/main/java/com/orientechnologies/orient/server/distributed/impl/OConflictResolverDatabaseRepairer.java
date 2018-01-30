@@ -24,8 +24,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -573,7 +571,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
                       buffer.append("bytes=");
                       buffer.append(Arrays.toString(r.buffer));
 
-                      final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(r.recordType);
+                      final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(r.recordType, -1, getDatabase());
                       record.fromStream(r.buffer);
                       buffer.append(record);
                       buffer.append(" (size=");

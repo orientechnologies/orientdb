@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
@@ -44,7 +43,6 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -95,7 +93,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ORecord getRecord() {
     if (record == null) {
-      record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+      record = Orient.instance().getRecordFactoryManager()
+          .newInstance(recordType, rid.getClusterId(), ODatabaseRecordThreadLocal.instance().get());
       ORecordInternal.fill(record, rid, version, content, true);
     }
     return record;
@@ -237,7 +236,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             final ORawBuffer remoteReadRecord = (ORawBuffer) response.getPayload();
 
             if (remoteReadRecord != null) {
-              toUpdateRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+              toUpdateRecord = Orient.instance().getRecordFactoryManager()
+                  .newInstance(recordType, record.getIdentity().getClusterId(), ODatabaseRecordThreadLocal.instance().get());
               ORecordInternal.fill(toUpdateRecord, toUpdateRid, remoteReadRecord.version, remoteReadRecord.buffer, false);
             } else
               toUpdateRecord = null;

@@ -86,7 +86,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ORecord getRecord() {
     if (record == null) {
-      record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+      record = Orient.instance().getRecordFactoryManager().newInstance(recordType, rid.getClusterId(), ODatabaseRecordThreadLocal.instance().get());
       ORecordInternal.fill(record, rid, version, content, true);
     }
     return record;
@@ -246,7 +246,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
       previousRecordContent = loaded.getResult().buffer;
       previousRecordVersion = loaded.getResult().version;
 
-      previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType);
+      previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType, rid.getClusterId(), ODatabaseRecordThreadLocal.instance().get());
       ORecordInternal.fill(previousRecord, rid, previousRecordVersion, loaded.getResult().getBuffer(), false);
     }
     return previousRecord;

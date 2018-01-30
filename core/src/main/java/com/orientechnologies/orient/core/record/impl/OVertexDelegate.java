@@ -181,35 +181,35 @@ public class OVertexDelegate implements OVertex {
   }
 
   @Override
-  public OVertexDelegate delete() {
+  public OVertex delete() {
     deleteLinks(this);
     element.delete();
     return this;
   }
 
-  public static void deleteLinks(OVertexDelegate delegate) {
+  public static void deleteLinks(OVertex delegate) {
     Iterable<OEdge> allEdges = delegate.getEdges(ODirection.BOTH);
     for (OEdge edge : allEdges) {
       edge.delete();
     }
   }
 
-  protected void detachOutgointEdge(OEdge edge) {
-    detachEdge(edge, "out_");
+  protected static void detachOutgointEdge(OVertex vertex, OEdge edge) {
+    detachEdge(vertex, edge, "out_");
   }
 
-  protected void detachIncomingEdge(OEdge edge) {
-    detachEdge(edge, "in_");
+  protected static void detachIncomingEdge(OVertex vertex, OEdge edge) {
+    detachEdge(vertex, edge, "in_");
   }
 
-  protected void detachEdge(OEdge edge, String fieldPrefix) {
+  protected static void detachEdge(OVertex vertex, OEdge edge, String fieldPrefix) {
     String className = edge.getSchemaType().get().getName();
 
     if (className.equalsIgnoreCase("e")) {
       className = "";
     }
     String edgeField = fieldPrefix + className;
-    Object edgeProp = getProperty(edgeField);
+    Object edgeProp = vertex.getProperty(edgeField);
     OIdentifiable edgeId = null;
 
     edgeId = ((OIdentifiable) edge).getIdentity();
@@ -218,7 +218,7 @@ public class OVertexDelegate implements OVertex {
 
       Object out = edge.getFrom();
       Object in = edge.getTo();
-      if (getIdentity().equals(out)) {
+      if (vertex.getIdentity().equals(out)) {
         edgeId = (OIdentifiable) in;
       } else {
         edgeId = (OIdentifiable) out;
@@ -638,11 +638,7 @@ public class OVertexDelegate implements OVertex {
 
   @Override
   public <RET extends ORecord> RET load() throws ORecordNotFoundException {
-    ORecord newItem = element.load();
-    if (newItem == null) {
-      return null;
-    }
-    return (RET) new OVertexDelegate((ODocument) newItem);
+    return (RET) element.load();
   }
 
   @Override

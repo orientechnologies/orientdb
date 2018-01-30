@@ -122,14 +122,14 @@ public class OEdgeDelegate implements OEdge {
     return this;
   }
 
-  public static void deleteLinks(OEdgeDelegate delegate) {
-    OVertexDelegate from = ((OVertexDelegate) delegate.getFrom());
+  public static void deleteLinks(OEdge delegate) {
+    OVertex from = delegate.getFrom();
     if (from != null) {
-      from.detachOutgointEdge(delegate);
+      OVertexDelegate.detachOutgointEdge(from, delegate);
     }
-    OVertexDelegate to = ((OVertexDelegate) delegate.getTo());
+    OVertex to = delegate.getTo();
     if (to != null) {
-      to.detachIncomingEdge(delegate);
+      OVertexDelegate.detachIncomingEdge(to, delegate);
     }
     if (from != null) {
       from.save();
@@ -162,10 +162,10 @@ public class OEdgeDelegate implements OEdge {
 
   private void promoteToRegularEdge() {
     ODatabaseDocument db = getDatabase();
-    OVertexDelegate from = (OVertexDelegate) getFrom();
-    OVertexDelegate to = (OVertexDelegate) getTo();
-    from.detachOutgointEdge(this);
-    to.detachIncomingEdge(this);
+    OVertex from = getFrom();
+    OVertex to = getTo();
+    OVertexDelegate.detachOutgointEdge(from, this);
+    OVertexDelegate.detachIncomingEdge(to, this);
     this.element = db.newEdge(from, to, lightweightEdgeType).getRecord();
     this.lightweightEdgeType = null;
     this.vOut = null;
@@ -394,11 +394,7 @@ public class OEdgeDelegate implements OEdge {
 
   @Override
   public <RET extends ORecord> RET load() throws ORecordNotFoundException {
-    ORecord newItem = element.load();
-    if (newItem == null) {
-      return null;
-    }
-    return (RET) new OVertexDelegate((ODocument) newItem);
+    return (RET) element.load();
   }
 
   @Override

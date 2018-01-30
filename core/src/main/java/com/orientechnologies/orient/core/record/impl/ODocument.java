@@ -94,6 +94,7 @@ public class ODocument extends ORecordAbstract
    *
    * @param iSource Raw stream
    */
+  @Deprecated
   public ODocument(final byte[] iSource) {
     _source = iSource;
     setup();

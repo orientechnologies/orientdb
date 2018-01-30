@@ -18,8 +18,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
-import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.serialization.serializer.result.binary.OResultSerializerNetwork;
@@ -397,7 +395,8 @@ public class OMessageHelper {
     final int version = network.readVersion();
     final byte[] content = network.readBytes();
 
-    ORecord record = Orient.instance().getRecordFactoryManager().newInstance(rec);
+    ORecord record = Orient.instance().getRecordFactoryManager()
+        .newInstance(rec, rid.getClusterId(), ODatabaseRecordThreadLocal.instance().getIfDefined());
     ORecordInternal.setIdentity(record, rid);
     ORecordInternal.setVersion(record, version);
     serializer.fromStream(content, record, null);
@@ -483,13 +482,13 @@ public class OMessageHelper {
 
   private static OResultInternal readVertex(OChannelDataInput channel) throws IOException {
     OResultInternal result = new OResultInternal();
-    result.setElement(new OVertexDelegate((ODocument) readDocument(channel)));
+    result.setElement(readDocument(channel));
     return result;
   }
 
   private static OResultInternal readEdge(OChannelDataInput channel) throws IOException {
     OResultInternal result = new OResultInternal();
-    result.setElement(new OEdgeDelegate((ODocument) readDocument(channel)));
+    result.setElement(readDocument(channel));
     return result;
   }
 

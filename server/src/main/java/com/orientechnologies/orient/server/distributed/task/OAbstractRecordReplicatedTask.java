@@ -143,7 +143,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
       if (loaded == null || loaded.getResult() == null)
         return null;
 
-      previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType);
+      previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType, rid.getClusterId(), ODatabaseRecordThreadLocal.instance().getIfDefined());
       ORecordInternal.fill(previousRecord, rid, loaded.getResult().version, loaded.getResult().getBuffer(), false);
     }
     return previousRecord;

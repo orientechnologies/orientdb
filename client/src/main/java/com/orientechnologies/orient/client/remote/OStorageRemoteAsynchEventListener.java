@@ -76,11 +76,11 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
           byte op = dis.readByte();
           id = dis.readInt();
 
-          final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(dis.readByte());
 
           final int version = readVersion(dis);
           final ORecordId rid = readRID(dis);
           final byte[] content = readBytes(dis);
+          final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(dis.readByte(), rid.getClusterId(), null);
           ORecordInternal.fill(record, rid, version, content, false);
 
           OLiveResultListener listener = liveQueryListeners.get(id);

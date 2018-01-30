@@ -364,13 +364,7 @@ public class OResultInternal implements OResult {
         if (!cached.isDirty()) {
           cached.fromStream(rec.toStream());
         }
-        if (element instanceof OVertex) {
-          element = new OVertexDelegate((ODocument) cached);
-        } else if (element instanceof OEdge) {
-          element = new OEdgeDelegate((ODocument) cached);
-        } else {
-          element = cached;
-        }
+        element = cached;
       } else {
         db.getLocalCache().updateRecord(rec);
       }

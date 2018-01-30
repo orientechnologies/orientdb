@@ -1481,4 +1481,16 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public void internalCommit(OTransactionInternal transaction) {
     internal.internalCommit(transaction);
   }
+
+  @Override
+  public boolean isClusterVertex(int cluster) {
+    checkOpenness();
+    return internal.isClusterVertex(cluster);
+  }
+
+  @Override
+  public boolean isClusterEdge(int cluster) {
+    checkOpenness();
+    return internal.isClusterEdge(cluster);
+  }
 }

@@ -24,6 +24,7 @@ import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -63,6 +64,7 @@ public class OCreateRecordRequest implements OBinaryAsyncRequest<OCreateRecordRe
     this.rid = iRid;
     this.recordType = iRecordType;
   }
+
   public OCreateRecordRequest(ORecord iContent, ORecordId iRid, byte iRecordType) {
     this.content = iContent;
     this.rid = iRid;
@@ -84,7 +86,8 @@ public class OCreateRecordRequest implements OBinaryAsyncRequest<OCreateRecordRe
     byte[] rec = channel.readBytes();
     recordType = channel.readByte();
     mode = channel.readByte();
-    content = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+    content = Orient.instance().getRecordFactoryManager()
+        .newInstance(recordType, rid.getClusterId(), ODatabaseRecordThreadLocal.instance().getIfDefined());
     serializer.fromStream(rec, content, null);
   }
 

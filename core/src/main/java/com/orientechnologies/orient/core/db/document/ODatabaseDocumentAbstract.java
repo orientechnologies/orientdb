@@ -1334,7 +1334,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
       if (iRecord == null || ORecordInternal.getRecordType(iRecord) != recordBuffer.recordType)
         // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
-        iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType);
+        iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType, rid.getClusterId(), this);
 
       ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
 
@@ -1905,11 +1905,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public OVertex newVertex(final String iClassName) {
-    ODocument doc = newInstance(iClassName);
-    if (!doc.isVertex()) {
+    OClass cl = getClass(iClassName);
+    if (!cl.isVertexType()) {
       throw new IllegalArgumentException("" + iClassName + " is not a vertex class");
     }
-    return doc.asVertex().get();
+    OVertex doc = new OVertexDocument(cl);
+    return doc;
   }
 
   @Override
@@ -1922,11 +1923,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public OEdge newEdge(OVertex from, OVertex to, String type) {
-    ODocument doc = newInstance(type);
-    if (!doc.isEdge()) {
+    OClass cl = getClass(type);
+    if (!cl.isEdgeType()) {
       throw new IllegalArgumentException("" + type + " is not an edge class");
     }
-
+    ODocument doc = new OEdgeDocument(cl);
     return addEdgeInternal(from, to, type);
   }
 
@@ -2261,10 +2262,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   private <RET extends ORecord> RET saveInternal(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
-    if (iRecord instanceof OVertexDelegate) {
+    if (iRecord instanceof OVertex) {
       iRecord = iRecord.getRecord();
     }
-    if (iRecord instanceof OEdgeDelegate) {
+    if (iRecord instanceof OEdge) {
       iRecord = iRecord.getRecord();
     }
     if (!(iRecord instanceof ODocument)) {
@@ -2332,10 +2333,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     checkOpenness();
     if (record == null)
       throw new ODatabaseException("Cannot delete null document");
-    if (record instanceof OVertexDelegate) {
-      OVertexDelegate.deleteLinks((OVertexDelegate) record);
-    } else if (record instanceof OEdgeDelegate) {
-      OEdgeDelegate.deleteLinks((OEdgeDelegate) record);
+    if (record instanceof OVertex) {
+      OVertexDelegate.deleteLinks((OVertex) record);
+    } else if (record instanceof OEdge) {
+      OEdgeDelegate.deleteLinks((OEdge) record);
     }
 
     // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
@@ -3002,5 +3003,21 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public void internalCommit(OTransactionInternal transaction) {
     this.getStorage().commit(transaction);
+  }
+
+  @Override
+  public boolean isClusterEdge(int cluster) {
+    OClass clazz = getMetadata().getSchema().getClassByClusterId(cluster);
+    if (clazz != null && clazz.isEdgeType())
+      return true;
+    return false;
+  }
+
+  @Override
+  public boolean isClusterVertex(int cluster) {
+    OClass clazz = getMetadata().getSchema().getClassByClusterId(cluster);
+    if (clazz != null && clazz.isVertexType())
+      return true;
+    return false;
   }
 }
