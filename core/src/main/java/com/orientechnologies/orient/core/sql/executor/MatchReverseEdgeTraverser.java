@@ -36,7 +36,6 @@ public class MatchReverseEdgeTraverser extends MatchEdgeTraverser {
     return edge.getLeftRid();
   }
 
-
   protected OWhereClause getTargetFilter(OMatchPathItem item) {
     return edge.getLeftFilter();
   }
@@ -45,13 +44,13 @@ public class MatchReverseEdgeTraverser extends MatchEdgeTraverser {
   protected Iterable<OResultInternal> traversePatternEdge(OIdentifiable startingPoint, OCommandContext iCommandContext) {
 
     Object qR = this.item.getMethod().executeReverse(startingPoint, iCommandContext);
-    if(qR==null){
+    if (qR == null) {
       return Collections.emptyList();
     }
-    if(qR instanceof OResultInternal){
+    if (qR instanceof OResultInternal) {
       return Collections.singleton((OResultInternal) qR);
     }
-    if(qR instanceof OIdentifiable){
+    if (qR instanceof OIdentifiable) {
       return Collections.singleton(new OResultInternal((OIdentifiable) qR));
     }
     if (qR instanceof Iterable) {
@@ -62,8 +61,9 @@ public class MatchReverseEdgeTraverser extends MatchEdgeTraverser {
           result.add(new OResultInternal((OIdentifiable) o));
         } else if (o instanceof OResultInternal) {
           result.add((OResultInternal) o);
-        }
-        else{
+        } else if (o == null) {
+          continue;
+        } else {
           throw new UnsupportedOperationException();
         }
       }

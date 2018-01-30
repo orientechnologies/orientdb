@@ -289,6 +289,8 @@ public class MatchEdgeTraverser {
           result.add(new OResultInternal((OIdentifiable) o));
         } else if (o instanceof OResultInternal) {
           result.add((OResultInternal) o);
+        } else if (o == null) {
+          continue;
         } else {
           throw new UnsupportedOperationException();
         }
