@@ -355,8 +355,9 @@ public class OSBTree<K, V> extends ODurableComponent {
 
           releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
-          if (sizeDiff != 0)
-            setSize(size() + sizeDiff, atomicOperation);
+          if (sizeDiff != 0) {
+            updateSize(sizeDiff, atomicOperation);
+          }
         } else {
           OCacheEntry cacheEntry;
           boolean isNew = false;
@@ -407,8 +408,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           }
 
           sizeDiff++;
-
-          setSize(size() + sizeDiff, atomicOperation);
+          updateSize(sizeDiff, atomicOperation);
         }
 
         endAtomicOperation(false, null);
@@ -666,7 +666,7 @@ public class OSBTree<K, V> extends ODurableComponent {
             if (removedValueLink >= 0)
               removeLinkedValue(removedValueLink, atomicOperation);
 
-            setSize(size() - 1, atomicOperation);
+            updateSize(-1, atomicOperation);
 
             removedValue = value;
           } finally {
@@ -693,7 +693,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           }
 
           if (removedValue != null)
-            setSize(size() - 1, atomicOperation);
+            updateSize(-1, atomicOperation);
         }
 
         endAtomicOperation(false, null);
@@ -1105,6 +1105,16 @@ public class OSBTree<K, V> extends ODurableComponent {
       endAtomicOperation(true, e);
     } catch (IOException e1) {
       OLogManager.instance().error(this, "Error during sbtree operation  rollback", e1);
+    }
+  }
+
+  private void updateSize(long diffSize, OAtomicOperation atomicOperation) throws IOException {
+    OCacheEntry rootCacheEntry = loadPageForWrite(atomicOperation, fileId, ROOT_INDEX, false);
+    try {
+      OSBTreeBucket<K, V> rootBucket = new OSBTreeBucket<K, V>(rootCacheEntry, keySerializer, keyTypes, valueSerializer);
+      rootBucket.setTreeSize(rootBucket.getTreeSize() + diffSize);
+    } finally {
+      releasePageFromWrite(atomicOperation, rootCacheEntry);
     }
   }
 
