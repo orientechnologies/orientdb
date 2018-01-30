@@ -157,6 +157,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       put(key, updated.getValue());
     else if (updated.isRemove()) {
       remove(key);
+    } else if (updated.isNothing()) {
+      //Do nothing
     }
   }
 
