@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 
 import java.util.*;
-import java.util.concurrent.Callable;
 
 /**
  * Abstract index implementation that supports multi-values for the same key.
@@ -127,10 +126,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
             throw new IllegalStateException("MVRBTree is not supported any more");
           }
         }
-
+        boolean isTree = toUpdate instanceof OIndexRIDContainer && !((OIndexRIDContainer) toUpdate).isEmbedded();
         toUpdate.add(identity);
-
-        return OIndexUpdateAction.changed(toUpdate);
+        if (isTree) {
+          return OIndexUpdateAction.nothing();
+        } else {
+          return OIndexUpdateAction.changed(toUpdate);
+        }
       };
 
       while (true) {

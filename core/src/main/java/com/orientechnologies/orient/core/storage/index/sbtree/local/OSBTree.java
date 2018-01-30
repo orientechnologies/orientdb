@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -358,6 +357,8 @@ public class OSBTree<K, V> extends ODurableComponent {
           } else if (updatedValue.isRemove()) {
             removeKey(atomicOperation, bucketSearchResult);
             releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
+          } else if (updatedValue.isNothing()) {
+            releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
           }
         } else {
           OCacheEntry cacheEntry;
@@ -403,8 +404,10 @@ public class OSBTree<K, V> extends ODurableComponent {
                 sizeDiff = -1;
 
               nullBucket.setValue(treeValue);
-            } else {
+            } else if (updatedValue.isRemove()) {
               removeNullBucket(atomicOperation);
+            } else if (updatedValue.isNothing()) {
+              //Do Nothing
             }
           } finally {
             releasePageFromWrite(atomicOperation, cacheEntry);
