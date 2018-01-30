@@ -316,6 +316,14 @@ public class ODocument extends ORecordAbstract
       }
     }
 
+    if (value instanceof OElement) {
+      if (((OElement) value).isVertex()) {
+        value = (RET) ((OElement) value).asVertex().get();
+      } else if (((OElement) value).isEdge()) {
+        value = (RET) ((OElement) value).asEdge().get();
+      }
+    }
+
     return value;
   }
 
@@ -2491,7 +2499,8 @@ public class ODocument extends ORecordAbstract
     return super.fill(iRid, iVersion, iBuffer, iDirty);
   }
 
-  protected ORecordAbstract fill(final ORID iRid, final int iVersion, final byte[] iBuffer, final boolean iDirty, ODatabaseDocumentInternal db) {
+  protected ORecordAbstract fill(final ORID iRid, final int iVersion, final byte[] iBuffer, final boolean iDirty,
+      ODatabaseDocumentInternal db) {
     _schema = null;
     fetchSchemaIfCan(db);
     return super.fill(iRid, iVersion, iBuffer, iDirty, db);
