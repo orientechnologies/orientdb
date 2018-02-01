@@ -1136,8 +1136,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t, true, null,
               channel.socket.getRemoteSocketAddress(), t.toString());
         else
-          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null, true,
-             null,channel.socket.getRemoteSocketAddress(), t.toString());
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null, true, null,
+              channel.socket.getRemoteSocketAddress(), t.toString());
       }
     } catch (Exception e) {
       if (e instanceof SocketException)
@@ -2888,11 +2888,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     final byte[] stream;
     String dbSerializerName = null;
-    if (ODatabaseRecordThreadLocal.instance().getIfDefined() != null)
-      dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
+    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (database != null) {
+      dbSerializerName = database.getSerializer().toString();
+    }
     String name = getRecordSerializerName(connection);
     if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
-        .equals(name))) {
+        .equals(name)) || checkDistributedVertex(iRecord, database)) {
       ((ODocument) iRecord).deserializeFields();
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
       stream = ser.toStream(iRecord, false);
@@ -2900,6 +2902,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       stream = iRecord.toStream();
 
     return stream;
+  }
+
+  private boolean checkDistributedVertex(ORecord iRecord, ODatabaseDocumentInternal database) {
+    if (database == null || !database.getStorage().isDistributed()) {
+      return false;
+    }
+    if ((iRecord instanceof ODocument) && ((ODocument) iRecord).getSchemaClass() != null) {
+      return ((ODocument) iRecord).getSchemaClass().isVertexType();
+    }
+    return false;
   }
 
   private void writeRecord(OClientConnection connection, final ORecord iRecord) throws IOException {
