@@ -714,10 +714,24 @@ public class OMatchExecutionPlanner {
         }
         result.put(alias, upperBound);
       } else if (clusterName != null) {
-        if (!ctx.getDatabase().existsCluster(clusterName)) {
+        ODatabase db = ctx.getDatabase();
+        if (!db.existsCluster(clusterName)) {
           throw new OCommandExecutionException("cluster not defined: " + clusterName);
         }
-        result.put(alias, ctx.getDatabase().countClusterElements(clusterName));
+        int clusterId = db.getClusterIdByName(clusterName);
+        OClass oClass = db.getMetadata().getSchema().getClassByClusterId(clusterId);
+        if (oClass != null) {
+          long upperBound;
+          OWhereClause filter = aliasFilters.get(alias);
+          if (filter != null) {
+            upperBound = Math.min(db.countClusterElements(clusterName), filter.estimate(oClass, this.threshold, ctx));
+          } else {
+            upperBound = db.countClusterElements(clusterName);
+          }
+          result.put(alias, upperBound);
+        } else {
+          result.put(alias, db.countClusterElements(clusterName));
+        }
       } else if (rid != null) {
         result.put(alias, 1L);
       }
