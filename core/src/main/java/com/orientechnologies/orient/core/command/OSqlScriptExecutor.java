@@ -59,7 +59,7 @@ public class OSqlScriptExecutor implements OScriptExecutor {
       if (rs != null) {
         rs.close();
       }
-      rs = stm.execute(database, (Map) null, scriptContext);
+      rs = stm.execute(database, params, scriptContext);
     }
     if (rs == null) {
       rs = new OInternalResultSet();
