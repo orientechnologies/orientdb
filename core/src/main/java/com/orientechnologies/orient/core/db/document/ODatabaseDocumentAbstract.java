@@ -2941,7 +2941,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   public OEdge newLightweightEdge(String iClassName, OVertex from, OVertex to) {
     OClass clazz = getMetadata().getSchema().getClass(iClassName);
-    OEdgeDelegate result = new OEdgeDelegate(from, to, clazz);
+    OEdgeDelegate result = new OEdgeDelegate(from, to, clazz, iClassName);
 
     return result;
   }

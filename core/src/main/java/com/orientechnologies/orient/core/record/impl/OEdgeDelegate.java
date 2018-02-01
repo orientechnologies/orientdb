@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -46,13 +47,15 @@ public class OEdgeDelegate implements OEdge {
   protected OVertex vOut;
   protected OVertex vIn;
   protected OClass  lightweightEdgeType;
+  protected String  lightwightEdgeLabel;
 
   protected ODocument element;
 
-  public OEdgeDelegate(OVertex out, OVertex in, OClass lightweightEdgeType) {
+  public OEdgeDelegate(OVertex out, OVertex in, OClass lightweightEdgeType, String edgeLabel) {
     vOut = out;
     vIn = in;
     this.lightweightEdgeType = lightweightEdgeType;
+    this.lightwightEdgeLabel = edgeLabel;
   }
 
   public OEdgeDelegate(ODocument elem) {
@@ -200,9 +203,39 @@ public class OEdgeDelegate implements OEdge {
   @Override
   public Optional<OClass> getSchemaType() {
     if (element == null) {
-      return Optional.of(lightweightEdgeType);
+      return Optional.ofNullable(lightweightEdgeType);
     }
     return Optional.ofNullable(element.getSchemaClass());
+  }
+
+  public boolean isLabeled(String[] labels) {
+    if (labels == null) {
+      return true;
+    }
+    if (labels.length == 0) {
+      return true;
+    }
+    Set<String> types = new HashSet<>();
+
+    Optional<OClass> typeClass = getSchemaType();
+    if (typeClass.isPresent()) {
+      types.add(typeClass.get().getName());
+      typeClass.get().getAllSuperClasses().stream().map(x -> x.getName()).forEach(name -> types.add(name));
+    } else {
+      if (lightwightEdgeLabel != null)
+        types.add(lightwightEdgeLabel);
+      else
+        types.add("E");
+    }
+    for (String s : labels) {
+      for (String type : types) {
+        if (type.equalsIgnoreCase(s)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   @Override
@@ -364,7 +397,7 @@ public class OEdgeDelegate implements OEdge {
     if (element != null) {
       return new OEdgeDelegate(element.copy());
     } else {
-      return new OEdgeDelegate(vOut, vIn, lightweightEdgeType);
+      return new OEdgeDelegate(vOut, vIn, lightweightEdgeType, lightwightEdgeLabel);
 
     }
   }

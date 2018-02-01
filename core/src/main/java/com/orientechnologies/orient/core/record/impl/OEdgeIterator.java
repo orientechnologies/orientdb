@@ -96,9 +96,9 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
         clazz = db.getMetadata().getSchema().getClass(connection.getValue());
       }
       if (connection.getKey() == ODirection.OUT) {
-        edge = new OEdgeDelegate(this.sourceVertex, value.asVertex().get(), clazz);
+        edge = new OEdgeDelegate(this.sourceVertex, value.asVertex().get(), clazz, connection.getValue());
       } else {
-        edge = new OEdgeDelegate(value.asVertex().get(), this.sourceVertex, clazz);
+        edge = new OEdgeDelegate(value.asVertex().get(), this.sourceVertex, clazz, connection.getValue());
       }
     } else if (value.isEdge()) {
       // EDGE

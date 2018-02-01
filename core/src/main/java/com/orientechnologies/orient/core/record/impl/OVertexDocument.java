@@ -131,7 +131,6 @@ public class OVertexDocument extends ODocument implements OVertex {
 
   @Override
   public Iterable<OVertex> getVertices(ODirection direction) {
-
     return getVertices(direction, (String[]) null);
   }
 
