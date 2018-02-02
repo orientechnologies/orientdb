@@ -166,7 +166,14 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
     if (create && type.isPresent()) {
       this.factory.createIfNotExists(dbName, type.get());
     }
-    return this.pool.acquire();
+
+    final ODatabaseDocument databaseDocument = this.pool.acquire();
+
+    if (databaseDocument.isClosed()) {
+      throw new IllegalStateException("Database returned from document is closed");
+    }
+
+    return databaseDocument;
 
   }
 
