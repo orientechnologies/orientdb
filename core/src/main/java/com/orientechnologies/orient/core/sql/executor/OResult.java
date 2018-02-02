@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.util.*;
 
@@ -157,8 +158,7 @@ public interface OResult {
     } else if (val instanceof byte[]) {
       jsonVal = "\"" + Base64.getEncoder().encodeToString((byte[]) val) + "\"";
     } else if (val instanceof Date) {
-      //TODO use "2012-04-23T18:25:43.511Z" instead...?
-      jsonVal = String.valueOf(((Date) val).getTime());
+      jsonVal = "\"" + ODateHelper.getDateTimeFormatInstance().format(val) + "\"";
     } else {
 
       throw new UnsupportedOperationException("Cannot convert " + val + " - " + val.getClass() + " to JSON");
