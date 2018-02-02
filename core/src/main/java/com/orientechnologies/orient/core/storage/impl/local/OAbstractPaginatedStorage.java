@@ -348,7 +348,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * That is internal method which is called once we encounter any error inside of JVM. In such case we need to restart JVM to avoid
    * any data corruption. Till JVM is not restarted storage will be put in read-only state.
    */
-  private void handleJVMError(Error e) {
+  public void handleJVMError(Error e) {
     jvmError.compareAndSet(null, e);
   }
 
@@ -1723,6 +1723,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Traditional commit that support already temporary rid and already assigned rids
    *
    * @param clientTx the transaction to commit
+   *
    * @return The list of operations applied by the transaction
    */
   @Override
@@ -1826,6 +1827,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             lockClusters(clustersToLock);
 
+            checkReadOnlyConditions();
+
             Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<>();
             for (ORecordOperation recordOperation : newRecords) {
               ORecord rec = recordOperation.getRecord();
@@ -1868,12 +1871,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             lockRidBags(clustersToLock, indexOperations, indexManager);
 
+            checkReadOnlyConditions();
+
             for (ORecordOperation recordOperation : recordOperations) {
               commitEntry(recordOperation, positions.get(recordOperation), database.getSerializer());
               result.add(recordOperation);
             }
 
             lockIndexes(indexOperations);
+
+            checkReadOnlyConditions();
 
             commitIndexes(indexOperations);
 
@@ -1926,7 +1933,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(t);
     }
   }
-  
+
   private void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
     final Map<OIndex, OIndexAbstract.IndexTxSnapshot> snapshots = new IdentityHashMap<>();
 
@@ -5193,6 +5200,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     }
 
+    checkReadOnlyConditions();
+  }
+
+  public void checkReadOnlyConditions() {
     if (dataFlushException != null) {
       throw OException.wrapException(new OStorageException(
               "Error in data flush background thread, please restart database and send full stack trace inside of bug report"),
@@ -5240,6 +5251,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           + "To prevent this exception please restart the JVM and check data consistency by calling of 'check database' "
           + "command from database console.");
     }
+
   }
 
   @SuppressWarnings("unused")
