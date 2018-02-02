@@ -15,11 +15,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
@@ -54,7 +51,8 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
       if (record != null) {
         record.unload();
       } else {
-        record = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType());
+        record = Orient.instance().getRecordFactoryManager()
+            .newInstance(operation.getRecordType(), operation.getOldId().getClusterId(), database);
       }
       record.fromStream(operation.getRecord());
       ORecordInternal.setIdentity(record, (ORecordId) operation.getId());
@@ -66,7 +64,6 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
         createCount--;
     }
     newObjectCounter = createCount;
-
 
     for (IndexChange change : indexChanges) {
       NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);

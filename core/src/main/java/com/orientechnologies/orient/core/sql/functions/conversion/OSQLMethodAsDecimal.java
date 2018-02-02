@@ -21,10 +21,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * Transforms a value to decimal. If the conversion is not possible, null is returned.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -43,6 +44,9 @@ public class OSQLMethodAsDecimal extends OAbstractSQLMethod {
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (iThis instanceof Date) {
+      return new BigDecimal(((Date) iThis).getTime());
+    }
     return iThis != null ? new BigDecimal(iThis.toString().trim()) : null;
   }
 }

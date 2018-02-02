@@ -19,14 +19,9 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.record.impl.*;
 
 /**
  * Record factory. To use your own record implementation use the declareRecordType() method. Example of registration of the record
@@ -46,26 +41,25 @@ public class ORecordFactoryManager {
   protected final Class<? extends ORecord>[] recordTypes     = new Class[Byte.MAX_VALUE];
   protected final ORecordFactory[]           recordFactories = new ORecordFactory[Byte.MAX_VALUE];
 
+  private enum RecType {RECORD, VERTEX, EDGE}
+
   public interface ORecordFactory {
-    ORecord newRecord();
+    ORecord newRecord(int cluster, ODatabaseDocumentInternal database);
   }
 
   public ORecordFactoryManager() {
-    declareRecordType(ODocument.RECORD_TYPE, "document", ODocument.class, new ORecordFactory() {
-      public ORecord newRecord() {
-        return new ODocument();
+    declareRecordType(ODocument.RECORD_TYPE, "document", ODocument.class, (cluster, database) -> {
+      if (database != null && cluster >= 0) {
+        if (database.isClusterVertex(cluster)) {
+          return new OVertexDocument();
+        } else if (database.isClusterEdge(cluster)) {
+          return new OEdgeDocument();
+        }
       }
+      return new ODocument();
     });
-    declareRecordType(OBlob.RECORD_TYPE, "bytes", OBlob.class, new ORecordFactory() {
-      public ORecord newRecord() {
-        return new ORecordBytes();
-      }
-    });
-    declareRecordType(ORecordFlat.RECORD_TYPE, "flat", ORecordFlat.class, new ORecordFactory() {
-      public ORecord newRecord() {
-        return new ORecordFlat();
-      }
-    });
+    declareRecordType(OBlob.RECORD_TYPE, "bytes", OBlob.class, (cluster, database) -> new ORecordBytes());
+    declareRecordType(ORecordFlat.RECORD_TYPE, "flat", ORecordFlat.class, (cluster, database) -> new ORecordFlat());
   }
 
   public String getRecordTypeName(final byte iRecordType) {
@@ -82,18 +76,17 @@ public class ORecordFactoryManager {
     return cls;
   }
 
-  public ORecord newInstance() {
-    final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().get();
+  public ORecord newInstance(int cluster, ODatabaseDocumentInternal database) {
     try {
-      return (ORecord) getFactory(database.getRecordType()).newRecord();
+      return (ORecord) getFactory(database.getRecordType()).newRecord(cluster, database);
     } catch (Exception e) {
       throw new IllegalArgumentException("Unsupported record type: " + database.getRecordType(), e);
     }
   }
 
-  public ORecord newInstance(final byte iRecordType) {
+  public ORecord newInstance(final byte iRecordType, int cluster, ODatabaseDocumentInternal database) {
     try {
-      return (ORecord) getFactory(iRecordType).newRecord();
+      return (ORecord) getFactory(iRecordType).newRecord(cluster, database);
     } catch (Exception e) {
       throw new IllegalArgumentException("Unsupported record type: " + iRecordType, e);
     }

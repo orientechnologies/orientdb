@@ -29,7 +29,8 @@ public class OLetStatement extends OSimpleExecStatement {
     if (expression != null) {
       result = expression.execute((OResult) null, ctx);
     } else {
-      result = statement.execute(ctx.getDatabase(), (Object[]) null, ctx);
+      Map<Object, Object> params = ctx.getInputParameters();
+      result = statement.execute(ctx.getDatabase(), params, ctx);
     }
     if (result instanceof OResultSet) {
       OInternalResultSet rs = new OInternalResultSet();

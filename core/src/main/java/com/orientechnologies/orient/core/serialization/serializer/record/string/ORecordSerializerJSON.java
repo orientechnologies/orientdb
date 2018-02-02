@@ -200,7 +200,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
           if (iRecord == null || ORecordInternal.getRecordType(iRecord) != fieldValueAsString.charAt(0)) {
             // CREATE THE RIGHT RECORD INSTANCE
-            iRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) fieldValueAsString.charAt(0));
+            iRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) fieldValueAsString.charAt(0), -1, ODatabaseRecordThreadLocal.instance().getIfDefined());
           }
         } else if (needReload && fieldName.equals(ODocumentHelper.ATTRIBUTE_RID) && iRecord instanceof ODocument) {
           if (fieldValue != null && fieldValue.length() > 0) {

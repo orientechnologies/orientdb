@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -40,7 +41,17 @@ public class OBinaryCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-    return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
+    Object leftVal = left.execute(currentRecord, ctx);
+    Object rightVal = right.execute(currentRecord, ctx);
+    OCollate collate = left.getCollate(currentRecord, ctx);
+    if (collate == null) {
+      collate = right.getCollate(currentRecord, ctx);
+    }
+    if (collate != null) {
+      leftVal = collate.transform(leftVal);
+      rightVal = collate.transform(rightVal);
+    }
+    return operator.execute(leftVal, rightVal);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -129,9 +140,9 @@ public class OBinaryCondition extends OBooleanExpression {
   }
 
   /**
-   * tests if current expression involves an indexed function AND the function has also to be executed after the index search.
-   * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
-   * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * tests if current expression involves an indexed function AND the function has also to be executed after the index search. In
+   * some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases the result
+   * from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
    *
    * @param target  the query target
    * @param context the execution context

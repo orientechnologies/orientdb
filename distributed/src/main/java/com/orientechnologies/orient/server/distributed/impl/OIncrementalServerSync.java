@@ -68,8 +68,8 @@ public class OIncrementalServerSync {
    * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
    * </ol>
    */
-  public void importDelta(final OServer serverInstance, final String databaseName, final FileInputStream in,
-      final String iNode) throws IOException {
+  public void importDelta(final OServer serverInstance, final String databaseName, final FileInputStream in, final String iNode)
+      throws IOException {
     final String nodeName = serverInstance.getDistributedManager().getLocalNodeName();
 
     final ODatabaseDocumentInternal db = serverInstance.openDatabase(databaseName);
@@ -109,8 +109,8 @@ public class OIncrementalServerSync {
 
                 totalRecords++;
 
-                final OPaginatedCluster cluster = (OPaginatedCluster) db.getStorage().getUnderlying().getClusterById(
-                    rid.getClusterId());
+                final OPaginatedCluster cluster = (OPaginatedCluster) db.getStorage().getUnderlying()
+                    .getClusterById(rid.getClusterId());
                 final OPaginatedCluster.RECORD_STATUS recordStatus = cluster.getRecordStatus(rid.getClusterPosition());
 
                 ORecord newRecord = null;
@@ -153,7 +153,8 @@ public class OIncrementalServerSync {
                   case ALLOCATED:
                   case PRESENT:
                     // UPDATE IT
-                    newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
+                    newRecord = Orient.instance().getRecordFactoryManager()
+                        .newInstance((byte) recordType, rid.getClusterId(), null);
                     ORecordInternal.fill(newRecord, rid, ORecordVersionHelper.setRollbackMode(recordVersion), recordContent, true);
 
                     final ORecord loadedRecord = rid.getRecord();
@@ -179,7 +180,8 @@ public class OIncrementalServerSync {
                   case NOT_EXISTENT:
                     // CREATE AND DELETE RECORD IF NEEDED
                     do {
-                      newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
+                      newRecord = Orient.instance().getRecordFactoryManager()
+                          .newInstance((byte) recordType, rid.getClusterId(), null);
                       ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), recordVersion, recordContent, true);
 
                       try {

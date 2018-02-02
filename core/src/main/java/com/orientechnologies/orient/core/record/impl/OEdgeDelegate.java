@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -46,13 +47,15 @@ public class OEdgeDelegate implements OEdge {
   protected OVertex vOut;
   protected OVertex vIn;
   protected OClass  lightweightEdgeType;
+  protected String  lightwightEdgeLabel;
 
   protected ODocument element;
 
-  public OEdgeDelegate(OVertex out, OVertex in, OClass lightweightEdgeType) {
+  public OEdgeDelegate(OVertex out, OVertex in, OClass lightweightEdgeType, String edgeLabel) {
     vOut = out;
     vIn = in;
     this.lightweightEdgeType = lightweightEdgeType;
+    this.lightwightEdgeLabel = edgeLabel;
   }
 
   public OEdgeDelegate(ODocument elem) {
@@ -122,14 +125,14 @@ public class OEdgeDelegate implements OEdge {
     return this;
   }
 
-  public static void deleteLinks(OEdgeDelegate delegate) {
-    OVertexDelegate from = ((OVertexDelegate) delegate.getFrom());
+  public static void deleteLinks(OEdge delegate) {
+    OVertex from = delegate.getFrom();
     if (from != null) {
-      from.detachOutgointEdge(delegate);
+      OVertexDelegate.detachOutgointEdge(from, delegate);
     }
-    OVertexDelegate to = ((OVertexDelegate) delegate.getTo());
+    OVertex to = delegate.getTo();
     if (to != null) {
-      to.detachIncomingEdge(delegate);
+      OVertexDelegate.detachIncomingEdge(to, delegate);
     }
     if (from != null) {
       from.save();
@@ -162,10 +165,10 @@ public class OEdgeDelegate implements OEdge {
 
   private void promoteToRegularEdge() {
     ODatabaseDocument db = getDatabase();
-    OVertexDelegate from = (OVertexDelegate) getFrom();
-    OVertexDelegate to = (OVertexDelegate) getTo();
-    from.detachOutgointEdge(this);
-    to.detachIncomingEdge(this);
+    OVertex from = getFrom();
+    OVertex to = getTo();
+    OVertexDelegate.detachOutgointEdge(from, this);
+    OVertexDelegate.detachIncomingEdge(to, this);
     this.element = db.newEdge(from, to, lightweightEdgeType).getRecord();
     this.lightweightEdgeType = null;
     this.vOut = null;
@@ -200,9 +203,39 @@ public class OEdgeDelegate implements OEdge {
   @Override
   public Optional<OClass> getSchemaType() {
     if (element == null) {
-      return Optional.of(lightweightEdgeType);
+      return Optional.ofNullable(lightweightEdgeType);
     }
     return Optional.ofNullable(element.getSchemaClass());
+  }
+
+  public boolean isLabeled(String[] labels) {
+    if (labels == null) {
+      return true;
+    }
+    if (labels.length == 0) {
+      return true;
+    }
+    Set<String> types = new HashSet<>();
+
+    Optional<OClass> typeClass = getSchemaType();
+    if (typeClass.isPresent()) {
+      types.add(typeClass.get().getName());
+      typeClass.get().getAllSuperClasses().stream().map(x -> x.getName()).forEach(name -> types.add(name));
+    } else {
+      if (lightwightEdgeLabel != null)
+        types.add(lightwightEdgeLabel);
+      else
+        types.add("E");
+    }
+    for (String s : labels) {
+      for (String type : types) {
+        if (type.equalsIgnoreCase(s)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   @Override
@@ -364,7 +397,7 @@ public class OEdgeDelegate implements OEdge {
     if (element != null) {
       return new OEdgeDelegate(element.copy());
     } else {
-      return new OEdgeDelegate(vOut, vIn, lightweightEdgeType);
+      return new OEdgeDelegate(vOut, vIn, lightweightEdgeType, lightwightEdgeLabel);
 
     }
   }
@@ -394,11 +427,7 @@ public class OEdgeDelegate implements OEdge {
 
   @Override
   public <RET extends ORecord> RET load() throws ORecordNotFoundException {
-    ORecord newItem = element.load();
-    if (newItem == null) {
-      return null;
-    }
-    return (RET) new OVertexDelegate((ODocument) newItem);
+    return (RET) element.load();
   }
 
   @Override

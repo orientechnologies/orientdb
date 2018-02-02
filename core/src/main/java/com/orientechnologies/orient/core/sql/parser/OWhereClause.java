@@ -78,22 +78,41 @@ public class OWhereClause extends SimpleNode {
     List<OAndBlock> flattenedConditions = flatten();
     Set<OIndex<?>> indexes = oClass.getIndexes();
     for (OAndBlock condition : flattenedConditions) {
-      Map<String, Object> conditions = getEqualityOperations(condition, ctx);
+
+      List<OBinaryCondition> indexedFunctConditions = condition
+          .getIndexedFunctionConditions(oClass, (ODatabaseDocumentInternal) ctx.getDatabase());
+
       long conditionEstimation = Long.MAX_VALUE;
-      for (OIndex index : indexes) {
-        List<String> indexedFields = index.getDefinition().getFields();
-        int nMatchingKeys = 0;
-        for (String indexedField : indexedFields) {
-          if (conditions.containsKey(indexedField)) {
-            nMatchingKeys++;
-          } else {
-            break;
-          }
-        }
-        if (nMatchingKeys > 0) {
-          long newCount = estimateFromIndex(index, conditions, nMatchingKeys);
+
+      if (indexedFunctConditions != null) {
+        for (OBinaryCondition cond : indexedFunctConditions) {
+          OFromClause from = new OFromClause(-1);
+          OFromItem item = new OFromItem(-1);
+          from.item = item;
+          from.item.setIdentifier(new OIdentifier(oClass.getName()));
+          long newCount = cond.estimateIndexed(from, ctx);
           if (newCount < conditionEstimation) {
             conditionEstimation = newCount;
+          }
+        }
+      } else {
+        Map<String, Object> conditions = getEqualityOperations(condition, ctx);
+
+        for (OIndex index : indexes) {
+          List<String> indexedFields = index.getDefinition().getFields();
+          int nMatchingKeys = 0;
+          for (String indexedField : indexedFields) {
+            if (conditions.containsKey(indexedField)) {
+              nMatchingKeys++;
+            } else {
+              break;
+            }
+          }
+          if (nMatchingKeys > 0) {
+            long newCount = estimateFromIndex(index, conditions, nMatchingKeys);
+            if (newCount < conditionEstimation) {
+              conditionEstimation = newCount;
+            }
           }
         }
       }

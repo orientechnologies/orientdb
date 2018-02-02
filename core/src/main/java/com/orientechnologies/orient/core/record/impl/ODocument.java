@@ -94,6 +94,7 @@ public class ODocument extends ORecordAbstract
    *
    * @param iSource Raw stream
    */
+  @Deprecated
   public ODocument(final byte[] iSource) {
     _source = iSource;
     setup();
@@ -221,7 +222,7 @@ public class ODocument extends ORecordAbstract
 
   @Override
   public Optional<OEdge> asEdge() {
-    if (this instanceof OVertex)
+    if (this instanceof OEdge)
       return Optional.of((OEdge) this);
     OClass type = this.getSchemaClass();
     if (type == null) {

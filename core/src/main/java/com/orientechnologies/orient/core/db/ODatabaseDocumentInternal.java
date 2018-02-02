@@ -203,4 +203,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
    * @param transaction
    */
   void internalCommit(OTransactionInternal transaction);
+
+  boolean isClusterVertex(int cluster);
+
+  boolean isClusterEdge(int cluster);
 }

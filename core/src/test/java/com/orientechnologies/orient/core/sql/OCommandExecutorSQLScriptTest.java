@@ -7,10 +7,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.*;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -311,6 +308,44 @@ public class OCommandExecutorSQLScriptTest {
     Assert.assertEquals(result.size(), 1);
     ODocument doc = result.get(0);
     Assert.assertEquals(doc.field("regexp"), "'';");
+  }
+
+  @Test
+  public void testParameters1() {
+    String className = "testParameters1";
+    db.createVertexClass(className);
+    String script = "BEGIN;" + "LET $a = CREATE VERTEX " + className + " SET name = :name;" + "LET $b = CREATE VERTEX " + className
+        + " SET name = :_name2;" + "LET $edge = CREATE EDGE E from $a to $b;" + "COMMIT;" + "RETURN $edge;";
+
+    HashMap<String, Object> map = new HashMap<>();
+    map.put("name", "bozo");
+    map.put("_name2", "bozi");
+
+    OResultSet rs = db.execute("sql", script, map);
+    rs.close();
+
+    rs = db.query("SELECT FROM " + className + " WHERE name = ?", "bozo");
+
+    Assert.assertTrue(rs.hasNext());
+    rs.next();
+    rs.close();
+  }
+
+  @Test
+  public void testPositionalParameters() {
+    String className = "testPositionalParameters";
+    db.createVertexClass(className);
+    String script = "BEGIN;" + "LET $a = CREATE VERTEX " + className + " SET name = ?;" + "LET $b = CREATE VERTEX " + className
+        + " SET name = ?;" + "LET $edge = CREATE EDGE E from $a to $b;" + "COMMIT;" + "RETURN $edge;";
+
+    OResultSet rs = db.execute("sql", script, "bozo", "bozi");
+    rs.close();
+
+    rs = db.query("SELECT FROM " + className + " WHERE name = ?", "bozo");
+
+    Assert.assertTrue(rs.hasNext());
+    rs.next();
+    rs.close();
   }
 
 }

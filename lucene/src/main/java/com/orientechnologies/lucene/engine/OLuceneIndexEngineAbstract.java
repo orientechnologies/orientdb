@@ -164,7 +164,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
         }
         if (!closed.get()) {
 
-          OLogManager.instance().info(this, " Flushing index:: " + indexName());
+          OLogManager.instance().debug(this, "Flushing index: " + indexName());
           flush();
         }
       }

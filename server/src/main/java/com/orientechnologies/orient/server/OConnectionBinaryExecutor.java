@@ -77,8 +77,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_BINARY_MIN_PROTOCOL_VERSION;
-
 public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   private final OClientConnection connection;
@@ -609,7 +607,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       ORecordId current;
       switch (operation.getType()) {
       case ORecordOperation.CREATED:
-        record = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType());
+        record = Orient.instance().getRecordFactoryManager()
+            .newInstance(operation.getRecordType(), operation.getId().getClusterId(), database);
         connection.getData().getSerializer().fromStream(operation.getRecord(), record, null);
         current = (ORecordId) record.getIdentity();
         OCreateRecordResponse createRecordResponse = (OCreateRecordResponse) executeCreateRecord(
@@ -621,7 +620,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
             createRecordResponse.getVersion()));
         break;
       case ORecordOperation.UPDATED:
-        record = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType());
+        record = Orient.instance().getRecordFactoryManager()
+            .newInstance(operation.getRecordType(), operation.getId().getClusterId(), database);
         connection.getData().getSerializer().fromStream(operation.getRecord(), record, null);
         current = (ORecordId) record.getIdentity();
         OUpdateRecordResponse updateRecordResponse = (OUpdateRecordResponse) executeUpdateRecord(

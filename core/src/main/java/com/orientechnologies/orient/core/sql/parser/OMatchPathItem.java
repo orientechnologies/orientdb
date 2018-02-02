@@ -144,7 +144,7 @@ public class OMatchPathItem extends SimpleNode {
     }
 
     Object qR = this.method.execute(startingPoint, possibleResults, iCommandContext);
-    return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
+    return (qR instanceof Iterable && !(qR instanceof ODocument)) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
   }
 
   @Override public boolean equals(Object o) {
