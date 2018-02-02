@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -132,9 +133,9 @@ public class OBaseIdentifier extends SimpleNode {
   }
 
   /**
-   * tests if current expression is an indexed function AND the function has also to be executed after the index search.
-   * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
-   * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * tests if current expression is an indexed function AND the function has also to be executed after the index search. In some
+   * cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases the result from
+   * the index is a superset of the expected result, so the function has to be executed anyway for further filtering
    *
    * @param target  the query target
    * @param context the execution context
@@ -184,7 +185,7 @@ public class OBaseIdentifier extends SimpleNode {
     return false;
   }
 
-  public boolean isCount(){
+  public boolean isCount() {
     if (levelZero != null && levelZero.isCount()) {
       return true;
     }
@@ -325,14 +326,14 @@ public class OBaseIdentifier extends SimpleNode {
   }
 
   public boolean isDefinedFor(OResult currentRecord) {
-    if(suffix!=null){
+    if (suffix != null) {
       return suffix.isDefinedFor(currentRecord);
     }
     return true;
   }
 
   public boolean isDefinedFor(OElement currentRecord) {
-    if(suffix!=null){
+    if (suffix != null) {
       return suffix.isDefinedFor(currentRecord);
     }
     return true;
@@ -348,6 +349,11 @@ public class OBaseIdentifier extends SimpleNode {
     if (this.levelZero != null) {
       this.levelZero.extractSubQueries(collector);
     }
+  }
+
+  public OCollate getCollate(OResult currentRecord, OCommandContext ctx) {
+    return suffix == null ? null : suffix.getCollate(currentRecord, ctx);
+
   }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

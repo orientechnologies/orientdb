@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -30,7 +31,7 @@ public class OMathExpression extends SimpleNode {
   public boolean isDefinedFor(OElement currentRecord) {
     return true;
   }
-
+  
   public enum Operator {
     STAR(10) {
       @Override
@@ -851,6 +852,13 @@ public class OMathExpression extends SimpleNode {
     }
     return false;
   }
+
+  public OCollate getCollate(OResult currentRecord, OCommandContext ctx) {
+    if (childExpressions.size() == 1)
+      return childExpressions.get(0).getCollate(currentRecord, ctx);
+    return null;
+  }
+
 
   public boolean isEarlyCalculated() {
     for (OMathExpression exp : childExpressions) {
