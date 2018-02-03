@@ -210,6 +210,17 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     return operation;
   }
 
+  public void alarmReleaseOfAtomicOperationAndLocks() {
+    final OAtomicOperation current = currentOperation.get();
+
+    if (current != null) {
+      currentOperation.set(null);
+
+      for (String lockObject : current.lockedObjects())
+        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+    }
+  }
+
   private void addThreadInWaitingList(Thread thread) {
     final WaitingListNode node = new WaitingListNode(thread);
 

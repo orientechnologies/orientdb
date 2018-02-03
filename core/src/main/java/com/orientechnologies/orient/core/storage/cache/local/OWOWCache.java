@@ -83,23 +83,17 @@ import java.util.zip.CRC32;
 /**
  * Write part of disk cache which is used to collect pages which were changed on read cache and store them to the disk in background
  * thread.
- * <p>
  * In current implementation only single background thread is used to store all changed data, despite of SSD parallelization
  * capabilities we suppose that better to write data in single big chunk by one thread than by many small chunks from many threads
  * introducing contention and multi threading overhead. Another reasons for usage of only one thread are
- * <p>
  * <ol> <li>That we should give room for readers to read data during data write phase</li> <li>It provides much less synchronization
  * overhead</li> </ol>
- * <p>
  * Background thread is running by with predefined intervals. Such approach allows SSD GC to use pauses to make some clean up of
  * half empty erase blocks.
- * <p>
  * Also write cache is used for checking of free space left on disk and putting of database in "read mode" if space limit is reached
  * and to perform fuzzy checkpoints.
- * <p>
  * Write cache holds two different type of pages, pages which are shared with read cache and pages which belong only to write cache
  * (so called exclusive pages).
- * <p>
  * Files in write cache are accessed by id , there are two types of ids, internal used inside of write cache and external used
  * outside of write cache. Presence of two types of ids is caused by the fact that read cache is global across all storages but each
  * storage has its own write cache. So all ids of files should be global across whole read cache. External id is created from
@@ -255,22 +249,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   /**
    * Container for dirty pages. Dirty pages table is concept taken from ARIES protocol. It contains earliest LSNs of operations on
    * each page which is potentially changed but not flushed to the disk.
-   * <p>
    * It allows us by calculation of minimal LSN contained by this container calculate which part of write ahead log may be already
    * truncated.
-   * <p>
    * "dirty pages" itself is managed using following algorithm.
-   * <p>
    * <ol> <li>Just after acquiring the exclusive lock on page we fetch LSN of latest record logged into WAL</li> <li>If page with
    * given index is absent into table we add it to this container</li> </ol>
-   * <p>
    * Because we add last WAL LSN if we are going to modify page, it means that we can calculate smallest LSN of operation which is
    * not flushed to the log yet without locking of all operations on database.
-   * <p>
    * There is may be situation when thread locks the page but did not add LSN to the dirty pages table yet. If at the moment of
    * start of iteration over the dirty pages table we have a non empty dirty pages table it means that new operation on page will
    * have LSN bigger than any LSN already stored in table.
-   * <p>
    * If dirty pages table is empty at the moment of iteration it means at the moment of start of iteration all page changes were
    * flushed to the disk.
    */
@@ -280,10 +268,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
    * Copy of content of {@link #dirtyPages} table at the moment when {@link #convertSharedDirtyPagesToLocal()} was called. This
    * field is not thread safe because it is used inside of tasks which are running inside of {@link #commitExecutor} thread. It is
    * used to keep results of postprocessing of {@link #dirtyPages} table.
-   * <p>
    * Every time we invoke {@link #convertSharedDirtyPagesToLocal()} all content of dirty pages is removed and copied to current
    * field and {@link #localDirtyPagesByLSN} filed.
-   * <p>
    * Such approach is possible because {@link #dirtyPages} table is filled by many threads but is read only from inside of {@link
    * #commitExecutor} thread.
    */
@@ -298,10 +284,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   /**
    * Amount of pages which were booked in file but were not flushed yet.
-   * <p>
    * In file systems like ext3 for example it is not enough to set size of the file to guarantee that subsequent write inside of
    * already allocated file range will not cause "not enough free space" exception. Such strange files are called sparse files.
-   * <p>
    * When you change size of the sparse file amount of available free space on disk is not changed and can be occupied by subsequent
    * writes to other files. So to calculate free space which is really consumed by system we calculate amount of pages which were
    * booked but not written yet on disk.
@@ -352,9 +336,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   /**
    * Latch which is switched on once amount of pages are cached exclusively in write cache is reached limit. And switched off once
    * size of write cache is down bellow threshold.
-   * <p>
    * Once this latch is switched on all threads which are wrote data in write cache wait till it will be switched off.
-   * <p>
    * It is better to make wait for threads which are going to put data on write cache instead of write threads but it may cause
    * deadlocks so it is considered as good enough alternative.
    */
@@ -396,7 +378,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   /**
    * File which contains map between names and ids of files used in write cache. Each record in file has following format (size of
    * file name in bytes (int), file name (string), internal file id)
-   * <p>
    * Internal file id may have negative value, it means that this file existed in storage but was deleted. We still keep mapping
    * between files so if file with given name will be created again it will get the same file id, which can be handy during process
    * of restore of storage data after crash.
@@ -607,7 +588,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   /**
    * This method is called once new pages are added to the disk inside of
    * {@link #load(long, long, int, boolean, OModifiableBoolean, boolean)}  method.
-   * <p>
    * If total amount of added pages minus amount of added pages at the time of last disk space check bigger than threshold value
    * {@link #diskSizeCheckInterval} new disk space check is performed and if amount of space left on disk less than threshold
    * {@link
@@ -1816,7 +1796,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   /**
    * Read information about files are registered inside of write cache/storage
-   * <p>
    * File consist of rows of variable length which contains following entries: <ol> <li>Internal file id, may be positive or
    * negative depends on whether file is removed or not</li> <li>Name of file inside of write cache, this name is case
    * sensitive</li> <li>Name of file which is used inside file system it can be different from name of file used inside write
@@ -2262,10 +2241,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private void flushPage(final int fileId, final long pageIndex, final ByteBuffer buffer) throws IOException, InterruptedException {
     if (writeAheadLog != null) {
       final OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
-      final OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
+      OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
 
-      if (flushedLSN == null || flushedLSN.compareTo(lsn) < 0)
+      while (flushedLSN == null || flushedLSN.compareTo(lsn) < 0) {
         writeAheadLog.flush();
+        flushedLSN = writeAheadLog.getFlushedLsn();
+      }
     }
 
     final long externalId = composeFileId(id, fileId);
@@ -2753,6 +2734,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     OClosableEntry<Long, OFileClassic> fileEntry = files.acquire(firstFileId);
     try {
+      if (fileEntry == null)
+        return 0;
+
       OFileClassic file = fileEntry.get();
       file.write(firstPageIndex * pageSize, buffers);
     } finally {

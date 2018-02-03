@@ -489,7 +489,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         // ADD THE DEFAULT CLUSTER
         defaultClusterId = doAddCluster(CLUSTER_DEFAULT_NAME, null);
 
-        clearStorageDirty();
+        if (jvmError.get() == null) {
+          clearStorageDirty();
+        }
+
         if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE))
           makeFullCheckpoint();
 
@@ -1928,6 +1931,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
+      handleJVMError(ee);
+      atomicOperationsManager.alarmReleaseOfAtomicOperationAndLocks();
       throw logAndPrepareForRethrow(ee);
     } catch (Throwable t) {
       throw logAndPrepareForRethrow(t);
@@ -3071,27 +3076,31 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
         try {
           checkOpenness();
+          if (jvmError.get() == null) {
+            for (OIndexEngine indexEngine : indexEngines)
+              try {
+                if (indexEngine != null)
+                  indexEngine.flush();
+              } catch (Throwable t) {
+                OLogManager.instance().error(this, "Error while flushing index via index engine of class %s.", t,
+                    indexEngine.getClass().getSimpleName());
+              }
 
-          for (OIndexEngine indexEngine : indexEngines)
-            try {
-              if (indexEngine != null)
-                indexEngine.flush();
-            } catch (Throwable t) {
-              OLogManager.instance().error(this, "Error while flushing index via index engine of class %s.", t,
-                  indexEngine.getClass().getSimpleName());
+            if (writeAheadLog != null) {
+              makeFullCheckpoint();
+              return;
             }
 
-          if (writeAheadLog != null) {
-            makeFullCheckpoint();
-            return;
+            writeCache.flush();
+
+            if (configuration != null)
+              getConfiguration().synch();
+
+            clearStorageDirty();
+          } else {
+            OLogManager.instance().errorNoDb(this, "Sync can not be performed because of JVM error on storage", null);
           }
 
-          writeCache.flush();
-
-          if (configuration != null)
-            getConfiguration().synch();
-
-          clearStorageDirty();
         } catch (IOException e) {
           throw OException.wrapException(new OStorageException("Error on synch storage '" + name + "'"), e);
 
@@ -3840,7 +3849,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         writeAheadLog.cutTill(lastLSN);
 
-        clearStorageDirty();
+        if (jvmError.get() == null) {
+          clearStorageDirty();
+        }
+
       } catch (IOException ioe) {
         throw OException.wrapException(new OStorageException("Error during checkpoint creation for storage " + name), ioe);
       }
@@ -4437,80 +4449,85 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       status = STATUS.CLOSING;
 
-      readCache.storeCacheState(writeCache);
+      if (jvmError.get() == null) {
+        readCache.storeCacheState(writeCache);
 
-      if (!onDelete)
-        makeFullCheckpoint();
+        if (!onDelete && jvmError.get() == null)
+          makeFullCheckpoint();
 
-      preCloseSteps();
+        preCloseSteps();
 
-      sbTreeCollectionManager.close();
+        sbTreeCollectionManager.close();
 
-      // we close all files inside cache system so we only clear cluster metadata
-      clusters.clear();
-      clusterMap.clear();
+        // we close all files inside cache system so we only clear cluster metadata
+        clusters.clear();
+        clusterMap.clear();
 
-      // we close all files inside cache system so we only clear index metadata and close non core indexes
-      for (OIndexEngine engine : indexEngines) {
-        if (engine != null && !(engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine)) {
+        // we close all files inside cache system so we only clear index metadata and close non core indexes
+        for (OIndexEngine engine : indexEngines) {
+          if (engine != null && !(engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine)) {
+            if (onDelete)
+              engine.delete();
+            else
+              engine.close();
+          }
+        }
+
+        indexEngines.clear();
+        indexEngineNameMap.clear();
+
+        if (getConfiguration() != null)
           if (onDelete)
-            engine.delete();
+            getConfiguration().delete();
           else
-            engine.close();
+            getConfiguration().close();
+
+        super.close(force, onDelete);
+
+        if (writeCache != null) {
+          writeCache.removeLowDiskSpaceListener(this);
+          writeCache.removeBackgroundExceptionListener(this);
+          writeCache.removePageIsBrokenListener(this);
         }
-      }
 
-      indexEngines.clear();
-      indexEngineNameMap.clear();
+        if (writeAheadLog != null) {
+          writeAheadLog.removeFullCheckpointListener(this);
+          writeAheadLog.removeLowDiskSpaceListener(this);
+        }
 
-      if (getConfiguration() != null)
-        if (onDelete)
-          getConfiguration().delete();
-        else
-          getConfiguration().close();
+        if (readCache != null)
+          if (!onDelete)
+            readCache.closeStorage(writeCache);
+          else
+            readCache.deleteStorage(writeCache);
 
-      super.close(force, onDelete);
+        if (writeAheadLog != null) {
+          writeAheadLog.close();
+          if (onDelete)
+            writeAheadLog.delete();
+        }
 
-      if (writeCache != null) {
-        writeCache.removeLowDiskSpaceListener(this);
-        writeCache.removeBackgroundExceptionListener(this);
-        writeCache.removePageIsBrokenListener(this);
-      }
-
-      if (writeAheadLog != null) {
-        writeAheadLog.removeFullCheckpointListener(this);
-        writeAheadLog.removeLowDiskSpaceListener(this);
-      }
-
-      if (readCache != null)
-        if (!onDelete)
-          readCache.closeStorage(writeCache);
-        else
-          readCache.deleteStorage(writeCache);
-
-      if (writeAheadLog != null) {
-        writeAheadLog.close();
-        if (onDelete)
-          writeAheadLog.delete();
-      }
-
-      try {
-        performanceStatisticManager.unregisterMBean(name, id);
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for write cache cannot be unregistered", e);
-      }
-
-      postCloseSteps(onDelete, jvmError.get() != null);
-
-      if (atomicOperationsManager != null)
         try {
-          atomicOperationsManager.unregisterMBean();
+          performanceStatisticManager.unregisterMBean(name, id);
         } catch (Exception e) {
-          OLogManager.instance().error(this, "MBean for atomic operations manager cannot be unregistered", e);
+          OLogManager.instance().error(this, "MBean for write cache cannot be unregistered", e);
         }
 
-      transaction = null;
-      fuzzyCheckpointExecutor = null;
+        postCloseSteps(onDelete, jvmError.get() != null);
+
+        if (atomicOperationsManager != null)
+          try {
+            atomicOperationsManager.unregisterMBean();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "MBean for atomic operations manager cannot be unregistered", e);
+          }
+
+        transaction = null;
+        fuzzyCheckpointExecutor = null;
+      } else {
+        OLogManager.instance()
+            .errorNoDb(this, "Because of JVM error happened inside of storage it can not be properly closed", null);
+      }
 
       status = STATUS.CLOSED;
     } catch (IOException e) {
