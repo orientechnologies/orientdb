@@ -248,8 +248,19 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
         list = new ArrayList<OLiveQueryOp>();
         ops.pendingOps.put(db, list);
       }
-      list.add(result);
+      if (result.type != ORecordOperation.UPDATED || !alreadyRegisteredAsUpdate(list, result.originalDoc)) {
+        list.add(result);
+      }
     }
+  }
+
+  private boolean alreadyRegisteredAsUpdate(List<OLiveQueryOp> list, ODocument doc) {
+    for (OLiveQueryOp oLiveQueryOp : list) {
+      if (oLiveQueryOp.originalDoc == doc) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private OResultInternal calculateBefore(ODocument iDocument) {
