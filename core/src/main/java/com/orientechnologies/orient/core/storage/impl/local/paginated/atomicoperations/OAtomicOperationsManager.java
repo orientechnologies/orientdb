@@ -130,13 +130,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * Starts atomic operation inside of current thread. If atomic operation has been already started, current atomic operation
    * instance will be returned. All durable components have to call this method at the beginning of any data modification
    * operation.
-   * <p>
    * <p>In current implementation of atomic operation, each component which is participated in atomic operation is hold under
    * exclusive lock till atomic operation will not be completed (committed or rolled back).
-   * <p>
    * <p>If other thread is going to read data from component it has to acquire read lock inside of atomic operation manager {@link
    * #acquireReadLock(ODurableComponent)}, otherwise data consistency will be compromised.
-   * <p>
    * <p>Atomic operation may be delayed if start of atomic operations is prohibited by call of {@link
    * #freezeAtomicOperations(Class, String)} method. If mentioned above method is called then execution of current method will be
    * stopped till call of {@link #releaseAtomicOperations(long)} method or exception will be thrown. Concrete behaviour depends on
@@ -201,7 +198,27 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (lockName != null)
       acquireExclusiveLockTillOperationComplete(operation, lockName);
 
+    try {
+      storage.checkReadOnlyConditions();
+    } catch (RuntimeException | Error e) {
+      for (String lockObject : operation.lockedObjects())
+        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+
+      throw e;
+    }
+
     return operation;
+  }
+
+  public void alarmReleaseOfAtomicOperationAndLocks() {
+    final OAtomicOperation current = currentOperation.get();
+
+    if (current != null) {
+      currentOperation.set(null);
+
+      for (String lockObject : current.lockedObjects())
+        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+    }
   }
 
   private void addThreadInWaitingList(Thread thread) {
@@ -371,30 +388,36 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     final OLogSequenceNumber lsn;
     if (counter == 1) {
-      final boolean useWal = useWal();
+      try {
+        final boolean useWal = useWal();
 
-      if (!operation.isRollback())
-        operation.commitChanges(useWal ? writeAheadLog : null);
+        if (!operation.isRollback())
+          operation.commitChanges(useWal ? writeAheadLog : null);
 
-      if (useWal)
-        lsn = writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
-            operation.getMetadata());
-      else
-        lsn = null;
+        if (useWal)
+          lsn = writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
+              operation.getMetadata());
+        else
+          lsn = null;
 
-      // We have to decrement the counter after the disk operations, otherwise, if they
-      // fail, we will be unable to rollback the atomic operation later.
-      operation.decrementCounter();
-      currentOperation.set(null);
+        // We have to decrement the counter after the disk operations, otherwise, if they
+        // fail, we will be unable to rollback the atomic operation later.
+        operation.decrementCounter();
+        currentOperation.set(null);
 
-      if (trackAtomicOperations) {
-        activeAtomicOperations.remove(operation.getOperationUnitId());
+        if (trackAtomicOperations) {
+          activeAtomicOperations.remove(operation.getOperationUnitId());
+        }
+      } catch (Error e) {
+        storage.handleJVMError(e);
+        throw e;
+      } finally {
+        for (String lockObject : operation.lockedObjects())
+          lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+
+        atomicOperationsCount.decrement();
       }
 
-      for (String lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
-
-      atomicOperationsCount.decrement();
     } else {
       lsn = null;
       operation.decrementCounter();
