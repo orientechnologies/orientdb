@@ -2476,10 +2476,10 @@ public class ODocument extends ORecordAbstract
           bagsMerged = ((ORidBag) value).tryMerge((ORidBag) otherValue, iMergeSingleItemsOfMultiValueFields);
 
         if (!bagsMerged && (value != null && !value.equals(otherValue)) || (value == null && otherValue != null)) {
-          field(f, otherValue);
+          setProperty(f, otherValue);
         }
       } else {
-        field(f, otherValue);
+        setProperty(f, otherValue);
       }
     }
 
