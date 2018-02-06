@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 
 import java.util.Map;
 import java.util.Optional;
@@ -12,45 +13,123 @@ import java.util.Optional;
  */
 public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
 
+  private final int[] filterClusterIds;
   private long cost = 0;
 
-  public GetValueFromIndexEntryStep(OCommandContext ctx, boolean profilingEnabled) {
+  private OResultSet prevResult = null;
+
+  /**
+   * @param ctx              the execution context
+   * @param filterClusterIds only extract values from these clusters. Pass null if no filtering is needed
+   * @param profilingEnabled enable profiling
+   */
+  public GetValueFromIndexEntryStep(OCommandContext ctx, int[] filterClusterIds, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
+    this.filterClusterIds = filterClusterIds;
   }
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
+
+    if (!prev.isPresent()) {
+      throw new IllegalStateException("filter step requires a previous step");
+    }
+    OExecutionStepInternal prevStep = prev.get();
+
     return new OResultSet() {
+
+      public boolean finished = false;
+
+      OResult nextItem = null;
+      int fetched = 0;
+
       @Override
       public boolean hasNext() {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          return upstream.hasNext();
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
-          }
+
+        if (fetched >= nRecords || finished) {
+          return false;
         }
+        if (nextItem == null) {
+          fetchNextItem();
+        }
+
+        if (nextItem != null) {
+          return true;
+        }
+
+        return false;
       }
 
       @Override
       public OResult next() {
-        long begin = profilingEnabled ? System.nanoTime() : 0;
-        try {
-          OResult val = upstream.next();
-          Object finalVal = val.getProperty("rid");
-          if (finalVal instanceof OIdentifiable) {
-            OResultInternal res = new OResultInternal();
-            res.setElement((OIdentifiable) finalVal);
-            return res;
-          } else if (finalVal instanceof OResult) {
-            return (OResult) finalVal;
-          }
+        if (fetched >= nRecords || finished) {
           throw new IllegalStateException();
-        } finally {
-          if (profilingEnabled) {
-            cost += (System.nanoTime() - begin);
+        }
+        if (nextItem == null) {
+          fetchNextItem();
+        }
+        if (nextItem == null) {
+          throw new IllegalStateException();
+        }
+        OResult result = nextItem;
+        nextItem = null;
+        fetched++;
+        return result;
+      }
+
+      private void fetchNextItem() {
+        nextItem = null;
+        if (finished) {
+          return;
+        }
+        if (prevResult == null) {
+          prevResult = prevStep.syncPull(ctx, nRecords);
+          if (!prevResult.hasNext()) {
+            finished = true;
+            return;
+          }
+        }
+        while (!finished) {
+          while (!prevResult.hasNext()) {
+            prevResult = prevStep.syncPull(ctx, nRecords);
+            if (!prevResult.hasNext()) {
+              finished = true;
+              return;
+            }
+          }
+          OResult val = prevResult.next();
+          long begin = profilingEnabled ? System.nanoTime() : 0;
+
+          try {
+            Object finalVal = val.getProperty("rid");
+            if (filterClusterIds != null) {
+              if (!(finalVal instanceof OIdentifiable)) {
+                continue;
+              }
+              ORID rid = ((OIdentifiable) finalVal).getIdentity();
+              boolean found = false;
+              for (int filterClusterId : filterClusterIds) {
+                if (rid.isValid() || filterClusterId == rid.getClusterId()) {
+                  found = true;
+                  break;
+                }
+              }
+              if (!found) {
+                continue;
+              }
+            }
+            if (finalVal instanceof OIdentifiable) {
+              OResultInternal res = new OResultInternal();
+              res.setElement((OIdentifiable) finalVal);
+              nextItem = res;
+            } else if (finalVal instanceof OResult) {
+              nextItem = (OResult) finalVal;
+            }
+            break;
+          } finally {
+            if (profilingEnabled) {
+              cost += (System.nanoTime() - begin);
+            }
           }
         }
       }

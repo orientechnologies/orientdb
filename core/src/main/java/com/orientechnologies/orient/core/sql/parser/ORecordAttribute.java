@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
@@ -72,6 +73,17 @@ public class ORecordAttribute extends SimpleNode {
 
   public void deserialize(OResult fromResult) {
     name = fromResult.getProperty("name");
+  }
+
+  public Object evaluate(OResult iCurrentRecord, OCommandContext ctx) {
+    if (name.equalsIgnoreCase("@rid")) {
+      return iCurrentRecord.getIdentity().orElse(null);
+    } else if (name.equalsIgnoreCase("@class")) {
+      return iCurrentRecord.getElement().flatMap(r -> r.getSchemaType()).map(clazz -> clazz.getName()).orElse(null);
+    } else if (name.equalsIgnoreCase("@version")) {
+      return iCurrentRecord.getRecord().map(r -> r.getVersion()).orElse(null);
+    }
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=45ce3cd16399dec7d7ef89f8920d02ae (do not edit this line) */
