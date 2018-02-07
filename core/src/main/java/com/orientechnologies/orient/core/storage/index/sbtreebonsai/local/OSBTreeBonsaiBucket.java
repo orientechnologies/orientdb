@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSBTreeBonsaiLocalException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -39,7 +40,7 @@ import java.util.Map;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
  */
-public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
+public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract  implements Closeable {
   public static final int   MAX_BUCKET_SIZE_BYTES    = OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getValueAsInteger() * 1024;
   /**
    * Maximum size of key-value pair which can be put in SBTreeBonsai in bytes (24576000 by default)
@@ -459,5 +460,10 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     if (entreeSize > MAX_ENTREE_SIZE)
       throw new OSBTreeBonsaiLocalException("Serialized key-value pair size bigger than allowed " + entreeSize + " vs "
           + MAX_ENTREE_SIZE + ".", tree);
+  }
+
+  @Override
+  public void close() throws IOException {
+    throw new UnsupportedOperationException();
   }
 }

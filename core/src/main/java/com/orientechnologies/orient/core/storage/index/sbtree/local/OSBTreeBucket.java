@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -39,7 +40,7 @@ import java.util.List;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
  */
-public class OSBTreeBucket<K, V> extends ODurablePage {
+public class OSBTreeBucket<K, V> extends ODurablePage implements Closeable {
   private static final int FREE_POINTER_OFFSET  = NEXT_FREE_POSITION;
   private static final int SIZE_OFFSET          = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int IS_LEAF_OFFSET       = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -50,7 +51,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   /**
    * KEY_SERIALIZER_OFFSET and VALUE_SERIALIZER_OFFSET are no longer used by sb-tree since 1.7.
-   *
+   * <p>
    * However we left them in buckets to support backward compatibility.
    */
   private static final int KEY_SERIALIZER_OFFSET   = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
@@ -479,5 +480,10 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     public int compareTo(SBTreeEntry<K, V> other) {
       return comparator.compare(key, other.key);
     }
+  }
+
+  @Override
+  public void close() throws IOException {
+    throw  new UnsupportedOperationException();
   }
 }
