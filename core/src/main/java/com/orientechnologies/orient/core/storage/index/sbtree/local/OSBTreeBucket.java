@@ -61,7 +61,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage implements Closeable {
 
   private static final int POSITIONS_ARRAY_OFFSET = FREE_VALUES_LIST_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private final boolean isLeaf;
+  private boolean isLeaf;
 
   private final OBinarySerializer<K> keySerializer;
   private final OBinarySerializer<V> valueSerializer;
@@ -75,11 +75,15 @@ public class OSBTreeBucket<K, V> extends ODurablePage implements Closeable {
       OBinarySerializer<V> valueSerializer) throws IOException {
     super(cacheEntry);
 
-    this.isLeaf = isLeaf;
     this.keySerializer = keySerializer;
     this.keyTypes = keyTypes;
     this.valueSerializer = valueSerializer;
 
+    init(isLeaf);
+  }
+
+  public void init(boolean isLeaf) {
+    this.isLeaf = isLeaf;
     setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
     setIntValue(SIZE_OFFSET, 0);
 
@@ -484,6 +488,6 @@ public class OSBTreeBucket<K, V> extends ODurablePage implements Closeable {
 
   @Override
   public void close() throws IOException {
-    throw  new UnsupportedOperationException();
+    throw new UnsupportedOperationException();
   }
 }

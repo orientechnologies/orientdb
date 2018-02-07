@@ -136,14 +136,8 @@ public class OSBTree<K, V> extends ODurableComponent {
         if (nullPointerSupport)
           nullBucketFileId = addFile(atomicOperation, getName() + nullFileExtension);
 
-        OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId);
-        try {
-
-          OSBTreeBucket<K, V> rootBucket = new OSBTreeBucket<K, V>(rootCacheEntry, true, keySerializer, keyTypes, valueSerializer);
+        try (OSBTreeBucket<K, V> rootBucket = addBucketPage(atomicOperation, fileId, true)) {
           rootBucket.setTreeSize(0);
-
-        } finally {
-          releasePageFromWrite(atomicOperation, rootCacheEntry);
         }
 
         endAtomicOperation(false, null);
@@ -198,6 +192,39 @@ public class OSBTree<K, V> extends ODurableComponent {
         releasePageFromWrite(atomicOperation, writePage);
       }
     };
+  }
+
+  private OSBTreeBucket<K, V> reuseOrAddBucketForWrite(final OAtomicOperation atomicOperation, final long fileId,
+      final long pageIndex, final boolean checkPinnedPages, boolean isLeaf) throws IOException {
+    OCacheEntry writePage = loadPageForWrite(atomicOperation, fileId, pageIndex, checkPinnedPages);
+    if (writePage != null) {
+      return new OSBTreeBucket<K, V>(writePage, isLeaf, keySerializer, keyTypes, valueSerializer) {
+        @Override
+        public void close() throws IOException {
+          releasePageFromWrite(atomicOperation, writePage);
+        }
+      };
+
+    } else {
+      OCacheEntry addPage = addPage(atomicOperation, fileId);
+      return new OSBTreeBucket<K, V>(addPage, isLeaf, keySerializer, keyTypes, valueSerializer) {
+        @Override
+        public void close() throws IOException {
+          releasePageFromWrite(atomicOperation, addPage);
+        }
+      };
+    }
+  }
+
+  private OSBTreeBucket<K, V> addBucketPage(OAtomicOperation atomicOperation, long fileId, boolean isLeaf) throws IOException {
+    OCacheEntry addPage = addPage(atomicOperation, fileId);
+    OSBTreeBucket<K, V> addBucket = new OSBTreeBucket<K, V>(addPage, isLeaf, keySerializer, keyTypes, valueSerializer) {
+      @Override
+      public void close() throws IOException {
+        releasePageFromWrite(atomicOperation, addPage);
+      }
+    };
+    return addBucket;
   }
 
   public V get(K key) {
@@ -482,18 +509,8 @@ public class OSBTree<K, V> extends ODurableComponent {
         if (nullPointerSupport)
           truncateFile(atomicOperation, nullBucketFileId);
 
-        OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, ROOT_INDEX, false);
-        if (cacheEntry == null) {
-          cacheEntry = addPage(atomicOperation, fileId);
-        }
-
-        try {
-          OSBTreeBucket<K, V> rootBucket = new OSBTreeBucket<K, V>(cacheEntry, true, keySerializer, keyTypes, valueSerializer);
-
-          rootBucket.setTreeSize(0);
-
-        } finally {
-          releasePageFromWrite(atomicOperation, cacheEntry);
+        try (OSBTreeBucket<K, V> curBucket = reuseOrAddBucketForWrite(atomicOperation, fileId, ROOT_INDEX, false, true)) {
+          curBucket.setTreeSize(0);
         }
 
         endAtomicOperation(false, null);
@@ -1442,7 +1459,6 @@ public class OSBTree<K, V> extends ODurableComponent {
       throws IOException {
     long pageIndex = path.get(path.size() - 1);
 
-    OCacheEntry bucketEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false);
     try (OSBTreeBucket<K, V> bucketToSplit = loadBucketForWrite(atomicOperation, fileId, pageIndex, false)) {
 
       final boolean splitLeaf = bucketToSplit.isLeaf();
@@ -1461,22 +1477,18 @@ public class OSBTree<K, V> extends ODurableComponent {
         return splitNonRootBucket(path, keyIndex, keyToInsert, pageIndex, bucketToSplit, splitLeaf, indexToSplit, separationKey,
             rightEntries, atomicOperation);
       } else {
-        return splitRootBucket(path, keyIndex, keyToInsert, pageIndex, bucketEntry, bucketToSplit, splitLeaf, indexToSplit,
-            separationKey, rightEntries, atomicOperation);
+        return splitRootBucket(path, keyIndex, keyToInsert, bucketToSplit, splitLeaf, indexToSplit, separationKey, rightEntries,
+            atomicOperation);
       }
-    } finally {
-      releasePageFromWrite(atomicOperation, bucketEntry);
     }
   }
 
   private BucketSearchResult splitNonRootBucket(List<Long> path, int keyIndex, K keyToInsert, long pageIndex,
       OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey,
       List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries, OAtomicOperation atomicOperation) throws IOException {
-    OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId);
-
-    try {
-      OSBTreeBucket<K, V> newRightBucket = new OSBTreeBucket<K, V>(rightBucketEntry, splitLeaf, keySerializer, keyTypes,
-          valueSerializer);
+    long rightBucketPageIndex;
+    try (OSBTreeBucket<K, V> newRightBucket = addBucketPage(atomicOperation, fileId, splitLeaf)) {
+      rightBucketPageIndex = newRightBucket.getPageIndex();
       newRightBucket.addAll(rightEntries);
 
       bucketToSplit.shrink(indexToSplit);
@@ -1487,11 +1499,11 @@ public class OSBTree<K, V> extends ODurableComponent {
         newRightBucket.setRightSibling(rightSiblingPageIndex);
         newRightBucket.setLeftSibling(pageIndex);
 
-        bucketToSplit.setRightSibling(rightBucketEntry.getPageIndex());
+        bucketToSplit.setRightSibling(newRightBucket.getPageIndex());
 
         if (rightSiblingPageIndex >= 0) {
           try (OSBTreeBucket<K, V> rightSiblingBucket = loadBucketForWrite(atomicOperation, fileId, rightSiblingPageIndex, false)) {
-            rightSiblingBucket.setLeftSibling(rightBucketEntry.getPageIndex());
+            rightSiblingBucket.setLeftSibling(newRightBucket.getPageIndex());
           }
         }
       }
@@ -1499,8 +1511,8 @@ public class OSBTree<K, V> extends ODurableComponent {
       long parentIndex = path.get(path.size() - 2);
       OSBTreeBucket<K, V> parentBucket = loadBucketForWrite(atomicOperation, fileId, parentIndex, false);
       try {
-        OSBTreeBucket.SBTreeEntry<K, V> parentEntry = new OSBTreeBucket.SBTreeEntry<K, V>(pageIndex,
-            rightBucketEntry.getPageIndex(), separationKey, null);
+        OSBTreeBucket.SBTreeEntry<K, V> parentEntry = new OSBTreeBucket.SBTreeEntry<K, V>(pageIndex, newRightBucket.getPageIndex(),
+            separationKey, null);
 
         int insertionIndex = parentBucket.find(separationKey);
         assert insertionIndex < 0;
@@ -1522,8 +1534,6 @@ public class OSBTree<K, V> extends ODurableComponent {
         parentBucket.close();
       }
 
-    } finally {
-      releasePageFromWrite(atomicOperation, rightBucketEntry);
     }
 
     ArrayList<Long> resultPath = new ArrayList<Long>(path.subList(0, path.size() - 1));
@@ -1533,18 +1543,18 @@ public class OSBTree<K, V> extends ODurableComponent {
       return new BucketSearchResult(keyIndex, resultPath);
     }
 
-    resultPath.add(rightBucketEntry.getPageIndex());
+    resultPath.add(rightBucketPageIndex);
     if (splitLeaf) {
       return new BucketSearchResult(keyIndex - indexToSplit, resultPath);
     }
 
-    resultPath.add(rightBucketEntry.getPageIndex());
+    resultPath.add(rightBucketPageIndex);
     return new BucketSearchResult(keyIndex - indexToSplit - 1, resultPath);
   }
 
-  private BucketSearchResult splitRootBucket(List<Long> path, int keyIndex, K keyToInsert, long pageIndex, OCacheEntry bucketEntry,
-      OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey,
-      List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries, OAtomicOperation atomicOperation) throws IOException {
+  private BucketSearchResult splitRootBucket(List<Long> path, int keyIndex, K keyToInsert, OSBTreeBucket<K, V> bucketToSplit,
+      boolean splitLeaf, int indexToSplit, K separationKey, List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries,
+      OAtomicOperation atomicOperation) throws IOException {
     final long freeListPage = bucketToSplit.getValuesFreeListFirstIndex();
     final long treeSize = bucketToSplit.getTreeSize();
 
@@ -1552,50 +1562,38 @@ public class OSBTree<K, V> extends ODurableComponent {
 
     for (int i = 0; i < indexToSplit; i++)
       leftEntries.add(bucketToSplit.getEntry(i));
-
-    OCacheEntry leftBucketEntry = addPage(atomicOperation, fileId);
-
-    OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId);
-    try {
-      OSBTreeBucket<K, V> newLeftBucket = new OSBTreeBucket<K, V>(leftBucketEntry, splitLeaf, keySerializer, keyTypes,
-          valueSerializer);
+    long leftBucketPageIndex;
+    long rightBucketPageIndex;
+    try (OSBTreeBucket<K, V> newLeftBucket = addBucketPage(atomicOperation, fileId, splitLeaf);
+        OSBTreeBucket<K, V> newRightBucket = addBucketPage(atomicOperation, fileId, splitLeaf)) {
+      leftBucketPageIndex = newLeftBucket.getPageIndex();
+      rightBucketPageIndex = newRightBucket.getPageIndex();
       newLeftBucket.addAll(leftEntries);
 
       if (splitLeaf)
-        newLeftBucket.setRightSibling(rightBucketEntry.getPageIndex());
+        newLeftBucket.setRightSibling(rightBucketPageIndex);
 
-    } finally {
-      releasePageFromWrite(atomicOperation, leftBucketEntry);
-    }
-
-    try {
-      OSBTreeBucket<K, V> newRightBucket = new OSBTreeBucket<K, V>(rightBucketEntry, splitLeaf, keySerializer, keyTypes,
-          valueSerializer);
       newRightBucket.addAll(rightEntries);
 
       if (splitLeaf)
-        newRightBucket.setLeftSibling(leftBucketEntry.getPageIndex());
-    } finally {
-      releasePageFromWrite(atomicOperation, rightBucketEntry);
+        newRightBucket.setLeftSibling(leftBucketPageIndex);
     }
 
-    bucketToSplit = new OSBTreeBucket<K, V>(bucketEntry, false, keySerializer, keyTypes, valueSerializer);
-
+    bucketToSplit.init(false);
     bucketToSplit.setTreeSize(treeSize);
     bucketToSplit.setValuesFreeListFirstIndex(freeListPage);
 
-    bucketToSplit.addEntry(0,
-        new OSBTreeBucket.SBTreeEntry<K, V>(leftBucketEntry.getPageIndex(), rightBucketEntry.getPageIndex(), separationKey, null),
-        true);
+    bucketToSplit
+        .addEntry(0, new OSBTreeBucket.SBTreeEntry<K, V>(leftBucketPageIndex, rightBucketPageIndex, separationKey, null), true);
 
     ArrayList<Long> resultPath = new ArrayList<Long>(path.subList(0, path.size() - 1));
 
     if (comparator.compare(keyToInsert, separationKey) < 0) {
-      resultPath.add(leftBucketEntry.getPageIndex());
+      resultPath.add(leftBucketPageIndex);
       return new BucketSearchResult(keyIndex, resultPath);
     }
 
-    resultPath.add(rightBucketEntry.getPageIndex());
+    resultPath.add(rightBucketPageIndex);
 
     if (splitLeaf)
       return new BucketSearchResult(keyIndex - indexToSplit, resultPath);

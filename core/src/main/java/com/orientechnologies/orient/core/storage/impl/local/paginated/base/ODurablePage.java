@@ -315,6 +315,10 @@ public class ODurablePage {
     cacheEntry.markDirty();
   }
 
+  public long getPageIndex() {
+    return cacheEntry.getPageIndex();
+  }
+
   @Override
   public String toString() {
     if (cacheEntry != null)
