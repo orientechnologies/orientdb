@@ -109,7 +109,7 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
               ORID rid = ((OIdentifiable) finalVal).getIdentity();
               boolean found = false;
               for (int filterClusterId : filterClusterIds) {
-                if (rid.isValid() || filterClusterId == rid.getClusterId()) {
+                if (rid.getClusterId() < 0 || filterClusterId == rid.getClusterId()) {
                   found = true;
                   break;
                 }
