@@ -20,7 +20,7 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import junit.framework.Assert;
 import org.junit.Test;
@@ -46,8 +46,7 @@ public class DistributedSecurityTest extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
     for (int s = 0; s < SERVERS; ++s) {
 
-      ODatabaseDocumentTx g = new ODatabaseDocumentTx("plocal:target/server" + s + "/databases/" + getDatabaseName());
-      g.open("reader", "reader");
+      ODatabaseDocument g = serverInstance.get(s).getServerInstance().getContext().open(getDatabaseName(),"admin","admin");
 
       try {
 

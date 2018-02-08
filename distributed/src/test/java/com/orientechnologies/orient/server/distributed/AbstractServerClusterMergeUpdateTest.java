@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,9 +34,9 @@ public abstract class AbstractServerClusterMergeUpdateTest  extends AbstractServ
   }
 
   public void executeTest() throws Exception {
-    ODatabaseDocumentTx db0 = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+    ODatabaseDocument db0 = serverInstance.get(0).getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
     try {
-      ODatabaseDocumentTx db1 = poolFactory.get(getDatabaseURL(serverInstance.get(1)), "admin", "admin").acquire();
+      ODatabaseDocument db1 = serverInstance.get(1).getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
       try {
         executeTest(db0, db1);
       } finally{
@@ -49,7 +49,7 @@ public abstract class AbstractServerClusterMergeUpdateTest  extends AbstractServ
     }
   }
 
-  private void executeTest(ODatabaseDocumentTx db0, ODatabaseDocumentTx db1) {
+  private void executeTest(ODatabaseDocument db0, ODatabaseDocument db1) {
 
     db0.activateOnCurrentThread();
 

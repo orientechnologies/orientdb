@@ -15,19 +15,17 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import junit.framework.Assert;
+import org.junit.Test;
 
 /**
  * Distributed test on drop database and further resync.
  */
 public class DistributedDbDropAndResyncTest extends AbstractServerClusterTxTest {
-  final static int SERVERS = 2;
-  final long       TIMEOUT = 15000;
+  final static int  SERVERS = 2;
+  final        long TIMEOUT = 15000;
 
   @Test
   public void test() throws Exception {
@@ -40,8 +38,8 @@ public class DistributedDbDropAndResyncTest extends AbstractServerClusterTxTest 
   @Override
   protected void onAfterExecution() throws Exception {
     for (ServerRun s : serverInstance) {
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(s));
-      db.open("admin", "admin");
+
+      final ODatabaseDocument db = s.getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
 
       banner("RE-SYNC DATABASE ON SERVER " + s.getServerId());
       db.command(new OCommandSQL("ha sync database")).execute();
@@ -49,7 +47,7 @@ public class DistributedDbDropAndResyncTest extends AbstractServerClusterTxTest 
       ODistributedServerManager.DB_STATUS currentStatus = null;
 
       // WAIT FOR ONLINE
-      for (long chrono = System.currentTimeMillis(); System.currentTimeMillis() - chrono < TIMEOUT;) {
+      for (long chrono = System.currentTimeMillis(); System.currentTimeMillis() - chrono < TIMEOUT; ) {
 
         final ODistributedServerManager.DB_STATUS status = s.getServerInstance().getDistributedManager()
             .getDatabaseStatus(s.getServerInstance().getDistributedManager().getLocalNodeName(), db.getName());

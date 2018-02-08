@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -203,7 +204,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       nodeCfg.field("id", nodeId);
       nodeCfg.field("uuid", nodeUuid);
       nodeCfg.field("name", nodeName);
-      ORecordInternal.setRecordSerializer(nodeCfg, ODatabaseDocumentTx.getDefaultSerializer());
+      ORecordInternal.setRecordSerializer(nodeCfg, ODatabaseDocumentAbstract.getDefaultSerializer());
       configurationMap.put(CONFIG_NODE_PREFIX + nodeUuid, nodeCfg);
 
       // REGISTER CURRENT NODES
@@ -478,7 +479,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected void publishLocalNodeConfiguration() {
     try {
       final ODocument cfg = getLocalNodeConfiguration();
-      ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentTx.getDefaultSerializer());
+      ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentAbstract.getDefaultSerializer());
       configurationMap.put(CONFIG_NODE_PREFIX + nodeUuid, cfg);
     } catch (Exception e) {
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on publishing local server configuration", e);
@@ -815,7 +816,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (updated) {
       if (iDeployToCluster) {
         // WRITE TO THE MAP TO BE READ BY NEW SERVERS ON JOIN
-        ORecordInternal.setRecordSerializer(document, ODatabaseDocumentTx.getDefaultSerializer());
+        ORecordInternal.setRecordSerializer(document, ODatabaseDocumentAbstract.getDefaultSerializer());
         configurationMap.put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, document);
 
         // SEND A DISTRIBUTED MSG TO ALL THE SERVERS

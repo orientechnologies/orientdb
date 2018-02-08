@@ -15,13 +15,15 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
@@ -37,7 +39,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Tests the behavior of hooks in distributed configuration.
  */
 public class DistributedHookTest extends AbstractServerClusterTest {
-  private final static int SERVERS      = 2;
+  private final static int SERVERS = 2;
 
   private final AtomicLong beforeCreate = new AtomicLong();
   private final AtomicLong afterCreate  = new AtomicLong();
@@ -122,12 +124,12 @@ public class DistributedHookTest extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     for (int s = 1; s <= SERVERS; ++s) {
-      ODatabaseDocumentTx g = new ODatabaseDocumentTx("plocal:target/server" + s + "/databases/" + getDatabaseName());
-      if(g.exists()){
-        g.open("admin", "admin");
-      }else{
-        g.create();
+
+      OrientDB orientDB = serverInstance.get(s - 1).getServerInstance().getContext();
+      if (!orientDB.exists(getDatabaseName())) {
+        orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
       }
+      ODatabaseDocument g = orientDB.open(getDatabaseName(), "admin", "admin");
       g.registerHook(new TestHookSourceNode(), ORecordHook.HOOK_POSITION.REGULAR);
 
       try {
