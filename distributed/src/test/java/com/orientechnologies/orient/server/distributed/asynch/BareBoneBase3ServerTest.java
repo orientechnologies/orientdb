@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import java.io.File;
 
@@ -30,7 +29,7 @@ public abstract class BareBoneBase3ServerTest extends BareBoneBase2ServerTest {
 
     super.tearDown();
 
-    new ODatabaseDocumentTx(getLocalURL3()).open("admin", "admin").drop();
+//    new ODatabaseDocumentTx(getLocalURL3()).open("admin", "admin").drop();
     OFileUtils.deleteRecursively(new File(DB3_DIR));
   }
 
@@ -68,7 +67,7 @@ public abstract class BareBoneBase3ServerTest extends BareBoneBase2ServerTest {
     Thread dbClient1 = new Thread() {
       @Override
       public void run() {
-        dbClient1();
+        dbClient1(servers);
       }
     };
     dbClient1.start();
@@ -76,7 +75,7 @@ public abstract class BareBoneBase3ServerTest extends BareBoneBase2ServerTest {
     Thread dbClient2 = new Thread() {
       @Override
       public void run() {
-        dbClient2();
+        dbClient2(servers);
       }
     };
     dbClient2.start();

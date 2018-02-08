@@ -16,8 +16,8 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
@@ -93,7 +93,7 @@ public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioTest extends
       int actualVersion = recordServer0.getVersion();
   
       // sets a delay for operations on distributed storage of server0
-      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer0).getStorage())
+      ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer0).getStorage())
           .setEventListener(new AfterRecordLockDelayer("server0", DOCUMENT_WRITE_TIMEOUT / 4));
   
       // updates the same record from two different clients, each calling a different node

@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.Orient;
 public abstract class BareBoneBase2ClientTest extends BareBoneBase1ClientTest {
   protected static Object LOCK = new Object();
 
-  protected abstract void dbClient2();
+  protected abstract void dbClient2(BareBonesServer[] servers);
 
   public void testReplication() throws Throwable {
     Orient.setRegisterDatabaseByPath(true);
@@ -16,7 +16,7 @@ public abstract class BareBoneBase2ClientTest extends BareBoneBase1ClientTest {
       Thread dbServer1 = new Thread() {
         @Override
         public void run() {
-          servers[0] = dbServer(DB1_DIR, getLocalURL(), "asynch-dserver-config-0.xml");
+          servers[0] = dbServer(DB1_DIR, getDatabaseName(), "asynch-dserver-config-0.xml");
         }
       };
       dbServer1.start();
@@ -26,7 +26,7 @@ public abstract class BareBoneBase2ClientTest extends BareBoneBase1ClientTest {
       Thread dbClient1 = new Thread() {
         @Override
         public void run() {
-          dbClient1();
+          dbClient1(servers);
         }
       };
       dbClient1.start();
@@ -35,7 +35,7 @@ public abstract class BareBoneBase2ClientTest extends BareBoneBase1ClientTest {
       Thread dbClient2 = new Thread() {
         @Override
         public void run() {
-          dbClient2();
+          dbClient2(servers);
         }
       };
       dbClient2.start();

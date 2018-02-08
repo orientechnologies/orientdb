@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
@@ -13,20 +15,20 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
   private static final int    NUM_OF_RETRIES         = 3;
   private static final String CNT_PROP_NAME          = "cnt";
 
-  private Object              parentV1Id;
-  private Object              parentV2Id;
+  private Object parentV1Id;
+  private Object parentV2Id;
 
   @Override
   protected String getDatabaseName() {
     return "TestAsyncReplMode2Servers";
   }
 
-  protected void dbClient1() {
+  protected void dbClient1(BareBonesServer[] servers) {
     OGlobalConfiguration.LOG_CONSOLE_LEVEL.setValue("FINEST");
 
     synchronized (LOCK) {
-      ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getRemoteURL());
-      graph.open("admin", "admin");
+      OrientDB orientDB = new OrientDB("remote:localhost:2424", OrientDBConfig.defaultConfig());
+      ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
       graph.begin();
       try {
         OVertex parentV1 = graph.newVertex("vertextype");
@@ -56,7 +58,7 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
               parentV1.save();
               graph.commit();
               graph.begin();
-              System.out.println("Committing parentV1" + parentV1.getRecord()+"...");
+              System.out.println("Committing parentV1" + parentV1.getRecord() + "...");
               break;
             } catch (OConcurrentModificationException c) {
               graph.rollback();
@@ -87,24 +89,25 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
       } finally {
         System.out.println("Shutting down");
         graph.close();
+        orientDB.close();
         LOCK.notifyAll();
       }
     }
   }
 
-  protected void dbClient2() {
+  protected void dbClient2(BareBonesServer[] servers) {
     sleep(1000);
 
     synchronized (LOCK) {
-      ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getRemoteURL2());
-      graph.open("admin", "admin");
+      OrientDB orientDB = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig());
+      ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
       graph.begin();
 
       try {
-        OElement parentV1 = graph.load((ORID)parentV1Id);
+        OElement parentV1 = graph.load((ORID) parentV1Id);
         assertEquals(1, parentV1.getRecord().getVersion());
 
-        OElement parentV2 = graph.load((ORID)parentV2Id);
+        OElement parentV2 = graph.load((ORID) parentV2Id);
         assertEquals(1, parentV2.getRecord().getVersion());
 
         int countPropValue = 0;
@@ -127,6 +130,7 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
       } finally {
         System.out.println("Shutting down");
         graph.close();
+        orientDB.close();
         LOCK.notifyAll();
       }
     }

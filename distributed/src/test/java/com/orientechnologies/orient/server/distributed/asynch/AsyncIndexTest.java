@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -15,13 +17,10 @@ public class AsyncIndexTest extends BareBoneBase2ServerTest {
     return "AsyncIndexTest";
   }
 
-  protected void dbClient1() {
-    ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getLocalURL());
-    if(graph.exists()){
-      graph.open("admin", "admin");
-    }else{
-      graph.create();
-    }
+  protected void dbClient1(BareBonesServer[] servers) {
+    OrientDB orientDB = servers[0].getServer().getContext();
+    orientDB.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
+    ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
     try {
       graph.command(new OCommandSQL("create class SMS")).execute();
       graph.command(new OCommandSQL("create property SMS.type string")).execute();
@@ -56,12 +55,9 @@ public class AsyncIndexTest extends BareBoneBase2ServerTest {
     }
 
     // CHECK ON THE OTHER NODE
-    ODatabaseDocumentTx graph2 = new ODatabaseDocumentTx(getLocalURL2());
-    if(graph2.exists()){
-      graph2.open("admin", "admin");
-    }else{
-      graph2.create();
-    }
+    OrientDB orientDB2 = servers[2].getServer().getContext();
+    orientDB2.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
+    ODatabaseDocument graph2 = orientDB.open(getDatabaseName(), "admin", "admin");
     try {
       try {
         graph2
@@ -86,7 +82,7 @@ public class AsyncIndexTest extends BareBoneBase2ServerTest {
   }
 
   @Override
-  protected void dbClient2() {
+  protected void dbClient2(BareBonesServer[] servers) {
 
   }
 }

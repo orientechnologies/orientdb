@@ -17,9 +17,8 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import org.junit.Ignore;
@@ -107,8 +106,8 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioTest extends Abstract
       OLogManager.instance().error(this, "Actual version: " + actualVersion, null);
   
       // sets a delay for operations on distributed storage of server0 and server1
-      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer0).getStorage()).setEventListener(new AfterRecordLockDelayer("server0", DOCUMENT_WRITE_TIMEOUT / 4));
-      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer1).getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT / 2));
+      ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer0).getStorage()).setEventListener(new AfterRecordLockDelayer("server0", DOCUMENT_WRITE_TIMEOUT / 4));
+      ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer1).getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT / 2));
   
       // updates the same record from two different clients, each calling a different server (server2 is idle)
       List<Callable<Void>> clients = new LinkedList<Callable<Void>>();

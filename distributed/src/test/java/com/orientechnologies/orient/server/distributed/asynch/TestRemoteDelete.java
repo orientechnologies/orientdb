@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -9,15 +11,14 @@ import com.orientechnologies.orient.core.record.OVertex;
 public class TestRemoteDelete extends BareBoneBase1ClientTest {
 
   @Override
-  protected void dbClient1() {
-    ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getLocalURL());
-    if(graph.exists()){
-      graph.open("admin", "admin");
-    }else{
-      graph.create();
-      graph.createClass("vertextype","V");
-      graph.createClass("edgetype","E");
-    }
+  protected void dbClient1(BareBonesServer[] servers) {
+    OrientDB orientdb = servers[0].getServer().getContext();
+    orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
+    ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "admin");
+    if (!graph.getMetadata().getSchema().existsClass("vertextype"))
+      graph.createClass("vertextype", "V");
+    if (!graph.getMetadata().getSchema().existsClass("edgetype"))
+      graph.createClass("edgetype", "E");
 
     graph.begin();
     try {

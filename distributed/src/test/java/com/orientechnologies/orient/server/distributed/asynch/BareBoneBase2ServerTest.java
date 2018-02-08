@@ -2,8 +2,6 @@ package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import org.junit.Ignore;
 
 import java.io.File;
 
@@ -31,10 +29,10 @@ public abstract class BareBoneBase2ServerTest extends BareBoneBase2ClientTest {
 
     super.tearDown();
 
-    new ODatabaseDocumentTx(getLocalURL2()).open("admin", "admin").drop();
+    // delete the folder should be enough if shutdown is done correctly
+    //new ODatabaseDocumentTx(getLocalURL2()).open("admin", "admin").drop();
     OFileUtils.deleteRecursively(new File(DB2_DIR));
   }
-
 
   public void testReplication() throws Throwable {
     Orient.setRegisterDatabaseByPath(true);
@@ -61,7 +59,7 @@ public abstract class BareBoneBase2ServerTest extends BareBoneBase2ClientTest {
     Thread dbClient1 = new Thread() {
       @Override
       public void run() {
-        dbClient1();
+        dbClient1(servers);
       }
     };
     dbClient1.start();
@@ -69,7 +67,7 @@ public abstract class BareBoneBase2ServerTest extends BareBoneBase2ClientTest {
     Thread dbClient2 = new Thread() {
       @Override
       public void run() {
-        dbClient2();
+        dbClient2(servers);
       }
     };
     dbClient2.start();

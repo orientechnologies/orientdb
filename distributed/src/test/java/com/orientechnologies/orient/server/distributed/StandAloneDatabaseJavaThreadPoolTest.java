@@ -3,9 +3,10 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
@@ -22,6 +23,7 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
   private String          dbName;
   private ODatabasePool   graphReadFactory;
   private ExecutorService executorService;
+  private OrientDB        orientDB;
 
   public StandAloneDatabaseJavaThreadPoolTest(String dbName) {
     this.dbName = dbName;
@@ -39,12 +41,11 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
   }
 
   public void runTest() {
-    ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDBURL());
-    if (orientGraph.exists()) {
-      orientGraph.open("admin", "admin");
-    } else {
-      orientGraph.create();
+    OrientDB orientDB = getOrientDB();
+    if (!orientDB.exists(dbName)) {
+      orientDB.create(dbName, ODatabaseType.PLOCAL);
     }
+    ODatabaseDocument orientGraph = orientDB.open(dbName, "admin", "admin");
     createVertexType(orientGraph, "Test");
     createVertexType(orientGraph, "Test1");
     orientGraph.close();
@@ -278,12 +279,21 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
     return "remote:" + "localhost:2424;localhost:2425;localhost:2426" + "/" + dbName;
   }
 
+  private OrientDB getOrientDB() {
+    if (orientDB == null) {
+      log("Datastore pool created with size : 10, db location: " + getDBURL());
+      orientDB = new OrientDB(getDBURL(), "root", "root", OrientDBConfig.defaultConfig());
+
+    }
+    return orientDB;
+
+  }
+
   private ODatabasePool getGraphFactory() {
     if (graphReadFactory == null) {
       log("Datastore pool created with size : 10, db location: " + getDBURL());
-      graphReadFactory = new ODatabasePool(getDBURL(), "admin", "admin", OrientDBConfig.defaultConfig());
+      graphReadFactory = new ODatabasePool(getOrientDB(), dbName, "admin", "admin", OrientDBConfig.defaultConfig());
 
-//      graphReadFactory.setupPool(10, 10);//TODO
     }
     return graphReadFactory;
   }

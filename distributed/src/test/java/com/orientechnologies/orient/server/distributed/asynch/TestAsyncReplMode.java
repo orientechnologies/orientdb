@@ -1,6 +1,9 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ODirection;
@@ -13,24 +16,21 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
   private static final int NUM_OF_LOOP_ITERATIONS = 25;
   private static final int NUM_OF_RETRIES         = 3;
 
-  private Object           parentV1Id;
-  private Object           parentV2Id;
+  private Object parentV1Id;
+  private Object parentV2Id;
 
   @Override
   protected String getDatabaseName() {
     return "TestAsyncReplMode";
   }
 
-  protected void dbClient1() {
+  protected void dbClient1(BareBonesServer[] servers) {
     sleep(1000);
 
     synchronized (LOCK) {
-      ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getLocalURL());
-      if(graph.exists()){
-        graph.open("admin", "admin");
-      }else{
-        graph.create();
-      }
+      OrientDB context = servers[0].getServer().getContext();
+      context.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
+      ODatabaseDocument graph = context.open(getDatabaseName(), "admin", "admin");
       graph.createVertexClass("vertextype1");
       graph.createVertexClass("vertextype2");
       graph.createVertexClass("vertextype3");
@@ -153,10 +153,10 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
     }
   }
 
-  protected void dbClient2() {
+  protected void dbClient2(BareBonesServer[] servers) {
     synchronized (LOCK) {
-      ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getRemoteURL());
-      graph.open("admin", "admin");
+      OrientDB orientDB = new OrientDB("remote:localhost:2424", OrientDBConfig.defaultConfig());
+      ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
       graph.begin();
       OElement parentV1 = null;
       OElement parentV2 = null;
@@ -171,7 +171,7 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
 //          sleep(500);
           countPropValue++;
           if (parentV1 == null) {
-            parentV1 = graph.load((ORID)parentV1Id);
+            parentV1 = graph.load((ORID) parentV1Id);
           }
           for (int attempt = 0; attempt < NUM_OF_RETRIES; attempt++) {
             try {
@@ -185,7 +185,7 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
           }
 
           if (parentV2 == null) {
-            parentV2 = graph.load((ORID)parentV1Id);
+            parentV2 = graph.load((ORID) parentV1Id);
           }
           for (int attempt = 0; attempt < NUM_OF_RETRIES; attempt++) {
             try {
@@ -206,6 +206,7 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
         System.out.println("Shutting down");
         graph.close();
         LOCK.notifyAll();
+        orientDB.close();
       }
     }
   }
