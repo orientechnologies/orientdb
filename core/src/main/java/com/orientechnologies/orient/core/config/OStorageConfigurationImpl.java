@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.io.IOException;
@@ -66,7 +67,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
   private String charset;
   private final List<OStorageEntryConfiguration> properties = new ArrayList<>();
-  protected final transient  OStorage                               storage;
+  protected final transient  OAbstractPaginatedStorage              storage;
   private volatile           OContextConfiguration                  configuration;
   public volatile            int                                    version;
   public volatile            String                                 name;
@@ -97,7 +98,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
   protected final Charset streamCharset;
 
-  public OStorageConfigurationImpl(final OStorage iStorage, Charset streamCharset) {
+  public OStorageConfigurationImpl(final OAbstractPaginatedStorage iStorage, Charset streamCharset) {
     this.streamCharset = streamCharset;
 
     storage = iStorage;
