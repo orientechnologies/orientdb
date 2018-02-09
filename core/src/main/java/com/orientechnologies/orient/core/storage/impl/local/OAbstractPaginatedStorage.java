@@ -78,7 +78,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.boperations.OLogicalOperation;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
@@ -5112,9 +5111,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } else if (record instanceof OAtomicUnitEndRecord) {
         //noinspection UnnecessaryContinue
         continue;
-      } else if (record instanceof OLogicalOperation) {
-        //noinspection UnnecessaryContinue
-        continue;
       } else {
         OLogManager.instance()
             .errorNoDb(this, "Invalid WAL record type was passed %s. Given record will be skipped.", null, record.getClass());
@@ -5183,8 +5179,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         continue;
       } else if (walRecord instanceof OAtomicUnitEndRecord) {
         //noinspection UnnecessaryContinue
-        continue;
-      } else if (walRecord instanceof OLogicalOperation) {
         continue;
       } else {
         OLogManager.instance()
