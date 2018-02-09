@@ -116,7 +116,6 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
   static Set<String> execute(ODatabaseDocument db, String command) throws InterruptedException {
     System.out.println(command);
     Set<String> resultSet = new HashSet();
-    db.open("admin", "admin");
 
     // CREATE A GRAPH TO MANIPULATE ELEMENTS
 

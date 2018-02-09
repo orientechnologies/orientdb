@@ -505,11 +505,6 @@ public class OServer {
   public boolean shutdown() {
     try {
       boolean res = deinit();
-
-      if (!getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY) && databases != null) {
-        databases.close();
-        databases = null;
-      }
       return res;
     } finally {
       startupLatch = null;
@@ -593,6 +588,10 @@ public class OServer {
         } catch (Exception e) {
           OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
         }
+      if (!getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY) && databases != null) {
+        databases.close();
+        databases = null;
+      }
     } finally {
       OLogManager.instance().info(this, "OrientDB Server shutdown complete\n");
       OLogManager.instance().flush();
