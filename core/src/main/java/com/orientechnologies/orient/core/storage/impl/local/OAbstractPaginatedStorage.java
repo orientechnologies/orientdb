@@ -1340,21 +1340,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public Iterator<OBrowsePage> browseCluster(int clusterId) {
+  public Iterator<OClusterBrowsePage> browseCluster(int clusterId) {
     try {
       checkOpenness();
       stateLock.acquireReadLock();
       try {
         checkOpenness();
 
+        final int finalClusterId;
         if (clusterId == ORID.CLUSTER_ID_INVALID)
           // GET THE DEFAULT CLUSTER
-          clusterId = defaultClusterId;
-
-        final int finalClusterId = clusterId;
-        return new Iterator<OBrowsePage>() {
-          private OBrowsePage page = null;
-          private long lastPos = 0;
+          finalClusterId = defaultClusterId;
+        else
+          finalClusterId = clusterId;
+        return new Iterator<OClusterBrowsePage>() {
+          private OClusterBrowsePage page = null;
+          private long lastPos = -1;
 
           @Override
           public boolean hasNext() {
@@ -1367,11 +1368,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
 
           @Override
-          public OBrowsePage next() {
+          public OClusterBrowsePage next() {
             if (!hasNext()) {
               throw new NoSuchElementException();
             }
-            OBrowsePage curPage = page;
+            OClusterBrowsePage curPage = page;
             page = null;
             return curPage;
           }
@@ -1388,7 +1389,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OBrowsePage nextPage(int clusterId, long lastPosition) {
+  private OClusterBrowsePage nextPage(int clusterId, long lastPosition) {
     try {
       checkOpenness();
       stateLock.acquireReadLock();
@@ -1396,15 +1397,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
 
         final OCluster cluster = doGetAndCheckCluster(clusterId);
-        OPhysicalPosition[] nexts = cluster.higherPositions(new OPhysicalPosition(lastPosition));
-        if (nexts.length > 0) {
-          lastPosition = nexts[nexts.length - 1].clusterPosition;
-          List<OBrowsePage.OBrowseEntry> nexv = new ArrayList<>();
-          for (OPhysicalPosition pos : nexts) {
+        OPhysicalPosition[] nextPositions = cluster.higherPositions(new OPhysicalPosition(lastPosition));
+        if (nextPositions.length > 0) {
+          long newLastPosition = nextPositions[nextPositions.length - 1].clusterPosition;
+          List<OClusterBrowseEntry> nexv = new ArrayList<>();
+          for (OPhysicalPosition pos : nextPositions) {
             final ORawBuffer buff = cluster.readRecord(pos.clusterPosition, false);
-            nexv.add(new OBrowsePage.OBrowseEntry(pos.clusterPosition, buff));
+            nexv.add(new OClusterBrowseEntry(pos.clusterPosition, buff));
           }
-          return new OBrowsePage(nexv, lastPosition);
+          return new OClusterBrowsePage(nexv, newLastPosition);
         } else {
           return null;
         }
