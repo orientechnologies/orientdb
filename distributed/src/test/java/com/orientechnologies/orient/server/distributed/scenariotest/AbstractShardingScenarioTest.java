@@ -18,7 +18,10 @@ package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -47,7 +50,7 @@ import static org.junit.Assert.*;
 
 public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
-  protected OVertex loadVertex(ODatabaseDocumentTx graph, String shardName, int serverId, int threadId, int i) {
+  protected OVertex loadVertex(ODatabaseDocument graph, String shardName, int serverId, int threadId, int i) {
 
     List<OVertex> result = null;
 
@@ -129,16 +132,14 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
     System.out.println("All writer threads have finished.");
 
-    // checking inserted vertices
-    ODatabaseDocumentTx graph;
-
+    OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
+    // checking inserted vertice
     // checking total amount of records (map-reduce aggregation)
-    graph = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
-    if (graph.exists()) {
-      graph.open("admin", "admin");
-    } else {
-      graph.create();
+    if (orientDB.exists(getDatabaseName())) {
+      orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
     }
+    ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
+
     try {
       OLegacyResultSet<ODocument> clients = new OCommandSQL("select from Client").execute();
       int total = clients.size();
@@ -154,12 +155,11 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     serverId = 0;
     for (ServerRun server : serverInstance) {
       if (server.isActive()) {
-        graph = new ODatabaseDocumentTx("plocal:target/server" + serverId + "/databases/" + getDatabaseName());
-        if (graph.exists()) {
-          graph.open("admin", "admin");
-        } else {
-          graph.create();
+        OrientDB orientDB1 = server.getServerInstance().getContext();
+        if (orientDB1.exists(getDatabaseName())) {
+          orientDB1.create(getDatabaseName(), ODatabaseType.PLOCAL);
         }
+        graph = orientDB1.open(getDatabaseName(), "admin", "admin");
         try {
           String sqlCommand = "select from cluster:client_" + server.getServerInstance().getDistributedManager().getLocalNodeName();
           List<ODocument> result = new OCommandSQL(sqlCommand).execute();
@@ -229,15 +229,15 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     }
     writtenServer = writtenServer.substring(0, writtenServer.length() - 1);
 
-    List<ODatabaseDocumentTx> dbs = new LinkedList<ODatabaseDocumentTx>();
+    List<ODatabaseDocument> dbs = new LinkedList<ODatabaseDocument>();
 
     for (ServerRun server : checkConsistencyOnServers) {
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(getPlocalDatabaseURL(server));
-      if (db.exists()) {
-        db.open("admin", "admin");
-      } else {
-        db.create();
+
+      OrientDB context = server.getServerInstance().getContext();
+      if (!context.exists(getDatabaseName())) {
+        context.create(getDatabaseName(), ODatabaseType.PLOCAL);
       }
+      ODatabaseSession db = context.open(getDatabaseName(), "admin", "admin");
       dbs.add(db);
     }
 
@@ -289,7 +289,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
           for (int j = 0; j < 100; j++) {
 
             // load records to compare
-            for (ODatabaseDocumentTx db : dbs) {
+            for (ODatabaseDocument db : dbs) {
               db.activateOnCurrentThread();
               verticesToCheck.add(loadVertex(db, clusterName, serverId, i, j + baseCount));
             }
@@ -324,8 +324,8 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       e.printStackTrace();
     } finally {
 
-      for (ODatabaseDocumentTx db : dbs) {
-        ODatabaseRecordThreadLocal.instance().set(db);
+      for (ODatabaseDocument db : dbs) {
+        db.activateOnCurrentThread();
         db.close();
         ODatabaseRecordThreadLocal.instance().set(null);
       }
@@ -355,12 +355,13 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       try {
 
         String name = Integer.toString(threadId);
-        ODatabaseDocumentTx graph = new ODatabaseDocumentTx("plocal:target/server" + serverId + "/databases/" + getDatabaseName());
-        if (graph.exists()) {
-          graph.open("admin", "admin");
-        } else {
-          graph.create();
+        OrientDB orientDB = serverInstance.get(serverId).getServerInstance().getContext();
+        // checking inserted vertice
+        // checking total amount of records (map-reduce aggregation)
+        if (!orientDB.exists(getDatabaseName())) {
+          orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
         }
+        ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
 
         for (int i = 0; i < count; i++) {
 
@@ -426,7 +427,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       return null;
     }
 
-    protected OVertex createVertex(ODatabaseDocumentTx graph, int i) {
+    protected OVertex createVertex(ODatabaseDocument graph, int i) {
 
       final String uniqueId = shardName + "-s" + serverId + "-t" + threadId + "-v" + i;
 
@@ -438,18 +439,18 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       return client;
     }
 
-    protected void updateVertex(ODatabaseDocumentTx graph, int i) {
+    protected void updateVertex(ODatabaseDocument graph, int i) {
       OVertex vertex = loadVertex(graph, this.shardName, this.serverId, this.threadId, i);
       vertex.setProperty("updated", true);
       vertex.save();
     }
 
-    protected void checkVertex(ODatabaseDocumentTx graph, int i) {
+    protected void checkVertex(ODatabaseDocument graph, int i) {
       OVertex vertex = loadVertex(graph, this.shardName, this.serverId, this.threadId, i);
       assertEquals(vertex.getProperty("updated"), Boolean.TRUE);
     }
 
-    protected void checkIndex(ODatabaseDocumentTx graph, final String key, final ORID rid) {
+    protected void checkIndex(ODatabaseDocument graph, final String key, final ORID rid) {
 
       List<ODocument> result = graph.query(new OSQLSynchQuery<OIdentifiable>("select from `index:Client.name` where key = ?"));
 
@@ -459,21 +460,21 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       assertEquals((result.get(0)).field("rid"), rid);
     }
 
-    protected void updateVertex(ODatabaseDocumentTx graph, OVertex vertex) {
+    protected void updateVertex(ODatabaseDocument graph, OVertex vertex) {
       vertex.setProperty("updated", true);
       vertex.save();
     }
 
-    protected void checkVertex(ODatabaseDocumentTx graph, OVertex vertex) {
+    protected void checkVertex(ODatabaseDocument graph, OVertex vertex) {
       vertex.reload();
       assertEquals(vertex.getProperty("updated"), Boolean.TRUE);
     }
 
-    protected void deleteRecord(ODatabaseDocumentTx graph, OVertex vertex) {
+    protected void deleteRecord(ODatabaseDocument graph, OVertex vertex) {
       vertex.delete();
     }
 
-    protected void checkRecordIsDeleted(ODatabaseDocumentTx graph, OVertex vertex) {
+    protected void checkRecordIsDeleted(ODatabaseDocument graph, OVertex vertex) {
       try {
         vertex.reload();
         fail("Record found while it should be deleted");

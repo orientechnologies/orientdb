@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
@@ -33,9 +33,8 @@ public class DistributedAggregateCollectionTest extends AbstractServerClusterTes
 
   @Override
   protected void executeTest() throws Exception {
-
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
-    db.open("admin", "admin");
+    OrientDB orientDB = serverInstance.get(0).server.getContext();
+    ODatabaseDocument db = orientDB.open(getDatabaseName(), "admin", "admin");
 
     try {
       db.command(new OCommandSQL("INSERT into Item (name) values ('foo')")).execute();

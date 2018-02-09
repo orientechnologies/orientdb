@@ -57,11 +57,7 @@ public class OGtOperatorTest {
 
     Assert.assertFalse(op.execute(BigDecimal.ONE, 2));
     Assert.assertFalse(op.execute(BigDecimal.ONE, 1.0001));
-    try {
-      Assert.assertFalse(op.execute(new Object(), new Object()));
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ClassCastException);
-    }
+
+    Assert.assertFalse(op.execute(new Object(), new Object()));
   }
 }

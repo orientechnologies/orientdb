@@ -21,7 +21,8 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OScheduledEventBuilder;
@@ -61,9 +62,7 @@ public class DistributedSchedulerTest extends AbstractServerClusterTest {
   }
 
   private void eventByAPI() throws InterruptedException {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
-    db.open("admin", "admin");
-
+    final ODatabaseDocument db = serverInstance.get(0).getServerInstance().getContext().open(getDatabaseName(),"admin","admin");
     OFunction func = createFunction(db);
 
     db.getMetadata().getScheduler()
@@ -81,8 +80,8 @@ public class DistributedSchedulerTest extends AbstractServerClusterTest {
   }
 
   public void eventBySQL() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
-    db.open("admin", "admin");
+    OrientDB context = serverInstance.get(0).getServerInstance().getContext();
+    final ODatabaseDocument db = context.open(getDatabaseName(),"admin","admin");
     try {
       OFunction func = createFunction(db);
 
@@ -121,7 +120,7 @@ public class DistributedSchedulerTest extends AbstractServerClusterTest {
       Assert.assertTrue("newCount = " + newCount, newCount - count <= 1);
 
     } finally {
-      db.drop();
+      context.drop(getDatabaseName());
     }
   }
 
@@ -135,7 +134,7 @@ public class DistributedSchedulerTest extends AbstractServerClusterTest {
     return "testDistributedScheduler";
   }
 
-  private OFunction createFunction(final ODatabaseDocumentTx db) {
+  private OFunction createFunction(final ODatabaseDocument db) {
     if (!db.getMetadata().getSchema().existsClass("scheduler_log"))
       db.getMetadata().getSchema().createClass("scheduler_log");
 
@@ -152,7 +151,7 @@ public class DistributedSchedulerTest extends AbstractServerClusterTest {
     return func;
   }
 
-  private Long getLogCounter(final ODatabaseDocumentTx db) {
+  private Long getLogCounter(final ODatabaseDocument db) {
     db.activateOnCurrentThread();
     List<ODocument> result = (List<ODocument>) db.command(new OCommandSQL("select count(*) from scheduler_log")).execute();
     return result.get(0).field("count");

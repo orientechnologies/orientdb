@@ -38,6 +38,9 @@ public class OGtOperator extends SimpleNode implements OBinaryCompareOperator {
     if (iLeft instanceof OIdentifiable && !(iRight instanceof OIdentifiable)) {
       return false;
     }
+    if (!(iLeft instanceof Comparable)) {
+      return false;
+    }
     return ((Comparable<Object>) iLeft).compareTo(iRight) > 0;
   }
 

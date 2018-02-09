@@ -15,12 +15,14 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Test;
 
@@ -52,45 +54,47 @@ public class ServerRemoteDocumentTest extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     String id = String.valueOf(Math.random());
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:localhost/" + getDatabaseName()).open("admin", "admin");
+    try (OrientDB orientDB = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
+      ODatabaseDocument db = orientDB.open(getDatabaseName(), "admin", "admin");
 
-    db.getMetadata().getSchema().createClass("Client");
-    db.getMetadata().getSchema().createClass("Matter");
+      db.getMetadata().getSchema().createClass("Client");
+      db.getMetadata().getSchema().createClass("Matter");
 
-    db.begin();
-    try {
-      ODocument client = new ODocument("Client");
-      ODocument matter = new ODocument("Matter");
-      matter.field("client", client);
-      matter.field("id", id);
-      List clientMatters = new ArrayList();
-      clientMatters.add(matter);
-      client.field("matters", clientMatters);
-      client.save();
-      matter.save();
-      db.commit();
-    } finally {
-      db.close();
-    }
+      db.begin();
+      try {
+        ODocument client = new ODocument("Client");
+        ODocument matter = new ODocument("Matter");
+        matter.field("client", client);
+        matter.field("id", id);
+        List clientMatters = new ArrayList();
+        clientMatters.add(matter);
+        client.field("matters", clientMatters);
+        client.save();
+        matter.save();
+        db.commit();
+      } finally {
+        db.close();
+      }
 
-    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx("remote:localhost/" + getDatabaseName()).open("admin", "admin");
-    db2.begin();
-    try {
-      ODocument matter = null;
-      for (ODocument doc : db2.browseClass("Matter")) {
-        if (doc.field("id").equals(id)) {
-          matter = doc;
-          break;
+      ODatabaseDocument db2 = orientDB.open(getDatabaseName(), "admin", "admin");
+      db2.begin();
+      try {
+        ODocument matter = null;
+        for (ODocument doc : db2.browseClass("Matter")) {
+          if (doc.field("id").equals(id)) {
+            matter = doc;
+            break;
+          }
         }
+        if (matter == null) {
+          throw new Exception("Matter not found with id" + id);
+        }
+        matter.field("client", new ODocument().save(db2.getClusterNameById(db2.getDefaultClusterId())));
+        matter.save();
+        db2.commit();
+      } finally {
+        db2.close();
       }
-      if (matter == null) {
-        throw new Exception("Matter not found with id" + id);
-      }
-      matter.field("client", new ODocument().save(db2.getClusterNameById(db2.getDefaultClusterId())));
-      matter.save();
-      db2.commit();
-    } finally {
-      db2.close();
     }
   }
 }

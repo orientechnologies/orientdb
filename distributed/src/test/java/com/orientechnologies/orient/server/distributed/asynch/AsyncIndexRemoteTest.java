@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -15,9 +17,9 @@ public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
     return "AsyncIndexTest";
   }
 
-  protected void dbClient1() {
-    ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getRemoteURL());
-    graph.open("admin", "admin");
+  protected void dbClient1(BareBonesServer[] servers) {
+    OrientDB orientDB = new OrientDB("remote:localhost:2424", OrientDBConfig.defaultConfig());
+    ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
     try {
       graph.command(new OCommandSQL("create class SMS")).execute();
       graph.command(new OCommandSQL("create property SMS.type string")).execute();
@@ -49,11 +51,13 @@ public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
     } finally {
       OLogManager.instance().info(this, "Shutting down db1");
       graph.close();
+      orientDB.close();
     }
 
     // CHECK ON THE 2ND NODE
-    ODatabaseDocumentTx graph2 = new ODatabaseDocumentTx(getRemoteURL2());
-    graph2.open("admin", "admin");
+    OrientDB orientDB2 = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig());
+    ODatabaseDocument graph2 = orientDB2.open(getDatabaseName(), "admin", "admin");
+
     try {
       try {
         graph2
@@ -74,11 +78,12 @@ public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
     } finally {
       OLogManager.instance().info(this, "Shutting down db2");
       graph2.close();
+      orientDB2.close();
     }
 
     // CHECK ON THE 2ND NODE
-    ODatabaseDocumentTx graph3 = new ODatabaseDocumentTx(getRemoteURL3());
-    graph3.open("admin", "admin");
+    OrientDB orientDB3 = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig());
+    ODatabaseDocument graph3 = orientDB2.open(getDatabaseName(), "admin", "admin");
     try {
       try {
         graph3
@@ -99,11 +104,12 @@ public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
     } finally {
       OLogManager.instance().info(this, "Shutting down db3");
       graph3.close();
+      orientDB3.close();
     }
   }
 
   @Override
-  protected void dbClient2() {
+  protected void dbClient2(BareBonesServer[] servers) {
 
   }
 }

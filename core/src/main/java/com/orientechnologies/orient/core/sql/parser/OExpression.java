@@ -159,6 +159,9 @@ public class OExpression extends SimpleNode {
       return this.arrayConcatExpression.isEarlyCalculated();
     }
 
+    if (booleanValue != null) {
+      return true;
+    }
     if (value instanceof Number) {
       return true;
     }
@@ -332,9 +335,9 @@ public class OExpression extends SimpleNode {
   }
 
   /**
-   * tests if current expression is an indexed function AND the function has also to be executed after the index search.
-   * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
-   * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * tests if current expression is an indexed function AND the function has also to be executed after the index search. In some
+   * cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases the result from
+   * the index is a superset of the expected result, so the function has to be executed anyway for further filtering
    *
    * @param target  the query target
    * @param context the execution context
@@ -542,8 +545,8 @@ public class OExpression extends SimpleNode {
   }
 
   /**
-   * if the condition involved the current pattern (MATCH statement, eg. $matched.something = foo),
-   * returns the name of involved pattern aliases ("something" in this case)
+   * if the condition involved the current pattern (MATCH statement, eg. $matched.something = foo), returns the name of involved
+   * pattern aliases ("something" in this case)
    *
    * @return a list of pattern aliases involved in this condition. Null it does not involve the pattern
    */
@@ -624,22 +627,23 @@ public class OExpression extends SimpleNode {
   }
 
   public boolean isDefinedFor(OResult currentRecord) {
-    if(mathExpression!=null){
+    if (mathExpression != null) {
       return mathExpression.isDefinedFor(currentRecord);
-    }else {
+    } else {
       return true;
     }
   }
+
   public boolean isDefinedFor(OElement currentRecord) {
-    if(mathExpression!=null){
+    if (mathExpression != null) {
       return mathExpression.isDefinedFor(currentRecord);
-    }else {
+    } else {
       return true;
     }
   }
 
   public OCollate getCollate(OResult currentRecord, OCommandContext ctx) {
-    if(mathExpression!=null) {
+    if (mathExpression != null) {
       return mathExpression.getCollate(currentRecord, ctx);
     }
     return null;

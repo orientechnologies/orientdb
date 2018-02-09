@@ -1442,251 +1442,14 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return (RET) record;
   }
 
-  /**
-   * This method is internal, it can be subject to signature change or be removed, do not use.
-   *
-   * @Internal
-   */
-  public <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
+  public abstract <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
       final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback) {
+      ORecordCallback<Integer> recordUpdatedCallback);
 
-    checkOpenness();
-    checkIfActive();
-    if (!record.isDirty())
-      return (RET) record;
 
-    final ORecordId rid = (ORecordId) record.getIdentity();
+  public abstract void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
+      boolean prohibitTombstones);
 
-    if (rid == null)
-      throw new ODatabaseException(
-          "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
-
-    if (supportsMicroTransactions(record)) {
-      final OMicroTransaction microTx = beginMicroTransaction();
-      if (microTx != null) {
-        try {
-          microTx.saveRecord(record, clusterName, mode, forceCreate, recordCreatedCallback, recordUpdatedCallback);
-        } catch (Exception e) {
-          endMicroTransaction(false);
-          throw e;
-        }
-        endMicroTransaction(true);
-        return (RET) record;
-      }
-    }
-
-    record.setInternalStatus(ORecordElement.STATUS.MARSHALLING);
-    try {
-
-      byte[] stream = null;
-      final OStorageOperationResult<Integer> operationResult;
-
-      getMetadata().makeThreadLocalSchemaSnapshot();
-      if (record instanceof ODocument)
-        ODocumentInternal.checkClass((ODocument) record, this);
-      ORecordSerializationContext.pushContext();
-      final boolean isNew = forceCreate || rid.isNew();
-      try {
-
-        final ORecordHook.TYPE triggerType;
-        if (isNew) {
-          // NOTIFY IDENTITY HAS CHANGED
-          ORecordInternal.onBeforeIdentityChanged(record);
-          int id = assignAndCheckCluster(record, clusterName);
-          clusterName = getClusterNameById(id);
-          checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
-          triggerType = ORecordHook.TYPE.BEFORE_CREATE;
-        } else {
-          clusterName = getClusterNameById(record.getIdentity().getClusterId());
-          checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, clusterName);
-          triggerType = ORecordHook.TYPE.BEFORE_UPDATE;
-        }
-        stream = getSerializer().toStream(record, false);
-
-        final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
-
-        if (hookResult == ORecordHook.RESULT.RECORD_CHANGED) {
-          if (record instanceof ODocument)
-            ((ODocument) record).validate();
-          stream = updateStream(record);
-        } else if (hookResult == ORecordHook.RESULT.SKIP_IO)
-          return (RET) record;
-        else if (hookResult == ORecordHook.RESULT.RECORD_REPLACED)
-          // RETURNED THE REPLACED RECORD
-          return (RET) OHookReplacedRecordThreadLocal.INSTANCE.get();
-
-        ORecordSaveThreadLocal.setLast(record);
-        try {
-          // SAVE IT
-          boolean updateContent = ORecordInternal.isContentChanged(record);
-          byte[] content = (stream == null) ? OCommonConst.EMPTY_BYTE_ARRAY : stream;
-          byte recordType = ORecordInternal.getRecordType(record);
-          final int modeIndex = mode.ordinal();
-
-          // CHECK IF RECORD TYPE IS SUPPORTED
-          Orient.instance().getRecordFactoryManager().getRecordTypeClass(recordType);
-
-          if (forceCreate || ORecordId.isNew(rid.getClusterPosition())) {
-            // CREATE
-            final OStorageOperationResult<OPhysicalPosition> ppos = getStorage()
-                .createRecord(rid, content, ver, recordType, modeIndex, (ORecordCallback<Long>) recordCreatedCallback);
-            operationResult = new OStorageOperationResult<Integer>(ppos.getResult().recordVersion, ppos.isMoved());
-
-          } else {
-            // UPDATE
-            operationResult = getStorage()
-                .updateRecord(rid, updateContent, content, ver, recordType, modeIndex, recordUpdatedCallback);
-          }
-
-          final int version = operationResult.getResult();
-
-          if (isNew) {
-            // UPDATE INFORMATION: CLUSTER ID+POSITION
-            ((ORecordId) record.getIdentity()).copyFrom(rid);
-            // NOTIFY IDENTITY HAS CHANGED
-            ORecordInternal.onAfterIdentityChanged(record);
-            // UPDATE INFORMATION: CLUSTER ID+POSITION
-          }
-
-          if (operationResult.getModifiedRecordContent() != null)
-            stream = operationResult.getModifiedRecordContent();
-          else if (version > record.getVersion() + 1 && getStorage() instanceof OStorageProxy)
-            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
-            record.unload();
-
-          ORecordInternal.fill(record, rid, version, stream, false);
-
-          callbackHookSuccess(record, isNew, stream, operationResult);
-        } catch (Exception t) {
-          callbackHookFailure(record, isNew, stream);
-          throw t;
-        }
-      } finally {
-        callbackHookFinalize(record, isNew, stream);
-        ORecordSerializationContext.pullContext();
-        getMetadata().clearThreadLocalSchemaSnapshot();
-        ORecordSaveThreadLocal.removeLast();
-      }
-
-      if (stream != null && stream.length > 0 && !operationResult.isMoved())
-        // ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
-        getLocalCache().updateRecord(record);
-    } catch (OException e) {
-      throw e;
-    } catch (Exception t) {
-      if (!ORecordId.isValid(record.getIdentity().getClusterPosition()))
-        throw OException
-            .wrapException(new ODatabaseException("Error on saving record in cluster #" + record.getIdentity().getClusterId()), t);
-      else
-        throw OException.wrapException(new ODatabaseException("Error on saving record " + record.getIdentity()), t);
-
-    } finally {
-      record.setInternalStatus(ORecordElement.STATUS.LOADED);
-    }
-    return (RET) record;
-  }
-
-  /**
-   * This method is internal, it can be subject to signature change or be removed, do not use.
-   *
-   * @Internal
-   */
-  public void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
-      boolean prohibitTombstones) {
-    checkOpenness();
-    checkIfActive();
-
-    final ORecordId rid = (ORecordId) record.getIdentity();
-
-    if (rid == null)
-      throw new ODatabaseException(
-          "Cannot delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
-
-    if (!rid.isValid())
-      return;
-
-    record = record.getRecord();
-    if (record == null)
-      return;
-
-    final OMicroTransaction microTx = beginMicroTransaction();
-    if (microTx != null) {
-      try {
-        microTx.deleteRecord(record.getRecord(), iMode);
-      } catch (Exception e) {
-        endMicroTransaction(false);
-        throw e;
-      }
-      endMicroTransaction(true);
-      return;
-    }
-
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.getClusterId()));
-
-    ORecordSerializationContext.pushContext();
-    getMetadata().makeThreadLocalSchemaSnapshot();
-    try {
-      if (record instanceof ODocument) {
-        ODocumentInternal.checkClass((ODocument) record, this);
-      }
-      try {
-        // if cache is switched off record will be unreachable after delete.
-        ORecord rec = record.getRecord();
-        if (rec != null) {
-          callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, rec);
-
-          if (rec instanceof ODocument)
-            ORidBagDeleter.deleteAllRidBags((ODocument) rec);
-        }
-
-        final OStorageOperationResult<Boolean> operationResult;
-        try {
-          if (prohibitTombstones) {
-            final boolean result = getStorage().cleanOutRecord(rid, iVersion, iMode.ordinal(), null);
-            if (!result && iRequired)
-              throw new ORecordNotFoundException(rid);
-            operationResult = new OStorageOperationResult<Boolean>(result);
-          } else {
-            final OStorageOperationResult<Boolean> result = getStorage().deleteRecord(rid, iVersion, iMode.ordinal(), null);
-            if (!result.getResult() && iRequired)
-              throw new ORecordNotFoundException(rid);
-            operationResult = new OStorageOperationResult<Boolean>(result.getResult());
-          }
-
-          if (!operationResult.isMoved() && rec != null)
-            callbackHooks(ORecordHook.TYPE.AFTER_DELETE, rec);
-          else if (rec != null)
-            callbackHooks(ORecordHook.TYPE.DELETE_REPLICATED, rec);
-        } catch (Exception t) {
-          callbackHooks(ORecordHook.TYPE.DELETE_FAILED, rec);
-          throw t;
-        } finally {
-          callbackHooks(ORecordHook.TYPE.FINALIZE_DELETION, rec);
-        }
-
-        clearDocumentTracking(rec);
-
-        // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
-        if (!operationResult.isMoved()) {
-          getLocalCache().deleteRecord(rid);
-        }
-
-      } catch (OException e) {
-        // RE-THROW THE EXCEPTION
-        throw e;
-
-      } catch (Exception t) {
-        // WRAP IT AS ODATABASE EXCEPTION
-        throw OException
-            .wrapException(new ODatabaseException("Error on deleting record in cluster #" + record.getIdentity().getClusterId()),
-                t);
-      }
-    } finally {
-      ORecordSerializationContext.pullContext();
-      getMetadata().clearThreadLocalSchemaSnapshot();
-    }
-  }
 
   /**
    * This method is internal, it can be subject to signature change or be removed, do not use.
@@ -2253,7 +2016,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
     if (iRecord instanceof OElement && dirtyManager != null && dirtyManager.getReferences() != null && !dirtyManager.getReferences()
         .isEmpty()) {
-      if (((OElement) iRecord).isVertex() || ((OElement) iRecord).isEdge() && !getTransaction().isActive()) {
+      if (((OElement) iRecord).isVertex() || ((OElement) iRecord).isEdge() && !getTransaction().isActive() && inHook.isEmpty()) {
         return saveGraph(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
       }
     }
@@ -2708,12 +2471,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return inHook.add(id);
   }
 
-  private void callbackHookFailure(ORecord record, boolean wasNew, byte[] stream) {
+  protected void callbackHookFailure(ORecord record, boolean wasNew, byte[] stream) {
     if (stream != null && stream.length > 0)
       callbackHooks(wasNew ? ORecordHook.TYPE.CREATE_FAILED : ORecordHook.TYPE.UPDATE_FAILED, record);
   }
 
-  private void callbackHookSuccess(final ORecord record, final boolean wasNew, final byte[] stream,
+  protected void callbackHookSuccess(final ORecord record, final boolean wasNew, final byte[] stream,
       final OStorageOperationResult<Integer> operationResult) {
     if (stream != null && stream.length > 0) {
       final ORecordHook.TYPE hookType;
@@ -2727,7 +2490,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     }
   }
 
-  private void callbackHookFinalize(final ORecord record, final boolean wasNew, final byte[] stream) {
+  protected void callbackHookFinalize(final ORecord record, final boolean wasNew, final byte[] stream) {
     if (stream != null && stream.length > 0) {
       final ORecordHook.TYPE hookType;
       hookType = wasNew ? ORecordHook.TYPE.FINALIZE_CREATION : ORecordHook.TYPE.FINALIZE_UPDATE;
@@ -2737,7 +2500,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     }
   }
 
-  private void clearDocumentTracking(final ORecord record) {
+  protected void clearDocumentTracking(final ORecord record) {
     if (record instanceof ODocument && ((ODocument) record).isTrackingChanges()) {
       ODocumentInternal.clearTrackData((ODocument) record);
     }
@@ -2750,32 +2513,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       throw new IllegalArgumentException(
           "Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
               + "' but has been created with class '" + recordClass + "'");
-  }
-
-  private byte[] updateStream(final ORecord record) {
-    ORecordSerializationContext.pullContext();
-
-    ODirtyManager manager = ORecordInternal.getDirtyManager(record);
-    Set<ORecord> newRecords = manager.getNewRecords();
-    Set<ORecord> updatedRecords = manager.getUpdateRecords();
-    manager.clearForSave();
-    if (newRecords != null) {
-      for (ORecord newRecord : newRecords) {
-        if (newRecord != record)
-          getTransaction().saveRecord(newRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
-      }
-    }
-    if (updatedRecords != null) {
-      for (ORecord updatedRecord : updatedRecords) {
-        if (updatedRecord != record)
-          getTransaction().saveRecord(updatedRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
-      }
-    }
-
-    ORecordSerializationContext.pushContext();
-    ORecordInternal.unsetDirty(record);
-    record.setDirty();
-    return serializer.toStream(record, false);
   }
 
   protected void init() {
@@ -2944,31 +2681,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     OEdgeDelegate result = new OEdgeDelegate(from, to, clazz, iClassName);
 
     return result;
-  }
-
-  protected boolean supportsMicroTransactions(ORecord record) {
-    return true;
-  }
-
-  protected abstract OMicroTransaction beginMicroTransaction();
-
-  private void endMicroTransaction(boolean success) {
-    assert microTransaction != null;
-
-    try {
-      if (success)
-        try {
-          microTransaction.commit();
-        } catch (Exception e) {
-          microTransaction.rollbackAfterFailedCommit();
-          throw e;
-        }
-      else
-        microTransaction.rollback();
-    } finally {
-      if (!microTransaction.isActive())
-        microTransaction = null;
-    }
   }
 
   public void queryStarted(String id, OResultSet rs) {

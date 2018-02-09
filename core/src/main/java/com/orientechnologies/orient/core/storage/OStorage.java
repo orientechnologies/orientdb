@@ -87,9 +87,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(ORecordId rid, String fetchPlan, boolean ignoreCache,
       int recordVersion) throws ORecordNotFoundException;
 
-  OStorageOperationResult<Integer> updateRecord(ORecordId iRecordId, boolean updateContent, byte[] iContent, int iVersion,
-      byte iRecordType, int iMode, ORecordCallback<Integer> iCallback);
-
   /**
    * Resurrects a record that was previously deleted, with a new content.
    */

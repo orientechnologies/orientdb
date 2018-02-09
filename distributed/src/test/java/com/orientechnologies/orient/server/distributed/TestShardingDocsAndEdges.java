@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -13,12 +12,12 @@ import java.util.Set;
 
 public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
 
-  protected final static int  SERVERS        = 2;
-  private static final String clusterNodeUSA = "client-type_usa";
-  private static final String clusterNodeEUR = "client-type_eur";
-  private static int          testNumber     = 0;
-  private ODatabaseDocumentTx USA;
-  private ODatabaseDocumentTx EUR;
+  protected final static int    SERVERS        = 2;
+  private static final   String clusterNodeUSA = "client-type_usa";
+  private static final   String clusterNodeEUR = "client-type_eur";
+  private static         int    testNumber     = 0;
+  private ODatabaseDocument USA;
+  private ODatabaseDocument EUR;
 
   @Test
   public void test() throws Exception {
@@ -50,8 +49,8 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
-    EUR = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
-    USA = new ODatabaseDocumentTx("plocal:target/server1/databases/" + getDatabaseName());
+    EUR = serverInstance.get(0).getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
+    USA = serverInstance.get(1).getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
 
     Set<String> queryResult;
 
@@ -59,19 +58,19 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     Thread.sleep(1000);
 
     // test 0
-    queryResult = execute(USA, "select from `cluster:" + clusterNodeUSA+"`");
+    queryResult = execute(USA, "select from `cluster:" + clusterNodeUSA + "`");
     compare(queryResult, new String[] { "mike" });
 
-    queryResult = execute(USA, "select from `cluster:" + clusterNodeEUR+"`");
+    queryResult = execute(USA, "select from `cluster:" + clusterNodeEUR + "`");
     compare(queryResult, new String[] {});
 
     queryResult = execute(USA, "select from `Client-Type`");
     compare(queryResult, new String[] { "mike" });
 
-    queryResult = execute(EUR, "select from `cluster:" + clusterNodeUSA+"`");
+    queryResult = execute(EUR, "select from `cluster:" + clusterNodeUSA + "`");
     compare(queryResult, new String[] { "mike" });
 
-    queryResult = execute(EUR, "select from `cluster:" + clusterNodeEUR+"`");
+    queryResult = execute(EUR, "select from `cluster:" + clusterNodeEUR + "`");
     compare(queryResult, new String[] {});
 
     queryResult = execute(EUR, "select from `Client-Type`");
@@ -81,19 +80,19 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     Thread.sleep(1000);
 
     // test 6
-    queryResult = execute(USA, "select from `cluster:" + clusterNodeUSA+"`");
+    queryResult = execute(USA, "select from `cluster:" + clusterNodeUSA + "`");
     compare(queryResult, new String[] { "mike" });
 
-    queryResult = execute(USA, "select from `cluster:" + clusterNodeEUR+"`");
+    queryResult = execute(USA, "select from `cluster:" + clusterNodeEUR + "`");
     compare(queryResult, new String[] { "phoebe" });
 
     queryResult = execute(USA, "select from `Client-Type`");
     compare(queryResult, new String[] { "mike", "phoebe" });
 
-    queryResult = execute(EUR, "select from `cluster:" + clusterNodeUSA+"`");
+    queryResult = execute(EUR, "select from `cluster:" + clusterNodeUSA + "`");
     compare(queryResult, new String[] { "mike" });
 
-    queryResult = execute(EUR, "select from `cluster:" + clusterNodeEUR+"`");
+    queryResult = execute(EUR, "select from `cluster:" + clusterNodeEUR + "`");
     compare(queryResult, new String[] { "phoebe" });
 
     queryResult = execute(EUR, "select from `Client-Type`");
@@ -110,13 +109,13 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     compare(queryResult, new String[] { "mike", "phoebe" });
 
     // LINE A
-    execute(USA, "create edge Follows from (select from `Client-Type` where name = 'mike') to (select from `Client-Type` where name = 'phoebe')");
+    execute(USA,
+        "create edge Follows from (select from `Client-Type` where name = 'mike') to (select from `Client-Type` where name = 'phoebe')");
   }
 
   static Set<String> execute(ODatabaseDocument db, String command) throws InterruptedException {
     System.out.println(command);
     Set<String> resultSet = new HashSet();
-    db.open("admin", "admin");
 
     // CREATE A GRAPH TO MANIPULATE ELEMENTS
 
@@ -127,7 +126,7 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
       if (o instanceof List) {
         List<ODocument> resultList = (List) o;
         for (OIdentifiable d : resultList) {
-          if(d.getRecord() instanceof  ODocument) {
+          if (d.getRecord() instanceof ODocument) {
             resultSet.add((String) ((ODocument) d.getRecord()).field("name"));
           }
         }

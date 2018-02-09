@@ -245,11 +245,29 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     synchronized (ops.pendingOps) {
       List<OLiveQueryOp> list = ops.pendingOps.get(db);
       if (list == null) {
-        list = new ArrayList<OLiveQueryOp>();
+        list = new ArrayList<>();
         ops.pendingOps.put(db, list);
       }
-      list.add(result);
+      if (result.type == ORecordOperation.UPDATED) {
+        OLiveQueryOp prev = prevousUpdate(list, result.originalDoc);
+        if (prev == null) {
+          list.add(result);
+        } else {
+          prev.after = result.after;
+        }
+      } else {
+        list.add(result);
+      }
     }
+  }
+
+  private OLiveQueryOp prevousUpdate(List<OLiveQueryOp> list, ODocument doc) {
+    for (OLiveQueryOp oLiveQueryOp : list) {
+      if (oLiveQueryOp.originalDoc == doc) {
+        return oLiveQueryOp;
+      }
+    }
+    return null;
   }
 
   private OResultInternal calculateBefore(ODocument iDocument) {

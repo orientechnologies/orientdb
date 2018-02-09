@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.server.distributed.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
@@ -43,7 +42,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
   public void executeTest() throws Exception {
     // Test two instances only;
     Assert.assertTrue("Test must run with at least 2 dbs", THREAD_COUNT >= 2);
-    final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[THREAD_COUNT];
+    final ODatabaseDocument[] dbs = new ODatabaseDocument[THREAD_COUNT];
     for (int i = 0; i < THREAD_COUNT; ++i) {
       dbs[i] = poolFactory.get(getDatabaseURL(serverInstance.get(i)), "admin", "admin").acquire();
     }
@@ -53,7 +52,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     executeCachedSequenceTest(dbs, "seq1");
   }
 
-  private void executeCachedSequenceTest(final ODatabaseDocumentTx[] dbs, final String sequenceName) {
+  private void executeCachedSequenceTest(final ODatabaseDocument[] dbs, final String sequenceName) {
     // Assuming seq2.next() is called once after calling seq1.next() once, and cache size is
     // C, seq2.current() - seq1.current() = C
 
@@ -67,16 +66,16 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     Assert.assertEquals(seq1.getSequenceType(), seq2.getSequenceType());
     Assert.assertEquals(seq1.getSequenceType(), SEQUENCE_TYPE.CACHED);
 
-    ODatabaseRecordThreadLocal.instance().set(dbs[0]);
+    dbs[0].activateOnCurrentThread();
     long v1 = seq1.next();
 
-    ODatabaseRecordThreadLocal.instance().set(dbs[1]);
+    dbs[1].activateOnCurrentThread();
     long v2 = seq2.next();
 
     Assert.assertEquals((long) CACHE_SIZE, v2 - v1);
   }
 
-  private void executeOrderedSequenceTest(final ODatabaseDocumentTx[] dbs, final String sequenceName) throws Exception {
+  private void executeOrderedSequenceTest(final ODatabaseDocument[] dbs, final String sequenceName) throws Exception {
     OSequenceLibrary seq1 = dbs[0].getMetadata().getSequenceLibrary();
     OSequenceLibrary seq2 = dbs[1].getMetadata().getSequenceLibrary();
 
@@ -108,7 +107,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     }
   }
 
-  private void executeParallelSyncTest(final ODatabaseDocumentTx[] dbs, final String sequenceName, final SEQUENCE_TYPE sequenceType)
+  private void executeParallelSyncTest(final ODatabaseDocument[] dbs, final String sequenceName, final SEQUENCE_TYPE sequenceType)
       throws Exception {
     // Run a function retrieving SEQ_RUN_COUNT numbers, in parallel,
     // to make sure they are distinct.
@@ -119,8 +118,8 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
       callables.add(new Callable<List<Long>>() {
         @Override
         public List<Long> call() throws Exception {
-          final ODatabaseDocumentTx db = dbs[id];
-          ODatabaseRecordThreadLocal.instance().set(db);
+          final ODatabaseDocument db = dbs[id];
+          db.activateOnCurrentThread();
 
           List<Long> res = new ArrayList<Long>(SEQ_RUN_COUNT);
 

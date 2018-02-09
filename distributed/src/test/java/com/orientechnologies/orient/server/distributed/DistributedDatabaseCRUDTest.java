@@ -2,10 +2,8 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -13,7 +11,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.Assert;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -31,6 +28,7 @@ public final class DistributedDatabaseCRUDTest {
    ******************************************************************************************************/
   private String        dbName;
   private ODatabasePool graphReadFactory;
+  private OrientDB      orientDB;
   private int           totalRecords;
 
   public DistributedDatabaseCRUDTest(String dbName, int totalRecords) {
@@ -43,12 +41,11 @@ public final class DistributedDatabaseCRUDTest {
     checkAndCreateDatabase(dbName);
     int totalClassCount = 50;
     int mainNodeDataCount = 50;
-    ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDBURL());
-    if (orientGraph.exists()) {
-      orientGraph.open("admin", "admin");
-    } else {
-      orientGraph.create();
+    OrientDB orientDb = getOrientDB();
+    if (!orientDB.exists(dbName)) {
+      orientDb.create(dbName, ODatabaseType.PLOCAL);
     }
+    ODatabaseSession orientGraph = orientDb.open(dbName,"admin","admin");
     createVertexTypeWithUniqueIndex(orientGraph, "Test", "property1", "property2");
     for (int i = 1; i <= totalClassCount; i++) {
       createVertexType(orientGraph, "Test" + i, "property1", "property2");
@@ -225,7 +222,6 @@ public final class DistributedDatabaseCRUDTest {
               st = System.currentTimeMillis();
             }
             ODatabaseDocument graph = graphFactory.acquire();
-
 
             try {
               boolean update = true;
@@ -412,10 +408,19 @@ public final class DistributedDatabaseCRUDTest {
     return "remote:" + "localhost:2424;localhost:2425;localhost:2426" + "/" + dbName;
   }
 
+  private OrientDB getOrientDB() {
+    if (orientDB == null) {
+      log("Datastore pool created with size : 50, db location: " + getDBURL());
+      orientDB = new OrientDB("remote:" + "localhost:2424;localhost:2425;localhost:2426", "root", "root",
+          OrientDBConfig.defaultConfig());
+    }
+    return orientDB;
+  }
+
   private ODatabasePool getGraphFactory() {
     if (graphReadFactory == null) {
       log("Datastore pool created with size : 50, db location: " + getDBURL());
-      graphReadFactory = new ODatabasePool(getDBURL(), "admin", "admin", OrientDBConfig.defaultConfig());
+      graphReadFactory = new ODatabasePool(getOrientDB(), dbName, "root", "root", OrientDBConfig.defaultConfig());
     }
     return graphReadFactory;
   }
@@ -433,8 +438,8 @@ public final class DistributedDatabaseCRUDTest {
         log(dbName + " database already exists");
       }
       serverAdmin.close();
-      ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDBURL());
-      orientGraph.open("admin", "admin");
+
+      ODatabaseDocument orientGraph = getGraphFactory().acquire();
 
       orientGraph.command(new OCommandSQL("ALTER DATABASE custom strictSQL=false")).execute();
       orientGraph.close();
@@ -457,7 +462,7 @@ public final class DistributedDatabaseCRUDTest {
    * @param orientGraph
    * @param className
    */
-  public void createVertexType(ODatabaseDocumentTx orientGraph, String className, String property, String keyIndexProperty) {
+  public void createVertexType(ODatabaseDocument orientGraph, String className, String property, String keyIndexProperty) {
     String edgeClassName = className;
     String vertexClassName = className + "Node";
     OClass clazz = orientGraph.getClass(edgeClassName);
@@ -486,7 +491,7 @@ public final class DistributedDatabaseCRUDTest {
    * @param orientGraph
    * @param className
    */
-  public void createVertexTypeWithUniqueIndex(ODatabaseDocumentTx orientGraph, String className, String property,
+  public void createVertexTypeWithUniqueIndex(ODatabaseDocument orientGraph, String className, String property,
       String keyIndexProperty) {
     String edgeClassName = className;
     String vertexClassName = className + "Node";

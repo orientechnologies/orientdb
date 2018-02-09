@@ -340,6 +340,9 @@ public class OSelectExecutionPlanner {
     } else if (item.getIndex() != null) {
       String indexName = item.getIndex().getIndexName();
       OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(indexName);
+      if (idx == null) {
+        throw new OCommandExecutionException("Index " + indexName + " does not exist");
+      }
       result.addAll(idx.getClusters());
       if (result.isEmpty()) {
         return null;
@@ -1163,6 +1166,11 @@ public class OSelectExecutionPlanner {
       throw new OCommandExecutionException("Index not found: " + indexName);
     }
 
+    int[] filterClusterIds = null;
+    if (filterClusters != null) {
+      filterClusterIds = filterClusters.stream().map(name -> ctx.getDatabase().getClusterIdByName(name)).mapToInt(i -> i).toArray();
+    }
+
     switch (indexIdentifier.getType()) {
     case INDEX:
       OBooleanExpression keyCondition = null;
@@ -1212,20 +1220,15 @@ public class OSelectExecutionPlanner {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
       result.chain(new FetchFromIndexValuesStep(index, true, ctx, profilingEnabled));
-      result.chain(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
-      if (filterClusters != null) {
-        result.chain(new FilterByClustersStep(filterClusters, ctx, profilingEnabled));
-      }
+      result.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
+
       break;
     case VALUESDESC:
       if (!index.supportsOrderedIterations()) {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
       result.chain(new FetchFromIndexValuesStep(index, false, ctx, profilingEnabled));
-      result.chain(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
-      if (filterClusters != null) {
-        result.chain(new FilterByClustersStep(filterClusters, ctx, profilingEnabled));
-      }
+      result.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
       break;
     }
   }
@@ -1443,10 +1446,12 @@ public class OSelectExecutionPlanner {
 
           OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
           subPlan.chain(step);
-          subPlan.chain(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
+          int[] filterClusterIds = null;
           if (filterClusters != null) {
-            subPlan.chain(new FilterByClustersStep(filterClusters, ctx, profilingEnabled));
+            filterClusterIds = filterClusters.stream().map(name -> ctx.getDatabase().getClusterIdByName(name)).mapToInt(i -> i)
+                .toArray();
           }
+          subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
           if (!block.getSubBlocks().isEmpty()) {
             subPlan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
           }
@@ -1592,10 +1597,12 @@ public class OSelectExecutionPlanner {
       }
       if (indexFound && orderType != null) {
         plan.chain(new FetchFromIndexValuesStep(idx, orderType.equals(OOrderByItem.ASC), ctx, profilingEnabled));
-        plan.chain(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
+        int[] filterClusterIds = null;
         if (filterClusters != null) {
-          plan.chain(new FilterByClustersStep(filterClusters, ctx, profilingEnabled));
+          filterClusterIds = filterClusters.stream().map(name -> ctx.getDatabase().getClusterIdByName(name)).mapToInt(i -> i)
+              .toArray();
         }
+        plan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
         if (info.serverToClusters.size() == 1) {
           info.orderApplied = true;
         }
@@ -1732,10 +1739,12 @@ public class OSelectExecutionPlanner {
       result.add(
           new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, !Boolean.FALSE.equals(orderAsc), ctx,
               profilingEnabled));
-      result.add(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
+      int[] filterClusterIds = null;
       if (filterClusters != null) {
-        result.add(new FilterByClustersStep(filterClusters, ctx, profilingEnabled));
+        filterClusterIds = filterClusters.stream().map(name -> ctx.getDatabase().getClusterIdByName(name)).mapToInt(i -> i)
+            .toArray();
       }
+      result.add(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
       if (orderAsc != null && info.orderBy != null && fullySorted(info.orderBy, desc.keyCondition, desc.idx)
           && info.serverToClusters.size() == 1) {
         info.orderApplied = true;
@@ -1844,10 +1853,12 @@ public class OSelectExecutionPlanner {
     for (IndexSearchDescriptor desc : indexSearchDescriptors) {
       OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
       subPlan.chain(new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, ctx, profilingEnabled));
-      subPlan.chain(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
+      int[] filterClusterIds = null;
       if (filterClusters != null) {
-        subPlan.chain(new FilterByClustersStep(filterClusters, ctx, profilingEnabled));
+        filterClusterIds = filterClusters.stream().map(name -> ctx.getDatabase().getClusterIdByName(name)).mapToInt(i -> i)
+            .toArray();
       }
+      subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
       if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
         subPlan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx, profilingEnabled));
       }

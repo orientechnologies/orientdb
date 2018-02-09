@@ -16,11 +16,11 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -41,6 +41,7 @@ import java.util.concurrent.Future;
 public final class DistributedConfigReloadTest {
 
   private String dbName = "distconfigureloaddb";
+  private OrientDB orientDB;
 
   public DistributedConfigReloadTest(String dbName) {
     this.dbName = dbName;
@@ -51,12 +52,7 @@ public final class DistributedConfigReloadTest {
     if (checkAndCreateDatabase(dbName)) {
       log("Creating data for database " + dbName);
       int totalClassCount = 50;
-      ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDBURL());
-      if (orientGraph.exists()) {
-        orientGraph.open("admin", "admin");
-      } else {
-        orientGraph.create();
-      }
+      ODatabaseDocument orientGraph = getGraphFactory().acquire();
       createVertexType(orientGraph, "Test", "property1", "property2");
       for (int i = 1; i <= totalClassCount; i++) {
         createVertexType(orientGraph, "Test" + i, "property1", "property2");
@@ -308,9 +304,18 @@ public final class DistributedConfigReloadTest {
   private ODatabasePool getGraphFactory() {
     if (graphReadFactory == null) {
       log("Datastore pool created with size : 50, db location: " + getDBURL());
-      graphReadFactory = new ODatabasePool(getDBURL(), "admin", "admin", OrientDBConfig.defaultConfig());
+      graphReadFactory = new ODatabasePool(getOrientDB(), dbName, "admin", "admin", OrientDBConfig.defaultConfig());
     }
     return graphReadFactory;
+  }
+
+  private OrientDB getOrientDB() {
+    if (orientDB == null) {
+      log("Datastore pool created with size : 50, db location: " + getDBURL());
+      orientDB = new OrientDB("remote:localhost:2424;localhost:2425;localhost:2426", "root", "root",
+          OrientDBConfig.defaultConfig());
+    }
+    return orientDB;
   }
 
   /**
@@ -319,22 +324,18 @@ public final class DistributedConfigReloadTest {
   public boolean checkAndCreateDatabase(String dbName) {
     boolean isNewDB = false;
     try {
-      OServerAdmin serverAdmin = new OServerAdmin(getDBURL()).connect("root", "root");
-      if (!serverAdmin.existsDatabase("plocal")) {
+      OrientDB orientDB = getOrientDB();
+      if (!orientDB.exists(dbName)) {
         log("Database does not exists. New database is created");
-        serverAdmin.createDatabase(dbName, "graph", "plocal");
-        ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDBURL());
-        if (orientGraph.exists()) {
-          orientGraph.open("admin", "admin");
-        } else {
-        }
+        orientDB.create(dbName, ODatabaseType.PLOCAL);
+
+        ODatabaseDocument orientGraph = orientDB.open(dbName, "admin", "admin");
         orientGraph.command(new OCommandSQL("ALTER DATABASE custom strictSQL=false")).execute();
         orientGraph.close();
         isNewDB = true;
       } else {
         log(dbName + " database already exists");
       }
-      serverAdmin.close();
     } catch (Exception ex) {
       log("Failed to create database", ex);
     }

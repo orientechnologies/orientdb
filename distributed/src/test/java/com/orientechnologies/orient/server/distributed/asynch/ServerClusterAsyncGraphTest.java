@@ -15,13 +15,15 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
@@ -38,7 +40,7 @@ import org.junit.Test;
  */
 public class ServerClusterAsyncGraphTest extends AbstractServerClusterTest {
   final static int SERVERS = 2;
-  private OVertex      v1;
+  private OVertex v1;
   private OVertex v2;
   private OVertex v3;
 
@@ -61,13 +63,9 @@ public class ServerClusterAsyncGraphTest extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     {
-      ODatabaseDocumentTx g = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
-      if(g.exists()){
-        g.open("admin", "admin");
-      }else {
-        g.create();
-      }
-
+      OrientDB orientdb = serverInstance.get(0).getServerInstance().getContext();
+      orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
+      ODatabaseDocument g = orientdb.open(getDatabaseName(), "admin", "admin");
 
       try {
         g.createClass("Post", "V");
@@ -83,13 +81,10 @@ public class ServerClusterAsyncGraphTest extends AbstractServerClusterTest {
     }
 
     // CHECK VERTEX CREATION ON ALL THE SERVERS
-    for (int s = 0; s<SERVERS; ++s) {
-      ODatabaseDocumentTx g2= new ODatabaseDocumentTx("plocal:target/server" + s + "/databases/" + getDatabaseName());
-      if(g2.exists()){
-        g2.open("admin", "admin");
-      }else {
-        g2.create();
-      }
+    for (int s = 0; s < SERVERS; ++s) {
+      OrientDB orientdb = serverInstance.get(s).getServerInstance().getContext();
+      orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
+      ODatabaseDocument g2 = orientdb.open(getDatabaseName(), "admin", "admin");
 
       try {
 
@@ -103,20 +98,17 @@ public class ServerClusterAsyncGraphTest extends AbstractServerClusterTest {
     }
 
     {
-      ODatabaseDocumentTx g = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
-      if(g.exists()){
-        g.open("admin", "admin");
-      }else {
-        g.create();
-      }
-
+      OrientDB orientdb = serverInstance.get(0).getServerInstance().getContext();
+      orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
+      ODatabaseDocument g = orientdb.open(getDatabaseName(), "admin", "admin");
       try {
-        g.command(new OCommandSQL("create edge Own from (select from User) to (select from Post)").onAsyncReplicationError(new OAsyncReplicationError() {
-          @Override
-          public ACTION onAsyncReplicationError(Throwable iException, int iRetry) {
-            return iException instanceof ONeedRetryException && iRetry<=3 ? ACTION.RETRY : ACTION.IGNORE;
-          }
-        })).execute();
+        g.command(new OCommandSQL("create edge Own from (select from User) to (select from Post)")
+            .onAsyncReplicationError(new OAsyncReplicationError() {
+              @Override
+              public ACTION onAsyncReplicationError(Throwable iException, int iRetry) {
+                return iException instanceof ONeedRetryException && iRetry <= 3 ? ACTION.RETRY : ACTION.IGNORE;
+              }
+            })).execute();
 
       } finally {
         g.close();
@@ -126,13 +118,10 @@ public class ServerClusterAsyncGraphTest extends AbstractServerClusterTest {
     Thread.sleep(1000);
 
     // CHECK VERTEX CREATION ON ALL THE SERVERS
-    for (int s = 0; s<SERVERS; ++s) {
-      ODatabaseDocumentTx g2 = new ODatabaseDocumentTx("plocal:target/server" + s + "/databases/" + getDatabaseName());
-      if(g2.exists()){
-        g2.open("admin", "admin");
-      }else {
-        g2.create();
-      }
+    for (int s = 0; s < SERVERS; ++s) {
+      OrientDB orientdb = serverInstance.get(s).getServerInstance().getContext();
+      orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
+      ODatabaseDocument g2 = orientdb.open(getDatabaseName(), "admin", "admin");
 
       try {
 

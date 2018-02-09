@@ -25,6 +25,8 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -86,10 +88,30 @@ public class OrientdbEdgeTest {
 
     OGlobalConfiguration.CLIENT_CONNECT_POOL_WAIT_TIMEOUT.setValue(15000);
 
-    verifyDatabaseExists(conf);
+    OrientDB orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    if (!orientDB.exists("test")) {
+      orientDB.create("test", ODatabaseType.PLOCAL);
+    }
 
-    ODatabasePool pool = new ODatabasePool(conf.get("storage.url") + "/" + (String) conf.get("db.name"),
-        (String) conf.get("storage.user"), (String) conf.get("storage.password"), OrientDBConfig.defaultConfig());
+    ODatabaseDocument t = orientDB.open("test", "root", "root");
+    t.begin();
+    try {
+      t.command(new OCommandSQL("alter database custom useLightweightEdges=false")).execute();
+      t.commit();
+      t.begin();
+      t.command(new OCommandSQL("ALTER CLASS V CLUSTERSELECTION balanced")).execute();
+      t.commit();
+      t.begin();
+      t.command(new OCommandSQL("ALTER CLASS E CLUSTERSELECTION balanced")).execute();
+      t.commit();
+    } finally {
+      t.close();
+    }
+
+    orientDB.close();
+
+    ODatabasePool pool = new ODatabasePool(orientDB, (String) conf.get("db.name"), (String) conf.get("storage.user"),
+        (String) conf.get("storage.password"), OrientDBConfig.defaultConfig());
     return pool;
   }
 
@@ -139,44 +161,6 @@ public class OrientdbEdgeTest {
         + " <isAfterFirstTime>true</isAfterFirstTime></orient-server>");
 
     server.activate();
-  }
-
-  private static void verifyDatabaseExists(Map<String, Object> conf) {
-    final String url = (String) conf.get("storage.url");
-
-    if (!url.startsWith("remote:"))
-      return;
-
-    try {
-      final OServerAdmin admin = new OServerAdmin(url);
-
-      admin.connect((String) conf.get("storage.user"), (String) conf.get("storage.password"));
-
-      if (!admin.existsDatabase()) {
-        System.err.println("creating database " + url);
-        admin.createDatabase("graph", "plocal");
-      }
-
-      ODatabaseDocumentTx t = new ODatabaseDocumentTx(url);
-      t.open((String) conf.get("storage.user"), (String) conf.get("storage.password"));
-      t.begin();
-      try {
-        t.command(new OCommandSQL("alter database custom useLightweightEdges=false")).execute();
-        t.commit();
-        t.begin();
-        t.command(new OCommandSQL("ALTER CLASS V CLUSTERSELECTION balanced")).execute();
-        t.commit();
-        t.begin();
-        t.command(new OCommandSQL("ALTER CLASS E CLUSTERSELECTION balanced")).execute();
-        t.commit();
-      } finally {
-        t.close();
-      }
-
-      admin.close();
-    } catch (IOException ex1) {
-      throw new RuntimeException(ex1);
-    }
   }
 
   @Test

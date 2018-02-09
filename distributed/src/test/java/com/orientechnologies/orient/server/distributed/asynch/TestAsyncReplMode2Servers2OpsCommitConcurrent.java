@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import org.junit.Assert;
@@ -14,24 +16,20 @@ import java.util.concurrent.CountDownLatch;
 @Ignore
 public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2ServerTest {
 
-  private static final int TOTAL   = 5;
-  private ORID             vertex1Id;
-  CountDownLatch           counter = new CountDownLatch(2);
+  private static final int TOTAL = 5;
+  private ORID vertex1Id;
+  CountDownLatch counter = new CountDownLatch(2);
 
   @Override
   protected String getDatabaseName() {
     return "TestAsyncReplMode2Servers2OpsCommitConcurrent";
   }
 
-  protected void dbClient1() {
+  protected void dbClient1(BareBonesServer[] servers) {
     // OGlobalConfiguration.LOG_CONSOLE_LEVEL.setValue("FINEST");
-
-    ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getLocalURL());
-    if(graph.exists()){
-      graph.open("admin", "admin");
-    }else{
-      graph.create();
-    }
+    OrientDB orientdb = servers[0].getServer().getContext();
+    orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
+    ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "admin");
     OVertex vertex1 = graph.newVertex("vertextype");
     vertex1.save();
     graph.commit();
@@ -39,14 +37,14 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
 
     vertex1Id = vertex1.getIdentity();
 
-    exec("client1");
+    exec("client1", servers);
   }
 
-  protected void dbClient2() {
-    exec("client2");
+  protected void dbClient2(BareBonesServer[] servers) {
+    exec("client2", servers);
   }
 
-  protected void exec(final String iClient) {
+  protected void exec(final String iClient, BareBonesServer[] servers) {
     counter.countDown();
 
     try {
@@ -55,10 +53,9 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
       e.printStackTrace();
     }
 
-    ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getLocalURL());
-    graph.open("admin", "admin");
+    ODatabaseSession graph = servers[0].getServer().getContext().open(getDatabaseName(), "admin", "admin");
 
-    OVertex vertex1 = ((OElement)graph.getRecord(vertex1Id)).asVertex().get();
+    OVertex vertex1 = ((OElement) graph.getRecord(vertex1Id)).asVertex().get();
 
     try {
       int i = 0;
@@ -67,7 +64,7 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
         for (int retry = 0; retry < 20; ++retry) {
           try {
             OVertex vertex2 = graph.newVertex("vertextype");
-            vertex1.addEdge( vertex2,"edgetype");
+            vertex1.addEdge(vertex2, "edgetype");
             vertex1.save();
             graph.commit();
 

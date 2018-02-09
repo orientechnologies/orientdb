@@ -31,9 +31,11 @@ import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
@@ -51,6 +53,7 @@ import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
@@ -666,6 +669,90 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     }
     getMetadata().getSchema().addBlobCluster(id);
     return id;
+  }
+
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   *
+   * @Internal
+   */
+  public void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
+      boolean prohibitTombstones) {
+    checkOpenness();
+    checkIfActive();
+
+    final ORecordId rid = (ORecordId) record.getIdentity();
+
+    if (rid == null)
+      throw new ODatabaseException(
+          "Cannot delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
+
+    if (!rid.isValid())
+      return;
+
+    record = record.getRecord();
+    if (record == null)
+      return;
+
+    final OMicroTransaction microTx = beginMicroTransaction();
+    try {
+      microTx.deleteRecord(record.getRecord(), iMode);
+    } catch (Exception e) {
+      endMicroTransaction(false);
+      throw e;
+    }
+    endMicroTransaction(true);
+    return;
+  }
+
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   *
+   * @Internal
+   */
+  public <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
+      final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
+      ORecordCallback<Integer> recordUpdatedCallback) {
+
+    checkOpenness();
+    checkIfActive();
+    if (!record.isDirty())
+      return (RET) record;
+
+    final ORecordId rid = (ORecordId) record.getIdentity();
+
+    if (rid == null)
+      throw new ODatabaseException(
+          "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
+
+    final OMicroTransaction microTx = beginMicroTransaction();
+    try {
+      microTx.saveRecord(record, clusterName, mode, forceCreate, recordCreatedCallback, recordUpdatedCallback);
+    } catch (Exception e) {
+      endMicroTransaction(false);
+      throw e;
+    }
+    endMicroTransaction(true);
+    return (RET) record;
+  }
+
+  private void endMicroTransaction(boolean success) {
+    assert microTransaction != null;
+
+    try {
+      if (success)
+        try {
+          microTransaction.commit();
+        } catch (Exception e) {
+          microTransaction.rollbackAfterFailedCommit();
+          throw e;
+        }
+      else
+        microTransaction.rollback();
+    } finally {
+      if (!microTransaction.isActive())
+        microTransaction = null;
+    }
   }
 
 }

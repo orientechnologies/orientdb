@@ -17,8 +17,8 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import org.junit.Ignore;
@@ -95,8 +95,8 @@ public class TwoClientsRecordUpdateDuringRetryWithTransactionsOnMultipleServersS
 
     // sets a delay for operations on distributed storage of server1 and server2
     // so that server1 will start to commit after server2 has started the transaction
-    ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer2).getStorage()).setEventListener(new AfterRecordLockDelayer("server2", 1000));
-    ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer1).getStorage()).setEventListener(new AfterRecordLockDelayer("server1", 250));
+    ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer2).getStorage()).setEventListener(new AfterRecordLockDelayer("server2", 1000));
+    ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer1).getStorage()).setEventListener(new AfterRecordLockDelayer("server1", 250));
 
     // updates the same record from two different clients, each calling a different node
     ODocument record1Server2 = retrieveRecord(serverInstance.get(1), RECORD_ID);

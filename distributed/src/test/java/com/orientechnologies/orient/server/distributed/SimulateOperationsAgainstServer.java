@@ -17,7 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -107,7 +107,7 @@ public class SimulateOperationsAgainstServer {
 
   protected void createDocument(final int threadId, final int iCycle, final String dbUrl, final String className,
       final int iProperties) {
-    final ODatabaseDocumentTx db = getDatabase(dbUrl);
+    final ODatabaseDocument db = getDatabase(dbUrl);
     try {
       log(threadId, iCycle, dbUrl, " creating document: class=" + className);
 
@@ -122,7 +122,7 @@ public class SimulateOperationsAgainstServer {
   }
 
   protected void queryClass(final int threadId, final int iCycle, final String dbUrl, final String className, final int iMax) {
-    final ODatabaseDocumentTx db = getDatabase(dbUrl);
+    final ODatabaseDocument db = getDatabase(dbUrl);
     try {
       log(threadId, iCycle, dbUrl, " query class=" + className);
 
@@ -142,7 +142,7 @@ public class SimulateOperationsAgainstServer {
   }
 
   protected void updateDocument(final int threadId, final int iCycle, final String dbUrl, final String className, final int iSkip) {
-    final ODatabaseDocumentTx db = getDatabase(dbUrl);
+    final ODatabaseDocument db = getDatabase(dbUrl);
     for (int retry = 0; retry < MAX_RETRY; ++retry) {
       ODocument doc = null;
       try {
@@ -178,7 +178,7 @@ public class SimulateOperationsAgainstServer {
   }
 
   protected void deleteDocument(final int threadId, final int iCycle, final String dbUrl, final String className, final int iSkip) {
-    final ODatabaseDocumentTx db = getDatabase(dbUrl);
+    final ODatabaseDocument db = getDatabase(dbUrl);
     for (int retry = 0; retry < MAX_RETRY; ++retry) {
       ODocument doc = null;
       try {
@@ -218,7 +218,7 @@ public class SimulateOperationsAgainstServer {
     System.out.println(String.format("%-12d [%2d:%-4d] %25s %s", totalOperations.get(), threadId, iCycle, dbUrl, iMessage));
   }
 
-  protected ODatabaseDocumentTx getDatabase(final String dbUrl) {
+  protected ODatabaseDocument getDatabase(final String dbUrl) {
     return poolFactory.get(dbUrl, userName, userPassword).acquire();
   }
 

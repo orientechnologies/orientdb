@@ -59,6 +59,7 @@ public class RidBagConversionTest {
     embOri.drop("test");
     embOri.close();
     server0.shutdown();
+    server1.shutdown();
   }
 
 }

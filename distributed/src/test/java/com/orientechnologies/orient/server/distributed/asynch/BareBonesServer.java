@@ -2,7 +2,8 @@ package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -13,20 +14,16 @@ public class BareBonesServer {
 
   private OServer server;
 
-  public void createDB(String orientUrl) {
-    OLogManager.instance().info(this, "creating the database:" + orientUrl);
-    ODatabaseDocumentTx graph = new ODatabaseDocumentTx(orientUrl);
-    if(!graph.exists()){
-      graph.create();
-    }else {
-      graph.open("admin", "admin");
-    }
+  public void createDB(String databaseName) {
+    OLogManager.instance().info(this, "creating the database:" + databaseName);
+    server.getContext().createIfNotExists(databaseName, ODatabaseType.PLOCAL);
+    ODatabaseSession graph = server.getContext().open(databaseName, "admin", "admin");
 
     OSchema schema = graph.getMetadata().getSchema();
-    if(!schema.existsClass("edgetype")){
+    if (!schema.existsClass("edgetype")) {
       schema.createClass("edgetype", schema.getClass("E"));
     }
-    if(!schema.existsClass("vertextype")){
+    if (!schema.existsClass("vertextype")) {
       schema.createClass("vertextype", schema.getClass("V"));
     }
 
@@ -54,5 +51,9 @@ public class BareBonesServer {
   public void deleteRecursively(final File iRootFile) {
     OLogManager.instance().info(this, "deleting recursively: " + iRootFile.getAbsolutePath());
     OFileUtils.deleteRecursively(iRootFile);
+  }
+
+  public OServer getServer() {
+    return server;
   }
 }

@@ -46,4 +46,11 @@ public class OEdgeDocument extends ODocument implements OEdge {
     //LIGHTWEIGHT EDGES MANAGED BY OEdgeDelegate, IN FUTURE MAY BE WE NEED TO HANDLE THEM WITH THIS
     return false;
   }
+
+  public OEdgeDocument delete() {
+    OEdgeDelegate.deleteLinks(this);
+    super.delete();
+    return this;
+  }
+
 }

@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import junit.framework.Assert;
@@ -47,9 +46,7 @@ public class DistributedIndexes extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/server1/databases/" + getDatabaseName());
-    db.open("admin", "admin");
-
+    ODatabaseDocument db = serverInstance.get(1).getServerInstance().getContext().open(getDatabaseName(),"admin","admin");
     try {
 
       testIndexUsage(db);
@@ -67,12 +64,12 @@ public class DistributedIndexes extends AbstractServerClusterTest {
     db.command(new OCommandSQL("CREATE INDEX Person.name NOTUNIQUE METADATA { ignoreNullValues: false }")).execute();
   }
 
-  private void testIndexAcceptsNulls(ODatabaseDocumentTx db) {
+  private void testIndexAcceptsNulls(ODatabaseDocument db) {
     db.command(new OCommandSQL("CREATE VERTEX Person SET name = 'Tobie'")).execute();
     db.command(new OCommandSQL("CREATE VERTEX Person SET temp = true")).execute();
   }
 
-  private void testIndexUsage(ODatabaseDocumentTx db) {
+  private void testIndexUsage(ODatabaseDocument db) {
     db.command(new OCommandSQL("create class DistributedIndexTest")).execute();
     db.command(new OCommandSQL("create property DistributedIndexTest.unique STRING")).execute();
     db.command(new OCommandSQL("create property DistributedIndexTest.notunique STRING")).execute();

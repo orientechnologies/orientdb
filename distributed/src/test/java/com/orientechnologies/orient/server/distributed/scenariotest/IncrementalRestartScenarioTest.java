@@ -16,7 +16,17 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-import static org.junit.Assert.*;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ServerRun;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -25,17 +35,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ServerRun;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import static org.junit.Assert.*;
 
 /**
  * It checks the consistency in the cluster with the following scenario: - 3 server (quorum=2) - network fault on server2 and
@@ -62,9 +62,6 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
   @Override
   public void executeTest() throws Exception {
-
-    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(SERVERS - 1))).open("admin",
-        "admin");
 
     try {
 
@@ -105,10 +102,10 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
   private class TestQuorum2 implements Callable<Void> {
 
-    private final String    databaseUrl;
-    private List<ServerRun> serverInstances;
-    private List<ServerRun> executeWritesOnServers;
-    private int             initialCount = 0;
+    private final String          databaseUrl;
+    private       List<ServerRun> serverInstances;
+    private       List<ServerRun> executeWritesOnServers;
+    private int initialCount = 0;
 
     public TestQuorum2(List<ServerRun> serverInstances) {
 
@@ -122,8 +119,8 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
     public Void call() throws Exception {
 
       List<ODocument> result = null;
-      final ODatabaseDocumentTx dbServer1 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(0))).open("admin",
-          "admin");
+      OrientDB orientDb = serverInstance.get(0).getServerInstance().getContext();
+      final ODatabaseDocument dbServer1 = orientDb.open(getDatabaseName(), "admin", "admin");
 
       try {
 
@@ -140,7 +137,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         cfg.field("writeQuorum", 2);
         cfg.field("version", (Integer) cfg.field("version") + 1);
         manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
-        assertEquals(2, (int)cfg.field("writeQuorum"));
+        assertEquals(2, (int) cfg.field("writeQuorum"));
 
         // network fault on server2
         System.out.println("Network fault on server2.\n");
@@ -153,7 +150,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         assertFalse(serverInstance.get(2).isActive());
 
         // writes on server1
-        ODatabaseRecordThreadLocal.instance().set(dbServer1);
+        dbServer1.activateOnCurrentThread();
         try {
           new ODocument("Person").fields("name", "Jay", "surname", "Miner").save();
           new ODocument("Person").fields("name", "Luke", "surname", "Skywalker").save();
@@ -212,7 +209,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         fail(e.getMessage());
       } finally {
         if (dbServer1 != null) {
-          ODatabaseRecordThreadLocal.instance().set(dbServer1);
+          dbServer1.activateOnCurrentThread();
           dbServer1.close();
           ODatabaseRecordThreadLocal.instance().set(null);
         }
@@ -224,11 +221,11 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
   private class TestQuorum1 implements Callable<Void> {
 
-    private final String    databaseUrl1;
-    private final String    databaseUrl2;
-    private List<ServerRun> serverInstances;
-    private List<ServerRun> executeWritesOnServers;
-    private int             initialCount = 0;
+    private final String          databaseUrl1;
+    private final String          databaseUrl2;
+    private       List<ServerRun> serverInstances;
+    private       List<ServerRun> executeWritesOnServers;
+    private int initialCount = 0;
 
     public TestQuorum1(List<ServerRun> serverInstances) {
 
@@ -243,7 +240,8 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
     public Void call() throws Exception {
 
       List<ODocument> result = null;
-      final ODatabaseDocumentTx dbServer1 = new ODatabaseDocumentTx(databaseUrl1).open("admin", "admin");
+      OrientDB orientDB = serverInstances.get(0).getServerInstance().getContext();
+      final ODatabaseDocument dbServer1 = orientDB.open(getDatabaseName(), "admin", "admin");
 
       try {
 
@@ -260,7 +258,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         cfg.field("writeQuorum", 1);
         cfg.field("version", (Integer) cfg.field("version") + 1);
         manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
-        assertEquals(1, (int)cfg.field("writeQuorum"));
+        assertEquals(1, (int) cfg.field("writeQuorum"));
 
         // network fault on server2
         System.out.println("Network fault on server2.\n");
@@ -273,7 +271,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         assertFalse(serverInstance.get(2).isActive());
 
         // writes on server1
-        ODatabaseRecordThreadLocal.instance().set(dbServer1);
+        dbServer1.activateOnCurrentThread();
         try {
           System.out.println("Inserting 3 record on server1...");
           new ODocument("Person").fields("name", "Darth", "surname", "Vader").save();
@@ -330,7 +328,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         fail(e.getMessage());
       } finally {
         if (dbServer1 != null) {
-          ODatabaseRecordThreadLocal.instance().set(dbServer1);
+          dbServer1.activateOnCurrentThread();
           dbServer1.close();
           ODatabaseRecordThreadLocal.instance().set(null);
         }

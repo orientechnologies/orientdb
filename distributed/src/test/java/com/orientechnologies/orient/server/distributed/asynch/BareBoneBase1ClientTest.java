@@ -14,7 +14,7 @@ public abstract class BareBoneBase1ClientTest extends TestCase {
 
   protected volatile Throwable exceptionInThread;
 
-  protected abstract void dbClient1();
+  protected abstract void dbClient1(BareBonesServer[] servers);
 
   protected abstract String getDatabaseName();
 
@@ -54,7 +54,7 @@ public abstract class BareBoneBase1ClientTest extends TestCase {
     Thread dbClient1 = new Thread() {
       @Override
       public void run() {
-        dbClient1();
+        dbClient1(servers);
       }
     };
     dbClient1.start();
@@ -77,13 +77,13 @@ public abstract class BareBoneBase1ClientTest extends TestCase {
     }
   }
 
-  protected BareBonesServer dbServer(String dbDirectory, String orientUrl, String dbConfigName) {
+  protected BareBonesServer dbServer(String dbDirectory, String databaseName, String dbConfigName) {
     BareBonesServer dbServer = new BareBonesServer();
     dbServer.deleteRecursively(new File(dbDirectory));
     System.setProperty("ORIENTDB_HOME", dbDirectory);
     dbServer.start(CONFIG_DIR, dbConfigName);
-    if (orientUrl != null) {
-      dbServer.createDB(orientUrl);
+    if (databaseName != null) {
+      dbServer.createDB(databaseName);
     }
 
     return dbServer;

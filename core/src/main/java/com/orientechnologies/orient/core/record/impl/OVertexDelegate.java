@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -229,6 +230,9 @@ public class OVertexDelegate implements OVertex {
       ((Collection) edgeProp).remove(edgeId);
     } else if (edgeProp instanceof ORidBag) {
       ((ORidBag) edgeProp).remove(edgeId);
+    } else {
+      OLogManager.instance().warn(vertex,
+          "Error detaching edge: the vertex collection field is of type " + (edgeProp == null ? "null" : edgeProp.getClass()));
     }
   }
 

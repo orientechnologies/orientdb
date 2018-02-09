@@ -108,14 +108,14 @@ public class ODeleteExecutionPlanner {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
       result.chain(new FetchFromIndexValuesStep(index, true, ctx, profilingEnabled));
-      result.chain(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
+      result.chain(new GetValueFromIndexEntryStep(ctx, null, profilingEnabled));
       break;
     case VALUESDESC:
       if (!index.supportsOrderedIterations()) {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
       result.chain(new FetchFromIndexValuesStep(index, false, ctx, profilingEnabled));
-      result.chain(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
+      result.chain(new GetValueFromIndexEntryStep(ctx, null, profilingEnabled));
       break;
     }
     return false;

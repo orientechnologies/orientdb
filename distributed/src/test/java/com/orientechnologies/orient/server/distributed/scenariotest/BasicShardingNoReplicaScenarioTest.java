@@ -17,7 +17,9 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -65,20 +67,19 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
         .modify();
     ODocument cfg = databaseConfiguration.getDocument();
 
-    ODatabaseDocumentTx graphNoTx = null;
+    ODatabaseDocument graphNoTx = null;
     try {
-      graphNoTx = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
-      if(graphNoTx.exists()){
-        graphNoTx.open("admin", "admin");
-      }else{
-        graphNoTx.create();
+      OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
+      if (!orientDB.exists(getDatabaseName())) {
+        orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
       }
+      graphNoTx = orientDB.open(getDatabaseName(), "admin", "admin");
 
       graphNoTx.command(" create class Client extends V clusters 1");
       OSchema schema = graphNoTx.getMetadata().getSchema();
       schema.reload();
 
-      OClass clientType =schema.getClass("Client");
+      OClass clientType = schema.getClass("Client");
 
       OModifiableDistributedConfiguration dCfg = new OModifiableDistributedConfiguration(cfg);
       for (int i = 0; i < serverInstance.size(); ++i) {
@@ -120,15 +121,14 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       try {
         System.out.print("Checking that records on server3 are not available in the cluster...");
         System.out.print("Checking that records on server3 are not available in the cluster...");
-        graphNoTx = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
-        graphNoTx.open("admin", "admin");
+        graphNoTx = orientDB.open(getDatabaseName(), "admin", "admin");
 
-        ODatabaseRecordThreadLocal.instance().set(graphNoTx);
+        graphNoTx.activateOnCurrentThread();
         final String uniqueId = "client_asia-s2-t10-v0";
         Iterable<OElement> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
         List<OVertex> result = new LinkedList<OVertex>();
         for (OElement v : it) {
-          if(v.isVertex()) {
+          if (v.isVertex()) {
             result.add(v.asVertex().get());
           }
         }
@@ -152,20 +152,18 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       // checking server3 status by querying a record inserted on it
       try {
         System.out.print("Checking server3 status by querying a record inserted on it...");
-        
-        graphNoTx = new ODatabaseDocumentTx("plocal:target/server2/databases/" + getDatabaseName());
-        if(graphNoTx.exists()){
-          graphNoTx.open("admin", "admin");
-        }else{
-          graphNoTx.create();
-        }
 
-        ODatabaseRecordThreadLocal.instance().set(graphNoTx);
+        OrientDB orientDB1 = serverInstance.get(2).getServerInstance().getContext();
+        if (!orientDB1.exists(getDatabaseName())) {
+          orientDB1.create(getDatabaseName(), ODatabaseType.PLOCAL);
+        }
+        graphNoTx = orientDB1.open(getDatabaseName(), "admin", "admin");
+        graphNoTx.activateOnCurrentThread();
         final String uniqueId = "client_asia-s2-t10-v0";
         Iterable<OElement> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
         List<OVertex> result = new LinkedList<OVertex>();
         for (OElement v : it) {
-          if(v.isVertex()) {
+          if (v.isVertex()) {
             result.add(v.asVertex().get());
           }
         }
@@ -187,7 +185,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       fail(e.toString());
     } finally {
       if (!graphNoTx.isClosed()) {
-        ODatabaseRecordThreadLocal.instance().set(graphNoTx);
+        graphNoTx.activateOnCurrentThread();
         graphNoTx.close();
         ODatabaseRecordThreadLocal.instance().set(null);
       }

@@ -62,7 +62,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
       @Override
       public boolean hasNext() {
-        return (localCount < nRecords && nextEntry != null);
+        if (localCount >= nRecords) {
+          return false;
+        }
+        if (nextEntry == null) {
+          fetchNextEntry();
+        }
+        return nextEntry != null;
       }
 
       @Override
@@ -74,7 +80,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         try {
           Object key = nextEntry.getKey();
           OIdentifiable value = nextEntry.getValue();
-          fetchNextEntry();
+
+          nextEntry = null;
 
           localCount++;
           OResultInternal result = new OResultInternal();
@@ -86,6 +93,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           if (profilingEnabled) {
             cost += (System.nanoTime() - begin);
           }
+
         }
       }
 

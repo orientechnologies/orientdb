@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 /**
  * Distributed test on drop + recreate database.
@@ -41,8 +41,7 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
     int s = 0;
     do {
       ServerRun server = serverInstance.get(0);
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
-      db.open("admin", "admin");
+      OrientDB orientDB = server.getServerInstance().getContext();
 
       banner("DROPPING DATABASE ON SERVERS");
 
@@ -50,7 +49,7 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
       waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 5000);
       waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 5000);
 
-      db.drop();
+      orientDB.drop(getDatabaseName());
 
       Thread.sleep(2000);
 
@@ -61,14 +60,12 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
 
       banner("RE-CREATING DATABASE ON SERVER " + server.getServerId());
 
-      db = new ODatabaseDocumentTx(getDatabaseURL(server));
-
       Assert.assertFalse(server.getServerInstance().getDistributedManager().getConfigurationMap()
           .containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getDatabaseName()));
 
       for (int retry = 0; retry < 10; retry++) {
         try {
-          db.create();
+          orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
           break;
         } catch (ODatabaseException e) {
           System.out.println("DB STILL IN THE CLUSTER, WAIT AND RETRY (retry " + retry + ")...");
@@ -76,15 +73,10 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
         }
       }
 
-      db.activateOnCurrentThread();
-      db.close();
-
     } while (++s < serverInstance.size());
 
     // DROP LAST DATABASE
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverInstance.size() - 1)));
-    db.open("admin", "admin");
-    db.drop();
+    serverInstance.get(serverInstance.size() - 1).getServerInstance().dropDatabase(getDatabaseName());
   }
 
   protected String getDatabaseURL(final ServerRun server) {

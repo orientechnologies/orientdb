@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
@@ -36,13 +36,12 @@ public class ConcurrentDistributedUpdateTest extends AbstractScenarioTest {
   @Override
   public void executeTest() throws Exception {
 
-    ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(0)));
-    if (orientGraph.exists()) {
-      orientGraph.open("admin", "admin");
-    } else {
-      orientGraph.create();
-    }
+    OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
 
+    if (!orientDB.exists(getDatabaseName())) {
+      orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
+    }
+    ODatabaseDocument orientGraph = orientDB.open(getDatabaseName(), "admin", "admin");
     OClass clazz = orientGraph.getClass("Test");
     if (clazz == null) {
       log("Creating vertex type - " + "Test");
@@ -51,13 +50,10 @@ public class ConcurrentDistributedUpdateTest extends AbstractScenarioTest {
 
     orientGraph.close();
 
-    ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(0)));
-    if (graph.exists()) {
-      graph.open("admin", "admin");
-    } else {
-      graph.create();
+    if (!orientDB.exists(getDatabaseName())) {
+      orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
     }
-
+    ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
     for (int i = 0; i < 2; i++) {
       OVertex vertex = graph.newVertex("Test");
       vertex.setProperty("prop1", "v1-" + i);
