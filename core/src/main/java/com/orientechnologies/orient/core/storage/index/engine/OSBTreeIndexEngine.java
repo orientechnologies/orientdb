@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.index.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
@@ -48,19 +47,11 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   private       int                     version;
   private final String                  name;
 
-  public OSBTreeIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
+  public OSBTreeIndexEngine(String name, OAbstractPaginatedStorage storage, int version) {
     this.name = name;
-    boolean durableInNonTx;
-
-    if (durableInNonTxMode == null)
-      durableInNonTx = storage.getConfiguration().getContextConfiguration()
-          .getValueAsBoolean(OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE);
-    else
-      durableInNonTx = durableInNonTxMode;
-
     this.version = version;
 
-    sbTree = new OSBTree<Object, Object>(name, DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, storage);
+    sbTree = new OSBTree<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
   }
 
   @Override

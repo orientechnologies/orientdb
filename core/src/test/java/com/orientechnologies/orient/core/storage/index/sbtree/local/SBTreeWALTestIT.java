@@ -105,7 +105,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     OReadCache actualReadCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getReadCache();
     actualWriteCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getWriteCache();
 
-    sbTree = new OSBTree<>("actualSBTree", ".sbt", true, ".nbt", actualStorage);
+    sbTree = new OSBTree<>("actualSBTree", ".sbt", ".nbt", actualStorage);
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
   }
 

@@ -78,6 +78,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.boperations.OLogicalOperation;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
@@ -206,7 +207,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    */
   private final Set<OPair<String, Long>> brokenPages = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-  protected volatile ScheduledExecutorService fuzzyCheckpointExecutor;
+  protected volatile OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
 
   private volatile Throwable dataFlushException = null;
 
@@ -270,6 +271,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
         fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
+        fuzzyCheckpointExecutor.setMaximumPoolSize(1);
+
         transaction = new ThreadLocal<>();
         getConfiguration().load(contextConfiguration);
 
@@ -450,7 +453,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (exists())
           throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it already exists");
 
-        fuzzyCheckpointExecutor = Executors.newScheduledThreadPool(1, new FuzzyCheckpointThreadFactory());
+        fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
+        fuzzyCheckpointExecutor.setMaximumPoolSize(1);
 
         getConfiguration().initConfiguration(contextConfiguration);
         componentsFactory = new OCurrentStorageComponentsFactory(getConfiguration());
@@ -1932,7 +1936,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
       handleJVMError(ee);
-      atomicOperationsManager.alarmReleaseOfAtomicOperationAndLocks();
+      atomicOperationsManager.alarmClearOfAtomicOperation();
       throw logAndPrepareForRethrow(ee);
     } catch (Throwable t) {
       throw logAndPrepareForRethrow(t);
@@ -4715,78 +4719,88 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     OLogManager.instance().info(this, "Looking for last checkpoint...");
 
-    OLogSequenceNumber lastCheckPoint;
+    final OLogSequenceNumber end = writeAheadLog.end();
+    if (end == null) {
+      OLogManager.instance().errorNoDb(this, "WAL is empty, there is nothing not restore", null);
+      return null;
+    }
+
+    writeAheadLog.addCutTillLimit(end);
     try {
-      lastCheckPoint = writeAheadLog.getLastCheckpoint();
-    } catch (OWALPageBrokenException ignore) {
-      lastCheckPoint = null;
-    }
+      OLogSequenceNumber lastCheckPoint;
+      try {
+        lastCheckPoint = writeAheadLog.getLastCheckpoint();
+      } catch (OWALPageBrokenException ignore) {
+        lastCheckPoint = null;
+      }
 
-    if (lastCheckPoint == null) {
-      OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
-      return restoreFromBeginning();
-    }
+      if (lastCheckPoint == null) {
+        OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
+        return restoreFromBeginning();
+      }
 
-    OWALRecord checkPointRecord;
-    try {
-      checkPointRecord = writeAheadLog.read(lastCheckPoint);
-    } catch (OWALPageBrokenException ignore) {
-      checkPointRecord = null;
-    }
-
-    if (checkPointRecord == null) {
-      OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
-      return restoreFromBeginning();
-    }
-
-    if (checkPointRecord instanceof OFuzzyCheckpointStartRecord) {
-      OLogManager.instance().info(this, "Found FUZZY checkpoint.");
-
-      boolean fuzzyCheckPointIsComplete = checkFuzzyCheckPointIsComplete(lastCheckPoint);
-      if (!fuzzyCheckPointIsComplete) {
-        OLogManager.instance().warn(this, "FUZZY checkpoint is not complete.");
-
-        OLogSequenceNumber previousCheckpoint = ((OFuzzyCheckpointStartRecord) checkPointRecord).getPreviousCheckpoint();
+      OWALRecord checkPointRecord;
+      try {
+        checkPointRecord = writeAheadLog.read(lastCheckPoint);
+      } catch (OWALPageBrokenException ignore) {
         checkPointRecord = null;
+      }
 
-        if (previousCheckpoint != null)
-          checkPointRecord = writeAheadLog.read(previousCheckpoint);
+      if (checkPointRecord == null) {
+        OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
+        return restoreFromBeginning();
+      }
 
-        if (checkPointRecord != null) {
-          OLogManager.instance().warn(this, "Restore will start from the previous checkpoint.");
+      if (checkPointRecord instanceof OFuzzyCheckpointStartRecord) {
+        OLogManager.instance().info(this, "Found FUZZY checkpoint.");
+
+        boolean fuzzyCheckPointIsComplete = checkFuzzyCheckPointIsComplete(lastCheckPoint);
+        if (!fuzzyCheckPointIsComplete) {
+          OLogManager.instance().warn(this, "FUZZY checkpoint is not complete.");
+
+          OLogSequenceNumber previousCheckpoint = ((OFuzzyCheckpointStartRecord) checkPointRecord).getPreviousCheckpoint();
+          checkPointRecord = null;
+
+          if (previousCheckpoint != null)
+            checkPointRecord = writeAheadLog.read(previousCheckpoint);
+
+          if (checkPointRecord != null) {
+            OLogManager.instance().warn(this, "Restore will start from the previous checkpoint.");
+            return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
+          } else {
+            OLogManager.instance().warn(this, "Restore will start from the beginning.");
+            return restoreFromBeginning();
+          }
+        } else
           return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
-        } else {
-          OLogManager.instance().warn(this, "Restore will start from the beginning.");
-          return restoreFromBeginning();
-        }
-      } else
-        return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
-    }
+      }
 
-    if (checkPointRecord instanceof OFullCheckpointStartRecord) {
-      OLogManager.instance().info(this, "FULL checkpoint found.");
-      boolean fullCheckPointIsComplete = checkFullCheckPointIsComplete(lastCheckPoint);
-      if (!fullCheckPointIsComplete) {
-        OLogManager.instance().warn(this, "FULL checkpoint has not completed.");
+      if (checkPointRecord instanceof OFullCheckpointStartRecord) {
+        OLogManager.instance().info(this, "FULL checkpoint found.");
+        boolean fullCheckPointIsComplete = checkFullCheckPointIsComplete(lastCheckPoint);
+        if (!fullCheckPointIsComplete) {
+          OLogManager.instance().warn(this, "FULL checkpoint has not completed.");
 
-        OLogSequenceNumber previousCheckpoint = ((OFullCheckpointStartRecord) checkPointRecord).getPreviousCheckpoint();
-        checkPointRecord = null;
-        if (previousCheckpoint != null)
-          checkPointRecord = writeAheadLog.read(previousCheckpoint);
+          OLogSequenceNumber previousCheckpoint = ((OFullCheckpointStartRecord) checkPointRecord).getPreviousCheckpoint();
+          checkPointRecord = null;
+          if (previousCheckpoint != null)
+            checkPointRecord = writeAheadLog.read(previousCheckpoint);
 
-        if (checkPointRecord != null) {
-          OLogManager.instance().warn(this, "Restore will start from the previous checkpoint.");
+          if (checkPointRecord != null) {
+            OLogManager.instance().warn(this, "Restore will start from the previous checkpoint.");
+            return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
+          } else {
+            OLogManager.instance().warn(this, "Restore will start from the beginning.");
+            return restoreFromBeginning();
+          }
+        } else
           return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
-        } else {
-          OLogManager.instance().warn(this, "Restore will start from the beginning.");
-          return restoreFromBeginning();
-        }
-      } else
-        return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
+      }
+
+      throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.getClass().getName());
+    } finally {
+      writeAheadLog.removeCutTillLimit(end);
     }
-
-    throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.getClass().getName());
-
   }
 
   private boolean checkFullCheckPointIsComplete(OLogSequenceNumber lastCheckPoint) throws IOException {
@@ -5099,6 +5113,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } else if (record instanceof OAtomicUnitEndRecord) {
         //noinspection UnnecessaryContinue
         continue;
+      } else if (record instanceof OLogicalOperation) {
+        //noinspection UnnecessaryContinue
+        continue;
       } else {
         OLogManager.instance()
             .errorNoDb(this, "Invalid WAL record type was passed %s. Given record will be skipped.", null, record.getClass());
@@ -5167,6 +5184,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         continue;
       } else if (walRecord instanceof OAtomicUnitEndRecord) {
         //noinspection UnnecessaryContinue
+        continue;
+      } else if (walRecord instanceof OLogicalOperation) {
         continue;
       } else {
         OLogManager.instance()
