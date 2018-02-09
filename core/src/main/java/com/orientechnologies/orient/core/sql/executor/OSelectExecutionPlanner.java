@@ -340,6 +340,9 @@ public class OSelectExecutionPlanner {
     } else if (item.getIndex() != null) {
       String indexName = item.getIndex().getIndexName();
       OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(indexName);
+      if (idx == null) {
+        throw new OCommandExecutionException("Index " + indexName + " does not exist");
+      }
       result.addAll(idx.getClusters());
       if (result.isEmpty()) {
         return null;
@@ -1165,8 +1168,7 @@ public class OSelectExecutionPlanner {
 
     int[] filterClusterIds = null;
     if (filterClusters != null) {
-      filterClusterIds = filterClusters.stream().map(name -> ctx.getDatabase().getClusterIdByName(name)).mapToInt(i -> i)
-          .toArray();
+      filterClusterIds = filterClusters.stream().map(name -> ctx.getDatabase().getClusterIdByName(name)).mapToInt(i -> i).toArray();
     }
 
     switch (indexIdentifier.getType()) {
@@ -1218,7 +1220,7 @@ public class OSelectExecutionPlanner {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
       result.chain(new FetchFromIndexValuesStep(index, true, ctx, profilingEnabled));
-      result.chain(new GetValueFromIndexEntryStep(ctx,  filterClusterIds, profilingEnabled));
+      result.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
 
       break;
     case VALUESDESC:
