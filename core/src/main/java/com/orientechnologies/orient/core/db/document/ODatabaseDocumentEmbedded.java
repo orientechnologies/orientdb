@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.*;
+import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -522,7 +523,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     if (!statement.isIdempotent()) {
       throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
     }
-    OResultSet original = statement.execute(this, args);
+    OExecutionPlan plan = OExecutionPlanCache.get(query, args, this);
+    OResultSet original = statement.execute((OInternalExecutionPlan) plan);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
     this.queryStarted(result.getQueryId(), result);
     result.addLifecycleListener(this);
@@ -535,7 +537,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     if (!statement.isIdempotent()) {
       throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
     }
-    OResultSet original = statement.execute(this, args);
+    OExecutionPlan plan = OExecutionPlanCache.get(query, args, this);
+    OResultSet original = statement.execute((OInternalExecutionPlan) plan);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
     this.queryStarted(result.getQueryId(), result);
     result.addLifecycleListener(this);
@@ -545,21 +548,30 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   @Override
   public OResultSet command(String query, Object[] args) {
     OStatement statement = OSQLEngine.parse(query, this);
-    OResultSet original = statement.execute(this, args);
-    OLocalResultSetLifecycleDecorator result;
-    if (!statement.isIdempotent()) {
-      //fetch all, close and detach
-      OInternalResultSet prefetched = new OInternalResultSet();
-      original.forEachRemaining(x -> prefetched.add(x));
-      original.close();
-      result = new OLocalResultSetLifecycleDecorator(prefetched);
-    } else {
-      //stream, keep open and attach to the current DB
-      result = new OLocalResultSetLifecycleDecorator(original);
+    if(statement.executinPlanCanBeCached()){
+      OExecutionPlan plan = OExecutionPlanCache.get(query, args, this);
+      OResultSet original = statement.execute((OInternalExecutionPlan) plan);
+      OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
       this.queryStarted(result.getQueryId(), result);
       result.addLifecycleListener(this);
+      return result;
+    }else {
+      OResultSet original = statement.execute(this, args);
+      OLocalResultSetLifecycleDecorator result;
+      if (!statement.isIdempotent()) {
+        //fetch all, close and detach
+        OInternalResultSet prefetched = new OInternalResultSet();
+        original.forEachRemaining(x -> prefetched.add(x));
+        original.close();
+        result = new OLocalResultSetLifecycleDecorator(prefetched);
+      } else {
+        //stream, keep open and attach to the current DB
+        result = new OLocalResultSetLifecycleDecorator(original);
+        this.queryStarted(result.getQueryId(), result);
+        result.addLifecycleListener(this);
+      }
+      return result;
     }
-    return result;
   }
 
   @Override

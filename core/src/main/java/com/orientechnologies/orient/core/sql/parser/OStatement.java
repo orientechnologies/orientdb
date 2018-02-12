@@ -9,10 +9,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 import java.util.Map;
@@ -66,6 +63,11 @@ public class OStatement extends SimpleNode {
   public OResultSet execute(ODatabase db, Map args) {
     return execute(db, args, null);
   }
+
+  public OResultSet execute(OInternalExecutionPlan executionPlan){
+    throw new UnsupportedOperationException();
+  }
+
 
   public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext) {
     throw new UnsupportedOperationException();
@@ -124,6 +126,10 @@ public class OStatement extends SimpleNode {
 
   public void deserialize(OResult fromResult) {
     throw new UnsupportedOperationException();
+  }
+
+  public boolean executinPlanCanBeCached() {
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=589c4dcc8287f430e46d8eb12b0412c5 (do not edit this line) */

@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.sql.executor.OQueryStats;
+import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -36,6 +37,8 @@ public class OSharedContextEmbedded extends OSharedContext {
     liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();
     commandCache = new OCommandCacheSoftRefs(storage);
     statementCache = new OStatementCache(
+        storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
+    executionPlanCache = new OExecutionPlanCache(
         storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
     queryStats = new OQueryStats();
     activeDistributedQueries = new HashMap<>();

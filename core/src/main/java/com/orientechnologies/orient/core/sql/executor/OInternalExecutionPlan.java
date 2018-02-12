@@ -32,4 +32,8 @@ public interface OInternalExecutionPlan extends OExecutionPlan {
   default void deserialize(OResult serializedExecutionPlan) {
     throw new UnsupportedOperationException();
   }
+
+  default OInternalExecutionPlan copy(OCommandContext ctx) {
+    throw new UnsupportedOperationException();
+  }
 }

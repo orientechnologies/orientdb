@@ -15,7 +15,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   private String location;
 
-  private final OCommandContext ctx;
+  private OCommandContext ctx;
 
   protected List<OExecutionStepInternal> steps = new ArrayList<>();
 
@@ -115,6 +115,16 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
         throw OException.wrapException(new OCommandExecutionException("Cannot deserialize execution step:" + serializedStep), e);
       }
     }
+  }
+
+  @Override
+  public OInternalExecutionPlan copy(OCommandContext ctx) {
+    OSelectExecutionPlan copy = new OSelectExecutionPlan(ctx);
+
+    //steps.forEach(x -> copy.getSteps().add(x.copy())); //TODO
+    copy.lastStep = copy.steps.get(copy.steps.size() - 1);
+    copy.location = location;
+    return copy;
   }
 }
 

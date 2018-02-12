@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
@@ -14,6 +13,7 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.sql.executor.OQueryStats;
+import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 
 /**
@@ -32,6 +32,7 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
   protected OLiveQueryHookV2.OLiveQueryOps liveQueryOpsV2;
   protected OCommandCache                  commandCache;
   protected OStatementCache                statementCache;
+  protected OExecutionPlanCache            executionPlanCache;
   protected OQueryStats                    queryStats;
   protected volatile boolean loaded = false;
 
@@ -77,6 +78,10 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
 
   public OStatementCache getStatementCache() {
     return statementCache;
+  }
+
+  public OExecutionPlanCache getExecutionPlanCache() {
+    return executionPlanCache;
   }
 
   public OQueryStats getQueryStats() {

@@ -225,6 +225,11 @@ public class OSelectStatement extends OStatement {
   }
 
   @Override
+  public boolean executinPlanCanBeCached() {
+    return false;
+  }
+
+  @Override
   public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
 
     OBasicCommandContext ctx = new OBasicCommandContext();
@@ -255,6 +260,12 @@ public class OSelectStatement extends OStatement {
     ctx.setInputParameters(params);
     OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
+    OLocalResultSet result = new OLocalResultSet(executionPlan);
+    return result;
+  }
+
+  @Override
+  public OResultSet execute(OInternalExecutionPlan executionPlan) {
     OLocalResultSet result = new OLocalResultSet(executionPlan);
     return result;
   }

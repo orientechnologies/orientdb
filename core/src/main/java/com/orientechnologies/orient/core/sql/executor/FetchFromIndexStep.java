@@ -28,7 +28,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private boolean orderAsc;
 
-  protected String indexName;//for distributed serialization only
+  protected String indexName;
 
   private long cost  = 0;
   private long count = 0;
@@ -48,6 +48,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.index = index;
+    this.indexName = index.getName();
     this.condition = condition;
     this.additionalRangeCondition = additionalRangeCondition;
     this.orderAsc = orderAsc;
@@ -151,6 +152,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private void updateIndexStats() {
     //stats
     OQueryStats stats = OQueryStats.get((ODatabaseDocumentInternal) ctx.getDatabase());
+    if (index == null) {
+      return;//this could happen, if not inited yet
+    }
     String indexName = index.getName();
     boolean range = false;
     int size = 0;
@@ -596,5 +600,22 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }
+  }
+
+  @Override
+  public void reset() {
+
+    index = null;
+    condition = condition == null ? null : condition.copy();
+    additionalRangeCondition = additionalRangeCondition == null ? null : additionalRangeCondition.copy();
+
+    cost = 0;
+    count = 0;
+
+    inited = false;
+    cursor = null;
+    customIterator = null;
+    nullKeyIterator = null;
+    nextEntry = null;
   }
 }
