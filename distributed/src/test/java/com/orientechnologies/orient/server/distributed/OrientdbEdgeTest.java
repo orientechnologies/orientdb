@@ -110,7 +110,7 @@ public class OrientdbEdgeTest {
 
     orientDB.close();
 
-    ODatabasePool pool = new ODatabasePool(orientDB, (String) conf.get("db.name"), (String) conf.get("storage.user"),
+    ODatabasePool pool = new ODatabasePool(conf.get("storage.url") + "/" + conf.get("db.name"), (String) conf.get("storage.user"),
         (String) conf.get("storage.password"), OrientDBConfig.defaultConfig());
     return pool;
   }
