@@ -31,12 +31,10 @@ import java.util.List;
  * to classic algorithm because of its big memory consumption in case of non-uniform data distribution instead it is implemented
  * according too "Multilevel Extendible Hashing Sven Helmer, Thomas Neumann, Guido Moerkotte April 17, 2002". Which has much less
  * memory consumption in case of nonuniform data distribution.
- * <p>
  * Index itself uses so called "multilevel schema" when first level contains 256 buckets, when bucket is split it is put at the
  * end of other file which represents second level. So if data which are put has distribution close to uniform (this index was
  * designed to be use as rid index for DHT storage) buckets split will be preformed in append only manner to speed up index write
  * speed.
- * <p>
  * So hash index bucket itself has following structure:
  * <ol>
  * <li>Bucket depth - 1 byte.</li>
@@ -45,30 +43,23 @@ import java.util.List;
  * <li>Offsets of entities stored in this bucket relatively to it's beginning. It is array of int values of undefined size.</li>
  * <li>Entities itself</li>
  * </ol>
- * <p>
  * So if 1-st and 2-nd fields are clear. We should discuss the last ones.
- * <p>
- * <p>
  * Entities in bucket are sorted by key's hash code so each entity has following storage format in bucket: key's hash code (8
  * bytes), key, value. Because entities are stored in sorted order it means that every time when we insert new entity old ones
  * should be moved.
- * <p>
  * There are 2 reasons why it is bad:
  * <ol>
  * <li>It will generate write ahead log of enormous size.</li>
  * <li>The more amount of memory is affected in operation the less speed we will have. In worst case 60 kb of memory should be
  * moved.</li>
  * </ol>
- * <p>
  * To avoid disadvantages listed above entries ara appended to the end of bucket, but their offsets are stored at the beginning of
  * bucket. Offsets are stored in sorted order (ordered by hash code of entity's key) so we need to move only small amount of memory
  * to store entities in sorted order.
- * <p>
  * About indexes of parents of current bucket. When item is removed from bucket we check space which is needed to store all entities
  * of this bucket, it's buddy bucket (bucket which was also created from parent bucket during split) and if space of single bucket
  * is enough to save all entities from both buckets we remove these buckets and put all content in parent bucket. That is why we
  * need indexes of parents of current bucket.
- * <p>
  * Also hash index has special file of one page long which contains information about state of each level of buckets in index. This
  * information is stored as array index of which equals to file level. All array item has following structure:
  * <ol>
@@ -93,7 +84,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
   static final         int HASH_CODE_SIZE  = 64;
   private static final int MAX_LEVEL_DEPTH = 8;
-  static final  int MAX_LEVEL_SIZE  = 1 << MAX_LEVEL_DEPTH;
+  static final         int MAX_LEVEL_SIZE  = 1 << MAX_LEVEL_DEPTH;
 
   private static final int LEVEL_MASK = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
@@ -116,9 +107,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
   private OHashTableDirectory directory;
 
-
   public OLocalHashTable(String name, String metadataConfigurationFileExtension, String treeStateFileExtension,
-      String bucketFileExtension, String nullBucketFileExtension, OHashFunction<K> keyHashFunction, OAbstractPaginatedStorage abstractPaginatedStorage) {
+      String bucketFileExtension, String nullBucketFileExtension, OHashFunction<K> keyHashFunction,
+      OAbstractPaginatedStorage abstractPaginatedStorage) {
     super(abstractPaginatedStorage, name, bucketFileExtension, name + bucketFileExtension);
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;

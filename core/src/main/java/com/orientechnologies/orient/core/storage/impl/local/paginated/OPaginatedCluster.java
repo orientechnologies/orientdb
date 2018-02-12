@@ -125,9 +125,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         final String cfgEncryption = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD);
         final String cfgEncryptionKey = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
 
-        config = new OStoragePaginatedClusterConfiguration((OStorageConfigurationImpl) storage.getConfiguration(), id, clusterName, null, true,
-            OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-            cfgCompression, cfgEncryption, cfgEncryptionKey, null, OStorageClusterConfiguration.STATUS.ONLINE);
+        config = new OStoragePaginatedClusterConfiguration((OStorageConfigurationImpl) storage.getConfiguration(), id, clusterName,
+            null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
+            OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, cfgCompression, cfgEncryption, cfgEncryptionKey, null,
+            OStorageClusterConfiguration.STATUS.ONLINE);
         config.name = clusterName;
 
         init((OAbstractPaginatedStorage) storage, config);

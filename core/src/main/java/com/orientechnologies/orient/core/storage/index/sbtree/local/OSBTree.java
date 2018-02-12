@@ -44,25 +44,19 @@ import java.util.*;
 
 /**
  * This is implementation which is based on B+-tree implementation threaded tree.
- * <p>
  * The main differences are:
  * <ol>
  * <li>Buckets are not compacted/removed if they are empty after deletion of item. They reused later when new items are added.</li>
  * <li>All non-leaf buckets have links to neighbor buckets which contain keys which are less/more than keys contained in current
  * bucket</li>
  * <ol/>
- * <p>
- * <p>
  * There is support of null values for keys, but values itself cannot be null. Null keys support is switched off by default if null
  * keys are supported value which is related to null key will be stored in separate file which has only one page.
- * <p>
  * Buckets/pages for usual (non-null) key-value entries can be considered as sorted array. The first bytes of page contains such
  * auxiliary information as size of entries contained in bucket, links to neighbors which contain entries with keys less/more than
  * keys in current bucket.
- * <p>
  * The next bytes contain sorted array of entries. Array itself is split on two parts. First part is growing from start to end, and
  * second part is growing from end to start.
- * <p>
  * First part is array of offsets to real key-value entries which are stored in second part of array which grows from end to start.
  * This array of offsets is sorted by accessing order according to key value. So we can use binary search to find requested key.
  * When new key-value pair is added we append binary presentation of this pair to the second part of array which grows from end of
@@ -84,7 +78,6 @@ public class OSBTree<K, V> extends ODurableComponent {
   private final static long                  ROOT_INDEX = 0;
   private final        Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
   private final String  nullFileExtension;
-  private final boolean durableInNonTxMode;
   private       long    fileId;
   private long nullBucketFileId = -1;
   private int                  keySize;
@@ -93,13 +86,11 @@ public class OSBTree<K, V> extends ODurableComponent {
   private OBinarySerializer<V> valueSerializer;
   private boolean              nullPointerSupport;
 
-  public OSBTree(String name, String dataFileExtension, boolean durableInNonTxMode, String nullFileExtension,
-      OAbstractPaginatedStorage storage) {
+  public OSBTree(String name, String dataFileExtension, String nullFileExtension, OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension, name + dataFileExtension);
     acquireExclusiveLock();
     try {
       this.nullFileExtension = nullFileExtension;
-      this.durableInNonTxMode = durableInNonTxMode;
     } finally {
       releaseExclusiveLock();
     }

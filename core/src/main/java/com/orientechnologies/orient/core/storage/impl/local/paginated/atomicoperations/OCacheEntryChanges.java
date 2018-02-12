@@ -11,14 +11,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPa
  */
 public class OCacheEntryChanges implements OCacheEntry {
 
-  /**
-   * Value of LSN of page before it was modified. LSN of new page equals to (0, 0)
-   */
-  OLogSequenceNumber originalLsn = new OLogSequenceNumber(0, 0);
-
   OCacheEntry delegate;
   final OWALChanges changes = new OWALPageChangesPortion();
-  OLogSequenceNumber lsn     = null;
+
   boolean            isNew   = false;
   boolean            pinPage = false;
 

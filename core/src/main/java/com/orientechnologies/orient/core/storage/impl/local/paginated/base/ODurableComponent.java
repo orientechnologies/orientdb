@@ -35,7 +35,6 @@ import java.io.IOException;
 /**
  * Base class for all durable data structures, that is data structures state of which can be consistently restored after system
  * crash but results of last operations in small interval before crash may be lost.
- * <p>
  * This class contains methods which are used to support such concepts as:
  * <ol>
  * <li>"atomic operation" - set of operations which should be either applied together or not. It includes not only changes on
@@ -43,8 +42,6 @@ import java.io.IOException;
  * operation.</li>
  * <li>write ahead log - log of all changes which were done with page content after loading it from cache.</li>
  * </ol>
- * <p>
- * <p>
  * To support of "atomic operation" concept following should be done:
  * <ol>
  * <li>Call {@link #startAtomicOperation(boolean)} method.</li>

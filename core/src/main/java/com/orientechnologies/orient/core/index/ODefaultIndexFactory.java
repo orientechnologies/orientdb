@@ -136,10 +136,10 @@ public class ODefaultIndexFactory implements OIndexFactory {
 
     final String storageType = storage.getType();
     if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OSBTreeIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage, version);
+      indexEngine = new OSBTreeIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OSBTreeIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
+      indexEngine = new OSBTreeIndexEngine(name, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine(name);
     else

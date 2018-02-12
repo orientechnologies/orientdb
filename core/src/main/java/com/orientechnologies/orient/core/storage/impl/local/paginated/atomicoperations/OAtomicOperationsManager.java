@@ -210,14 +210,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     return operation;
   }
 
-  public void alarmReleaseOfAtomicOperationAndLocks() {
+  public void alarmClearOfAtomicOperation() {
     final OAtomicOperation current = currentOperation.get();
 
     if (current != null) {
       currentOperation.set(null);
-
-      for (String lockObject : current.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
     }
   }
 
@@ -403,8 +400,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         // We have to decrement the counter after the disk operations, otherwise, if they
         // fail, we will be unable to rollback the atomic operation later.
         operation.decrementCounter();
-        currentOperation.set(null);
 
+        atomicOperationsCount.decrement();
         if (trackAtomicOperations) {
           activeAtomicOperations.remove(operation.getOperationUnitId());
         }
@@ -415,7 +412,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         for (String lockObject : operation.lockedObjects())
           lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
 
-        atomicOperationsCount.decrement();
+        currentOperation.set(null);
       }
 
     } else {

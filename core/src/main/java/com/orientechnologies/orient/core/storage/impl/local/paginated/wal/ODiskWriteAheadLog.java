@@ -116,21 +116,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final List<WeakReference<OLowDiskSpaceListener>>      lowDiskSpaceListeners   = new CopyOnWriteArrayList<>();
   private final List<WeakReference<OCheckpointRequestListener>> fullCheckpointListeners = new CopyOnWriteArrayList<>();
 
-  private final ScheduledThreadPoolExecutor autoFileCloser = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
-    final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-    thread.setDaemon(true);
-    thread.setName("WAL Closer Task (" + getStorage().getName() + ")");
-    thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-    return thread;
-  });
-
-  private final ScheduledThreadPoolExecutor commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
-    final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-    thread.setDaemon(true);
-    thread.setName("OrientDB WAL Flush Task (" + getStorage().getName() + ")");
-    thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-    return thread;
-  });
+  private final OScheduledThreadPoolExecutorWithLogging autoFileCloser;
+  private final OScheduledThreadPoolExecutorWithLogging commitExecutor;
 
   private final ConcurrentNavigableMap<OLogSequenceNumber, Runnable> events = new ConcurrentSkipListMap<>();
 
@@ -191,6 +178,23 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     this.maxSegmentSize = maxSegmentSize;
     this.storage = storage;
     this.performanceStatisticManager = storage.getPerformanceStatisticManager();
+    this.autoFileCloser = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
+      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
+      thread.setDaemon(true);
+      thread.setName("WAL Closer Task (" + getStorage().getName() + ")");
+      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+      return thread;
+    });
+    this.autoFileCloser.setMaximumPoolSize(1);
+
+    commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
+      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
+      thread.setDaemon(true);
+      thread.setName("OrientDB WAL Flush Task (" + getStorage().getName() + ")");
+      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+      return thread;
+    });
+    commitExecutor.setMaximumPoolSize(1);
 
     try {
       this.walLocation = calculateWalPath(this.storage, walPath);

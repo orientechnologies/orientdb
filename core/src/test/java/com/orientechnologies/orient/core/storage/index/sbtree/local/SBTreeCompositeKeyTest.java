@@ -31,7 +31,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
   @Before
   public void beforeMethod() {
-    localSBTree = new OSBTree<OCompositeKey, OIdentifiable>("localSBTreeCompositeKeyTest", ".sbt", false, ".nbt",
+    localSBTree = new OSBTree<>("localSBTreeCompositeKeyTest", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) database.getStorage().getUnderlying());
     localSBTree.create(OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 2, false);
 
@@ -460,7 +460,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
   }
 
   private Set<ORID> extractRids(OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor) {
-    final Set<ORID> orids = new HashSet<ORID>();
+    final Set<ORID> orids = new HashSet<>();
     while (true) {
       Map.Entry<OCompositeKey, OIdentifiable> entry = cursor.next(-1);
       if (entry != null)

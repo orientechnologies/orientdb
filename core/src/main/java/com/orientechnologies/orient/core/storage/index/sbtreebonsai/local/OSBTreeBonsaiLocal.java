@@ -46,9 +46,7 @@ import java.util.concurrent.locks.Lock;
 /**
  * Tree-based dictionary algorithm. Similar to {@link OSBTree} but uses subpages of disk cache that is more efficient for small data
  * structures.
- * <p>
  * Oriented for usage of several instances inside of one file.
- * <p>
  * Creation of several instances that represent the same collection is not allowed.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -731,10 +729,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   /**
    * Load all entries with key greater then specified key.
    *
-   * @param key          defines
-   * @param inclusive    if true entry with given key is included
-   * @param ascSortOrder
-   * @param listener
+   * @param key       defines
+   * @param inclusive if true entry with given key is included
    */
   @Override
   public void loadEntriesMajor(K key, boolean inclusive, boolean ascSortOrder, RangeResultListener<K, V> listener) {
