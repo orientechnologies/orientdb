@@ -167,11 +167,11 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
   protected OResultSet executeStatement(String language, String text, Object params, ODatabaseDocument db) {
     OResultSet result;
     if (params instanceof Map) {
-      result = db.command(text, (Map) params);
+      result = db.execute(language, text, (Map) params);
     } else if (params instanceof Object[]) {
-      result = db.command(text, (Object[]) params);
+      result = db.execute(language, text, (Object[]) params);
     } else {
-      result = db.command(text, params);
+      result = db.execute(language, text, params);
     }
     return result;
   }
