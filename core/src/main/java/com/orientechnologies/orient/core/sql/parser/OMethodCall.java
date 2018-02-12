@@ -73,8 +73,11 @@ public class OMethodCall extends SimpleNode {
   private Object execute(Object targetObjects, OCommandContext ctx, String name, List<OExpression> iParams,
       Iterable<OIdentifiable> iPossibleResults) {
     List<Object> paramValues = new ArrayList<Object>();
+    Object val = ctx.getVariable("$current");
+    if (val == null && targetObjects == null) {
+      return null;
+    }
     for (OExpression expr : iParams) {
-      Object val = ctx.getVariable("$current");
       if (val instanceof OIdentifiable) {
         paramValues.add(expr.execute((OIdentifiable) val, ctx));
       } else if (val instanceof OResult) {
@@ -110,7 +113,6 @@ public class OMethodCall extends SimpleNode {
     }
     OSQLMethod method = OSQLEngine.getMethod(name);
     if (method != null) {
-      Object val = ctx.getVariable("$current");
       if (val instanceof OResult) {
         val = ((OResult) val).getElement().orElse(null);
       }

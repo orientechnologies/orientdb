@@ -274,7 +274,15 @@ public class MatchEdgeTraverser {
       }
     }
 
-    Object qR = this.item.getMethod().execute(startingPoint, possibleResults, iCommandContext);
+    Object prevCurrent = iCommandContext.getVariable("$current");
+    iCommandContext.setVariable("$current", startingPoint);
+    Object qR;
+    try {
+      qR = this.item.getMethod().execute(startingPoint, possibleResults, iCommandContext);
+    } finally {
+      iCommandContext.setVariable("$current", prevCurrent);
+    }
+
     if (qR == null) {
       return Collections.EMPTY_LIST;
     }
