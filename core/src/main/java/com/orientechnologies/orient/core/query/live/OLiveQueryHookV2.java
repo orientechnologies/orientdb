@@ -271,7 +271,13 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
   }
 
   private OResultInternal calculateBefore(ODocument iDocument) {
-    OResultInternal result = calculateAfter(iDocument);
+    OResultInternal result = new OResultInternal();
+    for (String prop : iDocument.getPropertyNames()) {
+      result.setProperty(prop, iDocument.getProperty(prop));
+    }
+    result.setProperty("@rid", iDocument.getIdentity());
+    result.setProperty("@class", iDocument.getClassName());
+    result.setProperty("@version", iDocument.getVersion());
     for (String prop : iDocument.getDirtyFields()) {
       result.setProperty(prop, iDocument.getOriginalValue(prop));
     }
@@ -285,7 +291,7 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     }
     result.setProperty("@rid", iDocument.getIdentity());
     result.setProperty("@class", iDocument.getClassName());
-    result.setProperty("@version", iDocument.getVersion());
+    result.setProperty("@version", iDocument.getVersion() + 1);
     return result;
   }
 
