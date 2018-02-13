@@ -2011,7 +2011,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
     if (iRecord instanceof OElement && dirtyManager != null && dirtyManager.getReferences() != null && !dirtyManager.getReferences()
         .isEmpty()) {
-      if (((OElement) iRecord).isVertex() || ((OElement) iRecord).isEdge() && !getTransaction().isActive() && inHook.isEmpty()) {
+      if ((((OElement) iRecord).isVertex() || ((OElement) iRecord).isEdge()) && !getTransaction().isActive() && inHook.isEmpty()) {
         return saveGraph(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
       }
     }
