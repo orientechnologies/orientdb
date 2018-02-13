@@ -26,7 +26,6 @@ import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -41,7 +40,6 @@ import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFact
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDeleter;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -61,7 +59,6 @@ import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.*;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSaveThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -1446,10 +1443,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
       ORecordCallback<Integer> recordUpdatedCallback);
 
-
-  public abstract void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
-      boolean prohibitTombstones);
-
+  public abstract void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired,
+      final OPERATION_MODE iMode, boolean prohibitTombstones);
 
   /**
    * This method is internal, it can be subject to signature change or be removed, do not use.
@@ -1669,7 +1664,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   public OVertex newVertex(final String iClassName) {
     OClass cl = getClass(iClassName);
-    if (!cl.isVertexType()) {
+    if (cl == null || !cl.isVertexType()) {
       throw new IllegalArgumentException("" + iClassName + " is not a vertex class");
     }
     OVertex doc = new OVertexDocument(cl);
@@ -1908,10 +1903,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while others
    * cannot access to it since it's locked.
    * <p>
-   * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
-   * {@link OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the
-   * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
-   * {@link ODocument#validate()} is called.
+   * If MVCC is enabled and the version of the document is different by the version stored in the database, then a {@link
+   * OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the constraints
+   * declared in the schema if any (can work also in schema-less mode). To validate the document the {@link ODocument#validate()} is
+   * called.
    *
    * @param iRecord Record to save.
    *
@@ -1933,10 +1928,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * exclusive lock is acquired against the record. Current transaction will continue to see the record as modified, while others
    * cannot access to it since it's locked.
    * <p>
-   * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
-   * {@link OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the
-   * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
-   * {@link ODocument#validate()} is called.
+   * If MVCC is enabled and the version of the document is different by the version stored in the database, then a {@link
+   * OConcurrentModificationException} exception is thrown.Before to save the document it must be valid following the constraints
+   * declared in the schema if any (can work also in schema-less mode). To validate the document the {@link ODocument#validate()} is
+   * called.
    *
    * @param iRecord                Record to save.
    * @param iForceCreate           Flag that indicates that record should be created. If record with current rid already exists,
@@ -1963,10 +1958,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * transaction is running, then an exclusive lock is acquired against the record. Current transaction will continue to see the
    * record as modified, while others cannot access to it since it's locked.
    * <p>
-   * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
-   * {@link OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the
-   * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
-   * {@link ODocument#validate()} is called.
+   * If MVCC is enabled and the version of the document is different by the version stored in the database, then a {@link
+   * OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the constraints
+   * declared in the schema if any (can work also in schema-less mode). To validate the document the {@link ODocument#validate()} is
+   * called.
    *
    * @param iRecord      Record to save
    * @param iClusterName Cluster name where to save the record
@@ -1989,10 +1984,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * transaction is running, then an exclusive lock is acquired against the record. Current transaction will continue to see the
    * record as modified, while others cannot access to it since it's locked.
    * <p>
-   * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
-   * {@link OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the
-   * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
-   * {@link ODocument#validate()} is called.
+   * If MVCC is enabled and the version of the document is different by the version stored in the database, then a {@link
+   * OConcurrentModificationException} exception is thrown. Before to save the document it must be valid following the constraints
+   * declared in the schema if any (can work also in schema-less mode). To validate the document the {@link ODocument#validate()} is
+   * called.
    *
    * @param iRecord                Record to save
    * @param iClusterName           Cluster name where to save the record
@@ -2083,8 +2078,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * exclusive lock is acquired against the record. Current transaction will continue to see the record as deleted, while others
    * cannot access to it since it's locked.
    * <p>
-   * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
-   * {@link OConcurrentModificationException} exception is thrown.
+   * If MVCC is enabled and the version of the document is different by the version stored in the database, then a {@link
+   * OConcurrentModificationException} exception is thrown.
    *
    * @param record record to delete
    *
