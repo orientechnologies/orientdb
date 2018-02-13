@@ -887,10 +887,9 @@ public class ODocumentHelper {
   public static Object cloneValue(ODocument iCloned, final Object fieldValue) {
 
     if (fieldValue != null) {
-      if (fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid()) {
-        // EMBEDDED DOCUMENT
-        return ((ODocument) fieldValue).copy();
-
+      if (fieldValue instanceof ODocument && ((ODocument) fieldValue).isEmbedded()) {
+          // EMBEDDED DOCUMENT
+          return ((ODocument) fieldValue).copy();
       } else if (fieldValue instanceof ORidBag) {
         ORidBag newBag = ((ORidBag) fieldValue).copy();
         newBag.setOwner(null);
