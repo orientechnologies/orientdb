@@ -82,4 +82,14 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
   public long getCost() {
     return cost;
   }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new ProjectionCalculationStep(projection.copy(), ctx, profilingEnabled);
+  }
 }

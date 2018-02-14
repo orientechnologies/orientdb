@@ -125,11 +125,12 @@ public class OStatementCache {
         }
       }
       OStatement result = osql.parse();
+      result.originalStatement = statement;
 
       return result;
     } catch (ParseException e) {
       throwParsingException(e, statement);
-    }catch (TokenMgrError e2){
+    } catch (TokenMgrError e2) {
       throwParsingException(e2, statement);
     }
     return null;
@@ -143,4 +144,9 @@ public class OStatementCache {
     throw new OCommandSQLParsingException(e, statement);
   }
 
+  public void clear() {
+    synchronized (map) {
+      map.clear();
+    }
+  }
 }

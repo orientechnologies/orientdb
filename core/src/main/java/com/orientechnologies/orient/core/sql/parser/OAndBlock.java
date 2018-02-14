@@ -241,5 +241,15 @@ public class OAndBlock extends OBooleanExpression {
     subBlocks.forEach(x -> x.translateLuceneOperator());
   }
 
+  @Override
+  public boolean isCacheable() {
+    for (OBooleanExpression exp : subBlocks) {
+      if (!exp.isCacheable()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

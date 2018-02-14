@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by luigidellaquila on 08/07/16.
@@ -20,6 +21,10 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
   OResultSet currentResultSet;
   int currentStep = 0;
+
+  protected FetchFromClassExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
+  }
 
   public FetchFromClassExecutionStep(String className, Set<String> clusters, OCommandContext ctx, Boolean ridOrder,
       boolean profilingEnabled) {
@@ -39,6 +44,7 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     super(ctx, profilingEnabled);
 
     this.className = className;
+
     if (Boolean.TRUE.equals(ridOrder)) {
       orderByRidAsc = true;
     } else if (Boolean.FALSE.equals(ridOrder)) {
@@ -235,6 +241,21 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   @Override
   public List<OExecutionStep> getSubSteps() {
     return subSteps;
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    FetchFromClassExecutionStep result = new FetchFromClassExecutionStep(ctx, profilingEnabled);
+    result.className = this.className;
+    result.orderByRidAsc = this.orderByRidAsc;
+    result.orderByRidDesc = this.orderByRidDesc;
+    result.subSteps = this.subSteps.stream().map(x -> ((OExecutionStepInternal) x).copy(ctx)).collect(Collectors.toList());
+    return result;
   }
 }
 

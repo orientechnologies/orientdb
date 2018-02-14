@@ -226,12 +226,30 @@ public class OSelectStatement extends OStatement {
 
   @Override
   public boolean executinPlanCanBeCached() {
-    return false;
+    if (originalStatement == null) {
+      return false;
+    }
+    if (this.target != null && !this.target.isCacheable()) {
+      return false;
+    }
+
+    if (this.letClause != null && !this.letClause.isCacheable()) {
+      return false;
+    }
+
+    if (projection != null && !this.projection.isCacheable()) {
+      return false;
+    }
+
+    if (whereClause != null && !whereClause.isCacheable()) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
   public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
-
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -264,12 +282,6 @@ public class OSelectStatement extends OStatement {
     return result;
   }
 
-  @Override
-  public OResultSet execute(OInternalExecutionPlan executionPlan) {
-    OLocalResultSet result = new OLocalResultSet(executionPlan);
-    return result;
-  }
-
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(this);
     return planner.createExecutionPlan(ctx, enableProfiling);
@@ -283,6 +295,7 @@ public class OSelectStatement extends OStatement {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+    result.originalStatement = originalStatement;
     result.target = target == null ? null : target.copy();
     result.projection = projection == null ? null : projection.copy();
     result.whereClause = whereClause == null ? null : whereClause.copy();

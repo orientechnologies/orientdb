@@ -16,6 +16,9 @@ import java.util.Map;
 
 public class OStatement extends SimpleNode {
 
+  //only for internal use!!! (caching)
+  protected String originalStatement;
+
   public static final String CUSTOM_STRICT_SQL = "strictSql";
 
   public OStatement(int id) {
@@ -63,11 +66,6 @@ public class OStatement extends SimpleNode {
   public OResultSet execute(ODatabase db, Map args) {
     return execute(db, args, null);
   }
-
-  public OResultSet execute(OInternalExecutionPlan executionPlan){
-    throw new UnsupportedOperationException();
-  }
-
 
   public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext) {
     throw new UnsupportedOperationException();
@@ -131,5 +129,10 @@ public class OStatement extends SimpleNode {
   public boolean executinPlanCanBeCached() {
     return false;
   }
+
+  public String getOriginalStatement() {
+    return originalStatement;
+  }
+
 }
 /* JavaCC - OriginalChecksum=589c4dcc8287f430e46d8eb12b0412c5 (do not edit this line) */

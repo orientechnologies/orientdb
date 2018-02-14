@@ -57,5 +57,9 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
     return res;
   }
 
+  @Override
+  public boolean canBeCached() {
+    return false;
+  }
 }
 

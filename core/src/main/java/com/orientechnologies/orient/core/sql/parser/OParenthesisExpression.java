@@ -234,5 +234,16 @@ public class OParenthesisExpression extends OMathExpression {
       statement = OStatement.deserializeFromOResult(fromResult.getProperty("statement"));
     }
   }
+
+  @Override
+  public boolean isCacheable() {
+    if (expression != null) {
+      return expression.isCacheable();
+    }
+    if (statement != null) {
+      return statement.executinPlanCanBeCached();
+    }
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=4656e5faf4f54dc3fc45a06d8e375c35 (do not edit this line) */

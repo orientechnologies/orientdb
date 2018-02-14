@@ -81,7 +81,8 @@ public class OContainsAllCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     Object leftValue = left.execute(currentRecord, ctx);
     if (right != null) {
       Object rightValue = right.execute(currentRecord, ctx);
@@ -109,7 +110,8 @@ public class OContainsAllCondition extends OBooleanExpression {
     }
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     Object leftValue = left.execute(currentRecord, ctx);
     if (right != null) {
       Object rightValue = right.execute(currentRecord, ctx);
@@ -166,7 +168,8 @@ public class OContainsAllCondition extends OBooleanExpression {
     this.right = right;
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     if (left != null && !left.supportsBasicCalculation()) {
       return false;
     }
@@ -179,7 +182,8 @@ public class OContainsAllCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (left != null && !left.supportsBasicCalculation()) {
       total++;
@@ -193,7 +197,8 @@ public class OContainsAllCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     if (left != null && !left.supportsBasicCalculation()) {
       result.add(left);
@@ -207,7 +212,8 @@ public class OContainsAllCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     if (left.needsAliases(aliases)) {
       return true;
     }
@@ -221,7 +227,8 @@ public class OContainsAllCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public OContainsAllCondition copy() {
+  @Override
+  public OContainsAllCondition copy() {
     OContainsAllCondition result = new OContainsAllCondition(-1);
     result.left = left.copy();
     result.right = right == null ? null : right.copy();
@@ -229,7 +236,8 @@ public class OContainsAllCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     left.extractSubQueries(collector);
     if (right != null) {
       right.extractSubQueries(collector);
@@ -239,7 +247,8 @@ public class OContainsAllCondition extends OBooleanExpression {
     }
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     if (left != null && left.refersToParent()) {
       return true;
     }
@@ -252,7 +261,8 @@ public class OContainsAllCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -270,14 +280,16 @@ public class OContainsAllCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = left != null ? left.hashCode() : 0;
     result = 31 * result + (right != null ? right.hashCode() : 0);
     result = 31 * result + (rightBlock != null ? rightBlock.hashCode() : 0);
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
     List<String> rightX = right == null ? null : right.getMatchPatternInvolvedAliases();
     List<String> rightBlockX = rightBlock == null ? null : rightBlock.getMatchPatternInvolvedAliases();
@@ -294,6 +306,22 @@ public class OContainsAllCondition extends OBooleanExpression {
     }
 
     return result.size() == 0 ? null : result;
+  }
+
+  @Override
+  public boolean isCacheable() {
+    if (left != null && !left.isCacheable()) {
+      return false;
+    }
+
+    if (right != null && !right.isCacheable()) {
+      return false;
+    }
+
+    if (rightBlock != null && !rightBlock.isCacheable()) {
+      return false;
+    }
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=ab7b4e192a01cda09a82d5b80ef4ec60 (do not edit this line) */

@@ -73,5 +73,9 @@ public class OFromClause extends SimpleNode {
     item = new OFromItem(-1);
     item.deserialize(fromResult.getProperty("item"));
   }
+
+  public boolean isCacheable() {
+    return item.isCacheable();
+  }
 }
 /* JavaCC - OriginalChecksum=051839d20dabfa4cce26ebcbe0d03a86 (do not edit this line) */

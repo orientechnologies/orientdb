@@ -164,5 +164,14 @@ public class OCollection extends SimpleNode {
       }
     }
   }
+
+  public boolean isCacheable() {
+    for (OExpression exp : expressions) {
+      if (!exp.isCacheable()) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=c93b20138b2ae58c5f76e458c34b5946 (do not edit this line) */

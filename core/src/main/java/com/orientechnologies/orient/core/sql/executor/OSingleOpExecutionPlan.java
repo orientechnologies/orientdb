@@ -23,11 +23,13 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
     this.statement = stm;
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
 
   }
 
-  @Override public OResultSet fetchNext(int n) {
+  @Override
+  public OResultSet fetchNext(int n) {
     return null;
   }
 
@@ -35,8 +37,14 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
     executed = false;
   }
 
-  @Override public long getCost() {
+  @Override
+  public long getCost() {
     return 0;
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return false;
   }
 
   public OResultSet executeInternal(OBasicCommandContext ctx) throws OCommandExecutionException {
@@ -51,11 +59,13 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
     return result;
   }
 
-  @Override public List<OExecutionStep> getSteps() {
+  @Override
+  public List<OExecutionStep> getSteps() {
     return Collections.emptyList();
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
@@ -64,7 +74,8 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
     return result.toString();
   }
 
-  @Override public OResult toResult() {
+  @Override
+  public OResult toResult() {
     OResultInternal result = new OResultInternal();
     result.setProperty("type", "QueryExecutionPlan");
     result.setProperty("javaType", getClass().getName());

@@ -14,6 +14,9 @@ import java.util.Optional;
 public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
 
   private final int[] filterClusterIds;
+
+  // runtime
+
   private long cost = 0;
 
   private OResultSet prevResult = null;
@@ -164,5 +167,15 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
   @Override
   public long getCost() {
     return cost;
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new GetValueFromIndexEntryStep(ctx, this.filterClusterIds, this.profilingEnabled);
   }
 }

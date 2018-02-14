@@ -423,5 +423,9 @@ public class OSuffixIdentifier extends SimpleNode {
     }
     return null;
   }
+
+  public boolean isCacheable() {
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */

@@ -16,5 +16,10 @@ public class ODeleteExecutionPlan extends OUpdateExecutionPlan {
     res.setProperty("type", "DeleteExecutionPlan");
     return res;
   }
+
+  @Override
+  public boolean canBeCached() {
+    return false;
+  }
 }
 

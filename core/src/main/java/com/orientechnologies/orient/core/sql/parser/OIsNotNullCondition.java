@@ -105,5 +105,10 @@ public class OIsNotNullCondition extends OBooleanExpression {
     return expression.getMatchPatternInvolvedAliases();
   }
 
+  @Override
+  public boolean isCacheable() {
+    return expression.isCacheable();
+  }
+
 }
 /* JavaCC - OriginalChecksum=a292fa8a629abb7f6fe72a627fc91361 (do not edit this line) */

@@ -31,7 +31,7 @@ public class OMathExpression extends SimpleNode {
   public boolean isDefinedFor(OElement currentRecord) {
     return true;
   }
-  
+
   public enum Operator {
     STAR(10) {
       @Override
@@ -567,6 +567,15 @@ public class OMathExpression extends SimpleNode {
     super(p, id);
   }
 
+  public boolean isCacheable() {
+    for (OMathExpression exp : childExpressions) {
+      if (!exp.isCacheable()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (childExpressions.size() == 0) {
       return null;
@@ -858,7 +867,6 @@ public class OMathExpression extends SimpleNode {
       return childExpressions.get(0).getCollate(currentRecord, ctx);
     return null;
   }
-
 
   public boolean isEarlyCalculated() {
     for (OMathExpression exp : childExpressions) {

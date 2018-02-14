@@ -5,15 +5,14 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.sql.executor.OQueryStats;
+import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -34,6 +33,11 @@ public class OSharedContextDistributed extends OSharedContext {
     commandCache = new OCommandCacheSoftRefs(storage);
     statementCache = new OStatementCache(
         storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
+
+    executionPlanCache = new OExecutionPlanCache(
+        storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
+    this.registerListener(executionPlanCache);
+
     queryStats = new OQueryStats();
 
   }
@@ -71,6 +75,8 @@ public class OSharedContextDistributed extends OSharedContext {
     sequenceLibrary.close();
     commandCache.clear();
     commandCache.shutdown();
+    statementCache.clear();
+    executionPlanCache.invalidate();
     liveQueryOps.close();
     liveQueryOpsV2.close();
   }

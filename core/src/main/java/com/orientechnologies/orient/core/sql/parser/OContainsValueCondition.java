@@ -205,5 +205,20 @@ public class OContainsValueCondition extends OBooleanExpression {
 
     return result.size() == 0 ? null : result;
   }
+
+  @Override
+  public boolean isCacheable() {
+    if (left != null && !left.isCacheable()) {
+      return false;
+    }
+    if (condition != null && !condition.isCacheable()) {
+      return false;
+    }
+    if (expression != null && !expression.isCacheable()) {
+      return false;
+    }
+
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=6fda752f10c8d8731f43efa706e39459 (do not edit this line) */

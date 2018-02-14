@@ -38,8 +38,11 @@ public class OSharedContextEmbedded extends OSharedContext {
     commandCache = new OCommandCacheSoftRefs(storage);
     statementCache = new OStatementCache(
         storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
+
     executionPlanCache = new OExecutionPlanCache(
         storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
+    this.registerListener(executionPlanCache);
+
     queryStats = new OQueryStats();
     activeDistributedQueries = new HashMap<>();
     (((OAbstractPaginatedStorage) storage).getConfiguration()).setConfigurationUpdateListener(update -> {
@@ -80,6 +83,8 @@ public class OSharedContextEmbedded extends OSharedContext {
     sequenceLibrary.close();
     commandCache.clear();
     commandCache.shutdown();
+    statementCache.clear();
+    executionPlanCache.invalidate();
     liveQueryOps.close();
     liveQueryOpsV2.close();
     activeDistributedQueries.values().forEach(x -> x.close());

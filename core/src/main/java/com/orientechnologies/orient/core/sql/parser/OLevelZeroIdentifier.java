@@ -317,5 +317,15 @@ public class OLevelZeroIdentifier extends SimpleNode {
       this.functionCall.extractSubQueries(collector);
     }
   }
+
+  public boolean isCacheable() {
+    if(functionCall!=null){
+      return functionCall.isCacheable();
+    }
+    if(collection!=null){
+      return collection.isCacheable();
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=0305fcf120ba9395b4c975f85cdade72 (do not edit this line) */

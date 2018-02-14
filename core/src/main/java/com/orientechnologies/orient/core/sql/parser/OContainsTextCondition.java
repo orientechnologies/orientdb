@@ -31,30 +31,32 @@ public class OContainsTextCondition extends OBooleanExpression {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     Object leftValue = left.execute(currentRecord, ctx);
-    if(leftValue==null || !(leftValue instanceof String)){
+    if (leftValue == null || !(leftValue instanceof String)) {
       return false;
     }
     Object rightValue = right.execute(currentRecord, ctx);
-    if(rightValue==null || !(rightValue instanceof String)){
+    if (rightValue == null || !(rightValue instanceof String)) {
       return false;
     }
 
-    return ((String)leftValue).indexOf((String)rightValue) > -1;
+    return ((String) leftValue).indexOf((String) rightValue) > -1;
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     Object leftValue = left.execute(currentRecord, ctx);
-    if(leftValue==null || !(leftValue instanceof String)){
+    if (leftValue == null || !(leftValue instanceof String)) {
       return false;
     }
     Object rightValue = right.execute(currentRecord, ctx);
-    if(rightValue==null || !(rightValue instanceof String)){
+    if (rightValue == null || !(rightValue instanceof String)) {
       return false;
     }
 
-    return ((String)leftValue).indexOf((String)rightValue) > -1;
+    return ((String) leftValue).indexOf((String) rightValue) > -1;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -63,11 +65,13 @@ public class OContainsTextCondition extends OBooleanExpression {
     right.toString(params, builder);
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (!left.supportsBasicCalculation()) {
       total++;
@@ -78,7 +82,8 @@ public class OContainsTextCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     if (!left.supportsBasicCalculation()) {
       result.add(left);
@@ -89,7 +94,8 @@ public class OContainsTextCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     if (!left.needsAliases(aliases)) {
       return true;
     }
@@ -99,23 +105,27 @@ public class OContainsTextCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public OContainsTextCondition copy() {
+  @Override
+  public OContainsTextCondition copy() {
     OContainsTextCondition result = new OContainsTextCondition(-1);
     result.left = left.copy();
     result.right = right.copy();
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     left.extractSubQueries(collector);
     right.extractSubQueries(collector);
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     return left.refersToParent() || right.refersToParent();
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -131,13 +141,15 @@ public class OContainsTextCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = left != null ? left.hashCode() : 0;
     result = 31 * result + (right != null ? right.hashCode() : 0);
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
     List<String> rightX = right == null ? null : right.getMatchPatternInvolvedAliases();
 
@@ -150,6 +162,17 @@ public class OContainsTextCondition extends OBooleanExpression {
     }
 
     return result.size() == 0 ? null : result;
+  }
+
+  @Override
+  public boolean isCacheable() {
+    if (left != null && !left.isCacheable()) {
+      return false;
+    }
+    if (right != null && !right.isCacheable()) {
+      return false;
+    }
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=b588492ba2cbd0f932055f1f64bbbecd (do not edit this line) */

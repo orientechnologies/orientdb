@@ -306,6 +306,20 @@ public class OInCondition extends OBooleanExpression {
     return result.size() == 0 ? null : result;
   }
 
+  @Override
+  public boolean isCacheable() {
+    if (left != null && !left.isCacheable()) {
+      return false;
+    }
+    if (rightStatement != null && !rightStatement.executinPlanCanBeCached()) {
+      return false;
+    }
+    if (rightMathExpression != null && !rightMathExpression.isCacheable()) {
+      return false;
+    }
+    return true;
+  }
+
   public OExpression getLeft() {
     return left;
   }

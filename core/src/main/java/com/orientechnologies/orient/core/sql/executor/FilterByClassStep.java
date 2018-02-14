@@ -16,6 +16,8 @@ import java.util.Optional;
 public class FilterByClassStep extends AbstractExecutionStep {
   private OIdentifier identifier;
 
+  //runtime
+
   OResultSet prevResult = null;
 
   private long cost;
@@ -164,5 +166,15 @@ public class FilterByClassStep extends AbstractExecutionStep {
   @Override
   public long getCost() {
     return cost;
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new FilterByClassStep(this.identifier.copy(), ctx, this.profilingEnabled);
   }
 }

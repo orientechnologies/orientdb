@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class OIndexMatchCondition extends OBooleanExpression{
+public class OIndexMatchCondition extends OBooleanExpression {
 
   protected OBinaryCompareOperator operator;
   protected Boolean                between;
@@ -35,11 +35,13 @@ public class OIndexMatchCondition extends OBooleanExpression{
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement IndexMatch!!!");//TODO
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement IndexMatch!!!");//TODO
   }
 
@@ -80,21 +82,25 @@ public class OIndexMatchCondition extends OBooleanExpression{
     }
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return false;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     return 1;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     result.add(this);
     return result;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     if (leftExpressions != null) {
       for (OExpression exp : leftExpressions) {
         if (exp.needsAliases(aliases)) {
@@ -112,7 +118,8 @@ public class OIndexMatchCondition extends OBooleanExpression{
     return false;
   }
 
-  @Override public OIndexMatchCondition copy() {
+  @Override
+  public OIndexMatchCondition copy() {
     OIndexMatchCondition result = new OIndexMatchCondition(-1);
     result.operator = operator == null ? null : (OBinaryCompareOperator) operator.copy();
     result.between = between;
@@ -125,7 +132,8 @@ public class OIndexMatchCondition extends OBooleanExpression{
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     if (leftExpressions != null) {
       for (OExpression exp : leftExpressions) {
         exp.extractSubQueries(collector);
@@ -138,7 +146,8 @@ public class OIndexMatchCondition extends OBooleanExpression{
     }
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     if (leftExpressions != null) {
       for (OExpression exp : leftExpressions) {
         if (exp != null && exp.refersToParent()) {
@@ -156,7 +165,8 @@ public class OIndexMatchCondition extends OBooleanExpression{
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -176,7 +186,8 @@ public class OIndexMatchCondition extends OBooleanExpression{
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = operator != null ? operator.hashCode() : 0;
     result = 31 * result + (between != null ? between.hashCode() : 0);
     result = 31 * result + (leftExpressions != null ? leftExpressions.hashCode() : 0);
@@ -184,8 +195,29 @@ public class OIndexMatchCondition extends OBooleanExpression{
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     return null;
+  }
+
+  @Override
+  public boolean isCacheable() {
+
+    if (leftExpressions != null) {
+      for (OExpression exp : leftExpressions) {
+        if (!exp.isCacheable()) {
+          return false;
+        }
+      }
+    }
+    if (rightExpressions != null) {
+      for (OExpression exp : rightExpressions) {
+        if (!exp.isCacheable()) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
 }

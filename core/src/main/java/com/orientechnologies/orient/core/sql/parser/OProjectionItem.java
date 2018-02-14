@@ -181,8 +181,7 @@ public class OProjectionItem extends SimpleNode {
   }
 
   /**
-   * INTERNAL USE ONLY
-   * this has to be invoked ONLY if the item is aggregate!!!
+   * INTERNAL USE ONLY this has to be invoked ONLY if the item is aggregate!!!
    *
    * @param aggregateSplit
    */
@@ -295,6 +294,13 @@ public class OProjectionItem extends SimpleNode {
 
   public void setNestedProjection(ONestedProjection nestedProjection) {
     this.nestedProjection = nestedProjection;
+  }
+
+  public boolean isCacheable() {
+    if (expression != null) {
+      return expression.isCacheable();
+    }
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

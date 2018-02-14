@@ -24,29 +24,46 @@ import java.util.stream.Collectors;
 public class OSelectExecutionPlanner {
 
   QueryPlanningInfo info;
+  OSelectStatement  statement;
 
   public OSelectExecutionPlanner(OSelectStatement oSelectStatement) {
+    this.statement = oSelectStatement;
+  }
+
+  private void init() {
     //copying the content, so that it can be manipulated and optimized
     info = new QueryPlanningInfo();
-    info.projection = oSelectStatement.getProjection() == null ? null : oSelectStatement.getProjection().copy();
+    info.projection = this.statement.getProjection() == null ? null : this.statement.getProjection().copy();
     info.projection = translateDistinct(info.projection);
     info.distinct = info.projection == null ? false : info.projection.isDistinct();
     if (info.projection != null) {
       info.projection.setDistinct(false);
     }
 
-    info.target = oSelectStatement.getTarget();
-    info.whereClause = oSelectStatement.getWhereClause() == null ? null : oSelectStatement.getWhereClause().copy();
+    info.target = this.statement.getTarget();
+    info.whereClause = this.statement.getWhereClause() == null ? null : this.statement.getWhereClause().copy();
     info.whereClause = translateLucene(info.whereClause);
-    info.perRecordLetClause = oSelectStatement.getLetClause() == null ? null : oSelectStatement.getLetClause().copy();
-    info.groupBy = oSelectStatement.getGroupBy() == null ? null : oSelectStatement.getGroupBy().copy();
-    info.orderBy = oSelectStatement.getOrderBy() == null ? null : oSelectStatement.getOrderBy().copy();
-    info.unwind = oSelectStatement.getUnwind() == null ? null : oSelectStatement.getUnwind().copy();
-    info.skip = oSelectStatement.getSkip();
-    info.limit = oSelectStatement.getLimit();
+    info.perRecordLetClause = this.statement.getLetClause() == null ? null : this.statement.getLetClause().copy();
+    info.groupBy = this.statement.getGroupBy() == null ? null : this.statement.getGroupBy().copy();
+    info.orderBy = this.statement.getOrderBy() == null ? null : this.statement.getOrderBy().copy();
+    info.unwind = this.statement.getUnwind() == null ? null : this.statement.getUnwind().copy();
+    info.skip = this.statement.getSkip();
+    info.limit = this.statement.getLimit();
+
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
+    if (!enableProfiling && statement.executinPlanCanBeCached()) {
+      OExecutionPlan plan = OExecutionPlanCache.get(statement.getOriginalStatement(), ctx, db);
+      if (plan != null) {
+        return (OInternalExecutionPlan) plan;
+      }
+    }
+
+    long planningStart = System.currentTimeMillis();
+
+    init();
     OSelectExecutionPlan result = new OSelectExecutionPlan(ctx);
 
     if (info.expand && info.distinct) {
@@ -79,6 +96,10 @@ public class OSelectExecutionPlanner {
 
     handleProjectionsBlock(result, info, ctx, enableProfiling);
 
+    if (!enableProfiling && statement.executinPlanCanBeCached() && result.canBeCached()
+        && OExecutionPlanCache.getLastInvalidation(db) < planningStart) {
+      OExecutionPlanCache.put(statement.getOriginalStatement(), result, (ODatabaseDocumentInternal) ctx.getDatabase());
+    }
     return result;
   }
 

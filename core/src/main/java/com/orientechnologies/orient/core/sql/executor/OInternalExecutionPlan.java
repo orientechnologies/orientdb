@@ -36,4 +36,6 @@ public interface OInternalExecutionPlan extends OExecutionPlan {
   default OInternalExecutionPlan copy(OCommandContext ctx) {
     throw new UnsupportedOperationException();
   }
+
+  boolean canBeCached();
 }

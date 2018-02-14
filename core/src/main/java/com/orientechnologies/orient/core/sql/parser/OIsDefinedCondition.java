@@ -114,5 +114,10 @@ public class OIsDefinedCondition extends OBooleanExpression implements OSimpleBo
   public List<String> getMatchPatternInvolvedAliases() {
     return expression.getMatchPatternInvolvedAliases();
   }
+
+  @Override
+  public boolean isCacheable() {
+    return expression.isCacheable();
+  }
 }
 /* JavaCC - OriginalChecksum=075954b212c8cb44c8538bf5dea047d3 (do not edit this line) */

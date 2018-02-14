@@ -73,8 +73,6 @@ public class ONotInCondition extends OBooleanExpression {
     return !OInCondition.evaluateExpression(leftVal, rightVal);
   }
 
-
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
 
     left.toString(params, builder);
@@ -99,7 +97,8 @@ public class ONotInCondition extends OBooleanExpression {
     return o.toString();
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
 
     if (operator != null && !operator.supportsBasicCalculation()) {
       return false;
@@ -114,7 +113,8 @@ public class ONotInCondition extends OBooleanExpression {
 
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (operator != null && !operator.supportsBasicCalculation()) {
       total++;
@@ -128,7 +128,8 @@ public class ONotInCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     if (operator != null && !operator.supportsBasicCalculation()) {
       result.add(this);
@@ -139,7 +140,8 @@ public class ONotInCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     if (left.needsAliases(aliases)) {
       return true;
     }
@@ -150,7 +152,8 @@ public class ONotInCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public ONotInCondition copy() {
+  @Override
+  public ONotInCondition copy() {
     ONotInCondition result = new ONotInCondition(-1);
     result.operator = operator == null ? null : (OBinaryCompareOperator) operator.copy();
     result.left = left == null ? null : left.copy();
@@ -161,7 +164,8 @@ public class ONotInCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     if (left != null) {
       left.extractSubQueries(collector);
     }
@@ -175,7 +179,8 @@ public class ONotInCondition extends OBooleanExpression {
     }
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     if (left != null && left.refersToParent()) {
       return true;
     }
@@ -188,7 +193,8 @@ public class ONotInCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -214,7 +220,8 @@ public class ONotInCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = left != null ? left.hashCode() : 0;
     result = 31 * result + (operator != null ? operator.hashCode() : 0);
     result = 31 * result + (rightStatement != null ? rightStatement.hashCode() : 0);
@@ -225,7 +232,8 @@ public class ONotInCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
     List<String> rightX = rightMathExpression == null ? null : rightMathExpression.getMatchPatternInvolvedAliases();
 
@@ -238,6 +246,22 @@ public class ONotInCondition extends OBooleanExpression {
     }
 
     return result.size() == 0 ? null : result;
+  }
+
+  @Override
+  public boolean isCacheable() {
+    if (left != null && !left.isCacheable()) {
+      return false;
+    }
+
+    if (rightStatement != null && !rightStatement.executinPlanCanBeCached()) {
+      return false;
+    }
+
+    if (rightMathExpression != null && !rightMathExpression.isCacheable()) {
+      return false;
+    }
+    return true;
   }
 
 }

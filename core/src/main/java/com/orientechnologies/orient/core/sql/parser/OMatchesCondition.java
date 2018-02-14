@@ -35,8 +35,8 @@ public class OMatchesCondition extends OBooleanExpression {
   public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     String regex = right;
     if (regex != null) {
-      regex = regex.substring(1, regex.length()-1);
-    }else{
+      regex = regex.substring(1, regex.length() - 1);
+    } else {
       Object paramVal = rightParam.getValue(ctx.getInputParameters());
       if (paramVal instanceof String) {
         regex = (String) paramVal;
@@ -68,8 +68,8 @@ public class OMatchesCondition extends OBooleanExpression {
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     String regex = right;
     if (regex != null) {
-      regex = regex.substring(1, regex.length()-1);
-    }else{
+      regex = regex.substring(1, regex.length() - 1);
+    } else {
       Object paramVal = rightParam.getValue(ctx.getInputParameters());
       if (paramVal instanceof String) {
         regex = (String) paramVal;
@@ -173,6 +173,11 @@ public class OMatchesCondition extends OBooleanExpression {
   @Override
   public List<String> getMatchPatternInvolvedAliases() {
     return expression.getMatchPatternInvolvedAliases();
+  }
+
+  @Override
+  public boolean isCacheable() {
+    return expression.isCacheable();
   }
 
 }

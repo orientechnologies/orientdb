@@ -48,4 +48,8 @@ public class FetchFromIndexValuesStep extends FetchFromIndexStep {
     }
   }
 
+  @Override
+  public boolean canBeCached() {
+    return false;
+  }
 }

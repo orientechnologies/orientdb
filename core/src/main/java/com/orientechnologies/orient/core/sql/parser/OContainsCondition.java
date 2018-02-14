@@ -286,5 +286,19 @@ public class OContainsCondition extends OBooleanExpression {
     return result.size() == 0 ? null : result;
   }
 
+  @Override
+  public boolean isCacheable() {
+    if (left != null && !left.isCacheable()) {
+      return false;
+    }
+    if (right != null && !right.isCacheable()) {
+      return false;
+    }
+    if (condition != null && !condition.isCacheable()) {
+      return false;
+    }
+    return true;
+  }
+
 }
 /* JavaCC - OriginalChecksum=bad1118296ea74860e88d66bfe9fa222 (do not edit this line) */

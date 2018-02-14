@@ -55,7 +55,8 @@ public class OLetClause extends SimpleNode {
     return items;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -69,7 +70,8 @@ public class OLetClause extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return items != null ? items.hashCode() : 0;
   }
 
@@ -83,7 +85,7 @@ public class OLetClause extends SimpleNode {
   }
 
   public void extractSubQueries(SubQueryCollector collector) {
-    for(OLetItem item:items){
+    for (OLetItem item : items) {
       item.extractSubQueries(collector);
     }
   }
@@ -107,6 +109,15 @@ public class OLetClause extends SimpleNode {
         items.add(exp);
       }
     }
+  }
+
+  public boolean isCacheable() {
+    for (OLetItem item : items) {
+      if (!item.isCacheable()) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 

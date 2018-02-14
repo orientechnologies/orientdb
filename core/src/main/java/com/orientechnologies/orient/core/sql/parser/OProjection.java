@@ -226,5 +226,16 @@ public class OProjection extends SimpleNode {
       }
     }
   }
+
+  public boolean isCacheable() {
+    if (items != null) {
+      for (OProjectionItem item : items) {
+        if (!item.isCacheable()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

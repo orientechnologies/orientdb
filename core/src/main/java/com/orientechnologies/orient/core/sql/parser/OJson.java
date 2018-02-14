@@ -143,7 +143,8 @@ public class OJson extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -157,7 +158,8 @@ public class OJson extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return items != null ? items.hashCode() : 0;
   }
 
@@ -195,6 +197,10 @@ public class OJson extends SimpleNode {
         items.add(exp);
       }
     }
+  }
+
+  public boolean isCacheable() {
+    return false;//TODO optimize
   }
 }
 /* JavaCC - OriginalChecksum=3beec9f6db486de944498588b51a505d (do not edit this line) */

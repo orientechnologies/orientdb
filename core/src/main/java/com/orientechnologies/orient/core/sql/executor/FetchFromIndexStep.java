@@ -54,6 +54,15 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     this.orderAsc = orderAsc;
   }
 
+  public FetchFromIndexStep(String indexName, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
+      boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
+    this.indexName = indexName;
+    this.condition = condition;
+    this.additionalRangeCondition = additionalRangeCondition;
+    this.orderAsc = orderAsc;
+  }
+
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     init(ctx.getDatabase());
@@ -552,7 +561,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX " + index.getName();
+    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX " + indexName;
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
     }
@@ -604,7 +613,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public void reset() {
-
     index = null;
     condition = condition == null ? null : condition.copy();
     additionalRangeCondition = additionalRangeCondition == null ? null : additionalRangeCondition.copy();
@@ -617,5 +625,18 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     customIterator = null;
     nullKeyIterator = null;
     nextEntry = null;
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    FetchFromIndexStep result = new FetchFromIndexStep(indexName, this.condition == null ? null : this.condition.copy(),
+        this.additionalRangeCondition == null ? null : this.additionalRangeCondition.copy(), this.orderAsc, ctx,
+        this.profilingEnabled);
+    return result;
   }
 }

@@ -417,5 +417,9 @@ public class OModifier extends SimpleNode {
       next.deserialize(fromResult.getProperty("next"));
     }
   }
+
+  public boolean isCacheable() {
+    return false;//TODO enhance this!
+  }
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

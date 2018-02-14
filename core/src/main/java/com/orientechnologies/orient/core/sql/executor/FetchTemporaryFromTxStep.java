@@ -19,7 +19,10 @@ import java.util.*;
  */
 public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
 
-  private String            className;
+  private String className;
+
+  //runtime
+
   private Iterator<ORecord> txEntries;
   private Object            order;
 
@@ -207,5 +210,16 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    FetchTemporaryFromTxStep result = new FetchTemporaryFromTxStep(ctx, this.className, profilingEnabled);
+    return result;
   }
 }

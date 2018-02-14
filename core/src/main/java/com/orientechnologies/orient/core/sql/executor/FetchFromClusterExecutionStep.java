@@ -245,4 +245,16 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }
   }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    FetchFromClusterExecutionStep result = new FetchFromClusterExecutionStep(this.clusterId,
+        this.queryPlanning == null ? null : this.queryPlanning.copy(), ctx, profilingEnabled);
+    return result;
+  }
 }

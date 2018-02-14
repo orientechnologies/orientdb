@@ -63,6 +63,11 @@ public abstract class OBooleanExpression extends SimpleNode {
     }
 
     @Override
+    public boolean isCacheable() {
+      return true;
+    }
+
+    @Override
     public String toString() {
       return "true";
     }
@@ -132,6 +137,11 @@ public abstract class OBooleanExpression extends SimpleNode {
     @Override
     public void translateLuceneOperator() {
 
+    }
+
+    @Override
+    public boolean isCacheable() {
+      return true;
     }
 
     @Override
@@ -263,4 +273,5 @@ public abstract class OBooleanExpression extends SimpleNode {
     throw new UnsupportedOperationException();
   }
 
+  public abstract boolean isCacheable();
 }

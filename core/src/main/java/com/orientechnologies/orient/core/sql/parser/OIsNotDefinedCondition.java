@@ -45,33 +45,40 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
     return !expression.isDefinedFor(currentRecord);
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     return 0;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     return Collections.EMPTY_LIST;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     return expression.needsAliases(aliases);
   }
 
-  @Override public OIsNotDefinedCondition copy() {
+  @Override
+  public OIsNotDefinedCondition copy() {
     OIsNotDefinedCondition result = new OIsNotDefinedCondition(-1);
     result.expression = expression.copy();
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     this.expression.extractSubQueries(collector);
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     if (expression != null && expression.refersToParent()) {
       return true;
     }
@@ -83,7 +90,8 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
     builder.append(" is not defined");
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -97,12 +105,18 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     return expression.getMatchPatternInvolvedAliases();
   }
 
+  @Override
+  public boolean isCacheable() {
+    return expression.isCacheable();
+  }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return expression != null ? expression.hashCode() : 0;
   }
 }

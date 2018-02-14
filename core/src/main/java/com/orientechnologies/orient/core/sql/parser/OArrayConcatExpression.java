@@ -229,5 +229,14 @@ public class OArrayConcatExpression extends SimpleNode {
       }
     }
   }
+
+  public boolean isCacheable() {
+    for (OArrayConcatExpressionElement exp : childExpressions) {
+      if (!exp.isCacheable()) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=8d976a02f84460bf21c4304009135345 (do not edit this line) */

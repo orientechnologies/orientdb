@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
@@ -202,5 +203,21 @@ public class ParallelExecStep extends AbstractExecutionStep {
 
   public List<OExecutionPlan> getSubExecutionPlans() {
     return (List) subExecutionPlans;
+  }
+
+  @Override
+  public boolean canBeCached() {
+    for (OInternalExecutionPlan plan : subExecutionPlans) {
+      if (!plan.canBeCached()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new ParallelExecStep(subExecutionPlans.stream().map(x -> x.copy(ctx)).collect(Collectors.toList()), ctx,
+        profilingEnabled);
   }
 }

@@ -161,5 +161,10 @@ public class ONotBlock extends OBooleanExpression {
   public void translateLuceneOperator() {
     sub.translateLuceneOperator();
   }
+
+  @Override
+  public boolean isCacheable() {
+    return sub.isCacheable();
+  }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

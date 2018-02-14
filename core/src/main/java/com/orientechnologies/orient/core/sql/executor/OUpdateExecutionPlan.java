@@ -22,7 +22,8 @@ public class OUpdateExecutionPlan extends OSelectExecutionPlan {
     super(ctx);
   }
 
-  @Override public OResultSet fetchNext(int n) {
+  @Override
+  public OResultSet fetchNext(int n) {
     if (next >= result.size()) {
       return new OInternalResultSet();//empty
     }
@@ -32,7 +33,8 @@ public class OUpdateExecutionPlan extends OSelectExecutionPlan {
     return nextBlock;
   }
 
-  @Override public void reset(OCommandContext ctx) {
+  @Override
+  public void reset(OCommandContext ctx) {
     result.clear();
     next = 0;
     super.reset(ctx);
@@ -51,11 +53,16 @@ public class OUpdateExecutionPlan extends OSelectExecutionPlan {
     }
   }
 
-  @Override public OResult toResult() {
+  @Override
+  public OResult toResult() {
     OResultInternal res = (OResultInternal) super.toResult();
     res.setProperty("type", "UpdateExecutionPlan");
     return res;
   }
 
+  @Override
+  public boolean canBeCached() {
+    return false;
+  }
 }
 

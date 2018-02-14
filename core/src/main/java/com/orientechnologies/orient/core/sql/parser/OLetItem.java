@@ -144,5 +144,16 @@ public class OLetItem extends SimpleNode {
       query = OStatement.deserializeFromOResult(fromResult.getProperty("expression"));
     }
   }
+
+  public boolean isCacheable() {
+    if (expression != null) {
+      return expression.isCacheable();
+    }
+    if (query != null) {
+      return expression.isCacheable();
+    }
+
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=bb3cd298d79f50d72f6842e6d6ea4fb2 (do not edit this line) */

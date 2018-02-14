@@ -86,6 +86,11 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     return 0l;
   }
 
+  @Override
+  public boolean canBeCached() {
+    return false;
+  }
+
   public boolean containsReturn() {
     for (OExecutionStepInternal step : steps) {
       if (step instanceof ReturnStep) {

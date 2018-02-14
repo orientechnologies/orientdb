@@ -70,6 +70,11 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
     return 0l;
   }
 
+  @Override
+  public boolean canBeCached() {
+    return false;
+  }
+
   public boolean containsReturn() {
     return step.getPositivePlan().containsReturn() || step.getNegativePlan() != null && step.getPositivePlan().containsReturn();
   }

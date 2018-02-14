@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Collections;
@@ -16,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class OInstanceofCondition extends OBooleanExpression{
+public class OInstanceofCondition extends OBooleanExpression {
 
   protected OExpression left;
   protected OIdentifier right;
@@ -37,7 +36,8 @@ public class OInstanceofCondition extends OBooleanExpression{
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     if (currentRecord == null) {
       return false;
     }
@@ -61,12 +61,12 @@ public class OInstanceofCondition extends OBooleanExpression{
     return false;
   }
 
-
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (currentRecord == null) {
       return false;
     }
-    if(!currentRecord.isElement()){
+    if (!currentRecord.isElement()) {
       return false;
     }
     ORecord record = currentRecord.getElement().get().getRecord();
@@ -90,10 +90,10 @@ public class OInstanceofCondition extends OBooleanExpression{
   }
 
   private String decode(String rightString) {
-    if(rightString==null){
+    if (rightString == null) {
       return null;
     }
-    return OStringSerializerHelper.decode(rightString.substring(1, rightString.length()-1));
+    return OStringSerializerHelper.decode(rightString.substring(1, rightString.length() - 1));
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -106,32 +106,37 @@ public class OInstanceofCondition extends OBooleanExpression{
     }
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return left.supportsBasicCalculation();
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     if (!left.supportsBasicCalculation()) {
       return 1;
     }
     return 0;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     if (!left.supportsBasicCalculation()) {
       return (List) Collections.singletonList(left);
     }
     return Collections.EMPTY_LIST;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     if (left.needsAliases(aliases)) {
       return true;
     }
     return false;
   }
 
-  @Override public OInstanceofCondition copy() {
+  @Override
+  public OInstanceofCondition copy() {
     OInstanceofCondition result = new OInstanceofCondition(-1);
     result.left = left.copy();
     result.right = right == null ? null : right.copy();
@@ -139,18 +144,21 @@ public class OInstanceofCondition extends OBooleanExpression{
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     left.extractSubQueries(collector);
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     if (left != null && left.refersToParent()) {
       return true;
     }
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -168,15 +176,22 @@ public class OInstanceofCondition extends OBooleanExpression{
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = left != null ? left.hashCode() : 0;
     result = 31 * result + (right != null ? right.hashCode() : 0);
     result = 31 * result + (rightString != null ? rightString.hashCode() : 0);
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     return left == null ? null : left.getMatchPatternInvolvedAliases();
+  }
+
+  @Override
+  public boolean isCacheable() {
+    return left.isCacheable();
   }
 
 }

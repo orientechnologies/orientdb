@@ -7,13 +7,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class OBetweenCondition extends OBooleanExpression{
+public class OBetweenCondition extends OBooleanExpression {
 
   protected OExpression first;
   protected OExpression second;
@@ -34,7 +30,8 @@ public class OBetweenCondition extends OBooleanExpression{
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     Object firstValue = first.execute(currentRecord, ctx);
     if (firstValue == null) {
       return false;
@@ -59,7 +56,8 @@ public class OBetweenCondition extends OBooleanExpression{
     return leftResult >= 0 && rightResult <= 0;
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     Object firstValue = first.execute(currentRecord, ctx);
     if (firstValue == null) {
       return false;
@@ -116,19 +114,23 @@ public class OBetweenCondition extends OBooleanExpression{
     third.toString(params, builder);
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     return 0;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     return Collections.EMPTY_LIST;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     if (first.needsAliases(aliases)) {
       return true;
     }
@@ -141,7 +143,8 @@ public class OBetweenCondition extends OBooleanExpression{
     return false;
   }
 
-  @Override public OBooleanExpression copy() {
+  @Override
+  public OBooleanExpression copy() {
     OBetweenCondition result = new OBetweenCondition(-1);
     result.first = first.copy();
     result.second = second.copy();
@@ -149,17 +152,20 @@ public class OBetweenCondition extends OBooleanExpression{
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     first.extractSubQueries(collector);
     second.extractSubQueries(collector);
     third.extractSubQueries(collector);
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     return first.refersToParent() || second.refersToParent() || third.refersToParent();
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -177,14 +183,16 @@ public class OBetweenCondition extends OBooleanExpression{
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = first != null ? first.hashCode() : 0;
     result = 31 * result + (second != null ? second.hashCode() : 0);
     result = 31 * result + (third != null ? third.hashCode() : 0);
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     List<String> result = new ArrayList<String>();
     List<String> x = first.getMatchPatternInvolvedAliases();
     if (x != null) {
@@ -207,6 +215,20 @@ public class OBetweenCondition extends OBooleanExpression{
 
   @Override
   public void translateLuceneOperator() {
+  }
+
+  @Override
+  public boolean isCacheable() {
+    if (first != null && !first.isCacheable()) {
+      return false;
+    }
+    if (second != null && !second.isCacheable()) {
+      return false;
+    }
+    if (third != null && !third.isCacheable()) {
+      return false;
+    }
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=f94f4779c4a6c6d09539446045ceca89 (do not edit this line) */

@@ -457,6 +457,17 @@ public class OBaseExpression extends OMathExpression {
       this.identifier.extractSubQueries(collector);
     }
   }
+
+  public boolean isCacheable() {
+    if (modifier != null && !modifier.isCacheable()) {
+      return false;
+    }
+    if (identifier != null) {
+      return identifier.isCacheable();
+    }
+
+    return true;
+  }
 }
 
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

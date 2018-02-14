@@ -359,5 +359,25 @@ public class OFromItem extends SimpleNode {
       modifier.deserialize(fromResult.getProperty("modifier"));
     }
   }
+
+  public boolean isCacheable() {
+    if (modifier != null) {
+      return false;
+    }
+    if (inputParam != null) {
+      return false;
+    }
+    if (inputParams != null && !inputParams.isEmpty()) {
+      return false;
+    }
+    if (statement != null) {
+      return statement.executinPlanCanBeCached();
+    }
+    if(functionCall!=null){
+      return functionCall.isCacheable();
+    }
+
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */

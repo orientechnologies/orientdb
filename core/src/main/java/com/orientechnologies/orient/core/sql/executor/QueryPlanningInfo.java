@@ -49,4 +49,35 @@ public class QueryPlanningInfo {
   boolean projectionsCalculated = false;
 
   OAndBlock ridRangeConditions;
+
+  public QueryPlanningInfo copy() {
+    //TODO check what has to be copied and what can be just referenced as it is
+    QueryPlanningInfo result = new QueryPlanningInfo();
+    result.distinct = this.distinct;
+    result.expand = this.expand;
+    result.preAggregateProjection = this.preAggregateProjection;
+    result.aggregateProjection = this.aggregateProjection;
+    result.projection = this.projection;
+    result.projectionAfterOrderBy = this.projectionAfterOrderBy;
+    result.globalLetClause = this.globalLetClause;
+    result.globalLetPresent = this.globalLetPresent;
+    result.perRecordLetClause = this.perRecordLetClause;
+    result.serverToClusters = this.serverToClusters;
+
+//    Map<String, OSelectExecutionPlan> distributedFetchExecutionPlans;//TODO!
+
+    result.distributedPlanCreated = this.distributedPlanCreated;
+    result.target = this.target;
+    result.whereClause = this.whereClause;
+    result.flattenedWhereClause = this.flattenedWhereClause;
+    result.groupBy = this.groupBy;
+    result.orderBy = this.orderBy;
+    result.unwind = this.unwind;
+    result.skip = this.skip;
+    result.limit = this.limit;
+    result.orderApplied = this.orderApplied;
+    result.projectionsCalculated = this.projectionsCalculated;
+    result.ridRangeConditions = this.ridRangeConditions;
+    return result;
+  }
 }

@@ -164,4 +164,14 @@ public class FilterStep extends AbstractExecutionStep {
   public long getCost() {
     return cost;
   }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new FilterStep(this.whereClause.copy(), ctx, profilingEnabled);
+  }
 }

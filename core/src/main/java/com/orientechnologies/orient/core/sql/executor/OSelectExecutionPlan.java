@@ -121,10 +121,29 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   public OInternalExecutionPlan copy(OCommandContext ctx) {
     OSelectExecutionPlan copy = new OSelectExecutionPlan(ctx);
 
-    //steps.forEach(x -> copy.getSteps().add(x.copy())); //TODO
+    OExecutionStep lastStep = null;
+    for (OExecutionStep step : this.steps) {
+      OExecutionStepInternal newStep = (OExecutionStepInternal) ((OExecutionStepInternal) step).copy(ctx);
+      newStep.setPrevious((OExecutionStepInternal) lastStep);
+      if (lastStep != null) {
+        ((OExecutionStepInternal) lastStep).setNext(newStep);
+      }
+      lastStep = newStep;
+      copy.getSteps().add(newStep);
+    }
     copy.lastStep = copy.steps.get(copy.steps.size() - 1);
     copy.location = location;
     return copy;
+  }
+
+  @Override
+  public boolean canBeCached() {
+    for (OExecutionStepInternal step : steps) {
+      if (!step.canBeCached()) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 

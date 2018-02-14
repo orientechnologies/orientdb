@@ -355,5 +355,17 @@ public class OBaseIdentifier extends SimpleNode {
     return suffix == null ? null : suffix.getCollate(currentRecord, ctx);
 
   }
+
+  public boolean isCacheable() {
+    if (levelZero != null) {
+      return levelZero.isCacheable();
+    }
+
+    if (suffix != null) {
+      return suffix.isCacheable();
+    }
+
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

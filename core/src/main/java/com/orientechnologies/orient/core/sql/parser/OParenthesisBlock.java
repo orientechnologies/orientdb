@@ -29,11 +29,13 @@ public class OParenthesisBlock extends OBooleanExpression {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return subElement.evaluate(currentRecord, ctx);
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     return subElement.evaluate(currentRecord, ctx);
   }
 
@@ -43,41 +45,50 @@ public class OParenthesisBlock extends OBooleanExpression {
     builder.append(" )");
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return subElement.supportsBasicCalculation();
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     return subElement.getNumberOfExternalCalculations();
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     return subElement.getExternalCalculationConditions();
   }
 
-  @Override public List<OAndBlock> flatten() {
+  @Override
+  public List<OAndBlock> flatten() {
     return subElement.flatten();
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     return subElement.needsAliases(aliases);
   }
 
-  @Override public OParenthesisBlock copy() {
+  @Override
+  public OParenthesisBlock copy() {
     OParenthesisBlock result = new OParenthesisBlock(-1);
     result.subElement = subElement.copy();
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     this.subElement.extractSubQueries(collector);
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     return subElement.refersToParent();
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -91,17 +102,24 @@ public class OParenthesisBlock extends OBooleanExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return subElement != null ? subElement.hashCode() : 0;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     return subElement.getMatchPatternInvolvedAliases();
   }
 
   @Override
   public void translateLuceneOperator() {
     subElement.translateLuceneOperator();
+  }
+
+  @Override
+  public boolean isCacheable() {
+    return subElement.isCacheable();
   }
 }
 /* JavaCC - OriginalChecksum=9a16b6cf7d051382acb94c45067631a9 (do not edit this line) */
