@@ -1340,6 +1340,96 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  public Iterator<OClusterBrowsePage> browseCluster(int clusterId) {
+    try {
+      checkOpenness();
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+
+        final int finalClusterId;
+        if (clusterId == ORID.CLUSTER_ID_INVALID)
+          // GET THE DEFAULT CLUSTER
+          finalClusterId = defaultClusterId;
+        else
+          finalClusterId = clusterId;
+        return new Iterator<OClusterBrowsePage>() {
+          private OClusterBrowsePage page = null;
+          private long lastPos = -1;
+
+          @Override
+          public boolean hasNext() {
+            if (page == null) {
+              page = nextPage(finalClusterId, lastPos);
+              if (page != null)
+                lastPos = page.getLastPosition();
+            }
+            return page != null;
+          }
+
+          @Override
+          public OClusterBrowsePage next() {
+            if (!hasNext()) {
+              throw new NoSuchElementException();
+            }
+            OClusterBrowsePage curPage = page;
+            page = null;
+            return curPage;
+          }
+        };
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  private OClusterBrowsePage nextPage(int clusterId, long lastPosition) {
+    try {
+      checkOpenness();
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+
+        final OCluster cluster = doGetAndCheckCluster(clusterId);
+        OPhysicalPosition[] nextPositions = cluster.higherPositions(new OPhysicalPosition(lastPosition));
+        if (nextPositions.length > 0) {
+          long newLastPosition = nextPositions[nextPositions.length - 1].clusterPosition;
+          List<OClusterBrowseEntry> nexv = new ArrayList<>();
+          for (OPhysicalPosition pos : nextPositions) {
+            final ORawBuffer buff = cluster.readRecord(pos.clusterPosition, false);
+            nexv.add(new OClusterBrowseEntry(pos.clusterPosition, buff));
+          }
+          return new OClusterBrowsePage(nexv, newLastPosition);
+        } else {
+          return null;
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  private OCluster doGetAndCheckCluster(int clusterId) {
+    checkClusterSegmentIndexRange(clusterId);
+
+    final OCluster cluster = clusters.get(clusterId);
+    if (cluster == null)
+      throw new IllegalArgumentException("Cluster " + clusterId + " is null");
+    return cluster;
+  }
+
   @Override
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
       boolean prefetchRecords, ORecordCallback<ORawBuffer> iCallback) {
@@ -3170,11 +3260,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           // GET THE DEFAULT CLUSTER
           iClusterId = defaultClusterId;
 
-        checkClusterSegmentIndexRange(iClusterId);
-
-        final OCluster cluster = clusters.get(iClusterId);
-        if (cluster == null)
-          throw new IllegalArgumentException("Cluster " + iClusterId + " is null");
+        final OCluster cluster = doGetAndCheckCluster(iClusterId);
 
         return cluster;
       } finally {
