@@ -23,12 +23,13 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import org.junit.Assert;
@@ -131,7 +132,7 @@ public class OLiveQueryTest {
       db.command(new OCommandSQL("insert into cluster:" + cluster.getName() + " set name = 'foo', surname = 'bar'")).execute();
 
       try {
-        Assert.assertTrue(listener.latch.await(1,TimeUnit.MINUTES));
+        Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
@@ -139,6 +140,9 @@ public class OLiveQueryTest {
       for (ORecordOperation doc : listener.ops) {
         Assert.assertEquals(doc.type, ORecordOperation.CREATED);
         Assert.assertEquals(((ODocument) doc.record).field("name"), "foo");
+        ORID rid = ((ODocument) doc.record).getProperty("@rid");
+        Assert.assertNotNull(rid);
+//        Assert.assertTrue(rid.getClusterPosition() >= 0); //TODO fix live queries with microtx!
       }
     } finally {
       db.drop();
@@ -191,7 +195,7 @@ public class OLiveQueryTest {
           }));
 
           latch.countDown();
-          Assert.assertTrue(dataArrived.await(1,TimeUnit.MINUTES));
+          Assert.assertTrue(dataArrived.await(1, TimeUnit.MINUTES));
           return integer.get();
         }
       });
