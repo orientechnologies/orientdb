@@ -448,6 +448,8 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
 
     protected void internalOpen() {
       super.open(userName, password);
+      if (getMetadata().getSchema().countClasses() == 0)
+        getMetadata().reload();
     }
 
     @Override
