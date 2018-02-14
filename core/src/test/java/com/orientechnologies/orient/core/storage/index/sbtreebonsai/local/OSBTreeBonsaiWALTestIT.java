@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -315,7 +316,7 @@ public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalTestIT {
             try {
               ODurablePage durablePage = new ODurablePage(cacheEntry);
               durablePage.restoreChanges(updatePageRecord.getChanges());
-              durablePage.setLsn(updatePageRecord.getLsn());
+              durablePage.setLsn(new OLogSequenceNumber(0, 0));
 
               cacheEntry.markDirty();
             } finally {
@@ -355,7 +356,9 @@ public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalTestIT {
     while (bytesRead >= 0) {
       fileTwo.readFully(actualContent, 0, bytesRead);
 
-      Assert.assertArrayEquals(expectedContent, actualContent);
+      Assert
+          .assertArrayEquals(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES),
+              Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES));
 
       expectedContent = new byte[OClusterPage.PAGE_SIZE];
       actualContent = new byte[OClusterPage.PAGE_SIZE];

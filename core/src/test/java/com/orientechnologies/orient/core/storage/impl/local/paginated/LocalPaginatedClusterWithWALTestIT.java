@@ -15,7 +15,9 @@ import org.junit.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -394,7 +396,7 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
             try {
               ODurablePage durablePage = new ODurablePage(cacheEntry);
               durablePage.restoreChanges(updatePageRecord.getChanges());
-              durablePage.setLsn(updatePageRecord.getLsn());
+              durablePage.setLsn(new OLogSequenceNumber(0, 0));
 
               cacheEntry.markDirty();
             } finally {
@@ -454,7 +456,9 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
 
       //      Assert.assertEquals(expectedContent, actualContent);
 
-      assertThat(expectedContent).isEqualTo(actualContent);
+      assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES))
+          .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES));
+
       expectedContent = new byte[OClusterPage.PAGE_SIZE];
       actualContent = new byte[OClusterPage.PAGE_SIZE];
       bytesRead = datFileOne.read(expectedContent);
