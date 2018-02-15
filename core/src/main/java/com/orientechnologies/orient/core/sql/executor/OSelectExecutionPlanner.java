@@ -99,6 +99,13 @@ public class OSelectExecutionPlanner {
     if (!enableProfiling && statement.executinPlanCanBeCached() && result.canBeCached()
         && OExecutionPlanCache.getLastInvalidation(db) < planningStart) {
       OExecutionPlanCache.put(statement.getOriginalStatement(), result, (ODatabaseDocumentInternal) ctx.getDatabase());
+    } else {
+      System.out.println("Statement not cached: ");
+      System.out.println(statement);
+      System.out.println(result.prettyPrint(0, 2));
+      System.out.println("profiling: "+enableProfiling);
+      System.out.println("statement can be cached: "+statement.executinPlanCanBeCached());
+      System.out.println("exec can be cached: "+result.canBeCached());
     }
     return result;
   }

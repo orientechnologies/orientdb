@@ -14,7 +14,7 @@ public class OExecutionPlanCacheTest {
     String testName = "testCacheInvalidation1";
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OExecutionPlanCacheTest");
     db.create();
-    OExecutionPlanCache cache = OExecutionPlanCache.instance(db);
+    OExecutionPlanCache cache;
     String stm = "SELECT FROM OUser";
 
     //schema changes
