@@ -17,14 +17,6 @@ public class OExecutionPlanCacheTest {
     OExecutionPlanCache cache = OExecutionPlanCache.instance(db);
     String stm = "SELECT FROM OUser";
 
-    //schema changes
-    db.query(stm).close();
-    cache = OExecutionPlanCache.instance(db);
-    Assert.assertTrue(cache.contains(stm));
-
-    OClass clazz = db.getMetadata().getSchema().createClass(testName);
-    Assert.assertFalse(cache.contains(stm));
-
     /*
      * the cache has a mechanism that guarantees that if you are doing execution planning
      * and the cache is invalidated in the meantime, the newly generated execution plan
@@ -33,7 +25,17 @@ public class OExecutionPlanCacheTest {
      * millisecond, this Thread.sleep() guarantees that the new execution plan is generated
      * at least one ms after last invalidation, so it is cached.
      */
-    Thread.sleep(1);
+    Thread.sleep(2);
+
+    //schema changes
+    db.query(stm).close();
+    cache = OExecutionPlanCache.instance(db);
+    Assert.assertTrue(cache.contains(stm));
+
+    OClass clazz = db.getMetadata().getSchema().createClass(testName);
+    Assert.assertFalse(cache.contains(stm));
+
+    Thread.sleep(2);
 
     //schema changes 2
     db.query(stm).close();
@@ -43,7 +45,7 @@ public class OExecutionPlanCacheTest {
     OProperty prop = clazz.createProperty("name", OType.STRING);
     Assert.assertFalse(cache.contains(stm));
 
-    Thread.sleep(1);
+    Thread.sleep(2);
 
     //index changes
     db.query(stm).close();
