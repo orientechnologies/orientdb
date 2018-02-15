@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -357,7 +358,8 @@ public class ODatabaseDocumentTxTest {
       OResult res = rs.next();
 
       Object linkedVal = res.getProperty("linked");
-      Assert.assertTrue(linkedVal instanceof OVertex);
+      Assert.assertTrue(linkedVal instanceof OIdentifiable);
+      Assert.assertTrue(db.load(((OIdentifiable) linkedVal).getIdentity()) instanceof OIdentifiable);
 
       Assert.assertTrue(res.toElement().getProperty("linked") instanceof OVertex);
 

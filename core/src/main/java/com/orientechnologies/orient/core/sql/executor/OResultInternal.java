@@ -5,11 +5,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
-import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,13 +45,16 @@ public class OResultInternal implements OResult {
   }
 
   public <T> T getProperty(String name) {
+    T result = null;
     if (content.containsKey(name)) {
-      return (T) wrap(content.get(name));
+      result = (T) wrap(content.get(name));
+    } else if (element != null) {
+      result = (T) wrap(((ODocument) element.getRecord()).getProperty(name));
     }
-    if (element != null) {
-      return (T) wrap(((ODocument) element.getRecord()).getProperty(name));
+    if (result instanceof OIdentifiable && ((OIdentifiable) result).getIdentity().isPersistent()) {
+      result = (T) ((OIdentifiable) result).getIdentity();
     }
-    return null;
+    return result;
   }
 
   private Object wrap(Object input) {

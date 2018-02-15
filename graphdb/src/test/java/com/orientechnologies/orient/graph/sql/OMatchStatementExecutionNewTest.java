@@ -4,6 +4,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -242,7 +243,7 @@ public class OMatchStatementExecutionNewTest {
     for (int i = 0; i < 6; i++) {
       OResult item = qResult.next();
       Assert.assertTrue(item.getPropertyNames().size() == 1);
-      OElement person = item.getProperty("person");
+      OElement person = db.load((ORID)item.getProperty("person"));
 
       String name = person.getProperty("name");
       Assert.assertTrue(name.startsWith("n"));
@@ -257,7 +258,7 @@ public class OMatchStatementExecutionNewTest {
     for (int i = 0; i < 2; i++) {
       OResult item = qResult.next();
       Assert.assertTrue(item.getPropertyNames().size() == 1);
-      OElement personId = item.getProperty("person");
+      OElement personId = db.load((ORID)item.getProperty("person"));
 
       ODocument person = personId.getRecord();
       String name = person.field("name");
@@ -305,7 +306,7 @@ public class OMatchStatementExecutionNewTest {
 
       OResult item = qResult.next();
       Assert.assertTrue(item.getPropertyNames().size() == 1);
-      OElement person = item.getProperty("person");
+      OElement person = db.load((ORID)item.getProperty("person"));
 
       String name = person.getProperty("name");
       Assert.assertTrue(name.equals("n1") || name.equals("n2"));
@@ -1053,9 +1054,9 @@ public class OMatchStatementExecutionNewTest {
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     OResult doc = result.next();
-    OElement friend1 = doc.getProperty("friend1");
-    OElement friend2 = doc.getProperty("friend2");
-    OElement friend3 = doc.getProperty("friend3");
+    OElement friend1 = db.load((ORID)doc.getProperty("friend1"));
+    OElement friend2 = db.load((ORID)doc.getProperty("friend2"));
+    OElement friend3 = db.load((ORID)doc.getProperty("friend3"));
     Assert.assertEquals(0, friend1.<Object>getProperty("uid"));
     Assert.assertEquals(1, friend2.<Object>getProperty("uid"));
     Assert.assertEquals(2, friend3.<Object>getProperty("uid"));
@@ -1077,9 +1078,9 @@ public class OMatchStatementExecutionNewTest {
     Assert.assertTrue(result.hasNext());
     OResult doc = result.next();
     Assert.assertFalse(result.hasNext());
-    OElement friend1 = doc.getProperty("friend1");
-    OElement friend2 = doc.getProperty("friend2");
-    OElement friend3 = doc.getProperty("friend3");
+    OElement friend1 = db.load((ORID)doc.getProperty("friend1"));
+    OElement friend2 = db.load((ORID)doc.getProperty("friend2"));
+    OElement friend3 = db.load((ORID)doc.getProperty("friend3"));
     Assert.assertEquals(0, friend1.<Object>getProperty("uid"));
     Assert.assertEquals(1, friend2.<Object>getProperty("uid"));
     Assert.assertEquals(2, friend3.<Object>getProperty("uid"));
@@ -1101,9 +1102,9 @@ public class OMatchStatementExecutionNewTest {
     Assert.assertTrue(result.hasNext());
     OResult doc = result.next();
     Assert.assertFalse(result.hasNext());
-    OElement friend1 = doc.getProperty("friend1");
-    OElement friend2 = doc.getProperty("friend2");
-    OElement friend3 = doc.getProperty("friend3");
+    OElement friend1 = db.load((ORID)doc.getProperty("friend1"));
+    OElement friend2 = db.load((ORID)doc.getProperty("friend2"));
+    OElement friend3 = db.load((ORID)doc.getProperty("friend3"));
     Assert.assertEquals(0, friend1.<Object>getProperty("uid"));
     Assert.assertEquals(1, friend2.<Object>getProperty("uid"));
     Assert.assertEquals(2, friend3.<Object>getProperty("uid"));
@@ -1197,7 +1198,7 @@ public class OMatchStatementExecutionNewTest {
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(result.hasNext());
       OResult doc = result.next();
-      OElement friend1 = doc.getProperty("friend1");
+      OElement friend1 = db.load((ORID)doc.getProperty("friend1"));
       Assert.assertEquals(friend1.<Object>getProperty("uid"), 1);
     }
     Assert.assertFalse(result.hasNext());
@@ -1237,7 +1238,7 @@ public class OMatchStatementExecutionNewTest {
 
     Assert.assertTrue(result.hasNext());
     OResult d = result.next();
-    OElement friend1 = d.getProperty("friend1");
+    OElement friend1 = db.load((ORID) d.getProperty("friend1"));
     Assert.assertEquals(friend1.<Object>getProperty("uid"), 1);
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -1255,7 +1256,7 @@ public class OMatchStatementExecutionNewTest {
     Assert.assertTrue(result.hasNext());
 
     OResult doc = result.next();
-    Object foo = doc.getProperty("foo");
+    Object foo = db.load((ORID)doc.getProperty("foo"));
     Assert.assertNotNull(foo);
     Assert.assertTrue(foo instanceof OVertex);
     result.close();
@@ -1576,7 +1577,7 @@ public class OMatchStatementExecutionNewTest {
       Assert.assertTrue(qResult.hasNext());
       OResult doc = qResult.next();
       Assert.assertTrue(doc.getPropertyNames().size() == 2);
-      OElement person = doc.getProperty("person");
+      OElement person = db.load((ORID)doc.getProperty("person"));
 
       String name = person.getProperty("name");
       Assert.assertTrue(name.startsWith("n"));
@@ -1592,7 +1593,7 @@ public class OMatchStatementExecutionNewTest {
       Assert.assertTrue(qResult.hasNext());
       OResult doc = qResult.next();
       Assert.assertTrue(doc.getPropertyNames().size() == 2);
-      OElement person = doc.getProperty("person");
+      OElement person = db.load((ORID)doc.getProperty("person"));
 
       String name = person.getProperty("name");
       Assert.assertTrue(name.startsWith("n"));

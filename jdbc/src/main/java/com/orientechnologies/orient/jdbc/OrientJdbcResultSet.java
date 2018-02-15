@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -334,6 +335,9 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       Object value = result.getProperty(columnLabel);
 
+      if(value instanceof ORID){
+        value = ((ORID) value).getRecord();
+      }
       if (value instanceof OBlob) {
         return new OrientBlob((OBlob) value);
       } else if (value instanceof ORecordLazyList) {
