@@ -29,7 +29,7 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODefaultRemoteTaskFactoryV1 implements ORemoteTaskFactory {
+public class ODefaultRemoteTaskFactoryV2 implements ORemoteTaskFactory {
   @Override
   public ORemoteTask createTask(final int code) {
     switch (code) {

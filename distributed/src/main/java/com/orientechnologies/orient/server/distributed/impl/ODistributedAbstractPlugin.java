@@ -85,6 +85,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CHECKINTEGRITY_LAST_TX;
+import static com.orientechnologies.orient.server.distributed.ORemoteServerController.DISTRIBUTED_PROTOCOL_VERSION_2;
 import static com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME;
 
 /**
@@ -981,6 +982,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
                           "Error on setting LSN after the installation of database '%s'", databaseName);
                     }
+                    notifyLsnAfterInstall(db, nodes);
                   } finally {
                     db.close();
                   }
@@ -1010,6 +1012,22 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           });
     } finally {
       installingDatabases.remove(databaseName);
+    }
+  }
+
+  private void notifyLsnAfterInstall(ODatabaseDocumentInternal db, Collection<String> nodes) {
+    OLogSequenceNumber lsn = ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN();
+    Iterator<String> iter = nodes.iterator();
+    while (iter.hasNext()) {
+      String node = iter.next();
+      if (getTaskFactoryManager().getFactoryByServerName(node).getProtocolVersion() < DISTRIBUTED_PROTOCOL_VERSION_2) {
+        iter.remove();
+      }
+    }
+    if (!nodes.isEmpty()) {
+      OUpdateDatabaseStatusTask statusTask = new OUpdateDatabaseStatusTask(db.getName(), DB_STATUS.ONLINE.toString(), lsn);
+      sendRequest(db.getName(), null, nodes, statusTask, getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
+          null, null, null);
     }
   }
 
@@ -1106,10 +1124,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         for (Map.Entry<String, Object> r : results.entrySet()) {
           final Object value = r.getValue();
 
-          if (value instanceof Boolean)
+          if (value instanceof Boolean) {
             // FALSE: NO CHANGES, THE DATABASE IS ALIGNED
             databaseInstalledCorrectly = true;
-          else {
+            distrDatabase.setOnline();
+          } else {
             final String server = r.getKey();
 
             if (value instanceof ODistributedDatabaseDeltaSyncException) {
@@ -1275,9 +1294,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     for (Map.Entry<String, Object> r : results.entrySet()) {
       final Object value = r.getValue();
 
-      if (value instanceof Boolean)
+      if (value instanceof Boolean) {
+        distrDatabase.setOnline();
         continue;
-      else if (value instanceof ODatabaseIsOldException) {
+      } else if (value instanceof ODatabaseIsOldException) {
 
         // MANAGE THIS EXCEPTION AT UPPER LEVEL
         throw (ODatabaseIsOldException) value;

@@ -114,7 +114,7 @@ public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask 
     return databaseIsOld(iManager, databaseName, dDatabase);
   }
 
-  private ODistributedDatabase databaseIsOld(final ODistributedServerManager iManager, final String databaseName,
+  protected ODistributedDatabase databaseIsOld(final ODistributedServerManager iManager, final String databaseName,
       final ODistributedDatabase dDatabase) {
     final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 

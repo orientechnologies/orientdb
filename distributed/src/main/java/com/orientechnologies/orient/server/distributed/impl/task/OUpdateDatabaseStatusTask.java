@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -41,22 +42,24 @@ import java.io.IOException;
 public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
   public static final int FACTORYID = 25;
 
-  private String databaseName;
-  private String status;
+  private String             databaseName;
+  private String             status;
+  private OLogSequenceNumber lsn;
 
   public OUpdateDatabaseStatusTask() {
   }
 
-  public OUpdateDatabaseStatusTask(final String databaseName, final String status) {
+  public OUpdateDatabaseStatusTask(final String databaseName, final String status, final OLogSequenceNumber lsn) {
     this.databaseName = databaseName;
     this.status = status;
+    this.lsn = lsn;
   }
 
   @Override
   public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
 
-    ((OHazelcastDistributedMap) iManager.getConfigurationMap()).putInLocalCache(databaseName, status);
+    iManager.getMessageService().getDatabase(databaseName).getSyncConfiguration().setLastLSN(getNodeSource(), lsn, false);
 
     return true;
   }
@@ -80,12 +83,17 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
   public void toStream(final DataOutput out) throws IOException {
     out.writeUTF(databaseName);
     out.writeUTF(status);
+    out.writeLong(lsn.getSegment());
+    out.writeLong(lsn.getPosition());
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     databaseName = in.readUTF();
     status = in.readUTF();
+    long seg = in.readLong();
+    long pos = in.readLong();
+    lsn = new OLogSequenceNumber(seg, pos);
   }
 
   @Override

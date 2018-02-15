@@ -65,27 +65,6 @@ public class ODistributedSyncConfiguration {
     return lastLSN.get(server);
   }
 
-  public void setLastLSN(final String server, final OLogSequenceNumber lsn, final boolean updateLastOperationTimestamp)
-      throws IOException {
-    if (lsn == null)
-      return;
-
-    lastLSN.put(server, lsn);
-
-    if (updateLastOperationTimestamp) {
-      final long clusterTime = dManager.getClusterTime();
-      if (clusterTime > -1)
-        lastOperationTimestamp = clusterTime;
-    }
-
-    // if (updateLastOperationTimestamp)
-    // ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.IN,
-    // "Updating LSN %s lastOperationTimestamp=%d", lsn, lastOperationTimestamp);
-
-    if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000)
-      save();
-  }
-
   public void load() throws IOException {
     final InputStream is = new FileInputStream(file);
     try {
@@ -107,6 +86,27 @@ public class ODistributedSyncConfiguration {
     } finally {
       is.close();
     }
+  }
+
+  public void setLastLSN(final String server, final OLogSequenceNumber lsn, final boolean updateLastOperationTimestamp)
+      throws IOException {
+    if (lsn == null)
+      return;
+
+    lastLSN.put(server, lsn);
+
+    if (updateLastOperationTimestamp) {
+      final long clusterTime = dManager.getClusterTime();
+      if (clusterTime > -1)
+        lastOperationTimestamp = clusterTime;
+    }
+
+    // if (updateLastOperationTimestamp)
+    // ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.IN,
+    // "Updating LSN %s lastOperationTimestamp=%d", lsn, lastOperationTimestamp);
+
+    if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000)
+      save();
   }
 
   public void save() throws IOException {
