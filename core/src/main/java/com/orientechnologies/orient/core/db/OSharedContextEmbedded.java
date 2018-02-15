@@ -27,7 +27,7 @@ public class OSharedContextEmbedded extends OSharedContext {
   private Map<String, DistributedQueryContext> activeDistributedQueries;
 
   public OSharedContextEmbedded(OStorage storage) {
-    schema = new OSchemaEmbedded();
+    schema = new OSchemaEmbedded(this);
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerShared(storage);
     functionLibrary = new OFunctionLibraryImpl();

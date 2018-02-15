@@ -2,6 +2,8 @@ package com.orientechnologies.orient.server.distributed.impl.metadata;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -11,6 +13,10 @@ import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
  * Created by tglman on 22/06/17.
  */
 public class OSchemaDistributed extends OSchemaEmbedded {
+
+  public OSchemaDistributed(OSharedContext sharedContext) {
+    super(sharedContext);
+  }
 
   protected OClassImpl createClassInstance(String className, int[] clusterIds) {
     return new OClassDistributed(this, className, clusterIds);

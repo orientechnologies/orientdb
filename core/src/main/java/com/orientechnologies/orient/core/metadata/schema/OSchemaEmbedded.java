@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -21,8 +22,10 @@ import java.util.*;
  * Created by tglman on 13/06/17.
  */
 public class OSchemaEmbedded extends OSchemaShared {
-  public OSchemaEmbedded() {
+
+  public OSchemaEmbedded(OSharedContext sharedContext) {
     super();
+    sharedContext.registerListener(new SchemaSnapshotOnIndexesUpdateListener(this));
   }
 
   public OClass createClass(ODatabaseDocumentInternal database, final String className, int[] clusterIds, OClass... superClasses) {
