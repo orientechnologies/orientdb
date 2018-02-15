@@ -97,28 +97,27 @@ public class OAtomicOperation {
     } else {
       OCacheEntryChanges pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
 
-      final long filledUpTo = internalFilledUpTo(fileId, changesContainer);
-
-      if (pageIndex < filledUpTo) {
+      if (checkChangesFilledUpTo(changesContainer, pageIndex)) {
         if (pageChangesContainer == null) {
-          pageChangesContainer = new OCacheEntryChanges();
-          changesContainer.pageChangesMap.put(pageIndex, pageChangesContainer);
-          if (pageChangesContainer.isNew) {
-            OCacheEntry delegate = new OCacheEntryImpl(fileId, pageIndex, new OCachePointer(null, null, fileId, pageIndex), false);
-            pageChangesContainer.delegate = delegate;
-          }
-        }
-
-        if (pageChangesContainer.isNew) {
-          return pageChangesContainer;
-        } else {
           OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
-          pageChangesContainer.delegate = delegate;
-          return pageChangesContainer;
+          if (delegate != null) {
+            pageChangesContainer = new OCacheEntryChanges();
+            changesContainer.pageChangesMap.put(pageIndex, pageChangesContainer);
+            pageChangesContainer.delegate = delegate;
+            return pageChangesContainer;
+          }
+        } else {
+          if (pageChangesContainer.isNew) {
+            return pageChangesContainer;
+          } else {
+            // Need to load the page again from cache for locking reasons
+            OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
+            pageChangesContainer.delegate = delegate;
+            return pageChangesContainer;
+          }
         }
       }
     }
-
     return null;
   }
 
@@ -220,6 +219,24 @@ public class OAtomicOperation {
       return 0;
 
     return writeCache.getFilledUpTo(fileId);
+  }
+
+  /**
+   * This check if a file was trimmed or trunked in the current atomic operation.
+   *
+   * @param changesContainer changes container to check
+   * @param pageIndex        limit to check aginst the changes
+   *
+   * @return true if there are no changes or pageIndex still fit, false if the pageIndex do not fit anymore
+   */
+  private boolean checkChangesFilledUpTo(FileChanges changesContainer, long pageIndex) {
+    if (changesContainer == null) {
+      return true;
+    } else if (changesContainer.isNew || changesContainer.maxNewPageIndex > -2) {
+      return pageIndex < changesContainer.maxNewPageIndex + 1;
+    } else if (changesContainer.truncate)
+      return false;
+    return true;
   }
 
   public long addFile(String fileName) {
