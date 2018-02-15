@@ -5,9 +5,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -55,6 +53,86 @@ public class OResultInternal implements OResult {
       result = (T) ((OIdentifiable) result).getIdentity();
     }
     return result;
+  }
+
+  @Override
+  public OElement getElementProperty(String name) {
+    Object result = null;
+    if (content.containsKey(name)) {
+      result = content.get(name);
+    } else if (element != null) {
+      result = ((ODocument) element.getRecord()).getProperty(name);
+    }
+
+    if (result instanceof OResult) {
+      result = ((OResult) result).getRecord().orElse(null);
+    }
+
+    if (result instanceof ORID) {
+      result = ((ORID) result).getRecord();
+    }
+
+    return result instanceof OElement ? (OElement) result : null;
+  }
+
+  @Override
+  public OVertex getVertexProperty(String name) {
+    Object result = null;
+    if (content.containsKey(name)) {
+      result = content.get(name);
+    } else if (element != null) {
+      result = ((ODocument) element.getRecord()).getProperty(name);
+    }
+
+    if (result instanceof OResult) {
+      result = ((OResult) result).getRecord().orElse(null);
+    }
+
+    if (result instanceof ORID) {
+      result = ((ORID) result).getRecord();
+    }
+
+    return result instanceof OElement ? ((OElement) result).asVertex().orElse(null) : null;
+  }
+
+  @Override
+  public OEdge getEdgeProperty(String name) {
+    Object result = null;
+    if (content.containsKey(name)) {
+      result = content.get(name);
+    } else if (element != null) {
+      result = ((ODocument) element.getRecord()).getProperty(name);
+    }
+
+    if (result instanceof OResult) {
+      result = ((OResult) result).getRecord().orElse(null);
+    }
+
+    if (result instanceof ORID) {
+      result = ((ORID) result).getRecord();
+    }
+
+    return result instanceof OElement ? ((OElement) result).asEdge().orElse(null) : null;
+  }
+
+  @Override
+  public OBlob getBlobProperty(String name) {
+    Object result = null;
+    if (content.containsKey(name)) {
+      result = content.get(name);
+    } else if (element != null) {
+      result = ((ODocument) element.getRecord()).getProperty(name);
+    }
+
+    if (result instanceof OResult) {
+      result = ((OResult) result).getRecord().orElse(null);
+    }
+
+    if (result instanceof ORID) {
+      result = ((ORID) result).getRecord();
+    }
+
+    return result instanceof OBlob ? (OBlob) result : null;
   }
 
   private Object wrap(Object input) {

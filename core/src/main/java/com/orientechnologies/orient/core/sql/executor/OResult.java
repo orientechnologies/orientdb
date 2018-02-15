@@ -14,7 +14,54 @@ import java.util.*;
  * Created by luigidellaquila on 21/07/16.
  */
 public interface OResult {
+
+  /**
+   * returns a property from the result
+   *
+   * @param name the property name
+   * @param <T>
+   *
+   * @return the property value. If the property value is a persistent record, it only returns the RID. See also  {@link
+   * #getElementProperty(String)}  {@link #getVertexProperty(String)} {@link #getEdgeProperty(String)} {@link
+   * #getBlobProperty(String)}
+   */
   <T> T getProperty(String name);
+
+  /**
+   * returns an OElement property from the result
+   *
+   * @param name the property name
+   *
+   * @return the property value. Null if the property is not defined or if it's not an OElement
+   */
+  OElement getElementProperty(String name);
+
+  /**
+   * returns an OVertex property from the result
+   *
+   * @param name the property name
+   *
+   * @return the property value. Null if the property is not defined or if it's not an OVertex
+   */
+  OVertex getVertexProperty(String name);
+
+  /**
+   * returns an OEdge property from the result
+   *
+   * @param name the property name
+   *
+   * @return the property value. Null if the property is not defined or if it's not an OEdge
+   */
+  OEdge getEdgeProperty(String name);
+
+  /**
+   * returns an OEdge property from the result
+   *
+   * @param name the property name
+   *
+   * @return the property value. Null if the property is not defined or if it's not an OEdge
+   */
+  OBlob getBlobProperty(String name);
 
   Set<String> getPropertyNames();
 
