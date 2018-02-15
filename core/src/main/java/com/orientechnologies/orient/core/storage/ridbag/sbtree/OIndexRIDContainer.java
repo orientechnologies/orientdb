@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
@@ -55,8 +56,13 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   /**
    * Should be called inside of lock to ensure uniqueness of entity on disk !!!
    */
-  public OIndexRIDContainer(String name, boolean durableNonTxMode) {
-    fileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
+  public OIndexRIDContainer(String name, boolean durableNonTxMode, AtomicLong bonsayFileId) {
+    if (bonsayFileId.get() == 0) {
+      fileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
+      bonsayFileId.set(fileId);
+    } else {
+      fileId = bonsayFileId.get();
+    }
     underlying = new HashSet<>();
     isEmbedded = true;
     this.durableNonTxMode = durableNonTxMode;

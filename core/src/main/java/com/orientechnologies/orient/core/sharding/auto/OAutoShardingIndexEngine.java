@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Index engine implementation that relies on multiple hash indexes partitioned by key.
@@ -58,6 +59,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   private       int                              version;
   private final String                           name;
   private       int                              partitionSize;
+  private final AtomicLong bonsayFileId = new AtomicLong(0);
 
   public OAutoShardingIndexEngine(final String iName, final Boolean iDurableInNonTxMode, final OAbstractPaginatedStorage iStorage,
       final int iVersion) {
@@ -202,7 +204,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   @Override
   public void update(Object key, OIndexKeyUpdater<Object> updater) {
     Object value = get(key);
-    OIndexUpdateAction<Object> updated = updater.update(value);
+    OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
     if (updated.isChange())
       put(key, updated.getValue());
     else if (updated.isRemove()) {

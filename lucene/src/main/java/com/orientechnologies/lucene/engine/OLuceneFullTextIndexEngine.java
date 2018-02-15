@@ -50,6 +50,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_METADATA;
 
@@ -57,6 +58,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   private OLuceneDocumentBuilder builder;
   private OLuceneQueryBuilder    queryBuilder;
+  private final AtomicLong bonsayFileId = new AtomicLong(0);
 
   public OLuceneFullTextIndexEngine(OStorage storage, String idxName) {
     super(storage, idxName);
@@ -135,7 +137,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public void update(Object key, OIndexKeyUpdater<Object> updater) {
-    put(key, updater.update(null).getValue());
+    put(key, updater.update(null, bonsayFileId).getValue());
   }
 
   @Override

@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -49,6 +50,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   private final OHashTable<Object, Object>       hashTable;
   private final OMurmurHash3HashFunction<Object> hashFunction;
+  private final AtomicLong bonsayFileId = new AtomicLong(0);
 
   private int version;
 
@@ -152,7 +154,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   @Override
   public void update(Object key, OIndexKeyUpdater<Object> updater) {
     Object value = get(key);
-    OIndexUpdateAction<Object> updated = updater.update(value);
+    OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
     if (updated.isChange())
       put(key, updated.getValue());
     else if (updated.isRemove()) {

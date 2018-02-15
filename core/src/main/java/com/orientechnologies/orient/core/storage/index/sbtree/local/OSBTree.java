@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionSt
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This is implementation which is based on B+-tree implementation threaded tree.
@@ -74,14 +75,15 @@ public class OSBTree<K, V> extends ODurableComponent {
 
   private final static long                  ROOT_INDEX = 0;
   private final        Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
-  private final String  nullFileExtension;
-  private       long    fileId;
+  private final String nullFileExtension;
+  private       long   fileId;
   private long nullBucketFileId = -1;
   private int                  keySize;
   private OBinarySerializer<K> keySerializer;
   private OType[]              keyTypes;
   private OBinarySerializer<V> valueSerializer;
   private boolean              nullPointerSupport;
+  private final AtomicLong bonsayFileId = new AtomicLong(0);
 
   public OSBTree(String name, String dataFileExtension, String nullFileExtension, OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension, name + dataFileExtension);
@@ -237,7 +239,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private boolean put(K key, V value, OIndexEngine.Validator<K, V> validator) {
-    return update(key, (x) -> {
+    return update(key, (x, bonsayFileId) -> {
       return OIndexUpdateAction.changed(value);
     }, validator);
   }
@@ -278,7 +280,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           final V oldValue = bucketSearchResult.itemIndex > -1 ?
               readValue(keyBucket.getValue(bucketSearchResult.itemIndex), atomicOperation) :
               null;
-          OIndexUpdateAction<V> updatedValue = updater.update(oldValue);
+          OIndexUpdateAction<V> updatedValue = updater.update(oldValue, bonsayFileId);
           final OSBTreeValue<V> treeValue;
           if (updatedValue.isChange()) {
             V value = updatedValue.getValue();
@@ -377,7 +379,7 @@ public class OSBTree<K, V> extends ODurableComponent {
             final ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, valueSerializer, isNew);
             final OSBTreeValue<V> oldValue = nullBucket.getValue();
             final V oldValueValue = oldValue == null ? null : readValue(oldValue, atomicOperation);
-            OIndexUpdateAction<V> updatedValue = updater.update(oldValueValue);
+            OIndexUpdateAction<V> updatedValue = updater.update(oldValueValue, bonsayFileId);
             if (updatedValue.isChange()) {
               V value = updatedValue.getValue();
               final int valueSize = valueSerializer.getObjectSize(value);

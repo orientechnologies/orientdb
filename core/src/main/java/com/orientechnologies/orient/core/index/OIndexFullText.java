@@ -28,10 +28,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
-import jdk.nashorn.internal.runtime.options.Option;
 
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Fast index for full-text searches.
@@ -108,13 +107,13 @@ public class OIndexFullText extends OIndexMultiValues {
         // SAVE THE INDEX ENTRY
         while (true) {
           try {
-            storage.updateIndexEntry(indexId, word, oldValue -> {
+            storage.updateIndexEntry(indexId, word, (oldValue,  bonsayFileId) -> {
               Set<OIdentifiable> result = null;
 
               if (refsc == null) {
                 // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
                 if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-                  result = new OIndexRIDContainer(getName(), durable);
+                  result = new OIndexRIDContainer(getName(), durable, bonsayFileId);
                 } else {
                   throw new IllegalStateException("MBRBTreeContainer is not supported any more");
                 }
@@ -319,7 +318,7 @@ public class OIndexFullText extends OIndexMultiValues {
     }
 
     @Override
-    public OIndexUpdateAction<Object> update(Object old) {
+    public OIndexUpdateAction<Object> update(Object old, AtomicLong bonsayFileId) {
       Set<OIdentifiable> recs = (Set<OIdentifiable>) old;
       if (recs.remove(value)) {
         removed.setValue(true);

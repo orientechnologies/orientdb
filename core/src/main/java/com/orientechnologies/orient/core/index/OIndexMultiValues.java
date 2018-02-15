@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Abstract index implementation that supports multi-values for the same key.
@@ -117,11 +118,11 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       else
         durable = false;
 
-      final OIndexKeyUpdater<Object> creator = oldValue -> {
+      final OIndexKeyUpdater<Object> creator = (oldValue, bonsayFileId) -> {
         Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
         if (toUpdate == null) {
           if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-            toUpdate = new OIndexRIDContainer(getName(), durable);
+            toUpdate = new OIndexRIDContainer(getName(), durable, bonsayFileId);
           } else {
             throw new IllegalStateException("MVRBTree is not supported any more");
           }
@@ -411,7 +412,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
 
     @Override
-    public OIndexUpdateAction<Object> update(Object persistentValue) {
+    public OIndexUpdateAction<Object> update(Object persistentValue, AtomicLong bonsayFileId) {
       Set<OIdentifiable> values = (Set<OIdentifiable>) persistentValue;
       if (value == null) {
         removed.setValue(true);

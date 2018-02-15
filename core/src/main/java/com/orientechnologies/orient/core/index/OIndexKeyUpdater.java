@@ -19,10 +19,10 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 public interface OIndexKeyUpdater<V> {
 
-  OIndexUpdateAction<V> update(V o);
+  OIndexUpdateAction<V> update(V o, AtomicLong bonsayFileId);
 
 }
