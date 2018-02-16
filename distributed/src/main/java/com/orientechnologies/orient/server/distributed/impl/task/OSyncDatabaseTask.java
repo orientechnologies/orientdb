@@ -197,6 +197,31 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
     return Boolean.FALSE;
   }
 
+  protected ODistributedDatabase checkIfCurrentDatabaseIsNotOlder(final ODistributedServerManager iManager,
+      final String databaseName) {
+    final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
+
+    if (lastLSN != null) {
+      final OLogSequenceNumber currentLSN = dDatabase.getSyncConfiguration().getLastLSN(getNodeSource());
+      if (currentLSN != null) {
+        // LOCAL AND REMOTE LSN PRESENT
+        if (lastLSN.compareTo(currentLSN) <= 0)
+          // REQUESTED LSN IS <= LOCAL LSN
+          return dDatabase;
+        else
+          databaseIsOld(iManager, databaseName, dDatabase);
+      }
+    } else if (lastOperationTimestamp > -1) {
+      if (lastOperationTimestamp <= dDatabase.getSyncConfiguration().getLastOperationTimestamp())
+        // NO LSN, BUT LOCAL DATABASE HAS BEEN WRITTEN AFTER THE REQUESTER, STILL OK
+        return dDatabase;
+    } else
+      // NO LSN, NO TIMESTAMP, C'MON, CAN'T BE NEWER THAN THIS
+      return dDatabase;
+
+    return databaseIsOld(iManager, databaseName, dDatabase);
+  }
+
   @Override
   public String getName() {
     return "deploy_db";
