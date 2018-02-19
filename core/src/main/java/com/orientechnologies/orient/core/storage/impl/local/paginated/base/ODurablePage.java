@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * Base page class for all durable data structures, that is data structures state of which can be consistently restored after system
@@ -121,31 +122,33 @@ public class ODurablePage {
   }
 
   protected int getIntValue(int pageOffset) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
-    final ByteBuffer buffer = pointer.getSharedBuffer();
+
     if (changes == null) {
+      final ByteBuffer buffer = pointer.getExclusiveBuffer();
       return buffer.getInt(pageOffset);
     }
 
-    return changes.getIntValue(buffer, pageOffset);
+    return changes.getIntValue(pointer.getBufferDuplicate(), pageOffset);
   }
 
   protected long getLongValue(int pageOffset) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
-    final ByteBuffer buffer = pointer.getSharedBuffer();
+
     if (changes == null) {
+      final ByteBuffer buffer = pointer.getExclusiveBuffer();
       return buffer.getLong(pageOffset);
     }
 
-    return changes.getLongValue(buffer, pageOffset);
+    return changes.getLongValue(pointer.getBufferDuplicate(), pageOffset);
   }
 
   protected byte[] getBinaryValue(int pageOffset, int valLen) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
-    final ByteBuffer buffer = pointer.getSharedBuffer();
+    final ByteBuffer buffer = pointer.getBufferDuplicate();
     if (changes == null) {
       final byte[] result = new byte[valLen];
 
@@ -159,9 +162,9 @@ public class ODurablePage {
   }
 
   protected int getObjectSizeInDirectMemory(OBinarySerializer binarySerializer, int offset) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
-    final ByteBuffer buffer = pointer.getSharedBuffer();
+    final ByteBuffer buffer = pointer.getBufferDuplicate();
     if (changes == null) {
       buffer.position(offset);
       return binarySerializer.getObjectSizeInByteBuffer(buffer);
@@ -171,9 +174,9 @@ public class ODurablePage {
   }
 
   protected <T> T deserializeFromDirectMemory(OBinarySerializer<T> binarySerializer, int offset) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
-    final ByteBuffer buffer = pointer.getSharedBuffer();
+    final ByteBuffer buffer = pointer.getBufferDuplicate();
     if (changes == null) {
       buffer.position(offset);
       return binarySerializer.deserializeFromByteBufferObject(buffer);
@@ -183,19 +186,19 @@ public class ODurablePage {
   }
 
   protected byte getByteValue(int pageOffset) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
-    final ByteBuffer buffer = pointer.getSharedBuffer();
     if (changes == null) {
+      final ByteBuffer buffer = pointer.getExclusiveBuffer();
       return buffer.get(pageOffset);
     }
 
-    return changes.getByteValue(buffer, pageOffset);
+    return changes.getByteValue(pointer.getBufferDuplicate(), pageOffset);
   }
 
   @SuppressWarnings("SameReturnValue")
   protected int setIntValue(int pageOffset, int value) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
     final ByteBuffer buffer = pointer.getExclusiveBuffer();
     if (changes != null) {
@@ -210,7 +213,7 @@ public class ODurablePage {
 
   @SuppressWarnings("SameReturnValue")
   protected int setByteValue(int pageOffset, byte value) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
     final ByteBuffer buffer = pointer.getExclusiveBuffer();
     if (changes != null) {
@@ -225,7 +228,7 @@ public class ODurablePage {
 
   @SuppressWarnings("SameReturnValue")
   protected int setLongValue(int pageOffset, long value) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
     final ByteBuffer buffer = pointer.getExclusiveBuffer();
     if (changes != null) {
@@ -239,7 +242,7 @@ public class ODurablePage {
   }
 
   protected int setBinaryValue(int pageOffset, byte[] value) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
     if (value.length == 0)
       return 0;
@@ -257,7 +260,7 @@ public class ODurablePage {
   }
 
   protected void moveData(int from, int to, int len) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
     if (len == 0)
       return;
@@ -282,7 +285,7 @@ public class ODurablePage {
   }
 
   public void restoreChanges(OWALChanges changes) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
     final ByteBuffer buffer = cacheEntry.getCachePointer().getExclusiveBuffer();
 
@@ -293,7 +296,7 @@ public class ODurablePage {
   }
 
   public void rollbackChanges(OWALChanges changes) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
     final ByteBuffer buffer = cacheEntry.getCachePointer().getExclusiveBuffer();
 
@@ -304,9 +307,9 @@ public class ODurablePage {
   }
 
   public void setLsn(OLogSequenceNumber lsn) {
-    assert cacheEntry.getCachePointer().getSharedBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
+    assert cacheEntry.getCachePointer().getExclusiveBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
-    final ByteBuffer buffer = pointer.getSharedBuffer();
+    final ByteBuffer buffer = pointer.getExclusiveBuffer();
     buffer.position(WAL_SEGMENT_OFFSET);
 
     buffer.putLong(lsn.getSegment());

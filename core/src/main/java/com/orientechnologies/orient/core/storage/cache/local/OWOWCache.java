@@ -2687,7 +2687,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           try {
             version = pointer.getVersion();
 
-            final ByteBuffer buffer = pointer.getSharedBuffer();
+            final ByteBuffer buffer = pointer.getBufferDuplicate();
 
             buffer.position(0);
             copy.position(0);
@@ -2883,7 +2883,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           final ByteBuffer copy = bufferPool.acquireDirect(false);
           try {
             version = pointer.getVersion();
-            final ByteBuffer buffer = pointer.getSharedBuffer();
+            final ByteBuffer buffer = pointer.getBufferDuplicate();
 
             buffer.position(0);
             copy.position(0);
@@ -2966,7 +2966,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             continue;
 
           try {
-            final ByteBuffer buffer = pagePointer.getSharedBuffer();
+            final ByteBuffer buffer = pagePointer.getBufferDuplicate();
             flushPage(pageKey.fileId, pageKey.pageIndex, buffer);
 
             removeFromDirtyPages(pageKey);

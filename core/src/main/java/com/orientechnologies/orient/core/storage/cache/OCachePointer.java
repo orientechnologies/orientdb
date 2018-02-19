@@ -23,6 +23,7 @@ import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.log.OLogManager;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -50,20 +51,6 @@ public class OCachePointer {
   private volatile boolean notFlushed;
 
   private long version;
-
-  private final ThreadLocal<ByteBuffer> threadLocalBuffer = new ThreadLocal<ByteBuffer>() {
-    @Override
-    protected ByteBuffer initialValue() {
-      if (buffer != null) {
-        final ByteBuffer b = buffer.duplicate();
-        b.position(0);
-        b.order(buffer.order());
-        return b;
-      }
-
-      return null;
-    }
-  };
 
   private final long fileId;
   private final long pageIndex;
@@ -209,12 +196,16 @@ public class OCachePointer {
     return notFlushed;
   }
 
-  public ByteBuffer getSharedBuffer() {
-    return threadLocalBuffer.get();
-  }
-
   public ByteBuffer getExclusiveBuffer() {
     return buffer;
+  }
+
+  public ByteBuffer getBufferDuplicate() {
+    if (buffer == null) {
+      return null;
+    }
+
+    return buffer.duplicate().order(ByteOrder.nativeOrder());
   }
 
   public void acquireExclusiveLock() {
