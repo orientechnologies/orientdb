@@ -2408,6 +2408,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
           if (firstEntry == null)
             return null;
+
+          minDirtyLSN = firstEntry.getKey();
         }
 
         return null;
