@@ -49,6 +49,7 @@ import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -86,6 +87,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   private final Path        walLocation;
   private final FileChannel masterRecordLSNHolder;
+
+  private final FileStore fileStore;
 
   /**
    * If file of {@link OLogSegmentV2} will not be accessed inside of this interval (in seconds) it will be closed by timer.
@@ -198,6 +201,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
     try {
       this.walLocation = calculateWalPath(this.storage, walPath);
+      this.fileStore = Files.getFileStore(walLocation);
 
       Stream<Path> walFiles;
 
@@ -639,7 +643,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
-   private void appendNewSegment(OLogSegment last) throws IOException {
+  private void appendNewSegment(OLogSegment last) throws IOException {
     last.stopBackgroundWrite(true);
 
     last = new OLogSegmentV2(this, walLocation.resolve(getSegmentName(last.getOrder() + 1)), maxPagesCacheSize, fileTTL,
@@ -1164,7 +1168,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   public void checkFreeSpace() throws IOException {
-    freeSpace = Files.getFileStore(walLocation).getUsableSpace();
+    freeSpace = fileStore.getUsableSpace();
 
     //system has unlimited amount of free space
     if (freeSpace < 0)
