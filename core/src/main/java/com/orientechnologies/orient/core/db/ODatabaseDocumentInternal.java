@@ -77,6 +77,9 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   void reloadUser();
 
+  void afterUpdateOperations(final OIdentifiable id);
+  void afterCreateOperations(final OIdentifiable id);
+  void afterDeleteOperations(final OIdentifiable id);
   ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id);
 
   <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion, final String fetchPlan,

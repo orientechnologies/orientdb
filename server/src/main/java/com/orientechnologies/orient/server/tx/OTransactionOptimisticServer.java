@@ -376,7 +376,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
         if (callHooks) {
           switch (iStatus) {
           case ORecordOperation.CREATED:
-            database.callbackHooks(ORecordHook.TYPE.AFTER_CREATE, iRecord);
+            database.afterCreateOperations(iRecord);
             break;
           case ORecordOperation.LOADED:
             /**
@@ -385,10 +385,10 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
              */
             break;
           case ORecordOperation.UPDATED:
-            database.callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, iRecord);
+            database.afterUpdateOperations(iRecord);
             break;
           case ORecordOperation.DELETED:
-            database.callbackHooks(ORecordHook.TYPE.AFTER_DELETE, iRecord);
+            database.afterDeleteOperations(iRecord);
             break;
           }
         }

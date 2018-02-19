@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
@@ -744,6 +745,18 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     ORecordInternal.unsetDirty(record);
     record.setDirty();
     return serializer.toStream(record, false);
+  }
+
+  public void afterUpdateOperations(final OIdentifiable id) {
+    callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
+  }
+
+  public void afterCreateOperations(final OIdentifiable id) {
+    callbackHooks(ORecordHook.TYPE.AFTER_CREATE, id);
+  }
+
+  public void afterDeleteOperations(final OIdentifiable id) {
+    callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
   }
 
 }

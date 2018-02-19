@@ -26,11 +26,12 @@ import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
-import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
+import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 
@@ -84,6 +85,7 @@ public class OImmutableClass implements OClass {
   private       boolean                     triggered;
   private       boolean                     function;
   private       boolean                     scheduler;
+  private       boolean                     sequence;
   private       boolean                     ouser;
   private       boolean                     orole;
   private       OIndex<?>                   autoShardingIndex;
@@ -148,8 +150,9 @@ public class OImmutableClass implements OClass {
       this.isVertexType = isSubClassOf(OClass.VERTEX_CLASS_NAME);
       this.isEdgeType = isSubClassOf(OClass.EDGE_CLASS_NAME);
       this.triggered = isSubClassOf(OClassTrigger.CLASSNAME);
-      this.function = isSubClassOf(OFunctionTrigger.CLASSNAME);
+      this.function = isSubClassOf(OFunctionLibraryImpl.CLASSNAME);
       this.scheduler = isSubClassOf(OScheduledEvent.CLASS_NAME);
+      this.sequence = isSubClassOf(OSequence.CLASS_NAME);
       this.ouser = isSubClassOf(OUser.CLASS_NAME);
       this.orole = isSubClassOf(ORole.CLASS_NAME);
       this.indexes = new HashSet<>();
@@ -842,4 +845,7 @@ public class OImmutableClass implements OClass {
     return orole;
   }
 
+  public boolean isSequence() {
+    return sequence;
+  }
 }

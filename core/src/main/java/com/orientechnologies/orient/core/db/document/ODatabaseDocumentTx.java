@@ -1493,4 +1493,19 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     checkOpenness();
     return internal.isClusterEdge(cluster);
   }
+
+  @Override
+  public void afterCreateOperations(OIdentifiable id) {
+    internal.afterCreateOperations(id);
+  }
+
+  @Override
+  public void afterDeleteOperations(OIdentifiable id) {
+    internal.afterDeleteOperations(id);
+  }
+
+  @Override
+  public void afterUpdateOperations(OIdentifiable id) {
+    internal.afterUpdateOperations(id);
+  }
 }

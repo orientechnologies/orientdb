@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -476,7 +477,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
         switch (iStatus) {
         case ORecordOperation.CREATED:
-          database.callbackHooks(TYPE.AFTER_CREATE, iRecord);
+          database.afterCreateOperations(iRecord);
           break;
         case ORecordOperation.LOADED:
           /**
@@ -485,10 +486,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
            */
           break;
         case ORecordOperation.UPDATED:
-          database.callbackHooks(TYPE.AFTER_UPDATE, iRecord);
+          database.afterUpdateOperations(iRecord);
           break;
         case ORecordOperation.DELETED:
-          database.callbackHooks(TYPE.AFTER_DELETE, iRecord);
+          database.afterDeleteOperations(iRecord);
           break;
         }
 

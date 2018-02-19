@@ -38,14 +38,16 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.security.*;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceTrigger;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -498,9 +500,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new OUserTrigger(this), ORecordHook.HOOK_POSITION.EARLY);
-    registerHook(new OFunctionTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OSequenceTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OLiveQueryHookV2(this), ORecordHook.HOOK_POSITION.LAST);
@@ -509,7 +508,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   @Override
   public OStorage getStorage() {
     return storage;
-  }
+  } 
 
   @Override
   public void replaceStorage(OStorage iNewStorage) {
@@ -754,6 +753,60 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       if (!microTransaction.isActive())
         microTransaction = null;
     }
+  }
+
+  public void afterCreateOperations(final OIdentifiable id) {
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      if (clazz != null) {
+        OClassIndexManager.checkIndexesAfterCreate(doc, this);
+        if (clazz.isFunction()) {
+          this.getSharedContext().getFunctionLibrary().createdFunction(doc);
+          Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isSequence()) {
+          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(this, doc);
+        }
+      }
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_CREATE, id);
+  }
+
+  public void afterUpdateOperations(final OIdentifiable id) {
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      if (clazz != null) {
+        OClassIndexManager.checkIndexesAfterUpdate((ODocument) id, this);
+        if (clazz.isFunction()) {
+          this.getSharedContext().getFunctionLibrary().updatedFunction(doc);
+          Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isSequence()) {
+          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(this, doc);
+        }
+      }
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
+  }
+
+  public void afterDeleteOperations(final OIdentifiable id) {
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      if (clazz != null) {
+        OClassIndexManager.checkIndexesAfterDelete(doc, this);
+        if (clazz.isFunction()) {
+          this.getSharedContext().getFunctionLibrary().droppedFunction(doc);
+          Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isSequence()) {
+          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(this, doc);
+        }
+      }
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
   }
 
 }
