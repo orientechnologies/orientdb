@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
@@ -24,19 +25,20 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     while (nextN.hasNext()) {
       while (nextN.hasNext()) {
         OResult item = toTraverseResult(nextN.next());
+        if(item != null){
+          ArrayDeque<ORID> stack = new ArrayDeque<ORID>();
+          item.getIdentity().ifPresent(x -> stack.push(x));
+          ((OResultInternal) item).setMetadata("$stack", stack);
 
-        ArrayDeque stack = new ArrayDeque();
-        item.getIdentity().ifPresent(x -> stack.push(x));
-        ((OResultInternal) item).setMetadata("$stack", stack);
 
+          List<OIdentifiable> path = new ArrayList<>();
+          path.add(item.getIdentity().get());
+          ((OResultInternal) item).setMetadata("$path", path);
 
-        List<OIdentifiable> path = new ArrayList<>();
-        path.add(item.getIdentity().get());
-        ((OResultInternal) item).setMetadata("$path", path);
+          if (item != null && item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
+            tryAddEntryPoint(item, ctx);
 
-        if (item != null && item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
-          tryAddEntryPoint(item, ctx);
-
+          }
         }
       }
       nextN = getPrev().get().syncPull(ctx, nRecords);
