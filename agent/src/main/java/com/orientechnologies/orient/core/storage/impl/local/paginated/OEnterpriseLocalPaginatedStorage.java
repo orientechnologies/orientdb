@@ -339,13 +339,13 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         cacheEntry.acquireSharedLock();
         try {
           final OLogSequenceNumber pageLsn = ODurablePage
-              .getLogSequenceNumberFromPage(cacheEntry.getCachePointer().getSharedBuffer());
+              .getLogSequenceNumberFromPage(cacheEntry.getCachePointer().getBufferDuplicate());
 
           if (changeLsn == null || pageLsn.compareTo(changeLsn) > 0) {
 
             final byte[] data = new byte[pageSize + OLongSerializer.LONG_SIZE];
             OLongSerializer.INSTANCE.serializeNative(pageIndex, data, 0);
-            ODurablePage.getPageData(cacheEntry.getCachePointer().getSharedBuffer(), data, OLongSerializer.LONG_SIZE, pageSize);
+            ODurablePage.getPageData(cacheEntry.getCachePointer().getBufferDuplicate(), data, OLongSerializer.LONG_SIZE, pageSize);
 
             stream.write(data);
 
@@ -516,7 +516,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           }
 
           try {
-            final ByteBuffer buffer = cacheEntry.getCachePointer().getSharedBuffer();
+            final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
             final OLogSequenceNumber backedUpPageLsn = ODurablePage.getLogSequenceNumber(OLongSerializer.LONG_SIZE, data);
             if (isFull) {
               buffer.position(0);
