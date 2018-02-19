@@ -196,7 +196,7 @@ public class OCachePointer {
     return notFlushed;
   }
 
-  public ByteBuffer getExclusiveBuffer() {
+  public ByteBuffer getBuffer() {
     return buffer;
   }
 

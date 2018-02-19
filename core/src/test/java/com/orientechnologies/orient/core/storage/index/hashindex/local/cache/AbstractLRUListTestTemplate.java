@@ -195,7 +195,7 @@ public abstract class AbstractLRUListTestTemplate {
     }
 
     for (OCachePointer pointer : cachePointers) {
-      bufferPool.release(pointer.getExclusiveBuffer());
+      bufferPool.release(pointer.getBuffer());
     }
 
     bufferPool.clear();
@@ -262,7 +262,7 @@ public abstract class AbstractLRUListTestTemplate {
     }
 
     for (OCachePointer cachePointer : cachePointers) {
-      bufferPool.release(cachePointer.getExclusiveBuffer());
+      bufferPool.release(cachePointer.getBuffer());
     }
 
     bufferPool.clear();
@@ -295,7 +295,7 @@ public abstract class AbstractLRUListTestTemplate {
     }
 
     for (OCachePointer cachePointer : cachePointers) {
-      bufferPool.release(cachePointer.getExclusiveBuffer());
+      bufferPool.release(cachePointer.getBuffer());
     }
     bufferPool.clear();
   }
@@ -327,7 +327,7 @@ public abstract class AbstractLRUListTestTemplate {
     }
 
     for (OCachePointer cachePointer : cachePointers) {
-      bufferPool.release(cachePointer.getExclusiveBuffer());
+      bufferPool.release(cachePointer.getBuffer());
     }
     bufferPool.clear();
   }
@@ -352,7 +352,7 @@ public abstract class AbstractLRUListTestTemplate {
     }
 
     for (OCachePointer cachePointer : cachePointers) {
-      bufferPool.release(cachePointer.getExclusiveBuffer());
+      bufferPool.release(cachePointer.getBuffer());
     }
 
     bufferPool.clear();
@@ -381,7 +381,7 @@ public abstract class AbstractLRUListTestTemplate {
     }
 
     for (OCachePointer pointer : cachePointers) {
-      bufferPool.release(pointer.getExclusiveBuffer());
+      bufferPool.release(pointer.getBuffer());
     }
 
     bufferPool.clear();
@@ -410,7 +410,7 @@ public abstract class AbstractLRUListTestTemplate {
     }
 
     for (OCachePointer cachePointer : cachePointers) {
-      bufferPool.release(cachePointer.getExclusiveBuffer());
+      bufferPool.release(cachePointer.getBuffer());
     }
 
     bufferPool.clear();
@@ -447,7 +447,7 @@ public abstract class AbstractLRUListTestTemplate {
     }
 
     for (OCachePointer cachePointer : cachePointers) {
-      bufferPool.release(cachePointer.getExclusiveBuffer());
+      bufferPool.release(cachePointer.getBuffer());
     }
 
     bufferPool.clear();

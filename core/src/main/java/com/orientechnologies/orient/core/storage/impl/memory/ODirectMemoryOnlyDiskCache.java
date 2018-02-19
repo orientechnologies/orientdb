@@ -293,7 +293,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (cacheEntry) {
       cacheEntry.decrementUsages();
-      assert cacheEntry.getUsagesCount() > 0 || cacheEntry.getCachePointer().getExclusiveBuffer() == null || !cacheEntry
+      assert cacheEntry.getUsagesCount() > 0 || cacheEntry.getCachePointer().getBuffer() == null || !cacheEntry
           .isLockAcquiredByCurrentThread();
     }
   }

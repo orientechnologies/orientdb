@@ -25,7 +25,6 @@ import org.junit.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -204,7 +203,7 @@ public class ReadWriteDiskCacheTest {
 
       entries[i].markDirty();
 
-      final ByteBuffer buffer = entries[i].getCachePointer().getExclusiveBuffer();
+      final ByteBuffer buffer = entries[i].getCachePointer().getBuffer();
 
       buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i });

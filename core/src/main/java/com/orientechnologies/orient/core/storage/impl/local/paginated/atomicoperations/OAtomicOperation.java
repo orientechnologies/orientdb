@@ -192,7 +192,7 @@ public class OAtomicOperation {
     if (deletedFiles.contains(cacheEntry.getFileId()))
       throw new OStorageException("File with id " + cacheEntry.getFileId() + " is deleted.");
 
-    if (cacheEntry.getCachePointer().getExclusiveBuffer() != null)
+    if (cacheEntry.getCachePointer().getBuffer() != null)
       readCache.releaseFromRead(real.getDelegate(), writeCache);
     else {
       assert real.isNew || !cacheEntry.isLockAcquiredByCurrentThread();
@@ -376,7 +376,7 @@ public class OAtomicOperation {
               }
 
               final OLogSequenceNumber originalPageLSN = ODurablePage
-                  .getLogSequenceNumberFromPage(cacheEntry.getCachePointer().getExclusiveBuffer());
+                  .getLogSequenceNumberFromPage(cacheEntry.getCachePointer().getBuffer());
               final OLogSequenceNumber changesLSN = writeAheadLog
                   .log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes, originalPageLSN));
 
