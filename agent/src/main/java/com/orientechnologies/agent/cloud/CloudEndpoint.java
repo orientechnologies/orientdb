@@ -30,8 +30,8 @@ public class CloudEndpoint extends Thread {
   private String projectId;
   private String cloudBaseUrl;
 
-  private static String requestPath  = "/agent/commands/{projectId}";
-  private static String responsePath = "/agent/commands/{projectId}/response";
+  private static String requestPath  = "/api/v1/agent/commands/{projectId}";
+  private static String responsePath = "/api/v1/agent/commands/{projectId}/response";
 
   public CloudEndpoint(OEnterpriseCloudManager oEnterpriseAgent) {
     cloudManager = oEnterpriseAgent;
