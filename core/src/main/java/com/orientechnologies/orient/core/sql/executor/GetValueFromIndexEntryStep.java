@@ -166,8 +166,8 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
     if (filterClusterIds != null) {
       result += "\n";
       result += spaces;
-      result += "  filter clusters [";
-      result += Arrays.asList(filterClusterIds).stream().map(x -> "" + x).collect(Collectors.joining(","));
+      result += "  filtering clusters [";
+      result += Arrays.stream(filterClusterIds).boxed().map(x -> "" + x).collect(Collectors.joining(","));
       result += "]";
     }
     return result;
