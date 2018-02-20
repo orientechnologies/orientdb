@@ -1,22 +1,22 @@
 /*
- *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *  *
- *  *  Licensed under the Apache License, Version 2.0 (the "License");
- *  *  you may not use this file except in compliance with the License.
- *  *  You may obtain a copy of the License at
- *  *
- *  *       http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  *  Unless required by applicable law or agreed to in writing, software
- *  *  distributed under the License is distributed on an "AS IS" BASIS,
- *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  See the License for the specific language governing permissions and
- *  *  limitations under the License.
- *  *
- *  * For more information: http://orientdb.com
- *
- */
+  *
+  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://orientdb.com
+  *
+  */
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -46,21 +45,22 @@ public class OImmutableClass implements OClass {
    * use OClass.EDGE_CLASS_NAME instead
    */
   @Deprecated
-  public static final String EDGE_CLASS_NAME   = OClass.EDGE_CLASS_NAME;
+  public static final String              EDGE_CLASS_NAME   = OClass.EDGE_CLASS_NAME;
   /**
    * use OClass.EDGE_CLASS_NAME instead
    */
   @Deprecated
-  public static final String VERTEX_CLASS_NAME = OClass.VERTEX_CLASS_NAME;
+  public static final String              VERTEX_CLASS_NAME = OClass.VERTEX_CLASS_NAME;
 
-  private boolean inited = false;
+
+  private boolean                         inited            = false;
   private final boolean                   isAbstract;
   private final boolean                   strictMode;
   private final String                    name;
   private final String                    streamAbleName;
   private final Map<String, OProperty>    properties;
-  private       Map<String, OProperty>    allPropertiesMap;
-  private       Collection<OProperty>     allProperties;
+  private Map<String, OProperty>          allPropertiesMap;
+  private Collection<OProperty>           allProperties;
   private final OClusterSelectionStrategy clusterSelection;
   private final int                       defaultClusterId;
   private final int[]                     clusterIds;
@@ -73,21 +73,20 @@ public class OImmutableClass implements OClass {
   private final Map<String, String>       customFields;
   private final String                    description;
 
-  private final OImmutableSchema            schema;
+  private final OImmutableSchema          schema;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private final List<OImmutableClass>       superClasses;
+  private final List<OImmutableClass>     superClasses;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private       Collection<OImmutableClass> subclasses;
-  private       boolean                     restricted;
-  private       boolean                     isVertexType;
-  private       boolean                     isEdgeType;
-  private       boolean                     triggered;
-  private       boolean                     function;
-  private       boolean                     scheduler;
-  private       boolean                     ouser;
-  private       boolean                     orole;
-  private       OIndex<?>                   autoShardingIndex;
-  private       HashSet<OIndex<?>>          indexes;
+  private Collection<OImmutableClass>     subclasses;
+  private boolean                         restricted;
+  private boolean                         isVertexType;
+  private boolean                         isEdgeType;
+  private boolean                         triggered;
+  private boolean                         function;
+  private boolean                         scheduler;
+  private boolean                         ouser;
+  private boolean                         orole;
+  private OIndex<?>                       autoShardingIndex;
 
   public OImmutableClass(final OClass oClass, final OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
@@ -152,13 +151,10 @@ public class OImmutableClass implements OClass {
       this.scheduler = isSubClassOf(OScheduledEvent.CLASS_NAME);
       this.ouser = isSubClassOf(OUser.CLASS_NAME);
       this.orole = isSubClassOf(ORole.CLASS_NAME);
-      this.indexes = new HashSet<>();
-      getRawIndexes(indexes);
 
       final ODatabaseDocumentInternal db = getDatabase();
-      this.autoShardingIndex = db != null && db.getMetadata() != null && db.getMetadata().getIndexManager() != null ?
-          db.getMetadata().getIndexManager().getClassAutoShardingIndex(name) :
-          null;
+      this.autoShardingIndex = db != null && db.getMetadata() != null && db.getMetadata().getIndexManager() != null
+          ? db.getMetadata().getIndexManager().getClassAutoShardingIndex(name) : null;
     }
 
     inited = true;
@@ -672,10 +668,6 @@ public class OImmutableClass implements OClass {
     getDatabase().getMetadata().getIndexManager().getClassIndexes(name, indexes);
   }
 
-  public void getRawClassIndexes(final Collection<OIndex<?>> indexes) {
-    ((OIndexManagerProxy) getDatabase().getMetadata().getIndexManager()).getClassRawIndexes(name, indexes);
-  }
-
   @Override
   public void getIndexes(final Collection<OIndex<?>> indexes) {
     initSuperClasses();
@@ -686,23 +678,10 @@ public class OImmutableClass implements OClass {
     }
   }
 
-  public void getRawIndexes(final Collection<OIndex<?>> indexes) {
-    initSuperClasses();
-
-    getRawClassIndexes(indexes);
-    for (OImmutableClass superClass : superClasses) {
-      superClass.getRawIndexes(indexes);
-    }
-  }
-
   @Override
   public Set<OIndex<?>> getIndexes() {
     final Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
     getIndexes(indexes);
-    return indexes;
-  }
-
-  public Set<OIndex<?>> getRawIndexes() {
     return indexes;
   }
 

@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class OSharedContextDistributed extends OSharedContext {
 
   public OSharedContextDistributed(OStorage storage) {
-    schema = new OSchemaDistributed(this);
+    schema = new OSchemaDistributed();
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerDistributed(storage);
     functionLibrary = new OFunctionLibraryImpl();
