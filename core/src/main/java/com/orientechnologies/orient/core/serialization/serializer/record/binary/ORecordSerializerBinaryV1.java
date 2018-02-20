@@ -58,7 +58,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     return new Tuple<>(match, fieldName);
   }
   
-  private Tuple<Boolean, String> processLenSmallerThenZeroDeserializePartial(OGlobalProperty prop, final String[] iFields, final ODocument document, int len){    
+  private Tuple<Boolean, String> processLenSmallerThenZeroDeserializePartial(OGlobalProperty prop, final String[] iFields){    
     String fieldName = prop.getName();
 
     boolean matchField = false;
@@ -113,7 +113,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       } else {
         // LOAD GLOBAL PROPERTY BY ID
         final OGlobalProperty prop = getGlobalProperty(document, len);
-        Tuple<Boolean, String> matchFieldName = processLenSmallerThenZeroDeserializePartial(prop, iFields, document, len);
+        Tuple<Boolean, String> matchFieldName = processLenSmallerThenZeroDeserializePartial(prop, iFields);
 
         boolean matchField = matchFieldName.getFirstVal();
         fieldName = matchFieldName.getSecondVal();
