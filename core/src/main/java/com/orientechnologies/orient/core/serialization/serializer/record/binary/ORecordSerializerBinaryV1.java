@@ -51,7 +51,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
+public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
 
   private static final String       CHARSET_UTF_8    = "UTF-8";
   private static final ORecordId    NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
@@ -59,7 +59,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private final OBinaryComparatorV0 comparator       = new OBinaryComparatorV0();
 
-  public ORecordSerializerBinaryV0() {
+  public ORecordSerializerBinaryV1() {
   }
 
   @Override
@@ -69,9 +69,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   @Override
   public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields, boolean deserializeClassName) {
-    final String className = readString(bytes);
-    if (className.length() != 0)
-      ODocumentInternal.fillClassNameIfNeeded(document, className);
+    
+    if (deserializeClassName){
+      final String className = readString(bytes);
+      if (className.length() != 0)
+        ODocumentInternal.fillClassNameIfNeeded(document, className);
+    }
 
     // TRANSFORMS FIELDS FOM STRINGS TO BYTE[]
     final byte[][] fields = new byte[iFields.length][];
@@ -158,10 +161,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
   }
 
+  @Override
   public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
     // SKIP CLASS NAME
-    final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
-    bytes.skip(classNameLen);
+//    final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
+//    bytes.skip(classNameLen);
 
     final byte[] field = iFieldName.getBytes();
 
@@ -235,9 +239,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   @Override
   public void deserialize(final ODocument document, final BytesContainer bytes, boolean deserializeClassName) {
-    final String className = readString(bytes);
-    if (className.length() != 0)
-      ODocumentInternal.fillClassNameIfNeeded(document, className);
+    
+    if (deserializeClassName){
+      final String className = readString(bytes);
+      if (className.length() != 0)
+        ODocumentInternal.fillClassNameIfNeeded(document, className);
+    }
 
     int last = 0;
     String fieldName;
@@ -289,10 +296,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   @Override
-  public String[] getFieldNames(ODocument reference, final BytesContainer bytes, boolean deserializeClassName) {
+  public String[] getFieldNames(ODocument reference, final BytesContainer bytes,  boolean readClassName) {
     // SKIP CLASS NAME
-    final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
-    bytes.skip(classNameLen);
+    if (readClassName){
+      final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
+      bytes.skip(classNameLen);
+    }
 
     final List<String> result = new ArrayList<String>();
 
@@ -331,7 +340,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   @Override
   public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly, boolean serializeClassName) {
 
-    final OClass clazz = serializeClass(document, bytes);
+    final OClass clazz = serializeClass(document, bytes, serializeClassName);
     if (iClassOnly) {
       writeEmptyString(bytes);
       return;
@@ -357,7 +366,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       }
 
       if (docEntry.property != null) {
-        OVarIntSerializer.write(bytes, (docEntry.property.getId() + 1) * -1);
+        int id = docEntry.property.getId();
+        OVarIntSerializer.write(bytes, (id + 1) * -1);
         if (docEntry.property.getType() != OType.ANY)
           pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE);
         else
@@ -500,12 +510,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return value;
   }
 
-  protected OClass serializeClass(final ODocument document, final BytesContainer bytes) {
+  protected OClass serializeClass(final ODocument document, final BytesContainer bytes, boolean serializeClassName) {
     final OClass clazz = ODocumentInternal.getImmutableSchemaClass(document);
-    if (clazz != null)
-      writeString(bytes, clazz.getName());
-    else
-      writeEmptyString(bytes);
+    if (serializeClassName){
+      if (clazz != null && document.isEmbedded())
+        writeString(bytes, clazz.getName());
+      else
+        writeEmptyString(bytes);
+    }
     return clazz;
   }
 

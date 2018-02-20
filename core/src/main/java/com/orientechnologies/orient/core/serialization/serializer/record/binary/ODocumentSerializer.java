@@ -26,13 +26,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface ODocumentSerializer {
 
-  void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
+  void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly, boolean serializeClassName);
 
   int serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
 
-  void deserialize(ODocument document, BytesContainer bytes);
+  void deserialize(ODocument document, BytesContainer bytes, boolean deserializeClassName);
 
-  void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields);
+  void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields, boolean deserializeClassName);
 
   Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
 
@@ -44,5 +44,5 @@ public interface ODocumentSerializer {
    * Returns the array of field names with no values.
    * @param reference TODO
    */
-  String[] getFieldNames(ODocument reference, BytesContainer iBytes);
+  String[] getFieldNames(ODocument reference, BytesContainer iBytes, boolean readClassName);
 }

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
@@ -13,21 +12,24 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
 
-  public ORecordSerializationDebug deserializeDebug(final byte[] iSource, ODatabaseDocumentInternal db) {
+  public ORecordSerializationDebug deserializeDebug(final byte[] iSource, ODatabaseDocumentInternal db, boolean deserializeClassName) {
     ORecordSerializationDebug debugInfo = new ORecordSerializationDebug();
     OImmutableSchema schema = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot();
     BytesContainer bytes = new BytesContainer(iSource);
     if (bytes.bytes[0] != 0)
       throw new OSystemException("Unsupported binary serialization version");
     bytes.skip(1);
-    try {
-      final String className = readString(bytes);
-      debugInfo.className = className;
-    } catch (RuntimeException ex) {
-      debugInfo.readingFailure = true;
-      debugInfo.readingException = ex;
-      debugInfo.failPosition = bytes.offset;
-      return debugInfo;
+    
+    if (deserializeClassName){
+      try {
+        final String className = readString(bytes);
+        debugInfo.className = className;
+      } catch (RuntimeException ex) {
+        debugInfo.readingFailure = true;
+        debugInfo.readingException = ex;
+        debugInfo.failPosition = bytes.offset;
+        return debugInfo;
+      }
     }
 
     debugInfo.properties = new ArrayList<ORecordSerializationDebugProperty>();
