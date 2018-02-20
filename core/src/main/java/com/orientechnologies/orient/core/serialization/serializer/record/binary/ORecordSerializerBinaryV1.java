@@ -33,7 +33,65 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{  
-   
+  
+  private static class Tuple<T1, T2>{
+    
+    private final T1 firstVal;
+    private final T2 secondVal;
+    
+    Tuple(T1 firstVal, T2 secondVal){
+      this.firstVal = firstVal;
+      this.secondVal = secondVal;
+    }
+
+    public T1 getFirstVal() {
+      return firstVal;
+    }
+
+    public T2 getSecondVal() {
+      return secondVal;
+    }
+        
+  }
+  
+  private Tuple<Boolean, String> processLenLargerThenZeroDeserializePartial(final String[] iFields, final BytesContainer bytes, int len, byte[][] fields){
+    boolean match = false;
+    String fieldName = null;
+    for (int i = 0; i < iFields.length; ++i) {
+      if (iFields[i] != null && iFields[i].length() == len) {
+        boolean matchField = true;
+        for (int j = 0; j < len; ++j) {
+          if (bytes.bytes[bytes.offset + j] != fields[i][j]) {
+            matchField = false;
+            break;
+          }
+        }
+        if (matchField) {
+          fieldName = iFields[i];
+          bytes.skip(len);
+          match = true;
+          break;
+        }
+      }
+    }
+    
+    return new Tuple<>(match, fieldName);
+  }
+  
+  private Tuple<Boolean, String> processLenSmallerThenZeroDeserializePartial(OGlobalProperty prop, final String[] iFields, final ODocument document, int len){    
+    String fieldName = prop.getName();
+
+    boolean matchField = false;
+    for (String f : iFields) {
+      if (fieldName.equals(f)) {
+        matchField = true;
+        break;
+      }
+    }
+    
+    return new Tuple<>(matchField, fieldName);
+  }
+  
   @Override
   public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields, boolean deserializeClassName) {
     
@@ -48,7 +106,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     for (int i = 0; i < iFields.length; ++i)
       fields[i] = iFields[i].getBytes();
 
-    String fieldName = null;
+    String fieldName;
     int valuePos;
     OType type;
     int unmarshalledFields = 0;
@@ -61,25 +119,10 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
         break;
       } else if (len > 0) {
         // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
-        boolean match = false;
-        for (int i = 0; i < iFields.length; ++i) {
-          if (iFields[i] != null && iFields[i].length() == len) {
-            boolean matchField = true;
-            for (int j = 0; j < len; ++j) {
-              if (bytes.bytes[bytes.offset + j] != fields[i][j]) {
-                matchField = false;
-                break;
-              }
-            }
-            if (matchField) {
-              fieldName = iFields[i];
-              bytes.skip(len);
-              match = true;
-              break;
-            }
-          }
-        }
-
+        Tuple<Boolean, String> matchFieldName = processLenLargerThenZeroDeserializePartial(iFields, bytes, len, fields);
+        boolean match = matchFieldName.getFirstVal();
+        fieldName = matchFieldName.getSecondVal();
+        
         if (!match) {
           // FIELD NOT INCLUDED: SKIP IT
           bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
@@ -90,16 +133,11 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       } else {
         // LOAD GLOBAL PROPERTY BY ID
         final OGlobalProperty prop = getGlobalProperty(document, len);
-        fieldName = prop.getName();
+        Tuple<Boolean, String> matchFieldName = processLenSmallerThenZeroDeserializePartial(prop, iFields, document, len);
 
-        boolean matchField = false;
-        for (String f : iFields) {
-          if (fieldName.equals(f)) {
-            matchField = true;
-            break;
-          }
-        }
-
+        boolean matchField = matchFieldName.getFirstVal();
+        fieldName = matchFieldName.getSecondVal();
+        
         if (!matchField) {
           // FIELD NOT INCLUDED: SKIP IT
           bytes.skip(OIntegerSerializer.INT_SIZE + (prop.getType() != OType.ANY ? 0 : 1));
@@ -128,6 +166,17 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     }
   }
 
+  private boolean checkMatchForLargerThenZero(final BytesContainer bytes, final byte[] field, int len){
+    boolean match = true;
+    for (int j = 0; j < len; ++j)
+      if (bytes.bytes[bytes.offset + j] != field[j]) {
+        match = false;
+        break;
+      }
+    
+    return match;
+  }
+  
   @Override
   public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName, boolean deserializeClassName) {
     // SKIP CLASS NAME
@@ -150,12 +199,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       } else if (len > 0) {
         // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
         if (iFieldName.length() == len) {
-          boolean match = true;
-          for (int j = 0; j < len; ++j)
-            if (bytes.bytes[bytes.offset + j] != field[j]) {
-              match = false;
-              break;
-            }
+          boolean match = checkMatchForLargerThenZero(bytes, field, len);
 
           bytes.skip(len);
           final int valuePos = readInteger(bytes);
