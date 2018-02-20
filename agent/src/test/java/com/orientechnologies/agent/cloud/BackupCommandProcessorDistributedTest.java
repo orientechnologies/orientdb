@@ -13,7 +13,6 @@ import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import com.orientechnologies.orientdb.cloud.protocol.backup.*;
 import com.orientechnologies.orientdb.cloud.protocol.backup.log.BackupLogsList;
 import org.junit.Assert;
-import org.junit.Test;
 
 import java.io.File;
 import java.util.HashMap;
@@ -42,7 +41,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
         .forEach((b) -> agent.getBackupManager().removeAndStopBackup(b));
   }
 
-  @Test
+//  @Test
   public void testBackupCommandProcessorEmptyBackups() throws Exception {
 
     execute(2, () -> {
@@ -58,7 +57,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-  @Test
+//  @Test
   public void testListBackupCommandProcessor() throws Exception {
 
     execute(2, () -> {
@@ -111,7 +110,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-  @Test
+//  @Test
   public void testChangeBackupCommand() throws Exception {
 
     execute(2, () -> {
@@ -212,7 +211,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
     return (BackupList) execute.getPayload();
   }
 
-  @Test
+//  @Test
   public void testAddBackupCommandProcessor() throws Exception {
 
     execute(2, () -> {
@@ -295,7 +294,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-  @Test
+//  @Test
   public void testRemoveBackupCommandProcessor() throws Exception {
 
     execute(2, () -> {
@@ -332,7 +331,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-  @Test
+//  @Test
   public void testListLogsCommandProcessor() throws Exception {
 
     execute(2, () -> {
@@ -385,7 +384,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
     return (BackupLogsList) execute.getPayload();
   }
 
-  @Test
+//  @Test
   public void testListLogsWithUnitIdCommandProcessor() throws Exception {
 
     execute(2, () -> {
@@ -443,7 +442,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-  @Test
+//  @Test
   public void testRemoveBackupLogsCommandProcessor() throws Exception {
 
     execute(2, () -> {
@@ -500,7 +499,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-  @Test
+//  @Test
   public void testRestoreDatabaseCommandProcessor() throws Exception {
 
     execute(2, () -> {
