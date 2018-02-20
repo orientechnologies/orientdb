@@ -148,8 +148,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
     final ORecord rec = iRecord.getRecord();
 
-    return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeField(new BytesContainer(rec.toStream()).skip(1),
-        rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
+    if (iRecord.getIdentity().isValid()){
+      return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeField(new BytesContainer(rec.toStream()).skip(1),
+          rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name, false);
+    }
+    else{
+      return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeField(new BytesContainer(rec.toStream()).skip(1),
+          rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name, true);
+    }
   }
 
   public String getRoot() {

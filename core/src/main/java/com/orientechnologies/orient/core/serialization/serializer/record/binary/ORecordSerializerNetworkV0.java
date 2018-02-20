@@ -810,7 +810,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     }
   }
 
-  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
+  @Override
+  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName, boolean deserializeClassName) {
     // TODO: check if integrate the binary disc binary comparator here
     throw new UnsupportedOperationException("network serializer doesn't support comparators");
   }

@@ -36,7 +36,7 @@ public interface ODocumentSerializer {
 
   Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
 
-  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName);
+  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName, boolean deserializeClassName);
 
   OBinaryComparator getComparator();
 
