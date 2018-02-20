@@ -1,23 +1,3 @@
-/*
- *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *  *
- *  *  Licensed under the Apache License, Version 2.0 (the "License");
- *  *  you may not use this file except in compliance with the License.
- *  *  You may obtain a copy of the License at
- *  *
- *  *       http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  *  Unless required by applicable law or agreed to in writing, software
- *  *  distributed under the License is distributed on an "AS IS" BASIS,
- *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  See the License for the specific language governing permissions and
- *  *  limitations under the License.
- *  *
- *  * For more information: http://orientdb.com
- *
- */
-
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -349,6 +329,60 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     return result.toArray(new String[result.size()]);
   }
 
+  private int serializeAllocateSpace(final BytesContainer bytes,
+          final Entry<String, ODocumentEntry> values[], final Map<String, OProperty> props,
+          final Set<Entry<String, ODocumentEntry>> fields, final int[] pos) {
+    int i = 0;
+    
+    for (Entry<String, ODocumentEntry> entry : fields) {
+      ODocumentEntry docEntry = entry.getValue();
+      if (!docEntry.exist()) {
+        continue;
+      }
+      if (docEntry.property == null && props != null) {
+        OProperty prop = props.get(entry.getKey());
+        if (prop != null && docEntry.type == prop.getType()) {
+          docEntry.property = prop;
+        }
+      }
+
+      if (docEntry.property != null) {
+        int id = docEntry.property.getId();
+        OVarIntSerializer.write(bytes, (id + 1) * -1);
+        if (docEntry.property.getType() != OType.ANY) {
+          pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE);
+        } else {
+          pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
+        }
+      } else {
+        writeString(bytes, entry.getKey());
+        pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
+      }
+      values[i] = entry;
+      i++;
+    }
+    return i;
+  }
+  
+  private void serializeWriteValues(final BytesContainer bytes, final ODocument document,
+          int size, final Entry<String, ODocumentEntry> values[], final int[] pos){
+    for (int i = 0; i < size; i++) {
+      int pointer;
+      final Object value = values[i].getValue().value;
+      if (value != null) {
+        final OType type = getFieldType(values[i].getValue());
+        if (type == null) {
+          throw new OSerializationException(
+              "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
+        }
+        pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
+        OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
+        if (values[i].getValue().property == null || values[i].getValue().property.getType() == OType.ANY)
+          writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
+      }
+    }
+  }
+  
   @SuppressWarnings("unchecked")
   @Override
   public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly, boolean serializeClassName) {
@@ -363,53 +397,13 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
 
     final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
 
-    final int[] pos = new int[fields.size()];
-
-    int i = 0;
+    final int[] pos = new int[fields.size()];    
 
     final Entry<String, ODocumentEntry> values[] = new Entry[fields.size()];
-    for (Entry<String, ODocumentEntry> entry : fields) {
-      ODocumentEntry docEntry = entry.getValue();
-      if (!docEntry.exist())
-        continue;
-      if (docEntry.property == null && props != null) {
-        OProperty prop = props.get(entry.getKey());
-        if (prop != null && docEntry.type == prop.getType())
-          docEntry.property = prop;
-      }
+    int i = serializeAllocateSpace(bytes, values, props, fields, pos);
+    writeEmptyString(bytes);    
 
-      if (docEntry.property != null) {
-        int id = docEntry.property.getId();
-        OVarIntSerializer.write(bytes, (id + 1) * -1);
-        if (docEntry.property.getType() != OType.ANY)
-          pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE);
-        else
-          pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
-      } else {
-        writeString(bytes, entry.getKey());
-        pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
-      }
-      values[i] = entry;
-      i++;
-    }
-    writeEmptyString(bytes);
-    int size = i;
-
-    for (i = 0; i < size; i++) {
-      int pointer = 0;
-      final Object value = values[i].getValue().value;
-      if (value != null) {
-        final OType type = getFieldType(values[i].getValue());
-        if (type == null) {
-          throw new OSerializationException(
-              "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
-        }
-        pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
-        OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
-        if (values[i].getValue().property == null || values[i].getValue().property.getType() == OType.ANY)
-          writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
-      }
-    }
+    serializeWriteValues(bytes, document, i, values, pos);
 
   }  
 
