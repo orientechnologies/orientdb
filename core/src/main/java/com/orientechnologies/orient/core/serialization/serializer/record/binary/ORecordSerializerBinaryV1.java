@@ -33,12 +33,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{  
-
-  private final OBinaryComparatorV0 comparator       = new OBinaryComparatorV0();
-
-  public ORecordSerializerBinaryV1() {
-  }  
-
+   
   @Override
   public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields, boolean deserializeClassName) {
     
