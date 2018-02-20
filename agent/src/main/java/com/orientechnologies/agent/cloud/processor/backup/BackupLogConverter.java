@@ -27,6 +27,9 @@ public class BackupLogConverter {
     builders.put(OBackupLogType.RESTORE_STARTED, RestoreStartedLog::new);
     builders.put(OBackupLogType.RESTORE_FINISHED, RestoreFinishedLog::new);
     builders.put(OBackupLogType.RESTORE_ERROR, RestoreErrorLog::new);
+    builders.put(OBackupLogType.UPLOAD_STARTED, UploadStartedLog::new);
+    builders.put(OBackupLogType.UPLOAD_FINISHED, UploadFinishedLog::new);
+    builders.put(OBackupLogType.UPLOAD_ERROR, UploadErrorLog::new);
   }
 
   static BackupLog convert(OBackupLog input) {

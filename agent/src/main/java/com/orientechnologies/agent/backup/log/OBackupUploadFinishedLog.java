@@ -48,6 +48,14 @@ public class OBackupUploadFinishedLog extends OBackupLog {
     this.metadata = metadata;
   }
 
+  public long getElapsedTime() {
+    return elapsedTime;
+  }
+
+  public long getFileSize() {
+    return fileSize;
+  }
+
   public Map<String, String> getMetadata() {
     return metadata;
   }
