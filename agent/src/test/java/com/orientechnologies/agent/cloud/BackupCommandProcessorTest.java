@@ -342,7 +342,7 @@ public class BackupCommandProcessorTest {
 
   }
 
-  @Test
+//  @Test
   public void testRemoveBackupLogsCommandProcessor() throws InterruptedException {
 
     ODocument cfg = createBackupConfig();
