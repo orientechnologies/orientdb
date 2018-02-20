@@ -77,9 +77,9 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
 
     try {
       if (iFields != null && iFields.length > 0)
-        serializerByVersion[iSource[0]].deserializePartial((ODocument) iRecord, container, iFields);
+        serializerByVersion[iSource[0]].deserializePartial((ODocument) iRecord, container, iFields, false);
       else
-        serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
+        serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container, false);
     } catch (RuntimeException e) {
       OLogManager.instance().warn(this, "Error deserializing record with id %s send this data for debugging: %s ",
           iRecord.getIdentity().toString(), Base64.getEncoder().encodeToString(iSource));
@@ -101,7 +101,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
       int pos = container.alloc(1);
       container.bytes[pos] = CURRENT_RECORD_VERSION;
       // SERIALIZE RECORD
-      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
+      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false, false);
 
       return container.fitBytes();
     }
@@ -126,7 +126,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     final BytesContainer container = new BytesContainer(iSource).skip(1);
 
     try {
-      return serializerByVersion[iSource[0]].getFieldNames(reference, container);
+      return serializerByVersion[iSource[0]].getFieldNames(reference, container, false);
     } catch (RuntimeException e) {
       OLogManager.instance().warn(this, "Error deserializing record to get field-names, send this data for debugging: %s ",
           Base64.getEncoder().encodeToString(iSource));
@@ -142,7 +142,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     container.bytes[pos] = CURRENT_RECORD_VERSION;
 
     // SERIALIZE CLASS ONLY
-    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, true);
+    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, true, true);
 
     return container.fitBytes();
   }
