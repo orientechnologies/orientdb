@@ -148,6 +148,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
     final ORecord rec = iRecord.getRecord();
 
+    //check for embedded objects, they have invalid ID and they are serialized with class name
     if (iRecord.getIdentity().isValid()){
       return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeField(new BytesContainer(rec.toStream()).skip(1),
           rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name, false);
