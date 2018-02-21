@@ -418,17 +418,17 @@ public class OMessageHelper {
 
   private static void writeVertex(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(OQueryResponse.RECORD_TYPE_VERTEX);
-    writeDocument(channel, row.getElement().get().getRecord(), recordSerializer);
+    writeDocument(channel, (ODocument) row.getElement().get().getRecord(), recordSerializer);
   }
 
   private static void writeElement(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(OQueryResponse.RECORD_TYPE_ELEMENT);
-    writeDocument(channel, row.getElement().get().getRecord(), recordSerializer);
+    writeDocument(channel, (ODocument) row.getElement().get().getRecord(), recordSerializer);
   }
 
   private static void writeEdge(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(OQueryResponse.RECORD_TYPE_EDGE);
-    writeDocument(channel, row.getElement().get().getRecord(), recordSerializer);
+    writeDocument(channel, (ODocument) row.getElement().get().getRecord(), recordSerializer);
   }
 
   private static void writeDocument(OChannelDataOutput channel, ODocument doc, ORecordSerializer serializer) throws IOException {
