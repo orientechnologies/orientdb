@@ -39,7 +39,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
 
   public ORecordSerializerBinary() {
     serializerByVersion = new ODocumentSerializer[1];
-    serializerByVersion[0] = new ORecordSerializerBinaryV0();
+    serializerByVersion[0] = new ORecordSerializerBinaryV1();
   }
 
   @Override
