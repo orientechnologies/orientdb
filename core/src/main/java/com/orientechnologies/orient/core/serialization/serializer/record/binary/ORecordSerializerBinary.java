@@ -72,7 +72,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   }
 
   public ODocumentSerializer getCurrentSerializer() {
-    return serializerByVersion[serializerByVersion.length - 1];
+    return serializerByVersion[CURRENT_RECORD_VERSION];
   }
 
   @Override
