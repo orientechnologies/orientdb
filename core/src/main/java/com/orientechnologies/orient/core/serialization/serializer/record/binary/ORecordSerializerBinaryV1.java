@@ -114,14 +114,15 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     return new Tuple<>(Signal.RETURN_VALUE, value);
   }
   
-  protected void deserializePartialFields(final ODocument document, final BytesContainer bytes, final String[] iFields){
+  @Override
+   public void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields){
     // TRANSFORMS FIELDS FOM STRINGS TO BYTE[]
     final byte[][] fields = new byte[iFields.length][];
     for (int i = 0; i < iFields.length; ++i)
       fields[i] = iFields[i].getBytes();
 
     String fieldName;
-    int valuePos = 0;
+    int valuePos;
     OType type;
     int unmarshalledFields = 0;
 
@@ -149,12 +150,13 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
         Tuple<Signal, Triple<Integer, OType, String>> actionSignal = processLessThanZeroDeserializePartialFields(document, len, iFields, bytes);
         switch (actionSignal.getFirstVal()){
           case CONTINUE:
-            continue;          
+            continue;            
           case RETURN_VALUE:
           default:
             valuePos = actionSignal.getSecondVal().getFirstVal();
             type = actionSignal.getSecondVal().getSecondVal();
             fieldName = actionSignal.getSecondVal().getThirdVal();
+            break;
         }        
       }
 
@@ -172,17 +174,16 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
         break;
     }
   }
+    
   
   @Override
-  public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields, boolean deserializeClassName) {
-    
-    if (deserializeClassName){
-      final String className = readString(bytes);
-      if (className.length() != 0)
-        ODocumentInternal.fillClassNameIfNeeded(document, className);
-    }
+  public void deserializePartialWithClassName(final ODocument document, final BytesContainer bytes, final String[] iFields) {
+        
+    final String className = readString(bytes);
+    if (className.length() != 0)
+      ODocumentInternal.fillClassNameIfNeeded(document, className);    
 
-      deserializePartialFields(document, bytes, iFields);
+    deserializePartial(document, bytes, iFields);
   }
 
   private boolean checkMatchForLargerThenZero(final BytesContainer bytes, final byte[] field, int len){
@@ -255,13 +256,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   }
   
   @Override
-  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName, boolean deserializeClassName) {
-    // SKIP CLASS NAME
-    if (deserializeClassName){
-      final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
-      bytes.skip(classNameLen);
-    }
-
+  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName){
     final byte[] field = iFieldName.getBytes();
 
     final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
@@ -281,6 +276,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
             return actionSignal.getSecondVal();
           case CONTINUE:            
           case NO_ACTION:
+          default:
             break;
         }
       } else {
@@ -291,27 +287,30 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
             return actionSignal.getSecondVal();
           case CONTINUE:            
           case NO_ACTION:
+          default:
             break;
         }
       }
     }
   }
+  
+  @Override
+  public OBinaryField deserializeFieldWithClassName(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
+    // SKIP CLASS NAME    
+    final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
+    bytes.skip(classNameLen);    
+
+    return deserializeField(bytes, iClass, iFieldName);
+  }
 
   @Override
-  public void deserialize(final ODocument document, final BytesContainer bytes, boolean deserializeClassName) {
-    
-    if (deserializeClassName){
-      final String className = readString(bytes);
-      if (className.length() != 0)
-        ODocumentInternal.fillClassNameIfNeeded(document, className);
-    }
-
+  public void deserialize(final ODocument document, final BytesContainer bytes) {
     int last = 0;
     String fieldName;
     int valuePos;
     OType type;
     while (true) {
-      OGlobalProperty prop = null;
+      OGlobalProperty prop;
       final int len = OVarIntSerializer.readAsInteger(bytes);
       if (len == 0) {
         // SCAN COMPLETED
@@ -338,59 +337,71 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
         int headerCursor = bytes.offset;
         bytes.offset = valuePos;
         final Object value = deserializeValue(bytes, type, document);
-        if (bytes.offset > last)
-          last = bytes.offset;
+        if (bytes.offset > last) 
+          last = bytes.offset;        
         bytes.offset = headerCursor;
         ODocumentInternal.rawField(document, fieldName, value, type);
-      } else
-        ODocumentInternal.rawField(document, fieldName, null, null);
+      } 
+      else 
+        ODocumentInternal.rawField(document, fieldName, null, null);      
     }
 
     ORecordInternal.clearSource(document);
 
-    if (last > bytes.offset)
+    if (last > bytes.offset) {
       bytes.offset = last;
+    }
+  }
+
+  @Override
+  public void deserializeWithClassName(final ODocument document, final BytesContainer bytes) {
+
+    final String className = readString(bytes);
+    if (className.length() != 0)
+      ODocumentInternal.fillClassNameIfNeeded(document, className);
+
+    deserialize(document, bytes);
   }
 
   @Override
   public String[] getFieldNames(ODocument reference, final BytesContainer bytes,  boolean readClassName) {
-    // SKIP CLASS NAME
-    if (readClassName){
-      final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
-      bytes.skip(classNameLen);
-    }
+   // SKIP CLASS NAME
+   if (readClassName){
+     final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
+     bytes.skip(classNameLen);
+   }
 
-    final List<String> result = new ArrayList<String>();
+   final List<String> result = new ArrayList<>();
 
-    String fieldName;
-    while (true) {
-      OGlobalProperty prop = null;
-      final int len = OVarIntSerializer.readAsInteger(bytes);
-      if (len == 0) {
-        // SCAN COMPLETED
-        break;
-      } else if (len > 0) {
-        // PARSE FIELD NAME
-        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
-        result.add(fieldName);
+   String fieldName;
+   while (true) {
+     OGlobalProperty prop = null;
+     final int len = OVarIntSerializer.readAsInteger(bytes);
+     if (len == 0) {
+       // SCAN COMPLETED
+       break;
+     } else if (len > 0) {
+       // PARSE FIELD NAME
+       fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
+       result.add(fieldName);
 
-        // SKIP THE REST
-        bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
-      } else {
-        // LOAD GLOBAL PROPERTY BY ID
-        final int id = (len * -1) - 1;
-        prop = ODocumentInternal.getGlobalPropertyById(reference, id);
-        if (prop == null) {
-          throw new OSerializationException("Missing property definition for property id '" + id + "'");
-        }
-        result.add(prop.getName());
+       // SKIP THE REST
+       bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
+     } else {
+       // LOAD GLOBAL PROPERTY BY ID
+       final int id = (len * -1) - 1;
+       prop = ODocumentInternal.getGlobalPropertyById(reference, id);
+       if (prop == null) {
+         throw new OSerializationException("Missing property definition for property id '" + id + "'");
+       }
+       result.add(prop.getName());
 
-        // SKIP THE REST
-        bytes.skip(OIntegerSerializer.INT_SIZE + (prop.getType() != OType.ANY ? 0 : 1));
-      }
-    }
+       // SKIP THE REST
+       bytes.skip(OIntegerSerializer.INT_SIZE + (prop.getType() != OType.ANY ? 0 : 1));
+     }
+   }
 
-    return result.toArray(new String[result.size()]);
+   return result.toArray(new String[result.size()]);
   }
 
   private int serializeAllocateSpace(final BytesContainer bytes,
@@ -447,16 +458,8 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     }
   }
   
-  @SuppressWarnings("unchecked")
-  @Override
-  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly, boolean serializeClassName) {
-
-    final OClass clazz = serializeClass(document, bytes, serializeClassName);
-    if (iClassOnly) {
-      writeEmptyString(bytes);
-      return;
-    }
-
+  private void serializeDocument(final ODocument document, final BytesContainer bytes, final OClass clazz){
+    
     final Map<String, OProperty> props = clazz != null ? clazz.propertiesMap() : null;
 
     final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
@@ -468,7 +471,27 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     writeEmptyString(bytes);    
 
     serializeWriteValues(bytes, document, i, values, pos);
-
+  }
+  
+  @Override
+  public void serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly){
+    final OClass clazz = serializeClass(document, bytes, true);
+    if (iClassOnly) {
+      writeEmptyString(bytes);
+      return;
+    }
+    serializeDocument(document, bytes, clazz);
+  }
+  
+  @SuppressWarnings("unchecked")
+  @Override
+  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
+    final OClass clazz = serializeClass(document, bytes, false);
+    if (iClassOnly) {
+      writeEmptyString(bytes);
+      return;
+    }
+    serializeDocument(document, bytes, clazz);
   }  
 
   protected OClass serializeClass(final ODocument document, final BytesContainer bytes, boolean serializeClassName) {

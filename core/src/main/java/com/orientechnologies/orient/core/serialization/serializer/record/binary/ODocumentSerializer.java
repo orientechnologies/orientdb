@@ -26,17 +26,25 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface ODocumentSerializer {
 
-  void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly, boolean serializeClassName);
+  void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
+  
+  void serializeWithClassName(ODocument document, BytesContainer bytes, boolean iClassOnly);
 
   int serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
 
-  void deserialize(ODocument document, BytesContainer bytes, boolean deserializeClassName);
+  void deserialize(ODocument document, BytesContainer bytes);
+  
+  void deserializeWithClassName(ODocument document, BytesContainer bytes);
 
-  void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields, boolean deserializeClassName);
+  void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields);
+  
+  void deserializePartialWithClassName(ODocument document, BytesContainer bytes, String[] iFields);
 
   Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
 
-  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName, boolean deserializeClassName);
+  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName);
+  
+  OBinaryField deserializeFieldWithClassName(BytesContainer bytes, OClass iClass, String iFieldName);
 
   OBinaryComparator getComparator();
 

@@ -35,7 +35,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   public static final  ORecordSerializerBinary INSTANCE               = new ORecordSerializerBinary();
   private static final byte                    CURRENT_RECORD_VERSION = 0;
 
-  private ODocumentSerializer[] serializerByVersion;
+  private final ODocumentSerializer[] serializerByVersion;
 
   public ORecordSerializerBinary() {
     serializerByVersion = new ODocumentSerializer[1];
@@ -83,9 +83,9 @@ public class ORecordSerializerBinary implements ORecordSerializer {
 
     try {
       if (iFields != null && iFields.length > 0)
-        serializerByVersion[iSource[0]].deserializePartial((ODocument) iRecord, container, iFields, false);
+        serializerByVersion[iSource[0]].deserializePartial((ODocument) iRecord, container, iFields);
       else
-        serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container, false);
+        serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
     } catch (RuntimeException e) {
       OLogManager.instance()
           .warn(this, "Error deserializing record with id %s send this data for debugging: %s ", iRecord.getIdentity().toString(),
@@ -108,7 +108,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
       int pos = container.alloc(1);
       container.bytes[pos] = CURRENT_RECORD_VERSION;
       // SERIALIZE RECORD
-      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false, false);
+      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
 
       return container.fitBytes();
     }
@@ -139,7 +139,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     container.bytes[pos] = CURRENT_RECORD_VERSION;
 
     // SERIALIZE CLASS ONLY
-    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, true, true);
+    serializerByVersion[CURRENT_RECORD_VERSION].serializeWithClassName((ODocument) iSource, container, true);
 
     return container.fitBytes();
   }

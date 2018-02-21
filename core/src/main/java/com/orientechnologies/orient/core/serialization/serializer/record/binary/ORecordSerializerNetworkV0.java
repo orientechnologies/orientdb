@@ -68,7 +68,12 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields, boolean deserializeClasName) {
+  public void deserializePartialWithClassName(final ODocument document, final BytesContainer bytes, final String[] iFields){
+    deserializePartial(document, bytes, iFields);
+  }
+  
+  @Override
+  public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields) {
     final String className = readString(bytes);
     if (className.length() != 0)
       ODocumentInternal.fillClassNameIfNeeded(document, className);
@@ -138,7 +143,12 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void deserialize(final ODocument document, final BytesContainer bytes, boolean deserializeClasName) {
+  public void deserializeWithClassName(final ODocument document, final BytesContainer bytes){
+    deserialize(document, bytes);
+  }
+  
+  @Override
+  public void deserialize(final ODocument document, final BytesContainer bytes) {
     final String className = readString(bytes);
     if (className.length() != 0)
       ODocumentInternal.fillClassNameIfNeeded(document, className);
@@ -184,9 +194,14 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       bytes.offset = last;
   }
 
+  @Override
+  public void serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly){
+    serialize(document, bytes, iClassOnly);
+  }
+  
   @SuppressWarnings("unchecked")
   @Override
-  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly, boolean serializeClassName) {
+  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
 
     final OClass clazz = serializeClass(document, bytes);
     if (iClassOnly) {
@@ -326,7 +341,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       break;
     case EMBEDDED:
       value = new ODocument();
-      deserialize((ODocument) value, bytes, true);
+      deserializeWithClassName((ODocument) value, bytes);
       if (((ODocument) value).containsField(ODocumentSerializable.CLASS_NAME)) {
         String className = ((ODocument) value).field(ODocumentSerializable.CLASS_NAME);
         try {
@@ -544,9 +559,9 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       if (value instanceof ODocumentSerializable) {
         ODocument cur = ((ODocumentSerializable) value).toDocument();
         cur.field(ODocumentSerializable.CLASS_NAME, value.getClass().getName());
-        serialize(cur, bytes, false, true);
+        serializeWithClassName(cur, bytes, false);
       } else {
-        serialize((ODocument) value, bytes, false, true);
+        serializeWithClassName((ODocument) value, bytes, false);
       }
       break;
     case EMBEDDEDSET:
@@ -811,7 +826,12 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName, boolean deserializeClassName) {
+  public OBinaryField deserializeFieldWithClassName(final BytesContainer bytes, final OClass iClass, final String iFieldName){
+    return deserializeField(bytes, iClass, iFieldName);
+  }
+  
+  @Override
+  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
     // TODO: check if integrate the binary disc binary comparator here
     throw new UnsupportedOperationException("network serializer doesn't support comparators");
   }

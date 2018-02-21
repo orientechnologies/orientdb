@@ -66,9 +66,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   public OBinaryComparator getComparator() {
     return comparator;
   }
-
+  
   @Override
-  public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields, boolean deserializeClassName) {
+  public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields) {
     final String className = readString(bytes);
     if (className.length() != 0)
       ODocumentInternal.fillClassNameIfNeeded(document, className);
@@ -159,11 +159,16 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   @Override
-  public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName, boolean deserializeClassName) {
+  public void deserializePartialWithClassName(final ODocument document, final BytesContainer bytes, final String[] iFields) {
+    deserializePartial(document, bytes, iFields);
+  }
+  
+  @Override
+  public OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName){
     // SKIP CLASS NAME
     final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
     bytes.skip(classNameLen);
-
+    
     final byte[] field = iFieldName.getBytes();
 
     final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
@@ -233,9 +238,21 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       }
     }
   }
-
+  
   @Override
-  public void deserialize(final ODocument document, final BytesContainer bytes, boolean deserializeClassName) {
+  public OBinaryField deserializeFieldWithClassName(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
+    
+    return deserializeField(bytes, iClass, iFieldName);
+  }
+
+  
+  @Override
+  public void deserializeWithClassName(final ODocument document, final BytesContainer bytes){
+    deserialize(document, bytes);
+  }
+  
+  @Override
+  public void deserialize(final ODocument document, final BytesContainer bytes) {
     final String className = readString(bytes);
     if (className.length() != 0)
       ODocumentInternal.fillClassNameIfNeeded(document, className);
@@ -328,9 +345,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return result.toArray(new String[result.size()]);
   }
 
+  @Override
+  public void serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly){
+    serialize(document, bytes, iClassOnly);
+  }
+  
   @SuppressWarnings("unchecked")
   @Override
-  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly, boolean serializeClassName) {
+  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
 
     final OClass clazz = serializeClass(document, bytes);
     if (iClassOnly) {
@@ -429,7 +451,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     case EMBEDDED:
       value = new ODocument();
-      deserialize((ODocument) value, bytes, true);
+      deserializeWithClassName((ODocument) value, bytes);
       if (((ODocument) value).containsField(ODocumentSerializable.CLASS_NAME)) {
         String className = ((ODocument) value).field(ODocumentSerializable.CLASS_NAME);
         try {
@@ -722,9 +744,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       if (value instanceof ODocumentSerializable) {
         ODocument cur = ((ODocumentSerializable) value).toDocument();
         cur.field(ODocumentSerializable.CLASS_NAME, value.getClass().getName());
-        serialize(cur, bytes, false, true);
+        serializeWithClassName(cur, bytes, false);
       } else {
-        serialize((ODocument) value, bytes, false, true);
+        serializeWithClassName((ODocument) value, bytes, false);
       }
       break;
     case EMBEDDEDSET:
