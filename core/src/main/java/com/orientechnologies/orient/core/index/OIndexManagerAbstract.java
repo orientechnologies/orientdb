@@ -363,17 +363,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         indexes.add(preProcessBeforeReturn(getDatabase(), index));
   }
 
-  public void getClassRawIndexes(final String className, final Collection<OIndex<?>> indexes) {
-    final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = getIndexOnProperty(className);
-
-    if (propertyIndex == null)
-      return;
-
-    for (final Set<OIndex<?>> propertyIndexes : propertyIndex.values())
-      for (final OIndex<?> index : propertyIndexes)
-        indexes.add(index);
-  }
-
   @Override
   public OIndexUnique getClassUniqueIndex(final String className) {
     final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = getIndexOnProperty(className);
@@ -527,7 +516,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return result;
   }
 
-  public abstract OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index);
+  protected abstract OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index);
 
   private OIndex<?> createDictionaryIfNeeded() {
     acquireExclusiveLock();
