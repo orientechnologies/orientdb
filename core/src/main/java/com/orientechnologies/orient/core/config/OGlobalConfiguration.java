@@ -704,6 +704,8 @@ public enum OGlobalConfiguration {
   SERVER_OPEN_ALL_DATABASES_AT_STARTUP("server.openAllDatabasesAtStartup",
       "If true, the server opens all the available databases at startup. Available since 2.2", Boolean.class, false),
 
+  SERVER_DATABASE_PATH("server.database.path", "The path where are located the databases of a server", String.class, null),
+
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,
       5000),
 
