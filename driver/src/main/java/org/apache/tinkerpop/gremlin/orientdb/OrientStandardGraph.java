@@ -185,6 +185,11 @@ public class OrientStandardGraph implements OGraph {
   }
 
   @Override
+  public OGremlinResultSet querySql(String sql, Map params) {
+    return graph().querySql(sql,params);
+  }
+
+  @Override
   public Set<String> getIndexedKeys(Class<? extends Element> elementClass, String label) {
     return graph().getIndexedKeys(elementClass, label);
   }

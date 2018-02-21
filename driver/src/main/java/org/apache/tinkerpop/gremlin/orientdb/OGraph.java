@@ -38,6 +38,8 @@ public interface OGraph extends Graph {
 
   OGremlinResultSet executeSql(String sql, Map params);
 
+  OGremlinResultSet querySql(String sql, Map params);
+
 
   @Deprecated
   Set<String> getIndexedKeys(final Class<? extends Element> elementClass, String label);
