@@ -34,7 +34,7 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   private List<OStorageClusterConfiguration>      clusters;
   private String                                  networkRecordSerializer;
 
-  public OStorageConfigurationRemote(String networkRecordSerializer, OStorageConfigurationPayload payload ,
+  public OStorageConfigurationRemote(String networkRecordSerializer, OStorageConfigurationPayload payload,
       OContextConfiguration contextConfiguration) {
     this.networkRecordSerializer = networkRecordSerializer;
     this.contextConfiguration = contextConfiguration;
@@ -257,7 +257,8 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
 
   @Override
   public void dropCluster(int iClusterId) {
-    throw new UnsupportedOperationException();
+    // this just remove it locally before a proper update from the push arrive
+    clusters.set(iClusterId, null);
   }
 
   @Override
