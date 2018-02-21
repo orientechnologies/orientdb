@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationModifiable;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -53,9 +54,9 @@ import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.storage.OEmbeddedStorageAbstract;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 
 import java.text.SimpleDateFormat;
@@ -79,7 +80,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
       // OVERWRITE THE URL
       url = storage.getURL();
-      this.storage = storage;
+      this.storage = (OEmbeddedStorageAbstract) storage;
       this.componentsFactory = storage.getComponentsFactory();
 
       unmodifiableHooks = Collections.unmodifiableMap(hooks);
@@ -276,6 +277,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     final String stringValue = OIOUtils.getStringContent(iValue != null ? iValue.toString() : null);
     final OStorage storage = getStorage();
+
+    final OStorageConfigurationModifiable cfg = (OStorageConfigurationModifiable) storage.getConfiguration();
+
     switch (iAttribute) {
     case STATUS:
       if (stringValue == null)
@@ -302,8 +306,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       // CHECK FORMAT
       new SimpleDateFormat(stringValue).format(new Date());
 
-      storage.getConfiguration().setDateFormat(stringValue);
-      storage.getConfiguration().update();
+      cfg.setDateFormat(stringValue);
+      cfg.update();
       break;
 
     case DATETIMEFORMAT:
@@ -313,8 +317,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       // CHECK FORMAT
       new SimpleDateFormat(stringValue).format(new Date());
 
-      storage.getConfiguration().setDateTimeFormat(stringValue);
-      storage.getConfiguration().update();
+      cfg.setDateTimeFormat(stringValue);
+      cfg.update();
       break;
 
     case TIMEZONE:
@@ -327,23 +331,23 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         timeZoneValue = TimeZone.getTimeZone(stringValue);
       }
 
-      storage.getConfiguration().setTimeZone(timeZoneValue);
-      storage.getConfiguration().update();
+      cfg.setTimeZone(timeZoneValue);
+      cfg.update();
       break;
 
     case LOCALECOUNTRY:
-      storage.getConfiguration().setLocaleCountry(stringValue);
-      storage.getConfiguration().update();
+      cfg.setLocaleCountry(stringValue);
+      cfg.update();
       break;
 
     case LOCALELANGUAGE:
-      storage.getConfiguration().setLocaleLanguage(stringValue);
-      storage.getConfiguration().update();
+      cfg.setLocaleLanguage(stringValue);
+      cfg.update();
       break;
 
     case CHARSET:
-      storage.getConfiguration().setCharset(stringValue);
-      storage.getConfiguration().update();
+      cfg.setCharset(stringValue);
+      cfg.update();
       break;
 
     case CUSTOM:
@@ -364,32 +368,32 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       break;
 
     case CLUSTERSELECTION:
-      storage.getConfiguration().setClusterSelection(stringValue);
-      storage.getConfiguration().update();
+      cfg.setClusterSelection(stringValue);
+      cfg.update();
       break;
 
     case MINIMUMCLUSTERS:
       if (iValue != null) {
         if (iValue instanceof Number)
-          storage.getConfiguration().setMinimumClusters(((Number) iValue).intValue());
+          cfg.setMinimumClusters(((Number) iValue).intValue());
         else
-          storage.getConfiguration().setMinimumClusters(Integer.parseInt(stringValue));
+          cfg.setMinimumClusters(Integer.parseInt(stringValue));
       } else
         // DEFAULT = 1
-        storage.getConfiguration().setMinimumClusters(1);
+        cfg.setMinimumClusters(1);
 
-      storage.getConfiguration().update();
+      cfg.update();
       break;
 
     case CONFLICTSTRATEGY:
       storage.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(stringValue));
-      storage.getConfiguration().setConflictStrategy(stringValue);
-      storage.getConfiguration().update();
+      cfg.setConflictStrategy(stringValue);
+      cfg.update();
       break;
 
     case VALIDATION:
-      storage.getConfiguration().setValidation(Boolean.parseBoolean(stringValue));
-      storage.getConfiguration().update();
+      cfg.setValidation(Boolean.parseBoolean(stringValue));
+      cfg.update();
       break;
 
     default:
@@ -401,7 +405,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   }
 
   private void clearCustomInternal() {
-    getStorage().getConfiguration().clearProperties();
+    ((OStorageConfigurationModifiable) getStorage().getUnderlying().getConfiguration()).clearProperties();
   }
 
   private void removeCustomInternal(final String iName) {
@@ -409,15 +413,15 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   }
 
   private void setCustomInternal(final String iName, final String iValue) {
-    final OStorage storage = getStorage();
+    final OStorageConfigurationModifiable cfg = ((OStorageConfigurationModifiable) getStorage().getUnderlying().getConfiguration());
     if (iValue == null || "null".equalsIgnoreCase(iValue))
       // REMOVE
-      storage.getConfiguration().removeProperty(iName);
+      cfg.removeProperty(iName);
     else
       // SET
-      storage.getConfiguration().setProperty(iName, iValue);
+      cfg.setProperty(iName, iValue);
 
-    storage.getConfiguration().update();
+    cfg.update();
   }
 
   public <DB extends ODatabase> DB setCustom(final String name, final Object iValue) {
@@ -507,8 +511,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   }
 
   @Override
-  public OStorage getStorage() {
-    return storage;
+  public OEmbeddedStorageAbstract getStorage() {
+    return (OEmbeddedStorageAbstract) storage;
   }
 
   @Override
@@ -644,16 +648,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   }
 
   protected OMicroTransaction beginMicroTransaction() {
-    final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) getStorage().getUnderlying();
-
     if (microTransaction == null)
-      microTransaction = new OMicroTransaction(abstractPaginatedStorage, this);
+      microTransaction = new OMicroTransaction(getStorage().getUnderlying(), this);
 
     microTransaction.begin();
     return microTransaction;
   }
 
-  public static void deInit(OAbstractPaginatedStorage storage) {
+  public static void deInit(OStorage storage) {
     OSharedContext sharedContext = storage.removeResource(OSharedContext.class.getName());
     //This storage may not have been completely opened yet
     if (sharedContext != null)

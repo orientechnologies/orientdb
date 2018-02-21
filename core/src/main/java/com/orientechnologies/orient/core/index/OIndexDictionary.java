@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 /**
@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
  */
 public class OIndexDictionary extends OIndexOneValue {
 
-  public OIndexDictionary(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
+  public OIndexDictionary(String name, String typeId, String algorithm, int version, OStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
     super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
   }

@@ -26,12 +26,14 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationModifiable;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODocumentFieldWalker;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.tool.importer.*;
+import com.orientechnologies.orient.core.db.tool.importer.OConverterData;
+import com.orientechnologies.orient.core.db.tool.importer.OLinksRewriter;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -39,8 +41,6 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexFactory;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -59,6 +59,8 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexFactory;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -1003,8 +1005,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       ODocument indexDocument = new ODocument();
       indexDocument.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
 
-      database.getStorage().getConfiguration().setIndexMgrRecordId(indexDocument.getIdentity().toString());
-      database.getStorage().getConfiguration().update();
+      final OStorageConfigurationModifiable cfg = ((OStorageConfigurationModifiable) database.getStorage().getConfiguration());
+      cfg.setIndexMgrRecordId(indexDocument.getIdentity().toString());
+      cfg.update();
     }
 
     return total;
@@ -1305,7 +1308,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         if (indexDefinition == null) {
           indexDefinition = new OSimpleKeyIndexDefinition(0, OType.STRING);
         }
-        
+
         boolean oldValue = OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean();
         OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(indexDefinition.isNullValuesIgnored());
         final OIndex index = indexManager

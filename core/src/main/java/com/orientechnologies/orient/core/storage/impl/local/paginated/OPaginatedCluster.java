@@ -182,10 +182,12 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         initCusterState(atomicOperation);
 
-        if (config.root.clusters.size() <= config.id)
-          config.root.clusters.add(config);
+        final List<OStorageClusterConfiguration> clusters = config.root.getClusters();
+
+        if (clusters.size() <= config.id)
+          clusters.add(config);
         else
-          config.root.clusters.set(config.id, config);
+          clusters.set(config.id, config);
 
         clusterPositionMap.create();
 
@@ -1596,11 +1598,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     } finally {
       completeOperation();
     }
-  }
-
-  @Override
-  public boolean isHashBased() {
-    return false;
   }
 
   @Override

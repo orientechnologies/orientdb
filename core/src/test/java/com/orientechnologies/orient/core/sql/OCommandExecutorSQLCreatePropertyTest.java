@@ -19,18 +19,17 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.config.OStorageConfigurationModifiable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
 
 /**
  * @author Michael MacFadden
@@ -366,7 +365,7 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
     db.create();
 
-    db.getStorage().getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "false");
+    ((OStorageConfigurationModifiable) db.getStorage().getConfiguration()).setProperty(OStatement.CUSTOM_STRICT_SQL, "false");
 
     db.command(new OCommandSQL("CREATE CLASS company")).execute();
     db.command(new OCommandSQL(
@@ -471,9 +470,7 @@ public class OCommandExecutorSQLCreatePropertyTest {
     property = companyClass.getProperty("name");
     assertEquals(property.getName(), PROP_NAME);
 
-
     db.drop();
   }
-
 
 }

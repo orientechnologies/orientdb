@@ -20,21 +20,15 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexDictionary;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexFullText;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
-import com.orientechnologies.orient.core.index.OIndexUnique;
-import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
-import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
+import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
+import com.orientechnologies.orient.core.storage.rocks.ORocksIndexEngine;
+import com.orientechnologies.orient.core.storage.rocks.ORocksStorage;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -42,14 +36,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 
- * 
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OHashIndexFactory implements OIndexFactory {
 
   private static final Set<String> TYPES;
-  public static final String       HASH_INDEX_ALGORITHM = "HASH_INDEX";
+  public static final String HASH_INDEX_ALGORITHM = "HASH_INDEX";
   private static final Set<String> ALGORITHMS;
 
   static {
@@ -69,13 +61,7 @@ public class OHashIndexFactory implements OIndexFactory {
   }
 
   /**
-   * Index types :
-   * <ul>
-   * <li>UNIQUE</li>
-   * <li>NOTUNIQUE</li>
-   * <li>FULLTEXT</li>
-   * <li>DICTIONARY</li>
-   * </ul>
+   * Index types : <ul> <li>UNIQUE</li> <li>NOTUNIQUE</li> <li>FULLTEXT</li> <li>DICTIONARY</li> </ul>
    */
   public Set<String> getTypes() {
     return TYPES;
@@ -95,17 +81,13 @@ public class OHashIndexFactory implements OIndexFactory {
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
 
     if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexUnique(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
-          valueContainerAlgorithm, metadata);
+      return new OIndexUnique(name, indexType, algorithm, version, storage.getUnderlying(), valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexNotUnique(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
-          valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(name, indexType, algorithm, version, storage.getUnderlying(), valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
-      return new OIndexFullText(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
-          valueContainerAlgorithm, metadata);
+      return new OIndexFullText(name, indexType, algorithm, version, storage.getUnderlying(), valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
-      return new OIndexDictionary(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
-          valueContainerAlgorithm, metadata);
+      return new OIndexDictionary(name, indexType, algorithm, version, storage.getUnderlying(), valueContainerAlgorithm, metadata);
 
     throw new OConfigurationException("Unsupported type: " + indexType);
   }
@@ -125,10 +107,11 @@ public class OHashIndexFactory implements OIndexFactory {
       indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage, version);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage.getUnderlying(),
-          version);
+      indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine(name);
+    else if (storageType.equals("rocks"))
+      indexEngine = new ORocksIndexEngine((ORocksStorage) storage, name);
     else
       throw new OIndexException("Unsupported storage type: " + storageType);
 

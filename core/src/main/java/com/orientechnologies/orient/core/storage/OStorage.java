@@ -87,6 +87,9 @@ public interface OStorage extends OBackupable, OSharedContainer {
   OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(ORecordId rid, String fetchPlan, boolean ignoreCache,
       int recordVersion) throws ORecordNotFoundException;
 
+  OStorageOperationResult<Integer> updateRecord(final ORecordId rid, final boolean updateContent, final byte[] content,
+      final int version, final byte recordType, final int mode, final ORecordCallback<Integer> callback);
+
   /**
    * Resurrects a record that was previously deleted, with a new content.
    */
@@ -124,7 +127,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   /**
    * Add a new cluster into the storage.
-   *  @param iClusterName name of the cluster
+   *
+   * @param iClusterName name of the cluster
    * @param iRequestedId requested id of the cluster
    */
   int addCluster(String iClusterName, int iRequestedId, Object... iParameters);

@@ -1048,7 +1048,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       final OCluster cluster = clusters[iClusterId];
       clusters[iClusterId] = null;
       clusterMap.remove(cluster.getName());
-      configuration.dropCluster(iClusterId); // endResponse must be called before this line, which call updateRecord
+//      TODO: WHY THIS IS HERE?
+//      configuration.dropCluster(iClusterId); // endResponse must be called before this line, which call updateRecord
     } finally {
       stateLock.releaseWriteLock();
     }

@@ -59,8 +59,8 @@ public abstract class OTransactionAbstract implements OTransaction {
     database = iDatabase;
   }
 
-  public static void updateCacheFromEntries(final ODatabaseDocumentInternal database, final Iterable<? extends ORecordOperation> entries,
-      final boolean updateStrategy) {
+  public static void updateCacheFromEntries(final ODatabaseDocumentInternal database,
+      final Iterable<? extends ORecordOperation> entries, final boolean updateStrategy) {
     final OLocalRecordCache dbCache = database.getLocalCache();
 
     for (ORecordOperation txEntry : entries) {
@@ -130,7 +130,7 @@ public abstract class OTransactionAbstract implements OTransaction {
   @Override
   public OTransaction lockRecord(final OIdentifiable iRecord, final OStorage.LOCKING_STRATEGY lockingStrategy) {
     final OStorage stg = database.getStorage();
-    if (!(stg.getUnderlying() instanceof OAbstractPaginatedStorage))
+    if (stg.getUnderlying().isRemote())
       throw new OLockException("Cannot lock record across remote connections");
 
     final ORID rid = new ORecordId(iRecord.getIdentity());
@@ -188,7 +188,7 @@ public abstract class OTransactionAbstract implements OTransaction {
   @Override
   public OTransaction unlockRecord(final OIdentifiable iRecord) {
     final OStorage stg = database.getStorage();
-    if (!(stg.getUnderlying() instanceof OAbstractPaginatedStorage))
+    if (stg.getUnderlying().isRemote())
       throw new OLockException("Cannot lock record across remote connections");
 
     final ORID rid = iRecord.getIdentity();

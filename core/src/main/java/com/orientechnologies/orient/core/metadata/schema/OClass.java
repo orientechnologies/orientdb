@@ -37,8 +37,8 @@ import java.util.Set;
  */
 public interface OClass extends Comparable<OClass> {
 
-  public static final String EDGE_CLASS_NAME   = "E";
-  public static final String VERTEX_CLASS_NAME = "V";
+  String EDGE_CLASS_NAME   = "E";
+  String VERTEX_CLASS_NAME = "V";
 
   enum ATTRIBUTES {
     NAME, SHORTNAME, SUPERCLASS, SUPERCLASSES, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER, CUSTOM, ABSTRACT, CLUSTERSELECTION, DESCRIPTION, ENCRYPTION

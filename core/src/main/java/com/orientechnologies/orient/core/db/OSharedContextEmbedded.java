@@ -13,8 +13,7 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.OEmbeddedStorageAbstract;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +25,7 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   private Map<String, DistributedQueryContext> activeDistributedQueries;
 
-  public OSharedContextEmbedded(OStorage storage) {
+  public OSharedContextEmbedded(final OEmbeddedStorageAbstract storage) {
     schema = new OSchemaEmbedded();
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerShared(storage);
@@ -45,11 +44,13 @@ public class OSharedContextEmbedded extends OSharedContext {
 
     queryStats = new OQueryStats();
     activeDistributedQueries = new HashMap<>();
-    (((OAbstractPaginatedStorage) storage).getConfiguration()).setConfigurationUpdateListener(update -> {
-      for (OMetadataUpdateListener listener : browseListeners()) {
-        listener.onStorageConfigurationUpdate(storage.getName(), update);
-      }
-    });
+    if (!storage.isRemote()) {
+      (storage.getConfiguration()).setConfigurationUpdateListener(update -> {
+        for (OMetadataUpdateListener listener : browseListeners()) {
+          listener.onStorageConfigurationUpdate(storage.getName(), update);
+        }
+      });
+    }
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {

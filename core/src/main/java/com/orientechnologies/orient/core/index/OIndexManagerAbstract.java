@@ -23,6 +23,7 @@ import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationModifiable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
@@ -170,8 +171,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
           save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
         }
       }
-      database.getStorage().getConfiguration().setIndexMgrRecordId(document.getIdentity().toString());
-      database.getStorage().getConfiguration().update();
+
+      final OStorageConfigurationModifiable cfg = (OStorageConfigurationModifiable) database.getStorage().getConfiguration();
+      cfg.setIndexMgrRecordId(document.getIdentity().toString());
+      cfg.update();
 
       OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY.toString(), null);
       createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(),
