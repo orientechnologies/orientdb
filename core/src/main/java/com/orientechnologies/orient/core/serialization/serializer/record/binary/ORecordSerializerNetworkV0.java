@@ -857,5 +857,10 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     toCalendar.set(Calendar.MILLISECOND, 0);
     return toCalendar.getTimeInMillis();
   }
+  
+  @Override
+    public boolean isSerializingClassNameByDefault() {
+      return true;
+    }
 
 }

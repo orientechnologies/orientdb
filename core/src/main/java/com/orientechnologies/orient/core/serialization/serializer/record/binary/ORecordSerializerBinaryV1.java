@@ -503,6 +503,11 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
         writeEmptyString(bytes);
     }
     return clazz;
-  }    
+  }
+  
+  @Override
+    public boolean isSerializingClassNameByDefault() {
+      return false;
+    }
    
 }

@@ -1325,7 +1325,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if ("ORecordSerializerBinary".equals(currentDatabase.getSerializer().toString())) {
       byte[] buff = record.getBuffer();
       ORecordSerializerBinaryDebug debugger = new ORecordSerializerBinaryDebug();
-      ORecordSerializationDebug deserializeDebug = debugger.deserializeDebug(buff, currentDatabase, false);
+      ORecordSerializationDebug deserializeDebug = debugger.deserializeDebug(buff, currentDatabase);
       message("\n\nRECORD CONTENT INFO");
       message("\n class name: %s", deserializeDebug.className);
       message("\n fail on Reading: %b", deserializeDebug.readingFailure);

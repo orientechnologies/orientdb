@@ -1033,4 +1033,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return toCalendar.getTimeInMillis();
   }
 
+    @Override
+    public boolean isSerializingClassNameByDefault() {
+      return true;
+    }
+
 }
