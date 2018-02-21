@@ -12,10 +12,12 @@ public class OrientGraphQuery implements OrientGraphBaseQuery {
 
   protected final Map<String, Object> params;
   protected final String              query;
+  private final   Integer             target;
 
-  public OrientGraphQuery(String query, Map<String, Object> params) {
+  public OrientGraphQuery(String query, Map<String, Object> params, Integer target) {
     this.query = query;
     this.params = params;
+    this.target = target;
   }
 
   public String getQuery() {
@@ -35,11 +37,17 @@ public class OrientGraphQuery implements OrientGraphBaseQuery {
   }
 
   public int usedIndexes(OGraph graph) {
-    return this.explain(graph).get().getSteps().stream().filter(step -> step instanceof GlobalLetQueryStep).map(s -> {
-      GlobalLetQueryStep subStep = (GlobalLetQueryStep) s;
-      return (int) subStep.getSubExecutionPlans().stream()
-          .filter(plan -> plan.getSteps().stream().filter((step) -> step instanceof FetchFromIndexStep).count() > 0).count();
-    }).reduce(0, (a, b) -> a + b);
+
+    OExecutionPlan executionPlan = this.explain(graph).get();
+    if (target > 1) {
+      return executionPlan.getSteps().stream().filter(step -> (step instanceof GlobalLetQueryStep)).map(s -> {
+        GlobalLetQueryStep subStep = (GlobalLetQueryStep) s;
+        return (int) subStep.getSubExecutionPlans().stream()
+            .filter(plan -> plan.getSteps().stream().filter((step) -> step instanceof FetchFromIndexStep).count() > 0).count();
+      }).reduce(0, (a, b) -> a + b);
+    } else {
+      return (int) executionPlan.getSteps().stream().filter((step) -> step instanceof FetchFromIndexStep).count();
+    }
   }
 
 }

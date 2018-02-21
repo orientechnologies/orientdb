@@ -60,7 +60,7 @@ public class OrientGraphQueryBuilder {
     } else {
       builder.append(buildSingleQuery(classes.get(0), whereCondition));
     }
-    return Optional.of(new OrientGraphQuery(builder.toString(), parameters));
+    return Optional.of(new OrientGraphQuery(builder.toString(), parameters, classes.size()));
   }
 
   private String fillParameters(Map<String, Object> parameters) {
