@@ -177,6 +177,11 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
     return binaryFormatVersion;
   }
 
+  public void dropCluster(final int iClusterId) {
+    // this just remove it locally before a proper update from the push arrive
+    clusters.set(iClusterId, null);
+  }
+
   @Override
   public int getVersion() {
     return version;

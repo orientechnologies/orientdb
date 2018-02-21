@@ -156,15 +156,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     return snapshot;
   }
 
-  public void forceSnapshot() {
-    acquireSchemaReadLock();
-    try {
-      snapshot = new OImmutableSchema(this);
-    } finally {
-      releaseSchemaReadLock();
-    }
-  }
-
   public OClusterSelectionFactory getClusterSelectionFactory() {
     return clusterSelectionFactory;
   }
@@ -793,5 +784,4 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   public Set<Integer> getBlobClusters() {
     return Collections.unmodifiableSet(blobClusters);
   }
-
 }

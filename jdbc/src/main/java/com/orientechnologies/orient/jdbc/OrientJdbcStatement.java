@@ -15,7 +15,6 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -135,7 +134,7 @@ public class OrientJdbcStatement implements Statement {
 
     if (res.isPresent()) {
       if (res.get().getProperty("count") != null) {
-        return Math.toIntExact(res.get().getProperty("count"));
+        return Math.toIntExact((Long)res.get().getProperty("count"));
       } else
         return 1;
     } else {

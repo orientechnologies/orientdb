@@ -1784,25 +1784,30 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return retry;
   }
 
-  public void updateStorageConfiguration(final OStorageConfiguration storageConfiguration) {
+  public void updateStorageConfiguration(OStorageConfiguration storageConfiguration) {
+    if (status != STATUS.OPEN)
+      return;
     stateLock.acquireWriteLock();
-    this.configuration = storageConfiguration;
-    OCluster[] clusters = new OCluster[storageConfiguration.getClusters().size()];
-    for (OStorageClusterConfiguration clusterConfig : storageConfiguration.getClusters()) {
-      if (clusterConfig != null) {
-        final OClusterRemote cluster = new OClusterRemote();
-        String clusterName = clusterConfig.getName();
-        final int clusterId = clusterConfig.getId();
-        if (clusterName != null) {
-          clusterName = clusterName.toLowerCase(Locale.ENGLISH);
-          cluster.configure(null, clusterId, clusterName);
-          if (clusterId >= clusters.length)
-            clusters = Arrays.copyOf(clusters, clusterId + 1);
-          clusters[clusterId] = cluster;
+    try {
+      if (status != STATUS.OPEN)
+        return;
+      this.configuration = storageConfiguration;
+      OCluster[] clusters = new OCluster[storageConfiguration.getClusters().size()];
+      for (OStorageClusterConfiguration clusterConfig : storageConfiguration.getClusters()) {
+        if (clusterConfig != null) {
+          final OClusterRemote cluster = new OClusterRemote();
+          String clusterName = clusterConfig.getName();
+          final int clusterId = clusterConfig.getId();
+          if (clusterName != null) {
+            clusterName = clusterName.toLowerCase(Locale.ENGLISH);
+            cluster.configure(null, clusterId, clusterName);
+            if (clusterId >= clusters.length)
+              clusters = Arrays.copyOf(clusters, clusterId + 1);
+            clusters[clusterId] = cluster;
+          }
         }
       }
-    }
-    try {
+
       this.clusters = clusters;
       clusterMap.clear();
       for (int i = 0; i < clusters.length; ++i) {
