@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.io.IOException;
@@ -42,32 +41,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Versions:
- * <ul>
- * <li>3 = introduced file directory in physical segments and data-segment id in clusters</li>
- * <li>4 = ??</li>
- * <li>5 = ??</li>
- * <li>6 = ??</li>
- * <li>7 = ??</li>
- * <li>8 = introduced cluster selection strategy as string</li>
- * <li>9 = introduced minimumclusters as string</li>
- * <li>12 = introduced record conflict strategy as string in both storage and paginated clusters</li>
+ * Versions: <ul> <li>3 = introduced file directory in physical segments and data-segment id in clusters</li> <li>4 = ??</li> <li>5
+ * = ??</li> <li>6 = ??</li> <li>7 = ??</li> <li>8 = introduced cluster selection strategy as string</li> <li>9 = introduced
+ * minimumclusters as string</li> <li>12 = introduced record conflict strategy as string in both storage and paginated clusters</li>
  * <li>13 = introduced cluster status to manage cluster as "offline" with the new command "alter cluster status offline". Removed
- * data segments</li>
- * <li>14 = no changes, but version was incremented</li>
- * <li>15 = introduced encryption and encryptionKey</li>
- * <li>18 = we keep version of product release under which storage was created</li>
- * </ul>
+ * data segments</li> <li>14 = no changes, but version was incremented</li> <li>15 = introduced encryption and encryptionKey</li>
+ * <li>18 = we keep version of product release under which storage was created</li> </ul>
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("serial")
-public class OStorageConfigurationImpl implements OSerializableStream, OStorageConfiguration {
+public class OStorageConfigurationImpl implements OSerializableStream, OStorageConfigurationModifiable {
   protected static final ORecordId CONFIG_RID = new OImmutableRecordId(0, 0);
 
   private String charset;
   private final List<OStorageEntryConfiguration> properties = new ArrayList<>();
-  protected final transient  OAbstractPaginatedStorage              storage;
+  protected final transient  OStorage                               storage;
   private volatile           OContextConfiguration                  configuration;
   public volatile            int                                    version;
   public volatile            String                                 name;
@@ -98,7 +87,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
   protected final Charset streamCharset;
 
-  public OStorageConfigurationImpl(final OAbstractPaginatedStorage iStorage, Charset streamCharset) {
+  public OStorageConfigurationImpl(final OStorage iStorage, Charset streamCharset) {
     this.streamCharset = streamCharset;
 
     storage = iStorage;
@@ -110,6 +99,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   /**
    * Sets version of product release under which storage was created.
    */
+  @Override
   public void setCreationVersion(String version) {
     this.createdAtVersion = version;
   }
@@ -201,6 +191,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     return this;
   }
 
+  @Override
   public void update() throws OSerializationException {
     final byte[] record = toStream(streamCharset);
     storage.updateRecord(CONFIG_RID, true, record, -1, OBlob.RECORD_TYPE, 0, null);
@@ -600,6 +591,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     return buffer.toString().getBytes(charset);
   }
 
+  @Override
   public void create() throws IOException {
     storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, 0, OBlob.RECORD_TYPE, (byte) 0, null);
   }
@@ -638,10 +630,12 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     update();
   }
 
+  @Override
   public Set<String> indexEngines() {
     return Collections.unmodifiableSet(indexEngines.keySet());
   }
 
+  @Override
   public IndexEngineData getIndexEngine(String name) {
     return indexEngines.get(name);
   }
@@ -691,18 +685,22 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     return dateFormat;
   }
 
+  @Override
   public String getDateTimeFormat() {
     return dateTimeFormat;
   }
 
+  @Override
   public String getClusterSelection() {
     return clusterSelection;
   }
 
+  @Override
   public void setClusterSelection(final String clusterSelection) {
     this.clusterSelection = clusterSelection;
   }
 
+  @Override
   public int getMinimumClusters() {
     final int mc = getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS);
     if (mc == 0) {
@@ -712,35 +710,43 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     return mc;
   }
 
+  @Override
   public void setMinimumClusters(final int minimumClusters) {
     getContextConfiguration().setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, minimumClusters);
     autoInitClusters();
   }
 
+  @Override
   public String getRecordSerializer() {
     return recordSerializer;
   }
 
+  @Override
   public void setRecordSerializer(String recordSerializer) {
     this.recordSerializer = recordSerializer;
   }
 
+  @Override
   public int getRecordSerializerVersion() {
     return recordSerializerVersion;
   }
 
+  @Override
   public void setRecordSerializerVersion(int recordSerializerVersion) {
     this.recordSerializerVersion = recordSerializerVersion;
   }
 
+  @Override
   public boolean isStrictSql() {
     return strictSQL;
   }
 
+  @Override
   public List<OStorageEntryConfiguration> getProperties() {
     return Collections.unmodifiableList(properties);
   }
 
+  @Override
   public void setProperty(final String iName, final String iValue) {
     if (OStatement.CUSTOM_STRICT_SQL.equalsIgnoreCase(iName))
       // SET STRICT SQL VARIABLE
@@ -999,10 +1005,12 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     return version;
   }
 
+  @Override
   public List<OStorageClusterConfiguration> getClusters() {
     return clusters;
   }
 
+  @Override
   public void setConfigurationUpdateListener(OStorageConfigurationUpdateListener updateListener) {
     this.updateListener = updateListener;
   }

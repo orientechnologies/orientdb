@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageIndex;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -65,11 +66,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   protected static final String CONFIG_MAP_RID  = "mapRid";
   protected static final String CONFIG_CLUSTERS = "clusters";
-  protected final String                    type;
-  protected final ODocument                 metadata;
-  protected final OAbstractPaginatedStorage storage;
-  private final   String                    databaseName;
-  private final   String                    name;
+  protected final String        type;
+  protected final ODocument     metadata;
+  protected final OStorageIndex storage;
+  private final   String        databaseName;
+  private final   String        name;
   private final OReadersWriterSpinLock rwLock         = new OReadersWriterSpinLock();
   private final AtomicLong             rebuildVersion = new AtomicLong();
   private final      int                version;
@@ -94,7 +95,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       this.algorithm = algorithm;
       this.metadata = metadata;
       this.valueContainerAlgorithm = valueContainerAlgorithm;
-      this.storage = (OAbstractPaginatedStorage) storage.getUnderlying();
+      this.storage = (OStorageIndex) storage.getUnderlying();
     } finally {
       releaseExclusiveLock();
     }
@@ -975,12 +976,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   private void removeValuesContainer() {
-    if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
+    if (storage instanceof OAbstractPaginatedStorage && valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
 
-      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      final OAtomicOperation atomicOperation = ((OAbstractPaginatedStorage)storage).getAtomicOperationsManager().getCurrentOperation();
 
-      final OReadCache readCache = storage.getReadCache();
-      final OWriteCache writeCache = storage.getWriteCache();
+      final OReadCache readCache = ((OAbstractPaginatedStorage)storage).getReadCache();
+      final OWriteCache writeCache = ((OAbstractPaginatedStorage)storage).getWriteCache();
 
       if (atomicOperation == null) {
         try {

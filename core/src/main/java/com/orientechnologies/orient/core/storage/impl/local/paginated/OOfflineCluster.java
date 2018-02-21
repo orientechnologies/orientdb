@@ -36,11 +36,11 @@ import java.io.IOException;
  */
 public class OOfflineCluster implements OCluster {
 
-  private final String                    name;
-  private final int                       id;
-  private final OAbstractPaginatedStorage storageLocal;
+  private final String   name;
+  private final int      id;
+  private final OStorage storageLocal;
 
-  public OOfflineCluster(final OAbstractPaginatedStorage iStorage, final int iId, final String iName) {
+  public OOfflineCluster(final OStorage iStorage, final int iId, final String iName) {
     storageLocal = iStorage;
     id = iId;
     name = iName;
@@ -87,7 +87,7 @@ public class OOfflineCluster implements OCluster {
       if (stringValue == null)
         throw new IllegalStateException("Value of attribute is null.");
 
-      return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS
+      return ((OAbstractPaginatedStorage) storageLocal).setClusterStatus(id, OStorageClusterConfiguration.STATUS
           .valueOf(stringValue.toUpperCase(storageLocal.getConfiguration().getLocaleInstance())));
     }
     default:
@@ -220,11 +220,6 @@ public class OOfflineCluster implements OCluster {
   @Override
   public String compression() {
     return null;
-  }
-
-  @Override
-  public boolean isHashBased() {
-    return false;
   }
 
   @Override

@@ -102,13 +102,13 @@ public class ODefaultIndexFactory implements OIndexFactory {
 
     if (SBTREE_ALGORITHM.equals(algorithm))
       return createSBTreeIndex(name, indexType, valueContainerAlgorithm, metadata,
-          (OAbstractPaginatedStorage) storage.getUnderlying(), version);
+          storage.getUnderlying(), version);
 
     throw new OConfigurationException("Unsupported type: " + indexType);
   }
 
   private OIndexInternal<?> createSBTreeIndex(String name, String indexType, String valueContainerAlgorithm, ODocument metadata,
-      OAbstractPaginatedStorage storage, int version) {
+      OStorage storage, int version) {
 
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
       return new OIndexUnique(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);

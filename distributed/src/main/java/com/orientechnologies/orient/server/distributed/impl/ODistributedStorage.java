@@ -891,6 +891,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
+  public OStorageOperationResult<Integer> updateRecord(ORecordId rid, boolean updateContent, byte[] content, int version,
+      byte recordType, int mode, ORecordCallback<Integer> callback) {
+    throw new UnsupportedOperationException("updateRecord");
+  }
+
+  @Override
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final int iVersion, final int iMode,
       final ORecordCallback<Boolean> iCallback) {
     // IF is a real delete should be with a tx

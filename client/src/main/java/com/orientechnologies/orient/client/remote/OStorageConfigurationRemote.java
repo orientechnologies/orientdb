@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.orient.client.remote.message.OReloadResponse37;
 import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
-import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -34,7 +36,7 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   private List<OStorageClusterConfiguration>      clusters;
   private String                                  networkRecordSerializer;
 
-  public OStorageConfigurationRemote(String networkRecordSerializer, OStorageConfigurationPayload payload ,
+  public OStorageConfigurationRemote(String networkRecordSerializer, OStorageConfigurationPayload payload,
       OContextConfiguration contextConfiguration) {
     this.networkRecordSerializer = networkRecordSerializer;
     this.contextConfiguration = contextConfiguration;
@@ -90,16 +92,6 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   }
 
   @Override
-  public void setSchemaRecordId(String s) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void update() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public int getMinimumClusters() {
     return minimumClusters;
   }
@@ -118,11 +110,6 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   @Override
   public String getIndexMgrRecordId() {
     return indexMgrRecordId;
-  }
-
-  @Override
-  public void setIndexMgrRecordId(String indexMgrRecordId) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -176,71 +163,6 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   }
 
   @Override
-  public void setDateFormat(String stringValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setDateTimeFormat(String stringValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setTimeZone(TimeZone timeZoneValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setLocaleCountry(String stringValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setLocaleLanguage(String stringValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setCharset(String stringValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setClusterSelection(String stringValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setMinimumClusters(int i) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setConflictStrategy(String stringValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setValidation(boolean b) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setProperty(String iName, String iValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeProperty(String iName) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clearProperties() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public String getRecordSerializer() {
     return networkRecordSerializer;
   }
@@ -253,11 +175,6 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   @Override
   public int getBinaryFormatVersion() {
     return binaryFormatVersion;
-  }
-
-  @Override
-  public void dropCluster(int iClusterId) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -284,4 +201,5 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   public List<OStorageClusterConfiguration> getClusters() {
     return clusters;
   }
+
 }

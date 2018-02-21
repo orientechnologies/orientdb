@@ -24,7 +24,6 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
@@ -131,7 +130,7 @@ public class OLogManager {
         try {
           final ODatabaseDocumentInternal db =
               ODatabaseRecordThreadLocal.instance() != null ? ODatabaseRecordThreadLocal.instance().getIfDefined() : null;
-          if (db != null && db.getStorage() != null && db.getStorage() instanceof OAbstractPaginatedStorage) {
+          if (db != null && db.getStorage() != null && !db.getStorage().isRemote()) {
             final String dbName = db.getStorage().getName();
             if (dbName != null)
               iMessage = "$ANSI{green {db=" + dbName + "}} " + iMessage;

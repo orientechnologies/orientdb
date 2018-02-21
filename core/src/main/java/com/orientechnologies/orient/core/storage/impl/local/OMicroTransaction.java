@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.*;
 
 import java.util.*;
@@ -62,7 +63,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   private static final AtomicInteger transactionSerial = new AtomicInteger(0);
 
   private final ODatabaseDocumentInternal database;
-  private final OAbstractPaginatedStorage storage;
+  private final OStorage                  storage;
 
   private final int id;
 
@@ -97,7 +98,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
    * @param storage  the micro-transaction's storage.
    * @param database the micro-transaction's database.
    */
-  public OMicroTransaction(OAbstractPaginatedStorage storage, ODatabaseDocumentInternal database) {
+  public OMicroTransaction(OStorage storage, ODatabaseDocumentInternal database) {
     this.storage = storage;
     this.database = database;
 

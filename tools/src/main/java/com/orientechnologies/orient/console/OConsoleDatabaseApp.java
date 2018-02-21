@@ -2020,7 +2020,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throws IOException {
     checkForDatabase();
 
-    if (!(currentDatabase.getStorage() instanceof OAbstractPaginatedStorage)) {
+    if (currentDatabase.getStorage().isRemote()) {
       message("\nCannot check integrity of non-local database. Connect to it using local mode.");
       return;
     }

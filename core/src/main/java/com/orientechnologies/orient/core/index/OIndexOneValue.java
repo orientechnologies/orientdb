@@ -26,8 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.*;
 
@@ -37,7 +36,7 @@ import java.util.*;
  * @author Luca Garulli
  */
 public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
-  public OIndexOneValue(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
+  public OIndexOneValue(String name, final String type, String algorithm, int version, OStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
     super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage);
   }

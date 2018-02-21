@@ -22,10 +22,6 @@ public interface OStorageConfiguration {
 
   String getSchemaRecordId();
 
-  void setSchemaRecordId(String s);
-
-  void update();
-
   int getMinimumClusters();
 
   boolean isStrictSql();
@@ -33,8 +29,6 @@ public interface OStorageConfiguration {
   OStorageConfiguration load(OContextConfiguration contextConfiguration);
 
   String getIndexMgrRecordId();
-
-  void setIndexMgrRecordId(String indexMgrRecordId);
 
   TimeZone getTimeZone();
 
@@ -56,39 +50,11 @@ public interface OStorageConfiguration {
 
   boolean isValidationEnabled();
 
-  void setDateFormat(String stringValue);
-
-  void setDateTimeFormat(String stringValue);
-
-  void setTimeZone(TimeZone timeZoneValue);
-
-  void setLocaleCountry(String stringValue);
-
-  void setLocaleLanguage(String stringValue);
-
-  void setCharset(String stringValue);
-
-  void setClusterSelection(String stringValue);
-
-  void setMinimumClusters(int i);
-
-  void setConflictStrategy(String stringValue);
-
-  void setValidation(boolean b);
-
-  void setProperty(String iName, String iValue);
-
-  void removeProperty(String iName);
-
-  void clearProperties();
-
   String getRecordSerializer();
 
   int getRecordSerializerVersion();
 
   int getBinaryFormatVersion();
-
-  void dropCluster(int iClusterId);
 
   int getVersion();
 

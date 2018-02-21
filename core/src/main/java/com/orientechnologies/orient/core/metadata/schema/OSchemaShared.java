@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.common.util.OArrays;
+import com.orientechnologies.orient.core.config.OStorageConfigurationModifiable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
@@ -42,7 +43,6 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
@@ -354,7 +354,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
         // by sql commands and we need to reload local replica
 
         if (iSave) {
-          if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
+          if (!database.getStorage().getUnderlying().isRemote()) {
             saveInternal(database);
           } else {
             reload();
@@ -503,7 +503,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
       if (!hasGlobalProperties) {
         ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
-        if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+        if (!database.getStorage().getUnderlying().isRemote())
           saveInternal(database);
       }
 
@@ -601,8 +601,9 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     rwSpinLock.acquireWriteLock();
     try {
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-      database.getStorage().getConfiguration().setSchemaRecordId(document.getIdentity().toString());
-      database.getStorage().getConfiguration().update();
+      final OStorageConfigurationModifiable cfg = (OStorageConfigurationModifiable) database.getStorage().getConfiguration();
+      cfg.setSchemaRecordId(document.getIdentity().toString());
+      cfg.update();
       snapshot = new OImmutableSchema(this);
     } finally {
       rwSpinLock.releaseWriteLock();
