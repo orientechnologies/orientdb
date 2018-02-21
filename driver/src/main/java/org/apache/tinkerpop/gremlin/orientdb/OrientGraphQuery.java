@@ -27,11 +27,11 @@ public class OrientGraphQuery implements OrientGraphBaseQuery {
   }
 
   public OGremlinResultSet execute(OGraph graph) {
-    return graph.executeSql(this.query, this.params);
+    return graph.querySql(this.query, this.params);
   }
 
   public Optional<OExecutionPlan> explain(OGraph graph) {
-    return graph.executeSql(String.format("EXPLAIN %s", query), params).getRawResultSet().getExecutionPlan();
+    return graph.querySql(String.format("EXPLAIN %s", query), params).getRawResultSet().getExecutionPlan();
   }
 
   public int usedIndexes(OGraph graph) {

@@ -49,12 +49,17 @@ public class OrientGraphQueryBuilder {
     }
 
     StringBuilder builder = new StringBuilder();
-    builder.append("SELECT expand($union) ");
+
     Map<String, Object> parameters = new HashMap<>();
     String whereCondition = fillParameters(parameters);
-    String lets = classes.stream().map((s) -> buildLetStatement(buildSingleQuery(s, whereCondition), classes.indexOf(s)))
-        .reduce("", (a, b) -> a.isEmpty() ? b : a + " , " + b);
-    builder.append(String.format("%s , $union = UNIONALL(%s)", lets, buildVariables(classes.size())));
+    if (classes.size() > 1) {
+      builder.append("SELECT expand($union) ");
+      String lets = classes.stream().map((s) -> buildLetStatement(buildSingleQuery(s, whereCondition), classes.indexOf(s)))
+          .reduce("", (a, b) -> a.isEmpty() ? b : a + " , " + b);
+      builder.append(String.format("%s , $union = UNIONALL(%s)", lets, buildVariables(classes.size())));
+    } else {
+      builder.append(buildSingleQuery(classes.get(0), whereCondition));
+    }
     return Optional.of(new OrientGraphQuery(builder.toString(), parameters));
   }
 
