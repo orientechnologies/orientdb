@@ -12,7 +12,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
 
-  public ORecordSerializationDebug deserializeDebug(final byte[] iSource, ODatabaseDocumentInternal db, boolean deserializeClassName) {
+  public ORecordSerializationDebug deserializeDebug(final byte[] iSource, ODatabaseDocumentInternal db) {
     ORecordSerializationDebug debugInfo = new ORecordSerializationDebug();
     OImmutableSchema schema = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot();
     BytesContainer bytes = new BytesContainer(iSource);
@@ -20,7 +20,7 @@ public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
       throw new OSystemException("Unsupported binary serialization version");
     bytes.skip(1);
     
-    if (deserializeClassName){
+    if (ORecordSerializerBinary.INSTANCE.getCurrentSerializer().isSerializingClassNameByDefault()){
       try {
         final String className = readString(bytes);
         debugInfo.className = className;
