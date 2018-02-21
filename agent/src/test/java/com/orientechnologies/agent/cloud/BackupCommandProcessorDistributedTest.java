@@ -13,6 +13,7 @@ import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import com.orientechnologies.orientdb.cloud.protocol.backup.*;
 import com.orientechnologies.orientdb.cloud.protocol.backup.log.BackupLogsList;
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.HashMap;
@@ -41,7 +42,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
         .forEach((b) -> agent.getBackupManager().removeAndStopBackup(b));
   }
 
-//  @Test
+  @Test
   public void testBackupCommandProcessorEmptyBackups() throws Exception {
 
     execute(2, () -> {
@@ -57,7 +58,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-//  @Test
+  @Test
   public void testListBackupCommandProcessor() throws Exception {
 
     execute(2, () -> {
@@ -110,7 +111,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-//  @Test
+  @Test
   public void testChangeBackupCommand() throws Exception {
 
     execute(2, () -> {
@@ -211,7 +212,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
     return (BackupList) execute.getPayload();
   }
 
-//  @Test
+  @Test
   public void testAddBackupCommandProcessor() throws Exception {
 
     execute(2, () -> {
@@ -294,7 +295,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-//  @Test
+  @Test
   public void testRemoveBackupCommandProcessor() throws Exception {
 
     execute(2, () -> {
@@ -331,7 +332,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-//  @Test
+  @Test
   public void testListLogsCommandProcessor() throws Exception {
 
     execute(2, () -> {
@@ -384,7 +385,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
     return (BackupLogsList) execute.getPayload();
   }
 
-//  @Test
+  @Test
   public void testListLogsWithUnitIdCommandProcessor() throws Exception {
 
     execute(2, () -> {
@@ -414,8 +415,8 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
       task.registerListener((cfg1, log) -> {
 
         if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
-          latch.countDown();
           lastLog.set(log);
+          latch.countDown();
         }
         return latch.getCount() > 0;
 
@@ -442,10 +443,10 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-//  @Test
+  @Test
   public void testRemoveBackupLogsCommandProcessor() throws Exception {
 
-    execute(2, () -> {
+      execute(2, () -> {
 
       ServerRun firstServer = this.serverInstance.get(0);
       ServerRun secondServer = this.serverInstance.get(1);
@@ -471,8 +472,8 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
       final CountDownLatch latch = new CountDownLatch(1);
       task.registerListener((cfg1, log) -> {
         if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
-          latch.countDown();
           lastLog.set(log);
+          latch.countDown();
         }
         return latch.getCount() > 0;
 
@@ -499,7 +500,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
   }
 
-//  @Test
+  @Test
   public void testRestoreDatabaseCommandProcessor() throws Exception {
 
     execute(2, () -> {
@@ -527,10 +528,10 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
       AtomicReference<OBackupLog> lastLog = new AtomicReference<>();
       final CountDownLatch latch = new CountDownLatch(3);
       task.registerListener((cfg1, log) -> {
-        latch.countDown();
         if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
           lastLog.set(log);
         }
+        latch.countDown();
         return latch.getCount() > 0;
 
       });

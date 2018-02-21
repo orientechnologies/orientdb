@@ -19,6 +19,7 @@ import com.orientechnologies.orientdb.cloud.protocol.backup.log.BackupLogsList;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.InputStream;
@@ -104,7 +105,7 @@ public class BackupCommandProcessorTest {
         .forEach((b) -> agent.getBackupManager().removeAndStopBackup(b));
   }
 
-//  @Test
+  @Test
   public void testBackupCommandProcessorEmptyBackups() {
 
     BackupList payload = getBackupList();
@@ -128,7 +129,7 @@ public class BackupCommandProcessorTest {
     return (BackupList) execute.getPayload();
   }
 
-//  @Test
+  @Test
   public void testBackupCommandProcessor() {
 
     ODocument cfg = createBackupConfig();
@@ -184,7 +185,7 @@ public class BackupCommandProcessorTest {
     return agent.getBackupManager().addBackup(backup);
   }
 
-//  @Test
+  @Test
   public void testAddBackupCommandProcessor() {
 
     BackupInfo info = new BackupInfo();
@@ -235,7 +236,7 @@ public class BackupCommandProcessorTest {
 
   }
 
-//  @Test
+  @Test
   public void testRemoveBackupCommandProcessor() {
 
     ODocument cfg = createBackupConfig();
@@ -261,7 +262,7 @@ public class BackupCommandProcessorTest {
 
   }
 
-//  @Test
+  @Test
   public void testListLogsCommandProcessor() throws InterruptedException {
 
     ODocument cfg = createBackupConfig();
@@ -301,7 +302,7 @@ public class BackupCommandProcessorTest {
     return (BackupLogsList) execute.getPayload();
   }
 
-//  @Test
+  @Test
   public void testListLogsWithUnitIdCommandProcessor() throws InterruptedException {
 
     ODocument cfg = createBackupConfig();
@@ -317,8 +318,8 @@ public class BackupCommandProcessorTest {
     AtomicReference<OBackupLog> lastLog = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(3);
     task.registerListener((cfg1, log) -> {
-      latch.countDown();
       lastLog.set(log);
+      latch.countDown();
       return latch.getCount() > 0;
 
     });
@@ -341,7 +342,7 @@ public class BackupCommandProcessorTest {
 
   }
 
-//  @Test
+  @Test
   public void testRemoveBackupLogsCommandProcessor() throws InterruptedException {
 
     ODocument cfg = createBackupConfig();
@@ -357,11 +358,10 @@ public class BackupCommandProcessorTest {
     AtomicReference<OBackupLog> lastLog = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(3);
     task.registerListener((cfg1, log) -> {
-      latch.countDown();
-
       if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
         lastLog.set(log);
       }
+      latch.countDown();
       return latch.getCount() > 0;
 
     });
@@ -384,7 +384,7 @@ public class BackupCommandProcessorTest {
 
   }
 
-//  @Test
+  @Test
   public void testRestoreDatabaseCommandProcessor() throws InterruptedException {
 
     ODocument cfg = createBackupConfig();
@@ -400,10 +400,11 @@ public class BackupCommandProcessorTest {
     AtomicReference<OBackupLog> lastLog = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(3);
     task.registerListener((cfg1, log) -> {
-      latch.countDown();
+
       if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
         lastLog.set(log);
       }
+      latch.countDown();
       return latch.getCount() > 0;
 
     });
