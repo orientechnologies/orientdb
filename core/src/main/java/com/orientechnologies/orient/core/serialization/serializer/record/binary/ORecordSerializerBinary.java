@@ -33,15 +33,30 @@ public class ORecordSerializerBinary implements ORecordSerializer {
 
   public static final  String                  NAME                   = "ORecordSerializerBinary";
   public static final  ORecordSerializerBinary INSTANCE               = new ORecordSerializerBinary();
-  private static final byte                    CURRENT_RECORD_VERSION = 0;
+  private final byte                    CURRENT_RECORD_VERSION;
 
-  private final ODocumentSerializer[] serializerByVersion;
+  private ODocumentSerializer[] serializerByVersion;
 
+  private void init(){
+    serializerByVersion = new ODocumentSerializer[2];
+    serializerByVersion[0] = new ORecordSerializerBinaryV0();
+    serializerByVersion[1] = new ORecordSerializerBinaryV1();
+  }
+  
+  public ORecordSerializerBinary(byte serializerVersion){
+    CURRENT_RECORD_VERSION = serializerVersion;
+    init();
+  }
+  
   public ORecordSerializerBinary() {
-    serializerByVersion = new ODocumentSerializer[1];
-    serializerByVersion[0] = new ORecordSerializerBinaryV1();
+    CURRENT_RECORD_VERSION = 0;
+    init();
   }
 
+  public int getNumberOfSupportedVersions(){
+    return serializerByVersion.length;
+  }
+  
   @Override
   public int getCurrentVersion() {
     return CURRENT_RECORD_VERSION;
