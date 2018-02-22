@@ -78,7 +78,8 @@ public class OAtomicOperation {
     return operationUnitId;
   }
 
-  public OCacheEntry loadPage(long fileId, long pageIndex, boolean checkPinnedPages, final int pageCount) throws IOException {
+  public OCacheEntry loadPageForWrite(long fileId, long pageIndex, boolean checkPinnedPages, final int pageCount)
+      throws IOException {
     assert pageCount > 0;
 
     fileId = checkFileIdCompatibility(fileId, storageId);
@@ -106,6 +107,44 @@ public class OAtomicOperation {
             pageChangesContainer.delegate = delegate;
             return pageChangesContainer;
           }
+        } else {
+          if (pageChangesContainer.isNew) {
+            return pageChangesContainer;
+          } else {
+            // Need to load the page again from cache for locking reasons
+            OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
+            pageChangesContainer.delegate = delegate;
+            return pageChangesContainer;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public OCacheEntry loadPageForRead(long fileId, long pageIndex, boolean checkPinnedPages, final int pageCount)
+      throws IOException {
+    assert pageCount > 0;
+
+    fileId = checkFileIdCompatibility(fileId, storageId);
+
+    if (deletedFiles.contains(fileId))
+      throw new OStorageException("File with id " + fileId + " is deleted.");
+
+    FileChanges changesContainer = fileChanges.computeIfAbsent(fileId, k -> new FileChanges());
+
+    if (changesContainer.isNew) {
+      if (pageIndex <= changesContainer.maxNewPageIndex) {
+        OCacheEntryChanges pageChange = changesContainer.pageChangesMap.get(pageIndex);
+        return pageChange;
+      } else
+        return null;
+    } else {
+      OCacheEntryChanges pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
+
+      if (checkChangesFilledUpTo(changesContainer, pageIndex)) {
+        if (pageChangesContainer == null) {
+          return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
         } else {
           if (pageChangesContainer.isNew) {
             return pageChangesContainer;
@@ -186,7 +225,14 @@ public class OAtomicOperation {
     return pageChangesContainer;
   }
 
-  public void releasePage(OCacheEntry cacheEntry) {
+  public void releasePageFromRead(OCacheEntry cacheEntry) {
+    if (cacheEntry instanceof OCacheEntryChanges) {
+      releasePageFromWrite(cacheEntry);
+    } else
+      readCache.releaseFromRead(cacheEntry, writeCache);
+  }
+
+  public void releasePageFromWrite(OCacheEntry cacheEntry) {
     OCacheEntryChanges real = (OCacheEntryChanges) cacheEntry;
     if (deletedFiles.contains(cacheEntry.getFileId()))
       throw new OStorageException("File with id " + cacheEntry.getFileId() + " is deleted.");
